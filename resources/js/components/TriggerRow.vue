@@ -48,14 +48,9 @@ function onConditionValueInput(raw: string) {
 <template>
   <div class="flex flex-wrap items-center gap-3 rounded-sm border border-sidebar-border bg-sidebar-accent p-3">
     <label class="relative inline-flex cursor-pointer items-center" :title="enabled ? 'Disable' : 'Enable'">
-      <input
-        v-model="enabled"
-        type="checkbox"
-        class="peer sr-only"
-        @change="emit('save')"
-      />
+      <input v-model="enabled" type="checkbox" class="peer sr-only" @change="emit('save')" />
       <span
-        class="peer h-6 w-10 rounded-full bg-gray-300 after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 peer-focus:outline-none dark:bg-gray-600 dark:after:bg-gray-100"
+        class="peer h-6 w-10 rounded-full bg-gray-300 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:after:bg-gray-100"
         :class="toggleCheckedClass ?? 'peer-checked:bg-green-400 dark:peer-checked:bg-green-800'"
       />
     </label>
@@ -65,11 +60,7 @@ function onConditionValueInput(raw: string) {
       <div class="font-mono text-xs text-muted-foreground">{{ keyText }}</div>
     </div>
 
-    <div
-      v-if="amountUnit"
-      class="flex items-center gap-2"
-      :class="{ 'opacity-40': !enabled }"
-    >
+    <div v-if="amountUnit" class="flex items-center gap-2" :class="{ 'opacity-40': !enabled }">
       <select
         :value="conditionType ?? ''"
         class="input-border h-9 cursor-pointer rounded-sm"

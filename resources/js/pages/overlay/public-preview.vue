@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -122,19 +115,13 @@ const props = defineProps<{
   markdownUrl: string;
 }>();
 
-const hasRequirements = computed(
-  () => props.share.services.length > 0 || props.share.lists.length > 0,
-);
+const hasRequirements = computed(() => props.share.services.length > 0 || props.share.lists.length > 0);
 
 // Whether there is anything to say beyond the source itself. An overlay with no
 // controls, no integrations and no alert wiring gets no panel rather than three
 // empty ones.
 const hasShareDetail = computed(
-  () =>
-    props.share.controls.length > 0 ||
-    hasRequirements.value ||
-    props.share.alert !== null ||
-    props.share.dataTags.length > 0,
+  () => props.share.controls.length > 0 || hasRequirements.value || props.share.alert !== null || props.share.dataTags.length > 0,
 );
 
 // An expression control stores its formula in config.expression rather than in
@@ -308,24 +295,13 @@ function submitReport() {
           <img src="/favicon.png" alt="" class="hidden h-6 w-6 dark:block" />
           Overlabels
         </a>
-        <Link
-          v-if="isAuthed"
-          :href="route('dashboard.index')"
-          class="text-sm text-violet-400 hover:underline"
-        >
-          Dashboard
-        </Link>
+        <Link v-if="isAuthed" :href="route('dashboard.index')" class="text-sm text-violet-400 hover:underline"> Dashboard </Link>
       </div>
 
       <!-- Top header strip -->
       <div class="flex flex-wrap items-center justify-between gap-3 border border-sidebar-border bg-sidebar px-4 py-3">
-        <div class="flex items-center gap-3 min-w-0">
-          <img
-            v-if="template.owner?.avatar"
-            :src="template.owner.avatar"
-            alt=""
-            class="h-9 w-9 shrink-0 object-cover"
-          />
+        <div class="flex min-w-0 items-center gap-3">
+          <img v-if="template.owner?.avatar" :src="template.owner.avatar" alt="" class="h-9 w-9 shrink-0 object-cover" />
           <div class="min-w-0">
             <div class="truncate text-base font-medium text-foreground">{{ template.name }}</div>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-foreground">
@@ -340,7 +316,7 @@ function submitReport() {
                 <GitFork class="h-3.5 w-3.5 text-violet-400" />
                 {{ template.fork_count }}
               </span>
-              <span class="border border-sidebar-border bg-card px-1.5 py-0.5 text-xs uppercase text-violet-400">
+              <span class="border border-sidebar-border bg-card px-1.5 py-0.5 text-xs text-violet-400 uppercase">
                 {{ template.type }}
               </span>
             </div>
@@ -357,9 +333,7 @@ function submitReport() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" class="w-56 rounded-none border-sidebar-border bg-card">
-              <DropdownMenuLabel class="text-xs uppercase tracking-wider text-violet-400">
-                Copy snippet
-              </DropdownMenuLabel>
+              <DropdownMenuLabel class="text-xs tracking-wider text-violet-400 uppercase"> Copy snippet </DropdownMenuLabel>
               <DropdownMenuItem class="cursor-pointer rounded-none focus:bg-sidebar focus:text-violet-400" @click="copy('head')">
                 HEAD
                 <span class="ml-auto text-xs text-foreground">&lt;head&gt;</span>
@@ -378,9 +352,7 @@ function submitReport() {
                 <span class="ml-auto text-xs text-foreground">.html</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel class="text-xs uppercase tracking-wider text-violet-400">
-                For an LLM
-              </DropdownMenuLabel>
+              <DropdownMenuLabel class="text-xs tracking-wider text-violet-400 uppercase"> For an LLM </DropdownMenuLabel>
               <DropdownMenuItem class="cursor-pointer rounded-none focus:bg-sidebar focus:text-violet-400" @click="copy('markdown')">
                 Markdown URL
                 <span class="ml-auto text-xs text-foreground">.md</span>
@@ -388,22 +360,9 @@ function submitReport() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <button
-            v-if="template.screenshot_url"
-            type="button"
-            class="ovl-btn cursor-pointer"
-            @click="openScreenshot"
-          >
-            Screenshot
-          </button>
+          <button v-if="template.screenshot_url" type="button" class="ovl-btn cursor-pointer" @click="openScreenshot">Screenshot</button>
 
-          <form
-            v-if="isAuthed"
-            :action="route('templates.fork', template.id)"
-            method="POST"
-            class="inline"
-            @submit="confirmCopy"
-          >
+          <form v-if="isAuthed" :action="route('templates.fork', template.id)" method="POST" class="inline" @submit="confirmCopy">
             <input type="hidden" name="_token" :value="csrf" />
             <button type="submit" class="ovl-btn-copy cursor-pointer">Copy</button>
           </form>
@@ -426,9 +385,7 @@ function submitReport() {
             <div v-else class="flex h-full w-full flex-col items-center justify-center px-6 text-center">
               <ImageOff class="mb-3 h-10 w-10 text-violet-400" />
               <p class="text-sm text-foreground">No screenshot yet</p>
-              <p class="mt-1 text-xs text-foreground">
-                The owner hasn't added a screenshot for this overlay.
-              </p>
+              <p class="mt-1 text-xs text-foreground">The owner hasn't added a screenshot for this overlay.</p>
             </div>
           </div>
           <div class="flex items-center justify-between border-t border-sidebar-border px-4 py-2.5 text-sm text-foreground">
@@ -447,9 +404,9 @@ function submitReport() {
                 type="button"
                 @click="activeSourceTab = tab.key"
                 :class="[
-                  'flex cursor-pointer items-center gap-1.5 px-5 py-3 text-left text-xs uppercase tracking-wider transition-colors',
+                  'flex cursor-pointer items-center gap-1.5 px-5 py-3 text-left text-xs tracking-wider uppercase transition-colors',
                   activeSourceTab === tab.key
-                    ? 'bg-[#f8f8f8] dark:bg-[#160e21] text-foreground'
+                    ? 'bg-[#f8f8f8] text-foreground dark:bg-[#160e21]'
                     : 'text-foreground hover:bg-background/40 hover:text-violet-400',
                 ]"
               >
@@ -491,17 +448,16 @@ function submitReport() {
           <div class="p-4">
             <p class="mb-3 text-sm text-foreground">
               Named values the overlay reads with
-              <code class="bg-sidebar px-1 py-0.5 text-xs">[[[c:key]]]</code>. Copying the overlay
-              recreates these with the defaults shown.
+              <code class="bg-sidebar px-1 py-0.5 text-xs">[[[c:key]]]</code>. Copying the overlay recreates these with the defaults shown.
             </p>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs">
                 <thead class="text-foreground">
                   <tr class="border-b border-sidebar-border">
-                    <th class="py-1.5 pr-3 font-medium uppercase tracking-wider">Tag</th>
-                    <th class="py-1.5 pr-3 font-medium uppercase tracking-wider">Type</th>
-                    <th class="py-1.5 pr-3 font-medium uppercase tracking-wider">Label</th>
-                    <th class="py-1.5 font-medium uppercase tracking-wider">Default</th>
+                    <th class="py-1.5 pr-3 font-medium tracking-wider uppercase">Tag</th>
+                    <th class="py-1.5 pr-3 font-medium tracking-wider uppercase">Type</th>
+                    <th class="py-1.5 pr-3 font-medium tracking-wider uppercase">Label</th>
+                    <th class="py-1.5 font-medium tracking-wider uppercase">Default</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -550,38 +506,29 @@ function submitReport() {
           <div class="space-y-4 p-4">
             <div v-if="share.services.length">
               <p class="mb-3 text-sm text-foreground">
-                This overlay reads live data from these services. Connect them under Settings ->
-                Integrations; their controls are provisioned for you and are not part of the copy.
+                This overlay reads live data from these services. Connect them under Settings -> Integrations; their controls are provisioned for you
+                and are not part of the copy.
               </p>
               <div v-for="service in share.services" :key="service.service" class="mb-3 last:mb-0">
-                <div class="mb-1.5 text-xs uppercase tracking-wider text-violet-400">
+                <div class="mb-1.5 text-xs tracking-wider text-violet-400 uppercase">
                   {{ service.label }}
                 </div>
                 <ul class="space-y-1">
-                  <li
-                    v-for="control in service.controls"
-                    :key="control.tag"
-                    class="flex flex-wrap items-baseline gap-x-2 text-xs"
-                  >
+                  <li v-for="control in service.controls" :key="control.tag" class="flex flex-wrap items-baseline gap-x-2 text-xs">
                     <code class="text-violet-400">[[[{{ control.tag }}]]]</code>
                     <span v-if="control.known" class="text-foreground">{{ control.label }}</span>
-                    <span v-else class="text-destructive">
-                      not provided by {{ service.label }} - likely a typo
-                    </span>
+                    <span v-else class="text-destructive"> not provided by {{ service.label }} - likely a typo </span>
                   </li>
                 </ul>
               </div>
             </div>
 
             <div v-if="share.lists.length">
-              <div class="mb-1.5 flex items-center gap-1.5 text-xs uppercase tracking-wider text-violet-400">
+              <div class="mb-1.5 flex items-center gap-1.5 text-xs tracking-wider text-violet-400 uppercase">
                 <ListIcon class="h-3.5 w-3.5" />
                 Lists
               </div>
-              <p class="mb-2 text-sm text-foreground">
-                Lists hold their own data and are not copied. Create one with a matching slug under
-                Lists.
-              </p>
+              <p class="mb-2 text-sm text-foreground">Lists hold their own data and are not copied. Create one with a matching slug under Lists.</p>
               <ul class="space-y-1">
                 <li v-for="list in share.lists" :key="list.slug" class="text-xs">
                   <code class="text-violet-400">[[[{{ list.tag }}]]]</code>
@@ -601,8 +548,7 @@ function submitReport() {
             <ul class="space-y-1">
               <li v-if="share.alert.sound_url">Plays a sound when it fires.</li>
               <li v-if="share.alert.tts_expression">
-                Speaks via text to speech<span v-if="share.alert.tts_delay_ms">
-                  after {{ share.alert.tts_delay_ms }}ms</span>:
+                Speaks via text to speech<span v-if="share.alert.tts_delay_ms"> after {{ share.alert.tts_delay_ms }}ms</span>:
                 <code class="bg-sidebar px-1 py-0.5 text-xs">{{ share.alert.tts_expression }}</code>
               </li>
               <li v-if="share.alert.bot_message_expression">
@@ -611,31 +557,18 @@ function submitReport() {
                   {{ share.alert.bot_message_expression }}
                 </code>
               </li>
-              <li
-                v-if="
-                  !share.alert.sound_url &&
-                  !share.alert.tts_expression &&
-                  !share.alert.bot_message_expression
-                "
-              >
+              <li v-if="!share.alert.sound_url && !share.alert.tts_expression && !share.alert.bot_message_expression">
                 No sound, speech or chat message. This alert is purely visual.
               </li>
             </ul>
 
             <div v-if="share.alert.triggers.length">
-              <div class="mb-1.5 text-xs uppercase tracking-wider text-violet-400">
-                How the author wired it
-              </div>
-              <p class="mb-2">
-                Triggers are not copied - you bind your own. Shown because they explain what the
-                markup expects.
-              </p>
+              <div class="mb-1.5 text-xs tracking-wider text-violet-400 uppercase">How the author wired it</div>
+              <p class="mb-2">Triggers are not copied - you bind your own. Shown because they explain what the markup expects.</p>
               <ul class="space-y-1 text-xs">
                 <li v-for="(trigger, i) in share.alert.triggers" :key="i">
                   <span class="text-foreground">{{ trigger.label }}</span>
-                  <span class="text-foreground opacity-70">
-                    - {{ triggerCondition(trigger) }}, {{ trigger.duration_ms }}ms
-                  </span>
+                  <span class="text-foreground opacity-70"> - {{ triggerCondition(trigger) }}, {{ trigger.duration_ms }}ms </span>
                 </li>
               </ul>
             </div>
@@ -651,15 +584,11 @@ function submitReport() {
           </div>
           <div class="p-4">
             <p class="mb-3 text-sm text-foreground">
-              Resolved against Twitch channel data<span v-if="template.type === 'alert'">
-                and the firing event</span>. A tag with no data renders as nothing.
+              Resolved against Twitch channel data<span v-if="template.type === 'alert'"> and the firing event</span>. A tag with no data renders as
+              nothing.
             </p>
             <div class="flex flex-wrap gap-1.5">
-              <code
-                v-for="tag in share.dataTags"
-                :key="tag"
-                class="border border-sidebar-border bg-sidebar px-1.5 py-0.5 text-xs text-violet-400"
-              >
+              <code v-for="tag in share.dataTags" :key="tag" class="border border-sidebar-border bg-sidebar px-1.5 py-0.5 text-xs text-violet-400">
                 [[[{{ tag }}]]]
               </code>
             </div>
@@ -675,16 +604,11 @@ function submitReport() {
       <div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border border-sidebar-border bg-card p-4">
         <FileText class="h-4 w-4 shrink-0 text-violet-400" />
         <p class="text-sm text-foreground">
-          Give this URL to an LLM and it gets the whole overlay: source, controls, integrations and
-          alert wiring in one document.
+          Give this URL to an LLM and it gets the whole overlay: source, controls, integrations and alert wiring in one document.
         </p>
         <div class="ml-auto flex items-center gap-2">
-          <a :href="markdownUrl" target="_blank" rel="noopener" class="ovl-btn cursor-pointer">
-            View .md
-          </a>
-          <button type="button" class="ovl-btn cursor-pointer" @click="copy('markdown')">
-            Copy URL
-          </button>
+          <a :href="markdownUrl" target="_blank" rel="noopener" class="ovl-btn cursor-pointer"> View .md </a>
+          <button type="button" class="ovl-btn cursor-pointer" @click="copy('markdown')">Copy URL</button>
         </div>
       </div>
 
@@ -696,7 +620,7 @@ function submitReport() {
         right whether or not there is a description beside it.
       -->
       <div class="mt-4 flex flex-col gap-4 border border-sidebar-border bg-card p-4 sm:flex-row sm:items-start">
-        <p v-if="template.description" class="text-sm text-foreground whitespace-pre-wrap">
+        <p v-if="template.description" class="text-sm whitespace-pre-wrap text-foreground">
           {{ template.description }}
         </p>
         <button type="button" class="ovl-btn shrink-0 cursor-pointer self-start sm:ml-auto" @click="openReport">
@@ -711,20 +635,14 @@ function submitReport() {
           <DialogHeader>
             <DialogTitle>{{ reportSent ? 'Report sent' : 'Report this overlay' }}</DialogTitle>
             <DialogDescription>
-              <template v-if="reportSent">
-                Your report about "{{ template.name }}" has been sent to the Overlabels admins.
-              </template>
-              <template v-else>
-                This sends a report about "{{ template.name }}" to the Overlabels admins.
-              </template>
+              <template v-if="reportSent"> Your report about "{{ template.name }}" has been sent to the Overlabels admins. </template>
+              <template v-else> This sends a report about "{{ template.name }}" to the Overlabels admins. </template>
             </DialogDescription>
           </DialogHeader>
 
           <form v-if="!reportSent" class="space-y-4" @submit.prevent="submitReport">
             <div>
-              <label for="report-reason" class="mb-1.5 block text-sm font-medium text-foreground">
-                Why are you reporting it?
-              </label>
+              <label for="report-reason" class="mb-1.5 block text-sm font-medium text-foreground"> Why are you reporting it? </label>
               <textarea
                 id="report-reason"
                 v-model="reportForm.reason"
@@ -740,12 +658,11 @@ function submitReport() {
             </div>
 
             <div v-if="isAuthed" class="text-sm text-foreground">
-              Reporting as <span class="text-violet-400">{{ page.props.auth?.user?.name }}</span>.
+              Reporting as <span class="text-violet-400">{{ page.props.auth?.user?.name }}</span
+              >.
             </div>
             <div v-else>
-              <label for="report-email" class="mb-1.5 block text-sm font-medium text-foreground">
-                Your email address
-              </label>
+              <label for="report-email" class="mb-1.5 block text-sm font-medium text-foreground"> Your email address </label>
               <input
                 id="report-email"
                 v-model="reportForm.email"
@@ -757,8 +674,7 @@ function submitReport() {
               />
               <p class="mt-1 text-xs text-foreground">
                 Stored with the report so an admin can follow up, and for nothing else. See the
-                <a href="/privacy" target="_blank" rel="noopener" class="cursor-pointer text-violet-400 hover:underline">
-                  privacy policy</a>.
+                <a href="/privacy" target="_blank" rel="noopener" class="cursor-pointer text-violet-400 hover:underline"> privacy policy</a>.
               </p>
               <p v-if="reportForm.errors.email" class="mt-1 text-xs text-destructive">
                 {{ reportForm.errors.email }}
@@ -779,11 +695,7 @@ function submitReport() {
               <div class="flex w-full flex-col gap-3">
                 <div class="flex items-center justify-end gap-2">
                   <button type="button" class="ovl-btn cursor-pointer" @click="showReport = false">Cancel</button>
-                  <button
-                    type="submit"
-                    class="ovl-btn-copy cursor-pointer disabled:opacity-50"
-                    :disabled="reportForm.processing"
-                  >
+                  <button type="submit" class="ovl-btn-copy cursor-pointer disabled:opacity-50" :disabled="reportForm.processing">
                     {{ reportForm.processing ? 'Sending...' : 'Submit report' }}
                   </button>
                 </div>
@@ -802,7 +714,7 @@ function submitReport() {
 
       <!-- Fullscreen screenshot dialog -->
       <Dialog :open="showScreenshot" @update:open="showScreenshot = $event">
-        <DialogContent class="max-w-[95vw] max-h-[95vh] w-auto p-2 sm:max-w-[95vw]">
+        <DialogContent class="max-h-[95vh] w-auto max-w-[95vw] p-2 sm:max-w-[95vw]">
           <VisuallyHidden>
             <DialogTitle>Screenshot preview</DialogTitle>
           </VisuallyHidden>
@@ -839,7 +751,10 @@ function submitReport() {
   border: 1px solid var(--sidebar-border);
   background: var(--card);
   color: var(--foreground);
-  transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
+  transition:
+    color 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease;
 }
 
 .ovl-btn:hover {
@@ -859,7 +774,9 @@ function submitReport() {
   border: 1px solid var(--color-violet-400, #a78bfa);
   background: var(--color-violet-400, #a78bfa);
   color: #000;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
 }
 
 .ovl-btn-copy:hover {

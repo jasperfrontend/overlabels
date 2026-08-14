@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * A published Recipe in the catalogue. Each (slug, version) row is its
@@ -25,8 +26,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $max_instances_per_user
  * @property array<string, mixed> $manifest
  * @property bool $is_first_party
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class Recipe extends Model
 {

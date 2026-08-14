@@ -68,11 +68,7 @@ async function handleDelete(u: Update) {
         <span v-if="u.excerpt" class="text-xs">{{ u.excerpt }}</span>
 
         <div v-if="u.tags && u.tags.length" class="mt-1 flex flex-wrap gap-1">
-          <span
-            v-for="tag in u.tags"
-            :key="tag"
-            class="inline-flex items-center rounded-sm bg-sidebar px-2 py-0.5 text-xs text-foreground"
-          >
+          <span v-for="tag in u.tags" :key="tag" class="inline-flex items-center rounded-sm bg-sidebar px-2 py-0.5 text-xs text-foreground">
             {{ tag }}
           </span>
         </div>
@@ -92,14 +88,10 @@ async function handleDelete(u: Update) {
 
         <DropdownMenuContent align="end" class="w-52">
           <DropdownMenuItem as-child>
-            <Link :href="detailsHref(u)" :title="`Read ${u.title}`" class="cursor-pointer">
-              <Eye class="mr-2 h-4 w-4" />Read post
-            </Link>
+            <Link :href="detailsHref(u)" :title="`Read ${u.title}`" class="cursor-pointer"> <Eye class="mr-2 h-4 w-4" />Read post </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem class="cursor-pointer" @click="copyLink(u)">
-            <LinkIcon class="mr-2 h-4 w-4" />Copy link
-          </DropdownMenuItem>
+          <DropdownMenuItem class="cursor-pointer" @click="copyLink(u)"> <LinkIcon class="mr-2 h-4 w-4" />Copy link </DropdownMenuItem>
 
           <template v-if="props.isAdmin">
             <DropdownMenuSeparator />

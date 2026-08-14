@@ -18,7 +18,7 @@ function makeOwner(): User
 }
 
 test('extractPublicId handles versioned and unversioned URLs', function () {
-    $service = new CloudinaryUploadService();
+    $service = new CloudinaryUploadService;
 
     expect($service->extractPublicId('https://res.cloudinary.com/x/image/upload/v1234/folder/sub/abc.jpg'))
         ->toBe('folder/sub/abc')
@@ -37,7 +37,7 @@ test('claim stamps claimed_at on a matching unclaimed upload', function () {
         'kind' => CloudinaryUpload::KIND_TEMPLATE_SCREENSHOT,
     ]);
 
-    (new CloudinaryUploadService())->claim($upload->secure_url);
+    (new CloudinaryUploadService)->claim($upload->secure_url);
 
     expect($upload->fresh()->claimed_at)->not->toBeNull();
 });
@@ -53,7 +53,7 @@ test('claim is a no-op when url is null or already claimed', function () {
     ]);
     $originalClaim = $upload->claimed_at;
 
-    $service = new CloudinaryUploadService();
+    $service = new CloudinaryUploadService;
     $service->claim(null);
     $service->claim($upload->secure_url);
 
@@ -82,7 +82,7 @@ test('deleteByUrl skips when another template still references the URL', functio
     ]);
 
     // Pretend $other was just deleted - exclude it from the reference check.
-    (new CloudinaryUploadService())->deleteByUrl($url, excludeTemplateId: $other->id);
+    (new CloudinaryUploadService)->deleteByUrl($url, excludeTemplateId: $other->id);
 
     expect(CloudinaryUpload::find($upload->id))->not->toBeNull();
 });
@@ -121,7 +121,7 @@ test('deleteByUrl skips when a kit still references the URL', function () {
         'kind' => CloudinaryUpload::KIND_KIT_THUMBNAIL,
     ]);
 
-    (new CloudinaryUploadService())->deleteByUrl($url);
+    (new CloudinaryUploadService)->deleteByUrl($url);
 
     expect(CloudinaryUpload::find($upload->id))->not->toBeNull();
 });

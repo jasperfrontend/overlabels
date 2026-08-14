@@ -247,9 +247,7 @@ function formatLogEntry(entry: GameLogEntry): string {
     case 'zombie_attack':
       return `${zombieLabel(d.kind)[0].toUpperCase() + zombieLabel(d.kind).slice(1)} hit you for ${d.damage} (${d.player_hp} hp)`;
     case 'door_damage':
-      return d.is_exit
-        ? `You hit the exit door for ${d.damage} (${d.door_hp} left)`
-        : `You hit a door for ${d.damage} (${d.door_hp} left)`;
+      return d.is_exit ? `You hit the exit door for ${d.damage} (${d.door_hp} left)` : `You hit a door for ${d.damage} (${d.door_hp} left)`;
     case 'door_opened':
       return d.is_exit ? 'The exit door is open!' : 'A door is open';
     case 'room_entered':
@@ -333,9 +331,7 @@ function zombieStyle(z: ZombiePayload) {
   const x = view?.x ?? z.x;
   const y = view?.y ?? z.y;
   const easing = view?.lungeMode === 'moving' ? LUNGE_EASING : 'linear';
-  const transition = view?.animating
-    ? `transform ${view.duration}s ${easing}`
-    : 'none';
+  const transition = view?.animating ? `transform ${view.duration}s ${easing}` : 'none';
   return {
     transform: `translate(calc(${x} * var(--tile)), calc(${y} * var(--tile)))`,
     transition,
@@ -387,12 +383,8 @@ function debugTileState(x: number, y: number) {
     player: t.player ? { hp: t.player.player_hp, hiding: t.player.player_hiding_this_round } : null,
     blocker: !!t.blocker,
     hidingSpot: !!t.hidingSpot,
-    door: t.door
-      ? { state: t.door.state, is_exit: t.door.is_exit, turns_remaining: t.door.turns_remaining }
-      : null,
-    hiddenTile: t.hiddenTile
-      ? { content: t.hiddenTile.content, revealed_at_round: t.hiddenTile.revealed_at_round }
-      : null,
+    door: t.door ? { state: t.door.state, is_exit: t.door.is_exit, turns_remaining: t.door.turns_remaining } : null,
+    hiddenTile: t.hiddenTile ? { content: t.hiddenTile.content, revealed_at_round: t.hiddenTile.revealed_at_round } : null,
     glyph: tileGlyph(x, y) || '(none)',
     floor: floorFor(theme.value, x, y),
     sprite: spriteFor(x, y) ?? '(none)',
@@ -415,29 +407,108 @@ const lastResolvedTallyEntries = computed(() => {
 // DEV: visualize 50 active + 50 inactive. Flip to false (or delete) when done.
 const FAKE_PREVIEW = false;
 const FAKE_NAMES_A = [
-  'mossy_owl', 'pixelpilot', 'banana_storm', 'silentgryph', 'kaiser_42',
-  'zombiehugger99', 'thunderfist', 'lavender_warden', 'oolong_dev', 'crispmango',
-  'nyx_the_great_and_powerful_ruler', 'foxbyte', 'glimmerpath', 'rusticgoose',
-  'inverse_chimera', 'pebble_throw', 'thatonebot', 'sunset_runner', 'binary_bard',
-  'orchidwhisper', 'hexcrafter', 'velvetkey', 'mocha_thunder', 'pinegale',
-  'longusernamethatdefinitelywillnotfit', 'syrupsoul', 'amber_drift', 'voidcricket',
-  'pretzel_logic', 'midnightmoth', 'cobblepunk', 'mintycheese', 'arcanetangerine',
-  'rocketpotato', 'tidewind', 'glassyowl', 'lonesomelantern', 'pawsandeffect',
-  'caramelnova', 'snickerthorn', 'lichenstein', 'verdantwolf', 'hexagonsong',
-  'plumbeard', 'sodalitestream', 'jadewhisker', 'cinder_paw', 'twilight_clover',
-  'opalveil', 'misterquibble',
+  'mossy_owl',
+  'pixelpilot',
+  'banana_storm',
+  'silentgryph',
+  'kaiser_42',
+  'zombiehugger99',
+  'thunderfist',
+  'lavender_warden',
+  'oolong_dev',
+  'crispmango',
+  'nyx_the_great_and_powerful_ruler',
+  'foxbyte',
+  'glimmerpath',
+  'rusticgoose',
+  'inverse_chimera',
+  'pebble_throw',
+  'thatonebot',
+  'sunset_runner',
+  'binary_bard',
+  'orchidwhisper',
+  'hexcrafter',
+  'velvetkey',
+  'mocha_thunder',
+  'pinegale',
+  'longusernamethatdefinitelywillnotfit',
+  'syrupsoul',
+  'amber_drift',
+  'voidcricket',
+  'pretzel_logic',
+  'midnightmoth',
+  'cobblepunk',
+  'mintycheese',
+  'arcanetangerine',
+  'rocketpotato',
+  'tidewind',
+  'glassyowl',
+  'lonesomelantern',
+  'pawsandeffect',
+  'caramelnova',
+  'snickerthorn',
+  'lichenstein',
+  'verdantwolf',
+  'hexagonsong',
+  'plumbeard',
+  'sodalitestream',
+  'jadewhisker',
+  'cinder_paw',
+  'twilight_clover',
+  'opalveil',
+  'misterquibble',
 ];
 const FAKE_NAMES_I = [
-  'driftless_haze', 'wickerbeam', 'rustyriverlong_username_check', 'pumpkin_kite', 'sable_chime',
-  'kelpfortune', 'amaranthia', 'creakycog', 'goldfinchnova', 'tinker_grove',
-  'mauveroamer', 'ferncipher', 'duskwalker', 'tinypost', 'ironclove',
-  'porchlight7', 'ribbonchaser', 'salt_and_clover', 'bramblepudding', 'lozengevortex',
-  'turnipgazer', 'shrubcadet', 'meadowtrickle', 'thistlepine', 'hemlockharbour',
-  'cellargrin', 'frostedfollow', 'maplelore', 'glintwood', 'baronpeach',
-  'orchard_static', 'pebbleflute', 'softprism', 'twigfox', 'apricotmechanic',
-  'cardamomglow', 'snug_lantern', 'velourmoss', 'larkspurnine', 'moltenchime',
-  'sundaystation', 'bluffwicker', 'cherubcrane', 'puddingmoth', 'ginger_oracle',
-  'lookoutdaisy', 'plumeria_void', 'bristlefable', 'lichenpost', 'antiquefen',
+  'driftless_haze',
+  'wickerbeam',
+  'rustyriverlong_username_check',
+  'pumpkin_kite',
+  'sable_chime',
+  'kelpfortune',
+  'amaranthia',
+  'creakycog',
+  'goldfinchnova',
+  'tinker_grove',
+  'mauveroamer',
+  'ferncipher',
+  'duskwalker',
+  'tinypost',
+  'ironclove',
+  'porchlight7',
+  'ribbonchaser',
+  'salt_and_clover',
+  'bramblepudding',
+  'lozengevortex',
+  'turnipgazer',
+  'shrubcadet',
+  'meadowtrickle',
+  'thistlepine',
+  'hemlockharbour',
+  'cellargrin',
+  'frostedfollow',
+  'maplelore',
+  'glintwood',
+  'baronpeach',
+  'orchard_static',
+  'pebbleflute',
+  'softprism',
+  'twigfox',
+  'apricotmechanic',
+  'cardamomglow',
+  'snug_lantern',
+  'velourmoss',
+  'larkspurnine',
+  'moltenchime',
+  'sundaystation',
+  'bluffwicker',
+  'cherubcrane',
+  'puddingmoth',
+  'ginger_oracle',
+  'lookoutdaisy',
+  'plumeria_void',
+  'bristlefable',
+  'lichenpost',
+  'antiquefen',
 ];
 const FAKE_VOTES = ['p:up', 'p:down', 'p:left', 'p:right', 'p:up:2', 'p:right:3', 'a', 'a:2', 'h', 's', null];
 const fakeActive: JoinerPayload[] = FAKE_PREVIEW
@@ -464,21 +535,15 @@ const fakeInactive: JoinerPayload[] = FAKE_PREVIEW
   : [];
 
 const grouped = computed(() => ({
-  active: [
-    ...joiners.value.filter((j) => j.status === 'active'),
-    ...fakeActive,
-  ],
+  active: [...joiners.value.filter((j) => j.status === 'active'), ...fakeActive],
   pending: joiners.value.filter((j) => j.status === 'pending'),
-  inactive: [
-    ...joiners.value.filter((j) => j.status === 'inactive'),
-    ...fakeInactive,
-  ],
+  inactive: [...joiners.value.filter((j) => j.status === 'inactive'), ...fakeInactive],
 }));
 
 const blocks = computed(() => {
   return (blocksRemaining: number) => {
     const MAX_BLOCKS = 3;
-    return Array.from({ length: MAX_BLOCKS }, (_, i) => i < blocksRemaining ? 'filled' : 'empty');
+    return Array.from({ length: MAX_BLOCKS }, (_, i) => (i < blocksRemaining ? 'filled' : 'empty'));
   };
 });
 
@@ -543,7 +608,7 @@ function spriteFor(dx: number, dy: number): string | null {
   if (t.hiddenTile) {
     if (t.hiddenTile.revealed_at_round === null) return th.hidden;
     const content = t.hiddenTile.content as keyof RoomTheme['pickups'] | null;
-    return content ? th.pickups[content] ?? null : null;
+    return content ? (th.pickups[content] ?? null) : null;
   }
   if (t.hidingSpot) return th.hidingSpot;
   return null;
@@ -555,8 +620,7 @@ function tileAt(dx: number, dy: number) {
   if (x === null || y === null) {
     return { player: null, door: null, hidingSpot: null, hiddenTile: null, blocker: null };
   }
-  const player =
-    game.value && game.value.player_x === x && game.value.player_y === y ? game.value : null;
+  const player = game.value && game.value.player_x === x && game.value.player_y === y ? game.value : null;
   const door = world.value.doors.find((d) => d.x === x && d.y === y) ?? null;
   const hidingSpot = world.value.hiding_spots.find((s) => s.x === x && s.y === y) ?? null;
   const hiddenTile = world.value.hidden_tiles.find((t) => t.x === x && t.y === y) ?? null;
@@ -776,12 +840,8 @@ onMounted(() => {
         broadcast_start_ms: payload.broadcast_start_ms ?? null,
         received_at_ms: receivedAtMs,
         handler_to_broadcast_ms:
-          payload.dispatched_at_ms && payload.broadcast_start_ms
-            ? payload.broadcast_start_ms - payload.dispatched_at_ms
-            : null,
-        broadcast_to_client_ms: payload.broadcast_start_ms
-          ? receivedAtMs - payload.broadcast_start_ms
-          : null,
+          payload.dispatched_at_ms && payload.broadcast_start_ms ? payload.broadcast_start_ms - payload.dispatched_at_ms : null,
+        broadcast_to_client_ms: payload.broadcast_start_ms ? receivedAtMs - payload.broadcast_start_ms : null,
         end_to_end_ms: payload.dispatched_at_ms ? receivedAtMs - payload.dispatched_at_ms : null,
         apply_duration_ms: applyEndMs - applyStartMs,
       });
@@ -803,12 +863,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-
-  <Teleport to="body" v-if="game?.status !== 'running' && game?.status === 'won' || game?.status === 'lost'">
-    <div
-      v-if="!debugEnabledLive"
-      class="fixed inset-0 z-9999 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-    >
+  <Teleport to="body" v-if="(game?.status !== 'running' && game?.status === 'won') || game?.status === 'lost'">
+    <div v-if="!debugEnabledLive" class="fixed inset-0 z-9999 flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <GameResultBanner
         v-if="game?.status === 'won'"
         :status="game.status"
@@ -827,25 +883,19 @@ onUnmounted(() => {
     </div>
   </Teleport>
 
-  <div
-    class="live-board"
-    :class="game ? 'live' : ''"
-  >
+  <div class="live-board" :class="game ? 'live' : ''">
     <div v-if="!needsAudioUnlock" class="audio-unlock-overlay">
       <!-- @todo: Remove ! above after you're done here. -->
       <div class="audio-unlock-panel">
         <h2>Audio is blocked</h2>
         <p>Your browser is preventing this overlay from playing sound until you interact with the page.</p>
-        <button type="button" class="audio-unlock-button" @click="unlockAudio">
-          Click to enable audio
-        </button>
+        <button type="button" class="audio-unlock-button" @click="unlockAudio">Click to enable audio</button>
       </div>
     </div>
 
     <aside class="sidebar" v-if="game">
-
       <!-- Game Inventory -->
-      <section v-if="game" class="flex justify-between medievalsharp-regular">
+      <section v-if="game" class="medievalsharp-regular flex justify-between">
         <div class="flex shrink grow-0 gap-1">
           <GameWeaponCard
             v-if="game.weapon_slot_1 === 'fists'"
@@ -878,19 +928,10 @@ onUnmounted(() => {
         </div>
         <!-- Game Status -->
         <div class="flex">
-          <section v-if="game" class="flex text-center medievalsharp-regular gap-1">
-            <GameStatusCard
-              title="Round"
-              :description="game.current_round"
-            />
-            <GameStatusCard
-            title="Room"
-            :description="game.current_room"
-            />
-            <GameStatusCard
-            :title="`Player${joiners.length !== 1 ? 's' : ''}`"
-            :description="joiners.length"
-            />
+          <section v-if="game" class="medievalsharp-regular flex gap-1 text-center">
+            <GameStatusCard title="Round" :description="game.current_round" />
+            <GameStatusCard title="Room" :description="game.current_room" />
+            <GameStatusCard :title="`Player${joiners.length !== 1 ? 's' : ''}`" :description="joiners.length" />
           </section>
         </div>
       </section>
@@ -898,17 +939,19 @@ onUnmounted(() => {
       <!-- Health Bar -->
       <section v-if="game">
         <div
-          class="relative w-full overflow-hidden bg-red-400/50 border border-olive-500/50"
+          class="relative w-full overflow-hidden border border-olive-500/50 bg-red-400/50"
           role="progressbar"
           :aria-valuenow="game.player_hp"
           aria-valuemin="0"
           :aria-valuemax="gamePeakHp"
         >
           <span
-            class="absolute inset-y-0 left-0 transition-[width] duration-200 ease-out bg-green-400/50"
+            class="absolute inset-y-0 left-0 bg-green-400/50 transition-[width] duration-200 ease-out"
             :style="{ width: gamePeakHp > 0 ? `${Math.min(100, (game.player_hp / gamePeakHp) * 100)}%` : '0%' }"
           ></span>
-          <span class="medievalsharp-regular relative z-10 flex pt-0.5 h-full items-center justify-center text-2xl font-bold tracking-wide text-white">
+          <span
+            class="medievalsharp-regular relative z-10 flex h-full items-center justify-center pt-0.5 text-2xl font-bold tracking-wide text-white"
+          >
             {{ game.player_hp }} / {{ gamePeakHp }}
           </span>
         </div>
@@ -917,16 +960,17 @@ onUnmounted(() => {
       <div class="flex">
         <div class="w-[40%]">
           <section v-if="game" class="flex flex-col gap-2.5">
-
-            <div class="bg-olive-800 border border-olive-500/50 p-4 text-center medievalsharp-regular">
+            <div class="medievalsharp-regular border border-olive-500/50 bg-olive-800 p-4 text-center">
               <span class="text-olive-400">Next round in</span>
-              <div class="text-8xl mt-1.5 text-olive-400" :class="{ 'text-red-400': (secondsUntilNextTick ?? 99) < 5 }">{{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}` : '-' }}</div>
+              <div class="mt-1.5 text-8xl text-olive-400" :class="{ 'text-red-400': (secondsUntilNextTick ?? 99) < 5 }">
+                {{ secondsUntilNextTick !== null ? `${secondsUntilNextTick}` : '-' }}
+              </div>
               <div class="text-sm text-olive-400">{{ game.round_duration_seconds }} seconds per round</div>
             </div>
 
-            <div class="bg-olive-800 border border-olive-500/50 p-4 pb-0 flex flex-col resolved medievalsharp-regular">
-              <span class="text-olive-400 text-center">Last Twitch chat vote</span>
-              <div class="text-teal-400 text-8xl my-2 flex items-center justify-center gap-2">
+            <div class="resolved medievalsharp-regular flex flex-col border border-olive-500/50 bg-olive-800 p-4 pb-0">
+              <span class="text-center text-olive-400">Last Twitch chat vote</span>
+              <div class="my-2 flex items-center justify-center gap-2 text-8xl text-teal-400">
                 <template v-if="game.last_resolved_action">
                   <component
                     v-for="i in voteIconCount(game.last_resolved_action)"
@@ -942,126 +986,116 @@ onUnmounted(() => {
                 <span
                   v-for="[action, count] in lastResolvedTallyEntries"
                   :key="action"
-                  class="tally-entry medievalsharp-regular text-olive-400 text-sm inline-flex items-center gap-1"
+                  class="tally-entry medievalsharp-regular inline-flex items-center gap-1 text-sm text-olive-400"
                 >
-                  <component
-                    v-for="i in voteIconCount(action)"
-                    :is="voteIcon(action)"
-                    :key="i"
-                    class="h-4 w-4"
-                  />
+                  <component v-for="i in voteIconCount(action)" :is="voteIcon(action)" :key="i" class="h-4 w-4" />
                   <span v-if="voteLabel(action)">{{ voteLabel(action) }}</span>
-                  <span>: <strong class="text-teal-400">{{ count }}</strong></span>
+                  <span
+                    >: <strong class="text-teal-400">{{ count }}</strong></span
+                  >
                 </span>
               </div>
             </div>
 
-            <div class="bg-olive-800 border border-olive-500/50 medievalsharp-regular flex flex-col">
-              <div class="text-olive-400 text-center px-3 py-2 border-b border-olive-500/40">Game log</div>
-              <div ref="logScrollRef" class="h-100 overflow-y-auto flex flex-col gap-0.5 px-3 py-2">
+            <div class="medievalsharp-regular flex flex-col border border-olive-500/50 bg-olive-800">
+              <div class="border-b border-olive-500/40 px-3 py-2 text-center text-olive-400">Game log</div>
+              <div ref="logScrollRef" class="flex h-100 flex-col gap-0.5 overflow-y-auto px-3 py-2">
                 <div
                   v-for="entry in log"
                   :key="entry.id"
-                  class="text-sm leading-tight py-0.5 border-b border-olive-500/10 last:border-b-0"
+                  class="border-b border-olive-500/10 py-0.5 text-sm leading-tight last:border-b-0"
                   :class="logEntryClass(entry)"
                 >
                   {{ formatLogEntry(entry) }}
                 </div>
-                <div v-if="!log.length" class="text-olive-400 italic text-sm">No events yet</div>
+                <div v-if="!log.length" class="text-sm text-olive-400 italic">No events yet</div>
               </div>
             </div>
-
           </section>
-        </div> <!-- grid col 1 -->
+        </div>
+        <!-- grid col 1 -->
 
-        <div class="w-[60%] min-w-0 overflow-hidden h-209.5 flex flex-col">
-          <section v-if="game" class="pt-0 gap-2 ml-2 flex flex-col min-h-0 flex-1 overflow-hidden">
-            <div class="medievalsharp-regular flex flex-col min-h-0 flex-1 overflow-hidden">
-              <ul ref="activeScrollRef" class="overflow-hidden flex-1 min-h-0">
+        <div class="flex h-209.5 w-[60%] min-w-0 flex-col overflow-hidden">
+          <section v-if="game" class="ml-2 flex min-h-0 flex-1 flex-col gap-2 overflow-hidden pt-0">
+            <div class="medievalsharp-regular flex min-h-0 flex-1 flex-col overflow-hidden">
+              <ul ref="activeScrollRef" class="min-h-0 flex-1 overflow-hidden">
                 <li
                   v-for="j in grouped.active"
                   :key="j.twitch_user_id"
-                  class="joiner flex items-center gap-2 pl-1 w-full min-w-0 bg-olive-800 border border-olive-500/50 medievalsharp-regular"
+                  class="joiner medievalsharp-regular flex w-full min-w-0 items-center gap-2 border border-olive-500/50 bg-olive-800 pl-1"
                 >
-                  <div class="text-teal-400 bg-card p-1 w-25 shrink-0 fade-in-5 h-7 overflow-hidden px-3 flex items-center justify-center gap-1">
-                    <component
-                      v-for="i in voteIconCount(j.current_vote)"
-                      :is="voteIcon(j.current_vote)"
-                      :key="i"
-                      class="h-4 w-4 fade-in-5"
-                    />
-                    <span v-if="voteLabel(j.current_vote)" class="whitespace-nowrap text-left">{{ voteLabel(j.current_vote) }}</span>
+                  <div class="flex h-7 w-25 shrink-0 items-center justify-center gap-1 overflow-hidden bg-card p-1 px-3 text-teal-400 fade-in-5">
+                    <component v-for="i in voteIconCount(j.current_vote)" :is="voteIcon(j.current_vote)" :key="i" class="h-4 w-4 fade-in-5" />
+                    <span v-if="voteLabel(j.current_vote)" class="text-left whitespace-nowrap">{{ voteLabel(j.current_vote) }}</span>
                   </div>
-                  <div class="name flex-1 min-w-0 overflow-hidden whitespace-nowrap text-ellipsis">{{ j.username }}</div>
-                  <div class="flex shrink-0 items-center mr-2 gap-1">
-                    <span
-                      v-for="(state, i) in blocks(j.blocks_remaining)"
-                      :key="i"
-                      :class="state"
-                    >
-                      <CircleDot class="fill-teal-600 size-3" v-if="state === 'filled'" />
+                  <div class="name min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{{ j.username }}</div>
+                  <div class="mr-2 flex shrink-0 items-center gap-1">
+                    <span v-for="(state, i) in blocks(j.blocks_remaining)" :key="i" :class="state">
+                      <CircleDot class="size-3 fill-teal-600" v-if="state === 'filled'" />
                       <CircleDashed class="size-3" v-else />
                     </span>
                   </div>
                 </li>
-                <li v-if="!grouped.active.length" class="text-xl text-olive-400">no active players right now. Type <span class="text-yellow-400">!join</span> in chat.</li>
+                <li v-if="!grouped.active.length" class="text-xl text-olive-400">
+                  no active players right now. Type <span class="text-yellow-400">!join</span> in chat.
+                </li>
               </ul>
 
-              <div
-                v-if="grouped.inactive.length"
-                class="grid grid-cols-2 gap-1 mt-2 opacity-60 max-h-60 overflow-hidden shrink-0"
-              >
+              <div v-if="grouped.inactive.length" class="mt-2 grid max-h-60 shrink-0 grid-cols-2 gap-1 overflow-hidden opacity-60">
                 <div
                   v-for="j in grouped.inactive"
                   :key="j.twitch_user_id"
-                  class="flex items-center gap-2 px-2 py-0.5 bg-olive-800/60 border border-olive-500/30 text-sm min-w-0"
+                  class="flex min-w-0 items-center gap-2 border border-olive-500/30 bg-olive-800/60 px-2 py-0.5 text-sm"
                 >
-                  <div class="flex-1 min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-foreground/70">{{ j.username }}</div>
-                  <div class="text-yellow-400/40 shrink-0">r{{ j.last_vote_round ?? j.joined_round }}</div>
+                  <div class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-foreground/70">{{ j.username }}</div>
+                  <div class="shrink-0 text-yellow-400/40">r{{ j.last_vote_round ?? j.joined_round }}</div>
                 </div>
               </div>
             </div>
 
             <div class="medievalsharp-regular" v-if="grouped.pending.length > 0">
-              <h2 class="medievalsharp-regular text-lg text-white">Pending: <span class="count">{{ grouped.pending.length }} players</span></h2>
+              <h2 class="medievalsharp-regular text-lg text-white">
+                Pending: <span class="count">{{ grouped.pending.length }} players</span>
+              </h2>
               <ul>
                 <li v-for="j in grouped.pending" :key="j.twitch_user_id" class="joiner medievalsharp-regular">
-                  <div class="name">{{ j.username }} <span class="dim">joined r{{ j.joined_round }}</span></div>
+                  <div class="name">
+                    {{ j.username }} <span class="dim">joined r{{ j.joined_round }}</span>
+                  </div>
                 </li>
                 <li v-if="!grouped.pending.length" class="text-sm text-muted-foreground">no players waiting right now</li>
               </ul>
             </div>
 
-
-            <div v-if="debugEnabledLive" class="bg-[#1a1410] border border-dashed border-[#b0823d] rounded-md px-4 py-3 flex flex-col gap-2">
-
-              <h2 class="text-[0.75rem] uppercase tracking-[0.05em] text-[#e0a060] mt-1 mb-[0.1rem] first:mt-0 flex items-center gap-[0.4rem]">
+            <div v-if="debugEnabledLive" class="flex flex-col gap-2 rounded-md border border-dashed border-[#b0823d] bg-[#1a1410] px-4 py-3">
+              <h2 class="mt-1 mb-[0.1rem] flex items-center gap-[0.4rem] text-[0.75rem] tracking-[0.05em] text-[#e0a060] uppercase first:mt-0">
                 Debug: player tile
-                <span class="text-[0.6rem] py-[0.05rem] px-[0.35rem] bg-[#b0823d] text-[#1a1410] rounded-[3px] tracking-[0.05em]">temp</span>
+                <span class="rounded-[3px] bg-[#b0823d] px-[0.35rem] py-[0.05rem] text-[0.6rem] tracking-[0.05em] text-[#1a1410]">temp</span>
               </h2>
 
               <div v-if="game.player_x !== null && game.player_y !== null" class="flex flex-col gap-[0.4rem]">
-                <div class="font-mono text-[0.85rem] text-[#e0a060] font-bold">({{ game.player_x }}, {{ game.player_y }})</div>
+                <div class="font-mono text-[0.85rem] font-bold text-[#e0a060]">({{ game.player_x }}, {{ game.player_y }})</div>
                 <div class="flex flex-wrap gap-1">
                   <span
                     v-for="c in tileClasses(game.player_x, game.player_y)"
                     :key="c"
-                    class="bg-[#2a2018] text-[#ffd9a8] font-mono text-[0.72rem] py-[0.1rem] px-[0.4rem] rounded-[3px] border border-[#3a2a1a]"
-                  >{{ c }}</span>
-                              <span v-if="!tileClasses(game.player_x, game.player_y).length" class="text-[#666] italic text-[0.75rem]">
-                    (no classes)
-                  </span>
+                    class="rounded-[3px] border border-[#3a2a1a] bg-[#2a2018] px-[0.4rem] py-[0.1rem] font-mono text-[0.72rem] text-[#ffd9a8]"
+                    >{{ c }}</span
+                  >
+                  <span v-if="!tileClasses(game.player_x, game.player_y).length" class="text-[0.75rem] text-[#666] italic"> (no classes) </span>
                 </div>
-                <pre class="m-0 bg-[#0f0a08] rounded px-[0.6rem] py-2 font-mono text-[0.7rem] text-[#c8c0b8] whitespace-pre-wrap break-all max-h-45 overflow-y-auto">{{ debugTileState(game.player_x, game.player_y) }}</pre>
+                <pre
+                  class="m-0 max-h-45 overflow-y-auto rounded bg-[#0f0a08] px-[0.6rem] py-2 font-mono text-[0.7rem] break-all whitespace-pre-wrap text-[#c8c0b8]"
+                  >{{ debugTileState(game.player_x, game.player_y) }}</pre>
               </div>
-              <div v-else class="text-[#666] italic text-[0.75rem]">player not on board</div>
+              <div v-else class="text-[0.75rem] text-[#666] italic">player not on board</div>
 
-              <h2 class="text-[0.75rem] uppercase tracking-[0.05em] text-[#e0a060] mt-1 mb-[0.1rem] first:mt-0 flex items-center gap-[0.4rem]">
+              <h2 class="mt-1 mb-[0.1rem] flex items-center gap-[0.4rem] text-[0.75rem] tracking-[0.05em] text-[#e0a060] uppercase first:mt-0">
                 Debug: inspect any tile
               </h2>
               <input
                 v-model="debugInput"
-                class="bg-[#0f0a08] border border-[#3a2a1a] rounded px-[0.6rem] py-[0.4rem] text-[#ffd9a8] font-mono text-[0.85rem] w-full focus:outline-none focus:border-[#b0823d]"
+                class="w-full rounded border border-[#3a2a1a] bg-[#0f0a08] px-[0.6rem] py-[0.4rem] font-mono text-[0.85rem] text-[#ffd9a8] focus:border-[#b0823d] focus:outline-none"
                 type="text"
                 placeholder="x,y (e.g. 5,9)"
                 inputmode="numeric"
@@ -1069,47 +1103,40 @@ onUnmounted(() => {
               />
 
               <div v-if="debugInspected" class="flex flex-col gap-[0.4rem]">
-                <div class="font-mono text-[0.85rem] text-[#e0a060] font-bold">({{ debugInspected.x }}, {{ debugInspected.y }})</div>
+                <div class="font-mono text-[0.85rem] font-bold text-[#e0a060]">({{ debugInspected.x }}, {{ debugInspected.y }})</div>
                 <div class="flex flex-wrap gap-1">
                   <span
                     v-for="c in tileClasses(debugInspected.x, debugInspected.y)"
                     :key="c"
-                    class="bg-[#2a2018] text-[#ffd9a8] font-mono text-[0.72rem] py-[0.1rem] px-[0.4rem] rounded-[3px] border border-[#3a2a1a]"
-                  >{{ c }}</span>
-                  <span
-                    v-if="!tileClasses(debugInspected.x, debugInspected.y).length"
-                    class="text-[#666] italic text-[0.75rem]"
-                  >(no classes)</span>
+                    class="rounded-[3px] border border-[#3a2a1a] bg-[#2a2018] px-[0.4rem] py-[0.1rem] font-mono text-[0.72rem] text-[#ffd9a8]"
+                    >{{ c }}</span
+                  >
+                  <span v-if="!tileClasses(debugInspected.x, debugInspected.y).length" class="text-[0.75rem] text-[#666] italic">(no classes)</span>
                 </div>
-                <pre class="m-0 bg-[#0f0a08] rounded px-[0.6rem] py-2 font-mono text-[0.7rem] text-[#c8c0b8] whitespace-pre-wrap break-all max-h-45 overflow-y-auto">{{ debugTileState(debugInspected.x, debugInspected.y) }}</pre>
+                <pre
+                  class="m-0 max-h-45 overflow-y-auto rounded bg-[#0f0a08] px-[0.6rem] py-2 font-mono text-[0.7rem] break-all whitespace-pre-wrap text-[#c8c0b8]"
+                  >{{ debugTileState(debugInspected.x, debugInspected.y) }}</pre>
               </div>
-              <div v-else-if="debugInput" class="text-[#666] italic text-[0.75rem]">
-                invalid coords (use x,y with 1-{{ GRID_SIZE }})
-              </div>
-
+              <div v-else-if="debugInput" class="text-[0.75rem] text-[#666] italic">invalid coords (use x,y with 1-{{ GRID_SIZE }})</div>
             </div>
           </section>
-        </div> <!-- grid col 2 -->
+        </div>
+        <!-- grid col 2 -->
       </div>
     </aside>
 
     <main class="grid-area relative">
-      <div v-if="game" class="medievalsharp-regular bg-olive-700/90 border-t border-r border-olive-500 text-sm p-1 absolute bottom-0 left-0 z-9999">
-        !join - join the game<br>
-        !p up {3} - move player 1-3 blocks up/down/left/right.<br>
-        !a or !a2 - attack with weapon 1 or 2<br>
-        !h - teleport to hiding<br>
+      <div v-if="game" class="medievalsharp-regular absolute bottom-0 left-0 z-9999 border-t border-r border-olive-500 bg-olive-700/90 p-1 text-sm">
+        !join - join the game<br />
+        !p up {3} - move player 1-3 blocks up/down/left/right.<br />
+        !a or !a2 - attack with weapon 1 or 2<br />
+        !h - teleport to hiding<br />
         !s - stay. do nothing.
       </div>
 
       <div v-if="game" class="ticker medievalsharp-regular">
         <Transition name="ticker">
-          <div
-            v-if="tickerEntry"
-            :key="tickerEntry.id"
-            class="ticker-entry"
-            :data-type="tickerEntry.type"
-          >
+          <div v-if="tickerEntry" :key="tickerEntry.id" class="ticker-entry" :data-type="tickerEntry.type">
             {{ formatLogEntry(tickerEntry) }}
           </div>
         </Transition>
@@ -1153,18 +1180,19 @@ onUnmounted(() => {
           <div>
             <h1 class="medievalsharp-regular text-6xl text-yellow-400">Welcome to Chat Castle</h1>
           </div>
-          <div>Type <span class="text-yellow-400 tracking-wide">!castlehelp</span> in chat to see the commands again.</div>
+          <div>Type <span class="tracking-wide text-yellow-400">!castlehelp</span> in chat to see the commands again.</div>
           <div class="mb-10 space-y-3">
-            <div
-              v-for="cmd in gameCommands"
-              :key="cmd.command"
-              class="bg-olive-800/60 border border-olive-500/30 p-5"
-            >
+            <div v-for="cmd in gameCommands" :key="cmd.command" class="border border-olive-500/30 bg-olive-800/60 p-5">
               <div class="mb-2 flex flex-wrap items-center gap-3">
-                <code class="bg-olive-600 px-2 py-0.5 font-bold text-foreground inline-block shadow-[2px_2px_0_rgba(0,0,0,0.5)] inset-shadow-2xs inset-shadow-yellow-300/50">
+                <code
+                  class="inline-block bg-olive-600 px-2 py-0.5 font-bold text-foreground shadow-[2px_2px_0_rgba(0,0,0,0.5)] inset-shadow-2xs inset-shadow-yellow-300/50"
+                >
                   {{ cmd.example }}
                 </code>
-                <code v-if="cmd.example2" class="bg-olive-600 px-2 py-0.5 font-bold text-foreground inline-block shadow-[2px_2px_0_rgba(0,0,0,0.5)] inset-shadow-2xs inset-shadow-yellow-300/50">
+                <code
+                  v-if="cmd.example2"
+                  class="inline-block bg-olive-600 px-2 py-0.5 font-bold text-foreground shadow-[2px_2px_0_rgba(0,0,0,0.5)] inset-shadow-2xs inset-shadow-yellow-300/50"
+                >
                   {{ cmd.example2 }}
                 </code>
               </div>
@@ -1182,7 +1210,7 @@ onUnmounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
 
 .medievalsharp-regular {
-  font-family: "MedievalSharp", cursive;
+  font-family: 'MedievalSharp', cursive;
   font-weight: 400;
   font-style: normal;
 }
@@ -1233,10 +1261,22 @@ onUnmounted(() => {
   margin: 0;
 }
 
-.status-running { background: #2a9d90; color: #fff; }
-.status-waiting { background: #b0823d; color: #fff; }
-.status-won { background: #4f8ef7; color: #fff; }
-.status-lost { background: #7a2b2b; color: #fff; }
+.status-running {
+  background: #2a9d90;
+  color: #fff;
+}
+.status-waiting {
+  background: #b0823d;
+  color: #fff;
+}
+.status-won {
+  background: #4f8ef7;
+  color: #fff;
+}
+.status-lost {
+  background: #7a2b2b;
+  color: #fff;
+}
 
 .resolver-card.countdown .value {
   font-variant-numeric: tabular-nums;
@@ -1245,7 +1285,9 @@ onUnmounted(() => {
   color: #ff5a5a;
 }
 
-.tally-entry b { color: #2a9d90; }
+.tally-entry b {
+  color: #2a9d90;
+}
 
 .grid-area {
   display: flex;
@@ -1285,7 +1327,9 @@ onUnmounted(() => {
   height: 70%;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #7abb63 0%, #3e7a2e 60%, #1d3a16 100%);
-  box-shadow: 0 0 14px rgba(122, 187, 99, 0.55), inset 0 0 10px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 0 14px rgba(122, 187, 99, 0.55),
+    inset 0 0 10px rgba(0, 0, 0, 0.4);
   border: 2px solid rgba(0, 0, 0, 0.45);
   position: relative;
 }
@@ -1303,12 +1347,18 @@ onUnmounted(() => {
 }
 .zombie-chasing .zombie-body {
   background: radial-gradient(circle at 35% 30%, #e06a4c 0%, #9a2e18 60%, #3c0d05 100%);
-  box-shadow: 0 0 18px rgba(224, 106, 76, 0.75), inset 0 0 10px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 0 18px rgba(224, 106, 76, 0.75),
+    inset 0 0 10px rgba(0, 0, 0, 0.4);
   animation: zombiePulse 0.9s ease-in-out infinite alternate;
 }
 @keyframes zombiePulse {
-  from { transform: scale(1); }
-  to { transform: scale(1.08); }
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
 }
 
 .zombie-boss {
@@ -1319,7 +1369,9 @@ onUnmounted(() => {
 }
 .zombie-boss .zombie-body {
   background: radial-gradient(circle at 35% 30%, #a058e0 0%, #4a1c6a 60%, #1d0a2c 100%);
-  box-shadow: 0 0 22px rgba(160, 88, 224, 0.8), inset 0 0 14px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 0 22px rgba(160, 88, 224, 0.8),
+    inset 0 0 14px rgba(0, 0, 0, 0.5);
   border-color: #e0d04e;
 }
 .zombie-weakling {
@@ -1337,7 +1389,9 @@ onUnmounted(() => {
 }
 .zombie-dead .zombie-body {
   background: radial-gradient(circle at 35% 30%, #4a4a4a 0%, #2a2a2a 60%, #111 100%);
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 0 6px rgba(0, 0, 0, 0.6),
+    inset 0 0 6px rgba(0, 0, 0, 0.6);
   border-color: rgba(0, 0, 0, 0.6);
   opacity: 0.55;
   transform: rotate(80deg);
@@ -1362,10 +1416,28 @@ onUnmounted(() => {
   line-height: 1.3;
   pointer-events: none;
 }
-.zombie.facing-up .zombie-body::after { top: 15%; left: 50%; transform: translateX(-50%); }
-.zombie.facing-down .zombie-body::after { top: auto; bottom: 15%; left: 50%; transform: translateX(-50%); }
-.zombie.facing-left .zombie-body::after { top: 50%; left: 15%; transform: translateY(-50%); }
-.zombie.facing-right .zombie-body::after { top: 50%; left: auto; right: 15%; transform: translateY(-50%); }
+.zombie.facing-up .zombie-body::after {
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.zombie.facing-down .zombie-body::after {
+  top: auto;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.zombie.facing-left .zombie-body::after {
+  top: 50%;
+  left: 15%;
+  transform: translateY(-50%);
+}
+.zombie.facing-right .zombie-body::after {
+  top: 50%;
+  left: auto;
+  right: 15%;
+  transform: translateY(-50%);
+}
 
 /* Stationary lunge: zombie was already adjacent and attacked without moving.
    Winds up by pulling back, shoots forward past the tile edge, then bounces
@@ -1377,34 +1449,74 @@ onUnmounted(() => {
   animation-fill-mode: both;
   animation-iteration-count: 1;
 }
-.zombie.zombie-lunge-stationary.facing-up .zombie-body { animation-name: zombieLungeUp; }
-.zombie.zombie-lunge-stationary.facing-down .zombie-body { animation-name: zombieLungeDown; }
-.zombie.zombie-lunge-stationary.facing-left .zombie-body { animation-name: zombieLungeLeft; }
-.zombie.zombie-lunge-stationary.facing-right .zombie-body { animation-name: zombieLungeRight; }
+.zombie.zombie-lunge-stationary.facing-up .zombie-body {
+  animation-name: zombieLungeUp;
+}
+.zombie.zombie-lunge-stationary.facing-down .zombie-body {
+  animation-name: zombieLungeDown;
+}
+.zombie.zombie-lunge-stationary.facing-left .zombie-body {
+  animation-name: zombieLungeLeft;
+}
+.zombie.zombie-lunge-stationary.facing-right .zombie-body {
+  animation-name: zombieLungeRight;
+}
 
 @keyframes zombieLungeUp {
-  0%   { transform: translateY(0); }
-  25%  { transform: translateY(12%); }
-  60%  { transform: translateY(-45%); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(12%);
+  }
+  60% {
+    transform: translateY(-45%);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 @keyframes zombieLungeDown {
-  0%   { transform: translateY(0); }
-  25%  { transform: translateY(-12%); }
-  60%  { transform: translateY(45%); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-12%);
+  }
+  60% {
+    transform: translateY(45%);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 @keyframes zombieLungeLeft {
-  0%   { transform: translateX(0); }
-  25%  { transform: translateX(12%); }
-  60%  { transform: translateX(-45%); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(12%);
+  }
+  60% {
+    transform: translateX(-45%);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 @keyframes zombieLungeRight {
-  0%   { transform: translateX(0); }
-  25%  { transform: translateX(-12%); }
-  60%  { transform: translateX(45%); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-12%);
+  }
+  60% {
+    transform: translateX(45%);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 .grid-row {
   display: grid;
@@ -1488,9 +1600,15 @@ onUnmounted(() => {
   z-index: 3;
 }
 /* ---- has-* axis: what's on the tile ---- */
-.has-hidden { background-color: #1c1c26; }
-.has-hidden .glyph { color: #5a5a6e; }
-.has-pickup { background-color: #202028; }
+.has-hidden {
+  background-color: #1c1c26;
+}
+.has-hidden .glyph {
+  color: #5a5a6e;
+}
+.has-pickup {
+  background-color: #202028;
+}
 .has-hiding {
   background-color: #2a1f1a;
   outline: 2px dashed #6b4226;
@@ -1504,8 +1622,12 @@ onUnmounted(() => {
   color: #ddd;
   text-shadow: 0 1px 2px #000;
 }
-.has-door::before { background-color: #2b2b19; }
-.has-door .glyph { color: #e0c860; }
+.has-door::before {
+  background-color: #2b2b19;
+}
+.has-door .glyph {
+  color: #e0c860;
+}
 .has-player::before {
   background-color: #1a2a4a !important;
   box-shadow: inset 0 0 18px rgba(79, 142, 247, 0.45);
@@ -1526,38 +1648,54 @@ onUnmounted(() => {
   border-color: green;
   background-color: #2b3a1a;
 }
-.door-open .glyph { color: #9ce04c; }
-.door-exit { /* hook: mark the room-ending door differently (e.g. outlined gold) */ }
+.door-open .glyph {
+  color: #9ce04c;
+}
+.door-exit {
+  /* hook: mark the room-ending door differently (e.g. outlined gold) */
+}
 
 /* ---- pickup-* (revealed tile contents) ---- */
 .pickup-sword {
   border-color: blue;
   color: blue;
-  box-shadow: inset 0 0 30px #00f, 0 0 30px #00f;
+  box-shadow:
+    inset 0 0 30px #00f,
+    0 0 30px #00f;
 }
 .pickup-de-sword {
-  border-color: rgba(0,255,255, .75);
-  box-shadow: inset 0 0 30px rgba(0,255,255, .75), 0 0 30px rgba(0,255,255, .75);
+  border-color: rgba(0, 255, 255, 0.75);
+  box-shadow:
+    inset 0 0 30px rgba(0, 255, 255, 0.75),
+    0 0 30px rgba(0, 255, 255, 0.75);
 }
 .pickup-iron-fists {
   border-color: chartreuse;
   color: chartreuse;
-  box-shadow: inset 0 0 30px #0f0, 0 0 30px #0f0;
+  box-shadow:
+    inset 0 0 30px #0f0,
+    0 0 30px #0f0;
 }
 .pickup-bomb {
   border-color: red;
   color: red;
-  box-shadow: inset 0 0 30px #f00, 0 0 30px #f00;
+  box-shadow:
+    inset 0 0 30px #f00,
+    0 0 30px #f00;
 }
 .pickup-hp {
   border-color: green;
   color: green;
-  box-shadow: inset 0 0 30px greenyellow, 0 0 30px greenyellow;
+  box-shadow:
+    inset 0 0 30px greenyellow,
+    0 0 30px greenyellow;
 }
 .pickup-zombie {
   border-color: orange;
   color: orange;
-  box-shadow: inset 0 0 30px #ffa500, 0 0 30px #ffa500;
+  box-shadow:
+    inset 0 0 30px #ffa500,
+    0 0 30px #ffa500;
 }
 
 /* ---- reveal-* (hidden -> shown FX) ---- */
@@ -1569,7 +1707,9 @@ onUnmounted(() => {
   /* hook: short-lived class on the frame a tile reveals */
   border-color: #4f8ef7;
   color: #4f8ef7;
-  box-shadow: inset 0 0 30px #4f8ef7, 0 0 30px #4f8ef7;
+  box-shadow:
+    inset 0 0 30px #4f8ef7,
+    0 0 30px #4f8ef7;
 }
 
 /* ---- player-* modifiers ---- */
@@ -1577,36 +1717,86 @@ onUnmounted(() => {
   background: radial-gradient(circle at 50% 50%, green 0%, rgba(0, 0, 0, 0.25) 100%);
   z-index: 2;
 }
-.player-low-hp { /* hook: red pulse on the player tile when HP <= 1 */ }
+.player-low-hp {
+  /* hook: red pulse on the player tile when HP <= 1 */
+}
 
 /* ---- vote-* (not wired yet; add when we thread votes into tiles) ---- */
-.vote-target-attack { /* hook: tile is inside a pending attack AoE */ }
-.vote-target-move { /* hook: tile the winning move vote points at */ }
-.vote-heat-1 { /* hook: low interest */ }
-.vote-heat-2 { /* hook */ }
-.vote-heat-3 { /* hook */ }
-.vote-heat-4 { /* hook */ }
-.vote-heat-5 { /* hook: high interest */ }
+.vote-target-attack {
+  /* hook: tile is inside a pending attack AoE */
+}
+.vote-target-move {
+  /* hook: tile the winning move vote points at */
+}
+.vote-heat-1 {
+  /* hook: low interest */
+}
+.vote-heat-2 {
+  /* hook */
+}
+.vote-heat-3 {
+  /* hook */
+}
+.vote-heat-4 {
+  /* hook */
+}
+.vote-heat-5 {
+  /* hook: high interest */
+}
 
 /* ---- fx-* short-lived animations ---- */
-.fx-attack { animation: fxAttack 1s ease-out; }
+.fx-attack {
+  animation: fxAttack 1s ease-out;
+}
 @keyframes fxAttack {
-  0%   { zoom: 1;    rotate: 0deg;   opacity: 1;   filter: brightness(1); }
-  5%   { zoom: 1.15;                 opacity: 1;   filter: brightness(4) saturate(0%); }
-  15%  { zoom: 0.9;  rotate: 12deg;  opacity: 0.8; filter: brightness(0.5) saturate(200%) hue-rotate(30deg); }
-  35%  { zoom: 0.7;  rotate: -8deg;  opacity: 0.4; filter: brightness(0.3) saturate(300%); }
-  60%  { zoom: 0.75; rotate: 5deg;   opacity: 0.6; }
-  100% { zoom: 1;    rotate: 0deg;   opacity: 1;   filter: brightness(1) saturate(100%); }
+  0% {
+    zoom: 1;
+    rotate: 0deg;
+    opacity: 1;
+    filter: brightness(1);
+  }
+  5% {
+    zoom: 1.15;
+    opacity: 1;
+    filter: brightness(4) saturate(0%);
+  }
+  15% {
+    zoom: 0.9;
+    rotate: 12deg;
+    opacity: 0.8;
+    filter: brightness(0.5) saturate(200%) hue-rotate(30deg);
+  }
+  35% {
+    zoom: 0.7;
+    rotate: -8deg;
+    opacity: 0.4;
+    filter: brightness(0.3) saturate(300%);
+  }
+  60% {
+    zoom: 0.75;
+    rotate: 5deg;
+    opacity: 0.6;
+  }
+  100% {
+    zoom: 1;
+    rotate: 0deg;
+    opacity: 1;
+    filter: brightness(1) saturate(100%);
+  }
 }
 
 @keyframes unrevealedIdlePulse {
   0% {
-    border-color: rgba(247,143,79, 1);
-    box-shadow: inset 0 0 10px rgba(247,143,79, .15), 0 0 30px rgba(247,143,79,.15);
+    border-color: rgba(247, 143, 79, 1);
+    box-shadow:
+      inset 0 0 10px rgba(247, 143, 79, 0.15),
+      0 0 30px rgba(247, 143, 79, 0.15);
   }
   100% {
-    border-color: rgba(247,143,79, .5);
-    box-shadow: inset 0 0 30px rgba(247,143,79, .5), 0 0 30px rgba(247,143,79,.5);
+    border-color: rgba(247, 143, 79, 0.5);
+    box-shadow:
+      inset 0 0 30px rgba(247, 143, 79, 0.5),
+      0 0 30px rgba(247, 143, 79, 0.5);
   }
 }
 
@@ -1633,18 +1823,43 @@ onUnmounted(() => {
   border-radius: 3px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
-.ticker-entry[data-type="zombie_killed"] { border-color: rgba(156, 224, 76, 0.6); }
-.ticker-entry[data-type="zombie_attack"] { border-color: rgba(255, 90, 90, 0.55); color: #ffd9d9; }
-.ticker-entry[data-type="game_won"] { border-color: rgba(79, 142, 247, 0.7); color: #c8dbff; }
-.ticker-entry[data-type="game_lost"] { border-color: rgba(122, 43, 43, 0.8); color: #ffcccc; }
-.ticker-entry[data-type="hp_pickup"] { border-color: rgba(76, 224, 156, 0.6); color: #d6f5e1; }
-.ticker-entry[data-type="weapon_pickup"] { border-color: rgba(224, 200, 96, 0.7); color: #fff2c8; }
-.ticker-entry[data-type="door_opened"] { border-color: rgba(156, 224, 76, 0.7); color: #e8ffd0; }
-.ticker-entry[data-type="room_entered"] { border-color: rgba(79, 142, 247, 0.55); color: #d4e3ff; }
+.ticker-entry[data-type='zombie_killed'] {
+  border-color: rgba(156, 224, 76, 0.6);
+}
+.ticker-entry[data-type='zombie_attack'] {
+  border-color: rgba(255, 90, 90, 0.55);
+  color: #ffd9d9;
+}
+.ticker-entry[data-type='game_won'] {
+  border-color: rgba(79, 142, 247, 0.7);
+  color: #c8dbff;
+}
+.ticker-entry[data-type='game_lost'] {
+  border-color: rgba(122, 43, 43, 0.8);
+  color: #ffcccc;
+}
+.ticker-entry[data-type='hp_pickup'] {
+  border-color: rgba(76, 224, 156, 0.6);
+  color: #d6f5e1;
+}
+.ticker-entry[data-type='weapon_pickup'] {
+  border-color: rgba(224, 200, 96, 0.7);
+  color: #fff2c8;
+}
+.ticker-entry[data-type='door_opened'] {
+  border-color: rgba(156, 224, 76, 0.7);
+  color: #e8ffd0;
+}
+.ticker-entry[data-type='room_entered'] {
+  border-color: rgba(79, 142, 247, 0.55);
+  color: #d4e3ff;
+}
 
 .ticker-enter-active,
 .ticker-leave-active {
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease;
 }
 .ticker-enter-from {
   opacity: 0;

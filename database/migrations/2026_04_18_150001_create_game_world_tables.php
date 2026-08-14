@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -43,7 +44,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('room');
             $table->unsignedTinyInteger('x');
             $table->unsignedTinyInteger('y');
-            $table->json('open_sides')->default(new Illuminate\Database\Query\Expression("'[]'"));
+            $table->json('open_sides')->default(new Expression("'[]'"));
             $table->timestamps();
 
             $table->index(['game_id', 'room']);

@@ -110,10 +110,7 @@ const previewExample = computed(() => {
     <SettingsLayout>
       <div class="space-y-6">
         <div>
-          <Link
-            href="/settings/bot/aliases"
-            class="mb-2 inline-flex items-center text-sm text-foreground/70 cursor-pointer hover:text-foreground"
-          >
+          <Link href="/settings/bot/aliases" class="mb-2 inline-flex cursor-pointer items-center text-sm text-foreground/70 hover:text-foreground">
             <ChevronLeft class="mr-1 size-4" />
             Back to bot aliases
           </Link>
@@ -129,13 +126,7 @@ const previewExample = computed(() => {
             <Label for="command">Alias command</Label>
             <div class="flex items-center gap-1">
               <span class="text-foreground/60">!</span>
-              <Input
-                id="command"
-                v-model="form.command"
-                placeholder="w"
-                maxlength="30"
-                class="font-mono"
-              />
+              <Input id="command" v-model="form.command" placeholder="w" maxlength="30" class="font-mono" />
             </div>
             <p v-if="form.errors.command" class="text-sm text-rose-400">{{ form.errors.command }}</p>
             <p v-else class="text-xs text-foreground/60">
@@ -148,28 +139,22 @@ const previewExample = computed(() => {
             <Label for="target_template">Expands to</Label>
             <div class="flex items-center gap-1">
               <span class="text-foreground/60">!</span>
-              <Input
-                id="target_template"
-                v-model="form.target_template"
-                placeholder="increment wins {1}"
-                maxlength="200"
-                class="font-mono"
-              />
+              <Input id="target_template" v-model="form.target_template" placeholder="increment wins {1}" maxlength="200" class="font-mono" />
             </div>
             <p v-if="form.errors.target_template" class="text-sm text-rose-400">{{ form.errors.target_template }}</p>
             <p v-else class="text-xs text-foreground/60">
-              Use <code class="text-foreground/80">{1}</code>, <code class="text-foreground/80">{2}</code>, ... to pass
-              the chatter's args in order. <code class="text-foreground/80">{*}</code> means "all remaining args".
+              Use <code class="text-foreground/80">{1}</code>, <code class="text-foreground/80">{2}</code>, ... to pass the chatter's args in order.
+              <code class="text-foreground/80">{*}</code> means "all remaining args".
             </p>
 
             <!-- Quick-insert helpers -->
             <div class="flex flex-wrap gap-1.5 pt-1">
-              <span class="text-xs text-foreground/60 self-center mr-1">Placeholders:</span>
+              <span class="mr-1 self-center text-xs text-foreground/60">Placeholders:</span>
               <button
                 v-for="ph in ['{1}', '{2}', '{3}', '{*}']"
                 :key="ph"
                 type="button"
-                class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs cursor-pointer hover:bg-foreground/10"
+                class="cursor-pointer rounded bg-muted px-1.5 py-0.5 font-mono text-xs hover:bg-foreground/10"
                 @click="insertPlaceholder(ph)"
               >
                 {{ ph }}
@@ -177,9 +162,7 @@ const previewExample = computed(() => {
             </div>
 
             <details v-if="props.knownCommands.length > 0" class="rounded border border-sidebar-border p-3 text-sm">
-              <summary class="cursor-pointer font-medium text-xs uppercase tracking-wide text-foreground/60">
-                Target a command
-              </summary>
+              <summary class="cursor-pointer text-xs font-medium tracking-wide text-foreground/60 uppercase">Target a command</summary>
               <div class="mt-2 space-y-2">
                 <div>
                   <p class="mb-1 text-xs font-semibold text-foreground">Built-in commands</p>
@@ -188,7 +171,7 @@ const previewExample = computed(() => {
                       v-for="c in props.knownCommands.filter((c) => c.kind === 'builtin')"
                       :key="`b-${c.command}`"
                       type="button"
-                      class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs cursor-pointer hover:bg-foreground/10"
+                      class="cursor-pointer rounded bg-muted px-1.5 py-0.5 font-mono text-xs hover:bg-foreground/10"
                       @click="insertTargetCommand(c.command)"
                     >
                       !{{ c.command }}
@@ -202,7 +185,7 @@ const previewExample = computed(() => {
                       v-for="c in props.knownCommands.filter((c) => c.kind === 'expression')"
                       :key="`e-${c.command}`"
                       type="button"
-                      class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs cursor-pointer hover:bg-foreground/10"
+                      class="cursor-pointer rounded bg-muted px-1.5 py-0.5 font-mono text-xs hover:bg-foreground/10"
                       @click="insertTargetCommand(c.command)"
                     >
                       !{{ c.command }}
@@ -215,9 +198,7 @@ const previewExample = computed(() => {
 
           <!-- Live example -->
           <div class="rounded border border-sidebar-border bg-sidebar-accent/30 p-4">
-            <div class="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-foreground/60">
-              Example
-            </div>
+            <div class="mb-2 flex items-center gap-2 text-xs tracking-wide text-foreground/60 uppercase">Example</div>
             <div class="flex flex-wrap items-center gap-2 font-mono text-sm">
               <code class="rounded bg-muted px-2 py-0.5">{{ previewExample.callsite }}</code>
               <ArrowRight class="size-3.5 text-foreground/50" />
@@ -232,7 +213,7 @@ const previewExample = computed(() => {
               <select
                 id="permission_level"
                 v-model="form.permission_level"
-                class="w-full rounded border border-input bg-background px-3 py-2 text-sm cursor-pointer"
+                class="w-full cursor-pointer rounded border border-input bg-background px-3 py-2 text-sm"
               >
                 <option v-for="lvl in props.permissionLevels" :key="lvl" :value="lvl">
                   {{ lvl }}
@@ -240,48 +221,31 @@ const previewExample = computed(() => {
               </select>
               <p v-if="form.errors.permission_level" class="text-sm text-rose-400">{{ form.errors.permission_level }}</p>
               <p v-else class="text-xs text-foreground/60">
-                Defaults to <code class="text-foreground/80">moderator</code>. The target command's own permission
-                still applies after rewrite.
+                Defaults to <code class="text-foreground/80">moderator</code>. The target command's own permission still applies after rewrite.
               </p>
             </div>
 
             <div class="space-y-2">
               <Label for="cooldown_seconds">Cooldown (seconds)</Label>
-              <Input
-                id="cooldown_seconds"
-                v-model.number="form.cooldown_seconds"
-                type="number"
-                min="0"
-                max="86400"
-              />
+              <Input id="cooldown_seconds" v-model.number="form.cooldown_seconds" type="number" min="0" max="86400" />
               <p class="text-xs text-foreground/60">Per channel. Broadcaster bypasses cooldown.</p>
             </div>
           </div>
 
           <!-- Toggles -->
           <div class="space-y-3">
-            <label class="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                v-model="form.enabled"
-                class="mt-1 size-4 cursor-pointer"
-              />
+            <label class="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" v-model="form.enabled" class="mt-1 size-4 cursor-pointer" />
               <div>
                 <p class="text-sm font-medium">Enabled</p>
                 <p class="text-xs text-foreground/60">Disabled aliases stay in your library but don't fire.</p>
               </div>
             </label>
-            <label class="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                v-model="form.hidden_from_commands"
-                class="mt-1 size-4 cursor-pointer"
-              />
+            <label class="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" v-model="form.hidden_from_commands" class="mt-1 size-4 cursor-pointer" />
               <div>
                 <p class="text-sm font-medium">Hide from <code>!commands</code> listing</p>
-                <p class="text-xs text-foreground/60">
-                  When the bot exposes a <code>!commands</code> meta-command, this alias won't be listed.
-                </p>
+                <p class="text-xs text-foreground/60">When the bot exposes a <code>!commands</code> meta-command, this alias won't be listed.</p>
               </div>
             </label>
           </div>
@@ -290,15 +254,11 @@ const previewExample = computed(() => {
           <div class="rounded border border-sidebar-border bg-sidebar-accent/30 p-4">
             <div class="flex items-start gap-2">
               <Info class="mt-0.5 size-4 shrink-0 text-foreground/60" />
-              <div class="text-xs text-foreground/70 space-y-1">
+              <div class="space-y-1 text-xs text-foreground/70">
+                <p>Aliases are one hop only. An alias can't point at another alias - point it at the underlying built-in or expression instead.</p>
                 <p>
-                  Aliases are one hop only. An alias can't point at another alias - point it at the underlying
-                  built-in or expression instead.
-                </p>
-                <p>
-                  After rewrite, the target command runs with the chatter's original badges, so target-side
-                  permission checks still gate (e.g. <code class="text-foreground/80">!increment</code> stays
-                  moderator-only even if the alias is open to everyone).
+                  After rewrite, the target command runs with the chatter's original badges, so target-side permission checks still gate (e.g.
+                  <code class="text-foreground/80">!increment</code> stays moderator-only even if the alias is open to everyone).
                 </p>
               </div>
             </div>

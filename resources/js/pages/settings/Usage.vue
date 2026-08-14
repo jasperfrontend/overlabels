@@ -35,9 +35,7 @@ function fmt(n: number): string {
 function monthLabel(period: string): string {
   const [year, month] = period.split('-').map((v) => parseInt(v, 10));
   try {
-    return new Intl.DateTimeFormat(locale.value, { month: 'short', year: 'numeric' }).format(
-      new Date(year, month - 1, 1),
-    );
+    return new Intl.DateTimeFormat(locale.value, { month: 'short', year: 'numeric' }).format(new Date(year, month - 1, 1));
   } catch {
     return period;
   }
@@ -96,8 +94,8 @@ const historyPeak = computed(() => Math.max(1, ...props.history.map((m) => m.bro
           </template>
 
           <p v-else class="mt-4 text-sm text-foreground">
-            No limit is being enforced yet. Overlabels is counting your events so a fair free-tier ceiling can be set
-            from real usage. Your overlays will never be cut off without plenty of notice first.
+            No limit is being enforced yet. Overlabels is counting your events so a fair free-tier ceiling can be set from real usage. Your overlays
+            will never be cut off without plenty of notice first.
           </p>
         </div>
       </div>
@@ -109,10 +107,7 @@ const historyPeak = computed(() => Math.max(1, ...props.history.map((m) => m.bro
           <div v-for="month in history" :key="month.period" class="flex items-center gap-3">
             <span class="w-24 shrink-0 text-xs text-muted-foreground">{{ monthLabel(month.period) }}</span>
             <div class="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-              <div
-                class="h-full rounded-full bg-primary/60"
-                :style="{ width: Math.round((month.broadcasts / historyPeak) * 100) + '%' }"
-              />
+              <div class="h-full rounded-full bg-primary/60" :style="{ width: Math.round((month.broadcasts / historyPeak) * 100) + '%' }" />
             </div>
             <span class="w-16 shrink-0 text-right text-xs text-foreground">{{ fmt(month.broadcasts) }}</span>
           </div>

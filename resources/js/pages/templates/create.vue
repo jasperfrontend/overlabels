@@ -76,7 +76,7 @@ const submitForm = async () => {
     description: form.description,
     head: form.head,
     html: form.html,
-    css: form.css
+    css: form.css,
   });
   Object.assign(form, sanitized);
 
@@ -92,9 +92,7 @@ const submitForm = async () => {
     css: form.css,
   });
 
-  form.metadata = form.type === 'block'
-    ? { block: { default_span: { w: blockSpanW.value, h: blockSpanH.value } } }
-    : null;
+  form.metadata = form.type === 'block' ? { block: { default_span: { w: blockSpanW.value, h: blockSpanH.value } } } : null;
 
   form.post(route('templates.store'));
 };
@@ -120,7 +118,6 @@ onMounted(() => {
   register('save-overlay', 'ctrl+s', () => submitForm(), { description: 'Create overlay' });
   register('preview-overlay', 'ctrl+p', () => previewTemplate(), { description: 'Preview overlay' });
 });
-
 </script>
 
 <template>
@@ -129,10 +126,15 @@ onMounted(() => {
     <div class="p-4">
       <!-- Header -->
       <div class="mb-6 flex items-start justify-between">
-        <Heading title="New Overlay" description="Build your overlay with HTML, CSS, and Tags."
-                 description-class="text-sm text-muted-foreground" />
+        <Heading title="New Overlay" description="Build your overlay with HTML, CSS, and Tags." description-class="text-sm text-muted-foreground" />
         <div class="flex shrink-0 items-center gap-2">
-          <button type="button" @click="previewTemplate" :disabled="!typeChosen" class="btn btn-cancel disabled:cursor-not-allowed disabled:opacity-50">Preview
+          <button
+            type="button"
+            @click="previewTemplate"
+            :disabled="!typeChosen"
+            class="btn btn-cancel disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Preview
             <ExternalLink class="ml-2 h-4 w-4" />
           </button>
           <button
@@ -160,7 +162,7 @@ onMounted(() => {
                 'flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors',
                 !typeChosen ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-background',
                 index === 0 && 'rounded-tl-sm',
-                mainTab === tab.key ? 'bg-violet-400 hover:bg-violet-500 text-black' : 'text-accent-foreground',
+                mainTab === tab.key ? 'bg-violet-400 text-black hover:bg-violet-500' : 'text-accent-foreground',
               ]"
             >
               <component :is="tab.icon" class="h-4 w-4" />
@@ -182,20 +184,21 @@ onMounted(() => {
                   :class="form.type === 'static' ? 'border-violet-400 dark:bg-violet-400/5' : 'border-sidebar'"
                 >
                   <input v-model="form.type" type="radio" value="static" class="sr-only" required />
-                  <span class="flex items-start w-full">
+                  <span class="flex w-full items-start">
                     <span
                       class="mt-0.5 mr-3 flex size-4 min-w-4 rounded-full border-2"
                       :class="form.type === 'static' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
-                      <span v-if="form.type === 'static'" class="h-2 w-2 m-0.5 rounded-full bg-white" />
+                      <span v-if="form.type === 'static'" class="m-0.5 h-2 w-2 rounded-full bg-white" />
                     </span>
                     <span>
                       <span class="flex items-center gap-2">
                         <Layout class="h-4 w-4" />
                         <span class="text-sm font-medium">Static Overlay</span>
                       </span>
-                      <span class="mt-1 text-sm text-muted-foreground">Persistent content with live Twitch data (follower
-                        count, stream title, etc.)</span>
+                      <span class="mt-1 text-sm text-muted-foreground"
+                        >Persistent content with live Twitch data (follower count, stream title, etc.)</span
+                      >
                     </span>
                   </span>
                 </label>
@@ -205,20 +208,21 @@ onMounted(() => {
                   :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500/10' : 'border-sidebar'"
                 >
                   <input v-model="form.type" type="radio" value="alert" class="sr-only" required />
-                  <span class="flex items-start w-full">
+                  <span class="flex w-full items-start">
                     <span
                       class="mt-0.5 mr-3 flex size-4 min-w-4 rounded-full border-2"
                       :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
-                      <span v-if="form.type === 'alert'" class="h-2 w-2 m-0.5 rounded-full bg-white" />
+                      <span v-if="form.type === 'alert'" class="m-0.5 h-2 w-2 rounded-full bg-white" />
                     </span>
                     <span>
                       <span class="flex items-center gap-2">
                         <Zap class="h-4 w-4" />
                         <span class="text-sm font-medium">Event Alert</span>
                       </span>
-                      <span class="mt-1 text-sm text-muted-foreground">Shows temporarily when events occur (new follower,
-                        subscription, raid, etc.)</span>
+                      <span class="mt-1 text-sm text-muted-foreground"
+                        >Shows temporarily when events occur (new follower, subscription, raid, etc.)</span
+                      >
                     </span>
                   </span>
                 </label>
@@ -228,28 +232,27 @@ onMounted(() => {
                   :class="form.type === 'block' ? 'border-violet-500 bg-violet-500/10' : 'border-sidebar'"
                 >
                   <input v-model="form.type" type="radio" value="block" class="sr-only" required />
-                  <span class="flex items-start w-full">
+                  <span class="flex w-full items-start">
                     <span
                       class="mt-0.5 mr-3 flex size-4 min-w-4 rounded-full border-2"
                       :class="form.type === 'block' ? 'border-violet-500 bg-violet-500' : 'border-gray-400'"
                     >
-                      <span v-if="form.type === 'block'" class="h-2 w-2 m-0.5 rounded-full bg-white" />
+                      <span v-if="form.type === 'block'" class="m-0.5 h-2 w-2 rounded-full bg-white" />
                     </span>
                     <span>
                       <span class="flex items-center gap-2">
                         <Blocks class="h-4 w-4" />
                         <span class="text-sm font-medium">Block</span>
                       </span>
-                      <span class="mt-1 text-sm text-muted-foreground">A reusable piece for the Builder. Other streamers
-                        place blocks on a grid to compose an overlay.</span>
+                      <span class="mt-1 text-sm text-muted-foreground"
+                        >A reusable piece for the Builder. Other streamers place blocks on a grid to compose an overlay.</span
+                      >
                     </span>
                   </span>
                 </label>
               </div>
               <div v-if="form.errors.type" class="mt-1 text-sm text-red-600">{{ form.errors.type }}</div>
-              <p v-if="!typeChosen" class="mt-2 text-sm text-foreground">
-                Choose an overlay type to continue.
-              </p>
+              <p v-if="!typeChosen" class="mt-2 text-sm text-foreground">Choose an overlay type to continue.</p>
             </div>
 
             <!-- Everything below stays frozen until a type is deliberately chosen -->
@@ -269,8 +272,7 @@ onMounted(() => {
               </div>
 
               <div>
-                <label for="description"
-                       class="mb-1 block text-sm font-medium text-accent-foreground">Description</label>
+                <label for="description" class="mb-1 block text-sm font-medium text-accent-foreground">Description</label>
                 <textarea
                   id="description"
                   v-model="form.description"
@@ -288,34 +290,23 @@ onMounted(() => {
                 <div>
                   <label class="mb-1 block text-sm font-medium text-accent-foreground">Suggested size</label>
                   <p class="mb-2 text-sm text-foreground">
-                    How many grid cells this block occupies when someone places it in the Builder (they can resize it).
-                    Builder grids default to 12 columns by 8 rows.
+                    How many grid cells this block occupies when someone places it in the Builder (they can resize it). Builder grids default to 12
+                    columns by 8 rows.
                   </p>
                   <div class="flex items-center gap-3">
-                    <input
-                      v-model.number="blockSpanW"
-                      type="number"
-                      min="1"
-                      max="24"
-                      class="input-border w-24"
-                      aria-label="Columns wide"
-                    />
+                    <input v-model.number="blockSpanW" type="number" min="1" max="24" class="input-border w-24" aria-label="Columns wide" />
                     <span class="text-sm text-muted-foreground">columns wide</span>
-                    <input
-                      v-model.number="blockSpanH"
-                      type="number"
-                      min="1"
-                      max="24"
-                      class="input-border w-24"
-                      aria-label="Rows tall"
-                    />
+                    <input v-model.number="blockSpanH" type="number" min="1" max="24" class="input-border w-24" aria-label="Rows tall" />
                     <span class="text-sm text-muted-foreground">rows tall</span>
                   </div>
                 </div>
                 <div class="rounded-sm bg-sidebar p-4 text-sm">
                   <strong class="text-accent-foreground">Block tips:</strong>
                   <ul class="mt-2 list-inside list-disc space-y-1 text-foreground">
-                    <li>Your block renders inside its grid cell. Use <code class="rounded bg-sidebar-accent px-1">height: 100%</code> instead of styling <code class="rounded bg-sidebar-accent px-1">body</code>.</li>
+                    <li>
+                      Your block renders inside its grid cell. Use <code class="rounded bg-sidebar-accent px-1">height: 100%</code> instead of styling
+                      <code class="rounded bg-sidebar-accent px-1">body</code>.
+                    </li>
                     <li>Keep CSS flat and class names specific - your styles are scoped to the block when composed.</li>
                     <li>All template tags and controls work exactly like in a regular overlay.</li>
                   </ul>
@@ -326,25 +317,19 @@ onMounted(() => {
               <div v-if="form.type === 'alert'" class="rounded-sm bg-sidebar p-4 text-sm">
                 <strong class="text-accent-foreground">Event Alert tips:</strong>
                 <ul class="mt-2 list-inside list-disc space-y-1 text-foreground">
-                  <li>Visit the <a class="text-violet-400 hover:underline" href="/help/conditionals#event-tags" target="_blank">Help docs</a> for all
+                  <li>
+                    Visit the <a class="text-violet-400 hover:underline" href="/help/conditionals#event-tags" target="_blank">Help docs</a> for all
                     event-based tags.
                   </li>
-                  <li>Mix event tags with regular tags like <code class="rounded bg-sidebar-accent px-1">[[[followers_total]]]</code>.
-                  </li>
+                  <li>Mix event tags with regular tags like <code class="rounded bg-sidebar-accent px-1">[[[followers_total]]]</code>.</li>
                   <li>Keep alert overlays simple: they only display briefly on screen.</li>
                 </ul>
               </div>
             </fieldset>
-
           </div>
 
           <!-- Code Tab -->
-          <TemplateCodeEditor
-            v-if="mainTab === 'code'"
-            v-model:head="form.head"
-            v-model:body="form.html"
-            v-model:css="form.css"
-          />
+          <TemplateCodeEditor v-if="mainTab === 'code'" v-model:head="form.head" v-model:body="form.html" v-model:css="form.css" />
 
           <!-- Tags Tab -->
           <div v-if="mainTab === 'tags'">
@@ -354,19 +339,23 @@ onMounted(() => {
           <!-- Screenshot Tab -->
           <div v-if="mainTab === 'screenshot'" class="max-w-3xl space-y-4">
             <div>
-              <h3 class="text-sm font-medium text-accent-foreground">
-                Screenshot
-              </h3>
+              <h3 class="text-sm font-medium text-accent-foreground">Screenshot</h3>
               <p class="mt-1 text-sm text-foreground">
-                Optional. Preview your overlay (<kbd class="rounded-none bg-sidebar px-1.5 py-0.5 font-mono text-xs">Ctrl+P</kbd>),
-                then paste or drop a screenshot here. This is what visitors see on the public preview page.
+                Optional. Preview your overlay (<kbd class="rounded-none bg-sidebar px-1.5 py-0.5 font-mono text-xs">Ctrl+P</kbd>), then paste or drop
+                a screenshot here. This is what visitors see on the public preview page.
               </p>
             </div>
             <ImageDropZone
               kind="template_screenshot"
               :model-value="form.screenshot_url || null"
-              @update:model-value="(url: string | null) => form.screenshot_url = url || ''"
-              @error="(msg: string) => { toastMessage = msg; toastType = 'error'; showToast = true; }"
+              @update:model-value="(url: string | null) => (form.screenshot_url = url || '')"
+              @error="
+                (msg: string) => {
+                  toastMessage = msg;
+                  toastType = 'error';
+                  showToast = true;
+                }
+              "
             />
             <div v-if="form.errors.screenshot_url" class="text-sm text-red-600">{{ form.errors.screenshot_url }}</div>
           </div>
@@ -376,7 +365,9 @@ onMounted(() => {
         <div class="mt-6 flex items-center justify-between gap-3">
           <Link :href="route('dashboard.index')" class="btn btn-cancel">← Back to Dashboard</Link>
           <div class="flex items-center gap-3">
-            <button type="submit" :disabled="form.processing || !typeChosen" class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50">Create Overlay</button>
+            <button type="submit" :disabled="form.processing || !typeChosen" class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50">
+              Create Overlay
+            </button>
           </div>
         </div>
       </form>
@@ -392,8 +383,10 @@ onMounted(() => {
           <iframe v-if="previewHtml" :srcdoc="previewHtml" class="h-full w-full border-0" sandbox="allow-scripts" />
         </div>
         <div class="flex items-center justify-between">
-          <p class="text-sm text-muted-foreground">Tags are shown with sample data in preview. Press <kbd
-            class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">ESC</kbd> to close this preview.</p>
+          <p class="text-sm text-muted-foreground">
+            Tags are shown with sample data in preview. Press <kbd class="rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs">ESC</kbd> to close this
+            preview.
+          </p>
           <button class="btn btn-cancel" @click="showPreview = false">Close</button>
         </div>
       </DialogContent>

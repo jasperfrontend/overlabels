@@ -41,7 +41,7 @@ defineProps<{
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
-  { title: 'Tags', href: route('admin.tags.index') }
+  { title: 'Tags', href: route('admin.tags.index') },
 ];
 
 function toggleActive(tag: Tag) {
@@ -71,14 +71,13 @@ async function deleteCategory(cat: Category) {
       <Tabs :default-value="view === 'categories' ? 'categories' : 'tags'">
         <TabsList>
           <TabsTrigger value="tags" @click="router.get(route('admin.tags.index'))">Tags</TabsTrigger>
-          <TabsTrigger value="categories" @click="router.get(route('admin.tags.categories.index'))">Categories
-          </TabsTrigger>
+          <TabsTrigger value="categories" @click="router.get(route('admin.tags.categories.index'))">Categories </TabsTrigger>
         </TabsList>
 
         <!-- Tags tab -->
         <TabsContent value="tags" class="mt-4" v-if="tags">
           <!-- Card view (< lg) -->
-          <div class="lg:hidden space-y-2">
+          <div class="space-y-2 lg:hidden">
             <EmptyState v-if="tags.data.length === 0" message="No tags found." />
             <div v-for="tag in tags.data" :key="`card-${tag.id}`" class="rounded border p-3 text-sm">
               <div class="flex items-start justify-between gap-2">
@@ -87,18 +86,15 @@ async function deleteCategory(cat: Category) {
                   <div v-if="tag.display_name" class="text-xs text-muted-foreground">{{ tag.display_name }}</div>
                 </div>
                 <div class="flex shrink-0 gap-2">
-                  <button @click="toggleActive(tag)" class="text-xs text-primary hover:underline cursor-pointer">
+                  <button @click="toggleActive(tag)" class="cursor-pointer text-xs text-primary hover:underline">
                     {{ tag.is_active ? 'Deactivate' : 'Activate' }}
                   </button>
-                  <button @click="deleteTag(tag)" class="text-xs text-destructive hover:underline cursor-pointer">
-                    Delete
-                  </button>
+                  <button @click="deleteTag(tag)" class="cursor-pointer text-xs text-destructive hover:underline">Delete</button>
                 </div>
               </div>
               <div class="mt-2 flex flex-wrap gap-1.5">
                 <Badge variant="outline">{{ tag.tag_type }}</Badge>
-                <Badge :variant="tag.is_active ? 'default' : 'secondary'">{{ tag.is_active ? 'active' : 'inactive' }}
-                </Badge>
+                <Badge :variant="tag.is_active ? 'default' : 'secondary'">{{ tag.is_active ? 'active' : 'inactive' }} </Badge>
               </div>
               <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 <span v-if="tag.category">{{ tag.category.name }}</span>
@@ -108,50 +104,53 @@ async function deleteCategory(cat: Category) {
           </div>
 
           <!-- Table (≥ lg) -->
-          <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
+          <div class="hidden overflow-x-auto rounded border border-sidebar lg:block">
             <table class="w-full text-sm">
               <thead class="bg-card text-left text-muted-foreground">
-              <tr>
-                <th class="px-3 py-2">Tag</th>
-                <th class="px-3 py-2">Category</th>
-                <th class="px-3 py-2">Type</th>
-                <th class="px-3 py-2">Active</th>
-                <th class="px-3 py-2">Owner</th>
-                <th class="px-3 py-2"></th>
-              </tr>
+                <tr>
+                  <th class="px-3 py-2">Tag</th>
+                  <th class="px-3 py-2">Category</th>
+                  <th class="px-3 py-2">Type</th>
+                  <th class="px-3 py-2">Active</th>
+                  <th class="px-3 py-2">Owner</th>
+                  <th class="px-3 py-2"></th>
+                </tr>
               </thead>
               <tbody>
-              <tr v-for="tag in tags.data" :key="tag.id" class="border-t border-sidebar">
-                <td class="px-3 py-2">
-                  <div class="font-mono text-xs">{{ tag.tag_name }}</div>
-                  <div v-if="tag.display_name" class="text-xs text-muted-foreground">{{ tag.display_name }}</div>
-                </td>
-                <td class="px-3 py-2 text-muted-foreground text-xs">{{ tag.category?.name ?? '—' }}</td>
-                <td class="px-3 py-2">
-                  <Badge variant="outline">{{ tag.tag_type }}</Badge>
-                </td>
-                <td class="px-3 py-2">
-                  <Badge :variant="tag.is_active ? 'default' : 'secondary'">{{ tag.is_active ? 'active' : 'inactive'
-                    }}
-                  </Badge>
-                </td>
-                <td class="px-3 py-2 text-xs text-muted-foreground">{{ tag.user?.name ?? 'system' }}</td>
-                <td class="px-3 py-2 flex gap-2">
-                  <button @click="toggleActive(tag)" class="text-xs text-primary hover:underline">
-                    {{ tag.is_active ? 'Deactivate' : 'Activate' }}
-                  </button>
-                  <button @click="deleteTag(tag)" class="text-xs text-destructive hover:underline">Delete</button>
-                </td>
-              </tr>
-              <EmptyState v-if="tags.data.length === 0" :colspan="6" message="No tags found." />
+                <tr v-for="tag in tags.data" :key="tag.id" class="border-t border-sidebar">
+                  <td class="px-3 py-2">
+                    <div class="font-mono text-xs">{{ tag.tag_name }}</div>
+                    <div v-if="tag.display_name" class="text-xs text-muted-foreground">{{ tag.display_name }}</div>
+                  </td>
+                  <td class="px-3 py-2 text-xs text-muted-foreground">{{ tag.category?.name ?? '—' }}</td>
+                  <td class="px-3 py-2">
+                    <Badge variant="outline">{{ tag.tag_type }}</Badge>
+                  </td>
+                  <td class="px-3 py-2">
+                    <Badge :variant="tag.is_active ? 'default' : 'secondary'">{{ tag.is_active ? 'active' : 'inactive' }} </Badge>
+                  </td>
+                  <td class="px-3 py-2 text-xs text-muted-foreground">{{ tag.user?.name ?? 'system' }}</td>
+                  <td class="flex gap-2 px-3 py-2">
+                    <button @click="toggleActive(tag)" class="text-xs text-primary hover:underline">
+                      {{ tag.is_active ? 'Deactivate' : 'Activate' }}
+                    </button>
+                    <button @click="deleteTag(tag)" class="text-xs text-destructive hover:underline">Delete</button>
+                  </td>
+                </tr>
+                <EmptyState v-if="tags.data.length === 0" :colspan="6" message="No tags found." />
               </tbody>
             </table>
           </div>
 
           <div class="mt-2 flex gap-1">
             <template v-for="link in tags.links" :key="link.label">
-              <a v-if="link.url" :href="link.url" class="rounded border px-3 py-1 text-sm"
-                 :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'" v-html="link.label" />
+              <a
+                v-if="link.url"
+                :href="link.url"
+                class="rounded border px-3 py-1 text-sm"
+                :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'"
+                v-html="link.label"
+              />
               <span v-else class="rounded border px-3 py-1 text-sm opacity-40" v-html="link.label" />
             </template>
           </div>
@@ -160,7 +159,7 @@ async function deleteCategory(cat: Category) {
         <!-- Categories tab -->
         <TabsContent value="categories" class="mt-4" v-if="categories">
           <!-- Card view (< lg) -->
-          <div class="lg:hidden space-y-2">
+          <div class="space-y-2 lg:hidden">
             <EmptyState v-if="categories.length === 0" message="No categories found." />
             <div v-for="cat in categories" :key="`card-${cat.id}`" class="rounded border p-3 text-sm">
               <div class="flex items-start justify-between gap-2">
@@ -168,8 +167,7 @@ async function deleteCategory(cat: Category) {
                   <div class="font-mono text-xs font-medium">{{ cat.name }}</div>
                   <div v-if="cat.display_name" class="text-xs text-muted-foreground">{{ cat.display_name }}</div>
                 </div>
-                <button @click="deleteCategory(cat)" class="shrink-0 text-xs text-destructive hover:underline">Delete
-                </button>
+                <button @click="deleteCategory(cat)" class="shrink-0 text-xs text-destructive hover:underline">Delete</button>
               </div>
               <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 <span>Sort: {{ cat.sort_order }}</span>
@@ -179,28 +177,28 @@ async function deleteCategory(cat: Category) {
           </div>
 
           <!-- Table (≥ lg) -->
-          <div class="hidden lg:block overflow-x-auto rounded border">
+          <div class="hidden overflow-x-auto rounded border lg:block">
             <table class="w-full text-sm">
               <thead class="bg-muted text-left text-muted-foreground">
-              <tr>
-                <th class="px-3 py-2">Name</th>
-                <th class="px-3 py-2">Display Name</th>
-                <th class="px-3 py-2">Sort Order</th>
-                <th class="px-3 py-2">Tags</th>
-                <th class="px-3 py-2"></th>
-              </tr>
+                <tr>
+                  <th class="px-3 py-2">Name</th>
+                  <th class="px-3 py-2">Display Name</th>
+                  <th class="px-3 py-2">Sort Order</th>
+                  <th class="px-3 py-2">Tags</th>
+                  <th class="px-3 py-2"></th>
+                </tr>
               </thead>
               <tbody>
-              <tr v-for="cat in categories" :key="cat.id" class="border-t">
-                <td class="px-3 py-2 font-mono text-xs">{{ cat.name }}</td>
-                <td class="px-3 py-2">{{ cat.display_name ?? '—' }}</td>
-                <td class="px-3 py-2">{{ cat.sort_order }}</td>
-                <td class="px-3 py-2">{{ cat.template_tags_count }}</td>
-                <td class="px-3 py-2">
-                  <button @click="deleteCategory(cat)" class="text-xs text-destructive hover:underline">Delete</button>
-                </td>
-              </tr>
-              <EmptyState v-if="categories.length === 0" :colspan="5" message="No categories found." />
+                <tr v-for="cat in categories" :key="cat.id" class="border-t">
+                  <td class="px-3 py-2 font-mono text-xs">{{ cat.name }}</td>
+                  <td class="px-3 py-2">{{ cat.display_name ?? '—' }}</td>
+                  <td class="px-3 py-2">{{ cat.sort_order }}</td>
+                  <td class="px-3 py-2">{{ cat.template_tags_count }}</td>
+                  <td class="px-3 py-2">
+                    <button @click="deleteCategory(cat)" class="text-xs text-destructive hover:underline">Delete</button>
+                  </td>
+                </tr>
+                <EmptyState v-if="categories.length === 0" :colspan="5" message="No categories found." />
               </tbody>
             </table>
           </div>

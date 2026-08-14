@@ -10,10 +10,7 @@ const isAdmin = computed(() => page.props.isAdmin);
 </script>
 
 <template>
-  <div
-    v-if="isActive"
-    class="flex items-center justify-between bg-red-600 px-4 py-2 text-sm font-medium text-white"
-  >
+  <div v-if="isActive" class="flex items-center justify-between bg-red-600 px-4 py-2 text-sm font-medium text-white">
     <span>
       <strong>System lockdown active.</strong>
       All overlays are offline and access tokens have been suspended.

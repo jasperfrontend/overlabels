@@ -74,9 +74,7 @@ export const TWITCH_PRESETS: ServicePreset[] = [
 // System namespace, not an integration: alerts:muted mirrors the global
 // alert mute state (events page / feed page button). Read-only in overlays,
 // flips live: [[[if:c:alerts:muted]]]ALERTS ARE MUTED[[[endif]]]
-export const ALERTS_PRESETS: ServicePreset[] = [
-  { key: 'muted', label: 'Alerts Muted', type: 'boolean' },
-];
+export const ALERTS_PRESETS: ServicePreset[] = [{ key: 'muted', label: 'Alerts Muted', type: 'boolean' }];
 
 export const GPS_PRESETS: ServicePreset[] = [
   { key: 'speed', label: 'GPS Speed', type: 'number' },
@@ -96,14 +94,23 @@ export const GPS_PRESETS: ServicePreset[] = [
 
 export function getPresetsForSource(source: string): ServicePreset[] {
   switch (source) {
-    case 'twitch': return TWITCH_PRESETS;
-    case 'alerts': return ALERTS_PRESETS;
-    case 'kofi': return KOFI_PRESETS;
-    case 'gps': return GPS_PRESETS;
-    case 'streamlabs': return STREAMLABS_PRESETS;
-    case 'fourthwall': return FOURTHWALL_PRESETS;
-    case 'bmac': return BMAC_PRESETS;
-    case 'throne': return THRONE_PRESETS;
-    default: return [];
+    case 'twitch':
+      return TWITCH_PRESETS;
+    case 'alerts':
+      return ALERTS_PRESETS;
+    case 'kofi':
+      return KOFI_PRESETS;
+    case 'gps':
+      return GPS_PRESETS;
+    case 'streamlabs':
+      return STREAMLABS_PRESETS;
+    case 'fourthwall':
+      return FOURTHWALL_PRESETS;
+    case 'bmac':
+      return BMAC_PRESETS;
+    case 'throne':
+      return THRONE_PRESETS;
+    default:
+      return [];
   }
 }

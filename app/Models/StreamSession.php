@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User|null $user
+ *
  * @method static Builder<static>|StreamSession newModelQuery()
  * @method static Builder<static>|StreamSession newQuery()
  * @method static Builder<static>|StreamSession query()
@@ -27,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|StreamSession whereStartedAt($value)
  * @method static Builder<static>|StreamSession whereUpdatedAt($value)
  * @method static Builder<static>|StreamSession whereUserId($value)
+ *
  * @mixin Eloquent
  */
 class StreamSession extends Model

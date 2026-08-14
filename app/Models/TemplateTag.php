@@ -33,6 +33,7 @@ use Illuminate\Support\Arr;
  * @property int|null $user_id
  * @property-read TemplateTagCategory $category
  * @property-read User|null $user
+ *
  * @method static Builder<static>|TemplateTag custom()
  * @method static TemplateTagFactory factory($count = null, $state = [])
  * @method static Builder<static>|TemplateTag newModelQuery()
@@ -57,6 +58,7 @@ use Illuminate\Support\Arr;
  * @method static Builder<static>|TemplateTag whereUpdatedAt($value)
  * @method static Builder<static>|TemplateTag whereUserId($value)
  * @method static Builder<static>|TemplateTag whereVersion($value)
+ *
  * @mixin Eloquent
  */
 class TemplateTag extends Model

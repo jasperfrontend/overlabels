@@ -52,10 +52,7 @@ async function renderMath() {
   const nodes = content.value?.querySelectorAll<HTMLElement>('.help-math:not([data-rendered])');
   if (!nodes?.length) return;
 
-  const [{ default: katex }] = await Promise.all([
-    import('katex'),
-    import('katex/dist/katex.min.css'),
-  ]);
+  const [{ default: katex }] = await Promise.all([import('katex'), import('katex/dist/katex.min.css')]);
 
   nodes.forEach((node) => {
     const tex = node.dataset.tex ?? '';
@@ -73,7 +70,10 @@ async function renderMath() {
 }
 
 onMounted(renderMath);
-watch(() => props.html, () => nextTick(renderMath));
+watch(
+  () => props.html,
+  () => nextTick(renderMath),
+);
 
 /**
  * Keep SPA navigation for in-app links. Rendered markdown produces plain
@@ -99,12 +99,7 @@ function onContentClick(event: MouseEvent) {
 </script>
 
 <template>
-  <HelpLayout
-    :breadcrumbs="breadcrumbs"
-    :title="props.title"
-    :description="props.description"
-    :canonical-url="props.canonical"
-  >
+  <HelpLayout :breadcrumbs="breadcrumbs" :title="props.title" :description="props.description" :canonical-url="props.canonical">
     <div class="mb-10">
       <Heading :title="props.heading" title-class="text-4xl font-bold mb-4" :description="props.lead" />
     </div>

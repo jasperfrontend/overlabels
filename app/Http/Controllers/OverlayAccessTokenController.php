@@ -42,6 +42,7 @@ class OverlayAccessTokenController extends Controller
 
     /**
      * Store a new token
+     *
      * @throws RandomException
      */
     public function store(Request $request)
@@ -124,5 +125,4 @@ class OverlayAccessTokenController extends Controller
             'message' => 'Token deleted successfully',
         ]);
     }
-
 }

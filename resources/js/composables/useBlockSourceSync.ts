@@ -1,6 +1,6 @@
-import { onBeforeUnmount, onMounted, ref } from 'vue';
-import axios from 'axios';
 import type { BuilderControlDef, useBuilderState } from '@/composables/useBuilderState';
+import axios from 'axios';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 /**
  * "Refresh from source" for the Builder editor: detects placements whose

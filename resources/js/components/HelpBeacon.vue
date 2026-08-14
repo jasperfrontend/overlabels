@@ -28,37 +28,37 @@ const panel = ref<HTMLElement | null>(null);
 const trigger = ref<HTMLButtonElement | null>(null);
 
 function close(returnFocus = true) {
-    open.value = false;
-    if (returnFocus) {
-        trigger.value?.focus();
-    }
+  open.value = false;
+  if (returnFocus) {
+    trigger.value?.focus();
+  }
 }
 
 function toggle() {
-    if (!open.value) {
-        open.value = true;
+  if (!open.value) {
+    open.value = true;
 
-        return;
-    }
+    return;
+  }
 
-    // Only pull focus back to the button when it currently lives inside the
-    // panel. Alt+H to peek and Alt+H to dismiss should leave the caret in the
-    // field the user was already typing in.
-    close(panel.value?.contains(document.activeElement) === true);
+  // Only pull focus back to the button when it currently lives inside the
+  // panel. Alt+H to peek and Alt+H to dismiss should leave the caret in the
+  // field the user was already typing in.
+  close(panel.value?.contains(document.activeElement) === true);
 }
 
 function onKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-        close();
-    }
+  if (event.key === 'Escape') {
+    close();
+  }
 }
 
 function onPointerDown(event: PointerEvent) {
-    const target = event.target as Node;
+  const target = event.target as Node;
 
-    if (!panel.value?.contains(target) && !trigger.value?.contains(target)) {
-        close(false);
-    }
+  if (!panel.value?.contains(target) && !trigger.value?.contains(target)) {
+    close(false);
+  }
 }
 
 /**
@@ -72,21 +72,21 @@ function onPointerDown(event: PointerEvent) {
  * instead of having to hunt for it.
  */
 function focusFirstArticle() {
-    const first = panel.value?.querySelector<HTMLElement>('[data-help-article]');
+  const first = panel.value?.querySelector<HTMLElement>('[data-help-article]');
 
-    (first ?? panel.value)?.focus();
+  (first ?? panel.value)?.focus();
 }
 
 watch(open, async (isOpen) => {
-    if (isOpen) {
-        window.addEventListener('keydown', onKeydown);
-        window.addEventListener('pointerdown', onPointerDown);
-        await nextTick();
-        focusFirstArticle();
-    } else {
-        window.removeEventListener('keydown', onKeydown);
-        window.removeEventListener('pointerdown', onPointerDown);
-    }
+  if (isOpen) {
+    window.addEventListener('keydown', onKeydown);
+    window.addEventListener('pointerdown', onPointerDown);
+    await nextTick();
+    focusFirstArticle();
+  } else {
+    window.removeEventListener('keydown', onKeydown);
+    window.removeEventListener('pointerdown', onPointerDown);
+  }
 });
 
 // Navigating to a new page resolves different help, so the open panel would be
@@ -94,20 +94,20 @@ watch(open, async (isOpen) => {
 watch(links, () => close(false));
 
 onMounted(() => {
-    // Alt+H sits next to Alt+R for the tags reference: both open a panel to
-    // read something, where the Ctrl+* shortcuts do things. Registering it here
-    // also lists it in the Ctrl+K shortcuts dialog, which reads the same registry.
-    register('help-beacon', 'alt+h', toggle, { description: 'Help for this page' });
+  // Alt+H sits next to Alt+R for the tags reference: both open a panel to
+  // read something, where the Ctrl+* shortcuts do things. Registering it here
+  // also lists it in the Ctrl+K shortcuts dialog, which reads the same registry.
+  register('help-beacon', 'alt+h', toggle, { description: 'Help for this page' });
 });
 
 onBeforeUnmount(() => {
-    window.removeEventListener('keydown', onKeydown);
-    window.removeEventListener('pointerdown', onPointerDown);
+  window.removeEventListener('keydown', onKeydown);
+  window.removeEventListener('pointerdown', onPointerDown);
 });
 </script>
 
 <template>
-  <div class="fixed right-4 bottom-4 z-40 print:hidden sm:right-6 sm:bottom-6">
+  <div class="fixed right-4 bottom-4 z-40 sm:right-6 sm:bottom-6 print:hidden">
     <Transition
       enter-active-class="transition duration-150 ease-out"
       enter-from-class="translate-y-2 scale-95 opacity-0"
@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
                 target="_blank"
                 rel="noopener noreferrer"
                 data-help-article
-                class="block cursor-pointer px-4 py-4 transition hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none focus-visible:-outline-offset-2"
+                class="block cursor-pointer px-4 py-4 transition hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:-outline-offset-2 focus-visible:outline-none"
               >
                 <h3 class="text-sm font-medium text-foreground">{{ link.title }}</h3>
                 <p v-if="link.lead" class="mt-1.5 text-sm leading-relaxed text-foreground/80">
@@ -164,12 +164,8 @@ onBeforeUnmount(() => {
           </ul>
 
           <div v-else class="px-4 py-8 text-center">
-            <p class="text-sm text-foreground">
-              No help page covers this screen yet.
-            </p>
-            <p class="mt-1 text-xs text-muted-foreground">
-              The full help section is still a good place to look.
-            </p>
+            <p class="text-sm text-foreground">No help page covers this screen yet.</p>
+            <p class="mt-1 text-xs text-muted-foreground">The full help section is still a good place to look.</p>
           </div>
         </div>
 
@@ -198,11 +194,7 @@ onBeforeUnmount(() => {
       @click="toggle"
     >
       <CircleQuestionMark class="h-5 w-5" />
-      <span
-        v-if="hasHelp"
-        class="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-violet-500 ring-2 ring-background"
-        aria-hidden="true"
-      />
+      <span v-if="hasHelp" class="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-violet-500 ring-2 ring-background" aria-hidden="true" />
     </button>
   </div>
 </template>

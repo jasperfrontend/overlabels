@@ -215,7 +215,7 @@ test('walking through an open exit door in room 5 wins the game and stops the ti
 test('a blocker tile blocks player movement like a wall', function () {
     Bus::fake();
     $game = makeWorldGame(['player_x' => 5, 'player_y' => 5]);
-    \App\Models\GameBlocker::create([
+    GameBlocker::create([
         'game_id' => $game->id,
         'room' => 1,
         'x' => 5,

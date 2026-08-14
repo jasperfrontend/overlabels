@@ -179,13 +179,13 @@ function lookupControlLabel(id: number | undefined): string {
   if (!id) return '(unknown control)';
   const all = [...controls.value, ...(props.userScopedControls ?? [])];
   const c = all.find((x) => x.id === id);
-  return c ? (c.label || c.key) : `(control #${id})`;
+  return c ? c.label || c.key : `(control #${id})`;
 }
 
 function lookupListLabel(id: number | undefined): string {
   if (!id) return '(unknown list)';
   const l = (props.userLists ?? []).find((x) => x.id === id);
-  return l ? (l.label || l.slug) : `(list #${id})`;
+  return l ? l.label || l.slug : `(list #${id})`;
 }
 
 function configSummary(ctrl: OverlayControl): string[] {
@@ -292,9 +292,7 @@ const filteredGroupedControls = computed<ControlGroup[]>(() => {
     .filter((g) => g.controls.length > 0);
 });
 
-const totalVisibleControls = computed(() =>
-  filteredGroupedControls.value.reduce((s, g) => s + g.controls.length, 0),
-);
+const totalVisibleControls = computed(() => filteredGroupedControls.value.reduce((s, g) => s + g.controls.length, 0));
 
 const EXPANDED_KEY = 'controls_manager_expanded';
 
@@ -385,21 +383,21 @@ const controlsCounter = computed(() => controls.value.length);
       <div class="flex items-center gap-3">
         <div class="relative flex-1">
           <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-          <input
-            v-model="searchQuery"
-            placeholder="Filter controls..."
-            class="input-border w-full pl-8 pr-2.5 py-1.5 text-sm"
-          />
+          <input v-model="searchQuery" placeholder="Filter controls..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
         </div>
       </div>
 
       <!-- Count + collapse/expand-all -->
       <div class="mb-3 flex items-center text-xs text-muted-foreground">
         <span v-if="searchQuery">
-          {{ totalVisibleControls }} control{{ totalVisibleControls !== 1 ? 's' : '' }} in {{ filteredGroupedControls.length }} group{{ filteredGroupedControls.length !== 1 ? 's' : '' }}
+          {{ totalVisibleControls }} control{{ totalVisibleControls !== 1 ? 's' : '' }} in {{ filteredGroupedControls.length }} group{{
+            filteredGroupedControls.length !== 1 ? 's' : ''
+          }}
         </span>
         <span v-else>
-          {{ controls.length }} control{{ controls.length !== 1 ? 's' : '' }} across {{ groupedControls.length }} group{{ groupedControls.length !== 1 ? 's' : '' }}
+          {{ controls.length }} control{{ controls.length !== 1 ? 's' : '' }} across {{ groupedControls.length }} group{{
+            groupedControls.length !== 1 ? 's' : ''
+          }}
         </span>
         <button
           v-if="filteredGroupedControls.length > 0"
@@ -426,13 +424,10 @@ const controlsCounter = computed(() => controls.value.length);
           @update:open="toggleGroup(group.label)"
         >
           <CollapsibleTrigger
-            class="group flex w-full cursor-pointer items-center gap-2 px-2 py-4 text-left collection-row"
+            class="group collection-row flex w-full cursor-pointer items-center gap-2 px-2 py-4 text-left"
             :class="{ 'bg-sidebar-accent': isGroupExpanded(group.label) }"
           >
-            <ChevronRight
-              :size="14"
-              class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
-            />
+            <ChevronRight :size="14" class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
             <span class="text-sm font-medium">{{ group.label }}</span>
             <span class="ml-auto bg-card px-2.5 py-1.5 text-xs">{{ group.controls.length }}</span>
           </CollapsibleTrigger>
@@ -442,7 +437,7 @@ const controlsCounter = computed(() => controls.value.length);
               <div
                 v-for="ctrl in group.controls"
                 :key="ctrl.id"
-                class="row group/row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all collection-row"
+                class="row group/row collection-row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all"
                 role="button"
                 tabindex="0"
                 :title="`Click to edit ${ctrl.label || ctrl.key}`"
@@ -479,15 +474,10 @@ const controlsCounter = computed(() => controls.value.length);
                       Not used by any block
                     </span>
                   </div>
-                  <p v-if="ctrl.description" class="text-xs text-foreground whitespace-pre-line">{{ ctrl.description }}</p>
+                  <p v-if="ctrl.description" class="text-xs whitespace-pre-line text-foreground">{{ ctrl.description }}</p>
                   <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                     <span class="font-mono">{{ snippetKey(ctrl) }}</span>
-                    <span
-                      v-for="(part, i) in configSummary(ctrl)"
-                      :key="i"
-                      class="max-w-64 truncate"
-                      :title="part"
-                    >{{ part }}</span>
+                    <span v-for="(part, i) in configSummary(ctrl)" :key="i" class="max-w-64 truncate" :title="part">{{ part }}</span>
                   </div>
                 </div>
 
@@ -496,7 +486,7 @@ const controlsCounter = computed(() => controls.value.length);
                   <button
                     v-if="ctrl.type !== 'list_writer'"
                     type="button"
-                    class="items-center gap-1.5 rounded-sm border border-dashed border-sidebar-accent bg-background/60 px-2 py-1 font-mono text-xs text-muted-foreground opacity-60 transition hover:opacity-100 md:flex cursor-pointer"
+                    class="cursor-pointer items-center gap-1.5 rounded-sm border border-dashed border-sidebar-accent bg-background/60 px-2 py-1 font-mono text-xs text-muted-foreground opacity-60 transition hover:opacity-100 md:flex"
                     :title="`Click to copy [[[c:${snippetKey(ctrl)}]]] to clipboard`"
                     @click="copySnippet(ctrl)"
                   >

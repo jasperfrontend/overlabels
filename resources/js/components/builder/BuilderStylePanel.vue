@@ -104,12 +104,12 @@ const headExtensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ?
 
     <div v-if="open" class="border-t border-sidebar-border p-4">
       <p class="mb-4 text-sm text-foreground">
-        Restyle the blocks on this overlay. Your CSS is scoped to the grid and applied last, so a rule here
-        beats the same selector inside a block. Write plain CSS - Overlabels scopes it for you.
+        Restyle the blocks on this overlay. Your CSS is scoped to the grid and applied last, so a rule here beats the same selector inside a block.
+        Write plain CSS - Overlabels scopes it for you.
       </p>
       <p class="mb-4 text-sm text-foreground">
-        The block previews above do not follow along as you type. Send your changes over when you want to look at them -
-        the saved overlay uses what is in these editors either way.
+        The block previews above do not follow along as you type. Send your changes over when you want to look at them - the saved overlay uses what
+        is in these editors either way.
       </p>
 
       <div class="grid grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
@@ -117,9 +117,7 @@ const headExtensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ?
         <div class="min-w-0">
           <h4 class="mb-2 text-xs font-medium tracking-wide text-accent-foreground uppercase">Classes in use</h4>
 
-          <p v-if="!classes.length" class="text-sm text-foreground">
-            Place a block to see the classes you can target.
-          </p>
+          <p v-if="!classes.length" class="text-sm text-foreground">Place a block to see the classes you can target.</p>
 
           <div v-else class="max-h-64 space-y-1 overflow-auto pr-1 lg:max-h-96">
             <button
@@ -128,15 +126,9 @@ const headExtensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ?
               type="button"
               class="block w-full cursor-pointer truncate border px-2 py-1 text-left font-mono text-xs transition-colors hover:border-violet-400 hover:bg-violet-400/10"
               :class="
-                alreadyStyled(entry.name)
-                  ? 'border-violet-400/60 bg-violet-400/10 text-accent-foreground'
-                  : 'border-sidebar-border text-foreground'
+                alreadyStyled(entry.name) ? 'border-violet-400/60 bg-violet-400/10 text-accent-foreground' : 'border-sidebar-border text-foreground'
               "
-              :title="
-                entry.structural
-                  ? 'On every block wrapper in this overlay'
-                  : `Used by ${entry.blocks.join(', ')}`
-              "
+              :title="entry.structural ? 'On every block wrapper in this overlay' : `Used by ${entry.blocks.join(', ')}`"
               @click="addRule(entry.name)"
             >
               .{{ entry.name }}
@@ -178,18 +170,14 @@ const headExtensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ?
                  the whole point: typing a typo and deleting it again must not
                  push the editor down and pull it back up. -->
             <div class="mb-1 flex items-center justify-between gap-2">
-              <label for="builder-custom-css" class="block text-xs font-medium tracking-wide text-accent-foreground uppercase">
-                CSS
-              </label>
+              <label for="builder-custom-css" class="block text-xs font-medium tracking-wide text-accent-foreground uppercase"> CSS </label>
               <div
                 class="flex items-center gap-2 transition-opacity duration-200"
                 :class="stale ? 'opacity-100' : 'pointer-events-none opacity-0'"
                 :inert="!stale"
               >
                 <span class="text-xs text-orange-700 dark:text-orange-300">Not in the previews yet</span>
-                <button type="button" class="btn btn-warning btn-sm cursor-pointer" @click="emit('sendToPreview')">
-                  Send to preview
-                </button>
+                <button type="button" class="btn btn-warning btn-sm cursor-pointer" @click="emit('sendToPreview')">Send to preview</button>
               </div>
             </div>
             <div
@@ -228,9 +216,7 @@ const headExtensions = computed(() => [htmlLang(), baseTheme, ...(isDark.value ?
                 placeholder='<link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">'
               />
             </div>
-            <p class="mt-1 text-xs text-foreground">
-              Added after the head tags the blocks bring themselves. Scripts are stripped on save.
-            </p>
+            <p class="mt-1 text-xs text-foreground">Added after the head tags the blocks bring themselves. Scripts are stripped on save.</p>
           </div>
         </div>
       </div>

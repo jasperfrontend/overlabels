@@ -34,15 +34,14 @@ const form = useForm({
   description: props.kit.description || '',
   is_public: props.kit.is_public,
   thumbnail_url: props.kit.thumbnail_url || '',
-  template_ids: [...props.selectedTemplateIds]
+  template_ids: [...props.selectedTemplateIds],
 });
 
 const selectedTemplates = computed(() => {
-  return props.templates.filter(t => form.template_ids.includes(t.id));
+  return props.templates.filter((t) => form.template_ids.includes(t.id));
 });
 
 const toggleTemplate = (templateId: number, checked: boolean) => {
-
   if (checked) {
     // Add a template if not already included
     if (!form.template_ids.includes(templateId)) {
@@ -50,22 +49,22 @@ const toggleTemplate = (templateId: number, checked: boolean) => {
     }
   } else {
     // Remove template
-    form.template_ids = form.template_ids.filter(id => id !== templateId);
+    form.template_ids = form.template_ids.filter((id) => id !== templateId);
   }
 };
 
 const submit = () => {
   // Use put method for Cloudinary URL submission
   form.put(`/kits/${props.kit.id}`, {
-    preserveScroll: true
+    preserveScroll: true,
   });
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Edit Kit "' + props.kit.title + '"',
-    href: route('kits.index')
-  }
+    href: route('kits.index'),
+  },
 ];
 </script>
 
@@ -75,22 +74,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 
     <div class="container mx-auto max-w-4xl px-4 py-8">
       <!-- Back button -->
-      <Link :href="`/kits/${kit.id}`"
-            class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <Link :href="`/kits/${kit.id}`" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to Kit
       </Link>
 
       <div class="mb-8">
         <h1 class="text-3xl font-bold">Edit Kit</h1>
-        <p class="mt-2 text-muted-foreground">
-          Update your kit's information and templates
-        </p>
+        <p class="mt-2 text-muted-foreground">Update your kit's information and templates</p>
       </div>
 
       <form @submit.prevent="submit" class="space-y-6">
         <!-- Basic Information -->
-
 
         <Card class="gap-4">
           <CardHeader>
@@ -98,7 +93,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           </CardHeader>
           <CardContent class="space-y-4">
             <div>
-              <label for="title" class="block mb-2">Title *</label>
+              <label for="title" class="mb-2 block">Title *</label>
               <input
                 id="title"
                 v-model="form.title"
@@ -112,7 +107,7 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <div>
-              <label for="description" class="block mb-2">Description</label>
+              <label for="description" class="mb-2 block">Description</label>
               <textarea
                 id="description"
                 v-model="form.description"
@@ -125,22 +120,19 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <PublicToggle v-model="form.is_public" label="Kit" />
-
           </CardContent>
         </Card>
 
         <!-- Thumbnail Upload -->
         <Card>
           <CardHeader>
-            <HeadingSmall title="Kit Thumbnail"
-                          description="Update your kit's thumbnail image (2560x1440px recommended, max 10MB). Be sure to provide a high quality thumbnail so your kit looks great in the library." />
+            <HeadingSmall
+              title="Kit Thumbnail"
+              description="Update your kit's thumbnail image (2560x1440px recommended, max 10MB). Be sure to provide a high quality thumbnail so your kit looks great in the library."
+            />
           </CardHeader>
           <CardContent>
-            <ImageDropZone
-              v-model="form.thumbnail_url"
-              kind="kit_thumbnail"
-              compact
-            />
+            <ImageDropZone v-model="form.thumbnail_url" kind="kit_thumbnail" compact />
             <p v-if="form.errors.thumbnail_url" class="mt-2 text-sm text-red-500">{{ form.errors.thumbnail_url }}</p>
           </CardContent>
         </Card>
@@ -148,8 +140,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <!-- Template Selection -->
         <Card>
           <CardHeader>
-            <HeadingSmall title="Select Templates *"
-                          description="Choose which of your templates to include in this kit." />
+            <HeadingSmall title="Select Templates *" description="Choose which of your templates to include in this kit." />
           </CardHeader>
           <CardContent>
             <EmptyState
@@ -165,7 +156,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 v-for="template in templates"
                 :key="template.id"
                 class="flex items-center space-x-3 rounded-lg border p-3 transition-colors"
-                :class="{ 'bg-primary/5 border-primary': form.template_ids.includes(template.id) }"
+                :class="{ 'border-primary bg-primary/5': form.template_ids.includes(template.id) }"
               >
                 <Checkbox
                   :id="`template-${template.id}`"
@@ -173,10 +164,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                   :checked="form.template_ids.includes(template.id)"
                   @click="() => toggleTemplate(template.id, !form.template_ids.includes(template.id))"
                 />
-                <label
-                  :for="`template-${template.id}`"
-                  class="flex flex-1 cursor-pointer items-center justify-between"
-                >
+                <label :for="`template-${template.id}`" class="flex flex-1 cursor-pointer items-center justify-between">
                   <span>
                     <span class="font-medium">{{ template.name }}</span>
                     <span class="ml-2 text-sm text-muted-foreground">({{ template.type }})</span>
@@ -189,32 +177,22 @@ const breadcrumbs: BreadcrumbItem[] = [
             <p v-if="form.errors.template_ids" class="mt-2 text-sm text-red-500">{{ form.errors.template_ids }}</p>
 
             <div v-if="selectedTemplates.length > 0" class="mt-4 rounded-lg bg-muted p-3">
-              <p class="text-sm font-medium">
-                Selected: {{ selectedTemplates.length }} template{{ selectedTemplates.length !== 1 ? 's' : '' }}
-              </p>
+              <p class="text-sm font-medium">Selected: {{ selectedTemplates.length }} template{{ selectedTemplates.length !== 1 ? 's' : '' }}</p>
             </div>
           </CardContent>
         </Card>
 
         <!-- Fork Information -->
-        <div v-if="kit.fork_count > 0"
-             class="rounded-lg border border-amber-500/50 bg-amber-50 p-4 dark:bg-amber-950/20">
+        <div v-if="kit.fork_count > 0" class="rounded-lg border border-amber-500/50 bg-amber-50 p-4 dark:bg-amber-950/20">
           <p class="text-sm text-amber-800 dark:text-amber-200">
-            <strong>Note:</strong> This kit has been copied {{ kit.fork_count }} time{{ kit.fork_count !== 1 ? 's' : ''
-            }} and cannot be deleted.
+            <strong>Note:</strong> This kit has been copied {{ kit.fork_count }} time{{ kit.fork_count !== 1 ? 's' : '' }} and cannot be deleted.
           </p>
         </div>
 
         <!-- Form Actions -->
         <div class="flex justify-end gap-4">
-          <Link :href="`/kits/${kit.id}`" class="btn btn-secondary">
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            :disabled="form.processing"
-            class="btn btn-primary"
-          >
+          <Link :href="`/kits/${kit.id}`" class="btn btn-secondary"> Cancel </Link>
+          <button type="submit" :disabled="form.processing" class="btn btn-primary">
             {{ form.processing ? 'Updating...' : 'Update Kit' }}
           </button>
         </div>

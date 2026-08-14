@@ -2,6 +2,18 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 14th, 2026 - style: 261 files of accumulated drift, formatted once
+
+CI has been generating these exact edits on every push for thirteen months and throwing them away. This is that backlog, applied deliberately instead of discarded silently. No behaviour changes: 1287 tests pass with **3968 assertions, identical to before**.
+
+- **The config was fixed first, so the sweep normalises in one direction.** `.prettierrc` carried `tabWidth: 4` with overrides back to 2 for `.vue`, `.ts` and `.yml` - which left `.css`, `.json`, `.js` and `.mjs` orphaned on the old Laravel-starter default. Formatting with that config would have pushed eleven files *from* 2-space *to* 4-space, against both convention and how they are actually written. Prettier never touches PHP here (Pint owns that, and no Blade plugin is installed), so every file it formats is frontend, where 2 is the convention. The base is now `tabWidth: 2` and the override block is deleted as redundant.
+- **The two indentation rules are now owned by one tool each.** PHP is 4-space via Pint's Laravel preset (PSR-12, no `pint.json`), everything Prettier touches is 2-space. Nothing sets indentation in two places any more.
+- **Checked what Prettier wanted to expand before letting it.** Compact one-line entries in `resources/dsl/dsl.json` and the grouped function-name arrays in `engine.mjs` are deliberate readability choices, and Prettier disagrees with both. Measured rather than assumed: +7 lines and +19 lines respectively. Small enough that consistency wins; had it been hundreds, they would have earned an ignore rule like the help pages did.
+- **The help pages stayed untouched, which is the previous PR working.** A real write-mode run modified 262 files and exactly **0** under `resources/help`. That rule is now load-bearing rather than theoretical.
+- **Two of these tools delete code, so the suite is the actual check.** `prettier-plugin-organize-imports` removes and reorders imports; Pint's `no_unused_imports` did the same to three test files. An import removed wrongly is a runtime error, not a style nit. The identical assertion count either side is what rules that out - equal *pass* counts would still hide a test that quietly stopped asserting.
+- **Both check-mode gates now exit 0.** `npm run format:check` and `pint --test` are clean, which is what makes the next step possible: `lint.yml` can finally run them in check mode instead of write mode. That is the whole point of this commit and it is deliberately not in it.
+- **Nothing here was chosen; it is thirteen months of one tool's opinion, applied at once.** Reviewing it line by line is not a good use of anyone's evening. The verification is the build, the typecheck, the linter and 1287 tests, all green.
+
 ## August 14th, 2026 - fix(format): Prettier was one uncommented line away from rewriting the docs
 
 `resources/help/**` is now in `.prettierignore`. Found while investigating why CI runs Pint and throws the result away, which turned out to be the less interesting half of the story.

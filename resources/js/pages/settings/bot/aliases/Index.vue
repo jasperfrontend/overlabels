@@ -59,13 +59,8 @@ function formatDate(iso: string | null): string {
         />
 
         <div v-if="!props.botEnabled" class="rounded border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
-          <p class="text-foreground">
-            The Overlabels bot isn't enabled yet. Aliases are saved here, but nothing fires until the bot is on.
-          </p>
-          <Link
-            href="/settings/integrations"
-            class="mt-2 inline-block underline cursor-pointer hover:text-amber-400"
-          >
+          <p class="text-foreground">The Overlabels bot isn't enabled yet. Aliases are saved here, but nothing fires until the bot is on.</p>
+          <Link href="/settings/integrations" class="mt-2 inline-block cursor-pointer underline hover:text-amber-400">
             Enable it on the Integrations page -&gt;
           </Link>
         </div>
@@ -82,9 +77,7 @@ function formatDate(iso: string | null): string {
         <div v-if="props.aliases.length === 0" class="rounded border border-sidebar-border p-8 text-center">
           <CornerDownRight class="mx-auto size-10 text-foreground/40" />
           <p class="mt-4 text-foreground">You haven't authored any bot aliases yet.</p>
-          <p class="mt-1 text-sm text-foreground/70">
-            Create one to give a long command a short nickname. Aliases default to moderator-only.
-          </p>
+          <p class="mt-1 text-sm text-foreground/70">Create one to give a long command a short nickname. Aliases default to moderator-only.</p>
         </div>
 
         <div v-else class="space-y-3">
@@ -102,26 +95,18 @@ function formatDate(iso: string | null): string {
 
               <div class="flex flex-wrap items-center gap-2">
                 <span
-                  class="rounded px-2 py-0.5 text-xs uppercase tracking-wide"
-                  :class="
-                    alias.enabled
-                      ? 'bg-emerald-500/15 text-emerald-400'
-                      : 'bg-foreground/10 text-foreground/60'
-                  "
+                  class="rounded px-2 py-0.5 text-xs tracking-wide uppercase"
+                  :class="alias.enabled ? 'bg-emerald-500/15 text-emerald-400' : 'bg-foreground/10 text-foreground/60'"
                 >
                   {{ alias.enabled ? 'enabled' : 'disabled' }}
                 </span>
                 <span class="text-xs text-foreground/70">
                   {{ alias.permission_level }}
                 </span>
-                <span v-if="alias.cooldown_seconds > 0" class="text-xs text-foreground/70">
-                  cooldown: {{ alias.cooldown_seconds }}s
-                </span>
+                <span v-if="alias.cooldown_seconds > 0" class="text-xs text-foreground/70"> cooldown: {{ alias.cooldown_seconds }}s </span>
               </div>
 
-              <p class="text-xs text-foreground/60">
-                Last fired: {{ formatDate(alias.last_fired_at) }}
-              </p>
+              <p class="text-xs text-foreground/60">Last fired: {{ formatDate(alias.last_fired_at) }}</p>
             </div>
 
             <div class="flex shrink-0 gap-2">

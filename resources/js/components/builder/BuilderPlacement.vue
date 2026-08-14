@@ -63,9 +63,7 @@ const chipStyle = computed(() => ({
 }));
 
 const outline = computed(() =>
-  props.selected
-    ? `${px(OUTLINE_SELECTED_PX)} solid var(--color-violet-500)`
-    : `${px(OUTLINE_PX)} solid var(--color-sidebar-border)`,
+  props.selected ? `${px(OUTLINE_SELECTED_PX)} solid var(--color-violet-500)` : `${px(OUTLINE_PX)} solid var(--color-sidebar-border)`,
 );
 
 /** Corner handles sit on top of the edge strips, so they win the shared pixels. */
@@ -132,14 +130,8 @@ function onHandlePointerDown(handle: ResizeHandle, e: PointerEvent) {
 const previewDoc = computed(() => {
   const cellId = `blk-${props.placement.instance_id}`;
   const html = renderTemplateSource(props.placement.snapshot.html, props.sampleData, locale.value, true);
-  const blockCss = prefixCss(
-    renderTemplateSource(props.placement.snapshot.css, props.sampleData, locale.value, false),
-    `#${cellId}`,
-  );
-  const overlayCss = prefixCss(
-    renderTemplateSource(props.customCss, props.sampleData, locale.value, false),
-    BUILDER_ROOT,
-  );
+  const blockCss = prefixCss(renderTemplateSource(props.placement.snapshot.css, props.sampleData, locale.value, false), `#${cellId}`);
+  const overlayCss = prefixCss(renderTemplateSource(props.customCss, props.sampleData, locale.value, false), BUILDER_ROOT);
 
   // The iframe IS the cell, so 100%/100% wrappers stand in for the grid-area
   // rule the compiler writes: a definite box for `height: 100%` to resolve
@@ -160,28 +152,20 @@ const previewDoc = computed(() => {
 </html>`;
 });
 
-const gridArea = computed(
-  () => `${props.placement.y} / ${props.placement.x} / span ${props.placement.h} / span ${props.placement.w}`,
-);
+const gridArea = computed(() => `${props.placement.y} / ${props.placement.x} / span ${props.placement.h} / span ${props.placement.w}`);
 </script>
 
 <template>
   <div
     :style="{ gridArea, outline, outlineOffset: `-${px(selected ? OUTLINE_SELECTED_PX : OUTLINE_PX)}` }"
     :class="[
-      'group transition-all relative min-h-0 min-w-0 cursor-grab touch-none overflow-hidden select-none active:cursor-grabbing',
+      'group relative min-h-0 min-w-0 cursor-grab touch-none overflow-hidden transition-all select-none active:cursor-grabbing',
       selected ? 'z-10' : '',
     ]"
     @click.stop="emit('select', placement.instance_id)"
     @pointerdown="onPointerDown"
   >
-    <iframe
-      :srcdoc="previewDoc"
-      class="pointer-events-none h-full w-full border-0"
-      sandbox=""
-      tabindex="-1"
-      :title="placement.block_name"
-    />
+    <iframe :srcdoc="previewDoc" class="pointer-events-none h-full w-full border-0" sandbox="" tabindex="-1" :title="placement.block_name" />
     <div
       class="pointer-events-none absolute truncate bg-sidebar-accent/90 font-mono text-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100"
       :style="{ ...chipStyle, left: cornerInset, fontSize: px(12), padding: `${px(1)} ${px(6)}` }"
@@ -200,10 +184,7 @@ const gridArea = computed(
     <!-- Resize affordances. Hidden until the block is hovered or selected, so a
          canvas at rest stays readable, then deliberately chunky: at a 0.35
          scale anything subtle is invisible. -->
-    <div
-      class="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100"
-      :class="{ 'opacity-100': selected }"
-    >
+    <div class="pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100" :class="{ 'opacity-100': selected }">
       <div
         v-for="edge in edges"
         :key="edge.handle"

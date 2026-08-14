@@ -1,23 +1,14 @@
 <script setup lang="ts">
 import { ref, watch, computed, nextTick, onBeforeUnmount } from 'vue';
 import axios from 'axios';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Check, Copy, Lightbulb } from '@lucide/vue';
 import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
 import ControlTypePicker from '@/components/controls/ControlTypePicker.vue';
 import ControlTypeCard from '@/components/controls/ControlTypeCard.vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
-import {
-  controlTypeMeta,
-  PRESET_GROUPS,
-  SERVICE_ACCENT,
-} from '@/components/controls/controlTypeCatalog';
+import { controlTypeMeta, PRESET_GROUPS, SERVICE_ACCENT } from '@/components/controls/controlTypeCatalog';
 import { getPresetsForSource, type ServicePreset } from '@/components/controls/controlPresets';
 import { serviceLabel } from '@/utils/services';
 import type { OverlayControl, OverlayTemplate } from '@/types';
@@ -260,15 +251,21 @@ function validateKey(key: string): string {
   return '';
 }
 
-watch(() => form.value.label, (label) => {
-  if (!selectedServicePreset.value && !isEditing.value && !keyManuallyEdited.value) {
-    form.value.key = slugifyLabel(label);
-  }
-});
+watch(
+  () => form.value.label,
+  (label) => {
+    if (!selectedServicePreset.value && !isEditing.value && !keyManuallyEdited.value) {
+      form.value.key = slugifyLabel(label);
+    }
+  },
+);
 
-watch(() => form.value.key, (key) => {
-  keyWarning.value = validateKey(key);
-});
+watch(
+  () => form.value.key,
+  (key) => {
+    keyWarning.value = validateKey(key);
+  },
+);
 
 // --- Expression / list writer state -----------------------------------------
 const expressionText = ref('');
@@ -287,113 +284,124 @@ const listWriter = ref({
  * template-scoped one.
  */
 const availableWatchControls = computed(() => {
-  const templateControls = (props.existingControls ?? []).filter(
-    (c) => c.id !== props.control?.id,
-  );
+  const templateControls = (props.existingControls ?? []).filter((c) => c.id !== props.control?.id);
   const seen = new Set<string>();
   for (const c of templateControls) seen.add(`${c.source ?? ''}:${c.key}`);
-  const userScoped = (props.userScopedControls ?? []).filter(
-    (c) => !seen.has(`${c.source ?? ''}:${c.key}`),
-  );
+  const userScoped = (props.userScopedControls ?? []).filter((c) => !seen.has(`${c.source ?? ''}:${c.key}`));
   return [...templateControls, ...userScoped];
 });
 
-watch(() => props.open, (open) => {
-  if (!open) return;
+watch(
+  () => props.open,
+  (open) => {
+    if (!open) return;
 
-  errors.value = {};
-  keyManuallyEdited.value = false;
-  keyWarning.value = '';
-  servicePresetKey.value = '';
-  servicePresetSource.value = null;
-  tagCopied.value = false;
+    errors.value = {};
+    keyManuallyEdited.value = false;
+    keyWarning.value = '';
+    servicePresetKey.value = '';
+    servicePresetSource.value = null;
+    tagCopied.value = false;
 
-  if (props.control) {
-    const c = props.control;
-    const cfg = c.config ?? {};
-    form.value = {
-      key: c.key,
-      label: c.label ?? '',
-      description: c.description ?? '',
-      type: c.type,
-      value: c.value ?? '',
-      config: {
-        min: cfg.min ?? undefined,
-        max: cfg.max ?? undefined,
-        step: cfg.step ?? 1,
-        reset_value: cfg.reset_value ?? 0,
-        random: cfg.random ?? false,
-        random_interval: cfg.random_interval ?? 1000,
-        mode: cfg.mode ?? 'countup',
-        base_seconds: cfg.base_seconds ?? 0,
-        target_datetime: cfg.target_datetime ?? '',
-      },
-      sort_order: c.sort_order,
-    };
-    // An existing service control keeps its service identity in the rail.
-    if (c.source && getPresetsForSource(c.source).some((p) => p.key === c.key)) {
-      servicePresetKey.value = `${c.source}:${c.key}`;
-      servicePresetSource.value = c.source;
+    if (props.control) {
+      const c = props.control;
+      const cfg = c.config ?? {};
+      form.value = {
+        key: c.key,
+        label: c.label ?? '',
+        description: c.description ?? '',
+        type: c.type,
+        value: c.value ?? '',
+        config: {
+          min: cfg.min ?? undefined,
+          max: cfg.max ?? undefined,
+          step: cfg.step ?? 1,
+          reset_value: cfg.reset_value ?? 0,
+          random: cfg.random ?? false,
+          random_interval: cfg.random_interval ?? 1000,
+          mode: cfg.mode ?? 'countup',
+          base_seconds: cfg.base_seconds ?? 0,
+          target_datetime: cfg.target_datetime ?? '',
+        },
+        sort_order: c.sort_order,
+      };
+      // An existing service control keeps its service identity in the rail.
+      if (c.source && getPresetsForSource(c.source).some((p) => p.key === c.key)) {
+        servicePresetKey.value = `${c.source}:${c.key}`;
+        servicePresetSource.value = c.source;
+      }
+      booleanValue.value = c.value === '1';
+      sortMode.value = 'manual';
+      expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
+      listWriter.value =
+        c.type === 'list_writer'
+          ? {
+              source_control_id: (cfg.source_control_id ?? '') as number | '',
+              target_list_id: (cfg.target_list_id ?? '') as number | '',
+            }
+          : { source_control_id: '', target_list_id: '' };
+      step.value = 'configure';
+    } else if (props.copyFrom) {
+      const c = props.copyFrom;
+      const cfg = c.config ?? {};
+      form.value = {
+        key: '',
+        label: `${c.label || c.key} (copy)`,
+        description: c.description ?? '',
+        type: c.type,
+        value: c.value ?? '',
+        config: {
+          min: cfg.min ?? undefined,
+          max: cfg.max ?? undefined,
+          step: cfg.step ?? 1,
+          reset_value: cfg.reset_value ?? 0,
+          random: cfg.random ?? false,
+          random_interval: cfg.random_interval ?? 1000,
+          mode: cfg.mode ?? 'countup',
+          base_seconds: cfg.base_seconds ?? 0,
+          target_datetime: cfg.target_datetime ?? '',
+        },
+        sort_order: 0,
+      };
+      booleanValue.value = c.value === '1';
+      sortMode.value = 'after';
+      expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
+      listWriter.value =
+        c.type === 'list_writer'
+          ? {
+              source_control_id: (cfg.source_control_id ?? '') as number | '',
+              target_list_id: (cfg.target_list_id ?? '') as number | '',
+            }
+          : { source_control_id: '', target_list_id: '' };
+      step.value = 'configure';
+    } else {
+      form.value = {
+        key: '',
+        label: '',
+        description: '',
+        type: 'text',
+        value: '',
+        config: {
+          min: undefined,
+          max: undefined,
+          step: 1,
+          reset_value: 0,
+          random: false,
+          random_interval: 1000,
+          mode: 'countup',
+          base_seconds: 0,
+          target_datetime: '',
+        },
+        sort_order: 0,
+      };
+      booleanValue.value = false;
+      sortMode.value = 'after';
+      expressionText.value = '';
+      listWriter.value = { source_control_id: '', target_list_id: '' };
+      step.value = 'pick';
     }
-    booleanValue.value = c.value === '1';
-    sortMode.value = 'manual';
-    expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
-    listWriter.value = c.type === 'list_writer'
-      ? {
-          source_control_id: (cfg.source_control_id ?? '') as number | '',
-          target_list_id: (cfg.target_list_id ?? '') as number | '',
-        }
-      : { source_control_id: '', target_list_id: '' };
-    step.value = 'configure';
-  } else if (props.copyFrom) {
-    const c = props.copyFrom;
-    const cfg = c.config ?? {};
-    form.value = {
-      key: '',
-      label: `${c.label || c.key} (copy)`,
-      description: c.description ?? '',
-      type: c.type,
-      value: c.value ?? '',
-      config: {
-        min: cfg.min ?? undefined,
-        max: cfg.max ?? undefined,
-        step: cfg.step ?? 1,
-        reset_value: cfg.reset_value ?? 0,
-        random: cfg.random ?? false,
-        random_interval: cfg.random_interval ?? 1000,
-        mode: cfg.mode ?? 'countup',
-        base_seconds: cfg.base_seconds ?? 0,
-        target_datetime: cfg.target_datetime ?? '',
-      },
-      sort_order: 0,
-    };
-    booleanValue.value = c.value === '1';
-    sortMode.value = 'after';
-    expressionText.value = c.type === 'expression' ? (cfg.expression ?? '') : '';
-    listWriter.value = c.type === 'list_writer'
-      ? {
-          source_control_id: (cfg.source_control_id ?? '') as number | '',
-          target_list_id: (cfg.target_list_id ?? '') as number | '',
-        }
-      : { source_control_id: '', target_list_id: '' };
-    step.value = 'configure';
-  } else {
-    form.value = {
-      key: '',
-      label: '',
-      description: '',
-      type: 'text',
-      value: '',
-      config: { min: undefined, max: undefined, step: 1, reset_value: 0, random: false, random_interval: 1000, mode: 'countup', base_seconds: 0, target_datetime: '' },
-      sort_order: 0,
-    };
-    booleanValue.value = false;
-    sortMode.value = 'after';
-    expressionText.value = '';
-    listWriter.value = { source_control_id: '', target_list_id: '' };
-    step.value = 'pick';
-  }
-});
+  },
+);
 
 /** Land focus where the user is about to type, on open and on every step change. */
 function focusStep() {
@@ -454,7 +462,7 @@ function buildPayload() {
       step: form.value.config.step ?? null,
       reset_value: form.value.config.reset_value,
       random: form.value.config.random || false,
-      random_interval: form.value.config.random ? (form.value.config.random_interval || 1000) : null,
+      random_interval: form.value.config.random ? form.value.config.random_interval || 1000 : null,
     };
   } else if (t === 'timer') {
     payload.config = {
@@ -488,15 +496,9 @@ async function save() {
   try {
     let response;
     if (isEditing.value) {
-      response = await axios.put(
-        `/templates/${props.template.id}/controls/${props.control!.id}`,
-        buildPayload()
-      );
+      response = await axios.put(`/templates/${props.template.id}/controls/${props.control!.id}`, buildPayload());
     } else {
-      response = await axios.post(
-        `/templates/${props.template.id}/controls`,
-        buildPayload()
-      );
+      response = await axios.post(`/templates/${props.template.id}/controls`, buildPayload());
     }
 
     emit('saved', response.data.control);
@@ -584,8 +586,7 @@ async function save() {
                     {{ selectedServicePreset?.label }}
                   </h3>
                   <p class="mt-1 text-sm leading-snug text-foreground/75">
-                    Managed by {{ presetSourceLabel(servicePresetSource ?? '') }}. The value keeps itself up to date,
-                    you never set it by hand.
+                    Managed by {{ presetSourceLabel(servicePresetSource ?? '') }}. The value keeps itself up to date, you never set it by hand.
                   </p>
                 </div>
               </div>
@@ -612,15 +613,12 @@ async function save() {
               class="flex items-start gap-2 border-l-2 border-amber-400/50 pl-3 text-xs text-foreground/75"
             >
               <Lightbulb class="mt-0.5 size-3.5 shrink-0 text-amber-500 dark:text-amber-400" />
-              <span>Per-stream counters reset themselves the moment you go live. The "latest" values do not, they
-                carry over between streams.</span>
+              <span>Per-stream counters reset themselves the moment you go live. The "latest" values do not, they carry over between streams.</span>
             </p>
 
             <!-- The tag you paste -->
             <div class="space-y-2">
-              <h4 class="text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-                Paste this in your template
-              </h4>
+              <h4 class="text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">Paste this in your template</h4>
               <button
                 v-if="tagPreview"
                 type="button"
@@ -646,25 +644,18 @@ async function save() {
               <ArrowLeft class="size-3.5" />
               Pick a different control
             </button>
-            <p v-else class="text-xs text-muted-foreground">
-              The type cannot be changed after a control is created.
-            </p>
+            <p v-else class="text-xs text-muted-foreground">The type cannot be changed after a control is created.</p>
           </aside>
 
           <!-- The form itself -->
-          <div
-            class="space-y-8 lg:col-span-2"
-            :class="form.type === 'expression' && !isPresetMode ? 'xl:col-span-1' : ''"
-          >
+          <div class="space-y-8 lg:col-span-2" :class="form.type === 'expression' && !isPresetMode ? 'xl:col-span-1' : ''">
             <p v-if="errors.general" class="border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               {{ errors.general }}
             </p>
 
             <!-- Name it -->
             <section class="space-y-4">
-              <h3 class="border-b border-border/60 pb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-                Name it
-              </h3>
+              <h3 class="border-b border-border/60 pb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">Name it</h3>
 
               <div class="grid gap-4" :class="isPresetMode ? '' : 'sm:grid-cols-2'">
                 <div class="space-y-2">
@@ -678,9 +669,7 @@ async function save() {
                     :class="{ 'border-destructive': errors.label }"
                   />
                   <p v-if="errors.label" class="text-xs text-destructive">{{ errors.label }}</p>
-                  <p v-else class="text-xs text-muted-foreground">
-                    This is what you will see in your dashboard while you are live. Be descriptive.
-                  </p>
+                  <p v-else class="text-xs text-muted-foreground">This is what you will see in your dashboard while you are live. Be descriptive.</p>
                 </div>
 
                 <div v-if="!isPresetMode" class="space-y-2">
@@ -696,12 +685,8 @@ async function save() {
                   />
                   <p v-if="errors.key" class="text-xs text-destructive">{{ errors.key }}</p>
                   <p v-else-if="keyWarning" class="text-xs text-amber-500">{{ keyWarning }}</p>
-                  <p v-else-if="isEditing" class="text-xs text-muted-foreground">
-                    Fixed. Your templates already point at this.
-                  </p>
-                  <p v-else class="text-xs text-muted-foreground">
-                    Written for you from the name. Cannot be changed after you save.
-                  </p>
+                  <p v-else-if="isEditing" class="text-xs text-muted-foreground">Fixed. Your templates already point at this.</p>
+                  <p v-else class="text-xs text-muted-foreground">Written for you from the name. Cannot be changed after you save.</p>
                 </div>
               </div>
 
@@ -722,10 +707,7 @@ async function save() {
 
             <template v-if="!isPresetMode">
               <!-- Starting value -->
-              <section
-                v-if="['text', 'number', 'counter', 'datetime', 'boolean'].includes(form.type)"
-                class="space-y-4"
-              >
+              <section v-if="['text', 'number', 'counter', 'datetime', 'boolean'].includes(form.type)" class="space-y-4">
                 <h3 class="border-b border-border/60 pb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                   {{ isEditing ? 'Value' : 'Starting value' }}
                 </h3>
@@ -751,10 +733,7 @@ async function save() {
                     <label class="relative inline-flex cursor-pointer items-center">
                       <input v-model="booleanValue" type="checkbox" class="peer sr-only" />
                       <span
-                        class="peer h-6 w-10 rounded-full bg-gray-300 after:absolute after:inset-s-0.5 after:top-0.5
-                        after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-['']
-                        peer-checked:bg-green-400 peer-checked:after:translate-x-4 peer-focus:outline-none
-                        dark:bg-gray-600 dark:after:bg-gray-100 dark:peer-checked:bg-green-800"
+                        class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-green-800 dark:after:bg-gray-100"
                       ></span>
                     </label>
                     <span class="text-sm text-foreground">{{ booleanValue ? 'On (true)' : 'Off (false)' }}</span>
@@ -812,9 +791,7 @@ async function save() {
 
               <!-- Timer settings -->
               <section v-if="form.type === 'timer'" class="space-y-4">
-                <h3 class="border-b border-border/60 pb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-                  How it counts
-                </h3>
+                <h3 class="border-b border-border/60 pb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">How it counts</h3>
 
                 <div class="grid gap-2 sm:grid-cols-3">
                   <button
@@ -871,7 +848,7 @@ async function save() {
                     <Label for="ctrl-lw-target">Append to this list</Label>
                     <select id="ctrl-lw-target" v-model="listWriter.target_list_id" class="input-border w-full cursor-pointer">
                       <option value="">Pick a list</option>
-                      <option v-for="l in (props.userLists ?? [])" :key="l.id" :value="l.id">
+                      <option v-for="l in props.userLists ?? []" :key="l.id" :value="l.id">
                         {{ l.label || l.slug }} ({{ l.items_count }} item{{ l.items_count === 1 ? '' : 's' }}{{ l.disabled ? ', disabled' : '' }})
                       </option>
                     </select>
@@ -884,8 +861,7 @@ async function save() {
                   </div>
                 </div>
                 <p class="text-xs text-muted-foreground">
-                  Every time the watched control changes, its new value is appended to the list. Works with any control
-                  type, expressions included.
+                  Every time the watched control changes, its new value is appended to the list. Works with any control type, expressions included.
                 </p>
               </section>
             </template>
@@ -933,24 +909,15 @@ async function save() {
           <!-- Expression builder gets its own column, because a formula needs room.
                At xl the three columns are 30/30/40 (see grid-cols above), so each
                takes a single track; below that the builder drops to its own row. -->
-          <div
-            v-if="form.type === 'expression' && !isPresetMode"
-            class="lg:col-span-3 xl:col-span-1"
-          >
-            <ExpressionBuilder
-              v-model="expressionText"
-              :available-controls="availableWatchControls"
-              :errors="errors"
-            />
+          <div v-if="form.type === 'expression' && !isPresetMode" class="lg:col-span-3 xl:col-span-1">
+            <ExpressionBuilder v-model="expressionText" :available-controls="availableWatchControls" :errors="errors" />
           </div>
         </div>
       </div>
 
       <!-- Footer: outside the scroll area, so Save never runs off the bottom. -->
       <div class="flex items-center justify-between gap-3 border-t border-sidebar-border bg-sidebar-accent/40 px-6 py-4 sm:px-8">
-        <p v-if="step === 'pick'" class="text-sm text-muted-foreground">
-          Pick a control to carry on. You can change your mind on the next screen.
-        </p>
+        <p v-if="step === 'pick'" class="text-sm text-muted-foreground">Pick a control to carry on. You can change your mind on the next screen.</p>
         <button
           v-else-if="!isEditing"
           type="button"

@@ -26,7 +26,7 @@ watch(
       toastType.value = (page.props.flash?.type as typeof toastType.value) || 'info';
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 interface UnifiedEvent {
@@ -54,8 +54,8 @@ const isAdmin = computed(() => page.props.isAdmin);
 const breadcrumbs = [
   {
     title: 'Dashboard',
-    href: '/dashboard'
-  }
+    href: '/dashboard',
+  },
 ];
 </script>
 
@@ -73,7 +73,6 @@ const breadcrumbs = [
       <!-- // Onboarding Wizard -->
 
       <div v-else>
-
         <WelcomeCard />
 
         <div class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">
@@ -107,8 +106,7 @@ const breadcrumbs = [
             />
             <EventsTable v-if="props.userRecentEvents.length > 0" :events="props.userRecentEvents" />
 
-            <EmptyState v-else
-                        message="No events yet. Events will appear here once you have received one or more stream events." />
+            <EmptyState v-else message="No events yet. Events will appear here once you have received one or more stream events." />
           </section>
 
           <section v-if="props.recentUpdates && props.recentUpdates.length > 0" class="flex-1 p-4">
@@ -121,7 +119,6 @@ const breadcrumbs = [
             />
             <UpdatesList :updates="props.recentUpdates" :is-admin="isAdmin" />
           </section>
-
         </div>
       </div>
 
@@ -132,9 +129,7 @@ const breadcrumbs = [
         <Card class="border border-sidebar">
           <CardHeader class="py-4 text-center">
             <CardTitle class="text-2xl">Get Started with Your First Template</CardTitle>
-            <CardDescription class="mt-3 text-base"> Create your own custom overlays or copy one from the community to
-              get started
-            </CardDescription>
+            <CardDescription class="mt-3 text-base"> Create your own custom overlays or copy one from the community to get started </CardDescription>
           </CardHeader>
           <CardContent class="flex justify-center gap-4 pb-8">
             <Link class="btn btn-sm btn-secondary" :href="route('templates.create')">

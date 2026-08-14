@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia';
 import { normalizeEvent } from '@/composables/useNormalizeEvent';
 import { EVENT_RULES } from '@/composables/useTwitchEventRules';
 import type { NormalizedEvent } from '@/types';
+import { defineStore } from 'pinia';
 
 type TagValue = string | number | boolean | null;
 type StateTags = Record<string, TagValue>;
@@ -30,20 +30,20 @@ export const useEventsStore = defineStore('events', {
 
   getters: {
     getEventsByType: (state) => (eventType: string) => {
-      return state.events.filter(event => event.type === eventType);
+      return state.events.filter((event) => event.type === eventType);
     },
 
-    getRecentEventsByType: (state) => (eventType: string, limit = 10) => {
-      return state.recentEvents
-        .filter(event => event.type === eventType)
-        .slice(0, limit);
-    },
+    getRecentEventsByType:
+      (state) =>
+      (eventType: string, limit = 10) => {
+        return state.recentEvents.filter((event) => event.type === eventType).slice(0, limit);
+      },
 
     getStatsByType: (state) => (eventType: string) => {
-      const events = state.events.filter(event => event.type === eventType);
+      const events = state.events.filter((event) => event.type === eventType);
       return {
         total: events.length,
-        recent: events.filter(event => Date.now() - event.ts < 3600000).length,
+        recent: events.filter((event) => Date.now() - event.ts < 3600000).length,
         latest: events[events.length - 1] || null,
       };
     },
@@ -57,16 +57,16 @@ export const useEventsStore = defineStore('events', {
       const rules = EVENT_RULES[ev.type];
       if (!rules) return;
 
-      rules.forEach(rule => {
+      rules.forEach((rule) => {
         const { op, tag, value, from, by, byPath } = rule;
         let val: any = value;
 
         if (from) {
-          val = from.split('.').reduce((acc:any, key:any) => acc?.[key], ev.raw);
+          val = from.split('.').reduce((acc: any, key: any) => acc?.[key], ev.raw);
         }
 
         if (byPath) {
-          const byVal = byPath.split('.').reduce((acc:any, key:any) => acc?.[key], ev.raw);
+          const byVal = byPath.split('.').reduce((acc: any, key: any) => acc?.[key], ev.raw);
           if (typeof byVal === 'number') {
             this.tags[tag] = (Number(this.tags[tag]) || 0) + byVal;
             return;
@@ -96,7 +96,7 @@ export const useEventsStore = defineStore('events', {
      * Add event to the store and trigger notifications.
      */
     addEvent(ev: NormalizedEvent) {
-      if (this.events.find(e => e.id === ev.id)) {
+      if (this.events.find((e) => e.id === ev.id)) {
         return;
       }
 
@@ -110,11 +110,12 @@ export const useEventsStore = defineStore('events', {
       this.processEventRules(ev);
 
       if (this.notificationSettings.enabled) {
-        window.dispatchEvent(new CustomEvent('twitch-event-normalized', {
-          detail: ev
-        }));
+        window.dispatchEvent(
+          new CustomEvent('twitch-event-normalized', {
+            detail: ev,
+          }),
+        );
       }
-
     },
 
     /**
@@ -137,15 +138,15 @@ export const useEventsStore = defineStore('events', {
      * Clear old events (keep only recent ones).
      */
     clearOldEvents(olderThanHours = 24) {
-      const cutoff = Date.now() - (olderThanHours * 60 * 60 * 1000);
-      this.events = this.events.filter(event => event.ts > cutoff);
+      const cutoff = Date.now() - olderThanHours * 60 * 60 * 1000;
+      this.events = this.events.filter((event) => event.ts > cutoff);
     },
 
     /**
      * Clear specific tag overlay triggers.
      */
     clearOverlayTriggers() {
-      Object.keys(this.tags).forEach(key => {
+      Object.keys(this.tags).forEach((key) => {
         if (key.endsWith('_overlay')) {
           this.tags[key] = false;
         }
@@ -171,8 +172,8 @@ export const useEventsStore = defineStore('events', {
       const oneHour = 60 * 60 * 1000;
       const oneDay = 24 * oneHour;
 
-      const recentEvents = this.events.filter(event => (now - event.ts) < oneHour);
-      const todayEvents = this.events.filter(event => (now - event.ts) < oneDay);
+      const recentEvents = this.events.filter((event) => now - event.ts < oneHour);
+      const todayEvents = this.events.filter((event) => now - event.ts < oneDay);
 
       const stats = {
         total: this.events.length,
@@ -181,11 +182,11 @@ export const useEventsStore = defineStore('events', {
         byType: {} as Record<string, { total: number; lastHour: number; today: number }>,
       };
 
-      const eventTypes = [...new Set(this.events.map(e => e.type))];
-      eventTypes.forEach(type => {
-        const allOfType = this.events.filter(e => e.type === type);
-        const recentOfType = recentEvents.filter(e => e.type === type);
-        const todayOfType = todayEvents.filter(e => e.type === type);
+      const eventTypes = [...new Set(this.events.map((e) => e.type))];
+      eventTypes.forEach((type) => {
+        const allOfType = this.events.filter((e) => e.type === type);
+        const recentOfType = recentEvents.filter((e) => e.type === type);
+        const todayOfType = todayEvents.filter((e) => e.type === type);
 
         stats.byType[type] = {
           total: allOfType.length,
@@ -196,5 +197,5 @@ export const useEventsStore = defineStore('events', {
 
       return stats;
     },
-  }
+  },
 });

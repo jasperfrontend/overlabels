@@ -14,16 +14,7 @@ import {
   type ServicePreset,
 } from '@/components/controls/controlPresets';
 import { fuzzyMatch, presetHaystack, serviceLabel } from '@/utils/services';
-import {
-  Coffee,
-  Gift,
-  HandHeart,
-  MapPinned,
-  Megaphone,
-  ShoppingBag,
-  Tv,
-  type LucideIcon,
-} from '@lucide/vue';
+import { Coffee, Gift, HandHeart, MapPinned, Megaphone, ShoppingBag, Tv, type LucideIcon } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -43,7 +34,8 @@ const sections: ServiceSection[] = [
   {
     source: 'twitch',
     label: serviceLabel('twitch'),
-    description: 'Per-stream counters that reset automatically when you go live. No setup needed - these are available the moment you connect Twitch.',
+    description:
+      'Per-stream counters that reset automatically when you go live. No setup needed - these are available the moment you connect Twitch.',
     icon: Tv,
     presets: TWITCH_PRESETS,
   },
@@ -78,7 +70,8 @@ const sections: ServiceSection[] = [
   {
     source: 'throne',
     label: serviceLabel('throne'),
-    description: 'Gift, contribution, and crowdfunded-gift data from Throne. Beyond the shared donation controls, Throne gifts are real products - so they also expose the item name, a product thumbnail you can drop straight into an <img>, and a surprise-gift flag.',
+    description:
+      'Gift, contribution, and crowdfunded-gift data from Throne. Beyond the shared donation controls, Throne gifts are real products - so they also expose the item name, a product thumbnail you can drop straight into an <img>, and a surprise-gift flag.',
     icon: Gift,
     presets: THRONE_PRESETS,
   },
@@ -144,15 +137,13 @@ function copyTag(tag: string) {
             description="These are the auto-managed controls Overlabels exposes through its integrations. Drop the tag into any overlay template and the value updates live as events come in."
           />
           <p class="mt-4 text-foreground">
-            Click any <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:source:key]]]</code>
-            tag to copy it. There are {{ totalPresets }} presets across {{ sections.length }} integrations.
+            Click any <code class="rounded bg-background px-1.5 py-0.5 font-mono text-sm">[[[c:source:key]]]</code> tag to copy it. There are
+            {{ totalPresets }} presets across {{ sections.length }} integrations.
           </p>
         </div>
 
         <div class="mb-8">
-          <label for="preset-search" class="mb-2 block text-sm font-medium text-foreground">
-            Filter presets
-          </label>
+          <label for="preset-search" class="mb-2 block text-sm font-medium text-foreground"> Filter presets </label>
           <input
             id="preset-search"
             v-model="search"
@@ -168,8 +159,8 @@ function copyTag(tag: string) {
 
         <div class="mb-8 border border-sidebar-border bg-card p-4 text-sm text-foreground">
           <p>
-            Want to use one of these? Open a static template, click <strong>Add control</strong>,
-            and pick the preset from the <strong>Stream Controls</strong> dropdown - or paste the tag straight into your overlay HTML.
+            Want to use one of these? Open a static template, click <strong>Add control</strong>, and pick the preset from the
+            <strong>Stream Controls</strong> dropdown - or paste the tag straight into your overlay HTML.
           </p>
         </div>
 
@@ -198,7 +189,7 @@ function copyTag(tag: string) {
                   </div>
                   <a
                     href="#"
-                    class="cursor-pointer self-start rounded bg-background px-2 py-1 font-mono text-sm no-underline hover:bg-violet-500/10 hover:text-violet-500 dark:hover:text-violet-300 transition-colors sm:self-auto"
+                    class="cursor-pointer self-start rounded bg-background px-2 py-1 font-mono text-sm no-underline transition-colors hover:bg-violet-500/10 hover:text-violet-500 sm:self-auto dark:hover:text-violet-300"
                     :title="copiedTag === tagFor(section.source, preset.key) ? 'Copied!' : 'Click to copy'"
                     @click.prevent="copyTag(tagFor(section.source, preset.key))"
                   >

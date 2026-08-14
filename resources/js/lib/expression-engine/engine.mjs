@@ -188,10 +188,31 @@ export const ARG_FUNCTIONS = new Set(['argmax', 'argmin', 'latest', 'oldest']);
 
 /** All supported function names. */
 export const SUPPORTED_FUNCTIONS = new Set([
-  'argmax', 'argmin', 'latest', 'oldest',
-  'max', 'min', 'clamp', 'sum', 'avg', 'abs', 'round', 'floor', 'ceil',
-  'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'sqrt', 'fract', 'mod',
-  'now', 'now_ms',
+  'argmax',
+  'argmin',
+  'latest',
+  'oldest',
+  'max',
+  'min',
+  'clamp',
+  'sum',
+  'avg',
+  'abs',
+  'round',
+  'floor',
+  'ceil',
+  'sin',
+  'cos',
+  'tan',
+  'asin',
+  'acos',
+  'atan',
+  'atan2',
+  'sqrt',
+  'fract',
+  'mod',
+  'now',
+  'now_ms',
 ]);
 
 const FUNCTIONS = {
@@ -204,7 +225,7 @@ const FUNCTIONS = {
   min: (args) => Math.min(...args.map(toNum)),
   clamp: (args) => Math.min(Math.max(toNum(args[0]), toNum(args[1])), toNum(args[2])),
   sum: (args) => args.reduce((acc, v) => acc + toNum(v), 0),
-  avg: (args) => args.length === 0 ? 0 : args.reduce((acc, v) => acc + toNum(v), 0) / args.length,
+  avg: (args) => (args.length === 0 ? 0 : args.reduce((acc, v) => acc + toNum(v), 0) / args.length),
   abs: (args) => Math.abs(toNum(args[0])),
   round: (args) => {
     const n = toNum(args[0]);
@@ -292,9 +313,7 @@ export function evaluate(node, ctx) {
     }
 
     case 'ConditionalExpression':
-      return isTruthy(evaluate(node.test, ctx))
-        ? evaluate(node.consequent, ctx)
-        : evaluate(node.alternate, ctx);
+      return isTruthy(evaluate(node.test, ctx)) ? evaluate(node.consequent, ctx) : evaluate(node.alternate, ctx);
 
     case 'CallExpression': {
       if (node.callee.type !== 'Identifier') return undefined;

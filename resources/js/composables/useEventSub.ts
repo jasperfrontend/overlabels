@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref } from 'vue';
 
 /**
  * Sets up a Twitch EventSub WebSocket listener using the global Laravel Echo instance.
@@ -24,37 +24,34 @@ import { ref } from 'vue'
  * })
  * ```
  */
-export const isWebSocketConnected = ref(false)
-let initialized = false
+export const isWebSocketConnected = ref(false);
+let initialized = false;
 
-export function useEventSub(
-  twitchId: string | number | null | undefined,
-  onMapped?: (event: any) => void
-) {
-  if (initialized) return
-  initialized = true
+export function useEventSub(twitchId: string | number | null | undefined, onMapped?: (event: any) => void) {
+  if (initialized) return;
+  initialized = true;
 
-  const echo = (window as any).Echo
+  const echo = (window as any).Echo;
   if (!echo) {
-    console.error('useEventSub: window.Echo is not available')
-    return
+    console.error('useEventSub: window.Echo is not available');
+    return;
   }
 
   // Track connection status on the shared Echo instance
-  const connection = echo.connector?.pusher?.connection
+  const connection = echo.connector?.pusher?.connection;
   if (connection) {
-    connection.bind('connected',    () => isWebSocketConnected.value = true)
-    connection.bind('disconnected', () => isWebSocketConnected.value = false)
-    connection.bind('failed',       () => isWebSocketConnected.value = false)
-    connection.bind('error',        () => isWebSocketConnected.value = false)
+    connection.bind('connected', () => (isWebSocketConnected.value = true));
+    connection.bind('disconnected', () => (isWebSocketConnected.value = false));
+    connection.bind('failed', () => (isWebSocketConnected.value = false));
+    connection.bind('error', () => (isWebSocketConnected.value = false));
   }
 
   if (twitchId === null || twitchId === undefined || twitchId === '') {
-    console.warn('useEventSub: missing twitchId, skipping subscription')
-    return
+    console.warn('useEventSub: missing twitchId, skipping subscription');
+    return;
   }
 
   echo.private(`twitch-events.${twitchId}`).listen('.twitch.event', (event: any) => {
-    onMapped?.(event)
-  })
+    onMapped?.(event);
+  });
 }

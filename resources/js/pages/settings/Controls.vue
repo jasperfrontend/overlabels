@@ -42,11 +42,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
         </div>
 
         <div v-else class="space-y-2">
-          <div
-            v-for="group in groups"
-            :key="group.key"
-            class="rounded-md border border-sidebar p-4"
-          >
+          <div v-for="group in groups" :key="group.key" class="rounded-md border border-sidebar p-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center gap-2">
                 <code class="font-mono text-sm text-foreground">[[[c:{{ group.key }}]]]</code>

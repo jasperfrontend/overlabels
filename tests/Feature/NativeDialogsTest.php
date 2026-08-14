@@ -83,7 +83,7 @@ it('never calls native confirm() or alert() in the frontend', function () {
 
     expect($offenders)->toBe([], sprintf(
         "Native dialog call, or a useConfirm() call missing its `await`:\n%s\n\n".
-        "Use `const { confirm, alert } = useConfirm()` and await the result.",
+        'Use `const { confirm, alert } = useConfirm()` and await the result.',
         implode("\n", $offenders)
     ));
 });

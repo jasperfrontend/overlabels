@@ -33,7 +33,7 @@ const props = defineProps<{
 const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Integrations', href: '/settings/integrations' },
-  { title: 'Buy Me a Coffee', href: '/settings/integrations/bmac' }
+  { title: 'Buy Me a Coffee', href: '/settings/integrations/bmac' },
 ];
 
 const EVENT_TYPES = [
@@ -42,7 +42,7 @@ const EVENT_TYPES = [
   { value: 'extra', label: 'Extras' },
   { value: 'membership', label: 'Memberships' },
   { value: 'recurring', label: 'Monthly support' },
-  { value: 'wishlist', label: 'Wishlist payments' }
+  { value: 'wishlist', label: 'Wishlist payments' },
 ];
 
 const DEFAULT_EVENTS = EVENT_TYPES.map((e) => e.value);
@@ -50,7 +50,7 @@ const DEFAULT_EVENTS = EVENT_TYPES.map((e) => e.value);
 const form = useForm({
   webhook_secret: '',
   enabled_events: props.integration.settings?.enabled_events ?? DEFAULT_EVENTS,
-  enabled: props.integration.connected ? props.integration.enabled : true
+  enabled: props.integration.connected ? props.integration.enabled : true,
 });
 
 const testMode = ref(props.integration.test_mode ?? false);
@@ -69,7 +69,7 @@ const seedAmount = computed(() => parseAmountInput(seedInput.value, userLocale.v
 const seedExample = computed(() => (1256.5).toLocaleString(userLocale.value, { minimumFractionDigits: 2 }));
 const seedUnreadable = computed(() => seedInput.value.trim() !== '' && seedAmount.value === null);
 const seedPreview = computed(() =>
-  seedAmount.value === null ? null : seedAmount.value.toLocaleString(userLocale.value, { maximumFractionDigits: 2 })
+  seedAmount.value === null ? null : seedAmount.value.toLocaleString(userLocale.value, { maximumFractionDigits: 2 }),
 );
 
 async function setSeedCount() {
@@ -79,13 +79,12 @@ async function setSeedCount() {
   seedError.value = null;
   try {
     const { data } = await axios.post('/settings/integrations/bmac/seed-count', {
-      initial_count: amount
+      initial_count: amount,
     });
     donationsSeedSet.value = data.donations_seed_set;
     donationsSeedValue.value = data.donations_seed_value;
   } catch (e: any) {
-    seedError.value =
-      e.response?.data?.errors?.initial_count?.[0] ?? e.response?.data?.error ?? 'Something went wrong.';
+    seedError.value = e.response?.data?.errors?.initial_count?.[0] ?? e.response?.data?.error ?? 'Something went wrong.';
   } finally {
     seedLoading.value = false;
   }
@@ -130,7 +129,7 @@ async function toggleTestMode() {
   testModeLoading.value = true;
   try {
     const { data } = await axios.patch('/settings/integrations/bmac/test-mode', {
-      test_mode: testMode.value
+      test_mode: testMode.value,
     });
     testMode.value = data.test_mode;
   } catch {
@@ -173,17 +172,15 @@ function formatDate(iso: string | null): string {
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
-        <div v-if="integration.connected"
-             class="border border-sidebar-border bg-sidebar-accent p-4 mb-6 space-y-2 text-sm text-muted-foreground">
+        <div v-if="integration.connected" class="mb-6 space-y-2 border border-sidebar-border bg-sidebar-accent p-4 text-sm text-muted-foreground">
           <p class="font-medium text-foreground">What to do next</p>
-          <ol class="list-decimal pl-4 space-y-1">
+          <ol class="list-decimal space-y-1 pl-4">
             <li>
-              Go to <a href="/triggers" class="text-violet-400 hover:underline font-medium">Triggers</a>
+              Go to <a href="/triggers" class="font-medium text-violet-400 hover:underline">Triggers</a>
               to configure which alert template fires for each BMAC event type (Donation, Commission, Membership, etc.).
             </li>
             <li>
-              Open any <strong>static</strong> overlay template -> <strong>Controls</strong> tab -> <strong>Add
-              control</strong>
+              Open any <strong>static</strong> overlay template -> <strong>Controls</strong> tab -> <strong>Add control</strong>
               to add BMAC data controls (donation count, latest donor name, etc.) that update live.
             </li>
           </ol>
@@ -191,38 +188,58 @@ function formatDate(iso: string | null): string {
 
         <form class="space-y-6" @submit.prevent="save">
           <!-- Setup steps - only shown until the integration is fully wired up -->
-          <div v-if="!integration.connected || !integration.has_secret" class="border border-violet-500/30 bg-violet-500/5 p-4 space-y-2 text-sm text-muted-foreground">
+          <div
+            v-if="!integration.connected || !integration.has_secret"
+            class="space-y-2 border border-violet-500/30 bg-violet-500/5 p-4 text-sm text-muted-foreground"
+          >
             <p class="font-medium text-foreground">How to set up BMAC webhooks</p>
-            <ol class="list-decimal pl-4 space-y-1">
+            <ol class="list-decimal space-y-1 pl-4">
               <li v-if="!integration.connected">
-                Click <strong>Generate webhook URL</strong> at the bottom of this page. Overlabels will generate
-                a unique URL for you, then this page will reload showing the URL.
+                Click <strong>Generate webhook URL</strong> at the bottom of this page. Overlabels will generate a unique URL for you, then this page
+                will reload showing the URL.
               </li>
               <li v-if="!integration.connected">
-                Open <a href="https://studio.buymeacoffee.com/webhooks/" target="_blank" rel="noopener" class="cursor-pointer text-violet-400 hover:underline">studio.buymeacoffee.com/webhooks</a> and click <strong>Create new webhook</strong>. Paste the Overlabels URL into the <strong>Webhook URL</strong> field.
+                Open
+                <a
+                  href="https://studio.buymeacoffee.com/webhooks/"
+                  target="_blank"
+                  rel="noopener"
+                  class="cursor-pointer text-violet-400 hover:underline"
+                  >studio.buymeacoffee.com/webhooks</a
+                >
+                and click <strong>Create new webhook</strong>. Paste the Overlabels URL into the <strong>Webhook URL</strong> field.
               </li>
               <li v-else>
-                Open <a href="https://studio.buymeacoffee.com/webhooks/" target="_blank" rel="noopener" class="cursor-pointer text-violet-400 hover:underline">studio.buymeacoffee.com/webhooks</a> and click <strong>Create new webhook</strong>. Paste the URL above into BMAC's <strong>Webhook URL</strong> field.
+                Open
+                <a
+                  href="https://studio.buymeacoffee.com/webhooks/"
+                  target="_blank"
+                  rel="noopener"
+                  class="cursor-pointer text-violet-400 hover:underline"
+                  >studio.buymeacoffee.com/webhooks</a
+                >
+                and click <strong>Create new webhook</strong>. Paste the URL above into BMAC's <strong>Webhook URL</strong> field.
               </li>
               <li>Pick the BMAC events you want Overlabels to receive (the same ones you check below).</li>
               <li>BMAC will reveal a <strong>Secret</strong>. Click it to copy, paste it into the field below, then save.</li>
-              <li>Use BMAC's <strong>Send Test</strong> button to confirm everything works - the event will appear in <a href="/dashboard/recents" class="cursor-pointer text-violet-400 hover:underline">Recent Events</a>.</li>
+              <li>
+                Use BMAC's <strong>Send Test</strong> button to confirm everything works - the event will appear in
+                <a href="/dashboard/recents" class="cursor-pointer text-violet-400 hover:underline">Recent Events</a>.
+              </li>
             </ol>
           </div>
 
           <!-- Webhook URL (read-only) - shown as soon as the integration row exists -->
           <div v-if="integration.connected && integration.webhook_url" class="group space-y-2">
             <Label>Your Webhook URL</Label>
-            <p class="text-muted-foreground text-sm">
-              Paste this URL into the "Webhook URL" field on your BMAC webhook.
-            </p>
+            <p class="text-sm text-muted-foreground">Paste this URL into the "Webhook URL" field on your BMAC webhook.</p>
             <div class="flex">
-              <input
-                :value="integration.webhook_url ?? ''"
-                readonly
-                class="peer font-mono text-sm input-border w-full mr-0"
-              />
-              <button type="button" class="btn btn-sm rounded-none bg-background rounded-r-sm border border-l-0 border-border dark:border-violet-300/30 p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 dark:peer-focus:border-violet-400 hover:ring-0" @click="copyWebhookUrl">
+              <input :value="integration.webhook_url ?? ''" readonly class="peer input-border mr-0 w-full font-mono text-sm" />
+              <button
+                type="button"
+                class="btn btn-sm rounded-none rounded-r-sm border border-l-0 border-border bg-background p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 hover:ring-0 dark:border-violet-300/30 dark:peer-focus:border-violet-400"
+                @click="copyWebhookUrl"
+              >
                 {{ copied ? 'Copied!' : 'Copy' }}
               </button>
             </div>
@@ -231,9 +248,9 @@ function formatDate(iso: string | null): string {
           <!-- Webhook Secret - only shown once the URL is generated -->
           <div v-if="integration.connected" class="space-y-2">
             <Label for="webhook_secret">Webhook Secret</Label>
-            <p class="text-muted-foreground text-sm">
-              BMAC reveals this on the webhook page after you create the webhook. It's used to verify
-              that incoming webhooks actually came from Buy Me a Coffee.
+            <p class="text-sm text-muted-foreground">
+              BMAC reveals this on the webhook page after you create the webhook. It's used to verify that incoming webhooks actually came from Buy Me
+              a Coffee.
             </p>
             <input
               id="webhook_secret"
@@ -243,7 +260,7 @@ function formatDate(iso: string | null): string {
               autocomplete="off"
               class="input-border w-full"
             />
-            <p v-if="form.errors.webhook_secret" class="text-destructive text-sm">
+            <p v-if="form.errors.webhook_secret" class="text-sm text-destructive">
               {{ form.errors.webhook_secret }}
             </p>
           </div>
@@ -251,9 +268,9 @@ function formatDate(iso: string | null): string {
           <!-- Enabled Event Types -->
           <div class="space-y-2">
             <Label>Alert on</Label>
-            <p class="text-muted-foreground text-sm">
-              Which BMAC event types should trigger alerts and update controls. Match this with the events
-              you selected when creating the webhook on BMAC.
+            <p class="text-sm text-muted-foreground">
+              Which BMAC event types should trigger alerts and update controls. Match this with the events you selected when creating the webhook on
+              BMAC.
             </p>
             <div class="flex flex-wrap gap-2">
               <Button
@@ -270,7 +287,7 @@ function formatDate(iso: string | null): string {
             </div>
           </div>
 
-          <p v-if="integration.connected" class="text-muted-foreground text-sm">
+          <p v-if="integration.connected" class="text-sm text-muted-foreground">
             Last event received: {{ formatDate(integration.last_received_at) }}
           </p>
 
@@ -293,28 +310,36 @@ function formatDate(iso: string | null): string {
                 role="switch"
                 :aria-checked="testMode"
                 :disabled="testModeLoading"
-                class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
                 :class="testMode ? 'bg-yellow-500' : 'bg-muted-foreground/30'"
-                @click="testMode = !testMode; toggleTestMode()"
+                @click="
+                  testMode = !testMode;
+                  toggleTestMode();
+                "
               >
                 <span
                   class="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform"
                   :class="testMode ? 'translate-x-4.5' : 'translate-x-0.5'"
                 />
               </button>
-              <Label class="cursor-pointer" @click="testMode = !testMode; toggleTestMode()">
+              <Label
+                class="cursor-pointer"
+                @click="
+                  testMode = !testMode;
+                  toggleTestMode();
+                "
+              >
                 Test mode <span v-if="testMode" class="ml-1 text-yellow-500">enabled</span>
                 <span v-if="testModeLoading" class="ml-1 text-xs text-yellow-500">saving...</span>
               </Label>
             </div>
-            <p class="text-muted-foreground text-sm">
+            <p class="text-sm text-muted-foreground">
               Disables duplicate event detection. Fire the same BMAC test webhook as many times as you like.
-              <span v-if="testMode" class="text-yellow-500 font-bold">
+              <span v-if="testMode" class="font-bold text-yellow-500">
                 Turn this off before going live - your donation total will reset to {{ donationsSeedValue ?? 0 }}.
               </span>
             </p>
-            <div v-if="testMode"
-                 class="border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-400 text-sm">
+            <div v-if="testMode" class="border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-400">
               Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.
             </div>
           </div>
@@ -323,29 +348,27 @@ function formatDate(iso: string | null): string {
         <template v-if="integration.connected">
           <Separator />
           <div class="space-y-2">
-            <p class="font-medium text-sm">Starting donation total</p>
+            <p class="text-sm font-medium">Starting donation total</p>
 
             <template v-if="donationsSeedSet">
-              <p class="text-muted-foreground text-sm">
-                Starting total set to <strong>{{ donationsSeedValue?.toLocaleString(userLocale) }}</strong>.
-                Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:bmac:total_received]]]</code>
+              <p class="text-sm text-muted-foreground">
+                Starting total set to <strong>{{ donationsSeedValue?.toLocaleString(userLocale) }}</strong
+                >. Your <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:bmac:total_received]]]</code>
                 controls started from this value.
               </p>
-              <p class="text-muted-foreground text-sm">
+              <p class="text-sm text-muted-foreground">
                 Need to correct it? Email
-                <a href="mailto:jasper@emailjasper.com"
-                   class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
+                <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
               </p>
             </template>
 
             <template v-else>
-              <p class="text-muted-foreground text-sm">
-                Had BMAC supporters before joining? Set the total you already raised so your overlay doesn't begin at
-                zero. Decimals are fine, in whichever notation you write money.
-                All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">total_received</code>
+              <p class="text-sm text-muted-foreground">
+                Had BMAC supporters before joining? Set the total you already raised so your overlay doesn't begin at zero. Decimals are fine, in
+                whichever notation you write money. All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">total_received</code>
                 controls update immediately.
               </p>
-              <div class="flex gap-2 items-start">
+              <div class="flex items-start gap-2">
                 <div class="flex-1 space-y-1">
                   <input
                     v-model="seedInput"
@@ -356,19 +379,11 @@ function formatDate(iso: string | null): string {
                     :disabled="seedLoading"
                     class="input-border"
                   />
-                  <p v-if="seedUnreadable" class="text-destructive text-xs">
-                    That doesn't look like an amount. Try {{ seedExample }}.
-                  </p>
-                  <p v-else-if="seedPreview" class="text-muted-foreground text-xs">Saving as {{ seedPreview }}</p>
-                  <p v-if="seedError" class="text-destructive text-xs">{{ seedError }}</p>
+                  <p v-if="seedUnreadable" class="text-xs text-destructive">That doesn't look like an amount. Try {{ seedExample }}.</p>
+                  <p v-else-if="seedPreview" class="text-xs text-muted-foreground">Saving as {{ seedPreview }}</p>
+                  <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  class="cursor-pointer"
-                  :disabled="seedLoading || seedAmount === null"
-                  @click="setSeedCount"
-                >
+                <Button type="button" variant="outline" class="cursor-pointer" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
                   {{ seedLoading ? 'Saving...' : 'Set starting total' }}
                 </Button>
               </div>
@@ -379,14 +394,11 @@ function formatDate(iso: string | null): string {
         <template v-if="integration.connected">
           <Separator />
           <div class="space-y-2">
-            <p class="font-medium text-sm">Danger zone</p>
-            <p class="text-muted-foreground text-sm">
-              Disconnecting Buy Me a Coffee will remove all BMAC-managed controls (donation counts, latest donor,
-              etc.) from your overlays.
+            <p class="text-sm font-medium">Danger zone</p>
+            <p class="text-sm text-muted-foreground">
+              Disconnecting Buy Me a Coffee will remove all BMAC-managed controls (donation counts, latest donor, etc.) from your overlays.
             </p>
-            <Button variant="destructive" size="sm" type="button" class="cursor-pointer" @click="disconnect">
-              Disconnect Buy Me a Coffee
-            </Button>
+            <Button variant="destructive" size="sm" type="button" class="cursor-pointer" @click="disconnect"> Disconnect Buy Me a Coffee </Button>
           </div>
         </template>
       </div>

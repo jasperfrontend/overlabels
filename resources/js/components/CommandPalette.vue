@@ -59,37 +59,170 @@ const items = computed<PaletteItem[]>(() => {
 
   const list: PaletteItem[] = [
     { id: 'dashboard', label: 'Dashboard', section: 'Navigation', href: route('dashboard.index'), icon: House, keywords: ['home', 'start'] },
-    { id: 'overlays', label: 'My overlays', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=static', icon: Layers, keywords: ['templates', 'static'] },
-    { id: 'alerts', label: 'My alerts', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=alert', icon: Bell, keywords: ['notifications'] },
-    { id: 'blocks', label: 'My blocks', section: 'Navigation', href: '/templates?direction=desc&filter=mine&search=&type=block', icon: Blocks, keywords: ['builder', 'pieces'] },
-    { id: 'recents', label: 'Recent events', section: 'Navigation', href: route('dashboard.recents'), icon: Activity, keywords: ['history', 'activity'] },
-    { id: 'triggers', label: 'Alert triggers', section: 'Navigation', href: route('triggers.index'), icon: Megaphone, keywords: ['events', 'mappings', 'overview', 'builder'] },
+    {
+      id: 'overlays',
+      label: 'My overlays',
+      section: 'Navigation',
+      href: '/templates?direction=desc&filter=mine&search=&type=static',
+      icon: Layers,
+      keywords: ['templates', 'static'],
+    },
+    {
+      id: 'alerts',
+      label: 'My alerts',
+      section: 'Navigation',
+      href: '/templates?direction=desc&filter=mine&search=&type=alert',
+      icon: Bell,
+      keywords: ['notifications'],
+    },
+    {
+      id: 'blocks',
+      label: 'My blocks',
+      section: 'Navigation',
+      href: '/templates?direction=desc&filter=mine&search=&type=block',
+      icon: Blocks,
+      keywords: ['builder', 'pieces'],
+    },
+    {
+      id: 'recents',
+      label: 'Recent events',
+      section: 'Navigation',
+      href: route('dashboard.recents'),
+      icon: Activity,
+      keywords: ['history', 'activity'],
+    },
+    {
+      id: 'triggers',
+      label: 'Alert triggers',
+      section: 'Navigation',
+      href: route('triggers.index'),
+      icon: Megaphone,
+      keywords: ['events', 'mappings', 'overview', 'builder'],
+    },
     { id: 'lists', label: 'My lists', section: 'Navigation', href: route('lists.index'), icon: List, keywords: ['queue', 'items'] },
     { id: 'kits', label: 'Overlay kits', section: 'Navigation', href: route('kits.index'), icon: LayoutGrid, keywords: ['bundles', 'packages'] },
-    { id: 'create-overlay', label: 'Create new overlay', section: 'Navigation', href: route('templates.create'), icon: Layers, keywords: ['new', 'template', 'add'] },
+    {
+      id: 'create-overlay',
+      label: 'Create new overlay',
+      section: 'Navigation',
+      href: route('templates.create'),
+      icon: Layers,
+      keywords: ['new', 'template', 'add'],
+    },
     { id: 'builder', label: 'Builder', section: 'Navigation', href: route('builder.create'), icon: Blocks, keywords: ['compose', 'grid', 'blocks'] },
-    { id: 'updates', label: 'Updates', section: 'Navigation', href: route('updates.index'), icon: Newspaper, keywords: ['news', 'changelog', 'releases'] },
+    {
+      id: 'updates',
+      label: 'Updates',
+      section: 'Navigation',
+      href: route('updates.index'),
+      icon: Newspaper,
+      keywords: ['news', 'changelog', 'releases'],
+    },
 
-    { id: 'bot-expressions', label: 'Bot Expressions', section: 'Chat bot', href: route('settings.bot.expressions.index'), icon: MessageSquare, keywords: ['bot', 'commands', 'chat'] },
-    { id: 'bot-aliases', label: 'Bot Aliases', section: 'Chat bot', href: route('settings.bot.aliases.index'), icon: MessageSquareCode, keywords: ['bot', 'commands', 'chat'] },
+    {
+      id: 'bot-expressions',
+      label: 'Bot Expressions',
+      section: 'Chat bot',
+      href: route('settings.bot.expressions.index'),
+      icon: MessageSquare,
+      keywords: ['bot', 'commands', 'chat'],
+    },
+    {
+      id: 'bot-aliases',
+      label: 'Bot Aliases',
+      section: 'Chat bot',
+      href: route('settings.bot.aliases.index'),
+      icon: MessageSquareCode,
+      keywords: ['bot', 'commands', 'chat'],
+    },
 
-    { id: 'account', label: 'Account Settings', section: 'Settings', href: route('settings.account'), icon: Settings, keywords: ['dark', 'light', 'mode', 'theme', 'locale', 'delete', 'account'] },
-    { id: 'integrations', label: 'Integrations', section: 'Settings', href: route('settings.integrations.index'), icon: Coffee, keywords: ['kofi', 'streamlabs', 'connect'] },
+    {
+      id: 'account',
+      label: 'Account Settings',
+      section: 'Settings',
+      href: route('settings.account'),
+      icon: Settings,
+      keywords: ['dark', 'light', 'mode', 'theme', 'locale', 'delete', 'account'],
+    },
+    {
+      id: 'integrations',
+      label: 'Integrations',
+      section: 'Settings',
+      href: route('settings.integrations.index'),
+      icon: Coffee,
+      keywords: ['kofi', 'streamlabs', 'connect'],
+    },
     { id: 'usage', label: 'Usage', section: 'Settings', href: '/settings/usage', icon: Activity, keywords: ['broadcasts', 'metering', 'limits'] },
-    { id: 'controls', label: 'Controls', section: 'Settings', href: '/settings/controls', icon: SlidersHorizontal, keywords: ['values', 'observability'] },
+    {
+      id: 'controls',
+      label: 'Controls',
+      section: 'Settings',
+      href: '/settings/controls',
+      icon: SlidersHorizontal,
+      keywords: ['values', 'observability'],
+    },
 
-    { id: 'help', label: 'Overlabels Help', section: 'Learn', href: route('help'), icon: Library, keywords: ['help', 'assistence', 'learn', 'documentation', 'docs'] },
-    { id: 'help-reference', label: 'Reference (Left Alt+r)', section: 'Learn', href: '/help/reference', icon: Library, keywords: ['search', 'tags', 'events', 'fields', 'lookup', 'documentation', 'docs'] },
-    { id: 'help-tags', label: 'Conditional Tags', section: 'Learn', href: route('help.conditionals'), icon: Brackets, keywords: ['syntax', 'documentation', 'docs'] },
-    { id: 'help-controls', label: 'Controls', section: 'Learn', href: route('help.controls'), icon: SlidersHorizontal, keywords: ['documentation', 'docs'] },
-    { id: 'help-formatting', label: 'Formatting Pipes', section: 'Learn', href: route('help.formatting'), icon: Pipette, keywords: ['duration', 'currency', 'number', 'date', 'pipe', 'format'] },
+    {
+      id: 'help',
+      label: 'Overlabels Help',
+      section: 'Learn',
+      href: route('help'),
+      icon: Library,
+      keywords: ['help', 'assistence', 'learn', 'documentation', 'docs'],
+    },
+    {
+      id: 'help-reference',
+      label: 'Reference (Left Alt+r)',
+      section: 'Learn',
+      href: '/help/reference',
+      icon: Library,
+      keywords: ['search', 'tags', 'events', 'fields', 'lookup', 'documentation', 'docs'],
+    },
+    {
+      id: 'help-tags',
+      label: 'Conditional Tags',
+      section: 'Learn',
+      href: route('help.conditionals'),
+      icon: Brackets,
+      keywords: ['syntax', 'documentation', 'docs'],
+    },
+    {
+      id: 'help-controls',
+      label: 'Controls',
+      section: 'Learn',
+      href: route('help.controls'),
+      icon: SlidersHorizontal,
+      keywords: ['documentation', 'docs'],
+    },
+    {
+      id: 'help-formatting',
+      label: 'Formatting Pipes',
+      section: 'Learn',
+      href: route('help.formatting'),
+      icon: Pipette,
+      keywords: ['duration', 'currency', 'number', 'date', 'pipe', 'format'],
+    },
     { id: 'help-resources', label: 'Free Resources', section: 'Learn', href: route('help.resources'), icon: BookOpen, keywords: ['links', 'tools'] },
     { id: 'help-why-kofi', label: 'Why Ko-fi', section: 'Learn', href: route('help.why-kofi'), icon: Heart, keywords: ['donate', 'support'] },
     { id: 'help-manifesto', label: 'Manifesto', section: 'Learn', href: route('help.manifesto'), icon: FileText, keywords: ['about', 'philosophy'] },
 
     { id: 'tokens', label: 'Token Generator', section: 'Developer tools', href: route('tokens.index'), icon: Shield, keywords: ['access', 'auth'] },
-    { id: 'tags', label: 'Tags Generator', section: 'Developer tools', href: route('tags.generator'), icon: Code, keywords: ['template', 'generator'] },
-    { id: 'twitchdata', label: 'Your Twitch Data', section: 'Developer tools', href: route('twitchdata'), icon: Terminal, keywords: ['api', 'debug', 'refresh'] },
+    {
+      id: 'tags',
+      label: 'Tags Generator',
+      section: 'Developer tools',
+      href: route('tags.generator'),
+      icon: Code,
+      keywords: ['template', 'generator'],
+    },
+    {
+      id: 'twitchdata',
+      label: 'Your Twitch Data',
+      section: 'Developer tools',
+      href: route('twitchdata'),
+      icon: Terminal,
+      keywords: ['api', 'debug', 'refresh'],
+    },
     { id: 'testing', label: 'Testing Guide', section: 'Developer tools', href: route('testing.index'), icon: Terminal, keywords: ['debug', 'test'] },
   ];
 
@@ -100,7 +233,14 @@ const items = computed<PaletteItem[]>(() => {
       { id: 'admin-templates', label: 'Admin Overlays', section: 'Admin', href: route('admin.templates.index'), icon: Shield, keywords: ['admin'] },
       { id: 'admin-events', label: 'Admin Events', section: 'Admin', href: route('admin.events.index'), icon: Shield, keywords: ['admin'] },
       { id: 'admin-audit', label: 'Audit Log', section: 'Admin', href: route('admin.audit.index'), icon: Shield, keywords: ['admin', 'log'] },
-      { id: 'admin-lockdown', label: 'Lockdown', section: 'Admin', href: route('admin.lockdown.index'), icon: Shield, keywords: ['admin', 'emergency'] },
+      {
+        id: 'admin-lockdown',
+        label: 'Lockdown',
+        section: 'Admin',
+        href: route('admin.lockdown.index'),
+        icon: Shield,
+        keywords: ['admin', 'emergency'],
+      },
     );
   }
 
@@ -212,13 +352,20 @@ function scrollToSelected() {
 const { register } = useKeyboardShortcuts();
 
 onMounted(() => {
-  register('command-palette', 'ctrl+space', () => { open.value = !open.value; }, { description: 'Command palette' });
+  register(
+    'command-palette',
+    'ctrl+space',
+    () => {
+      open.value = !open.value;
+    },
+    { description: 'Command palette' },
+  );
 });
 </script>
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-w-lg gap-0 p-0 overflow-hidden top-[35%]" @interact-outside="open = false">
+    <DialogContent class="top-[35%] max-w-lg gap-0 overflow-hidden p-0" @interact-outside="open = false">
       <DialogTitle class="sr-only">Command palette</DialogTitle>
       <div class="flex items-center gap-2 border-b px-3">
         <Search class="size-4 shrink-0 text-muted-foreground" />
@@ -230,24 +377,24 @@ onMounted(() => {
           class="flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
           @keydown="onKeydown"
         />
-        <kbd class="text-[10px] text-muted-foreground/60 border rounded px-1.5 py-0.5">ESC</kbd>
+        <kbd class="rounded border px-1.5 py-0.5 text-[10px] text-muted-foreground/60">ESC</kbd>
       </div>
 
       <div class="max-h-72 overflow-y-auto p-1">
-        <div v-if="flatFiltered.length === 0" class="p-4 text-center text-sm text-muted-foreground">
-          No results found.
-        </div>
+        <div v-if="flatFiltered.length === 0" class="p-4 text-center text-sm text-muted-foreground">No results found.</div>
 
         <template v-for="group in grouped" :key="group.section">
-          <div class="px-2 pt-2 pb-1 text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wide">
+          <div class="px-2 pt-2 pb-1 text-[11px] font-medium tracking-wide text-muted-foreground/70 uppercase">
             {{ group.section }}
           </div>
           <button
-            v-for="(item) in group.items"
+            v-for="item in group.items"
             :key="item.id"
             :data-palette-selected="flatFiltered.indexOf(item) === selectedIndex"
-            class="flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm cursor-pointer transition-colors"
-            :class="flatFiltered.indexOf(item) === selectedIndex ? 'bg-card text-accent-foreground hover:bg-card' : 'text-foreground hover:bg-accent/50'"
+            class="flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors"
+            :class="
+              flatFiltered.indexOf(item) === selectedIndex ? 'bg-card text-accent-foreground hover:bg-card' : 'text-foreground hover:bg-accent/50'
+            "
             @click="navigate(item)"
             @mouseenter="selectedIndex = flatFiltered.indexOf(item)"
           >
@@ -257,10 +404,10 @@ onMounted(() => {
         </template>
       </div>
 
-      <div class="border-t px-3 py-2 text-[11px] text-muted-foreground/60 flex items-center gap-3">
-        <span><kbd class="border rounded px-1">&#8593;</kbd> <kbd class="border rounded px-1">&#8595;</kbd> navigate</span>
-        <span><kbd class="border rounded px-1">Enter</kbd> go</span>
-        <span><kbd class="border rounded px-1">Esc</kbd> close</span>
+      <div class="flex items-center gap-3 border-t px-3 py-2 text-[11px] text-muted-foreground/60">
+        <span><kbd class="rounded border px-1">&#8593;</kbd> <kbd class="rounded border px-1">&#8595;</kbd> navigate</span>
+        <span><kbd class="rounded border px-1">Enter</kbd> go</span>
+        <span><kbd class="rounded border px-1">Esc</kbd> close</span>
       </div>
     </DialogContent>
   </Dialog>

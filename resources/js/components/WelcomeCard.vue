@@ -52,33 +52,33 @@ const tiles = [
     label: 'My static overlays',
     icon: Layers,
     href: route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'static' }),
-    class: 'btn-secondary'
+    class: 'btn-secondary',
   },
   {
     label: 'My alerts',
     icon: Bell,
     href: route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'alert' }),
-    class: 'btn-warning'
+    class: 'btn-warning',
   },
   {
     label: 'Recent events',
     icon: Activity,
     href: route('dashboard.recents'),
-    class: 'btn-cancel'
+    class: 'btn-cancel',
   },
   {
     label: 'Recent updates',
     icon: Newspaper,
     href: route('updates.index'),
-    class: 'btn-primary'
-  }
+    class: 'btn-primary',
+  },
 ];
 </script>
 
 <template>
   <!-- py-0 hands all vertical padding to the inner wrapper, so the card has one
        source of spacing rather than Card's py-4 stacked on top of it. -->
-  <Card v-if="!dismissed" class="relative rounded-md m-4 mb-6 py-0">
+  <Card v-if="!dismissed" class="relative m-4 mb-6 rounded-md py-0">
     <button
       type="button"
       class="btn btn-plain btn-xs absolute top-2 right-2"

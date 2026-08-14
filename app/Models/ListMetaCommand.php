@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * One-per-user configuration for the `!list` meta-command. The command
@@ -15,9 +16,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property int $id
  * @property int $user_id
- * @property string $command            Without leading "!"
+ * @property string $command Without leading "!"
  * @property bool $enabled
- * @property \Illuminate\Support\Carbon|null $last_fired_at
+ * @property Carbon|null $last_fired_at
  */
 class ListMetaCommand extends Model
 {

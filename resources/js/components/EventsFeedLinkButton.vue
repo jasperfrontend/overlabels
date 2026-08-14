@@ -19,11 +19,7 @@ defineExpose({ generateFeedUrl });
 </script>
 
 <template>
-  <button
-    @click="generateFeedUrl()"
-    class="btn btn-primary cursor-pointer"
-    title="Open your events feed on your phone"
-  >
+  <button @click="generateFeedUrl()" class="btn btn-primary cursor-pointer" title="Open your events feed on your phone">
     <Smartphone class="mr-2 h-4 w-4" />
     Events feed
   </button>
@@ -41,10 +37,9 @@ defineExpose({ generateFeedUrl });
   >
     <template #instructions>
       <p class="text-foreground">
-        The link opens your live events feed with the mute-all-alerts button and event replay -
-        no login needed. Anyone with the link can read your event history, mute or unmute your
-        alerts, and replay past alerts on your stream, so treat it like a password. If it ever
-        leaks, revoke the "Events feed" token on the Tokens page and generate a new link here.
+        The link opens your live events feed with the mute-all-alerts button and event replay - no login needed. Anyone with the link can read your
+        event history, mute or unmute your alerts, and replay past alerts on your stream, so treat it like a password. If it ever leaks, revoke the
+        "Events feed" token on the Tokens page and generate a new link here.
       </p>
     </template>
 

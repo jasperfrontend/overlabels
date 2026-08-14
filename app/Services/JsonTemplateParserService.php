@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\TemplateTag;
 use App\Models\TemplateTagCategory;
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use LaravelIdea\Helper\App\Models\_IH_TemplateTagCategory_C;
 
 /**
  * JsonTemplateParserService
@@ -613,11 +615,7 @@ class JsonTemplateParserService
         return empty($options) ? null : $options;
     }
 
-    /**
-     * @param \LaravelIdea\Helper\App\Models\_IH_TemplateTagCategory_C|\Illuminate\Database\Eloquent\Collection|array $categories
-     * @return array
-     */
-    public function extracted_categories(\LaravelIdea\Helper\App\Models\_IH_TemplateTagCategory_C|\Illuminate\Database\Eloquent\Collection|array $categories): array
+    public function extracted_categories(_IH_TemplateTagCategory_C|Collection|array $categories): array
     {
         $organized = [];
 

@@ -99,10 +99,7 @@ function matchesTemplate(ctx: ListContext, template: { type?: string | null; own
 // direct-paste, fresh tab, straight after create or copy) - but a frozen or
 // global candidate is skipped when the template could not appear in that list
 // (see matchesTemplate above).
-export function captureListContext(
-  templateId: number | string,
-  template: { type?: string | null; ownedByMe: boolean },
-): ListContext {
+export function captureListContext(templateId: number | string, template: { type?: string | null; ownedByMe: boolean }): ListContext {
   const frozen = read(originKey(templateId));
   if (frozen && matchesTemplate(frozen, template)) return frozen;
 

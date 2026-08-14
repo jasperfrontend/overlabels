@@ -11,11 +11,11 @@ import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { ref, computed, onMounted } from 'vue';
 
 interface Props {
-    breadcrumbs?: BreadcrumbItemType[];
+  breadcrumbs?: BreadcrumbItemType[];
 }
 
 withDefaults(defineProps<Props>(), {
-    breadcrumbs: () => [],
+  breadcrumbs: () => [],
 });
 
 const showKeyboardShortcuts = ref(false);
@@ -23,9 +23,14 @@ const { register, getAllShortcuts } = useKeyboardShortcuts();
 const keyboardShortcutsList = computed(() => getAllShortcuts());
 
 onMounted(() => {
-  register('toggle-shortcuts', 'ctrl+k', () => {
-    showKeyboardShortcuts.value = !showKeyboardShortcuts.value;
-  }, { description: 'Show keyboard shortcuts' });
+  register(
+    'toggle-shortcuts',
+    'ctrl+k',
+    () => {
+      showKeyboardShortcuts.value = !showKeyboardShortcuts.value;
+    },
+    { description: 'Show keyboard shortcuts' },
+  );
 });
 </script>
 

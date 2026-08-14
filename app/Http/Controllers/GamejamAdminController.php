@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Console\Commands\GamejamDebug;
-use App\Events\GameStateChanged;
 use App\Events\GamejamDebugToggled;
+use App\Events\GameStateChanged;
 use App\Jobs\ResolveGameRound;
 use App\Models\BotChatOutbox;
 use App\Models\Game;

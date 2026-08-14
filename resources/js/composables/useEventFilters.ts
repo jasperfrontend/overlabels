@@ -1,5 +1,5 @@
-import { ref, watch } from 'vue';
 import debounce from 'lodash/debounce';
+import { ref, watch } from 'vue';
 
 /** Filter values as they arrive from the server, all optional. */
 export interface EventFiltersShape {
@@ -38,11 +38,7 @@ export function normalizeEventFilters(input?: EventFiltersShape): NormalizedEven
  * @param options.apply performs the actual visit; called after the dispatched term is recorded
  * @param options.debounceMs quiet period before search-as-you-type fires
  */
-export function useEventFilters(options: {
-  serverFilters: () => EventFiltersShape | undefined;
-  apply: () => void;
-  debounceMs?: number;
-}) {
+export function useEventFilters(options: { serverFilters: () => EventFiltersShape | undefined; apply: () => void; debounceMs?: number }) {
   const filters = ref(normalizeEventFilters(options.serverFilters()));
 
   // The search term we last asked the server for. A response can only ever echo

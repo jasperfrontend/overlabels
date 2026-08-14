@@ -48,8 +48,8 @@ interface Props {
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Overlay kits',
-    href: route('kits.index')
-  }
+    href: route('kits.index'),
+  },
 ];
 
 defineProps<Props>();
@@ -59,10 +59,10 @@ defineProps<Props>();
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Overlay kits" />
 
-    <div class="p-4 space-y-4">
+    <div class="space-y-4 p-4">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
-          <LayoutGrid class="w-6 h-6 mr-2" />
+          <LayoutGrid class="mr-2 h-6 w-6" />
           <Heading title="Overlay Kits" />
         </div>
         <Link :href="route('kits.create')" class="btn btn-primary self-start sm:self-auto">
@@ -71,14 +71,8 @@ defineProps<Props>();
         </Link>
       </div>
 
-      <div v-if="kits.data.length > 0" class="grid md:grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-        <KitCard
-          v-for="kit in kits.data"
-          :key="kit.id"
-          :kit="kit"
-          :current-user-id="auth?.user?.id"
-          :allow-delete="true"
-        />
+      <div v-if="kits.data.length > 0" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <KitCard v-for="kit in kits.data" :key="kit.id" :kit="kit" :current-user-id="auth?.user?.id" :allow-delete="true" />
       </div>
 
       <EmptyState
@@ -102,34 +96,20 @@ defineProps<Props>();
           v-for="page in kits.last_page"
           :key="page"
           :href="`/kits?page=${page}`"
-          :class="[
-            'rounded px-3 py-1 text-sm',
-            page === kits.current_page
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted hover:bg-muted/80'
-          ]"
+          :class="['rounded px-3 py-1 text-sm', page === kits.current_page ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80']"
         >
           {{ page }}
         </Link>
       </div>
 
-
       <!-- Public kits from other users -->
       <template v-if="recentPublicKits && recentPublicKits.length > 0">
         <Heading title="Public kits" />
-        <p class="text-sm text-muted-foreground mb-3">Kits shared by the community. Copy any kit to use it in your own
-          overlays.</p>
-        <div class="grid md:grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-          <KitCard
-            v-for="kit in recentPublicKits"
-            :key="`public-${kit.id}`"
-            :kit="kit"
-            :current-user-id="auth?.user?.id"
-            show-owner
-          />
+        <p class="mb-3 text-sm text-muted-foreground">Kits shared by the community. Copy any kit to use it in your own overlays.</p>
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <KitCard v-for="kit in recentPublicKits" :key="`public-${kit.id}`" :kit="kit" :current-user-id="auth?.user?.id" show-owner />
         </div>
       </template>
-
     </div>
   </AppLayout>
 </template>

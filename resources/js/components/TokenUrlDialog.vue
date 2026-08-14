@@ -72,7 +72,7 @@ function generate() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
         },
         body: JSON.stringify({
@@ -141,7 +141,7 @@ defineExpose({ generate });
         <p class="text-foreground" v-else>{{ copyHint }}</p>
 
         <a
-          class="flex items-center cursor-pointer gap-2 rounded-lg border border-green-500/20 bg-green-400/10 dark:bg-green-950/10 p-3 font-mono text-xs break-all transition-colors hover:bg-green-400/20 active:ring active:ring-green-500 select-all"
+          class="flex cursor-pointer items-center gap-2 rounded-lg border border-green-500/20 bg-green-400/10 p-3 font-mono text-xs break-all transition-colors select-all hover:bg-green-400/20 active:ring active:ring-green-500 dark:bg-green-950/10"
           :class="urlCopied ? 'border-green-500/40 ring ring-green-500/80' : 'border-green-500/20'"
           :href="generatedUrl"
           @click.prevent="copyUrl"
@@ -159,7 +159,7 @@ defineExpose({ generate });
         <div class="rounded-lg border border-violet-500/30 bg-violet-600/5">
           <button
             type="button"
-            class="flex w-full items-center justify-between gap-2 px-3 py-2 text-left cursor-pointer"
+            class="flex w-full cursor-pointer items-center justify-between gap-2 px-3 py-2 text-left"
             @click="showQrCode = !showQrCode"
           >
             <span class="flex items-center gap-2 text-sm text-foreground">

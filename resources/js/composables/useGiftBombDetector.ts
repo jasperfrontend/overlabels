@@ -1,10 +1,10 @@
-import { ref } from 'vue';
 import type { NormalizedEvent } from '@/types';
+import { ref } from 'vue';
 
 interface GiftBombBuffer {
   gifterName: string;
   gifterUserId: string;
-  tier: "1000" | "2000" | "3000" | undefined;
+  tier: '1000' | '2000' | '3000' | undefined;
   events: NormalizedEvent[];
   firstEventTime: number;
   lastEventTime: number;
@@ -54,7 +54,7 @@ export function useGiftBombDetector(): {
       gift_count: giftCount,
       raw: {
         subscription: {
-          type: 'channel.subscription.gift'
+          type: 'channel.subscription.gift',
         },
         event: {
           user_id: buffer.gifterUserId,
@@ -67,8 +67,8 @@ export function useGiftBombDetector(): {
           total: giftCount,
           is_gift: true,
           is_live_update: isUpdate,
-        }
-      }
+        },
+      },
     };
   };
 
@@ -83,7 +83,7 @@ export function useGiftBombDetector(): {
       callback(finalEvent);
     } else {
       // Send individual events if below threshold
-      buffer.events.forEach(event => callback(event));
+      buffer.events.forEach((event) => callback(event));
     }
 
     // Clean up
@@ -107,7 +107,7 @@ export function useGiftBombDetector(): {
 
     const gifterName = event.user_name || 'Anonymous';
     const gifterUserId = event.user_id || 'unknown';
-    const tier: "1000" | "2000" | "3000" | undefined = event.tier as "1000" | "2000" | "3000" | undefined;
+    const tier: '1000' | '2000' | '3000' | undefined = event.tier as '1000' | '2000' | '3000' | undefined;
     const bufferKey = `${gifterUserId}-${tier || '1000'}`;
     const now = Date.now();
 
@@ -158,7 +158,7 @@ export function useGiftBombDetector(): {
 
     // If already live, send throttled update (every 5th event or every 300ms)
     else if (buffer.isLive && buffer.events.length > MIN_GIFT_BOMB_SIZE) {
-      const shouldUpdate = buffer.events.length % 5 === 0 || (now - buffer.lastUpdateTime) > 300;
+      const shouldUpdate = buffer.events.length % 5 === 0 || now - buffer.lastUpdateTime > 300;
       if (shouldUpdate) {
         buffer.lastUpdateTime = now;
         sendLiveUpdate(buffer, callback);
@@ -191,11 +191,11 @@ export function useGiftBombDetector(): {
 
   const forceFlushAll = (callback: (event: NormalizedEvent) => void) => {
     const bufferKeys = Array.from(activeBuffers.value.keys());
-    bufferKeys.forEach(key => flushBuffer(key, callback));
+    bufferKeys.forEach((key) => flushBuffer(key, callback));
   };
 
   const getActiveBuffers = () => {
-    return Array.from(activeBuffers.value.values()).map(buffer => ({
+    return Array.from(activeBuffers.value.values()).map((buffer) => ({
       gifterName: buffer.gifterName,
       count: buffer.events.length,
       timeRemaining: buffer.timeoutId ? GIFT_BOMB_WINDOW : 0,

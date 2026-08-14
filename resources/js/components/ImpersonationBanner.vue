@@ -12,13 +12,10 @@ function stopImpersonating() {
 </script>
 
 <template>
-  <div
-    v-if="impersonating"
-    class="flex items-center justify-between bg-yellow-400 px-4 py-2 text-sm font-medium text-yellow-900"
-  >
+  <div v-if="impersonating" class="flex items-center justify-between bg-yellow-400 px-4 py-2 text-sm font-medium text-yellow-900">
     <span>
-      You are impersonating <strong>{{ impersonating?.target_name }}</strong>.
-      Actions you take affect their account.
+      You are impersonating <strong>{{ impersonating?.target_name }}</strong
+      >. Actions you take affect their account.
     </span>
     <button
       @click="stopImpersonating"

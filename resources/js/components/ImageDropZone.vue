@@ -2,13 +2,16 @@
 import { ref } from 'vue';
 import { ImageIcon, Trash2, Upload, Loader2 } from '@lucide/vue';
 
-const props = withDefaults(defineProps<{
-  modelValue: string | null;
-  kind: 'template_screenshot' | 'kit_thumbnail';
-  compact?: boolean;
-}>(), {
-  compact: false,
-});
+const props = withDefaults(
+  defineProps<{
+    modelValue: string | null;
+    kind: 'template_screenshot' | 'kit_thumbnail';
+    compact?: boolean;
+  }>(),
+  {
+    compact: false,
+  },
+);
 
 const emit = defineEmits<{
   'update:modelValue': [url: string | null];
@@ -48,11 +51,7 @@ async function uploadToCloudinary(file: File) {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      const msg = data?.error
-        ?? data?.errors?.image?.[0]
-        ?? data?.errors?.kind?.[0]
-        ?? data?.message
-        ?? `Upload failed: ${response.statusText}`;
+      const msg = data?.error ?? data?.errors?.image?.[0] ?? data?.errors?.kind?.[0] ?? data?.message ?? `Upload failed: ${response.statusText}`;
       throw new Error(msg);
     }
 
@@ -115,7 +114,10 @@ function handleFileSelect(event: Event) {
       <img
         :src="props.modelValue"
         alt="Uploaded image"
-        :class="[compact ? 'h-48 w-auto rounded-lg object-cover' : 'max-h-96 rounded border border-sidebar', 'cursor-pointer hover:opacity-80 transition-opacity']"
+        :class="[
+          compact ? 'h-48 w-auto rounded-lg object-cover' : 'max-h-96 rounded border border-sidebar',
+          'cursor-pointer transition-opacity hover:opacity-80',
+        ]"
         @click="emit('clickImage')"
       />
       <div class="flex gap-2">
@@ -151,29 +153,18 @@ function handleFileSelect(event: Event) {
         <p class="text-sm text-muted-foreground">Uploading...</p>
       </template>
       <template v-else>
-        <ImageIcon :class="['mb-3 transition-colors', compact ? 'h-8 w-8' : 'h-10 w-10', isFocused ? 'text-violet-500' : 'text-muted-foreground/50']" />
-        <p v-if="!isFocused" class="mb-1 text-sm font-medium text-accent-foreground">
-          Click here, then paste from clipboard (Ctrl+V)
-        </p>
-        <p v-else class="mb-1 animate-pulse text-sm font-medium text-violet-500">
-          Ready — press Ctrl+V to paste your image
-        </p>
-        <p class="mb-4 text-xs text-muted-foreground">
-          or drag and drop an image, or use the button below
-        </p>
+        <ImageIcon
+          :class="['mb-3 transition-colors', compact ? 'h-8 w-8' : 'h-10 w-10', isFocused ? 'text-violet-500' : 'text-muted-foreground/50']"
+        />
+        <p v-if="!isFocused" class="mb-1 text-sm font-medium text-accent-foreground">Click here, then paste from clipboard (Ctrl+V)</p>
+        <p v-else class="mb-1 animate-pulse text-sm font-medium text-violet-500">Ready — press Ctrl+V to paste your image</p>
+        <p class="mb-4 text-xs text-muted-foreground">or drag and drop an image, or use the button below</p>
         <button type="button" @click.stop="fileInput?.click()" class="btn btn-secondary btn-sm">
           <Upload class="mr-1.5 h-3.5 w-3.5" />
           Browse files
         </button>
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          class="hidden"
-          @change="handleFileSelect"
-        />
+        <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
       </template>
     </div>
-
   </div>
 </template>

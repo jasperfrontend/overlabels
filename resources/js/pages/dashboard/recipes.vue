@@ -54,7 +54,7 @@ async function fireButton(instanceId: number, pickerRef: string) {
     const res = await fetch(`/recipes/instances/${instanceId}/fire-button`, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': csrfToken,
       },
@@ -63,8 +63,8 @@ async function fireButton(instanceId: number, pickerRef: string) {
     });
     const data = await res.json();
     if (res.ok && data.fired) {
-      const instance = instances.value.find(i => i.id === instanceId);
-      const button = instance?.buttons.find(b => b.picker_ref === pickerRef);
+      const instance = instances.value.find((i) => i.id === instanceId);
+      const button = instance?.buttons.find((b) => b.picker_ref === pickerRef);
       if (button) {
         button.last_result = data.result;
         button.last_result_at = Math.floor(Date.now() / 1000);
@@ -110,16 +110,17 @@ function formatRelativeTime(unixSeconds: number | null): string | null {
   <Head title="Recipes" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-6">
-      <Heading title="Recipes" description="Installed recipes that produce values into your controls layer. Click a button to fire its picker; the result lands in your overlays via the matching control tag." />
+      <Heading
+        title="Recipes"
+        description="Installed recipes that produce values into your controls layer. Click a button to fire its picker; the result lands in your overlays via the matching control tag."
+      />
 
       <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
 
       <div v-if="instances.length === 0" class="rounded-lg border border-dashed p-10 text-center">
         <ChefHat class="mx-auto h-10 w-10 text-muted-foreground" />
         <p class="mt-4 text-foreground">No recipes installed yet.</p>
-        <p class="mt-1 text-sm text-muted-foreground">
-          Install a recipe from the catalogue to see its dashboard buttons here.
-        </p>
+        <p class="mt-1 text-sm text-muted-foreground">Install a recipe from the catalogue to see its dashboard buttons here.</p>
       </div>
 
       <div v-else class="grid gap-4 md:grid-cols-2">
@@ -137,7 +138,7 @@ function formatRelativeTime(unixSeconds: number | null): string | null {
               <Button
                 variant="ghost"
                 size="sm"
-                class="cursor-pointer shrink-0"
+                class="shrink-0 cursor-pointer"
                 @click="copyTag(instance.tag_prefix)"
                 title="Copy the result tag for this instance"
               >
@@ -147,9 +148,7 @@ function formatRelativeTime(unixSeconds: number | null): string | null {
             </div>
           </CardHeader>
           <CardContent class="space-y-3">
-            <div v-if="instance.buttons.length === 0" class="text-sm text-muted-foreground">
-              This recipe declares no dashboard buttons.
-            </div>
+            <div v-if="instance.buttons.length === 0" class="text-sm text-muted-foreground">This recipe declares no dashboard buttons.</div>
             <div
               v-for="button in instance.buttons"
               :key="button.picker_ref"

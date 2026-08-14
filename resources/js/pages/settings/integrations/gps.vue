@@ -13,14 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
 
@@ -110,9 +103,7 @@ function save() {
     preserveScroll: true,
     onSuccess: () => {
       toastType.value = 'success';
-      toastMessage.value = props.integration.connected
-        ? 'Settings saved.'
-        : 'Overlabels GPS connected.';
+      toastMessage.value = props.integration.connected ? 'Settings saved.' : 'Overlabels GPS connected.';
     },
     onError: () => {
       toastType.value = 'error';
@@ -122,7 +113,8 @@ function save() {
 }
 
 async function resetSession() {
-  if (!(await confirm({ message: 'Reset the current session distance and stats to 0? Your lifetime total is not affected.', confirmLabel: 'Reset' }))) return;
+  if (!(await confirm({ message: 'Reset the current session distance and stats to 0? Your lifetime total is not affected.', confirmLabel: 'Reset' })))
+    return;
   resetting.value = true;
   try {
     await axios.post('/settings/integrations/overlabels-mobile/reset-session');
@@ -153,7 +145,8 @@ async function resetLifetime() {
 }
 
 async function regenerateToken() {
-  if (!(await confirm({ message: 'Regenerate the token? You will need to scan the new QR code in the app again.', confirmLabel: 'Regenerate' }))) return;
+  if (!(await confirm({ message: 'Regenerate the token? You will need to scan the new QR code in the app again.', confirmLabel: 'Regenerate' })))
+    return;
   regenerating.value = true;
   useForm({}).post('/settings/integrations/overlabels-mobile/regenerate-token', {
     preserveScroll: true,
@@ -197,12 +190,9 @@ function formatDate(iso: string | null): string {
         </div>
 
         <!-- Not connected: explain what this does -->
-        <div
-          v-if="!integration.connected"
-          class="border border-sidebar-border bg-sidebar-accent p-4 space-y-2 text-sm text-foreground"
-        >
+        <div v-if="!integration.connected" class="space-y-2 border border-sidebar-border bg-sidebar-accent p-4 text-sm text-foreground">
           <p class="font-medium">How it works</p>
-          <ol class="list-decimal pl-4 space-y-1">
+          <ol class="list-decimal space-y-1 pl-4">
             <li>Click <strong>Connect Overlabels GPS</strong> below.</li>
             <li>A QR code will appear. Open the Overlabels GPS app on your phone and scan it.</li>
             <li>Start tracking - your overlay controls update live with speed, coordinates, and distance.</li>
@@ -210,19 +200,14 @@ function formatDate(iso: string | null): string {
         </div>
 
         <!-- Connected: QR code + setup instructions -->
-        <div
-          v-if="integration.connected && qrDataUrl"
-          class="border border-sidebar bg-sidebar-accent p-6 gap-4 flex flex-col text-md"
-        >
+        <div v-if="integration.connected && qrDataUrl" class="text-md flex flex-col gap-4 border border-sidebar bg-sidebar-accent p-6">
           <p class="font-medium text-foreground">Connect the Overlabels GPS app</p>
           <p class="text-sm text-foreground">
             Open the Overlabels GPS app on your phone and scan this QR code. The app will be configured automatically.
           </p>
           <div class="flex flex-col items-start gap-3">
             <img :src="qrDataUrl" alt="Setup QR code" class="border border-sidebar-border" width="240" height="240" />
-            <p class="text-xs text-muted-foreground">
-              This QR code contains your endpoint URL and authentication token. Do not share it.
-            </p>
+            <p class="text-xs text-muted-foreground">This QR code contains your endpoint URL and authentication token. Do not share it.</p>
           </div>
 
           <Separator />
@@ -247,9 +232,7 @@ function formatDate(iso: string | null): string {
                     {{ copied ? 'Copied!' : 'Copy' }}
                   </Button>
                 </div>
-                <p class="text-xs text-muted-foreground">
-                  Open this link on your phone to configure the app automatically.
-                </p>
+                <p class="text-xs text-muted-foreground">Open this link on your phone to configure the app automatically.</p>
               </div>
             </div>
           </details>
@@ -257,14 +240,14 @@ function formatDate(iso: string | null): string {
           <Separator />
 
           <div>
-            <p class="font-medium text-sm text-foreground">Overlay controls</p>
-            <p class="text-sm text-muted-foreground mt-1">
-              Use these tags in your overlay templates:
-            </p>
+            <p class="text-sm font-medium text-foreground">Overlay controls</p>
+            <p class="mt-1 text-sm text-muted-foreground">Use these tags in your overlay templates:</p>
             <div class="mt-2 grid gap-3 sm:grid-cols-2">
               <div v-for="preset in GPS_PRESETS" :key="preset.key" class="space-y-1">
                 <p class="text-sm font-medium text-foreground">{{ preset.label }}</p>
-                <p class="text-xs text-muted-foreground">Type: <span class="font-mono">{{ preset.type }}</span></p>
+                <p class="text-xs text-muted-foreground">
+                  Type: <span class="font-mono">{{ preset.type }}</span>
+                </p>
                 <code class="rounded bg-black/10 px-1 text-sm dark:bg-white/10">[[[c:gps:{{ preset.key }}]]]</code>
               </div>
             </div>
@@ -276,7 +259,7 @@ function formatDate(iso: string | null): string {
           <!-- Speed Unit -->
           <div class="space-y-2">
             <Label for="speed_unit">Speed Unit</Label>
-            <p class="text-muted-foreground text-sm">
+            <p class="text-sm text-muted-foreground">
               Default unit for the GPS Sessions dashboard. Overlay templates pick their own unit per tag, e.g.
               <code class="rounded bg-black/10 px-1 dark:bg-white/10">[[[c:gps:speed|speed:kmh]]]</code>
               or <code class="rounded bg-black/10 px-1 dark:bg-white/10">|speed:mph</code>.
@@ -284,7 +267,7 @@ function formatDate(iso: string | null): string {
             <select
               id="speed_unit"
               v-model="form.speed_unit"
-              class="w-full border border-sidebar-border bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+              class="w-full border border-sidebar-border bg-background px-3 py-2 text-sm text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
             >
               <option value="kmh">km/h</option>
               <option value="mph">mph</option>
@@ -297,29 +280,24 @@ function formatDate(iso: string | null): string {
             <div class="space-y-4">
               <div class="space-y-2">
                 <Label for="map_sharing_enabled">Public live map</Label>
-                <p class="text-muted-foreground text-sm">
+                <p class="text-sm text-muted-foreground">
                   Share your live GPS location on a public map page. Anyone with the link can see where you are while tracking is active.
                 </p>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input
-                    id="map_sharing_enabled"
-                    v-model="form.map_sharing_enabled"
-                    type="checkbox"
-                    class="rounded border-sidebar"
-                  />
+                <label class="flex cursor-pointer items-center gap-2">
+                  <input id="map_sharing_enabled" v-model="form.map_sharing_enabled" type="checkbox" class="rounded border-sidebar" />
                   <span class="text-sm text-foreground">Enable public map</span>
                 </label>
               </div>
 
               <div v-if="form.map_sharing_enabled" class="space-y-2">
                 <Label for="map_delay_seconds">Location delay</Label>
-                <p class="text-muted-foreground text-sm">
+                <p class="text-sm text-muted-foreground">
                   Add a delay to your public location for safety. Viewers see where you were, not where you are.
                 </p>
                 <select
                   id="map_delay_seconds"
                   v-model.number="form.map_delay_seconds"
-                  class="w-full border border-sidebar-border bg-background px-3 py-2 text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none text-sm"
+                  class="w-full border border-sidebar-border bg-background px-3 py-2 text-sm text-foreground focus:ring-1 focus:ring-primary/20 focus:outline-none"
                 >
                   <option :value="0">No delay (real-time)</option>
                   <option :value="60">1 minute</option>
@@ -345,26 +323,20 @@ function formatDate(iso: string | null): string {
             <Separator />
             <div class="space-y-2">
               <Label>Safe zones</Label>
-              <p class="text-muted-foreground text-sm">
+              <p class="text-sm text-muted-foreground">
                 When you are inside a safe zone, the app does not send GPS data. Manage zones in the Overlabels GPS app.
               </p>
               <ul v-if="integration.safe_zones.length" class="space-y-1 text-sm">
-                <li
-                  v-for="zone in integration.safe_zones"
-                  :key="zone.id"
-                  class="text-foreground"
-                >
+                <li v-for="zone in integration.safe_zones" :key="zone.id" class="text-foreground">
                   {{ zone.lat.toFixed(5) }}, {{ zone.lng.toFixed(5) }} - {{ zone.radius }}m radius
                 </li>
               </ul>
-              <p v-else class="text-sm text-muted-foreground">
-                No safe zones set. Configure them in the Overlabels GPS app.
-              </p>
+              <p v-else class="text-sm text-muted-foreground">No safe zones set. Configure them in the Overlabels GPS app.</p>
             </div>
           </template>
 
           <!-- Last received -->
-          <p v-if="integration.connected" class="text-muted-foreground text-sm">
+          <p v-if="integration.connected" class="text-sm text-muted-foreground">
             Last event received: {{ formatDate(integration.last_received_at) }}
           </p>
 
@@ -384,39 +356,24 @@ function formatDate(iso: string | null): string {
 
           <!-- Session reset: low-stakes -->
           <div class="space-y-2">
-            <p class="font-medium text-sm">Reset session distance</p>
-            <p class="text-foreground text-sm">
-              Zero out the current session's distance, speed and duration stats. Your lifetime total is
-              untouched. Note: a new session already resets these automatically - this is for fixing a
-              session mid-stream.
+            <p class="text-sm font-medium">Reset session distance</p>
+            <p class="text-sm text-foreground">
+              Zero out the current session's distance, speed and duration stats. Your lifetime total is untouched. Note: a new session already resets
+              these automatically - this is for fixing a session mid-stream.
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              class="cursor-pointer"
-              :disabled="resetting"
-              @click="resetSession"
-            >
+            <Button variant="outline" size="sm" type="button" class="cursor-pointer" :disabled="resetting" @click="resetSession">
               {{ resetting ? 'Resetting...' : 'Reset session distance' }}
             </Button>
           </div>
 
           <!-- Lifetime reset: destructive -->
           <div class="space-y-2 rounded-md border border-destructive/40 p-4">
-            <p class="font-medium text-sm text-destructive">Reset lifetime distance</p>
-            <p class="text-foreground text-sm">
-              This wipes your all-time cumulative distance back to 0 km. It is permanent and cannot be
-              undone - every kilometre you have ever logged is gone. This is not the same as starting a
-              new trip or stream (use the session reset above, or just start a new session).
+            <p class="text-sm font-medium text-destructive">Reset lifetime distance</p>
+            <p class="text-sm text-foreground">
+              This wipes your all-time cumulative distance back to 0 km. It is permanent and cannot be undone - every kilometre you have ever logged
+              is gone. This is not the same as starting a new trip or stream (use the session reset above, or just start a new session).
             </p>
-            <Button
-              variant="destructive"
-              size="sm"
-              type="button"
-              class="cursor-pointer"
-              @click="lifetimeDialogOpen = true"
-            >
+            <Button variant="destructive" size="sm" type="button" class="cursor-pointer" @click="lifetimeDialogOpen = true">
               Reset lifetime distance
             </Button>
           </div>
@@ -426,17 +383,9 @@ function formatDate(iso: string | null): string {
         <template v-if="integration.connected">
           <Separator />
           <div class="space-y-2">
-            <p class="font-medium text-sm">Regenerate token</p>
-            <p class="text-muted-foreground text-sm">
-              Generate a new authentication token. You will need to scan the QR code in the app again.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              :disabled="regenerating"
-              @click="regenerateToken"
-            >
+            <p class="text-sm font-medium">Regenerate token</p>
+            <p class="text-sm text-muted-foreground">Generate a new authentication token. You will need to scan the QR code in the app again.</p>
+            <Button variant="outline" size="sm" type="button" :disabled="regenerating" @click="regenerateToken">
               {{ regenerating ? 'Regenerating...' : 'Regenerate token' }}
             </Button>
           </div>
@@ -446,14 +395,11 @@ function formatDate(iso: string | null): string {
         <template v-if="integration.connected">
           <Separator />
           <div class="space-y-2">
-            <p class="font-medium text-sm">Danger zone</p>
-            <p class="text-muted-foreground text-sm">
-              Disconnecting Overlabels GPS will remove all GPS controls (speed, coordinates, distance)
-              from your overlays.
+            <p class="text-sm font-medium">Danger zone</p>
+            <p class="text-sm text-muted-foreground">
+              Disconnecting Overlabels GPS will remove all GPS controls (speed, coordinates, distance) from your overlays.
             </p>
-            <Button variant="destructive" size="sm" type="button" @click="disconnect">
-              Disconnect Overlabels GPS
-            </Button>
+            <Button variant="destructive" size="sm" type="button" @click="disconnect"> Disconnect Overlabels GPS </Button>
           </div>
         </template>
       </div>
@@ -467,33 +413,17 @@ function formatDate(iso: string | null): string {
         <DialogHeader>
           <DialogTitle class="text-destructive">Reset lifetime distance?</DialogTitle>
           <DialogDescription class="text-foreground">
-            This permanently wipes your all-time cumulative distance back to 0 km. It cannot be undone.
-            Your current session distance is not affected.
+            This permanently wipes your all-time cumulative distance back to 0 km. It cannot be undone. Your current session distance is not affected.
           </DialogDescription>
         </DialogHeader>
 
         <div class="space-y-2">
-          <Label for="lifetime-confirm" class="text-sm">
-            Type <span class="font-mono font-semibold">RESET</span> to confirm.
-          </Label>
-          <Input
-            id="lifetime-confirm"
-            v-model="lifetimeConfirmText"
-            autocomplete="off"
-            placeholder="RESET"
-            @keyup.enter="resetLifetime"
-          />
+          <Label for="lifetime-confirm" class="text-sm"> Type <span class="font-mono font-semibold">RESET</span> to confirm. </Label>
+          <Input id="lifetime-confirm" v-model="lifetimeConfirmText" autocomplete="off" placeholder="RESET" @keyup.enter="resetLifetime" />
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            type="button"
-            class="cursor-pointer"
-            @click="lifetimeDialogOpen = false"
-          >
-            Cancel
-          </Button>
+          <Button variant="outline" type="button" class="cursor-pointer" @click="lifetimeDialogOpen = false"> Cancel </Button>
           <Button
             variant="destructive"
             type="button"

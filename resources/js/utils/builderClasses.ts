@@ -18,13 +18,13 @@ import type { BuilderPlacement } from '@/types';
  */
 
 export interface HarvestedClass {
-    name: string;
-    /** The block's own CSS styles this class, so overriding it needs the scope. */
-    styled: boolean;
-    /** Names of the blocks using it, deduped, in placement order. */
-    blocks: string[];
-    /** Emitted by the compiler rather than by any block. */
-    structural?: boolean;
+  name: string;
+  /** The block's own CSS styles this class, so overriding it needs the scope. */
+  styled: boolean;
+  /** Names of the blocks using it, deduped, in placement order. */
+  blocks: string[];
+  /** Emitted by the compiler rather than by any block. */
+  structural?: boolean;
 }
 
 const CLASS_ATTR = /class\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
@@ -35,10 +35,10 @@ const CSS_URL = /url\([^)]*\)/gi;
 
 /** Wrapper class the compiler puts on every placement (see composeBuilderTemplate). */
 const STRUCTURAL: HarvestedClass = {
-    name: 'builder-cell',
-    styled: true,
-    blocks: [],
-    structural: true,
+  name: 'builder-cell',
+  styled: true,
+  blocks: [],
+  structural: true,
 };
 
 /**
@@ -47,45 +47,40 @@ const STRUCTURAL: HarvestedClass = {
  * leads, since "every block" is the most common thing to want to reach.
  */
 export function harvestBuilderClasses(placements: BuilderPlacement[]): HarvestedClass[] {
-    const found = new Map<string, { styled: boolean; blocks: string[] }>();
+  const found = new Map<string, { styled: boolean; blocks: string[] }>();
 
-    for (const p of placements) {
-        const styledHere = classSelectorsIn(p.snapshot.css ?? '');
+  for (const p of placements) {
+    const styledHere = classSelectorsIn(p.snapshot.css ?? '');
 
-        for (const name of classAttributesIn(p.snapshot.html ?? '')) {
-            const entry = found.get(name) ?? { styled: false, blocks: [] };
-            entry.styled = entry.styled || styledHere.has(name);
-            if (!entry.blocks.includes(p.block_name)) entry.blocks.push(p.block_name);
-            found.set(name, entry);
-        }
+    for (const name of classAttributesIn(p.snapshot.html ?? '')) {
+      const entry = found.get(name) ?? { styled: false, blocks: [] };
+      entry.styled = entry.styled || styledHere.has(name);
+      if (!entry.blocks.includes(p.block_name)) entry.blocks.push(p.block_name);
+      found.set(name, entry);
     }
+  }
 
-    const harvested = [...found.entries()]
-        .map(([name, entry]) => ({ name, ...entry }))
-        .sort(
-            (a, b) =>
-                Number(b.styled) - Number(a.styled) ||
-                b.blocks.length - a.blocks.length ||
-                a.name.localeCompare(b.name),
-        );
+  const harvested = [...found.entries()]
+    .map(([name, entry]) => ({ name, ...entry }))
+    .sort((a, b) => Number(b.styled) - Number(a.styled) || b.blocks.length - a.blocks.length || a.name.localeCompare(b.name));
 
-    return placements.length ? [STRUCTURAL, ...harvested] : [];
+  return placements.length ? [STRUCTURAL, ...harvested] : [];
 }
 
 /** Class tokens from every class attribute in a fragment of HTML. */
 function classAttributesIn(html: string): Set<string> {
-    const names = new Set<string>();
+  const names = new Set<string>();
 
-    for (const match of html.matchAll(CLASS_ATTR)) {
-        const value = match[1] ?? match[2] ?? '';
-        for (const token of value.split(/\s+/)) {
-            // `[[[c:color]]]` inside a token means the class name is only known
-            // at render time - there is nothing here to target.
-            if (token && !token.includes('[[[')) names.add(token);
-        }
+  for (const match of html.matchAll(CLASS_ATTR)) {
+    const value = match[1] ?? match[2] ?? '';
+    for (const token of value.split(/\s+/)) {
+      // `[[[c:color]]]` inside a token means the class name is only known
+      // at render time - there is nothing here to target.
+      if (token && !token.includes('[[[')) names.add(token);
     }
+  }
 
-    return names;
+  return names;
 }
 
 /**
@@ -95,7 +90,7 @@ function classAttributesIn(html: string): Set<string> {
  * that really appear in the HTML.
  */
 function classSelectorsIn(css: string): Set<string> {
-    const cleaned = css.replace(CSS_COMMENT, ' ').replace(CSS_URL, ' ').replace(CSS_STRING, ' ');
+  const cleaned = css.replace(CSS_COMMENT, ' ').replace(CSS_URL, ' ').replace(CSS_STRING, ' ');
 
-    return new Set([...cleaned.matchAll(CSS_CLASS_SELECTOR)].map((m) => m[1]));
+  return new Set([...cleaned.matchAll(CSS_CLASS_SELECTOR)].map((m) => m[1]));
 }

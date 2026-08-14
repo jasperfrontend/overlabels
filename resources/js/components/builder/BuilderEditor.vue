@@ -148,8 +148,8 @@ defineExpose({
       />
 
       <p class="text-sm text-muted-foreground">
-        Click an empty cell to place a block. Drag a block to move it, or select it and use the panel or arrow keys -
-        Shift + arrows to resize, Delete to remove. Save with the page's Save button.
+        Click an empty cell to place a block. Drag a block to move it, or select it and use the panel or arrow keys - Shift + arrows to resize, Delete
+        to remove. Save with the page's Save button.
       </p>
 
       <BuilderStylePanel

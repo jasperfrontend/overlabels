@@ -5,14 +5,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { FlaskConical, Power, PowerOff, ZapOff } from '@lucide/vue';
@@ -93,7 +86,10 @@ interface EventSubSetupPayload {
   success: boolean;
 }
 
-type EchoChannel = { listen: (event: string, cb: (payload: EventSubSetupPayload) => void) => EchoChannel; stopListening: (event: string) => EchoChannel };
+type EchoChannel = {
+  listen: (event: string, cb: (payload: EventSubSetupPayload) => void) => EchoChannel;
+  stopListening: (event: string) => EchoChannel;
+};
 
 let eventsubChannel: EchoChannel | null = null;
 
@@ -113,7 +109,7 @@ async function sendTestCheer() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
       },
     });
@@ -182,9 +178,7 @@ onMounted(() => {
   eventsubChannel?.listen('.eventsub.setup-completed', (payload: EventSubSetupPayload) => {
     const createdCount = payload.created?.length ?? 0;
     const existingCount = payload.existing?.length ?? 0;
-    const failedCount = Array.isArray(payload.failed)
-      ? payload.failed.length
-      : Object.keys(payload.failed ?? {}).length;
+    const failedCount = Array.isArray(payload.failed) ? payload.failed.length : Object.keys(payload.failed ?? {}).length;
     const skippedCount = payload.skipped_missing_scope?.length ?? 0;
 
     if (payload.success) {
@@ -197,7 +191,7 @@ onMounted(() => {
     }
 
     eventsubLoading.value = false;
-    router.reload({ only: ['eventsub'] })
+    router.reload({ only: ['eventsub'] });
   });
 });
 
@@ -246,16 +240,16 @@ function formatDate(iso: string | null): string {
             <div class="flex items-center justify-between">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                  <span title="Connected to Twtich" v-if="eventsub.active_count > 0"><Power class="text-green-400 size-4 my-1" /></span>
-                  <span title="Not listening to any events" v-else-if="eventsub.connected"><ZapOff class="text-pink-400 size-4 my-1" /></span>
-                  <span v-else title="Disconnected from Twitch"><PowerOff class="text-orange-400 size-4 my-1" /></span>
+                  <span title="Connected to Twtich" v-if="eventsub.active_count > 0"><Power class="my-1 size-4 text-green-400" /></span>
+                  <span title="Not listening to any events" v-else-if="eventsub.connected"><ZapOff class="my-1 size-4 text-pink-400" /></span>
+                  <span v-else title="Disconnected from Twitch"><PowerOff class="my-1 size-4 text-orange-400" /></span>
                   <span class="font-medium">Twitch Alerts</span>
                 </div>
                 <Dialog>
-                  <p v-if="eventsub.connected && eventsub.active_count > 0" class="text-muted-foreground text-sm">
+                  <p v-if="eventsub.connected && eventsub.active_count > 0" class="text-sm text-muted-foreground">
                     Listening to
                     <DialogTrigger as-child>
-                      <button class="text-foreground underline underline-offset-2 hover:no-underline cursor-pointer">
+                      <button class="cursor-pointer text-foreground underline underline-offset-2 hover:no-underline">
                         {{ eventsub.active_count }} events
                       </button>
                     </DialogTrigger>
@@ -264,17 +258,11 @@ function formatDate(iso: string | null): string {
                   <DialogContent class="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Active events ({{ eventsub.active_count }})</DialogTitle>
-                      <DialogDescription>
-                        These are the Twitch events your overlays can respond to.
-                      </DialogDescription>
+                      <DialogDescription> These are the Twitch events your overlays can respond to. </DialogDescription>
                     </DialogHeader>
 
                     <ul class="space-y-2">
-                      <li
-                        v-for="event in eventsub.supported_events"
-                        :key="event.key"
-                        class="flex items-center gap-2 text-sm"
-                      >
+                      <li v-for="event in eventsub.supported_events" :key="event.key" class="flex items-center gap-2 text-sm">
                         <span v-if="event.active" class="text-green-500">&#10003;</span>
                         <span v-else class="text-muted-foreground">&#10005;</span>
                         <span :class="{ 'text-muted-foreground': !event.active }">{{ event.label }}</span>
@@ -305,7 +293,7 @@ function formatDate(iso: string | null): string {
               </div>
             </div>
 
-            <p v-if="eventsubMessage" class="text-muted-foreground mt-2 text-sm">
+            <p v-if="eventsubMessage" class="mt-2 text-sm text-muted-foreground">
               {{ eventsubMessage }}
             </p>
             <p
@@ -328,37 +316,38 @@ function formatDate(iso: string | null): string {
             <div class="flex items-center justify-between">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                  <Power v-if="props.bot.enabled" class="text-green-400 size-5 my-1" />
-                  <PowerOff v-else class="text-orange-400 size-5 my-1" />
+                  <Power v-if="props.bot.enabled" class="my-1 size-5 text-green-400" />
+                  <PowerOff v-else class="my-1 size-5 text-orange-400" />
                   <span class="font-medium">Chat bot</span>
                 </div>
                 <p v-if="props.bot.enabled" class="text-sm">
-                  Run <code class="rounded bg-muted px-1 py-0.5 text-xs">/mod overlabels</code> in your Twitch chat so the bot can post without rate limits, then try <code class="rounded bg-muted px-1 py-0.5 text-xs">!ping</code> - it should reply with pong.
+                  Run <code class="rounded bg-muted px-1 py-0.5 text-xs">/mod overlabels</code> in your Twitch chat so the bot can post without rate
+                  limits, then try <code class="rounded bg-muted px-1 py-0.5 text-xs">!ping</code> - it should reply with pong.
                 </p>
                 <p v-else class="text-sm text-muted-foreground">
-                  Enable to have the bot join your channel. Default <a :href="route('help.bot.expressions')" target="_blank" class="underline hover:text-foreground">bot expressions</a> are enabled automatically the first time you enable it.
+                  Enable to have the bot join your channel. Default
+                  <a :href="route('help.bot.expressions')" target="_blank" class="underline hover:text-foreground">bot expressions</a> are enabled
+                  automatically the first time you enable it.
                 </p>
               </div>
 
               <button v-if="props.bot.enabled" class="btn btn-secondary cursor-pointer" :disabled="botLoading" @click="toggleBot">Disable</button>
               <button v-else class="btn btn-primary cursor-pointer" :disabled="botLoading" @click="toggleBot">Enable</button>
             </div>
-            <div v-if="props.bot.enabled" class="mt-4 border-t border-sidebar-border pt-4 space-y-3">
+            <div v-if="props.bot.enabled" class="mt-4 space-y-3 border-t border-sidebar-border pt-4">
               <div class="flex items-center justify-between gap-4">
                 <p class="text-sm text-foreground">
-                  Bot expressions: custom <code class="rounded bg-muted px-1 py-0.5 text-xs">!command</code> chat replies templated against your controls and Twitch data.
+                  Bot expressions: custom <code class="rounded bg-muted px-1 py-0.5 text-xs">!command</code> chat replies templated against your
+                  controls and Twitch data.
                 </p>
-                <Link href="/settings/bot/expressions" class="btn btn-tertiary cursor-pointer shrink-0">
-                  Manage expressions
-                </Link>
+                <Link href="/settings/bot/expressions" class="btn btn-tertiary shrink-0 cursor-pointer"> Manage expressions </Link>
               </div>
               <div class="flex items-center justify-between gap-4">
                 <p class="text-sm text-foreground">
-                  Bot aliases: short names that rewrite to longer commands. <code class="rounded bg-muted px-1 py-0.5 text-xs">!w 2</code> -&gt; <code class="rounded bg-muted px-1 py-0.5 text-xs">!increment wins 2</code>.
+                  Bot aliases: short names that rewrite to longer commands. <code class="rounded bg-muted px-1 py-0.5 text-xs">!w 2</code> -&gt;
+                  <code class="rounded bg-muted px-1 py-0.5 text-xs">!increment wins 2</code>.
                 </p>
-                <Link href="/settings/bot/aliases" class="btn btn-tertiary cursor-pointer shrink-0">
-                  Manage aliases
-                </Link>
+                <Link href="/settings/bot/aliases" class="btn btn-tertiary shrink-0 cursor-pointer"> Manage aliases </Link>
               </div>
             </div>
           </div>
@@ -366,27 +355,20 @@ function formatDate(iso: string | null): string {
 
         <!-- External Integrations -->
         <div>
-          <HeadingSmall
-            title="External Integrations"
-            description="Connect external donation and support platforms to power your overlays."
-          />
+          <HeadingSmall title="External Integrations" description="Connect external donation and support platforms to power your overlays." />
 
           <div class="mt-4 space-y-4">
-            <div
-              v-for="service in props.services"
-              :key="service.key"
-              class="flex items-center justify-between border border-sidebar-border p-4"
-            >
+            <div v-for="service in props.services" :key="service.key" class="flex items-center justify-between border border-sidebar-border p-4">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                  <span v-if="service.connected" title="Connected"><Power class="text-green-400 size-5 my-1" /></span>
-                  <span v-else title="Disconnected"><PowerOff class="text-orange-400 size-5 my-1" /></span>
-                  <span v-if="service.connected && service.test_mode" title="Test mode enabled"><FlaskConical class="text-yellow-400 size-5 my-1" /></span>
+                  <span v-if="service.connected" title="Connected"><Power class="my-1 size-5 text-green-400" /></span>
+                  <span v-else title="Disconnected"><PowerOff class="my-1 size-5 text-orange-400" /></span>
+                  <span v-if="service.connected && service.test_mode" title="Test mode enabled"
+                    ><FlaskConical class="my-1 size-5 text-yellow-400"
+                  /></span>
                   <span class="font-medium">{{ service.name }}</span>
                 </div>
-                <p v-if="service.connected" class="text-muted-foreground text-sm">
-                  Last event: {{ formatDate(service.last_received_at) }}
-                </p>
+                <p v-if="service.connected" class="text-sm text-muted-foreground">Last event: {{ formatDate(service.last_received_at) }}</p>
               </div>
 
               <Link
@@ -396,7 +378,6 @@ function formatDate(iso: string | null): string {
               >
                 {{ service.connected ? 'Manage' : 'Connect' }}
               </Link>
-
             </div>
           </div>
         </div>

@@ -5,17 +5,7 @@
   "description": "Declarative description of a Recipe: the primitives it wires together (option sets, pickers), the controls it exports, and the triggers that fire its pickers. Manifests are 100% declarative - no executable code - because they are intended to be Claude-auditable before publishing.",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "recipe_format_version",
-    "slug",
-    "name",
-    "version",
-    "description",
-    "author",
-    "primitives",
-    "control_exports",
-    "triggers"
-  ],
+  "required": ["recipe_format_version", "slug", "name", "version", "description", "author", "primitives", "control_exports", "triggers"],
   "properties": {
     "recipe_format_version": {
       "type": "integer",
@@ -211,10 +201,7 @@
       }
     },
     "trigger": {
-      "oneOf": [
-        { "$ref": "#/$defs/chatCommandTrigger" },
-        { "$ref": "#/$defs/dashboardButtonTrigger" }
-      ]
+      "oneOf": [{ "$ref": "#/$defs/chatCommandTrigger" }, { "$ref": "#/$defs/dashboardButtonTrigger" }]
     },
     "chatCommandTrigger": {
       "type": "object",

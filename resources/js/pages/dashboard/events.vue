@@ -285,12 +285,7 @@ function eventTypeLabel(type: string): string {
     <div class="bg-card px-2 py-1 transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
       <EventsTable v-if="events.data.length > 0" :events="events.data" />
 
-      <EventsEmptyState
-        v-else
-        :search="filters.search"
-        :range="filters.range"
-        @clear-search="clearSearch"
-      />
+      <EventsEmptyState v-else :search="filters.search" :range="filters.range" @clear-search="clearSearch" />
 
       <div v-if="events.last_page > 1" class="mt-4">
         <Pagination :links="events.links" :from="events.from" :to="events.to" :total="events.total" />

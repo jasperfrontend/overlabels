@@ -1,6 +1,6 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { usePage } from '@inertiajs/vue3';
 import type { AppPageProps } from '@/types';
+import { usePage } from '@inertiajs/vue3';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 export function useStreamState() {
   const page = usePage<AppPageProps>();
@@ -14,9 +14,7 @@ export function useStreamState() {
 
   const state = computed(() => wsState.value ?? serverState.value?.state ?? 'offline');
   const confidence = computed(() => wsConfidence.value ?? serverState.value?.confidence ?? 0);
-  const startedAt = computed(() =>
-    wsStartedAt.value !== undefined ? wsStartedAt.value : (serverState.value?.startedAt ?? null)
-  );
+  const startedAt = computed(() => (wsStartedAt.value !== undefined ? wsStartedAt.value : (serverState.value?.startedAt ?? null)));
 
   const isLive = computed(() => state.value === 'live' && confidence.value >= 0.75);
   const isTransitioning = computed(() => state.value === 'starting' || state.value === 'ending');

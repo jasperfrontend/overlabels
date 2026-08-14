@@ -24,15 +24,14 @@ const form = useForm({
   description: '',
   is_public: false,
   thumbnail_url: '' as string,
-  template_ids: [] as number[]
+  template_ids: [] as number[],
 });
 
 const selectedTemplates = computed(() => {
-  return props.templates.filter(t => form.template_ids.includes(t.id));
+  return props.templates.filter((t) => form.template_ids.includes(t.id));
 });
 
 const toggleTemplate = (templateId: number, checked: boolean) => {
-
   if (checked) {
     // Add a template if not already included
     if (!form.template_ids.includes(templateId)) {
@@ -40,13 +39,13 @@ const toggleTemplate = (templateId: number, checked: boolean) => {
     }
   } else {
     // Remove template
-    form.template_ids = form.template_ids.filter(id => id !== templateId);
+    form.template_ids = form.template_ids.filter((id) => id !== templateId);
   }
 };
 
 const submit = () => {
   form.post('/kits', {
-    preserveScroll: true
+    preserveScroll: true,
   });
 };
 </script>
@@ -57,17 +56,14 @@ const submit = () => {
 
     <div class="container mx-auto max-w-4xl px-4 py-8">
       <!-- Back button -->
-      <Link :href="route('kits.index')"
-            class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <Link :href="route('kits.index')" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to Kits
       </Link>
 
       <div class="mb-8">
         <h1 class="text-3xl font-bold">Create Template Kit</h1>
-        <p class="mt-2 text-muted-foreground">
-          Organize your overlay templates into a reusable collection
-        </p>
+        <p class="mt-2 text-muted-foreground">Organize your overlay templates into a reusable collection</p>
       </div>
 
       <form @submit.prevent="submit" class="space-y-6">
@@ -75,9 +71,7 @@ const submit = () => {
         <Card>
           <CardHeader>
             <CardTitle>Kit Information</CardTitle>
-            <CardDescription>
-              Give your kit a name and description to help others understand what it contains
-            </CardDescription>
+            <CardDescription> Give your kit a name and description to help others understand what it contains </CardDescription>
           </CardHeader>
           <CardContent class="space-y-4">
             <div>
@@ -108,14 +102,9 @@ const submit = () => {
             <div class="flex items-center justify-between rounded-lg border p-4">
               <div class="space-y-0.5">
                 <Label for="is_public">Make this kit public</Label>
-                <p class="text-sm text-muted-foreground">
-                  Public kits can be discovered and copied by other users
-                </p>
+                <p class="text-sm text-muted-foreground">Public kits can be discovered and copied by other users</p>
               </div>
-              <Switch
-                id="is_public"
-                v-model:checked="form.is_public"
-              />
+              <Switch id="is_public" v-model:checked="form.is_public" />
             </div>
           </CardContent>
         </Card>
@@ -124,16 +113,10 @@ const submit = () => {
         <Card>
           <CardHeader>
             <CardTitle>Kit Thumbnail</CardTitle>
-            <CardDescription>
-              Upload a thumbnail image for your kit (2560x1440px recommended, max 10MB)
-            </CardDescription>
+            <CardDescription> Upload a thumbnail image for your kit (2560x1440px recommended, max 10MB) </CardDescription>
           </CardHeader>
           <CardContent>
-            <ImageDropZone
-              v-model="form.thumbnail_url"
-              kind="kit_thumbnail"
-              compact
-            />
+            <ImageDropZone v-model="form.thumbnail_url" kind="kit_thumbnail" compact />
             <p v-if="form.errors.thumbnail_url" class="mt-2 text-sm text-red-500">{{ form.errors.thumbnail_url }}</p>
           </CardContent>
         </Card>
@@ -142,9 +125,7 @@ const submit = () => {
         <Card>
           <CardHeader>
             <CardTitle>Select Templates *</CardTitle>
-            <CardDescription>
-              Choose which of your templates to include in this kit
-            </CardDescription>
+            <CardDescription> Choose which of your templates to include in this kit </CardDescription>
           </CardHeader>
           <CardContent>
             <EmptyState
@@ -159,17 +140,14 @@ const submit = () => {
                 v-for="template in templates"
                 :key="template.id"
                 class="flex items-center space-x-3 rounded-lg border p-3 transition-colors"
-                :class="{ 'bg-primary/5 border-primary': form.template_ids.includes(template.id) }"
+                :class="{ 'border-primary bg-primary/5': form.template_ids.includes(template.id) }"
               >
                 <Checkbox
                   :id="`template-${template.id}`"
                   :checked="form.template_ids.includes(template.id)"
                   @click="() => toggleTemplate(template.id, !form.template_ids.includes(template.id))"
                 />
-                <label
-                  :for="`template-${template.id}`"
-                  class="flex flex-1 cursor-pointer items-center justify-between"
-                >
+                <label :for="`template-${template.id}`" class="flex flex-1 cursor-pointer items-center justify-between">
                   <div>
                     <span class="font-medium">{{ template.name }}</span>
                     <span class="ml-2 text-sm text-muted-foreground">({{ template.type }})</span>
@@ -182,23 +160,15 @@ const submit = () => {
             <p v-if="form.errors.template_ids" class="mt-2 text-sm text-red-500">{{ form.errors.template_ids }}</p>
 
             <div v-if="selectedTemplates.length > 0" class="mt-4 rounded-lg bg-muted p-3">
-              <p class="text-sm font-medium">
-                Selected: {{ selectedTemplates.length }} template{{ selectedTemplates.length !== 1 ? 's' : '' }}
-              </p>
+              <p class="text-sm font-medium">Selected: {{ selectedTemplates.length }} template{{ selectedTemplates.length !== 1 ? 's' : '' }}</p>
             </div>
           </CardContent>
         </Card>
 
         <!-- Form Actions -->
         <div class="flex justify-end gap-4">
-          <Link :href="route('kits.index')" class="btn btn-secondary">
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            :disabled="form.processing || form.template_ids.length === 0"
-            class="btn btn-primary"
-          >
+          <Link :href="route('kits.index')" class="btn btn-secondary"> Cancel </Link>
+          <button type="submit" :disabled="form.processing || form.template_ids.length === 0" class="btn btn-primary">
             {{ form.processing ? 'Creating...' : 'Create Kit' }}
           </button>
         </div>

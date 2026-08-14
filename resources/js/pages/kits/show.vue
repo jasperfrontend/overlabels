@@ -62,7 +62,13 @@ function copyMarkdownUrl() {
 }
 
 const handleFork = async () => {
-  if (await confirm({ message: 'Copy this kit to your account? This will also copy all templates within the kit.', confirmLabel: 'Copy', tone: 'neutral' })) {
+  if (
+    await confirm({
+      message: 'Copy this kit to your account? This will also copy all templates within the kit.',
+      confirmLabel: 'Copy',
+      tone: 'neutral',
+    })
+  ) {
     router.post(`/kits/${props.kit.id}/fork`);
   }
 };
@@ -75,7 +81,7 @@ const handleDelete = async () => {
 
   if (await confirm({ message: 'Are you sure you want to delete this kit? This action cannot be undone.', confirmLabel: 'Delete' })) {
     router.delete(`/kits/${props.kit.id}`, {
-      onSuccess: () => router.visit('/kits')
+      onSuccess: () => router.visit('/kits'),
     });
   }
 };
@@ -113,12 +119,7 @@ const totalTemplates = computed(() => {
   }
 
   const parts = entries.map(([type, count]) => {
-    const label =
-      type === 'static'
-        ? 'static overlay'
-        : type === 'alert'
-          ? 'alert'
-          : type;
+    const label = type === 'static' ? 'static overlay' : type === 'alert' ? 'alert' : type;
 
     return `${count} ${label}${count > 1 ? 's' : ''}`;
   });
@@ -136,15 +137,15 @@ const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString(userLocale.value, {
     month: 'long',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   });
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'View Kit "' + props.kit.title + '"',
-    href: route('kits.index')
-  }
+    href: route('kits.index'),
+  },
 ];
 </script>
 
@@ -154,20 +155,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 
     <div class="space-y-4 p-4">
       <!-- Back button -->
-      <Link :href="route('kits.index')"
-            class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+      <Link :href="route('kits.index')" class="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft class="mr-2 h-4 w-4" />
         Back to Kits
       </Link>
 
       <!-- Kit header -->
-      <div class="mb-8 overflow-hidden rounded-lg bg-card border border-sidebar lg:max-w-[55%]">
+      <div class="mb-8 overflow-hidden rounded-lg border border-sidebar bg-card lg:max-w-[55%]">
         <!-- Thumbnail -->
         <div v-if="kit.thumbnail_url" class="aspect-video w-full overflow-hidden bg-muted lg:aspect-video">
           <img :src="kit.thumbnail_url" :alt="kit.title" class="h-full w-full object-cover" />
         </div>
-        <div v-else
-             class="flex aspect-video w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5 lg:aspect-21/9">
+        <div v-else class="flex aspect-video w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5 lg:aspect-21/9">
           <Package class="h-16 w-16 text-primary/40" />
         </div>
 
@@ -192,8 +191,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
               <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <div v-if="kit.owner" class="flex items-center gap-2">
-                  <img v-if="kit.owner.avatar" :src="kit.owner.avatar" :alt="kit.owner.name"
-                       class="h-6 w-6 rounded-full" />
+                  <img v-if="kit.owner.avatar" :src="kit.owner.avatar" :alt="kit.owner.name" class="h-6 w-6 rounded-full" />
                   <span>by {{ kit.owner.name }}</span>
                 </div>
 
@@ -215,31 +213,15 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
 
             <div class="flex gap-2">
-              <Link
-                v-if="canEdit"
-                :href="`/kits/${kit.id}/edit`"
-                class="btn btn-primary"
-                title="Edit kit"
-              >
+              <Link v-if="canEdit" :href="`/kits/${kit.id}/edit`" class="btn btn-primary" title="Edit kit">
                 <PencilIcon class="h-4 w-4" />
               </Link>
 
-              <button
-                v-if="canFork"
-                @click="handleFork"
-                class="btn btn-warning"
-                :disabled="!kit.is_public"
-                title="Copy this kit to your own account"
-              >
+              <button v-if="canFork" @click="handleFork" class="btn btn-warning" :disabled="!kit.is_public" title="Copy this kit to your own account">
                 <BookCopy class="h-4 w-4" />
               </button>
 
-              <button
-                v-if="canEdit && kit.fork_count === 0"
-                @click="handleDelete"
-                class="btn btn-danger"
-                title="Delete kit"
-              >
+              <button v-if="canEdit && kit.fork_count === 0" @click="handleDelete" class="btn btn-danger" title="Delete kit">
                 <Trash2Icon class="h-4 w-4" />
               </button>
             </div>
@@ -252,19 +234,13 @@ const breadcrumbs: BreadcrumbItem[] = [
         the only case where the link resolves for whoever it gets sent to - the
         markdown route is gated on is_public and has no session to check.
       -->
-      <div
-        v-if="markdownUrl"
-        class="mb-8 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-sidebar bg-card p-4 lg:max-w-[55%]"
-      >
+      <div v-if="markdownUrl" class="mb-8 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-sidebar bg-card p-4 lg:max-w-[55%]">
         <FileText class="h-4 w-4 shrink-0 text-primary" />
         <p class="text-sm text-foreground">
-          Give this URL to an LLM and it gets the whole kit: every overlay's source, controls and
-          integrations in one document.
+          Give this URL to an LLM and it gets the whole kit: every overlay's source, controls and integrations in one document.
         </p>
         <div class="ml-auto flex items-center gap-2">
-          <a :href="markdownUrl" target="_blank" rel="noopener" class="btn btn-chill btn-xs cursor-pointer">
-            View .md
-          </a>
+          <a :href="markdownUrl" target="_blank" rel="noopener" class="btn btn-chill btn-xs cursor-pointer"> View .md </a>
           <button type="button" class="btn btn-chill btn-xs cursor-pointer" @click="copyMarkdownUrl">
             {{ copiedMarkdown ? 'Copied!' : 'Copy URL' }}
           </button>
@@ -277,11 +253,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <h2 class="text-xl font-semibold">{{ totalTemplates }}</h2>
 
           <div v-if="hasMultipleTypes" class="flex gap-1">
-            <button
-              class="btn btn-xs"
-              :class="typeFilter === 'all' ? 'btn-secondary' : 'btn-chill'"
-              @click="typeFilter = 'all'"
-            >
+            <button class="btn btn-xs" :class="typeFilter === 'all' ? 'btn-secondary' : 'btn-chill'" @click="typeFilter = 'all'">
               All ({{ (kit.templates ?? []).length }})
             </button>
             <button
@@ -318,8 +290,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 :alt="template.name"
                 class="h-full w-full object-cover transition-transform duration-300"
               />
-              <div v-else
-                   class="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5">
+              <div v-else class="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5">
                 <component :is="template.type === 'alert' ? Zap : Layers" class="h-10 w-10 text-primary/30" />
               </div>
             </div>
@@ -327,30 +298,26 @@ const breadcrumbs: BreadcrumbItem[] = [
             <!-- Info -->
             <div class="p-4">
               <div class="mb-1 flex items-center gap-2">
-                <h3
-                  class="truncate font-semibold group-hover:text-violet-500 dark:group-hover:text-violet-300 transition-colors">
-                  {{ template.name }}</h3>
+                <h3 class="truncate font-semibold transition-colors group-hover:text-violet-500 dark:group-hover:text-violet-300">
+                  {{ template.name }}
+                </h3>
                 <Badge
                   class="shrink-0 text-xs"
-                  :class="template.type === 'alert'
-                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'"
+                  :class="
+                    template.type === 'alert'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                  "
                 >
                   {{ template.type === 'alert' ? 'Alert' : 'Static' }}
                 </Badge>
               </div>
-              <p v-if="template.description" class="line-clamp-2 text-sm text-muted-foreground">{{ template.description
-                }}</p>
+              <p v-if="template.description" class="line-clamp-2 text-sm text-muted-foreground">{{ template.description }}</p>
             </div>
           </Link>
         </div>
 
-        <EmptyState
-          v-else
-          dashed
-          :icon="Package"
-          message="No templates in this kit yet."
-        >
+        <EmptyState v-else dashed :icon="Package" message="No templates in this kit yet.">
           <template v-if="canEdit" #action>
             <Link :href="`/kits/${kit.id}/edit`" class="btn btn-primary">Add Templates</Link>
           </template>

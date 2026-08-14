@@ -46,7 +46,7 @@ const props = defineProps<{
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
-  { title: 'Bans', href: route('admin.bans.index') }
+  { title: 'Bans', href: route('admin.bans.index') },
 ];
 
 // Filters
@@ -56,11 +56,15 @@ const search = ref(props.filters.search ?? '');
 let debounce: ReturnType<typeof setTimeout>;
 
 function applyFilters() {
-  router.get(route('admin.bans.index'), {
-    status: status.value || undefined,
-    type: type.value || undefined,
-    search: search.value || undefined
-  }, { preserveState: true, replace: true });
+  router.get(
+    route('admin.bans.index'),
+    {
+      status: status.value || undefined,
+      type: type.value || undefined,
+      search: search.value || undefined,
+    },
+    { preserveState: true, replace: true },
+  );
 }
 
 watch([status, type, search], () => {
@@ -75,7 +79,7 @@ const form = useForm({
   user_id: '' as string | number,
   ip: '',
   comment: '',
-  duration: 'permanent'
+  duration: 'permanent',
 });
 
 function submitBan() {
@@ -84,7 +88,7 @@ function submitBan() {
     onSuccess: () => {
       form.reset();
       showForm.value = false;
-    }
+    },
   });
 }
 
@@ -116,7 +120,7 @@ const durations = [
   { value: '24h', label: '24 hours' },
   { value: '7d', label: '7 days' },
   { value: '30d', label: '30 days' },
-  { value: 'permanent', label: 'Permanent' }
+  { value: 'permanent', label: 'Permanent' },
 ];
 </script>
 
@@ -130,8 +134,7 @@ const durations = [
             <Badge variant="outline">{{ stats.active }} active</Badge>
             <Badge variant="secondary">{{ stats.user_bans }} users</Badge>
             <Badge variant="secondary">{{ stats.ip_bans }} IPs</Badge>
-            <button @click="showForm = !showForm"
-                    class="rounded bg-primary px-3 py-1.5 text-primary-foreground text-sm hover:bg-primary/90">
+            <button @click="showForm = !showForm" class="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90">
               {{ showForm ? 'Cancel' : 'Create Ban' }}
             </button>
           </div>
@@ -139,10 +142,10 @@ const durations = [
       </PageHeader>
 
       <!-- Create Ban Form -->
-      <div v-if="showForm" class="rounded border p-4 space-y-3">
+      <div v-if="showForm" class="space-y-3 rounded border p-4">
         <h3 class="text-sm font-medium">Create New Ban</h3>
         <div class="flex flex-wrap gap-3">
-          <select v-model="form.type" class="rounded border px-3 py-1.5 text-sm bg-background">
+          <select v-model="form.type" class="rounded border bg-background px-3 py-1.5 text-sm">
             <option value="ip">IP Address</option>
             <option value="user">User</option>
           </select>
@@ -152,12 +155,15 @@ const durations = [
 
           <Input v-model="form.comment" placeholder="Reason (optional)" class="w-64" />
 
-          <select v-model="form.duration" class="rounded border px-3 py-1.5 text-sm bg-background">
+          <select v-model="form.duration" class="rounded border bg-background px-3 py-1.5 text-sm">
             <option v-for="d in durations" :key="d.value" :value="d.value">{{ d.label }}</option>
           </select>
 
-          <button @click="submitBan" :disabled="form.processing"
-                  class="rounded bg-destructive px-3 py-1.5 text-destructive-foreground text-sm hover:bg-destructive/90 disabled:opacity-50">
+          <button
+            @click="submitBan"
+            :disabled="form.processing"
+            class="rounded bg-destructive px-3 py-1.5 text-sm text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+          >
             Ban
           </button>
         </div>
@@ -168,12 +174,12 @@ const durations = [
 
       <!-- Filters -->
       <div class="flex flex-wrap gap-2">
-        <select v-model="status" class="rounded border px-3 py-1.5 text-sm bg-background">
+        <select v-model="status" class="rounded border bg-background px-3 py-1.5 text-sm">
           <option value="active">Active</option>
           <option value="expired">Expired</option>
           <option value="all">All</option>
         </select>
-        <select v-model="type" class="rounded border px-3 py-1.5 text-sm bg-background">
+        <select v-model="type" class="rounded border bg-background px-3 py-1.5 text-sm">
           <option value="">All types</option>
           <option value="user">User bans</option>
           <option value="ip">IP bans</option>
@@ -182,7 +188,7 @@ const durations = [
       </div>
 
       <!-- Card view (< lg) -->
-      <div class="lg:hidden space-y-2">
+      <div class="space-y-2 lg:hidden">
         <EmptyState v-if="bans.data.length === 0" message="No bans found." />
         <div v-for="ban in bans.data" :key="`card-${ban.id}`" class="rounded border p-3 text-sm">
           <div class="flex items-start justify-between gap-2">
@@ -190,8 +196,7 @@ const durations = [
               <div class="flex items-center gap-2">
                 <Badge :variant="ban.bannable_type ? 'default' : 'secondary'">{{ banType(ban) }}</Badge>
                 <span class="font-medium">
-                  <a v-if="ban.bannable" :href="route('admin.users.show', ban.bannable.id)"
-                     class="hover:underline">{{ banTarget(ban) }}</a>
+                  <a v-if="ban.bannable" :href="route('admin.users.show', ban.bannable.id)" class="hover:underline">{{ banTarget(ban) }}</a>
                   <span v-else>{{ banTarget(ban) }}</span>
                 </span>
               </div>
@@ -209,41 +214,40 @@ const durations = [
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
+      <div class="hidden overflow-x-auto rounded border border-sidebar lg:block">
         <table class="w-full text-sm">
           <thead class="bg-card text-left text-muted-foreground">
-          <tr>
-            <th class="px-3 py-2">Type</th>
-            <th class="px-3 py-2">Target</th>
-            <th class="px-3 py-2">Comment</th>
-            <th class="px-3 py-2">Expires</th>
-            <th class="px-3 py-2">Created by</th>
-            <th class="px-3 py-2">Created</th>
-            <th class="px-3 py-2"></th>
-          </tr>
+            <tr>
+              <th class="px-3 py-2">Type</th>
+              <th class="px-3 py-2">Target</th>
+              <th class="px-3 py-2">Comment</th>
+              <th class="px-3 py-2">Expires</th>
+              <th class="px-3 py-2">Created by</th>
+              <th class="px-3 py-2">Created</th>
+              <th class="px-3 py-2"></th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-for="ban in bans.data" :key="ban.id" class="border-t border-sidebar">
-            <td class="px-3 py-2">
-              <Badge :variant="ban.bannable_type ? 'default' : 'secondary'">{{ banType(ban) }}</Badge>
-            </td>
-            <td class="px-3 py-2">
-              <a v-if="ban.bannable" :href="route('admin.users.show', ban.bannable.id)"
-                 class="hover:underline">{{ banTarget(ban) }}</a>
-              <span v-else class="font-mono">{{ banTarget(ban) }}</span>
-            </td>
-            <td class="px-3 py-2 text-muted-foreground max-w-xs truncate">{{ ban.comment ?? '—' }}</td>
-            <td class="px-3 py-2">
-              <Badge v-if="!ban.expired_at" variant="destructive">Permanent</Badge>
-              <span v-else class="text-xs text-muted-foreground">{{ formatExpiry(ban) }}</span>
-            </td>
-            <td class="px-3 py-2 text-muted-foreground">{{ ban.created_by?.name ?? '—' }}</td>
-            <td class="px-3 py-2 text-xs text-muted-foreground">{{ new Date(ban.created_at).toLocaleString() }}</td>
-            <td class="px-3 py-2">
-              <button @click="removeBan(ban.id)" class="text-xs text-destructive hover:underline">Unban</button>
-            </td>
-          </tr>
-          <EmptyState v-if="bans.data.length === 0" :colspan="7" message="No bans found." />
+            <tr v-for="ban in bans.data" :key="ban.id" class="border-t border-sidebar">
+              <td class="px-3 py-2">
+                <Badge :variant="ban.bannable_type ? 'default' : 'secondary'">{{ banType(ban) }}</Badge>
+              </td>
+              <td class="px-3 py-2">
+                <a v-if="ban.bannable" :href="route('admin.users.show', ban.bannable.id)" class="hover:underline">{{ banTarget(ban) }}</a>
+                <span v-else class="font-mono">{{ banTarget(ban) }}</span>
+              </td>
+              <td class="max-w-xs truncate px-3 py-2 text-muted-foreground">{{ ban.comment ?? '—' }}</td>
+              <td class="px-3 py-2">
+                <Badge v-if="!ban.expired_at" variant="destructive">Permanent</Badge>
+                <span v-else class="text-xs text-muted-foreground">{{ formatExpiry(ban) }}</span>
+              </td>
+              <td class="px-3 py-2 text-muted-foreground">{{ ban.created_by?.name ?? '—' }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ new Date(ban.created_at).toLocaleString() }}</td>
+              <td class="px-3 py-2">
+                <button @click="removeBan(ban.id)" class="text-xs text-destructive hover:underline">Unban</button>
+              </td>
+            </tr>
+            <EmptyState v-if="bans.data.length === 0" :colspan="7" message="No bans found." />
           </tbody>
         </table>
       </div>

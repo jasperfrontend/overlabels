@@ -63,12 +63,7 @@ function rowHref(item: TItem): string | null {
       class="collection-row group relative flex items-start justify-between gap-4 p-3"
       :class="rowClass?.(item)"
     >
-      <Link
-        v-if="rowHref(item)"
-        :href="rowHref(item)!"
-        :aria-label="label?.(item)"
-        class="absolute inset-0 cursor-pointer"
-      />
+      <Link v-if="rowHref(item)" :href="rowHref(item)!" :aria-label="label?.(item)" class="absolute inset-0 cursor-pointer" />
 
       <div class="min-w-0 flex-1">
         <slot name="item" :item="item" />

@@ -25,9 +25,7 @@ const breadcrumbs = computed(() => [
   { title: 'Updates', href: route('admin.updates.index') },
   {
     title: isEditing.value ? `Edit: ${props.update!.title}` : 'New post',
-    href: isEditing.value
-      ? route('admin.updates.edit', props.update!.id)
-      : route('admin.updates.create'),
+    href: isEditing.value ? route('admin.updates.edit', props.update!.id) : route('admin.updates.create'),
   },
 ]);
 
@@ -42,14 +40,12 @@ function toLocalDateTimeInput(iso: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const tagsInput = ref<string>(
-  (props.update?.tags ?? []).join(', ')
-);
+const tagsInput = ref<string>((props.update?.tags ?? []).join(', '));
 
 const form = useForm({
   title: props.update?.title ?? '',
   slug: props.update?.slug ?? '',
-  tags: props.update?.tags ?? [] as string[],
+  tags: props.update?.tags ?? ([] as string[]),
   excerpt: props.update?.excerpt ?? '',
   body: props.update?.body ?? '',
   compiled_css: props.update?.compiled_css ?? '',
@@ -147,7 +143,7 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
       </PageHeader>
 
       <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div class="lg:col-span-2 flex flex-col gap-4">
+        <div class="flex flex-col gap-4 lg:col-span-2">
           <div class="flex flex-col gap-1">
             <label for="field-title" class="text-sm font-medium">Title</label>
             <input id="field-title" v-model="form.title" class="input-border" placeholder="What are you announcing?" required />
@@ -177,9 +173,7 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">
-              Body <span class="text-muted-foreground">(markdown, HTML allowed)</span>
-            </label>
+            <label class="text-sm font-medium"> Body <span class="text-muted-foreground">(markdown, HTML allowed)</span> </label>
             <div class="overflow-hidden rounded-sm border border-sidebar-border" style="height: 600px">
               <Codemirror
                 :key="'body-' + editorKey"
@@ -198,29 +192,16 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-1">
             <label for="field-published" class="text-sm font-medium">Post date</label>
-            <input
-              id="field-published"
-              v-model="form.published_at"
-              type="datetime-local"
-              class="input-border h-10 w-full"
-            />
+            <input id="field-published" v-model="form.published_at" type="datetime-local" class="input-border h-10 w-full" />
             <p v-if="form.errors.published_at" class="text-xs text-destructive">{{ form.errors.published_at }}</p>
           </div>
 
           <div class="flex flex-col gap-1">
-            <label for="field-tags" class="text-sm font-medium">
-              Tags <span class="text-muted-foreground">(comma-separated)</span>
-            </label>
-            <input
-              id="field-tags"
-              v-model="tagsInput"
-              placeholder="kits, kofi, release"
-              class="input-border"
-              @input="syncTagsFromInput"
-            />
+            <label for="field-tags" class="text-sm font-medium"> Tags <span class="text-muted-foreground">(comma-separated)</span> </label>
+            <input id="field-tags" v-model="tagsInput" placeholder="kits, kofi, release" class="input-border" @input="syncTagsFromInput" />
             <p v-if="form.errors.tags" class="text-xs text-destructive">{{ form.errors.tags }}</p>
             <p class="text-xs text-muted-foreground">Stored exactly as you type them - no HTML, case preserved.</p>
-            <div class="flex gap-2 mt-3">
+            <div class="mt-3 flex gap-2">
               <button type="submit" :disabled="form.processing" class="btn btn-primary cursor-pointer">
                 <Save class="mr-2 h-4 w-4" />
                 {{ isEditing ? 'Save changes' : 'Publish' }}

@@ -1,8 +1,8 @@
-import { ref, computed } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
+import { clearListContext } from '@/composables/useListContext';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { clearListContext } from '@/composables/useListContext';
-import { useConfirm } from '@/composables/useConfirm';
+import { computed, ref } from 'vue';
 
 const { confirm } = useConfirm();
 interface TemplateActionOptions {

@@ -30,11 +30,7 @@ const search = ref(props.filters.search ?? '');
 
 let debounce: ReturnType<typeof setTimeout>;
 function applyFilters() {
-  router.get(
-    route('admin.updates.index'),
-    { search: search.value || undefined },
-    { preserveState: true, replace: true }
-  );
+  router.get(route('admin.updates.index'), { search: search.value || undefined }, { preserveState: true, replace: true });
 }
 watch(search, () => {
   clearTimeout(debounce);
@@ -88,28 +84,31 @@ async function handleDelete(u: Update) {
             <tr v-for="u in updates.data" :key="u.id" class="border-t border-sidebar">
               <td class="px-3 py-2">
                 <div class="font-medium">
-                  <Link class="hover:underline cursor-pointer" :href="route('admin.updates.edit', u.id)">{{ u.title }}</Link>
+                  <Link class="cursor-pointer hover:underline" :href="route('admin.updates.edit', u.id)">{{ u.title }}</Link>
                 </div>
                 <div class="font-mono text-xs text-muted-foreground">{{ u.slug }}</div>
               </td>
               <td class="px-3 py-2">
                 <div v-if="u.tags && u.tags.length" class="flex flex-wrap gap-1">
-                  <span
-                    v-for="tag in u.tags"
-                    :key="tag"
-                    class="inline-flex items-center rounded-sm bg-sidebar px-2 py-0.5 text-xs text-foreground"
-                  >
+                  <span v-for="tag in u.tags" :key="tag" class="inline-flex items-center rounded-sm bg-sidebar px-2 py-0.5 text-xs text-foreground">
                     {{ tag }}
                   </span>
                 </div>
               </td>
               <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDate(u.published_at) }}</td>
               <td class="px-3 py-2 text-right">
-                <Link :href="route('admin.updates.edit', u.id)" class="inline-flex items-center text-primary text-xs hover:underline mr-3 cursor-pointer">
+                <Link
+                  :href="route('admin.updates.edit', u.id)"
+                  class="mr-3 inline-flex cursor-pointer items-center text-xs text-primary hover:underline"
+                >
                   <PencilIcon class="mr-1 h-3.5 w-3.5" />
                   Edit
                 </Link>
-                <button @click="handleDelete(u)" class="inline-flex items-center text-destructive text-xs hover:underline cursor-pointer" type="button">
+                <button
+                  @click="handleDelete(u)"
+                  class="inline-flex cursor-pointer items-center text-xs text-destructive hover:underline"
+                  type="button"
+                >
                   <Trash2 class="mr-1 h-3.5 w-3.5" />
                   Delete
                 </button>
@@ -122,8 +121,13 @@ async function handleDelete(u: Update) {
 
       <div class="flex gap-1">
         <template v-for="link in updates.links" :key="link.label">
-          <a v-if="link.url" :href="link.url" class="rounded border px-3 py-1 text-sm cursor-pointer"
-             :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'" v-html="link.label" />
+          <a
+            v-if="link.url"
+            :href="link.url"
+            class="cursor-pointer rounded border px-3 py-1 text-sm"
+            :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'"
+            v-html="link.label"
+          />
           <span v-else class="rounded border px-3 py-1 text-sm opacity-40" v-html="link.label" />
         </template>
       </div>

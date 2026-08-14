@@ -2,12 +2,12 @@
 const props = defineProps({
   title: String,
   description: [String, Number],
-})
+});
 </script>
 
 <template>
-  <div class="flex flex-col gap-0 p-2 justify-between">
+  <div class="flex flex-col justify-between gap-0 p-2">
     <span class="text-olive-400">{{ props.title }}</span>
-    <span class="py-0.5 px-2 capitalize font-bold text-4xl">{{ props.description }}</span>
+    <span class="px-2 py-0.5 text-4xl font-bold capitalize">{{ props.description }}</span>
   </div>
 </template>

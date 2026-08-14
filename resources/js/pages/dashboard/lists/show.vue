@@ -62,7 +62,13 @@ const props = defineProps<{
 // can mutate in place. Re-synced whenever the server sends fresh props (every
 // focused PATCH returns back(), re-rendering this page).
 const list = ref<ListRow>({ ...props.list });
-watch(() => props.list, (next) => { list.value = { ...next }; }, { deep: true });
+watch(
+  () => props.list,
+  (next) => {
+    list.value = { ...next };
+  },
+  { deep: true },
+);
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
   { title: 'Dashboard', href: '/dashboard' },
@@ -78,11 +84,15 @@ const draftItemsText = ref('');
 const isDirty = ref(false);
 const saving = ref(false);
 
-watch(list, (next) => {
-  draftLabel.value = next?.label ?? '';
-  draftItemsText.value = (next?.items ?? []).join('\n');
-  isDirty.value = false;
-}, { immediate: true });
+watch(
+  list,
+  (next) => {
+    draftLabel.value = next?.label ?? '';
+    draftItemsText.value = (next?.items ?? []).join('\n');
+    isDirty.value = false;
+  },
+  { immediate: true },
+);
 
 watch([draftLabel, draftItemsText], () => {
   const baseline = (list.value.items ?? []).join('\n');
@@ -97,24 +107,28 @@ function saveActive() {
   saving.value = true;
   const items = draftItemsText.value === '' ? [] : draftItemsText.value.split('\n');
 
-  router.put(route('lists.update', list.value.id), {
-    label: draftLabel.value || null,
-    items,
-  }, {
-    preserveScroll: true,
-    onSuccess: () => {
-      isDirty.value = false;
-      toastMessage.value = `'${list.value.slug}' saved.`;
-      toastType.value = 'success';
+  router.put(
+    route('lists.update', list.value.id),
+    {
+      label: draftLabel.value || null,
+      items,
     },
-    onError: (errors) => {
-      toastMessage.value = Object.values(errors)[0] as string ?? 'Save failed.';
-      toastType.value = 'error';
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        isDirty.value = false;
+        toastMessage.value = `'${list.value.slug}' saved.`;
+        toastType.value = 'success';
+      },
+      onError: (errors) => {
+        toastMessage.value = (Object.values(errors)[0] as string) ?? 'Save failed.';
+        toastType.value = 'error';
+      },
+      onFinish: () => {
+        saving.value = false;
+      },
     },
-    onFinish: () => {
-      saving.value = false;
-    },
-  });
+  );
 }
 
 async function deleteActive() {
@@ -127,7 +141,7 @@ async function deleteActive() {
 
   router.delete(route('lists.destroy', list.value.id), {
     onError: (errors) => {
-      toastMessage.value = Object.values(errors)[0] as string ?? 'Delete failed.';
+      toastMessage.value = (Object.values(errors)[0] as string) ?? 'Delete failed.';
       toastType.value = 'error';
     },
   });
@@ -136,21 +150,23 @@ async function deleteActive() {
 function toggleDisabled() {
   const nextDisabled = list.value.disabled_at === null;
 
-  router.put(route('lists.update', list.value.id), {
-    disabled: nextDisabled,
-  }, {
-    preserveScroll: true,
-    onSuccess: () => {
-      toastMessage.value = nextDisabled
-        ? `'${list.value.slug}' disabled. Chat appenders will silently no-op.`
-        : `'${list.value.slug}' re-enabled.`;
-      toastType.value = 'success';
+  router.put(
+    route('lists.update', list.value.id),
+    {
+      disabled: nextDisabled,
     },
-    onError: () => {
-      toastMessage.value = 'Failed to toggle list state.';
-      toastType.value = 'error';
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        toastMessage.value = nextDisabled ? `'${list.value.slug}' disabled. Chat appenders will silently no-op.` : `'${list.value.slug}' re-enabled.`;
+        toastType.value = 'success';
+      },
+      onError: () => {
+        toastMessage.value = 'Failed to toggle list state.';
+        toastType.value = 'error';
+      },
     },
-  });
+  );
 }
 
 async function copyTag(tag: string) {
@@ -173,27 +189,31 @@ const ttlUnit = ref<'seconds' | 'minutes' | 'hours'>('minutes');
 const expiresAtLocal = ref<string>('');
 const expirySaving = ref(false);
 
-watch(list, (next) => {
-  if (!next || next.entry_ttl_seconds === null) {
-    ttlValue.value = null;
-    ttlUnit.value = 'minutes';
-  } else {
-    // Pick the largest unit that divides evenly so editing feels natural:
-    // 3600 -> 1 hour, 90 -> 90 seconds (not 1.5 minutes).
-    const s = next.entry_ttl_seconds;
-    if (s % 3600 === 0) {
-      ttlValue.value = s / 3600;
-      ttlUnit.value = 'hours';
-    } else if (s % 60 === 0) {
-      ttlValue.value = s / 60;
+watch(
+  list,
+  (next) => {
+    if (!next || next.entry_ttl_seconds === null) {
+      ttlValue.value = null;
       ttlUnit.value = 'minutes';
     } else {
-      ttlValue.value = s;
-      ttlUnit.value = 'seconds';
+      // Pick the largest unit that divides evenly so editing feels natural:
+      // 3600 -> 1 hour, 90 -> 90 seconds (not 1.5 minutes).
+      const s = next.entry_ttl_seconds;
+      if (s % 3600 === 0) {
+        ttlValue.value = s / 3600;
+        ttlUnit.value = 'hours';
+      } else if (s % 60 === 0) {
+        ttlValue.value = s / 60;
+        ttlUnit.value = 'minutes';
+      } else {
+        ttlValue.value = s;
+        ttlUnit.value = 'seconds';
+      }
     }
-  }
-  expiresAtLocal.value = next?.expires_at ? unixToLocalInput(next.expires_at) : '';
-}, { immediate: true });
+    expiresAtLocal.value = next?.expires_at ? unixToLocalInput(next.expires_at) : '';
+  },
+  { immediate: true },
+);
 
 function unixToLocalInput(unix: number): string {
   const d = new Date(unix * 1000);
@@ -258,23 +278,27 @@ function saveExpiry() {
   if (expirySaving.value) return;
   expirySaving.value = true;
 
-  router.put(route('lists.update', list.value.id), {
-    entry_ttl_seconds: ttlSecondsComposed.value,
-    expires_at: expiresAtUnix.value,
-  }, {
-    preserveScroll: true,
-    onSuccess: () => {
-      toastMessage.value = `Expiry updated for '${list.value.slug}'.`;
-      toastType.value = 'success';
+  router.put(
+    route('lists.update', list.value.id),
+    {
+      entry_ttl_seconds: ttlSecondsComposed.value,
+      expires_at: expiresAtUnix.value,
     },
-    onError: (errors) => {
-      toastMessage.value = (Object.values(errors)[0] as string) ?? 'Save failed.';
-      toastType.value = 'error';
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        toastMessage.value = `Expiry updated for '${list.value.slug}'.`;
+        toastType.value = 'success';
+      },
+      onError: (errors) => {
+        toastMessage.value = (Object.values(errors)[0] as string) ?? 'Save failed.';
+        toastType.value = 'error';
+      },
+      onFinish: () => {
+        expirySaving.value = false;
+      },
     },
-    onFinish: () => {
-      expirySaving.value = false;
-    },
-  });
+  );
 }
 
 function clearTtl() {
@@ -393,7 +417,7 @@ async function saveAppender() {
     if (editingAppender.value) {
       const res = await axios.put(`/dashboard/lists/${list.value.id}/appenders/${editingAppender.value.id}`, body);
       const updated = res.data.appender;
-      const idx = appenders.value.findIndex(a => a.id === updated.id);
+      const idx = appenders.value.findIndex((a) => a.id === updated.id);
       if (idx >= 0) appenders.value[idx] = updated;
       toastMessage.value = `!${updated.command} saved.`;
     } else {
@@ -423,7 +447,7 @@ async function deleteAppender(a: AppenderRow) {
   if (!(await confirm({ message: `Delete command !${a.command}?`, confirmLabel: 'Delete' }))) return;
   try {
     await axios.delete(`/dashboard/lists/${list.value.id}/appenders/${a.id}`);
-    appenders.value = appenders.value.filter(x => x.id !== a.id);
+    appenders.value = appenders.value.filter((x) => x.id !== a.id);
     toastMessage.value = `!${a.command} deleted.`;
     toastType.value = 'success';
   } catch {
@@ -534,7 +558,9 @@ async function runAction(action: string, args: string = '', requiresConfirm = fa
   }
 }
 
-function runCount() { runAction('count'); }
+function runCount() {
+  runAction('count');
+}
 function runFirst() {
   const n = prompt(`How many from the start? (default 1)`, '1');
   if (n === null) return;
@@ -612,19 +638,23 @@ function toggleActionPermission(action: string, checked: boolean) {
   list.value.chat_permissions = next;
 
   permissionSaving.value = true;
-  router.put(route('lists.update', list.value.id), {
-    chat_permissions: next,
-  }, {
-    preserveScroll: true,
-    onError: () => {
-      list.value.chat_permissions = previous;
-      toastMessage.value = 'Failed to save permission. Reverted.';
-      toastType.value = 'error';
+  router.put(
+    route('lists.update', list.value.id),
+    {
+      chat_permissions: next,
     },
-    onFinish: () => {
-      permissionSaving.value = false;
+    {
+      preserveScroll: true,
+      onError: () => {
+        list.value.chat_permissions = previous;
+        toastMessage.value = 'Failed to save permission. Reverted.';
+        toastType.value = 'error';
+      },
+      onFinish: () => {
+        permissionSaving.value = false;
+      },
     },
-  });
+  );
 }
 
 function runClone() {
@@ -675,7 +705,13 @@ async function takeManualSnapshot() {
 }
 
 async function restoreSnapshot(snap: SnapshotRow) {
-  if (!(await confirm({ message: `Restore '${list.value.slug}' to this snapshot (${snap.item_count} items)? A safety snapshot of the current state is taken first.`, confirmLabel: 'Restore' }))) return;
+  if (
+    !(await confirm({
+      message: `Restore '${list.value.slug}' to this snapshot (${snap.item_count} items)? A safety snapshot of the current state is taken first.`,
+      confirmLabel: 'Restore',
+    }))
+  )
+    return;
   try {
     await axios.post(`/dashboard/lists/${list.value.id}/snapshots/${snap.id}/restore`);
     await loadSnapshots(list.value.id);
@@ -703,7 +739,7 @@ async function deleteSnapshot(snap: SnapshotRow) {
   if (!(await confirm({ message: 'Delete this snapshot? Cannot be undone.', confirmLabel: 'Delete' }))) return;
   try {
     await axios.delete(`/dashboard/lists/${list.value.id}/snapshots/${snap.id}`);
-    snapshots.value = snapshots.value.filter(s => s.id !== snap.id);
+    snapshots.value = snapshots.value.filter((s) => s.id !== snap.id);
     toastMessage.value = 'Snapshot deleted.';
     toastType.value = 'success';
   } catch {
@@ -739,7 +775,9 @@ async function loadMeta() {
   try {
     const res = await axios.get('/dashboard/lists/meta-command');
     metaCommand.value = res.data.meta;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 </script>
 
@@ -768,9 +806,7 @@ async function loadMeta() {
             <PowerOffIcon class="mr-1 h-3 w-3" />
             Disabled
           </Badge>
-          <Badge v-if="list.recipe" variant="secondary">
-            from {{ list.recipe.name }}
-          </Badge>
+          <Badge v-if="list.recipe" variant="secondary"> from {{ list.recipe.name }} </Badge>
           <Badge v-if="!list.user_editable && list.recipe_instance_id !== null" variant="outline">
             <LockIcon class="mr-1 h-3 w-3" />
             Locked
@@ -780,13 +816,7 @@ async function loadMeta() {
 
       <div class="w-full">
         <Label for="active-label">Label</Label>
-        <input
-          id="active-label"
-          v-model="draftLabel"
-          :disabled="!!isActiveLocked"
-          placeholder="(optional)"
-          class="input-border w-full"
-        />
+        <input id="active-label" v-model="draftLabel" :disabled="!!isActiveLocked" placeholder="(optional)" class="input-border w-full" />
       </div>
 
       <div>
@@ -801,9 +831,7 @@ async function loadMeta() {
           rows="16"
           class="input-border w-full font-mono text-sm"
         ></textarea>
-        <p class="mt-1 text-xs text-muted-foreground">
-          Empty lines and duplicates are preserved exactly.
-        </p>
+        <p class="mt-1 text-xs text-muted-foreground">Empty lines and duplicates are preserved exactly.</p>
       </div>
 
       <div class="flex flex-wrap items-center justify-between gap-2">
@@ -818,19 +846,19 @@ async function loadMeta() {
             <span class="ml-1.5">Delete list</span>
           </button>
           <button
-            class="btn btn-warning cursor-pointer text-warning hover:text-warning"
-            :title="list.disabled_at !== null ? 'Re-enable: chat appenders can write again.' : 'Disable: chat appenders silently no-op; existing items stay visible.'"
+            class="btn btn-warning text-warning hover:text-warning cursor-pointer"
+            :title="
+              list.disabled_at !== null
+                ? 'Re-enable: chat appenders can write again.'
+                : 'Disable: chat appenders silently no-op; existing items stay visible.'
+            "
             @click="toggleDisabled"
           >
             <component :is="list.disabled_at !== null ? PowerIcon : PowerOffIcon" class="h-4 w-4" />
             <span class="ml-1.5">{{ list.disabled_at !== null ? 'Enable list' : 'Disable list' }}</span>
           </button>
         </div>
-        <button
-          class="cursor-pointer btn btn-primary"
-          :disabled="!isDirty || saving || !!isActiveLocked"
-          @click="saveActive"
-        >
+        <button class="btn btn-primary cursor-pointer" :disabled="!isDirty || saving || !!isActiveLocked" @click="saveActive">
           {{ saving ? 'Saving…' : isDirty ? 'Save changes' : 'Saved' }}
         </button>
       </div>
@@ -840,9 +868,8 @@ async function loadMeta() {
         <div class="mb-3">
           <h3 class="text-sm font-semibold text-foreground">Expiry</h3>
           <p class="mt-0.5 text-xs text-muted-foreground">
-            Optional. Per-item age-out drops individual entries after their age exceeds the TTL.
-            Whole-list expiry snapshots the list, clears items, and disables further appends at the chosen moment.
-            Both run every minute.
+            Optional. Per-item age-out drops individual entries after their age exceeds the TTL. Whole-list expiry snapshots the list, clears items,
+            and disables further appends at the chosen moment. Both run every minute.
           </p>
         </div>
 
@@ -859,49 +886,27 @@ async function loadMeta() {
                 placeholder="off"
                 class="input-border cursor-pointer px-2 py-1.5 text-sm"
               />
-              <select
-                v-model="ttlUnit"
-                class="input-border cursor-pointer px-2 py-2 text-sm"
-              >
+              <select v-model="ttlUnit" class="input-border cursor-pointer px-2 py-2 text-sm">
                 <option value="seconds">seconds</option>
                 <option value="minutes">minutes</option>
                 <option value="hours">hours</option>
               </select>
-              <button
-                v-if="ttlValue !== null"
-                size="sm"
-                class="cursor-pointer btn btn-chill px-2 py-1.5 text-sm"
-                @click="clearTtl"
-              >
-                Clear
-              </button>
+              <button v-if="ttlValue !== null" size="sm" class="btn btn-chill cursor-pointer px-2 py-1.5 text-sm" @click="clearTtl">Clear</button>
             </div>
-            <p class="mt-1 text-xs text-muted-foreground">
-              Items older than this are removed on the next sweep. Max 30 days.
-            </p>
+            <p class="mt-1 text-xs text-muted-foreground">Items older than this are removed on the next sweep. Max 30 days.</p>
           </div>
 
           <!-- Whole-list expires_at -->
           <div>
             <Label for="expires-at">Whole-list deadline</Label>
             <div class="mt-1 flex items-center gap-2">
-              <input
-                id="expires-at"
-                v-model="expiresAtLocal"
-                type="datetime-local"
-                class="cursor-pointer input-border px-2 py-1.5 text-sm"
-              />
-              <button
-                v-if="expiresAtLocal"
-                size="sm"
-                class="cursor-pointer btn btn-chill px-2 py-1.5 text-sm"
-                @click="clearExpiresAt"
-              >
-                Clear
-              </button>
+              <input id="expires-at" v-model="expiresAtLocal" type="datetime-local" class="input-border cursor-pointer px-2 py-1.5 text-sm" />
+              <button v-if="expiresAtLocal" size="sm" class="btn btn-chill cursor-pointer px-2 py-1.5 text-sm" @click="clearExpiresAt">Clear</button>
             </div>
             <p class="mt-1 text-xs text-foreground">
-              <span v-if="expiryCountdown">In <span class="font-mono">{{ expiryCountdown }}</span></span>
+              <span v-if="expiryCountdown"
+                >In <span class="font-mono">{{ expiryCountdown }}</span></span
+              >
               <span v-else class="text-muted-foreground">No deadline set.</span>
             </p>
           </div>
@@ -910,15 +915,11 @@ async function loadMeta() {
         <div class="mt-3 flex items-center justify-between gap-2">
           <p class="text-xs text-muted-foreground">
             Template tags:
-            <span class="font-mono">{{ list.tag.replace(']]]', ':expires_at]]]') }}</span>,
+            <span class="font-mono">{{ list.tag.replace(']]]', ':expires_at]]]') }}</span
+            >,
             <span class="font-mono">{{ list.tag.replace(']]]', ':countdown]]]') }}</span>
           </p>
-          <button
-            size="sm"
-            class="cursor-pointer btn btn-primary px-2 py-1.5 text-sm"
-            :disabled="!expiryIsDirty || expirySaving"
-            @click="saveExpiry"
-          >
+          <button size="sm" class="btn btn-primary cursor-pointer px-2 py-1.5 text-sm" :disabled="!expiryIsDirty || expirySaving" @click="saveExpiry">
             {{ expirySaving ? 'Saving…' : expiryIsDirty ? 'Save expiry' : 'Saved' }}
           </button>
         </div>
@@ -929,7 +930,8 @@ async function loadMeta() {
         <div class="mb-3">
           <h3 class="text-sm font-semibold text-foreground">Actions</h3>
           <p class="mt-0.5 text-xs text-muted-foreground">
-            Same vocabulary as <span class="font-mono">!{{ metaCommand?.command || 'list' }} {{ list.slug }} &lt;action&gt;</span> in chat. Destructive actions snapshot first.
+            Same vocabulary as <span class="font-mono">!{{ metaCommand?.command || 'list' }} {{ list.slug }} &lt;action&gt;</span> in chat.
+            Destructive actions snapshot first.
           </p>
         </div>
         <div class="grid gap-6 md:grid-cols-2">
@@ -937,7 +939,7 @@ async function loadMeta() {
           <div class="flex flex-col items-start gap-x-6 gap-y-3">
             <!-- Inspect: read-only peeks -->
             <div class="flex flex-wrap items-center gap-2">
-              <div class="text-xs font-medium w-full tracking-wide text-foreground">Inspect</div>
+              <div class="w-full text-xs font-medium tracking-wide text-foreground">Inspect</div>
               <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runCount">
                 <HashIcon class="h-3.5 w-3.5" /><span class="ml-1">Count</span>
               </button>
@@ -954,7 +956,7 @@ async function loadMeta() {
 
             <!-- Pop: remove one item -->
             <div class="flex flex-wrap items-center gap-2">
-              <div class="text-xs w-full font-medium tracking-wide text-foreground">Pop/draw</div>
+              <div class="w-full text-xs font-medium tracking-wide text-foreground">Pop/draw</div>
               <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="() => runPop('first')">
                 <ArrowUpFromLineIcon class="h-3.5 w-3.5" /><span class="ml-1">Pop first</span>
               </button>
@@ -968,11 +970,15 @@ async function loadMeta() {
 
             <!-- Whole list -->
             <div class="flex flex-wrap items-center gap-2">
-              <div class="text-xs w-full font-medium tracking-wide text-foreground">List</div>
+              <div class="w-full text-xs font-medium tracking-wide text-foreground">List</div>
               <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runClone">
                 <CopyPlusIcon class="h-3.5 w-3.5" /><span class="ml-1">Clone</span>
               </button>
-              <button class="btn btn-chill cursor-pointer text-destructive hover:text-destructive" :disabled="runningAction !== null" @click="runClear">
+              <button
+                class="btn btn-chill cursor-pointer text-destructive hover:text-destructive"
+                :disabled="runningAction !== null"
+                @click="runClear"
+              >
                 <EraserIcon class="h-3.5 w-3.5" /><span class="ml-1">Clear</span>
               </button>
             </div>
@@ -983,23 +989,15 @@ async function loadMeta() {
             <div>
               <div class="text-xs font-medium tracking-wide text-foreground">Allow viewers in chat</div>
               <p class="mt-0.5 text-xs text-muted-foreground">
-                Unchecked = moderator+ only (default). Checked = everyone can run this action via <span class="font-mono">!{{ metaCommand?.command || 'list' }} {{ list.slug }} &lt;action&gt;</span>.
-                Settings apply only to this list.
+                Unchecked = moderator+ only (default). Checked = everyone can run this action via
+                <span class="font-mono">!{{ metaCommand?.command || 'list' }} {{ list.slug }} &lt;action&gt;</span>. Settings apply only to this list.
                 <span v-if="permissionSaving" class="ml-1 italic">Saving…</span>
               </p>
             </div>
-            <div
-              v-for="group in PERMISSION_GROUPS"
-              :key="group.title"
-              class="space-y-1"
-            >
+            <div v-for="group in PERMISSION_GROUPS" :key="group.title" class="space-y-1">
               <div class="text-xs font-medium tracking-wide text-muted-foreground">{{ group.title }}</div>
               <div class="grid grid-cols-2 gap-x-3 gap-y-1">
-                <label
-                  v-for="action in group.actions"
-                  :key="action.key"
-                  class="flex cursor-pointer items-center gap-2 text-xs text-foreground"
-                >
+                <label v-for="action in group.actions" :key="action.key" class="flex cursor-pointer items-center gap-2 text-xs text-foreground">
                   <input
                     type="checkbox"
                     class="cursor-pointer"
@@ -1017,11 +1015,7 @@ async function loadMeta() {
       <!-- Snapshots panel: history of destructive actions, restorable -->
       <div class="border border-sidebar-border p-4">
         <div class="mb-3 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            class="flex cursor-pointer items-center gap-2 text-left"
-            @click="showSnapshots = !showSnapshots"
-          >
+          <button type="button" class="flex cursor-pointer items-center gap-2 text-left" @click="showSnapshots = !showSnapshots">
             <HistoryIcon class="h-4 w-4 text-muted-foreground" />
             <h3 class="text-sm font-semibold text-foreground">Snapshots</h3>
             <span class="text-xs text-muted-foreground">({{ snapshots.length }})</span>
@@ -1055,13 +1049,25 @@ async function loadMeta() {
                 </div>
               </div>
               <div class="flex items-center gap-1">
-                <Button size="sm" variant="ghost" class="cursor-pointer" :title="snap.pinned ? 'Unpin' : 'Pin (survives retention)'" @click="togglePin(snap)">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  class="cursor-pointer"
+                  :title="snap.pinned ? 'Unpin' : 'Pin (survives retention)'"
+                  @click="togglePin(snap)"
+                >
                   <PinIcon class="h-3.5 w-3.5" :class="snap.pinned ? 'fill-current' : ''" />
                 </Button>
                 <Button size="sm" variant="ghost" class="cursor-pointer" title="Restore to this snapshot" @click="restoreSnapshot(snap)">
                   <RotateCcwIcon class="h-3.5 w-3.5" />
                 </Button>
-                <Button size="sm" variant="ghost" class="cursor-pointer text-destructive hover:text-destructive" title="Delete this snapshot" @click="deleteSnapshot(snap)">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  class="cursor-pointer text-destructive hover:text-destructive"
+                  title="Delete this snapshot"
+                  @click="deleteSnapshot(snap)"
+                >
                   <Trash2Icon class="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -1080,7 +1086,7 @@ async function loadMeta() {
               <span class="font-mono">[[[bot:from_user]]]</span> in the value template.
             </p>
           </div>
-          <button class="btn btn-primary cursor-pointer shrink-0" @click="openAppenderAdd">
+          <button class="btn btn-primary shrink-0 cursor-pointer" @click="openAppenderAdd">
             <PlusIcon class="h-3.5 w-3.5" />
             <span class="ml-1">Add command</span>
           </button>
@@ -1091,11 +1097,7 @@ async function loadMeta() {
           No append commands yet. Add one to let chatters grow this list.
         </div>
         <div v-else class="space-y-6">
-          <div
-            v-for="a in appenders"
-            :key="a.id"
-            class="flex flex-wrap items-start justify-between gap-2 rounded border border-sidebar-border p-2.5"
-          >
+          <div v-for="a in appenders" :key="a.id" class="flex flex-wrap items-start justify-between gap-2 rounded border border-sidebar-border p-2.5">
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-mono text-sm font-medium text-foreground">!{{ a.command }}</span>
@@ -1105,15 +1107,13 @@ async function loadMeta() {
                 <Badge v-if="a.cooldown_seconds > 0" variant="outline" class="text-[10px]">{{ a.cooldown_seconds }}s cd</Badge>
                 <Badge v-if="!a.enabled" variant="destructive" class="text-[10px]">disabled</Badge>
               </div>
-              <p class="mt-1 font-mono text-xs text-muted-foreground truncate" :title="a.value_template">
-                appends: {{ a.value_template }}
-              </p>
+              <p class="mt-1 truncate font-mono text-xs text-muted-foreground" :title="a.value_template">appends: {{ a.value_template }}</p>
               <p v-if="a.success_reply" class="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground">
-                <MessageSquareIcon class="h-3 w-3 shrink-0 mt-0.5" />
+                <MessageSquareIcon class="mt-0.5 h-3 w-3 shrink-0" />
                 <span class="truncate" :title="a.success_reply">success reply: {{ a.success_reply }}</span>
               </p>
               <p v-if="a.args_empty_reply" class="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground">
-                <MessageSquareIcon class="h-3 w-3 shrink-0 mt-0.5" />
+                <MessageSquareIcon class="mt-0.5 h-3 w-3 shrink-0" />
                 <span class="truncate" :title="a.args_empty_reply">empty-args reply: {{ a.args_empty_reply }}</span>
               </p>
             </div>
@@ -1138,7 +1138,7 @@ async function loadMeta() {
           <div class="space-y-6">
             <div>
               <Label for="ap-command">Command (without <code>!</code>)</Label>
-              <input id="ap-command" v-model="appenderForm.command" placeholder="raffle" class="font-mono input-border" />
+              <input id="ap-command" v-model="appenderForm.command" placeholder="raffle" class="input-border font-mono" />
               <p v-if="appenderFormErrors.command" class="mt-1 text-xs text-destructive">{{ appenderFormErrors.command }}</p>
             </div>
             <div class="grid grid-cols-2 gap-3">
@@ -1196,7 +1196,8 @@ async function loadMeta() {
               ></textarea>
               <p class="mt-1 text-xs text-muted-foreground">
                 Spoken in chat after a successful append. Same template syntax as the value template, plus this list's read tags like
-                <span class="font-mono">[[[c:list:{{ list.slug }}:count]]]</span> (resolved after the append, so the count includes it). Leave blank for silent.
+                <span class="font-mono">[[[c:list:{{ list.slug }}:count]]]</span> (resolved after the append, so the count includes it). Leave blank
+                for silent.
               </p>
             </div>
             <div>
@@ -1209,7 +1210,8 @@ async function loadMeta() {
                 placeholder="@[[[bot:from_user]]] add something after !raffle"
               ></textarea>
               <p class="mt-1 text-xs text-muted-foreground">
-                Spoken in chat when the template uses <span class="font-mono">[[[bot:args]]]</span> but the chatter didn't supply any. Leave blank for silent.
+                Spoken in chat when the template uses <span class="font-mono">[[[bot:args]]]</span> but the chatter didn't supply any. Leave blank for
+                silent.
               </p>
             </div>
             <div class="flex items-center gap-2">

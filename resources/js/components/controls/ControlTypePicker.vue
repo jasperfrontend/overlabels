@@ -72,9 +72,7 @@ function buildGroups(applySearch: boolean): RenderedPresetGroup[] {
       label: g.label,
       blurb: g.blurb,
       presets: getPresetsForSource(g.source).filter(
-        (p) =>
-          !isAlreadyAdded(g.source, p.key) &&
-          (!applySearch || fuzzyMatch(presetQuery.value, presetHaystack(g.source, p.label))),
+        (p) => !isAlreadyAdded(g.source, p.key) && (!applySearch || fuzzyMatch(presetQuery.value, presetHaystack(g.source, p.label))),
       ),
     }))
     .filter((g) => g.presets.length > 0);
@@ -88,9 +86,7 @@ const hasPresetLane = computed(() => buildGroups(false).length > 0);
 
 const visibleTypes = computed(() => {
   if (!typeQuery.value) return CONTROL_TYPES;
-  return CONTROL_TYPES.filter((meta) =>
-    fuzzyMatch(typeQuery.value, `${meta.name} ${meta.tagline} ${meta.goodFor.join(' ')}`),
-  );
+  return CONTROL_TYPES.filter((meta) => fuzzyMatch(typeQuery.value, `${meta.name} ${meta.tagline} ${meta.goodFor.join(' ')}`));
 });
 </script>
 
@@ -118,13 +114,7 @@ const visibleTypes = computed(() => {
       </div>
 
       <div v-if="visibleTypes.length" class="grid gap-4 sm:grid-cols-2" :class="hasPresetLane ? '' : '2xl:grid-cols-3'">
-        <ControlTypeCard
-          v-for="meta in visibleTypes"
-          :key="meta.type"
-          :meta="meta"
-          selectable
-          @click="emit('select-type', meta.type)"
-        />
+        <ControlTypeCard v-for="meta in visibleTypes" :key="meta.type" :meta="meta" selectable @click="emit('select-type', meta.type)" />
       </div>
       <p v-else class="border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
         No control type matches "{{ typeQuery }}".
@@ -148,12 +138,10 @@ const visibleTypes = computed(() => {
             </a>
           </div>
           <p class="mt-1 text-sm text-foreground/75">
-            Already wired up. These fill themselves in from Twitch and the services you connected, so you only pick
-            where they appear.
+            Already wired up. These fill themselves in from Twitch and the services you connected, so you only pick where they appear.
           </p>
           <p class="mt-2 border-l-2 border-violet-400/40 pl-3 text-xs text-foreground/70">
-            Service controls are shared across all your overlays. Adding one here makes it available everywhere, you do
-            not add it per overlay.
+            Service controls are shared across all your overlays. Adding one here makes it available everywhere, you do not add it per overlay.
           </p>
         </header>
 
@@ -169,9 +157,7 @@ const visibleTypes = computed(() => {
         </div>
 
         <div class="space-y-5 xl:max-h-[52vh] xl:overflow-y-auto xl:pr-2">
-          <p v-if="!presetGroups.length" class="text-sm text-muted-foreground">
-            No ready-made control matches "{{ presetQuery }}".
-          </p>
+          <p v-if="!presetGroups.length" class="text-sm text-muted-foreground">No ready-made control matches "{{ presetQuery }}".</p>
 
           <div v-for="group in presetGroups" :key="group.source" class="space-y-2">
             <div class="flex items-center gap-2">
@@ -191,15 +177,11 @@ const visibleTypes = computed(() => {
               >
                 <span class="flex items-center justify-between gap-2">
                   <span class="truncate text-sm font-medium text-foreground">{{ preset.label }}</span>
-                  <span
-                    class="shrink-0 border border-border/60 px-1.5 py-0.5 text-[10px] tracking-wide text-muted-foreground uppercase"
-                  >
+                  <span class="shrink-0 border border-border/60 px-1.5 py-0.5 text-[10px] tracking-wide text-muted-foreground uppercase">
                     {{ preset.type }}
                   </span>
                 </span>
-                <code class="truncate font-mono text-[10px] text-muted-foreground">
-                  [[[c:{{ group.source }}:{{ preset.key }}]]]
-                </code>
+                <code class="truncate font-mono text-[10px] text-muted-foreground"> [[[c:{{ group.source }}:{{ preset.key }}]]] </code>
               </button>
             </div>
           </div>

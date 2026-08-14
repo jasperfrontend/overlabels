@@ -111,22 +111,22 @@ function previewOnboarding() {
           <CardContent>
             <table class="w-full text-sm">
               <thead>
-              <tr class="border-b text-left text-muted-foreground">
-                <th class="pb-2">Name</th>
-                <th class="pb-2">Role</th>
-                <th class="pb-2">Joined</th>
-              </tr>
+                <tr class="border-b text-left text-muted-foreground">
+                  <th class="pb-2">Name</th>
+                  <th class="pb-2">Role</th>
+                  <th class="pb-2">Joined</th>
+                </tr>
               </thead>
               <tbody>
-              <tr v-for="user in recentSignups" :key="user.id" class="border-b last:border-0">
-                <td class="py-2">
-                  <a :href="route('admin.users.show', user.id)" class="hover:underline">{{ user.name }}</a>
-                </td>
-                <td class="py-2">
-                  <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">{{ user.role }}</Badge>
-                </td>
-                <td class="py-2 text-muted-foreground">{{ user.created_at }}</td>
-              </tr>
+                <tr v-for="user in recentSignups" :key="user.id" class="border-b last:border-0">
+                  <td class="py-2">
+                    <a :href="route('admin.users.show', user.id)" class="hover:underline">{{ user.name }}</a>
+                  </td>
+                  <td class="py-2">
+                    <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">{{ user.role }}</Badge>
+                  </td>
+                  <td class="py-2 text-muted-foreground">{{ user.created_at }}</td>
+                </tr>
               </tbody>
             </table>
           </CardContent>
@@ -139,15 +139,13 @@ function previewOnboarding() {
           </CardHeader>
           <CardContent>
             <div class="space-y-2">
-              <div v-for="log in recentAuditLogs" :key="log.id"
-                   class="flex items-start justify-between border-b py-2 last:border-0 text-sm">
+              <div v-for="log in recentAuditLogs" :key="log.id" class="flex items-start justify-between border-b py-2 text-sm last:border-0">
                 <div>
                   <span class="font-medium">{{ log.admin?.name ?? 'Unknown' }}</span>
-                  <span class="text-muted-foreground ml-1">{{ log.action }}</span>
-                  <span v-if="log.target_type" class="text-muted-foreground ml-1">on {{ log.target_type
-                    }}#{{ log.target_id }}</span>
+                  <span class="ml-1 text-muted-foreground">{{ log.action }}</span>
+                  <span v-if="log.target_type" class="ml-1 text-muted-foreground">on {{ log.target_type }}#{{ log.target_id }}</span>
                 </div>
-                <span class="text-xs text-muted-foreground whitespace-nowrap ml-2">{{ log.created_at }}</span>
+                <span class="ml-2 text-xs whitespace-nowrap text-muted-foreground">{{ log.created_at }}</span>
               </div>
               <EmptyState v-if="recentAuditLogs.length === 0" message="No audit activity yet." />
             </div>
@@ -156,7 +154,7 @@ function previewOnboarding() {
       </div>
       <div class="flex gap-4">
         <!-- Dev Tools -->
-        <Card class="border-dashed w-100 border-muted-foreground/30">
+        <Card class="w-100 border-dashed border-muted-foreground/30">
           <CardHeader class="pb-2">
             <CardTitle class="flex items-center gap-2 text-sm text-muted-foreground">
               <FlaskConical class="h-4 w-4" />
@@ -165,11 +163,7 @@ function previewOnboarding() {
           </CardHeader>
           <CardContent>
             <div class="flex flex-wrap gap-3">
-              <button
-                class="btn btn-sm btn-secondary"
-                title="Preview the onboarding wizard as it appears to new users"
-                @click="previewOnboarding"
-              >
+              <button class="btn btn-sm btn-secondary" title="Preview the onboarding wizard as it appears to new users" @click="previewOnboarding">
                 Preview Onboarding Wizard
               </button>
             </div>
@@ -177,7 +171,7 @@ function previewOnboarding() {
         </Card>
 
         <!-- Kit Selector -->
-        <Card class="border-dashed w-100 border-muted-foreground/30">
+        <Card class="w-100 border-dashed border-muted-foreground/30">
           <CardHeader class="pb-2">
             <CardTitle class="flex items-center gap-2 text-sm text-muted-foreground">
               <Grid2x2 class="h-4 w-4" />
@@ -190,10 +184,7 @@ function previewOnboarding() {
             </div>
           </CardContent>
         </Card>
-
-
       </div>
-
     </div>
   </AppLayout>
 </template>

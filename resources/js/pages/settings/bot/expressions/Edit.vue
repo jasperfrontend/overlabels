@@ -155,7 +155,7 @@ watch(
     }
     if (previewTimer) clearTimeout(previewTimer);
     previewTimer = setTimeout(refreshPreview, 250);
-  }
+  },
 );
 
 watch(livePreview, (on) => {
@@ -197,7 +197,7 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
         <div>
           <Link
             href="/settings/bot/expressions"
-            class="mb-2 inline-flex items-center text-sm text-foreground/70 cursor-pointer hover:text-foreground"
+            class="mb-2 inline-flex cursor-pointer items-center text-sm text-foreground/70 hover:text-foreground"
           >
             <ChevronLeft class="mr-1 size-4" />
             Back to bot expressions
@@ -214,13 +214,7 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
             <Label for="command">Command</Label>
             <div class="flex items-center gap-1">
               <span class="text-foreground/60">!</span>
-              <Input
-                id="command"
-                v-model="form.command"
-                placeholder="distance"
-                maxlength="30"
-                class="font-mono"
-              />
+              <Input id="command" v-model="form.command" placeholder="distance" maxlength="30" class="font-mono" />
             </div>
             <p v-if="form.errors.command" class="text-sm text-rose-400">{{ form.errors.command }}</p>
             <p v-else class="text-xs text-foreground/60">
@@ -233,12 +227,7 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <Label for="expression">Expression</Label>
-              <span
-                class="text-xs"
-                :class="charsLeft < 0 ? 'text-rose-400' : 'text-foreground/60'"
-              >
-                {{ previewLength }} / 500 chars
-              </span>
+              <span class="text-xs" :class="charsLeft < 0 ? 'text-rose-400' : 'text-foreground/60'"> {{ previewLength }} / 500 chars </span>
             </div>
             <Textarea
               id="expression"
@@ -248,17 +237,13 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
               placeholder="Hi [[[bot:from_user]]], the count is [[[c:my_counter]]]"
             />
             <p v-if="form.errors.expression" class="text-sm text-rose-400">{{ form.errors.expression }}</p>
-            <div
-              v-if="startsWithSlash"
-              class="flex items-start gap-2 rounded border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200"
-            >
+            <div v-if="startsWithSlash" class="flex items-start gap-2 rounded border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
               <AlertTriangle class="mt-0.5 size-4 shrink-0" />
               <span>
-                Slash commands like <code class="text-amber-100">/timeout</code>,
-                <code class="text-amber-100">/ban</code> or <code class="text-amber-100">/me</code> don't work here.
-                The overlabels bot sends plain chat text, so Twitch drops the leading
-                <code class="text-amber-100">/</code> and posts the rest as a message. The bot powers your overlays,
-                it isn't a chat moderator - use your mod tools for that.
+                Slash commands like <code class="text-amber-100">/timeout</code>, <code class="text-amber-100">/ban</code> or
+                <code class="text-amber-100">/me</code> don't work here. The overlabels bot sends plain chat text, so Twitch drops the leading
+                <code class="text-amber-100">/</code> and posts the rest as a message. The bot powers your overlays, it isn't a chat moderator - use
+                your mod tools for that.
               </span>
             </div>
           </div>
@@ -266,17 +251,13 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
           <!-- Preview -->
           <div class="rounded border border-sidebar-border bg-sidebar-accent/30 p-4">
             <div class="mb-2 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 text-xs uppercase tracking-wide text-foreground/60">
+              <div class="flex items-center gap-2 text-xs tracking-wide text-foreground/60 uppercase">
                 <Sparkles class="size-3.5" />
                 Preview
-                <span v-if="previewLoading" class="normal-case italic text-foreground/40">resolving...</span>
+                <span v-if="previewLoading" class="text-foreground/40 normal-case italic">resolving...</span>
               </div>
-              <label class="flex items-center gap-2 text-xs text-foreground/70 cursor-pointer">
-                <input
-                  type="checkbox"
-                  v-model="livePreview"
-                  class="size-3.5 cursor-pointer"
-                />
+              <label class="flex cursor-pointer items-center gap-2 text-xs text-foreground/70">
+                <input type="checkbox" v-model="livePreview" class="size-3.5 cursor-pointer" />
                 Live preview
               </label>
             </div>
@@ -293,27 +274,20 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
                 <AlertTriangle class="size-4" />
                 {{ previewError }}
               </div>
-              <div v-else-if="!previewOutput" class="italic text-foreground/50">
-                (empty)
-              </div>
-              <div
-                v-else
-                class="whitespace-pre-wrap wrap-break-word transition-opacity duration-150"
-                :class="{ 'opacity-50': previewLoading }"
-              >
+              <div v-else-if="!previewOutput" class="text-foreground/50 italic">(empty)</div>
+              <div v-else class="wrap-break-word whitespace-pre-wrap transition-opacity duration-150" :class="{ 'opacity-50': previewLoading }">
                 {{ previewOutput }}
               </div>
             </div>
             <div class="mt-3 flex flex-wrap items-end justify-between gap-2">
               <p class="text-xs text-foreground/60">
-                Bot context shown as <code class="text-foreground/80">CoolChatter</code> with sample args.
-                Twitch tags resolve to empty in preview.
+                Bot context shown as <code class="text-foreground/80">CoolChatter</code> with sample args. Twitch tags resolve to empty in preview.
               </p>
               <div v-if="!livePreview" class="flex items-center gap-2">
                 <span v-if="previewStale" class="text-xs text-amber-400">edited</span>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-1 rounded bg-foreground/10 px-2 py-1 text-xs cursor-pointer hover:bg-foreground/15"
+                  class="inline-flex cursor-pointer items-center gap-1 rounded bg-foreground/10 px-2 py-1 text-xs hover:bg-foreground/15"
                   @click="refreshPreview"
                 >
                   <Sparkles class="size-3" />
@@ -343,7 +317,7 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
                     ]"
                     :key="tag"
                     type="button"
-                    class="rounded bg-muted px-1.5 py-0.5 font-mono cursor-pointer hover:bg-foreground/10"
+                    class="cursor-pointer rounded bg-muted px-1.5 py-0.5 font-mono hover:bg-foreground/10"
                     @click="insertSnippet(`[[[${tag}]]]`)"
                   >
                     [[[{{ tag }}]]]
@@ -357,7 +331,7 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
                     v-for="key in props.availableControlKeys"
                     :key="key"
                     type="button"
-                    class="rounded bg-muted px-1.5 py-0.5 font-mono cursor-pointer hover:bg-foreground/10"
+                    class="cursor-pointer rounded bg-muted px-1.5 py-0.5 font-mono hover:bg-foreground/10"
                     @click="insertSnippet(`[[[c:${key}]]]`)"
                   >
                     [[[c:{{ key }}]]]
@@ -369,23 +343,20 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
                 <code class="text-foreground/80">[[[followers_total]]]</code>. They resolve at fire time, not in preview.
               </p>
               <p class="text-foreground/60">
-                Pipe formatters: <code class="text-foreground/80">|number</code>,
-                <code class="text-foreground/80">|distance:mi</code>,
-                <code class="text-foreground/80">|round:2</code>,
-                <code class="text-foreground/80">|uppercase</code>,
+                Pipe formatters: <code class="text-foreground/80">|number</code>, <code class="text-foreground/80">|distance:mi</code>,
+                <code class="text-foreground/80">|round:2</code>, <code class="text-foreground/80">|uppercase</code>,
                 <code class="text-foreground/80">|date:HH:mm</code>.
               </p>
               <p class="text-foreground/60">
-                For shoutouts: <code class="text-foreground/80">|mention</code> keeps the
-                <code class="text-foreground/80">@</code> so it pings,
+                For shoutouts: <code class="text-foreground/80">|mention</code> keeps the <code class="text-foreground/80">@</code> so it pings,
                 <code class="text-foreground/80">|login</code> strips it and lowercases for URLs like
                 <code class="text-foreground/80">twitch.tv/[[[bot:args.0|login]]]</code>.
               </p>
               <p class="text-foreground/60">
-                Default value: add <code class="text-foreground/80">?? something</code> to show literal text when a
-                tag is empty, e.g. <code class="text-foreground/80">[[[bot:args.0 ?? everyone]]]</code> or
-                <code class="text-foreground/80">[[[c:donations|number ?? 0]]]</code>. It only fills in for a
-                missing value; a value that's present is shown as-is.
+                Default value: add <code class="text-foreground/80">?? something</code> to show literal text when a tag is empty, e.g.
+                <code class="text-foreground/80">[[[bot:args.0 ?? everyone]]]</code> or
+                <code class="text-foreground/80">[[[c:donations|number ?? 0]]]</code>. It only fills in for a missing value; a value that's present is
+                shown as-is.
               </p>
             </div>
           </details>
@@ -397,7 +368,7 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
               <select
                 id="permission_level"
                 v-model="form.permission_level"
-                class="w-full rounded border border-input bg-background px-3 py-2 text-sm cursor-pointer"
+                class="w-full cursor-pointer rounded border border-input bg-background px-3 py-2 text-sm"
               >
                 <option v-for="lvl in props.permissionLevels" :key="lvl" :value="lvl">
                   {{ lvl }}
@@ -408,13 +379,7 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
 
             <div class="space-y-2">
               <Label for="cooldown_seconds">Cooldown (seconds)</Label>
-              <Input
-                id="cooldown_seconds"
-                v-model.number="form.cooldown_seconds"
-                type="number"
-                min="0"
-                max="86400"
-              />
+              <Input id="cooldown_seconds" v-model.number="form.cooldown_seconds" type="number" min="0" max="86400" />
               <p class="text-xs text-foreground/60">Per channel. Broadcaster bypasses cooldown.</p>
             </div>
           </div>
@@ -432,13 +397,10 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
             />
             <p v-if="form.errors.destroy_hours" class="text-sm text-rose-400">{{ form.errors.destroy_hours }}</p>
             <p v-else class="text-xs text-foreground/60">
-              Automatically deletes this command after a set number of whole hours (max 8760 = one year). Leave empty to
-              keep it forever. Saving restarts the countdown from now.
+              Automatically deletes this command after a set number of whole hours (max 8760 = one year). Leave empty to keep it forever. Saving
+              restarts the countdown from now.
             </p>
-            <p
-              v-if="isEdit && props.expression?.destroy_at"
-              class="inline-flex items-center gap-1 text-xs text-amber-400"
-            >
+            <p v-if="isEdit && props.expression?.destroy_at" class="inline-flex items-center gap-1 text-xs text-amber-400">
               <Clock class="size-3" />
               Currently self-destructs in {{ expiresIn(props.expression.destroy_at) }}
             </p>
@@ -446,23 +408,15 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
 
           <!-- Toggles -->
           <div class="space-y-3">
-            <label class="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                v-model="form.enabled"
-                class="mt-1 size-4 cursor-pointer"
-              />
+            <label class="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" v-model="form.enabled" class="mt-1 size-4 cursor-pointer" />
               <div>
                 <p class="text-sm font-medium">Enabled</p>
                 <p class="text-xs text-foreground/60">Disabled expressions stay in your library but don't fire.</p>
               </div>
             </label>
-            <label class="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                v-model="form.hidden_from_commands"
-                class="mt-1 size-4 cursor-pointer"
-              />
+            <label class="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" v-model="form.hidden_from_commands" class="mt-1 size-4 cursor-pointer" />
               <div>
                 <p class="text-sm font-medium">Hide from <code>!commands</code> listing</p>
                 <p class="text-xs text-foreground/60">

@@ -12,54 +12,54 @@
 @custom-variant sepia (&:is(.theme-sepia *));
 
 @theme inline {
-    --font-sans: 'Albert Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans: 'Albert Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
 
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
 
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
 
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
 
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
 
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
 
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
-    --color-sidebar: var(--sidebar-background);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 /*
@@ -71,95 +71,94 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-    *,
-    ::after,
-    ::before,
-    ::backdrop,
-    ::file-selector-button {
-        border-color: var(--color-violet-200, currentColor);
-    }
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-violet-200, currentColor);
+  }
 }
 
-
 :root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(0 0% 3.9%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(0 0% 3.9%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(0 0% 3.9%);
-    --primary: hsl(0 0% 9%);
-    --primary-foreground: hsl(0 0% 98%);
-    --secondary: hsl(0 0% 92.1%);
-    --secondary-foreground: hsl(0 0% 9%);
-    --muted: hsl(0 0% 96.1%);
-    --muted-foreground: hsl(0 0% 45.1%);
-    --accent: hsl(0 0% 96.1%);
-    --accent-foreground: hsl(0 0% 9%);
-    --destructive: hsl(0 84.2% 60.2%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 92.8%);
-    --input: hsl(0 0% 89.8%);
-    --ring: hsl(0 0% 3.9%);
-    --chart-1: hsl(12 76% 61%);
-    --chart-2: hsl(173 58% 39%);
-    --chart-3: hsl(197 37% 24%);
-    --chart-4: hsl(43 74% 66%);
-    --chart-5: hsl(27 87% 67%);
-    --radius: 0.5rem;
-    --sidebar-background: hsl(0, 0%, 95%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(0 0% 10%);
-    --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(0, 0%, 95%);
-    --sidebar-accent-foreground: hsl(0 0% 30%);
-    --sidebar-border: hsl(0 0% 91%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(0 0% 98%);
-    --gradient-spot-1: transparent;
-    --gradient-spot-2: transparent;
-    --gradient-spot-3: transparent;
-    --gradient-base: hsl(0 0% 100%);
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(0 0% 3.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(0 0% 3.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(0 0% 3.9%);
+  --primary: hsl(0 0% 9%);
+  --primary-foreground: hsl(0 0% 98%);
+  --secondary: hsl(0 0% 92.1%);
+  --secondary-foreground: hsl(0 0% 9%);
+  --muted: hsl(0 0% 96.1%);
+  --muted-foreground: hsl(0 0% 45.1%);
+  --accent: hsl(0 0% 96.1%);
+  --accent-foreground: hsl(0 0% 9%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(0 0% 92.8%);
+  --input: hsl(0 0% 89.8%);
+  --ring: hsl(0 0% 3.9%);
+  --chart-1: hsl(12 76% 61%);
+  --chart-2: hsl(173 58% 39%);
+  --chart-3: hsl(197 37% 24%);
+  --chart-4: hsl(43 74% 66%);
+  --chart-5: hsl(27 87% 67%);
+  --radius: 0.5rem;
+  --sidebar-background: hsl(0, 0%, 95%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(0 0% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(0, 0%, 95%);
+  --sidebar-accent-foreground: hsl(0 0% 30%);
+  --sidebar-border: hsl(0 0% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --sidebar: hsl(0 0% 98%);
+  --gradient-spot-1: transparent;
+  --gradient-spot-2: transparent;
+  --gradient-spot-3: transparent;
+  --gradient-base: hsl(0 0% 100%);
 }
 
 .dark {
-    --background: hsl(252 26% 4%);
-    --foreground: hsl(270 16% 98%);
-    --card: hsl(261 91% 4%);
-    --card-foreground: var(--foreground);
-    --popover: var(--primary-foreground);
-    --popover-foreground: var(--foreground);
-    --primary: var(--foreground);
-    --primary-foreground: hsl(270 16% 9%);
-    --secondary: hsl(270 16% 23%);
-    --secondary-foreground: var(--foreground);
-    --muted: hsl(270 16% 16.08%);
-    --muted-foreground: hsl(265 27% 81%);
-    --accent: hsl(268 22% 17%);
-    --accent-foreground: var(--foreground);
-    --destructive: hsl(0 84% 60%);
-    --destructive-foreground: var(--foreground);
-    --border: var(--secondary);
-    --input: var(--secondary);
-    --ring: var(--muted-foreground);
-    --chart-1: hsl(220 70% 50%);
-    --chart-2: hsl(160 60% 45%);
-    --chart-3: hsl(30 80% 55%);
-    --chart-4: hsl(280 65% 60%);
-    --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(264 48% 14%);
-    --sidebar-foreground: var(--foreground);
-    --sidebar-primary: var(--foreground);
-    --sidebar-primary-foreground: var(--foreground);
-    --sidebar-accent: var(--sidebar-background);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(263 43% 25%);
-    --sidebar-ring: hsl(265 42% 51%);
-    --sidebar: hsl(240 5.9% 10%);
-    --gradient-spot-1: #1d0b30;
-    --gradient-spot-2: #650e8f;
-    --gradient-spot-3: #2c074b;
-    --gradient-base: #1d0b30;
+  --background: hsl(252 26% 4%);
+  --foreground: hsl(270 16% 98%);
+  --card: hsl(261 91% 4%);
+  --card-foreground: var(--foreground);
+  --popover: var(--primary-foreground);
+  --popover-foreground: var(--foreground);
+  --primary: var(--foreground);
+  --primary-foreground: hsl(270 16% 9%);
+  --secondary: hsl(270 16% 23%);
+  --secondary-foreground: var(--foreground);
+  --muted: hsl(270 16% 16.08%);
+  --muted-foreground: hsl(265 27% 81%);
+  --accent: hsl(268 22% 17%);
+  --accent-foreground: var(--foreground);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: var(--foreground);
+  --border: var(--secondary);
+  --input: var(--secondary);
+  --ring: var(--muted-foreground);
+  --chart-1: hsl(220 70% 50%);
+  --chart-2: hsl(160 60% 45%);
+  --chart-3: hsl(30 80% 55%);
+  --chart-4: hsl(280 65% 60%);
+  --chart-5: hsl(340 75% 55%);
+  --sidebar-background: hsl(264 48% 14%);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--foreground);
+  --sidebar-primary-foreground: var(--foreground);
+  --sidebar-accent: var(--sidebar-background);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(263 43% 25%);
+  --sidebar-ring: hsl(265 42% 51%);
+  --sidebar: hsl(240 5.9% 10%);
+  --gradient-spot-1: #1d0b30;
+  --gradient-spot-2: #650e8f;
+  --gradient-spot-3: #2c074b;
+  --gradient-base: #1d0b30;
 }
 
 /*
@@ -170,80 +169,81 @@
   Tailwind's built-in `.sepia` filter utility. Future variants follow `.theme-<name>`.
 */
 .theme-sepia {
-    --background: hsl(30 7% 8%);
-    --foreground: hsl(35 12% 92%);
-    --card: hsl(28 9% 10%);
-    --card-foreground: var(--foreground);
-    --popover: var(--primary-foreground);
-    --popover-foreground: var(--foreground);
-    --primary: var(--foreground);
-    --primary-foreground: hsl(30 7% 12%);
-    --secondary: hsl(32 8% 22%);
-    --secondary-foreground: var(--foreground);
-    --muted: hsl(30 7% 15%);
-    --muted-foreground: hsl(35 9% 78%);
-    --accent: hsl(28 9% 18%);
-    --accent-foreground: var(--foreground);
-    --destructive: hsl(0 70% 55%);
-    --destructive-foreground: var(--foreground);
-    --border: var(--secondary);
-    --input: var(--secondary);
-    --ring: var(--muted-foreground);
-    --chart-1: hsl(25 75% 55%);
-    --chart-2: hsl(40 65% 50%);
-    --chart-3: hsl(15 70% 50%);
-    --chart-4: hsl(50 60% 55%);
-    --chart-5: hsl(30 80% 60%);
-    --sidebar-background: hsl(28 10% 12%);
-    --sidebar-foreground: var(--foreground);
-    --sidebar-primary: var(--foreground);
-    --sidebar-primary-foreground: var(--foreground);
-    --sidebar-accent: hsl(30 8% 20%);
-    --sidebar-accent-foreground: hsl(35 10% 92%);
-    --sidebar-border: hsl(30 9% 22%);
-    --sidebar-ring: hsl(30 25% 55%);
-    --sidebar: hsl(30 7% 10%);
-    --gradient-spot-1: transparent;
-    --gradient-spot-2: transparent;
-    --gradient-spot-3: transparent;
-    --gradient-base: hsl(30 7% 8%);
+  --background: hsl(30 7% 8%);
+  --foreground: hsl(35 12% 92%);
+  --card: hsl(28 9% 10%);
+  --card-foreground: var(--foreground);
+  --popover: var(--primary-foreground);
+  --popover-foreground: var(--foreground);
+  --primary: var(--foreground);
+  --primary-foreground: hsl(30 7% 12%);
+  --secondary: hsl(32 8% 22%);
+  --secondary-foreground: var(--foreground);
+  --muted: hsl(30 7% 15%);
+  --muted-foreground: hsl(35 9% 78%);
+  --accent: hsl(28 9% 18%);
+  --accent-foreground: var(--foreground);
+  --destructive: hsl(0 70% 55%);
+  --destructive-foreground: var(--foreground);
+  --border: var(--secondary);
+  --input: var(--secondary);
+  --ring: var(--muted-foreground);
+  --chart-1: hsl(25 75% 55%);
+  --chart-2: hsl(40 65% 50%);
+  --chart-3: hsl(15 70% 50%);
+  --chart-4: hsl(50 60% 55%);
+  --chart-5: hsl(30 80% 60%);
+  --sidebar-background: hsl(28 10% 12%);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--foreground);
+  --sidebar-primary-foreground: var(--foreground);
+  --sidebar-accent: hsl(30 8% 20%);
+  --sidebar-accent-foreground: hsl(35 10% 92%);
+  --sidebar-border: hsl(30 9% 22%);
+  --sidebar-ring: hsl(30 25% 55%);
+  --sidebar: hsl(30 7% 10%);
+  --gradient-spot-1: transparent;
+  --gradient-spot-2: transparent;
+  --gradient-spot-3: transparent;
+  --gradient-base: hsl(30 7% 8%);
 }
 
-html {scroll-behavior: smooth;}
+html {
+  scroll-behavior: smooth;
+}
 
 @layer base {
-    * {
-        @apply border-border outline-ring/50;
-    }
-    body {
-        @apply bg-sidebar text-foreground;
-    }
-    .bg-page-gradient {
-        background:
-            radial-gradient(at 11% 50%, var(--gradient-spot-1) 0px, transparent 65%),
-            radial-gradient(at 50% 70%, var(--gradient-spot-2) 0px, transparent 65%),
-            radial-gradient(at 91% 28%, var(--gradient-spot-3) 0px, transparent 65%),
-            var(--gradient-base);
-    }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-sidebar text-foreground;
+  }
+  .bg-page-gradient {
+    background:
+      radial-gradient(at 11% 50%, var(--gradient-spot-1) 0px, transparent 65%),
+      radial-gradient(at 50% 70%, var(--gradient-spot-2) 0px, transparent 65%),
+      radial-gradient(at 91% 28%, var(--gradient-spot-3) 0px, transparent 65%), var(--gradient-base);
+  }
 
-    /* Range slider styles */
-    input[type="range"] {
-        @apply appearance-none bg-secondary/20;
-    }
+  /* Range slider styles */
+  input[type='range'] {
+    @apply appearance-none bg-secondary/20;
+  }
 
-    input[type="range"]::-webkit-slider-thumb {
-        @apply appearance-none h-4 w-4 rounded-full bg-primary cursor-pointer transition-colors hover:bg-primary/90;
-    }
+  input[type='range']::-webkit-slider-thumb {
+    @apply h-4 w-4 cursor-pointer appearance-none rounded-full bg-primary transition-colors hover:bg-primary/90;
+  }
 
-    input[type="range"]::-moz-range-thumb {
-        @apply appearance-none h-4 w-4 rounded-full bg-primary cursor-pointer border-0 transition-colors hover:bg-primary/90;
-    }
+  input[type='range']::-moz-range-thumb {
+    @apply h-4 w-4 cursor-pointer appearance-none rounded-full border-0 bg-primary transition-colors hover:bg-primary/90;
+  }
 
-    input[type="range"]::-webkit-slider-runnable-track {
-        @apply h-2 rounded-lg bg-secondary;
-    }
+  input[type='range']::-webkit-slider-runnable-track {
+    @apply h-2 rounded-lg bg-secondary;
+  }
 
-    input[type="range"]::-moz-range-track {
-        @apply h-2 rounded-lg bg-secondary;
-    }
+  input[type='range']::-moz-range-track {
+    @apply h-2 rounded-lg bg-secondary;
+  }
 }

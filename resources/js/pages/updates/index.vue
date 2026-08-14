@@ -76,9 +76,7 @@ function clearTag() {
 const page = usePage<AppPageProps>();
 const isAdmin = computed(() => page.props.isAdmin);
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Updates', href: '/updates' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Updates', href: '/updates' }];
 </script>
 
 <template>
@@ -106,12 +104,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <div class="flex flex-col gap-1">
             <label for="filter-tag">Tag</label>
-            <select
-              v-model="filters.tag"
-              @change="applyFilter"
-              class="input-border h-10 w-full"
-              id="filter-tag"
-            >
+            <select v-model="filters.tag" @change="applyFilter" class="input-border h-10 w-full" id="filter-tag">
               <option value="">All tags</option>
               <option v-for="tag in props.allTags" :key="tag" :value="tag">{{ tag }}</option>
             </select>
@@ -119,46 +112,25 @@ const breadcrumbs: BreadcrumbItem[] = [
 
           <div class="flex flex-col gap-1">
             <label for="filter-from">From</label>
-            <input
-              v-model="filters.from"
-              @change="applyFilter"
-              type="date"
-              class="input-border h-10 w-full"
-              id="filter-from"
-            />
+            <input v-model="filters.from" @change="applyFilter" type="date" class="input-border h-10 w-full" id="filter-from" />
           </div>
 
           <div class="flex flex-col gap-1">
             <label for="filter-to">To</label>
-            <input
-              v-model="filters.to"
-              @change="applyFilter"
-              type="date"
-              class="input-border h-10 w-full"
-              id="filter-to"
-            />
+            <input v-model="filters.to" @change="applyFilter" type="date" class="input-border h-10 w-full" id="filter-to" />
           </div>
         </div>
 
         <div v-if="filters.tag" class="mt-3 text-xs text-muted-foreground">
           Filtering by tag: <span class="font-medium text-foreground">{{ filters.tag }}</span>
-          <button type="button" @click="clearTag" class="ml-2 underline cursor-pointer">clear</button>
+          <button type="button" @click="clearTag" class="ml-2 cursor-pointer underline">clear</button>
         </div>
       </div>
 
-      <UpdatesList
-        :updates="props.updates?.data ?? []"
-        :is-admin="isAdmin"
-        empty-message="No updates yet. Check back soon."
-      />
+      <UpdatesList :updates="props.updates?.data ?? []" :is-admin="isAdmin" empty-message="No updates yet. Check back soon." />
 
       <div v-if="props.updates?.last_page > 1" class="mt-6">
-        <Pagination
-          :links="props.updates.links"
-          :from="props.updates.from"
-          :to="props.updates.to"
-          :total="props.updates.total"
-        />
+        <Pagination :links="props.updates.links" :from="props.updates.from" :to="props.updates.to" :total="props.updates.total" />
       </div>
     </div>
   </AppLayout>

@@ -29,7 +29,7 @@ const props = defineProps<{
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
-  { title: 'Audit Log', href: route('admin.audit.index') }
+  { title: 'Audit Log', href: route('admin.audit.index') },
 ];
 
 const action = ref(props.filters.action ?? '');
@@ -39,11 +39,15 @@ const to = ref(props.filters.to ?? '');
 let debounce: ReturnType<typeof setTimeout>;
 
 function applyFilters() {
-  router.get(route('admin.audit.index'), {
-    action: action.value || undefined,
-    from: from.value || undefined,
-    to: to.value || undefined
-  }, { preserveState: true, replace: true });
+  router.get(
+    route('admin.audit.index'),
+    {
+      action: action.value || undefined,
+      from: from.value || undefined,
+      to: to.value || undefined,
+    },
+    { preserveState: true, replace: true },
+  );
 }
 
 watch([action, from, to], () => {
@@ -63,14 +67,13 @@ watch([action, from, to], () => {
       </PageHeader>
 
       <div class="flex flex-wrap gap-2">
-        <input v-model="action" placeholder="Filter by action…"
-               class="rounded border px-3 py-1.5 text-sm bg-background" />
-        <input v-model="from" type="date" class="rounded border px-3 py-1.5 text-sm bg-background" />
-        <input v-model="to" type="date" class="rounded border px-3 py-1.5 text-sm bg-background" />
+        <input v-model="action" placeholder="Filter by action…" class="rounded border bg-background px-3 py-1.5 text-sm" />
+        <input v-model="from" type="date" class="rounded border bg-background px-3 py-1.5 text-sm" />
+        <input v-model="to" type="date" class="rounded border bg-background px-3 py-1.5 text-sm" />
       </div>
 
       <!-- Card view (< lg) -->
-      <div class="lg:hidden space-y-2">
+      <div class="space-y-2 lg:hidden">
         <EmptyState v-if="logs.data.length === 0" message="No audit entries found." />
         <div v-for="log in logs.data" :key="`card-${log.id}`" class="rounded border p-3 text-sm">
           <div class="flex items-start justify-between gap-2">
@@ -86,37 +89,42 @@ watch([action, from, to], () => {
       </div>
 
       <!-- Table (≥ lg) -->
-      <div class="hidden lg:block overflow-x-auto rounded border border-sidebar">
+      <div class="hidden overflow-x-auto rounded border border-sidebar lg:block">
         <table class="w-full text-sm">
           <thead class="bg-card text-left text-muted-foreground">
-          <tr>
-            <th class="px-3 py-2">Admin</th>
-            <th class="px-3 py-2">Action</th>
-            <th class="px-3 py-2">Target</th>
-            <th class="px-3 py-2">IP</th>
-            <th class="px-3 py-2">When</th>
-          </tr>
+            <tr>
+              <th class="px-3 py-2">Admin</th>
+              <th class="px-3 py-2">Action</th>
+              <th class="px-3 py-2">Target</th>
+              <th class="px-3 py-2">IP</th>
+              <th class="px-3 py-2">When</th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-for="log in logs.data" :key="log.id" class="border-t border-sidebar">
-            <td class="px-3 py-2 font-medium">{{ log.admin?.name ?? 'Unknown' }}</td>
-            <td class="px-3 py-2 font-mono text-xs">{{ log.action }}</td>
-            <td class="px-3 py-2 text-xs text-muted-foreground">
-              <span v-if="log.target_type">{{ log.target_type }}#{{ log.target_id }}</span>
-              <span v-else>—</span>
-            </td>
-            <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
-            <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.created_at }}</td>
-          </tr>
-          <EmptyState v-if="logs.data.length === 0" :colspan="5" message="No audit entries found." />
+            <tr v-for="log in logs.data" :key="log.id" class="border-t border-sidebar">
+              <td class="px-3 py-2 font-medium">{{ log.admin?.name ?? 'Unknown' }}</td>
+              <td class="px-3 py-2 font-mono text-xs">{{ log.action }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">
+                <span v-if="log.target_type">{{ log.target_type }}#{{ log.target_id }}</span>
+                <span v-else>—</span>
+              </td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.created_at }}</td>
+            </tr>
+            <EmptyState v-if="logs.data.length === 0" :colspan="5" message="No audit entries found." />
           </tbody>
         </table>
       </div>
 
       <div class="flex gap-1">
         <template v-for="link in logs.links" :key="link.label">
-          <a v-if="link.url" :href="link.url" class="rounded border px-3 py-1 text-sm"
-             :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'" v-html="link.label" />
+          <a
+            v-if="link.url"
+            :href="link.url"
+            class="rounded border px-3 py-1 text-sm"
+            :class="link.active ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'"
+            v-html="link.label"
+          />
           <span v-else class="rounded border px-3 py-1 text-sm opacity-40" v-html="link.label" />
         </template>
       </div>

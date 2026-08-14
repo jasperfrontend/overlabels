@@ -1,14 +1,6 @@
 <script setup lang="ts">
 import NavMain from '@/components/NavMain.vue';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem
-} from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
@@ -41,7 +33,7 @@ import {
   ListIcon,
   Sigma,
   SlidersHorizontal,
-  Users
+  Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
@@ -65,17 +57,17 @@ const mainNavItems = computed<NavItem[]>(() =>
         { title: 'Blocks', href: '/templates?filter=mine&type=block', icon: Blocks },
         { title: 'Triggers', href: route('triggers.index'), icon: Megaphone },
         { title: 'Lists', href: route('lists.index'), icon: ListIcon },
-        { title: 'Kits', href: route('kits.index'), icon: LayoutGrid }
+        { title: 'Kits', href: route('kits.index'), icon: LayoutGrid },
       ]
-    : []
+    : [],
 );
 const botNavItems = computed<NavItem[]>(() =>
   user.value
     ? [
         { title: 'Expressions', href: route('settings.bot.expressions.index'), icon: MessageSquare },
-        { title: 'Aliases', href: route('settings.bot.aliases.index'), icon: MessageSquareCode }
+        { title: 'Aliases', href: route('settings.bot.aliases.index'), icon: MessageSquareCode },
       ]
-    : []
+    : [],
 );
 
 const alertsNavItems = computed<NavItem[]>(() =>
@@ -83,9 +75,9 @@ const alertsNavItems = computed<NavItem[]>(() =>
     ? [
         { title: 'Recent', href: route('dashboard.recents'), icon: Activity },
         { title: 'Streams', href: route('dashboard.stream-sessions'), icon: Radio },
-        { title: 'Routes', href: route('dashboard.gps-sessions'), icon: MapPin }
+        { title: 'Routes', href: route('dashboard.gps-sessions'), icon: MapPin },
       ]
-    : []
+    : [],
 );
 
 const learnNavItems = computed<NavItem[]>(() =>
@@ -93,9 +85,9 @@ const learnNavItems = computed<NavItem[]>(() =>
     ? [
         { title: 'Help', href: route('help'), icon: BookOpen },
         { title: 'Reference', href: route('help.reference'), icon: Brackets },
-        { title: 'Updates', href: route('updates.index'), icon: Newspaper }
+        { title: 'Updates', href: route('updates.index'), icon: Newspaper },
       ]
-    : []
+    : [],
 );
 
 const helpNavItems: NavItem[] = [
@@ -108,7 +100,7 @@ const helpNavItems: NavItem[] = [
   { title: 'Twitch Chat Bot', href: '/help/bot', icon: BotIcon },
   { title: 'Free Resources', href: '/help/resources', icon: BookOpen },
   { title: 'Why Ko-fi', href: '/help/why-kofi', icon: Heart },
-  { title: 'Manifesto', href: '/help/manifesto', icon: FileText }
+  { title: 'Manifesto', href: '/help/manifesto', icon: FileText },
 ];
 
 const isOnAdminPage = computed(() => page.url.startsWith('/admin'));
@@ -134,10 +126,9 @@ const adminNavItems = computed<NavItem[]>(() => {
     { title: 'Access Logs', href: route('admin.logs.index'), icon: ScrollText },
     { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
     { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert },
-    { title: 'Updates', href: route('admin.updates.index'), icon: Newspaper }
+    { title: 'Updates', href: route('admin.updates.index'), icon: Newspaper },
   ];
 });
-
 </script>
 
 <template>
@@ -168,11 +159,9 @@ const adminNavItems = computed<NavItem[]>(() => {
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
       <NavMain v-if="!user" label="Learn" :items="helpNavItems" />
       <div v-if="user" class="px-4 pt-2 text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
-        <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd
-        class="border rounded px-1 py-0.5 text-[10px]">K</kbd> shortcuts
-        <div class="h-0 mt-1" />
-        <kbd class="border rounded px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd
-        class="border rounded px-1 py-0.5 text-[10px]">Space</kbd> go to
+        <kbd class="rounded border px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd class="rounded border px-1 py-0.5 text-[10px]">K</kbd> shortcuts
+        <div class="mt-1 h-0" />
+        <kbd class="rounded border px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd class="rounded border px-1 py-0.5 text-[10px]">Space</kbd> go to
       </div>
     </SidebarContent>
 
@@ -180,7 +169,7 @@ const adminNavItems = computed<NavItem[]>(() => {
       <SidebarMenu v-if="!user">
         <SidebarMenuItem>
           <SidebarMenuButton as-child>
-            <a href="/auth/redirect/twitch" class="flex items-center cursor-pointer">
+            <a href="/auth/redirect/twitch" class="flex cursor-pointer items-center">
               <LogIn class="mr-2 h-4 w-4" />
               Log in
             </a>
@@ -188,8 +177,12 @@ const adminNavItems = computed<NavItem[]>(() => {
         </SidebarMenuItem>
       </SidebarMenu>
       <div class="px-3 pb-2 text-[10px] text-muted-foreground/50 group-data-[collapsible=icon]:hidden">
-        <a :href="`https://github.com/jasperfrontend/overlabels/commit/${commitHash}`" target="_blank"
-           rel="noopener noreferrer" class="hover:text-muted-foreground transition-colors">
+        <a
+          :href="`https://github.com/jasperfrontend/overlabels/commit/${commitHash}`"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="transition-colors hover:text-muted-foreground"
+        >
           {{ commitHash }}
         </a>
       </div>

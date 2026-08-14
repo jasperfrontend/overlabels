@@ -14,16 +14,14 @@ function toggle() {
 
 <template>
   <div
-    class="flex items-center justify-between border p-4 cursor-pointer hover:bg-background"
-    :class="model ? 'border-green-500 bg-green-300/5' : 'border-border bg-background-50/20'"
+    class="flex cursor-pointer items-center justify-between border p-4 hover:bg-background"
+    :class="model ? 'border-green-500 bg-green-300/5' : 'bg-background-50/20 border-border'"
     @click="toggle"
   >
     <div class="space-y-0.5">
       <div v-if="model">Public {{ props.label }} <small>(Click to make private)</small></div>
       <div v-else>Private {{ props.label }} <small>(Click to make public)</small></div>
-      <p v-if="model" class="text-sm text-green-500">
-        Public {{ props.label.toLowerCase() }}s can be discovered and copied by other users.
-      </p>
+      <p v-if="model" class="text-sm text-green-500">Public {{ props.label.toLowerCase() }}s can be discovered and copied by other users.</p>
       <p v-else class="text-sm text-muted-foreground">
         Private {{ props.label.toLowerCase() }}s are only visible to you and cannot be copied by other users.
       </p>

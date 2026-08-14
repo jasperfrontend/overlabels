@@ -2,7 +2,7 @@
   <Transition name="toast" @after-leave="emit('dismiss')">
     <div
       v-if="visible"
-      class="pointer-events-auto fixed top-0 left-0 z-50 flex w-full items-start px-4 py-3 gap-4 shadow-lg"
+      class="pointer-events-auto fixed top-0 left-0 z-50 flex w-full items-start gap-4 px-4 py-3 shadow-lg"
       :class="[color.bg, color.border]"
       :role="toastRole"
       :aria-live="ariaLive"

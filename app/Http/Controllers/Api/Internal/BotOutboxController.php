@@ -15,6 +15,7 @@ class BotOutboxController extends Controller
      * atomically so two concurrent polls can't double-send. The bot is
      * responsible for actually delivering them - we don't retry on failure
      * because duplicate chat messages are worse than a missed mention.
+     *
      * @throws Throwable
      */
     public function index(): JsonResponse

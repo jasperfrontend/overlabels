@@ -28,9 +28,7 @@ const search = ref('');
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase();
   if (!q) return props.blocks;
-  return props.blocks.filter(
-    (b) => b.name.toLowerCase().includes(q) || (b.description ?? '').toLowerCase().includes(q),
-  );
+  return props.blocks.filter((b) => b.name.toLowerCase().includes(q) || (b.description ?? '').toLowerCase().includes(q));
 });
 </script>
 
@@ -41,13 +39,7 @@ const filtered = computed(() => {
         <DialogTitle>Pick a block</DialogTitle>
       </DialogHeader>
 
-      <input
-        v-model="search"
-        type="text"
-        class="input-border w-full"
-        placeholder="Search blocks..."
-        autofocus
-      />
+      <input v-model="search" type="text" class="input-border w-full" placeholder="Search blocks..." autofocus />
 
       <div class="max-h-[50vh] overflow-y-auto">
         <div v-if="filtered.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -58,13 +50,7 @@ const filtered = computed(() => {
             class="flex cursor-pointer flex-col overflow-hidden rounded-sm border border-sidebar-border text-left transition-colors hover:border-violet-400 hover:bg-violet-400/5"
             @click="emit('pick', block)"
           >
-            <img
-              v-if="block.screenshot_url"
-              :src="block.screenshot_url"
-              alt=""
-              class="h-28 w-full object-cover"
-              loading="lazy"
-            />
+            <img v-if="block.screenshot_url" :src="block.screenshot_url" alt="" class="h-28 w-full object-cover" loading="lazy" />
             <div v-else class="flex h-28 w-full items-center justify-center bg-sidebar-accent">
               <Blocks class="size-8 text-muted-foreground/50" />
             </div>

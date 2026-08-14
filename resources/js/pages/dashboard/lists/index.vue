@@ -10,15 +10,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  ListIcon,
-  PlusIcon,
-  LockIcon,
-  ChefHat,
-  List,
-  PowerOffIcon,
-  SearchIcon,
-} from '@lucide/vue';
+import { ListIcon, PlusIcon, LockIcon, ChefHat, List, PowerOffIcon, SearchIcon } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { listItemValues, type ListItem } from '@/utils/listItems';
 
@@ -50,7 +42,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const lists = ref<ListRow[]>([...props.lists]);
-watch(() => props.lists, (next) => { lists.value = [...next]; }, { deep: true });
+watch(
+  () => props.lists,
+  (next) => {
+    lists.value = [...next];
+  },
+  { deep: true },
+);
 
 const toastMessage = ref<string | null>(null);
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
@@ -66,7 +64,7 @@ const search = ref('');
 // (not slug/label). Surfaced as a "matches: ..." hint so a content hit is
 // visible even though the matching item isn't otherwise shown on the row.
 function contentMatch(list: ListRow, q: string): string | null {
-  return list.items.find(item => item.toLowerCase().includes(q)) ?? null;
+  return list.items.find((item) => item.toLowerCase().includes(q)) ?? null;
 }
 
 /** A list plus, when the query only matched its contents, the item that hit. */
@@ -77,7 +75,7 @@ interface ListSearchResult {
 
 const filteredLists = computed<ListSearchResult[]>(() => {
   const q = search.value.trim().toLowerCase();
-  if (!q) return lists.value.map(list => ({ list, hint: null }));
+  if (!q) return lists.value.map((list) => ({ list, hint: null }));
 
   const out: { list: ListRow; hint: string | null }[] = [];
   for (const list of lists.value) {
@@ -121,7 +119,7 @@ const SLUG_PATTERN = /^[a-z][a-z0-9_]{0,49}$/;
 function validateSlug(s: string): string | null {
   if (!s) return 'Slug is required.';
   if (!SLUG_PATTERN.test(s)) return 'Slug must start with a lowercase letter; only letters, digits, and underscores.';
-  if (lists.value.some(l => l.slug === s)) return 'You already have a list with this slug.';
+  if (lists.value.some((l) => l.slug === s)) return 'You already have a list with this slug.';
   return null;
 }
 
@@ -135,15 +133,19 @@ function createList() {
   // "lists are lists" contract for any non-empty typed content.
   const items = newItemsText.value === '' ? [] : newItemsText.value.split('\n');
 
-  router.post(route('lists.store'), {
-    slug: newSlug.value,
-    label: newLabel.value || null,
-    items,
-  }, {
-    onError: (errors) => {
-      slugError.value = errors.slug ?? 'Failed to create list.';
+  router.post(
+    route('lists.store'),
+    {
+      slug: newSlug.value,
+      label: newLabel.value || null,
+      items,
     },
-  });
+    {
+      onError: (errors) => {
+        slugError.value = errors.slug ?? 'Failed to create list.';
+      },
+    },
+  );
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -162,7 +164,7 @@ interface ListUpdatedPayload {
 }
 
 function applyListUpdated(payload: ListUpdatedPayload) {
-  const idx = lists.value.findIndex(l => l.slug === payload.slug);
+  const idx = lists.value.findIndex((l) => l.slug === payload.slug);
   if (idx === -1) {
     // Unknown slug - a new list (created in another tab). Refresh just the
     // lists prop so it appears in the collection.
@@ -181,7 +183,7 @@ function applyListUpdated(payload: ListUpdatedPayload) {
 }
 
 function applyListDeleted(slug: string) {
-  const idx = lists.value.findIndex(l => l.slug === slug);
+  const idx = lists.value.findIndex((l) => l.slug === slug);
   if (idx === -1) return;
   lists.value.splice(idx, 1);
 }
@@ -206,7 +208,9 @@ async function loadMeta() {
       metaForm.value.command = metaCommand.value.command;
       metaForm.value.enabled = metaCommand.value.enabled;
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 async function saveMeta() {
@@ -258,17 +262,20 @@ onUnmounted(() => {
     <div class="mx-auto w-full space-y-4 p-4">
       <div class="flex items-start justify-between gap-3">
         <div class="flex items-center gap-3">
-          <List class="h-6 w-6 mr-2" />
+          <List class="mr-2 h-6 w-6" />
           <Heading title="Lists" />
         </div>
 
-        <button class="btn btn-primary cursor-pointer shrink-0" @click="showCreate = !showCreate">
+        <button class="btn btn-primary shrink-0 cursor-pointer" @click="showCreate = !showCreate">
           <PlusIcon class="h-4 w-4" />
           <span class="ml-1.5">New list</span>
         </button>
       </div>
 
-      <p class="text-sm text-foreground">Reusable lists you can reference from any overlay via [[[c:list:&lt;slug&gt;]]] or loop with [[[foreach:c:list:&lt;slug&gt; as item]]]. Lists are lists - we preserve exactly what you type, empties and duplicates included.</p>
+      <p class="text-sm text-foreground">
+        Reusable lists you can reference from any overlay via [[[c:list:&lt;slug&gt;]]] or loop with [[[foreach:c:list:&lt;slug&gt; as item]]]. Lists
+        are lists - we preserve exactly what you type, empties and duplicates included.
+      </p>
       <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
 
       <!-- Create-list modal/card -->
@@ -277,12 +284,7 @@ onUnmounted(() => {
           <div class="grid gap-3 md:grid-cols-2">
             <div>
               <Label for="new-slug">Slug</Label>
-              <input
-                id="new-slug"
-                v-model="newSlug"
-                placeholder="pizza_toppings"
-                class="cursor-text font-mono input-border"
-              />
+              <input id="new-slug" v-model="newSlug" placeholder="pizza_toppings" class="input-border cursor-text font-mono" />
               <p v-if="slugError" class="mt-1 text-xs text-destructive">{{ slugError }}</p>
               <p v-else class="mt-1 text-xs text-muted-foreground">
                 Used in tags: <span class="font-mono">[[[c:list:{{ newSlug || 'your_slug' }}]]]</span>
@@ -311,32 +313,16 @@ onUnmounted(() => {
       </Card>
 
       <!-- Empty state: no lists at all -->
-      <EmptyState
-        v-if="lists.length === 0"
-        dashed
-        :icon="ChefHat"
-        title="No lists yet."
-        message="Create one above to use it across your overlays."
-      />
+      <EmptyState v-if="lists.length === 0" dashed :icon="ChefHat" title="No lists yet." message="Create one above to use it across your overlays." />
 
       <template v-else>
         <!-- Search box: filters by slug, label, and item contents -->
         <div class="relative">
-          <SearchIcon class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            v-model="search"
-            type="text"
-            placeholder="Search lists by name, slug, or contents..."
-            class="input-border h-10 w-full pl-9"
-          />
+          <SearchIcon class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input v-model="search" type="text" placeholder="Search lists by name, slug, or contents..." class="input-border h-10 w-full pl-9" />
         </div>
 
-        <CollectionList
-          :items="filteredLists"
-          :item-key="rowKey"
-          :href="rowHref"
-          :label="rowLabel"
-        >
+        <CollectionList :items="filteredLists" :item-key="rowKey" :href="rowHref" :label="rowLabel">
           <template #item="{ item: { list, hint } }">
             <div class="flex flex-wrap items-center gap-1.5">
               <ListIcon class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -361,11 +347,7 @@ onUnmounted(() => {
           <!-- Empty state: search matched nothing. The no-lists-at-all case is
                handled above, before the search box renders. -->
           <template #empty>
-            <EmptyState
-              dashed
-              :icon="SearchIcon"
-              :message="`No lists match &quot;${search}&quot;. Try a different name, slug, or item.`"
-            />
+            <EmptyState dashed :icon="SearchIcon" :message="`No lists match &quot;${search}&quot;. Try a different name, slug, or item.`" />
           </template>
         </CollectionList>
       </template>
@@ -378,8 +360,8 @@ onUnmounted(() => {
               <div>
                 <h3 class="text-sm font-semibold text-foreground">!list meta-command</h3>
                 <p class="mt-0.5 text-xs text-muted-foreground">
-                  By default, List actions live under <span class="text-foreground">!list</span>. If that doesn't work with your stream
-                  configuration, you can set another command here. Applies to all your lists.
+                  By default, List actions live under <span class="text-foreground">!list</span>. If that doesn't work with your stream configuration,
+                  you can set another command here. Applies to all your lists.
                 </p>
               </div>
               <Label for="meta-cmd" class="text-xs">Command name</Label>
@@ -387,11 +369,11 @@ onUnmounted(() => {
                 <div>
                   <div class="flex items-center gap-1">
                     <span class="font-mono text-sm text-muted-foreground">!</span>
-                    <input id="meta-cmd" v-model="metaForm.command" class="w-32 h-8 font-mono input-border" />
+                    <input id="meta-cmd" v-model="metaForm.command" class="input-border h-8 w-32 font-mono" />
                   </div>
                 </div>
 
-                <button class="btn h-8 btn-primary cursor-pointer" :disabled="savingMeta" @click="saveMeta">
+                <button class="btn btn-primary h-8 cursor-pointer" :disabled="savingMeta" @click="saveMeta">
                   {{ savingMeta ? 'Saving…' : metaCommand ? 'Update' : 'Enable !list' }}
                 </button>
               </div>

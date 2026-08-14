@@ -81,9 +81,7 @@ const externalRowsByService = ref<Record<string, Row[]>>(
     (acc, service) => {
       const eventTypes = props.triggers.externalEventTypes[service] ?? {};
       acc[service] = Object.entries(eventTypes).map(([eventType, label]) => {
-        const existing = props.triggers.assigned.external.find(
-          (e) => e.service === service && e.event_type === eventType,
-        );
+        const existing = props.triggers.assigned.external.find((e) => e.service === service && e.event_type === eventType);
         return {
           event_type: eventType,
           event_label: label,
@@ -191,9 +189,7 @@ function save() {
   >
     <template #description>
       Pick the events that should fire this alert. One alert template can be reused across many events.
-      <div class="mt-1.5 text-xs text-muted-foreground">
-        {{ enabledCount }} event{{ enabledCount !== 1 ? 's' : '' }} firing this alert
-      </div>
+      <div class="mt-1.5 text-xs text-muted-foreground">{{ enabledCount }} event{{ enabledCount !== 1 ? 's' : '' }} firing this alert</div>
     </template>
 
     <template #header-actions>
@@ -205,12 +201,7 @@ function save() {
 
     <template #group-icon="{ group }">
       <Zap v-if="group.key === TWITCH_GROUP_KEY" class="h-3.5 w-3.5 shrink-0 text-violet-400" />
-      <span
-        v-else
-        class="rounded-full border border-orange-400/40 px-2 py-0.5 text-[10px] text-orange-400"
-      >
-        external
-      </span>
+      <span v-else class="rounded-full border border-orange-400/40 px-2 py-0.5 text-[10px] text-orange-400"> external </span>
     </template>
 
     <template #item="{ item, group }">

@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import axios from 'axios';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -75,49 +69,33 @@ function close() {
     <DialogContent class="sm:max-w-lg">
       <DialogHeader>
         <DialogTitle>Suggest an integration</DialogTitle>
-        <p class="text-sm text-muted-foreground mt-1">
-          Overlays can't embed external content directly, but we can build native integrations.
-          Tell us what service you'd like to see supported!
+        <p class="mt-1 text-sm text-muted-foreground">
+          Overlays can't embed external content directly, but we can build native integrations. Tell us what service you'd like to see supported!
         </p>
       </DialogHeader>
 
       <div v-if="submitted" class="py-6 text-center">
-        <p class="text-foreground font-medium">Thanks for the suggestion!</p>
-        <p class="text-sm text-muted-foreground mt-1">We'll take a look and see what we can do.</p>
-        <button class="btn btn-primary mt-4 m-auto" @click="close">Sounds good!</button>
+        <p class="font-medium text-foreground">Thanks for the suggestion!</p>
+        <p class="mt-1 text-sm text-muted-foreground">We'll take a look and see what we can do.</p>
+        <button class="btn btn-primary m-auto mt-4" @click="close">Sounds good!</button>
       </div>
 
       <form v-else @submit.prevent="submit" class="space-y-4">
         <div>
           <Label for="service_url">Service URL</Label>
-          <Input
-            id="service_url"
-            v-model="serviceUrl"
-            placeholder="https://example.com or the service name"
-            class="mt-1"
-          />
-          <p v-if="errors.service_url" class="text-sm text-destructive mt-1">{{ errors.service_url }}</p>
+          <Input id="service_url" v-model="serviceUrl" placeholder="https://example.com or the service name" class="mt-1" />
+          <p v-if="errors.service_url" class="mt-1 text-sm text-destructive">{{ errors.service_url }}</p>
         </div>
 
         <div>
           <Label for="example">What does the integration do?</Label>
-          <Input
-            id="example"
-            v-model="example"
-            placeholder="e.g. shows donation alerts, displays a live chat widget"
-            class="mt-1"
-          />
-          <p v-if="errors.example" class="text-sm text-destructive mt-1">{{ errors.example }}</p>
+          <Input id="example" v-model="example" placeholder="e.g. shows donation alerts, displays a live chat widget" class="mt-1" />
+          <p v-if="errors.example" class="mt-1 text-sm text-destructive">{{ errors.example }}</p>
         </div>
 
         <div>
           <Label for="context">Anything else? (optional)</Label>
-          <Input
-            id="context"
-            v-model="context"
-            placeholder="e.g. an output URL, API docs link, or overlay URL from the service"
-            class="mt-1"
-          />
+          <Input id="context" v-model="context" placeholder="e.g. an output URL, API docs link, or overlay URL from the service" class="mt-1" />
         </div>
 
         <p v-if="errors.general" class="text-sm text-destructive">{{ errors.general }}</p>

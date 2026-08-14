@@ -86,17 +86,16 @@ const debounceSearch = debounce(() => {
 const page = usePage<AppPageProps>();
 const currentUserId = computed(() => page.props.auth.user.id);
 
-
 const pageTitle = computed(() => {
   const ownerMap: Record<string, string> = {
     all_templates: 'All',
     mine: 'My',
-    public: 'Public'
+    public: 'Public',
   };
   const typeMap: Record<string, string> = {
     alert: 'event alerts',
     static: 'static overlays',
-    block: 'blocks'
+    block: 'blocks',
   };
 
   const owner = ownerMap[filters.value.filter] ?? 'All';
@@ -114,15 +113,15 @@ watchEffect(() => {
   });
   recordListContext({
     title: pageTitle.value,
-    href: `${route('templates.index')}?${params.toString()}`
+    href: `${route('templates.index')}?${params.toString()}`,
   });
 });
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: pageTitleString,
-    href: '/templates'
-  }
+    href: '/templates',
+  },
 ];
 </script>
 
@@ -170,12 +169,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="flex flex-col gap-1">
             <!-- Type Filter -->
             <label for="filter-type">Type</label>
-            <select
-              v-model="filters.type"
-              @change="applyFilter"
-              class="input-border h-10 w-full"
-              id="filter-type"
-            >
+            <select v-model="filters.type" @change="applyFilter" class="input-border h-10 w-full" id="filter-type">
               <option value="">All Types</option>
               <option value="static">Static overlay</option>
               <option value="alert">Event alert</option>
@@ -186,12 +180,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="flex flex-col gap-1">
             <label for="filter-visibility">Ownership</label>
             <!-- Visibility Filter -->
-            <select
-              v-model="filters.filter"
-              @change="applyFilter"
-              class="input-border h-10 w-full"
-              id="filter-visibility"
-            >
+            <select v-model="filters.filter" @change="applyFilter" class="input-border h-10 w-full" id="filter-visibility">
               <option value="all_templates">All overlays</option>
               <option value="mine">My overlays</option>
               <option value="public">Public overlays</option>
@@ -201,12 +190,7 @@ const breadcrumbs: BreadcrumbItem[] = [
           <div class="flex flex-col gap-1">
             <label for="filter-sort">Order</label>
             <!-- Sort -->
-            <select
-              v-model="filters.sort"
-              @change="applyFilter"
-              class="input-border h-10 w-full"
-              id="filter-sort"
-            >
+            <select v-model="filters.sort" @change="applyFilter" class="input-border h-10 w-full" id="filter-sort">
               <option value="created_at">Date created</option>
               <option value="name">Name</option>
               <option value="view_count">Views</option>

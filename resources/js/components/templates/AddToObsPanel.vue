@@ -16,14 +16,9 @@ const props = defineProps<{
       <VideoIcon class="size-6 text-violet-500 dark:text-violet-400" />
       <h3 class="text-lg font-semibold">Add this overlay to OBS</h3>
     </div>
-    <p>
-      Add this overlay to OBS by clicking the button below and copying the exact URL to your OBS as a browser source.
-    </p>
+    <p>Add this overlay to OBS by clicking the button below and copying the exact URL to your OBS as a browser source.</p>
 
-    <div
-      v-if="props.template?.type === 'alert'"
-      class="space-y-2 rounded border-l-4 border-violet-500 bg-violet-500/10 p-3 text-foreground/90"
-    >
+    <div v-if="props.template?.type === 'alert'" class="space-y-2 rounded border-l-4 border-violet-500 bg-violet-500/10 p-3 text-foreground/90">
       <p class="font-medium text-violet-700 dark:text-violet-300">Heads up: you're adding an alert directly to OBS</p>
       <p>
         That works fine, but alerts are usually far more powerful rendered inside a static overlay, where they inherit its structure and styling.
@@ -32,7 +27,8 @@ const props = defineProps<{
           target="_blank"
           rel="noopener noreferrer"
           class="cursor-pointer font-medium text-violet-600 underline hover:text-violet-500 dark:text-violet-300"
-        >Read "Overlays vs Alerts"</a>
+          >Read "Overlays vs Alerts"</a
+        >
         so you know what you're doing.
       </p>
     </div>

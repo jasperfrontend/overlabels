@@ -201,7 +201,7 @@ async function save() {
     router.visit(route('templates.show', data.template.id));
   } catch (error) {
     const message = axios.isAxiosError(error)
-      ? (Object.values(error.response?.data?.errors ?? {}).flat()[0] as string | undefined) ?? 'Save failed. Please try again.'
+      ? ((Object.values(error.response?.data?.errors ?? {}).flat()[0] as string | undefined) ?? 'Save failed. Please try again.')
       : 'Save failed. Please try again.';
     toast(message, 'error');
   } finally {
@@ -279,8 +279,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
           />
 
           <p class="text-sm text-muted-foreground">
-            Click an empty cell to place a block. Drag a block to move it, or select it and use the panel or arrow keys -
-            Shift + arrows to resize, Delete to remove.
+            Click an empty cell to place a block. Drag a block to move it, or select it and use the panel or arrow keys - Shift + arrows to resize,
+            Delete to remove.
           </p>
 
           <BuilderStylePanel
@@ -319,11 +319,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
           <div class="border border-sidebar-border bg-sidebar-accent p-4 text-sm text-foreground">
             <p class="mb-2">
               Blocks come from the community and your own account.
-              <Link :href="`${route('templates.index')}?filter=public&type=block`" class="cursor-pointer text-violet-400 hover:underline">Browse all blocks</Link>
+              <Link :href="`${route('templates.index')}?filter=public&type=block`" class="cursor-pointer text-violet-400 hover:underline"
+                >Browse all blocks</Link
+              >
             </p>
-            <p class="text-xs text-muted-foreground">
-              Blocks that use controls bring them along on save. Blocks sharing a control key stay in sync.
-            </p>
+            <p class="text-xs text-muted-foreground">Blocks that use controls bring them along on save. Blocks sharing a control key stay in sync.</p>
           </div>
         </div>
       </div>

@@ -33,10 +33,7 @@ export interface RoomTheme {
   hidingSpot: string;
   hidden: string;
   door: { closed: string; opening: string; open: string; exit: string };
-  pickups: Record<
-    'regular_sword' | 'de_sword' | 'iron_fists' | 'bomb' | 'hp_restore' | 'zombie_spawn',
-    string
-  >;
+  pickups: Record<'regular_sword' | 'de_sword' | 'iron_fists' | 'bomb' | 'hp_restore' | 'zombie_spawn', string>;
 }
 
 export interface TileOptions {
@@ -66,20 +63,20 @@ const tileOptions: TileOptions = {
   hidingSpot: '/tile-icons/Objects/Coffin.png',
   hidden: '/tile-icons/pixel/128x128/barrel_top.png',
   door: {
-    closed:  '/tile-icons/Objects/Coffin.png',
+    closed: '/tile-icons/Objects/Coffin.png',
     opening: '/tile-icons/Objects/Coffin.png',
-    open:    '/tile-icons/Objects/Dirt.png',
-    exit:    '/tile-icons/Objects/Sign (1).png',
+    open: '/tile-icons/Objects/Dirt.png',
+    exit: '/tile-icons/Objects/Sign (1).png',
   },
   pickups: {
     regular_sword: '/tile-icons/pixel/128x128/sword-default.png',
-    de_sword:      '/tile-icons/pixel/128x128/sword-de.png',
-    iron_fists:    '/tile-icons/pixel/128x128/sword-default.png',
-    bomb:          '/tile-icons/pixel/128x128/tnt_side.png',
-    hp_restore:    '/tile-icons/pixel/128x128/apple.png',
-    zombie_spawn:  '/tile-icons/pixel/128x128/zombie-spawn.png',
+    de_sword: '/tile-icons/pixel/128x128/sword-de.png',
+    iron_fists: '/tile-icons/pixel/128x128/sword-default.png',
+    bomb: '/tile-icons/pixel/128x128/tnt_side.png',
+    hp_restore: '/tile-icons/pixel/128x128/apple.png',
+    zombie_spawn: '/tile-icons/pixel/128x128/zombie-spawn.png',
   },
-}
+};
 
 const tilesObject: Record<string, string> = {
   j: '/tile-icons/Tile/Tile (10).png', // dirt variation 1
@@ -148,7 +145,7 @@ const tilesObject: Record<string, string> = {
   7: '/tile-icons/Tile/Tile (60).png', // diagonal water with grass north-west
   '#': '/tile-icons/Tile/Tile (64).png', // water with grass left and top
   '@': '/tile-icons/Tile/Tile (65).png', // water with grass right and top
-  '$': '/tile-icons/Tile/Tile (66).png', // water with grass left and bottom
+  $: '/tile-icons/Tile/Tile (66).png', // water with grass left and bottom
   '%': '/tile-icons/Tile/Tile (67).png', // water with grass right and bottom
   ':': '/tile-icons/Tile/Tile (75).png', // water with dirt top
   '&': '/tile-icons/Tile/Tile (69).png', // water with dirt bottom
@@ -166,7 +163,7 @@ const tilesObject: Record<string, string> = {
   '}': '/tile-icons/Tile/Tile (82).png', // water with dirt right and top
   '|': '/tile-icons/Tile/Tile (83).png', // water with dirt left and bottom
   '~': '/tile-icons/Tile/Tile (84).png', // water with dirt right and bottom
-  '_': '/tile-icons/Tile/Fence (1).png', // fence corner left top
+  _: '/tile-icons/Tile/Fence (1).png', // fence corner left top
   '-': '/tile-icons/Tile/Fence (2).png', // fence corner right top
   '+': '/tile-icons/Tile/Fence (3).png', // fence vertical with decorative pole
   '=': '/tile-icons/Tile/Fence (4).png', // fence vertical
@@ -174,7 +171,7 @@ const tilesObject: Record<string, string> = {
   '€': '/tile-icons/Tile/Fence (6).png', // fence horizontal
   '¡': '/tile-icons/Tile/Fence (7).png', // fence horizontal with decorative pole
   '»': '/tile-icons/Tile/Fence (8).png', // fence horizontal stop right
-}
+};
 
 const GRAVEYARD: RoomTheme = {
   floor: Array.from({ length: 20 }, (_, i) => `/tile-icons/Tile/Tile (${i + 1}).png`),
@@ -271,7 +268,10 @@ export function themeFor(room: number): RoomTheme {
 }
 
 function parseGrid(grid: string): string[] {
-  return grid.trim().split('\n').map(row => row.trim());
+  return grid
+    .trim()
+    .split('\n')
+    .map((row) => row.trim());
 }
 
 export function floorFor(theme: RoomTheme, x: number, y: number): string {

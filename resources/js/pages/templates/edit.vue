@@ -55,13 +55,7 @@ import { compileTailwindCss } from '@/utils/compileTailwind';
 import { useLinkWarning } from '@/composables/useLinkWarning';
 import { useTemplateActions } from '@/composables/useTemplateActions';
 import { captureListContext } from '@/composables/useListContext';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface OverlayOption {
   id: number;
@@ -130,7 +124,7 @@ interface Props {
 const FREESOUND_LIBRARY_CAP = 100;
 
 const props = withDefaults(defineProps<Props>(), {
-  template: Object
+  template: Object,
 });
 
 const { triggerLinkWarning } = useLinkWarning();
@@ -150,7 +144,7 @@ const {
   forkWizardTemplateSlug,
   forkWizardSourceControls,
   forkWizardRequiredServices,
-  forkWizardConnectedServices
+  forkWizardConnectedServices,
 } = useTemplateActions(props.template, { redirectAfterDelete: () => listContext.href });
 
 const form = useForm({
@@ -202,24 +196,21 @@ function ejectToCodeEditor() {
 // index is re-filtered or restored via browser back/forward. When there's no
 // recorded navigation (direct URL, fresh tab), fall back to a crumb derived from
 // the template itself. The edit page is owner-only, so ownership is always "My".
-const listContext = captureListContext(
-  props.template?.id,
-  { type: props.template?.type, ownedByMe: true },
-);
+const listContext = captureListContext(props.template?.id, { type: props.template?.type, ownedByMe: true });
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: listContext.title,
-    href: listContext.href
+    href: listContext.href,
   },
   {
     title: props.template?.name || 'Template',
-    href: `/templates/${props.template?.id}`
+    href: `/templates/${props.template?.id}`,
   },
   {
     title: 'Edit',
-    href: route('templates.edit', props.template)
-  }
+    href: route('templates.edit', props.template),
+  },
 ];
 
 const mainTabs = computed(() => {
@@ -229,7 +220,7 @@ const mainTabs = computed(() => {
     { key: 'tags', label: 'Tags', icon: Brackets },
     { key: 'controls', label: 'Controls', icon: SlidersHorizontal },
     { key: 'panel', label: 'Values', icon: SquarePenIcon },
-    { key: 'screenshot', label: 'Screenshot', icon: ImageIcon }
+    { key: 'screenshot', label: 'Screenshot', icon: ImageIcon },
   ];
   if (props.template.type === 'alert') {
     tabs.push({ key: 'triggers', label: 'Triggers', icon: Zap });
@@ -267,9 +258,7 @@ const freesoundModalOpen = ref(false);
 const libraryAuditioningId = ref<number | null>(null);
 let libraryAuditionPlayer: HTMLAudioElement | null = null;
 
-const currentLibrarySound = computed(() =>
-  freesoundLibrary.value.find((s) => s.preview_url === form.alert_sound_url) ?? null
-);
+const currentLibrarySound = computed(() => freesoundLibrary.value.find((s) => s.preview_url === form.alert_sound_url) ?? null);
 
 function toggleLibraryAudition(sound: FreesoundLibraryRow) {
   if (libraryAuditioningId.value === sound.id) {
@@ -372,8 +361,8 @@ function saveTargeting() {
     {
       preserveScroll: true,
       onSuccess: () => pushToast('Targeting settings saved.', 'success'),
-      onError: () => pushToast('Failed to save targeting settings.', 'error')
-    }
+      onError: () => pushToast('Failed to save targeting settings.', 'error'),
+    },
   );
 }
 
@@ -409,9 +398,7 @@ const showSuggestionLink = ref(false);
 function countBlockOrphans(): number {
   const tags = props.template?.template_tags;
   if (!builderMode.value || !Array.isArray(tags)) return 0;
-  return localControls.value.filter(
-    (c) => !c.source && c.overlay_template_id !== null && !tags.includes(`c:${c.key}`),
-  ).length;
+  return localControls.value.filter((c) => !c.source && c.overlay_template_id !== null && !tags.includes(`c:${c.key}`)).length;
 }
 
 const submitForm = async () => {
@@ -437,7 +424,7 @@ const submitForm = async () => {
     description: form.description,
     head: form.head,
     html: form.html,
-    css: form.css
+    css: form.css,
   });
   Object.assign(form, sanitized);
 
@@ -454,66 +441,64 @@ const submitForm = async () => {
     css: form.css,
   });
 
-  form.transform((data) => {
-    if (props.template.type === 'block') {
-      return { ...data, metadata: { block: { default_span: { w: blockSpanW.value, h: blockSpanH.value } } } };
-    }
-    if (builderMode.value && builderEditor.value) {
-      return { ...data, metadata: { builder: builderEditor.value.serialize() } };
-    }
-    return data;
-  }).put(route('templates.update', props.template), {
-    preserveScroll: true,
-    onSuccess: () => {
-      builderDirty.value = false;
-
-      // Import controls for blocks placed this session (existing keys are
-      // skipped server-side - same semantics as the Copy import wizard).
-      // This runs AFTER Inertia already delivered the refreshed props, so the
-      // created controls must be merged into localControls by hand - the
-      // Controls and Values tabs render from it and remount per tab switch.
+  form
+    .transform((data) => {
+      if (props.template.type === 'block') {
+        return { ...data, metadata: { block: { default_span: { w: blockSpanW.value, h: blockSpanH.value } } } };
+      }
       if (builderMode.value && builderEditor.value) {
-        const controls = builderEditor.value.controlsForImport();
-        if (controls.length) {
-          axios
-            .post(`/templates/${props.template.id}/controls/import`, {
-              controls: controls.map((c) => ({ ...c, action: 'create' })),
-            })
-            .then(({ data }) => {
-              if (data?.created?.length) {
-                localControls.value = [...localControls.value, ...data.created];
-              }
-            })
-            .catch(() => pushToast('Overlay saved, but importing block controls failed.', 'warning'));
-        }
+        return { ...data, metadata: { builder: builderEditor.value.serialize() } };
       }
-      if (removed > 0 && hadEmbeds) {
-        showSuggestionLink.value = true;
-        pushToast(
-          `Saved! Removed ${removed} unsafe pattern${removed === 1 ? '' : 's'}. Embeds (iframes, objects) are not allowed - want to suggest an integration instead?`,
-          'warning'
-        );
-      } else if (removed > 0) {
-        pushToast(
-          `Saved! Removed ${removed} unsafe pattern${removed === 1 ? '' : 's'} (scripts, event handlers, or javascript: URIs).`,
-          'warning'
-        );
-      } else {
-        showSuggestionLink.value = false;
-        const orphans = countBlockOrphans();
-        if (orphans === 1) {
-          pushToast('Overlay saved. 1 control is no longer used by any block - review it on the Controls tab.', 'info');
-        } else if (orphans > 1) {
-          pushToast(`Overlay saved. ${orphans} controls are no longer used by any block - review them on the Controls tab.`, 'info');
-        } else {
-          pushToast('Overlay saved successfully!', 'success');
-        }
-      }
-    },
-    onError: () => pushToast('Failed to save overlay.', 'error')
-  });
-};
+      return data;
+    })
+    .put(route('templates.update', props.template), {
+      preserveScroll: true,
+      onSuccess: () => {
+        builderDirty.value = false;
 
+        // Import controls for blocks placed this session (existing keys are
+        // skipped server-side - same semantics as the Copy import wizard).
+        // This runs AFTER Inertia already delivered the refreshed props, so the
+        // created controls must be merged into localControls by hand - the
+        // Controls and Values tabs render from it and remount per tab switch.
+        if (builderMode.value && builderEditor.value) {
+          const controls = builderEditor.value.controlsForImport();
+          if (controls.length) {
+            axios
+              .post(`/templates/${props.template.id}/controls/import`, {
+                controls: controls.map((c) => ({ ...c, action: 'create' })),
+              })
+              .then(({ data }) => {
+                if (data?.created?.length) {
+                  localControls.value = [...localControls.value, ...data.created];
+                }
+              })
+              .catch(() => pushToast('Overlay saved, but importing block controls failed.', 'warning'));
+          }
+        }
+        if (removed > 0 && hadEmbeds) {
+          showSuggestionLink.value = true;
+          pushToast(
+            `Saved! Removed ${removed} unsafe pattern${removed === 1 ? '' : 's'}. Embeds (iframes, objects) are not allowed - want to suggest an integration instead?`,
+            'warning',
+          );
+        } else if (removed > 0) {
+          pushToast(`Saved! Removed ${removed} unsafe pattern${removed === 1 ? '' : 's'} (scripts, event handlers, or javascript: URIs).`, 'warning');
+        } else {
+          showSuggestionLink.value = false;
+          const orphans = countBlockOrphans();
+          if (orphans === 1) {
+            pushToast('Overlay saved. 1 control is no longer used by any block - review it on the Controls tab.', 'info');
+          } else if (orphans > 1) {
+            pushToast(`Overlay saved. ${orphans} controls are no longer used by any block - review them on the Controls tab.`, 'info');
+          } else {
+            pushToast('Overlay saved successfully!', 'success');
+          }
+        }
+      },
+      onError: () => pushToast('Failed to save overlay.', 'error'),
+    });
+};
 
 const { register } = useKeyboardShortcuts();
 
@@ -525,35 +510,49 @@ onMounted(() => {
     () => {
       triggerLinkWarning(
         () => openExternalLink(`/overlay/${props.template?.slug}/public`, '_blank'),
-        'Remember: DO NOT EVER show the overlay link with your personal access #hash in the URL on stream! Treat it like a password.'
+        'Remember: DO NOT EVER show the overlay link with your personal access #hash in the URL on stream! Treat it like a password.',
       );
     },
-    { description: 'Preview in new tab' }
+    { description: 'Preview in new tab' },
   );
 
   // Digits 1-9 pick the first nine tabs, 0 the tenth: alert overlays run to ten
   // tabs with Add to OBS on the end.
   for (let i = 1; i <= 10; i++) {
-    register(`switch-tab-${i}`, i === 10 ? '0' : `${i}`, () => {
-      const tab = mainTabs.value[i - 1];
-      if (tab) mainTab.value = tab.key;
-    }, { description: `Switch to tab ${i}` });
+    register(
+      `switch-tab-${i}`,
+      i === 10 ? '0' : `${i}`,
+      () => {
+        const tab = mainTabs.value[i - 1];
+        if (tab) mainTab.value = tab.key;
+      },
+      { description: `Switch to tab ${i}` },
+    );
   }
 
-  register('blur-focus', 'alt+f', () => {
-    const el = document.activeElement as HTMLElement | null;
-    el?.blur();
-  }, { description: 'Release focus from editor / input' });
+  register(
+    'blur-focus',
+    'alt+f',
+    () => {
+      const el = document.activeElement as HTMLElement | null;
+      el?.blur();
+    },
+    { description: 'Release focus from editor / input' },
+  );
 
-  register('back-to-show', 's', () => {
-    if (form.isDirty) {
-      pushToast('Save your changes before leaving.', 'warning');
-      return;
-    }
-    if (props.template?.id) router.visit(route('templates.show', props.template.id));
-  }, { description: 'Back to overlay overview' });
+  register(
+    'back-to-show',
+    's',
+    () => {
+      if (form.isDirty) {
+        pushToast('Save your changes before leaving.', 'warning');
+        return;
+      }
+      if (props.template?.id) router.visit(route('templates.show', props.template.id));
+    },
+    { description: 'Back to overlay overview' },
+  );
 });
-
 </script>
 
 <template>
@@ -578,7 +577,6 @@ onMounted(() => {
           description-class="text-sm text-muted-foreground"
         />
         <div class="flex shrink-0 items-center gap-2">
-
           <button @click="submitForm" :disabled="form.processing || (!form.isDirty && !builderDirty)" class="btn btn-primary">
             <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
             <Save v-else class="mr-2 h-4 w-4" />
@@ -616,14 +614,11 @@ onMounted(() => {
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem v-if="canDelete" class="text-destructive focus:text-destructive"
-                                @click="deleteTemplate">
+              <DropdownMenuItem v-if="canDelete" class="text-destructive focus:text-destructive" @click="deleteTemplate">
                 <Trash class="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
-              <DropdownMenuItem v-else disabled class="text-muted-foreground text-xs">
-                Part of a kit - cannot delete
-              </DropdownMenuItem>
+              <DropdownMenuItem v-else disabled class="text-xs text-muted-foreground"> Part of a kit - cannot delete </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -632,16 +627,17 @@ onMounted(() => {
       <form @submit.prevent="submitForm">
         <!-- Tab bar -->
         <div class="bg-violet-300/20 dark:bg-violet-900/20">
-          <div
-            class="flex dark:border-violet-400 max-w-full touch-pan-x lg:touch-none overflow-auto">
+          <div class="flex max-w-full touch-pan-x overflow-auto lg:touch-none dark:border-violet-400">
             <button
-              v-for="(tab) in mainTabs"
+              v-for="tab in mainTabs"
               :key="tab.key"
               type="button"
               @click="mainTab = tab.key"
               :class="[
                 'flex cursor-pointer items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-background',
-                mainTab === tab.key ? ' border-t-2 border-t-violet-400 bg-white dark:bg-violet-500/30 dark:hover-bg-violet-500 text-black dark:text-violet-300' : 'text-accent-foreground',
+                mainTab === tab.key
+                  ? 'dark:hover-bg-violet-500 border-t-2 border-t-violet-400 bg-white text-black dark:bg-violet-500/30 dark:text-violet-300'
+                  : 'text-accent-foreground',
               ]"
             >
               <component :is="tab.icon" class="h-4 w-4" />
@@ -651,9 +647,7 @@ onMounted(() => {
         </div>
 
         <!-- Content box -->
-        <div
-          class="border border-t-0 border-sidebar-border bg-card h-full overflow-auto"
-        >
+        <div class="h-full overflow-auto border border-t-0 border-sidebar-border bg-card">
           <!-- Code Tab: Builder-composed overlays get the grid editor, everything else CodeMirror -->
           <BuilderEditor
             v-if="builderMode && props.template.metadata?.builder"
@@ -665,16 +659,10 @@ onMounted(() => {
             @dirty="builderDirty = true"
             @error="(msg) => pushToast(msg, 'warning')"
           />
-          <TemplateCodeEditor
-            v-else
-            v-show="mainTab === 'code'"
-            v-model:head="form.head"
-            v-model:body="form.html"
-            v-model:css="form.css"
-          />
+          <TemplateCodeEditor v-else v-show="mainTab === 'code'" v-model:head="form.head" v-model:body="form.html" v-model:css="form.css" />
 
           <!-- Meta Tab -->
-          <div v-if="mainTab === 'meta'" class="max-w-5xl p-4 pt-5 space-y-5">
+          <div v-if="mainTab === 'meta'" class="max-w-5xl space-y-5 p-4 pt-5">
             <div>
               <label for="name" class="mb-1 block text-sm font-medium text-accent-foreground">Title *</label>
               <input id="name" v-model="form.name" type="text" class="input-border w-full" required />
@@ -682,8 +670,7 @@ onMounted(() => {
             </div>
 
             <div>
-              <label for="description"
-                     class="mb-1 block text-sm font-medium text-accent-foreground">Description</label>
+              <label for="description" class="mb-1 block text-sm font-medium text-accent-foreground">Description</label>
               <textarea id="description" v-model="form.description" rows="3" class="input-border w-full" />
               <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</div>
             </div>
@@ -721,10 +708,14 @@ onMounted(() => {
 
           <!-- Controls Tab -->
           <div v-if="mainTab === 'controls'" class="p-4">
-            <ControlsManager :template="template" :initial-controls="localControls"
-                             :connected-services="connectedServices" :user-scoped-controls="userScopedControls"
-                             :user-lists="userLists"
-                             @change="localControls = $event" />
+            <ControlsManager
+              :template="template"
+              :initial-controls="localControls"
+              :connected-services="connectedServices"
+              :user-scoped-controls="userScopedControls"
+              :user-lists="userLists"
+              @change="localControls = $event"
+            />
           </div>
 
           <!-- Values Tab -->
@@ -757,24 +748,19 @@ onMounted(() => {
 
           <!-- Targeting Tab (alert templates only) -->
           <div v-if="mainTab === 'targeting'" class="max-w-2xl p-4">
-            <AlertTargetOverlaySelector
-              v-model="localTargetOverlayIds"
-              :static-overlays="staticOverlays ?? []"
-            />
+            <AlertTargetOverlaySelector v-model="localTargetOverlayIds" :static-overlays="staticOverlays ?? []" />
             <button type="button" @click="saveTargeting" class="btn btn-primary mt-4">Save targeting</button>
           </div>
 
           <!-- Effects Tab (alert templates only): alert sound + TTS + bot chat message -->
           <div v-if="mainTab === 'tts'" class="p-4">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <!-- Left column (2/3): alert sound + TTS -->
-              <div class="lg:col-span-2 space-y-6">
+              <div class="space-y-6 lg:col-span-2">
                 <section>
                   <header class="mb-3">
                     <h3 class="text-base font-semibold text-accent-foreground">Alert sound</h3>
-                    <p class="text-xs text-foreground/80">
-                      Plays once when the alert fires. Preloaded on overlay mount for instant playback.
-                    </p>
+                    <p class="text-xs text-foreground/80">Plays once when the alert fires. Preloaded on overlay mount for instant playback.</p>
                   </header>
 
                   <div class="flex gap-2">
@@ -786,11 +772,7 @@ onMounted(() => {
                       class="input-border flex-1 font-mono text-sm"
                       placeholder="https://your-cdn.example/coin.mp3 - or browse Freesound"
                     />
-                    <button
-                      type="button"
-                      class="btn btn-secondary cursor-pointer whitespace-nowrap"
-                      @click="freesoundModalOpen = true"
-                    >
+                    <button type="button" class="btn btn-secondary cursor-pointer whitespace-nowrap" @click="freesoundModalOpen = true">
                       <Search class="mr-1.5 h-4 w-4" />
                       Browse Freesound
                     </button>
@@ -798,7 +780,10 @@ onMounted(() => {
                   <div v-if="form.errors.alert_sound_url" class="mt-1 text-sm text-red-600">{{ form.errors.alert_sound_url }}</div>
 
                   <!-- Attribution box, shown when the current URL matches a Freesound library entry -->
-                  <div v-if="currentLibrarySound" class="mt-2 flex items-center gap-2 rounded border border-sidebar-border bg-muted/30 px-3 py-2 text-xs text-foreground">
+                  <div
+                    v-if="currentLibrarySound"
+                    class="mt-2 flex items-center gap-2 rounded border border-sidebar-border bg-muted/30 px-3 py-2 text-xs text-foreground"
+                  >
                     <span class="font-medium">{{ currentLibrarySound.name }}</span>
                     <span>by {{ currentLibrarySound.author }}</span>
                     <span class="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase">
@@ -809,7 +794,7 @@ onMounted(() => {
                       :href="currentLibrarySound.freesound_url"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="cursor-pointer inline-flex items-center gap-0.5 text-violet-500 hover:underline"
+                      class="inline-flex cursor-pointer items-center gap-0.5 text-violet-500 hover:underline"
                     >
                       Freesound <ExternalLinkIcon class="h-3 w-3" />
                     </a>
@@ -818,11 +803,14 @@ onMounted(() => {
                       class="ml-auto cursor-pointer text-foreground/70 hover:text-foreground"
                       @click="clearAlertSoundUrl"
                       title="Clear sound from this alert"
-                    >Clear</button>
+                    >
+                      Clear
+                    </button>
                   </div>
 
                   <p v-if="!form.alert_sound_url" class="mt-2 text-xs text-foreground/70">
-                    Or host your own MP3/OGG/WAV anywhere CORS-friendly (Cloudflare R2, Backblaze B2, GitHub Pages). Raw <code class="rounded bg-muted px-1">&lt;audio&gt;</code> in the alert HTML is stripped on save - use this field instead.
+                    Or host your own MP3/OGG/WAV anywhere CORS-friendly (Cloudflare R2, Backblaze B2, GitHub Pages). Raw
+                    <code class="rounded bg-muted px-1">&lt;audio&gt;</code> in the alert HTML is stripped on save - use this field instead.
                   </p>
                 </section>
 
@@ -831,14 +819,10 @@ onMounted(() => {
                 <section>
                   <header class="mb-3">
                     <h3 class="text-base font-semibold text-accent-foreground">Text-to-speech</h3>
-                    <p class="text-xs text-foreground/80">
-                      Spoken by Kaylin, the voice of Overlabels. Empty disables TTS for this alert.
-                    </p>
+                    <p class="text-xs text-foreground/80">Spoken by Kaylin, the voice of Overlabels. Empty disables TTS for this alert.</p>
                   </header>
 
-                  <label for="tts_expression" class="mb-1 block text-xs font-medium text-accent-foreground">
-                    Expression
-                  </label>
+                  <label for="tts_expression" class="mb-1 block text-xs font-medium text-accent-foreground"> Expression </label>
                   <textarea
                     id="tts_expression"
                     v-model="form.tts_expression"
@@ -849,9 +833,7 @@ onMounted(() => {
                   />
                   <div v-if="form.errors.tts_expression" class="mt-1 text-sm text-red-600">{{ form.errors.tts_expression }}</div>
 
-                  <label for="tts_delay_ms" class="mt-3 mb-1 block text-xs font-medium text-accent-foreground">
-                    Wait before speaking (ms)
-                  </label>
+                  <label for="tts_delay_ms" class="mt-3 mb-1 block text-xs font-medium text-accent-foreground"> Wait before speaking (ms) </label>
                   <input
                     id="tts_delay_ms"
                     v-model.number="form.tts_delay_ms"
@@ -862,9 +844,7 @@ onMounted(() => {
                     class="input-border w-40"
                     placeholder="0"
                   />
-                  <p class="mt-1 text-xs text-foreground/70">
-                    Delay TTS until the alert sound finishes. 0 = speak immediately.
-                  </p>
+                  <p class="mt-1 text-xs text-foreground/70">Delay TTS until the alert sound finishes. 0 = speak immediately.</p>
                   <div v-if="form.errors.tts_delay_ms" class="mt-1 text-sm text-red-600">{{ form.errors.tts_delay_ms }}</div>
 
                   <div v-if="template.template_tags && template.template_tags.length" class="mt-3">
@@ -875,7 +855,8 @@ onMounted(() => {
                         :key="tag"
                         class="cursor-pointer rounded bg-muted px-1.5 py-0.5 text-xs hover:bg-muted/70"
                         @click="form.tts_expression = (form.tts_expression || '') + `[[[${tag}]]]`"
-                      >[[[{{ tag }}]]]</code>
+                        >[[[{{ tag }}]]]</code
+                      >
                     </div>
                   </div>
 
@@ -883,8 +864,8 @@ onMounted(() => {
                     <summary class="cursor-pointer">How do I mute TTS?</summary>
                     <p class="mt-1 pl-4">
                       Add a boolean control with the key <code class="rounded bg-muted px-1">tts</code>
-                      to any of your overlays (Controls tab). When it's off, TTS is skipped for all your
-                      alerts. Turn it on or remove the control to resume.
+                      to any of your overlays (Controls tab). When it's off, TTS is skipped for all your alerts. Turn it on or remove the control to
+                      resume.
                     </p>
                   </details>
                 </section>
@@ -895,14 +876,12 @@ onMounted(() => {
                   <header class="mb-3">
                     <h3 class="text-base font-semibold text-accent-foreground">Bot chat message</h3>
                     <p class="text-xs text-foreground/80">
-                      Posted to your channel chat when this alert fires - handy when the alert sound is muted or missed.
-                      Empty disables it. Requires the Overlabels bot to be enabled.
+                      Posted to your channel chat when this alert fires - handy when the alert sound is muted or missed. Empty disables it. Requires
+                      the Overlabels bot to be enabled.
                     </p>
                   </header>
 
-                  <label for="bot_message_expression" class="mb-1 block text-xs font-medium text-accent-foreground">
-                    Message
-                  </label>
+                  <label for="bot_message_expression" class="mb-1 block text-xs font-medium text-accent-foreground"> Message </label>
                   <textarea
                     id="bot_message_expression"
                     v-model="form.bot_message_expression"
@@ -913,7 +892,8 @@ onMounted(() => {
                   />
                   <div v-if="form.errors.bot_message_expression" class="mt-1 text-sm text-red-600">{{ form.errors.bot_message_expression }}</div>
                   <p class="mt-1 text-xs text-foreground/70">
-                    Same tags as TTS. No <code class="rounded bg-muted px-1">[[[if]]]</code> logic - plain text and tags only. Capped at 500 characters (Twitch's chat limit).
+                    Same tags as TTS. No <code class="rounded bg-muted px-1">[[[if]]]</code> logic - plain text and tags only. Capped at 500
+                    characters (Twitch's chat limit).
                   </p>
 
                   <div v-if="template.template_tags && template.template_tags.length" class="mt-3">
@@ -924,7 +904,8 @@ onMounted(() => {
                         :key="tag"
                         class="cursor-pointer rounded bg-muted px-1.5 py-0.5 text-xs hover:bg-muted/70"
                         @click="form.bot_message_expression = (form.bot_message_expression || '') + `[[[${tag}]]]`"
-                      >[[[{{ tag }}]]]</code>
+                        >[[[{{ tag }}]]]</code
+                      >
                     </div>
                   </div>
                 </section>
@@ -934,9 +915,7 @@ onMounted(() => {
               <aside class="space-y-2">
                 <header class="flex items-baseline justify-between">
                   <h3 class="text-base font-semibold text-accent-foreground">Your sounds</h3>
-                  <span class="text-xs text-foreground/70">
-                    {{ freesoundLibrary.length }} / {{ FREESOUND_LIBRARY_CAP }}
-                  </span>
+                  <span class="text-xs text-foreground/70"> {{ freesoundLibrary.length }} / {{ FREESOUND_LIBRARY_CAP }} </span>
                 </header>
 
                 <div v-if="freesoundLibrary.length === 0" class="rounded border border-sidebar-border bg-muted/30 p-3 text-xs text-foreground">
@@ -960,9 +939,9 @@ onMounted(() => {
                         <Pause v-if="libraryAuditioningId === sound.id" class="h-3 w-3" />
                         <Play v-else class="h-3 w-3" />
                       </button>
-                      <div class="flex-1 min-w-0">
+                      <div class="min-w-0 flex-1">
                         <div class="truncate text-xs font-medium text-accent-foreground">{{ sound.name }}</div>
-                        <div class="text-[11px] text-foreground/70 flex items-center gap-1.5">
+                        <div class="flex items-center gap-1.5 text-[11px] text-foreground/70">
                           <span class="truncate">{{ sound.author }}</span>
                           <span class="inline-flex items-center rounded bg-muted px-1 py-0 text-[9px] font-medium uppercase">
                             {{ licenseShort(sound.license) }}
@@ -972,7 +951,7 @@ onMounted(() => {
                       </div>
                       <button
                         type="button"
-                        class="cursor-pointer text-foreground/70 hover:text-red-500 p-1"
+                        class="cursor-pointer p-1 text-foreground/70 hover:text-red-500"
                         title="Remove from library"
                         @click="removeLibrarySound(sound)"
                       >
@@ -987,9 +966,7 @@ onMounted(() => {
                     >
                       Use for this alert
                     </button>
-                    <div v-else class="mt-1.5 text-center text-[11px] text-violet-500">
-                      In use for this alert
-                    </div>
+                    <div v-else class="mt-1.5 text-center text-[11px] text-violet-500">In use for this alert</div>
                   </li>
                 </ul>
               </aside>
@@ -1017,19 +994,15 @@ onMounted(() => {
             :href="route('templates.show', template)"
             class="btn btn-cancel"
             title="Go back to overlay (keyboard shortcut: 's')"
-          >← Back to Overlay</Link>
-          <button
-            v-else
-            type="button"
-            disabled
-            class="btn btn-cancel opacity-50 cursor-not-allowed"
-            title="Save your changes before leaving"
-          >← Back to Overlay (unsaved changes)</button>
+            >← Back to Overlay</Link
+          >
+          <button v-else type="button" disabled class="btn btn-cancel cursor-not-allowed opacity-50" title="Save your changes before leaving">
+            ← Back to Overlay (unsaved changes)
+          </button>
           <button type="submit" :disabled="form.processing || !form.isDirty" class="btn btn-primary">Save</button>
         </div>
       </form>
     </div>
-
 
     <!-- Eject confirmation: one-way door from Builder mode to hand-edited code -->
     <Dialog :open="ejectDialogOpen" @update:open="ejectDialogOpen = $event">
@@ -1039,8 +1012,8 @@ onMounted(() => {
         </DialogHeader>
         <div class="space-y-3 text-sm text-foreground">
           <p>
-            This converts your overlay to a hand-edited overlay. You get the full compiled HTML and CSS in the code
-            editor, but the block layout tools will no longer be available for it.
+            This converts your overlay to a hand-edited overlay. You get the full compiled HTML and CSS in the code editor, but the block layout tools
+            will no longer be available for it.
           </p>
           <p><strong>This cannot be undone.</strong></p>
         </div>
@@ -1056,8 +1029,11 @@ onMounted(() => {
     <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false">
       <button
         v-if="showSuggestionLink"
-        class="mt-2 btn hover:text-card"
-        @click="showToast = false; suggestionModalOpen = true;"
+        class="btn mt-2 hover:text-card"
+        @click="
+          showToast = false;
+          suggestionModalOpen = true;
+        "
       >
         Suggest integration
       </button>

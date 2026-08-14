@@ -1,9 +1,7 @@
-<script setup lang="ts">
-
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <div class="grid place-items-center h-screen bg-background text-foreground text-center">
+  <div class="grid h-screen place-items-center bg-background text-center text-foreground">
     <p>Welcome to the Casual Elephant Game Jam</p>
   </div>
 </template>

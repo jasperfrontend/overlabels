@@ -29,68 +29,68 @@ const PASSTHROUGH_AT_RULES = /^@/;
 const ROOT_COMPOUND = /^(:root|html|body)(?![\w-])/;
 
 export function prefixCss(css: string, scope: string): string {
-    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
-    return prefixRules(stripped, scope).trim();
+  const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  return prefixRules(stripped, scope).trim();
 }
 
 function prefixRules(css: string, scope: string): string {
-    let out = '';
-    let i = 0;
+  let out = '';
+  let i = 0;
 
-    while (i < css.length) {
-        const braceOpen = css.indexOf('{', i);
-        if (braceOpen === -1) {
-            out += css.slice(i);
-            break;
-        }
-
-        const selector = css.slice(i, braceOpen).trim();
-        const bodyEnd = findMatchingBrace(css, braceOpen);
-        if (bodyEnd === -1) {
-            // Unbalanced braces - emit the rest verbatim rather than eating it.
-            out += css.slice(i);
-            break;
-        }
-        const body = css.slice(braceOpen + 1, bodyEnd);
-
-        if (RECURSE_AT_RULES.test(selector)) {
-            out += `${selector} {\n${prefixRules(body, scope)}\n}\n`;
-        } else if (PASSTHROUGH_AT_RULES.test(selector)) {
-            out += `${selector} {${body}}\n`;
-        } else if (selector) {
-            const scoped = selector
-                .split(',')
-                .map((sel) => scopeSelector(sel.trim(), scope))
-                .filter(Boolean)
-                .join(', ');
-            out += `${scoped} {${body}}\n`;
-        }
-
-        i = bodyEnd + 1;
+  while (i < css.length) {
+    const braceOpen = css.indexOf('{', i);
+    if (braceOpen === -1) {
+      out += css.slice(i);
+      break;
     }
 
-    return out;
+    const selector = css.slice(i, braceOpen).trim();
+    const bodyEnd = findMatchingBrace(css, braceOpen);
+    if (bodyEnd === -1) {
+      // Unbalanced braces - emit the rest verbatim rather than eating it.
+      out += css.slice(i);
+      break;
+    }
+    const body = css.slice(braceOpen + 1, bodyEnd);
+
+    if (RECURSE_AT_RULES.test(selector)) {
+      out += `${selector} {\n${prefixRules(body, scope)}\n}\n`;
+    } else if (PASSTHROUGH_AT_RULES.test(selector)) {
+      out += `${selector} {${body}}\n`;
+    } else if (selector) {
+      const scoped = selector
+        .split(',')
+        .map((sel) => scopeSelector(sel.trim(), scope))
+        .filter(Boolean)
+        .join(', ');
+      out += `${scoped} {${body}}\n`;
+    }
+
+    i = bodyEnd + 1;
+  }
+
+  return out;
 }
 
 function scopeSelector(selector: string, scope: string): string {
-    if (!selector) return '';
+  if (!selector) return '';
 
-    if (ROOT_COMPOUND.test(selector)) {
-        // `:root` -> scope; `body .x` -> `scope .x`; `body.foo` -> `scope.foo`
-        return scope + selector.replace(ROOT_COMPOUND, '');
-    }
+  if (ROOT_COMPOUND.test(selector)) {
+    // `:root` -> scope; `body .x` -> `scope .x`; `body.foo` -> `scope.foo`
+    return scope + selector.replace(ROOT_COMPOUND, '');
+  }
 
-    return `${scope} ${selector}`;
+  return `${scope} ${selector}`;
 }
 
 function findMatchingBrace(css: string, openIndex: number): number {
-    let depth = 0;
-    for (let i = openIndex; i < css.length; i++) {
-        if (css[i] === '{') depth++;
-        else if (css[i] === '}') {
-            depth--;
-            if (depth === 0) return i;
-        }
+  let depth = 0;
+  for (let i = openIndex; i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    else if (css[i] === '}') {
+      depth--;
+      if (depth === 0) return i;
     }
-    return -1;
+  }
+  return -1;
 }

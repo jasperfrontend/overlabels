@@ -289,7 +289,7 @@ function eventTypeLabel(type: string): string {
       </button>
     </div>
 
-    <div v-if="alertsMuted" class="mb-2 flex items-center gap-2 sticky top-0 border border-[#82600a] bg-[#2e2511] px-3 py-2 text-sm text-foreground">
+    <div v-if="alertsMuted" class="sticky top-0 mb-2 flex items-center gap-2 border border-[#82600a] bg-[#2e2511] px-3 py-2 text-sm text-foreground">
       <VolumeX class="h-4 w-4 shrink-0 text-amber-400" />
       <span>All alerts are muted. Events keep recording; unmute to fire alerts again.</span>
     </div>
@@ -375,12 +375,7 @@ function eventTypeLabel(type: string): string {
     <div v-else-if="initialized" class="bg-card px-2 py-1 transition-opacity duration-300" :class="refreshing ? 'opacity-40' : 'opacity-100'">
       <EventsTable v-if="events.length > 0" :events="events" :token="token" @replay-result="onReplayResult" />
 
-      <EventsEmptyState
-        v-else
-        :search="filters.search"
-        :range="filters.range"
-        @clear-search="clearSearch"
-      />
+      <EventsEmptyState v-else :search="filters.search" :range="filters.range" @clear-search="clearSearch" />
 
       <div v-if="meta.last_page > 1" class="mt-4 flex items-center justify-between gap-2 pb-2 text-sm">
         <button

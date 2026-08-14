@@ -137,11 +137,7 @@ async function handleDelete(t: OverlayTemplate) {
           {{ t.description }}
         </span>
 
-        <div
-          v-if="props.showEvent && firstEvent(t)"
-          class="text-xs"
-          :class="eventTypeDotClass(firstEvent(t)!.eventType, firstEvent(t)!.source)"
-        >
+        <div v-if="props.showEvent && firstEvent(t)" class="text-xs" :class="eventTypeDotClass(firstEvent(t)!.eventType, firstEvent(t)!.source)">
           {{ eventLabel(firstEvent(t)!) }}
         </div>
       </div>
@@ -173,21 +169,13 @@ async function handleDelete(t: OverlayTemplate) {
           </DropdownMenuItem>
 
           <DropdownMenuItem v-if="t.is_public" as-child>
-            <a :href="previewHref(t)" target="_blank" class="cursor-pointer">
-              <ExternalLinkIcon class="mr-2 h-4 w-4" />Preview
-            </a>
+            <a :href="previewHref(t)" target="_blank" class="cursor-pointer"> <ExternalLinkIcon class="mr-2 h-4 w-4" />Preview </a>
           </DropdownMenuItem>
 
-          <DropdownMenuItem
-            v-if="canDelete(t)"
-            class="cursor-pointer text-destructive"
-            @click="handleDelete(t)"
-          >
+          <DropdownMenuItem v-if="canDelete(t)" class="cursor-pointer text-destructive" @click="handleDelete(t)">
             <Trash2 class="mr-2 h-4 w-4" />Delete
           </DropdownMenuItem>
-          <DropdownMenuItem v-else-if="isOwn(t)" disabled class="text-xs text-muted-foreground">
-            Part of a kit - cannot delete
-          </DropdownMenuItem>
+          <DropdownMenuItem v-else-if="isOwn(t)" disabled class="text-xs text-muted-foreground"> Part of a kit - cannot delete </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
@@ -195,9 +183,7 @@ async function handleDelete(t: OverlayTemplate) {
             <GitFork class="mr-2 h-4 w-4" />Copy template
           </DropdownMenuItem>
 
-          <DropdownMenuItem class="cursor-pointer" @click="copyLink(t)">
-            <LinkIcon class="mr-2 h-4 w-4" />Copy link
-          </DropdownMenuItem>
+          <DropdownMenuItem class="cursor-pointer" @click="copyLink(t)"> <LinkIcon class="mr-2 h-4 w-4" />Copy link </DropdownMenuItem>
 
           <template v-if="props.showOwner && t.owner">
             <DropdownMenuSeparator />

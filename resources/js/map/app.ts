@@ -1,9 +1,9 @@
-import { createApp } from 'vue';
 import Echo from 'laravel-echo';
+import 'leaflet/dist/leaflet.css';
 import Pusher from 'pusher-js';
+import { createApp } from 'vue';
 import LiveMap from './LiveMap.vue';
 import SessionMap from './SessionMap.vue';
-import 'leaflet/dist/leaflet.css';
 
 // Echo/Reverb for live map WebSocket
 (window as any).Pusher = Pusher;

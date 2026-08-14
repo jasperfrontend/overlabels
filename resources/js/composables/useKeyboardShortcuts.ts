@@ -1,5 +1,5 @@
-import { onMounted, onUnmounted, ref } from 'vue';
 import { isTextEntryTarget } from '@/utils/isTextEntryTarget';
+import { onMounted, onUnmounted, ref } from 'vue';
 
 type ShortcutCallback = (event: KeyboardEvent) => void;
 
@@ -34,15 +34,12 @@ function handleKeyDown(event: KeyboardEvent): void {
   // A modal owns the keyboard while it's open: single-key page shortcuts must
   // not reach through it (e.g. 'e' jumping a <select> to "Expression", or 'a'
   // firing "Add to OBS" from a button inside the dialog).
-  const inDialog =
-    event.target instanceof Element && event.target.closest('[role="dialog"]') !== null;
+  const inDialog = event.target instanceof Element && event.target.closest('[role="dialog"]') !== null;
 
   for (const shortcut of registry.values()) {
     if (matchesKeyCombination(event, shortcut.keys)) {
       // Inside inputs or an open dialog, only fire shortcuts that use a modifier key
-      const hasModifier = shortcut.keys.some((k) =>
-        ['ctrl', 'alt', 'meta'].includes(k.toLowerCase()),
-      );
+      const hasModifier = shortcut.keys.some((k) => ['ctrl', 'alt', 'meta'].includes(k.toLowerCase()));
       if ((inInput || inDialog) && !hasModifier) break;
 
       if (shortcut.preventDefault !== false) {

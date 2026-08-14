@@ -36,7 +36,8 @@ export const gameCommands: GameCommand[] = [
   {
     command: '!s',
     summary: 'Propose to stay (do nothing).',
-    description: 'An explicit skip vote that still resets your energy to 3. Useful when you want to keep your slot alive but not influence the round.',
+    description:
+      'An explicit skip vote that still resets your energy to 3. Useful when you want to keep your slot alive but not influence the round.',
     example: '!s',
   },
 ];

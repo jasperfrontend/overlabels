@@ -21,23 +21,9 @@ import { type Ref, watchEffect, type WatchStopHandle } from 'vue';
 
 // Pure engine surface from the shared lib. Re-exported so consumers don't
 // need to know whether they're talking to the wrapper or the lib.
-import {
-  buildContext,
-  evaluate,
-  resultToString,
-  containsNowCall,
-  ARG_FUNCTIONS,
-  SUPPORTED_FUNCTIONS,
-} from '@/lib/expression-engine/engine.mjs';
+import { ARG_FUNCTIONS, buildContext, containsNowCall, evaluate, resultToString, SUPPORTED_FUNCTIONS } from '@/lib/expression-engine/engine.mjs';
 
-export {
-  buildContext,
-  evaluate,
-  resultToString,
-  containsNowCall,
-  ARG_FUNCTIONS,
-  SUPPORTED_FUNCTIONS,
-};
+export { ARG_FUNCTIONS, buildContext, containsNowCall, evaluate, resultToString, SUPPORTED_FUNCTIONS };
 
 // ---------------------------------------------------------------------------
 // Composable

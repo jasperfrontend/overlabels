@@ -369,7 +369,6 @@ class TemplateTagController extends Controller
         }
     }
 
-
     /**
      * Ensure all required data arrays exist to prevent "Undefined array key" errors
      */
