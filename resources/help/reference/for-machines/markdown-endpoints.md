@@ -41,6 +41,21 @@ those are the author's design defaults and are exactly what copying the overlay 
 
 A private overlay returns 404, the same as its preview page.
 
+## Public kits too
+
+```
+https://overlabels.com/kits/<id>.md
+```
+
+The kit, then every overlay in it described exactly as its own `.md` describes it, plus one
+aggregated list of the integrations the kit needs as a whole.
+
+This is the one place where the `.md` is reachable and the HTML page is not: every other kit route
+requires a login, and this one deliberately does not, because a URL handed to a language model
+cannot sit behind a session. It opens nothing new. A kit and its overlays carry separate visibility
+flags, and a private overlay inside a public kit is listed but has its source withheld - so every
+line of source in a kit document is already readable at that overlay's own public `.md`.
+
 ## Start at the index
 
 ```

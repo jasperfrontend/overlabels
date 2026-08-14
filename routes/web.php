@@ -273,6 +273,18 @@ Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePu
     ->name('overlay.public')
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
 
+// A public kit as plain markdown: the kit, then every overlay in it described
+// exactly as its own `.md` describes it.
+//
+// This sits OUTSIDE the `auth.redirect` group that every other kit route lives
+// in, and that asymmetry is the point. `kits.show` needs a login; a URL you
+// hand to a language model cannot. It opens no new surface: a private template
+// inside a public kit is listed but its source is withheld, so every byte of
+// source here is already readable at that template's own public `.md`.
+Route::get('/kits/{kit}.md', [KitController::class, 'markdown'])
+    ->name('kits.markdown')
+    ->where('kit', '[0-9]+');
+
 // The public overlay as plain markdown, so one URL is enough for a language
 // model to understand a whole overlay: source, controls, required integrations
 // and alert wiring. Same `.md` convention as the help pages above.

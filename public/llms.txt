@@ -494,6 +494,18 @@ The `.md` form is a complete, self-contained description of that overlay, and on
 
 This is the thing to ask for when someone says "help me with my overlay" and pastes a link. If they give you the bare preview URL, add `.md` yourself.
 
+### Kits
+
+A kit is a bundle of overlays that copy into an account together. Public kits work the same way:
+
+```
+https://overlabels.com/kits/<id>.md
+```
+
+That returns the kit followed by every overlay in it, each described in full, plus one aggregated list of the integrations the kit needs as a whole. Note that the kit's HTML page requires a login while the `.md` does not, so `.md` is the only kit URL you can fetch.
+
+A kit and the overlays inside it have separate visibility flags. A private overlay inside a public kit is listed by name and type, because copying the kit copies it too, but its source is withheld. The document says how many are withheld before the contents table.
+
 Two caveats worth stating back to the user:
 
 1. **Control values are defaults, not live data.** Values are shown only for controls the overlay defines. Controls belonging to a connected service are described by type and label but carry no value, because those hold live account data (a real donor's name, actual revenue).

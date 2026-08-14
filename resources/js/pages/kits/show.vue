@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { PencilIcon, BookCopy, Package, Globe, Lock, ArrowLeft, Trash2Icon, Layers, Zap } from '@lucide/vue';
+import { PencilIcon, BookCopy, Package, Globe, Lock, ArrowLeft, Trash2Icon, Layers, Zap, FileText } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +35,9 @@ interface Props {
   kit: Kit;
   canEdit: boolean;
   canFork: boolean;
+  // Null for a private kit: the markdown route is gated on is_public, so there
+  // would be nothing at the other end of the link.
+  markdownUrl: string | null;
   auth?: {
     user?: {
       id: number;
@@ -43,6 +46,20 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const copiedMarkdown = ref(false);
+let markdownCopyTimer: ReturnType<typeof setTimeout> | null = null;
+
+function copyMarkdownUrl() {
+  if (!props.markdownUrl) return;
+  navigator.clipboard.writeText(props.markdownUrl).then(() => {
+    copiedMarkdown.value = true;
+    if (markdownCopyTimer) clearTimeout(markdownCopyTimer);
+    markdownCopyTimer = setTimeout(() => {
+      copiedMarkdown.value = false;
+    }, 1500);
+  });
+}
 
 const handleFork = async () => {
   if (await confirm({ message: 'Copy this kit to your account? This will also copy all templates within the kit.', confirmLabel: 'Copy', tone: 'neutral' })) {
@@ -227,6 +244,30 @@ const breadcrumbs: BreadcrumbItem[] = [
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!--
+        Machine-readable twin. Only present for a public kit, because that is
+        the only case where the link resolves for whoever it gets sent to - the
+        markdown route is gated on is_public and has no session to check.
+      -->
+      <div
+        v-if="markdownUrl"
+        class="mb-8 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-sidebar bg-card p-4 lg:max-w-[55%]"
+      >
+        <FileText class="h-4 w-4 shrink-0 text-primary" />
+        <p class="text-sm text-foreground">
+          Give this URL to an LLM and it gets the whole kit: every overlay's source, controls and
+          integrations in one document.
+        </p>
+        <div class="ml-auto flex items-center gap-2">
+          <a :href="markdownUrl" target="_blank" rel="noopener" class="btn btn-chill btn-xs cursor-pointer">
+            View .md
+          </a>
+          <button type="button" class="btn btn-chill btn-xs cursor-pointer" @click="copyMarkdownUrl">
+            {{ copiedMarkdown ? 'Copied!' : 'Copy URL' }}
+          </button>
         </div>
       </div>
 

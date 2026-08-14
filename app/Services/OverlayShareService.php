@@ -391,14 +391,30 @@ class OverlayShareService
 
         $out = $this->frontMatter($template, $url, $owner);
         $out .= $this->intro($template, $doc, $owner);
-        $out .= $this->sourceSection($template);
-        $out .= $this->controlsSection($doc['controls']);
-        $out .= $this->requirementsSection($doc['services'], $doc['lists']);
-        $out .= $this->alertSection($doc['alert']);
-        $out .= $this->dataTagsSection($doc['dataTags']);
+        $out .= $this->body($template, $doc, '##');
         $out .= $this->copySection($template, $url);
 
         return $out;
+    }
+
+    /**
+     * The sections describing one overlay, at a caller-chosen heading depth.
+     *
+     * Split out so a kit document can nest whole overlays underneath its own
+     * headings. The depth is threaded through as a parameter rather than
+     * post-processed with a regex: template CSS is full of lines that start
+     * with `#`, and shifting headings by pattern would rewrite an id selector
+     * inside a fenced code block into a heading.
+     *
+     * @param  array<string,mixed>  $doc  Result of document().
+     */
+    public function body(OverlayTemplate $template, array $doc, string $h): string
+    {
+        return $this->sourceSection($template, $h)
+            .$this->controlsSection($doc['controls'], $h)
+            .$this->requirementsSection($doc['services'], $doc['lists'], $h)
+            .$this->alertSection($doc['alert'], $h)
+            .$this->dataTagsSection($doc['dataTags'], $h);
     }
 
     private function frontMatter(OverlayTemplate $template, string $url, string $owner): string
@@ -423,8 +439,11 @@ class OverlayShareService
     /**
      * Quote anything YAML would misread. Overlay names are free text, so a
      * name containing a colon would otherwise produce an invalid mapping.
+     *
+     * Public because KitShareService writes front matter of its own and a
+     * duplicated escaping helper is how the two end up disagreeing.
      */
-    private function yamlScalar(string $value): string
+    public function yamlScalar(string $value): string
     {
         if ($value === '' || preg_match('/[:#\'"\[\]{}&*?|<>=!%@`,\n]/', $value)) {
             return '"'.str_replace(['\\', '"'], ['\\\\', '\"'], $value).'"';
@@ -470,9 +489,9 @@ class OverlayShareService
         return $out;
     }
 
-    private function sourceSection(OverlayTemplate $template): string
+    private function sourceSection(OverlayTemplate $template, string $h): string
     {
-        $out = "## Source\n\n";
+        $out = $h." Source\n\n";
         $out .= "The three fields below are the entire overlay. Nothing else is rendered.\n\n";
 
         foreach ([
@@ -482,7 +501,7 @@ class OverlayShareService
         ] as $field => [$lang, $note]) {
             $content = trim((string) $template->{$field});
 
-            $out .= "### `$field`\n\n";
+            $out .= $h."# `$field`\n\n";
 
             if ($content === '') {
                 $out .= "Empty.\n\n";
@@ -510,9 +529,9 @@ class OverlayShareService
         return $fence.$language."\n".$content."\n".$fence."\n";
     }
 
-    private function controlsSection(array $controls): string
+    private function controlsSection(array $controls, string $h): string
     {
-        $out = "## Controls\n\n";
+        $out = $h." Controls\n\n";
 
         if ($controls === []) {
             $out .= "This overlay defines no controls of its own.\n\n";
@@ -549,7 +568,7 @@ class OverlayShareService
         );
 
         if ($detailed !== []) {
-            $out .= "### Control detail\n\n";
+            $out .= $h."# Control detail\n\n";
 
             foreach ($detailed as $control) {
                 $out .= '- `'.$control['tag'].'`';
@@ -605,13 +624,13 @@ class OverlayShareService
         return $config;
     }
 
-    private function requirementsSection(array $services, array $lists): string
+    private function requirementsSection(array $services, array $lists, string $h): string
     {
         if ($services === [] && $lists === []) {
             return '';
         }
 
-        $out = "## Requirements\n\n";
+        $out = $h." Requirements\n\n";
 
         if ($services !== []) {
             $names = implode(', ', array_column($services, 'label'));
@@ -621,7 +640,7 @@ class OverlayShareService
                 ."account-wide rather than per-overlay.\n\n";
 
             foreach ($services as $service) {
-                $out .= '### '.$service['label']."\n\n";
+                $out .= $h.'# '.$service['label']."\n\n";
                 $out .= "| Tag | Type | Control |\n|---|---|---|\n";
 
                 foreach ($service['controls'] as $control) {
@@ -639,7 +658,7 @@ class OverlayShareService
         }
 
         if ($lists !== []) {
-            $out .= "### Lists\n\n";
+            $out .= $h."# Lists\n\n";
             $out .= 'This overlay reads '.count($lists).' List(s). Lists hold their own data and are not '
                 ."copied with an overlay - create one with a matching slug under /dashboard/lists.\n\n";
 
@@ -653,13 +672,13 @@ class OverlayShareService
         return $out;
     }
 
-    private function alertSection(?array $alert): string
+    private function alertSection(?array $alert, string $h): string
     {
         if ($alert === null) {
             return '';
         }
 
-        $out = "## Alert behaviour\n\n";
+        $out = $h." Alert behaviour\n\n";
 
         $configured = false;
 
@@ -687,7 +706,7 @@ class OverlayShareService
         $out .= "\n";
 
         if ($alert['triggers'] !== []) {
-            $out .= "### How the author wired it\n\n";
+            $out .= $h."# How the author wired it\n\n";
             $out .= "Triggers belong to the author's account and are **not** copied - you bind your own after "
                 ."copying. They are listed because they are the clearest explanation of what the markup expects.\n\n";
             $out .= "| Fires on | Condition | Duration |\n|---|---|---|\n";
@@ -708,13 +727,13 @@ class OverlayShareService
         return $out;
     }
 
-    private function dataTagsSection(array $tags): string
+    private function dataTagsSection(array $tags, string $h): string
     {
         if ($tags === []) {
             return '';
         }
 
-        $out = "## Live data tags used\n\n";
+        $out = $h." Live data tags used\n\n";
         $out .= 'Beyond its controls, this overlay reads '.count($tags).' data tag(s). These resolve against '
             .'Twitch channel data and, for alerts, the firing event. A tag with no data renders as nothing '
             ."unless it carries a `?? default`.\n\n";
