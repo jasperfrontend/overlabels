@@ -13,7 +13,7 @@ use Symfony\Component\Process\Process;
 use Throwable;
 
 /**
- * Nightly Postgres dump, shipped to Cloudflare R2 and Scaleway Object Storage.
+ * Daily Postgres dump, shipped to Cloudflare R2 and Scaleway Object Storage.
  *
  * Runs in the scheduler role, which already has DB_HOST/DB_PASSWORD injected
  * and can reach the `overlabels-postgres` accessory over the Kamal network, so

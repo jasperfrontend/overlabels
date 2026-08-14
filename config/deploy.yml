@@ -208,7 +208,7 @@ env:
     ELEVENLABS_VOICE_ID: AYQJi30bKdh5rHiPdUGX
     ELEVENLABS_MODEL_ID: eleven_flash_v2_5
 
-    # Cloudflare R2 target for the nightly `backup:database` dump. Neither of
+    # Cloudflare R2 target for the daily `backup:database` dump. Neither of
     # these is a credential; the account id and keys are secrets below. The
     # jurisdiction MUST stay `eu` - it is what keeps the objects in the EU and
     # it is also part of the endpoint hostname, so changing it here silently
@@ -216,7 +216,7 @@ env:
     R2_BUCKET: overlabels-backups
     R2_JURISDICTION: eu
 
-    # Scaleway Object Storage, the second copy of the same nightly dump. Neither
+    # Scaleway Object Storage, the second copy of the same daily dump. Neither
     # of these is a credential; the keys are secrets below. The region is part
     # of the endpoint hostname, so pointing this at a region the bucket is not
     # in fails as a 404 NotFound - which reads as "the bucket is gone" rather
@@ -264,20 +264,20 @@ env:
 
     - ELEVENLABS_API_KEY
 
-    # R2 credentials for the nightly database backup, plus the Discord webhook
+    # R2 credentials for the daily database backup, plus the Discord webhook
     # the backup shouts at when it fails. Scoped to Object Read & Write on the
     # overlabels-backups bucket only.
     - R2_ACCESS_KEY_ID
     - R2_SECRET_ACCESS_KEY
     - R2_ACCOUNT_ID
-    # Scaleway credentials for the second copy of the nightly backup. Only the
+    # Scaleway credentials for the second copy of the daily backup. Only the
     # access key and secret are needed - Scaleway's S3-compatible API resolves
     # the project from the key, so SCW_DEFAULT_ORGANIZATION_ID and
     # SCW_DEFAULT_PROJECT_ID are deliberately not deployed.
     - SCW_ACCESS_KEY
     - SCW_SECRET_KEY
     - BACKUP_ALERT_WEBHOOK_URL
-    # Healthchecks.io dead-man's switch for the nightly backup. A capability
+    # Healthchecks.io dead-man's switch for the daily backup. A capability
     # URL - anyone holding it can fake a successful ping - so it lives here
     # rather than in env.clear.
     - HC_PING_URL

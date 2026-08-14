@@ -55,7 +55,7 @@ FROM dunglas/frankenphp:1-php8.4 AS runtime
 # install-php-extensions handles compilation, deps, and config in one shot
 ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
-# postgresql-client-16 supplies pg_dump for the nightly `backup:database` job
+# postgresql-client-16 supplies pg_dump for the daily `backup:database` job
 # (scheduler role). pg_dump refuses to run against a server newer than itself,
 # and prod is Postgres 16.13.
 #

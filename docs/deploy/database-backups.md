@@ -1,13 +1,13 @@
 # Database backups and restore
 
-Nightly Postgres dump from the Linode box to **two** providers - Cloudflare R2
+Daily Postgres dump from the Linode box to **two** providers - Cloudflare R2
 and Scaleway Object Storage - plus the part that actually matters: how to get
 the data back.
 
 ## What runs
 
-`php artisan backup:database` runs at **03:00 UTC** (05:00 Amsterdam) in the
-scheduler container. It:
+`php artisan backup:database` runs at **16:00 UTC** (18:00 Amsterdam, 17:00 in
+winter) in the scheduler container. It:
 
 1. runs `pg_dump --format=plain --compress=9 --no-owner --no-privileges`
 2. refuses anything under 10 KB as an implausible dump
@@ -25,6 +25,35 @@ rule (see below), which is one less thing that can have a bug and delete the
 wrong object. The two rules are configured independently in two dashboards -
 nothing keeps them in sync, so changing the retention window means changing it
 in both places.
+
+## Why 16:00
+
+Because someone has to be awake to read the alarm.
+
+This ran at 03:00 UTC until 2026-08-14, picked for the reason everyone picks
+03:00: backups go at night, when the box is quiet. That logic does not apply
+here.
+
+- **There is no load window to hide in.** The dump is about 1.5 MB and takes
+  roughly two seconds. It was never competing with traffic, so avoiding peak
+  hours bought nothing.
+- **There is no globally quiet hour.** The users are streamers spread across
+  every timezone. 03:00 in Amsterdam is mid-afternoon in Sydney and late evening
+  in New York. Picking a local small hour optimises for a "quiet" that only
+  exists in one place.
+- **It reliably timed the alert to arrive while nobody could act on it.** The
+  Discord shout and the Healthchecks alert both fire within half an hour of the
+  run. At 03:00 that means a phone buzzing at 03:30 next to a sleeping solo
+  operator, who then either wakes up and works at 03:30, or sleeps through it
+  and finds out hours later. Both outcomes are worse than the failure itself.
+
+16:00 UTC puts a failure alert at about 16:30 UTC, which is early evening in
+Amsterdam: awake, fed, near a laptop. The cost of moving is that a dump taken at
+16:00 is up to 24 hours stale in the worst case, exactly as it was at 03:00 -
+the window size did not change, only its position.
+
+Nothing at R2 or Scaleway depends on the time of day. Both retention rules are
+lifecycle policies measured in days, so they are unaffected by this.
 
 ## Why two providers
 
@@ -253,7 +282,7 @@ php artisan tinker --execute="echo App\Models\User::count().' users, '.App\Model
 ## Verifying the backup itself
 
 The first scheduled run is the real test, and a failure shouts to Discord. If
-you would rather not wait until 03:00 UTC, SSH to the box yourself and trigger
+you would rather not wait until 16:00 UTC, SSH to the box yourself and trigger
 one:
 
 ```bash
@@ -301,7 +330,7 @@ being one.
 
 Worth redoing after any change to the dump flags, the pinned client major, or
 either object-storage disk config. Those are the things that can break a restore
-while leaving the nightly run looking perfectly healthy.
+while leaving the daily run looking perfectly healthy.
 
 ## Scaleway leg added (2026-08-10)
 
@@ -357,18 +386,27 @@ at all.
 
 ### Check configuration
 
-- **Period: 1 day.** The backup is daily at 03:00 UTC.
+- **Period: 1 day.** The backup is daily at 16:00 UTC.
 - **Grace: 30 minutes.** The dump itself takes about two seconds. Thirty minutes
-  absorbs a slow night or a deploy that overlaps 03:00, without being so loose
+  absorbs a slow run or a deploy that overlaps 16:00, without being so loose
   that a dead scheduler goes unnoticed for a whole day.
 
-An alert therefore fires at about **03:30 UTC** on the first night the backup
-does not run.
+An alert therefore fires at about **16:30 UTC** on the first day the backup
+does not run - early evening in Amsterdam, which is the entire point of the
+16:00 slot. See "Why 16:00" above.
+
+> **Moving the schedule again?** Healthchecks measures the gap between pings,
+> not the wall-clock time, so a one-off move creates a gap longer than the
+> period and trips a false alert. Moving the run later in the day by N hours
+> makes the first interval 24 + N hours. Widen Grace past N for that one cycle,
+> then put it back. Note that a manual `php artisan backup:database` does *not*
+> help here: the pings are attached to the schedule, not the command,
+> deliberately (see above), so a hand-run backup never touches the switch.
 
 ## Known gaps
 
 - **The restore is not automated.** The test suite verifies a dump is real gzip
-  containing real SQL, and the nightly run exercises the write path to both
+  containing real SQL, and the daily run exercises the write path to both
   providers every night. The *read* and the restore itself only happen when
   someone does them by hand, as above. Nothing detects a dump that uploads fine
   and will not restore.
