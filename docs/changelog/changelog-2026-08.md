@@ -2,6 +2,19 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 15th, 2026 - fix(bot): a chat reply that missed its moment is dropped, not posted late
+
+If the bot was offline for six hours, every message queued in that time went out the instant it came back. A `!wins` answer, a sub thank-you and a gamejam round result, all landing at once, all replying to conversations that ended hours ago. Chat replies are the most perishable thing in the app: outside a window of seconds they are not just worthless, they are actively worse than silence, because a bot answering a question nobody remembers asking reads as broken.
+
+The claim path now drops anything older than 60 seconds instead of delivering it.
+
+- **The cutoff has to live at claim time, not in the prune.** A daily sweep cannot help: the bot reconnects and claims its backlog long before the sweep next runs. `BotOutboxController` is the moment of decision, so that is where the decision belongs.
+- **60 seconds is 30x the 2 second poll** (and the push usually delivers inside a second), so ordinary jitter can never trip it. It is also long enough to survive a container swap - a deploy should not silently eat replies queued while the bot restarts, and there is a test pinning exactly that.
+- **Dropped rows are marked, not deleted.** `discarded_at` makes "did the bot eat my message" answerable for as long as the prune keeps the row, and makes a run of discards legible as what it is: the bot flapping. Deleting them would have been simpler and would have thrown away the only signal that this is happening at all. The count and the age of the oldest are logged on every discard.
+- **Fresh and stale are split inside one transaction over one locked row set**, so a message can never be both delivered and discarded, and nothing is left pending for the next poll to find.
+- **The prune got simpler, not more complex.** It now sweeps on `created_at` regardless of state. Unsent rows used to be exempt because an unclaimed row was still owed to a channel - that stopped being true the moment the claim path started discarding stale ones, so the exemption became dead weight.
+- **Four tests were verified to fail** with the cutoff disabled, including the one that matters: six hours of backlog, claimed, and nothing handed to the bot.
+
 ## August 15th, 2026 - feat(bot): chat replies go out on a push, and the outbox stops growing forever
 
 Two things, both downstream of getting Reverb actually working this morning.

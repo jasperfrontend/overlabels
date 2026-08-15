@@ -9,6 +9,7 @@ use App\Services\TwitchApiService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Testing\TestResponse;
 
 uses(DatabaseTransactions::class);
 
@@ -23,6 +24,9 @@ beforeEach(function () {
         }
     };
     app()->instance(TwitchApiService::class, $stub);
+
+    // Matches BotInternalApiTest: the claim endpoint authenticates on this.
+    config(['services.twitchbot.listener_secret' => 'test-bot-secret']);
 });
 
 function outboxUser(): User
@@ -110,25 +114,124 @@ it('carries no payload, so chat text never rides a public channel', function () 
 // Prune: the outbox is a queue, and it was growing without bound.
 // ──────────────────────────────────────────────────────────────────────────────
 
-it('prunes delivered messages older than 7 days and keeps the rest', function () {
+it('prunes everything older than 7 days and keeps the rest', function () {
     $user = outboxUser();
 
-    $old = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'ancient']);
-    $old->forceFill(['sent_at' => now()->subDays(8)])->save();
+    $delivered = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'ancient']);
+    $delivered->forceFill(['created_at' => now()->subDays(8), 'sent_at' => now()->subDays(8)])->save();
+
+    $discarded = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'dropped']);
+    $discarded->forceFill(['created_at' => now()->subDays(9), 'discarded_at' => now()->subDays(9)])->save();
+
+    // Unsent rows are swept too now. They used to be exempt as "still owed",
+    // but the claim path discards anything stale, so a 30-day-old row is never
+    // going out and keeping it only grows the table.
+    $ancientUnsent = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'never claimed']);
+    $ancientUnsent->forceFill(['created_at' => now()->subDays(30)])->save();
 
     $recent = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'recent']);
-    $recent->forceFill(['sent_at' => now()->subDays(2)])->save();
-
-    // Never claimed by the bot. Still owed to the channel, whatever its age -
-    // deleting it would silently drop a message the bot was going to post.
-    $unsent = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'still owed']);
-    $unsent->forceFill(['created_at' => now()->subDays(30)])->save();
+    $recent->forceFill(['created_at' => now()->subDays(2), 'sent_at' => now()->subDays(2)])->save();
 
     $this->artisan('schedule:test', ['--name' => 'prune:bot-chat-outbox'])->assertSuccessful();
 
-    expect(BotChatOutbox::find($old->id))->toBeNull()
-        ->and(BotChatOutbox::find($recent->id))->not->toBeNull()
-        ->and(BotChatOutbox::find($unsent->id))->not->toBeNull();
+    expect(BotChatOutbox::find($delivered->id))->toBeNull()
+        ->and(BotChatOutbox::find($discarded->id))->toBeNull()
+        ->and(BotChatOutbox::find($ancientUnsent->id))->toBeNull()
+        ->and(BotChatOutbox::find($recent->id))->not->toBeNull();
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Staleness. A chat reply is worthless once the conversation has moved on, and
+// posting a backlog on reconnect is worse than staying quiet.
+// ──────────────────────────────────────────────────────────────────────────────
+
+function claimOutbox(): TestResponse
+{
+    return test()->getJson('/api/internal/bot/outbox', ['X-Internal-Secret' => 'test-bot-secret']);
+}
+
+it('hands out a fresh message and marks it sent', function () {
+    $user = outboxUser();
+    $row = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'won 1 times']);
+
+    $response = claimOutbox()->assertOk();
+
+    expect($response->json('messages'))->toHaveCount(1)
+        ->and($response->json('messages.0.message'))->toBe('won 1 times')
+        ->and($row->fresh()->sent_at)->not->toBeNull()
+        ->and($row->fresh()->discarded_at)->toBeNull();
+});
+
+it('drops a message queued while the bot was down instead of posting it late', function () {
+    $user = outboxUser();
+
+    // The scenario: bot offline for hours, comes back, claims. Before this,
+    // every one of these went out at once into a chat that had moved on.
+    $stale = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'won 1 times']);
+    $stale->forceFill(['created_at' => now()->subHours(6)])->save();
+
+    $response = claimOutbox()->assertOk();
+
+    expect($response->json('messages'))->toBeEmpty()
+        ->and($stale->fresh()->discarded_at)->not->toBeNull()
+        ->and($stale->fresh()->sent_at)->toBeNull();
+});
+
+it('delivers the fresh messages and drops the stale ones in the same claim', function () {
+    $user = outboxUser();
+
+    $stale = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'ancient reply']);
+    $stale->forceFill(['created_at' => now()->subHours(2)])->save();
+    $fresh = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'current reply']);
+
+    $response = claimOutbox()->assertOk();
+
+    expect($response->json('messages'))->toHaveCount(1)
+        ->and($response->json('messages.0.message'))->toBe('current reply')
+        ->and($fresh->fresh()->sent_at)->not->toBeNull()
+        ->and($stale->fresh()->discarded_at)->not->toBeNull();
+});
+
+it('never hands out a discarded message on a later claim', function () {
+    $user = outboxUser();
+    $stale = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'ancient reply']);
+    $stale->forceFill(['created_at' => now()->subHours(6)])->save();
+
+    claimOutbox()->assertOk();
+    // A second poll two seconds later must not resurrect it.
+    claimOutbox()->assertOk()->assertJsonPath('messages', []);
+
+    expect($stale->fresh()->sent_at)->toBeNull();
+});
+
+it('keeps a message queued during a bot restart', function () {
+    $user = outboxUser();
+
+    // The reason the cutoff is a minute rather than a few seconds: a container
+    // swap should not silently eat replies queued while it happens.
+    $row = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'won 1 times']);
+    $row->forceFill(['created_at' => now()->subSeconds(20)])->save();
+
+    expect(claimOutbox()->assertOk()->json('messages'))->toHaveCount(1)
+        ->and($row->fresh()->discarded_at)->toBeNull();
+});
+
+it('splits exactly on the configured cutoff', function () {
+    $user = outboxUser();
+    $cutoff = BotChatOutbox::STALE_AFTER_SECONDS;
+
+    $justInside = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'inside']);
+    $justInside->forceFill(['created_at' => now()->subSeconds($cutoff - 5)])->save();
+
+    $justOutside = BotChatOutbox::create(['user_id' => $user->id, 'message' => 'outside']);
+    $justOutside->forceFill(['created_at' => now()->subSeconds($cutoff + 5)])->save();
+
+    claimOutbox()->assertOk();
+
+    expect($justInside->fresh()->sent_at)->not->toBeNull()
+        ->and($justInside->fresh()->discarded_at)->toBeNull()
+        ->and($justOutside->fresh()->discarded_at)->not->toBeNull()
+        ->and($justOutside->fresh()->sent_at)->toBeNull();
 });
 
 it('registers the prune on the schedule', function () {
