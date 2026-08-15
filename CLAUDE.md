@@ -21,10 +21,16 @@ php artisan queue:work   # Queue worker
 ### Testing & Quality
 ```bash
 php artisan test         # PHP tests (Pest framework)
+npm test                 # Frontend unit tests (Vitest, run once)
+npm run test:watch       # Vitest in watch mode
+npm run typecheck        # vue-tsc --noEmit
 npm run lint             # ESLint with auto-fix
 npm run format           # Prettier formatting
 php artisan pint         # PHP code style fixes
 ```
+
+CI runs the check-mode variants (`pint --test`, `format:check`, `lint:check`) plus `npm test`,
+`npm run typecheck` and `pest`. All of them must pass before a PR merges.
 
 ### Build & Deploy
 ```bash
@@ -69,6 +75,13 @@ Critical variables:
 - Template operations require authentication through Inertia
 
 **Testing**: Feature tests in `/tests/Feature/`, unit tests in `/tests/Unit/`. Pest framework with Laravel-specific helpers. Tests use `RefreshDatabase`.
+
+Frontend unit tests are Vitest, co-located as `resources/js/**/*.test.ts`, configured in
+`vitest.config.mts` (deliberately separate from `vite.config.mts`, which loads the Vue/Tailwind
+plugins and shells out to `git rev-parse` at module scope). Scope is the pure TypeScript Pest cannot
+reach - the DSL, tag parser, two-pass template renderer, formatters. `environment: 'node'`, no jsdom:
+component testing would mean adding both and is an open decision, not an oversight. Added Aug 2026
+alongside the foreach tag-injection fix (PR #230), which had no automated coverage to catch it.
 
 ### Key Architecture Notes
 
