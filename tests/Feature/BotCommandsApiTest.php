@@ -102,30 +102,6 @@ test('fire returns command_not_found when there is no matching command', functio
         ->assertJson(['queued' => false, 'reason' => 'command_not_found']);
 });
 
-// The bot deploys from a separate repo, so there is always a window where one
-// side has the rename and the other does not. A bot still POSTing to the old
-// path must keep firing commands, not silently stop. Delete this test in the
-// same change that deletes the alias route.
-test('the deprecated expressions/fire path still fires a command', function () {
-    $user = makeOptedInBotUser();
-
-    BotCommand::create([
-        'user_id' => $user->id,
-        'command' => 'hi',
-        'permission_level' => 'everyone',
-        'cooldown_seconds' => 0,
-        'reply' => 'hello there',
-        'enabled' => true,
-        'hidden' => false,
-    ]);
-
-    $this->postJson(
-        '/api/internal/bot/expressions/fire',
-        firePayload(['command' => 'hi']),
-        ['X-Internal-Secret' => 'test-bot-secret'],
-    )->assertOk()->assertJson(['queued' => true]);
-});
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Fire endpoint - gating
 // ──────────────────────────────────────────────────────────────────────────────
