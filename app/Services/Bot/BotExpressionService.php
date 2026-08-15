@@ -18,11 +18,11 @@ use Illuminate\Support\Carbon;
  * Both are intentionally thin. Resolution is delegated to BotExpressionResolver
  * so it can be reused (and tested) in isolation by the builder UI's preview.
  */
-class BotExpressionService
+readonly class BotExpressionService
 {
     public function __construct(
-        private readonly BotExpressionResolver $resolver,
-        private readonly BotCounterService $counters,
+        private BotExpressionResolver $resolver,
+        private BotCounterService     $counters,
     ) {}
 
     /**
