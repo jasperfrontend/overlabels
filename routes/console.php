@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\VerifyStreamState;
+use App\Models\BotChatOutbox;
 use App\Models\CloudinaryUpload;
 use App\Models\ExternalEvent;
 use App\Models\ListSnapshot;
@@ -188,6 +189,20 @@ Schedule::call(fn () => TwitchEvent::where('created_at', '<', now()->subDays(90)
 
 Schedule::call(fn () => ExternalEvent::where('created_at', '<', now()->subDays(90))->delete())
     ->weekly()->name('prune:external-events')->withoutOverlapping();
+
+// Auto-prune delivered chat messages after 7 days. bot_chat_outbox is a queue,
+// not a log: once the bot has claimed a row and posted it, the row's only
+// remaining value is answering "why did the bot say that" for a few days.
+// Nothing else reads it, and it was growing without bound.
+//
+// Only rows the bot has actually taken (sent_at set) are swept. An unsent row
+// is still owed to a channel - BotOutboxController hands those out on the next
+// claim - so deleting one would silently drop a message the bot was going to
+// post. See the note in that controller about why nothing here retries.
+Schedule::call(fn () => BotChatOutbox::whereNotNull('sent_at')
+    ->where('sent_at', '<', now()->subDays(7))
+    ->delete()
+)->daily()->name('prune:bot-chat-outbox')->withoutOverlapping();
 
 // Auto-prune handled overlay reports after 180 days. Only reports an admin has
 // actually marked as read are swept, so nothing disappears out of the queue

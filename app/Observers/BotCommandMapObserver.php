@@ -2,7 +2,7 @@
 
 namespace App\Observers;
 
-use App\Services\Bot\BotCommandMapAnnouncer;
+use App\Services\Bot\BotPushAnnouncer;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 class BotCommandMapObserver
 {
     public function __construct(
-        private readonly BotCommandMapAnnouncer $announcer,
+        private readonly BotPushAnnouncer $announcer,
     ) {}
 
     public function saved(Model $model): void
@@ -40,6 +40,6 @@ class BotCommandMapObserver
      */
     private function announce(Model $model): void
     {
-        $this->announcer->announce($model->user);
+        $this->announcer->commandMapChanged($model->user);
     }
 }
