@@ -500,7 +500,7 @@ class TwitchEventSubController extends Controller
             // event references (acting user, broadcaster, raid source, hype
             // train top_contributions[] and last_contribution, ...). Single
             // batched lookup, memoised per user id, then mutates $event so
-            // DB persist, alert render, raw broadcast, and tts expression
+            // DB persist, alert render, raw broadcast, and tts message
             // all see the same `<prefix>_avatar` keys.
             $enrichmentToken = $user?->access_token ?: $this->eventSubService->getAppAccessToken();
             if ($enrichmentToken) {

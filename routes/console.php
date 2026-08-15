@@ -271,7 +271,7 @@ Schedule::command('lists:sweep-expired')
     ->withoutOverlapping()
     ->name('lists:sweep-expired');
 
-// Self-destruct sweep for temporary Bot Commands. Deletes expressions
+// Self-destruct sweep for temporary Bot Commands. Deletes commands
 // whose destroy_at timer (set via `!ol cmd options <name> destroy <hours>`)
 // has elapsed, plus any aliases that forward to them. DB-backed so timers
 // survive restarts; idempotent.

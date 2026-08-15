@@ -53,26 +53,26 @@ class AlertMessageRenderer
      * @param  array<string,mixed>  $templateData  Flat dot-keyed map already
      *                                             built for the alert payload.
      */
-    public function render(User $user, ?string $expression, array $templateData): ?string
+    public function render(User $user, ?string $message, array $templateData): ?string
     {
         if ($this->isGatedOff($user)) {
             return null;
         }
 
-        return $this->resolve($user, $expression, $templateData);
+        return $this->resolve($user, $message, $templateData);
     }
 
     /**
-     * Render an expression for posting to chat via BotChatOutbox. Identical tag
+     * Render a message for posting to chat via BotChatOutbox. Identical tag
      * resolution to render(), but WITHOUT the `tts` mute gate - bot chat
      * messages are gated only by the user's `bot_enabled` flag, checked at the
      * dispatch site. The 500-char cap doubles as a fit for Twitch's chat limit.
      *
      * @param  array<string,mixed>  $templateData
      */
-    public function renderMessage(User $user, ?string $expression, array $templateData): ?string
+    public function renderMessage(User $user, ?string $message, array $templateData): ?string
     {
-        return $this->resolve($user, $expression, $templateData);
+        return $this->resolve($user, $message, $templateData);
     }
 
     /**
@@ -80,9 +80,9 @@ class AlertMessageRenderer
      *
      * @param  array<string,mixed>  $templateData
      */
-    private function resolve(User $user, ?string $expression, array $templateData): ?string
+    private function resolve(User $user, ?string $message, array $templateData): ?string
     {
-        if ($expression === null || trim($expression) === '') {
+        if ($message === null || trim($message) === '') {
             return null;
         }
 
@@ -108,7 +108,7 @@ class AlertMessageRenderer
 
                 return $value;
             },
-            $expression
+            $message
         );
 
         if (mb_strlen($resolved) > self::MAX_RESOLVED_LENGTH) {

@@ -28,7 +28,7 @@ class TwitchApiService
     /**
      * Per-type cache TTLs in seconds. Volatile reads (latest follower, subs,
      * goal progress) get short windows so cold consumers - notably Bot
-     * Expressions, which read the cache without the overlay's live EventSub
+     * Commands, which read the cache without the overlay's live EventSub
      * patching - see current data. Near-static reads (profile, follow list)
      * keep longer windows. Replaces the old blanket 365-day TTL that let a
      * single failed fetch poison a key for a year.
