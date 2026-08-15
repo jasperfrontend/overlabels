@@ -2,6 +2,23 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 15th, 2026 - fix(templates): a tag typed in chat could resolve inside a foreach
+
+Overlay data is not trustworthy, and the rule that keeps that survivable is old and well documented: a value the renderer substitutes is data, and is never re-read as template source. `tagParser.ts` has carried that note since day one, calling out donor names and chat messages containing `[[[c:foo]]]` as exactly the thing it exists to stop.
+
+It held for the pass it was written about, and not for the boundary between two passes. `renderTemplateSource` resolves conditional and foreach blocks first, substituting each loop item's values into the loop body, and then runs the single tag-substitution pass over the whole result. Anything a foreach wrote in the first step was, by the second step, indistinguishable from something the author had typed.
+
+So `!enter [[[c:kofi:total_received]]]` in chat, in any channel whose overlay iterates a chat-writable list, put a live tag into the template. `ListAppendService` stores chatter text verbatim, and `encodeHtml` escapes `& < > " '` but has no reason to touch `[`.
+
+The reach was worse than "a template leaks a tag it already uses". `OverlayTemplateController` allowlists the Twitch data and then merges controls and lists in wholesale, so the payload sitting in the renderer holds every control on the account: all five donation services' running totals, the latest donor name, amount and message, every private counter, and the contents of every list. None of it needs to be mentioned in the template to be readable.
+
+- **The fix already existed twenty lines up.** `[[[raw]]]` has always entity-escaped its brackets, with a comment explaining that a stray `[[[...]]]` in the data must not re-enter the outer pass. That is the same defusing, applied to the same pass, for the same reason. It just was not on the value path. It is now a named helper both branches call.
+- **Defusing is unconditional, not "only when the value already looks like a tag."** One attacker usually controls several fields of the same item, and `[` in one plus `[[c:x]]]` in the next concatenates into a live tag while neither half looks dangerous alone. There is a test for exactly that split.
+- **Entities, not stripping, so nothing is silently eaten.** A browser renders `&#91;` as `[`, so `[AFK] brb` still reads as `[AFK] brb`. The CSS sink gets the same treatment, because it runs the same two passes with only the HTML encoding turned off, and an inert entity in a stylesheet beats a resolved tag.
+- **This was disclosure, not script execution.** HTML escaping was never the thing that failed, and a test pins that it still is not.
+- **The server render path was never affected.** PHP's `extractForeachTags` expands a loop only to discover which data keys to ship; it never substitutes. This was the browser's half of the pipeline alone.
+- **Vitest is here now, and this is why.** Pest cannot reach any of it. The template pipeline is pure TypeScript, it is what decides what a stranger's string is allowed to do inside an overlay, and it had no automated coverage at all. Eleven tests, six of which were watched failing before the fix went in, and a step in `tests.yml` next to typecheck so they run on every PR. Scope is deliberately the pure logic - the DSL, the tag parser, the renderer - which is why there is no jsdom and no component test.
+
 ## August 15th, 2026 - fix(bot): a chat reply that missed its moment is dropped, not posted late
 
 If the bot was offline for six hours, every message queued in that time went out the instant it came back. A `!wins` answer, a sub thank-you and a gamejam round result, all landing at once, all replying to conversations that ended hours ago. Chat replies are the most perishable thing in the app: outside a window of seconds they are not just worthless, they are actively worse than silence, because a bot answering a question nobody remembers asking reads as broken.
