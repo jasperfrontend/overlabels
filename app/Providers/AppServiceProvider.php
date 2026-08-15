@@ -6,15 +6,17 @@ use App\Broadcasting\MeteredBroadcaster;
 use App\Events\UserRegistered;
 use App\Listeners\OnboardNewUserListener;
 use App\Models\BotAlias;
+use App\Models\BotChatOutbox;
 use App\Models\BotCommand;
 use App\Models\BotExpression;
 use App\Models\ListAppender;
 use App\Models\ListMetaCommand;
 use App\Models\RecipeChatTrigger;
 use App\Models\User;
+use App\Observers\BotChatOutboxObserver;
 use App\Observers\BotCommandMapObserver;
 use App\Observers\UserObserver;
-use App\Services\Bot\BotCommandMapAnnouncer;
+use App\Services\Bot\BotPushAnnouncer;
 use App\Services\Bot\RateLimitLog as BotRateLimitLog;
 use App\Services\BroadcastMeter;
 use App\Services\DefaultTemplateProviderService;
@@ -58,17 +60,18 @@ class AppServiceProvider extends ServiceProvider
         // Same per-request singleton treatment for the inbound-event meter.
         $this->app->singleton(EventMeter::class);
 
-        // One announcer per request so its "already told the bot about this
-        // login" list covers the whole request. Opting into the bot seeds
-        // seventeen BotCommand rows in a loop; without the shared instance
-        // that is seventeen synchronous broadcasts for one click.
+        // One announcer per request so its "already nudged the bot about this"
+        // bag covers the whole request. Opting into the bot seeds seventeen
+        // BotCommand rows in a loop and one gamejam round writes several
+        // outbox messages; without the shared instance each row would be its
+        // own synchronous broadcast.
         //
         // scoped(), NOT singleton(): a queue worker boots the container once
         // and keeps plain singletons for the life of the process, so the
         // dedupe list would never empty and every job after the first would
         // silently skip announcing. Scoped instances are forgotten between
         // jobs, which is exactly the lifetime this wants.
-        $this->app->scoped(BotCommandMapAnnouncer::class);
+        $this->app->scoped(BotPushAnnouncer::class);
 
         // Register Telescope only in local development
         // Use class_exists() to avoid autoload failure when Telescope is not installed (--no-dev)
@@ -205,5 +208,9 @@ class AppServiceProvider extends ServiceProvider
         ] as $model) {
             $model::observe(BotCommandMapObserver::class);
         }
+
+        // Queued chat messages: nudge the bot to drain the outbox immediately
+        // rather than waiting up to 2s for its next poll.
+        BotChatOutbox::observe(BotChatOutboxObserver::class);
     }
 }

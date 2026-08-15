@@ -2,6 +2,24 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 15th, 2026 - feat(bot): chat replies go out on a push, and the outbox stops growing forever
+
+Two things, both downstream of getting Reverb actually working this morning.
+
+**Replies are pushed, not waited for.** The bot polls `bot_chat_outbox` every 2 seconds, so a reply waited an average of one second and up to two before anyone saw it. The app now nudges the bot the instant a message is queued, over the same `bot-channels` connection it already holds open for command-map refreshes.
+
+- **The 2 second poll stays exactly as it is.** It is not being lengthened to "claim" the win. `REVERB_HOST` spent months pointed at the wrong host and the polls are the only reason nobody noticed - a push is a latency optimisation, and the poll is what keeps a missed one costing seconds instead of a silent bot. Shortening the poll to 1s was considered and rejected: it doubles the request rate forever to halve an average wait that the push removes entirely.
+- **The event deliberately carries no payload.** The bot claims every pending row in one atomic transaction, so the only thing it needs to know is that something is there. Shipping the message itself would put chat text on a public channel and need per-user routing, for a fetch that happens anyway.
+- **One nudge per request, however many messages.** A gamejam round writes several rows in a loop; the bot drains all of them in one claim, so the rest would be broadcasts spent on nothing. Stamping `sent_at` does not nudge either - that is the bot taking a message, and announcing it would be a broadcast per delivery, forever.
+- **`BotCommandMapAnnouncer` became `BotPushAnnouncer`** with two methods rather than growing a second class with a copy-pasted dedupe bag. One scoped instance now covers both nudges.
+- **Verified end to end against a real Reverb**, not just asserted in isolation: the app dispatched both events, Reverb relayed them, and a real bot listener ran both handlers. The unit tests prove dispatch; only a round trip proves delivery, which is the exact gap that let this morning's bug through.
+
+**`bot_chat_outbox` is pruned.** It was never swept - there are prune schedules for access logs, Twitch events, external events, overlay reports and list snapshots, and the outbox simply got missed. Delivered rows accumulated from the day the table shipped.
+
+- **Delivered messages are deleted after 7 days.** The outbox is a queue, not a log: once the bot has posted a row, its only remaining value is answering "why did the bot say that" for a few days. Nothing else reads it.
+- **Only rows the bot actually claimed are swept.** An unsent row is still owed to a channel, whatever its age, so deleting one would silently drop a message the bot was going to post.
+- **This was never a performance problem**, which is why it hid. The table is indexed on `(sent_at, id)`, so the every-2-seconds poll costs time proportional to *pending* rows - almost always zero - regardless of how many delivered rows sit behind them. It was growing disk, not latency.
+
 ## August 15th, 2026 - fix(bot): a command you just made now works immediately
 
 `!ol cmd add wins So far, Jasper has won [[[counter:wins]]] times` replied `added !wins`, and then `!wins` did nothing at all. Not an error, not a hint - silence. A minute later it worked perfectly.
