@@ -176,8 +176,6 @@ test('ignores votes from pending and inactive joiners', function () {
 });
 
 test('no-ops when called with a stale round number', function () {
-    Bus::fake();
-
     $user = makeResolverUser();
     $game = Game::create([
         'user_id' => $user->id,
@@ -188,6 +186,12 @@ test('no-ops when called with a stale round number', function () {
         'round_started_at' => now(),
     ]);
 
+    // Faked after the fixtures: creating a bot-enabled user seeds their default
+    // command set, which legitimately tells the bot to refresh. That is setup
+    // noise here, and the assertion below is about what resolving a stale round
+    // does.
+    Bus::fake();
+
     (new ResolveGameRound($game->id, 2))->handle();
 
     expect($game->fresh()->current_round)->toBe(5);
@@ -195,8 +199,6 @@ test('no-ops when called with a stale round number', function () {
 });
 
 test('no-ops when the game has ended', function () {
-    Bus::fake();
-
     $user = makeResolverUser();
     $game = Game::create([
         'user_id' => $user->id,
@@ -206,6 +208,9 @@ test('no-ops when the game has ended', function () {
         'round_duration_seconds' => 30,
         'round_started_at' => now(),
     ]);
+
+    // Faked after the fixtures, for the same reason as the stale-round test.
+    Bus::fake();
 
     (new ResolveGameRound($game->id, 3))->handle();
 

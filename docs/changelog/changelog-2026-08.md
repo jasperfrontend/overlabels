@@ -2,6 +2,22 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 15th, 2026 - fix(bot): a command you just made now works immediately
+
+`!ol cmd add wins So far, Jasper has won [[[counter:wins]]] times` replied `added !wins`, and then `!wins` did nothing at all. Not an error, not a hint - silence. A minute later it worked perfectly.
+
+The bot keeps a map of which commands exist in which channel and refreshes it on a 60 second poll. A command it has never heard of is dropped without a word, which is correct behaviour: chat is full of other bots' commands and replying to all of them would be intolerable. There is also an instant push path over Reverb, and it worked fine - but the app only ever raised `bot.channels.changed` when a user toggled the bot on or off. Creating a command, from the dashboard or from chat, told the bot nothing.
+
+So this was never about the new tags. It has been true for every expression and alias since `!ol` shipped. What changed is that "author a command from chat in one line" invites you to try it one second later, so a latency nobody noticed became the first thing you meet.
+
+- **An observer on all six models the command map is built from**, not a `dispatch()` at each save site. Those sites are spread across the settings controllers, the `!ol` chat-admin service, recipe installation and list management, and missing one would bring the bug back for a single command type - the kind of thing that hides for months. `saved` covers renames and disables too, which move the map just as much as a new row.
+- **A test derives the model list from `BotCommandController`'s own imports** rather than a second hardcoded copy, so a seventh command type fails the suite until it is observed as well. Every behavioural test in the file was confirmed to fail with the observer registration removed.
+- **Announcements are coalesced per request.** `BotChannelsChanged` is `ShouldBroadcastNow` and broadcasts are the metered resource here; signing up seeds seventeen-odd `BotCommand` rows in a loop, which would otherwise be seventeen synchronous broadcasts for one click. The bot re-reads the whole map either way, so the second broadcast carries nothing the first did not.
+- **The announcer is bound with `scoped()`, not `singleton()`** - caught by a test that failed for what looked like a fixture problem. A queue worker boots the container once and holds plain singletons for the life of the process, so the dedupe list would never have emptied and every job after the first would have silently skipped announcing.
+- **Nothing is announced for a user who has not turned the bot on.** The map only lists opted-in users, so a signup with the bot off changes nothing the bot can see. That is the difference between one wasted broadcast per registration and none, and turning the bot on is already announced by the settings controller.
+- **No change to the bot itself.** The Reverb listener, the refresh and the 60 second poll were all already there; only the app end was missing. `syncChannels` diffs against the current subscription set, so reusing the existing event costs nothing when only a command changed. The poll stays as the fallback for when Reverb is unreachable.
+- **Two pre-existing gamejam tests were faking the bus before creating their fixtures**, so seeding a bot-enabled user's commands now counted against `assertNothingDispatched`. Moved the fake after the setup, which is what they meant.
+
 ## August 15th, 2026 - feat(bot): random rolls and counters, in the command you're writing
 
 `!ol cmd add steven your Steven Level is [[[rand:0-69]]]%! Kappa.` and `!ol cmd add wins So far, Jasper has won [[[counter:wins]]] times`. Two new bot-only tags, both authored entirely from chat, neither needing a trip to the dashboard first.
