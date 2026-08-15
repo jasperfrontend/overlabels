@@ -3,7 +3,7 @@
   "slug": "coin_flip",
   "name": "Coin Flip",
   "version": 1,
-  "description": "Heads or tails. Triggered from chat or dashboard. Writes the result to a control any overlay, alert, or Bot Expression can read.",
+  "description": "Heads or tails. Triggered from chat or dashboard. Writes the result to a control any overlay, alert, or Bot Command can read.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"

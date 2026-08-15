@@ -2,7 +2,7 @@
 
 use App\Models\BotAlias;
 use App\Models\BotChatOutbox;
-use App\Models\BotExpression;
+use App\Models\BotCommand;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Testing\TestResponse;
@@ -48,7 +48,7 @@ function postManage(array $payload): TestResponse
 // cmd: add / edit / delete / options
 // ──────────────────────────────────────────────────────────────────────────────
 
-it('cmd add creates a Bot Expression and queues a chat reply', function () {
+it('cmd add creates a Bot Command and queues a chat reply', function () {
     $user = adminUser();
 
     postManage(managePayload([
@@ -56,7 +56,7 @@ it('cmd add creates a Bot Expression and queues a chat reply', function () {
         'payload' => 'HAHA [[[bot:from_user]]]',
     ]))->assertOk();
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'lol')->exists())->toBeTrue();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'lol')->exists())->toBeTrue();
     expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)->toBe('added !lol');
 });
 
@@ -68,7 +68,7 @@ it('strips leading ! from command names so `!ol cmd add !test foo` lands as `tes
         'name' => '!greet',
         'payload' => 'hello [[[bot:from_user]]]',
     ]))->assertOk();
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'greet')->exists())->toBeTrue();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'greet')->exists())->toBeTrue();
     expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)->toBe('added !greet');
 
     // Double bang on cmd delete - ltrim strips all leading `!` chars.
@@ -76,7 +76,7 @@ it('strips leading ! from command names so `!ol cmd add !test foo` lands as `tes
         'action' => 'delete',
         'name' => '!!greet',
     ]))->assertOk();
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'greet')->exists())->toBeFalse();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'greet')->exists())->toBeFalse();
 
     // Leading bang on alias add - name stripped to plain, target_template's
     // own leading bang stripped by the alias validator.
@@ -99,13 +99,13 @@ it('cmd add rejects collision with a builtin', function () {
         'payload' => 'denied',
     ]))->assertOk();
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'reset')->exists())->toBeFalse();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'reset')->exists())->toBeFalse();
     expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
         ->toStartWith('error:')
         ->toContain('built-in');
 });
 
-it('cmd add rejects an expression that starts with a slash command', function () {
+it('cmd add rejects a reply that starts with a slash command', function () {
     $user = adminUser();
 
     postManage(managePayload([
@@ -113,22 +113,22 @@ it('cmd add rejects an expression that starts with a slash command', function ()
         'payload' => '/timeout [[[bot:from_user]]] 1',
     ]))->assertOk();
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'vanish')->exists())->toBeFalse();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'vanish')->exists())->toBeFalse();
     expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
         ->toStartWith('error:')
         ->toContain("can't start with '/'");
 });
 
-it('cmd edit updates expression payload', function () {
+it('cmd edit updates the reply payload', function () {
     $user = adminUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'discord',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'old text',
+        'reply' => 'old text',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     postManage(managePayload([
@@ -137,20 +137,20 @@ it('cmd edit updates expression payload', function () {
         'payload' => 'new text [[[bot:from_user]]]',
     ]))->assertOk();
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'discord')->first()?->expression)
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'discord')->first()?->reply)
         ->toBe('new text [[[bot:from_user]]]');
 });
 
-it('cmd delete removes the expression', function () {
+it('cmd delete removes the command', function () {
     $user = adminUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'gone',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'bye',
+        'reply' => 'bye',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     postManage(managePayload([
@@ -158,19 +158,19 @@ it('cmd delete removes the expression', function () {
         'name' => 'gone',
     ]))->assertOk();
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'gone')->exists())->toBeFalse();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'gone')->exists())->toBeFalse();
 });
 
 it('cmd options sets cooldown', function () {
     $user = adminUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'slow',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'yo',
+        'reply' => 'yo',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     postManage(managePayload([
@@ -180,19 +180,19 @@ it('cmd options sets cooldown', function () {
         'value' => '30',
     ]))->assertOk();
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'slow')->first()?->cooldown_seconds)->toBe(30);
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'slow')->first()?->cooldown_seconds)->toBe(30);
 });
 
 it('cmd options canonicalises permission shortforms', function () {
     $user = adminUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'mod_only',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'yo',
+        'reply' => 'yo',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     postManage(managePayload([
@@ -202,20 +202,20 @@ it('cmd options canonicalises permission shortforms', function () {
         'value' => 'mod',
     ]))->assertOk();
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'mod_only')->first()?->permission_level)
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'mod_only')->first()?->permission_level)
         ->toBe('moderator');
 });
 
 it('cmd options rejects out-of-range cooldown', function () {
     $user = adminUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'slow',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 5,
-        'expression' => 'yo',
+        'reply' => 'yo',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     postManage(managePayload([
@@ -225,21 +225,21 @@ it('cmd options rejects out-of-range cooldown', function () {
         'value' => '999999',
     ]))->assertOk();
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'slow')->first()?->cooldown_seconds)->toBe(5);
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'slow')->first()?->cooldown_seconds)->toBe(5);
     expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
         ->toContain('0 and 86400');
 });
 
 it('cmd options destroy sets a self-destruct timer', function () {
     $user = adminUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'temp',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'fleeting',
+        'reply' => 'fleeting',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     postManage(managePayload([
@@ -249,23 +249,23 @@ it('cmd options destroy sets a self-destruct timer', function () {
         'value' => '12',
     ]))->assertOk();
 
-    $expr = BotExpression::where('user_id', $user->id)->where('command', 'temp')->first();
-    expect($expr->destroy_at)->not->toBeNull();
-    expect($expr->destroy_at->between(now()->addHours(12)->subMinute(), now()->addHours(12)->addMinute()))->toBeTrue();
+    $command = BotCommand::where('user_id', $user->id)->where('command', 'temp')->first();
+    expect($command->destroy_at)->not->toBeNull();
+    expect($command->destroy_at->between(now()->addHours(12)->subMinute(), now()->addHours(12)->addMinute()))->toBeTrue();
     expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
         ->toContain('destroyed in 12h');
 });
 
 it('cmd options destroy 0 cancels a pending timer', function () {
     $user = adminUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'temp',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'fleeting',
+        'reply' => 'fleeting',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
         'destroy_at' => now()->addHours(3),
     ]);
 
@@ -276,21 +276,21 @@ it('cmd options destroy 0 cancels a pending timer', function () {
         'value' => '0',
     ]))->assertOk();
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'temp')->first()?->destroy_at)->toBeNull();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'temp')->first()?->destroy_at)->toBeNull();
     expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
         ->toContain('cancelled');
 });
 
 it('cmd options destroy rejects out-of-range and non-numeric values', function () {
     $user = adminUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'temp',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'fleeting',
+        'reply' => 'fleeting',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     postManage(managePayload([
@@ -299,7 +299,7 @@ it('cmd options destroy rejects out-of-range and non-numeric values', function (
         'option' => 'destroy',
         'value' => '99999',
     ]))->assertOk();
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'temp')->first()?->destroy_at)->toBeNull();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'temp')->first()?->destroy_at)->toBeNull();
 
     postManage(managePayload([
         'action' => 'options',
@@ -307,7 +307,7 @@ it('cmd options destroy rejects out-of-range and non-numeric values', function (
         'option' => 'destroy',
         'value' => 'soon',
     ]))->assertOk();
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'temp')->first()?->destroy_at)->toBeNull();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'temp')->first()?->destroy_at)->toBeNull();
     expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
         ->toContain('whole number of hours');
 });
@@ -321,7 +321,7 @@ it('alias options destroy is refused (commands only)', function () {
         'permission_level' => 'moderator',
         'cooldown_seconds' => 0,
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     postManage(managePayload([
@@ -380,7 +380,7 @@ it('alias delete removes the alias', function () {
         'permission_level' => 'moderator',
         'cooldown_seconds' => 0,
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     postManage(managePayload([
@@ -398,14 +398,14 @@ it('alias delete removes the alias', function () {
 
 it('list returns the user commands as a single chat line', function () {
     $user = adminUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'discord',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'd',
+        'reply' => 'd',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
     BotAlias::create([
         'user_id' => $user->id,
@@ -414,7 +414,7 @@ it('list returns the user commands as a single chat line', function () {
         'permission_level' => 'moderator',
         'cooldown_seconds' => 0,
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     postManage(managePayload([
@@ -446,7 +446,7 @@ it('rejects non-mod chatters', function () {
         'payload' => 'noooo',
     ]))->assertOk()->assertJson(['queued' => false, 'reason' => 'gate']);
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'denied')->exists())->toBeFalse();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'denied')->exists())->toBeFalse();
 });
 
 it('returns channel_not_found for an unknown login', function () {

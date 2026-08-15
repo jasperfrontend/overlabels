@@ -3,25 +3,25 @@
 namespace App\Services\Bot;
 
 use App\Models\BotChatOutbox;
-use App\Models\BotExpression;
+use App\Models\BotCommand;
 use App\Support\BotChatGate;
 use Illuminate\Support\Carbon;
 
 /**
- * Orchestrates a Bot Expression invocation.
+ * Orchestrates a Bot Command invocation.
  *
  * Lifecycle for one chat command:
  *   canFire()  - permission + cooldown gate, no side effects
  *   fire()     - bump counters, resolve template, write outbox row, stamp
  *                last_fired_at
  *
- * Both are intentionally thin. Resolution is delegated to BotExpressionResolver
+ * Both are intentionally thin. Resolution is delegated to BotCommandResolver
  * so it can be reused (and tested) in isolation by the builder UI's preview.
  */
-class BotExpressionService
+class BotCommandService
 {
     public function __construct(
-        private readonly BotExpressionResolver $resolver,
+        private readonly BotCommandResolver $resolver,
         private readonly BotCounterService $counters,
     ) {}
 
@@ -30,13 +30,13 @@ class BotExpressionService
      *                                     (subscriber, vip, moderator, broadcaster).
      *                                     Empty array = unbadged chatter.
      */
-    public function canFire(BotExpression $expression, array $badges): bool
+    public function canFire(BotCommand $command, array $badges): bool
     {
-        if (! $expression->enabled) {
+        if (! $command->enabled) {
             return false;
         }
 
-        if (! BotChatGate::hasPermission($expression->permission_level, $badges)) {
+        if (! BotChatGate::hasPermission($command->permission_level, $badges)) {
             return false;
         }
 
@@ -45,28 +45,28 @@ class BotExpressionService
             return true;
         }
 
-        return BotChatGate::isOffCooldown($expression->last_fired_at, $expression->cooldown_seconds);
+        return BotChatGate::isOffCooldown($command->last_fired_at, $command->cooldown_seconds);
     }
 
     /**
-     * Resolve the expression and queue the result into bot_chat_outbox. Caller
+     * Resolve the reply and queue the result into bot_chat_outbox. Caller
      * is expected to have already gated via canFire(). Returns the resolved
      * string (mostly for tests / preview parity).
      *
-     * @param  array<string,mixed>  $botContext  See BotExpressionResolver::resolve.
+     * @param  array<string,mixed>  $botContext  See BotCommandResolver::resolve.
      */
-    public function fire(BotExpression $expression, array $botContext): string
+    public function fire(BotCommand $command, array $botContext): string
     {
-        $user = $expression->user;
+        $user = $command->user;
 
         // Apply the increments declared by any counter: tags BEFORE resolving,
         // so the tag reads the post-increment value (matching what streamers
-        // expect from SE's ${count}). This is the only place a bot expression
+        // expect from SE's ${count}). This is the only place a bot command
         // writes: keeping it out of the resolver is what leaves the dry-run
         // preview, the validator and every re-resolve free of side effects.
-        $this->counters->bump($user, $expression->expression);
+        $this->counters->bump($user, $command->reply);
 
-        $message = $this->resolver->resolve($user, $expression->expression, $botContext);
+        $message = $this->resolver->resolve($user, $command->reply, $botContext);
 
         if ($message !== '') {
             BotChatOutbox::create([
@@ -75,7 +75,7 @@ class BotExpressionService
             ]);
         }
 
-        $expression->forceFill(['last_fired_at' => Carbon::now()])->save();
+        $command->forceFill(['last_fired_at' => Carbon::now()])->save();
 
         return $message;
     }

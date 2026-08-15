@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Services\Expressions;
+namespace App\Services\Messages;
 
 use App\Models\OverlayControl;
 use App\Models\User;
 use App\Support\Dsl;
 
 /**
- * Renders an alert template's `tts_expression` against the same flat
+ * Renders an alert template's `tts_message` against the same flat
  * $templateData payload that ships with AlertTriggered.
  *
  * SINGLE-PASS BY DESIGN: matches the day-one "tags never reparse" rule and
- * mirrors BotExpressionResolver. Substituted values are never re-scanned for
+ * mirrors BotCommandResolver. Substituted values are never re-scanned for
  * tags.
  *
  * Tag families inside [[[...]]]:
@@ -20,7 +20,7 @@ use App\Support\Dsl;
  *   <flat key>         -> $templateData lookup (event.user_name, user_name, ...)
  *
  * Pipe formatters (e.g. |number, |currency:USD) run after lookup via
- * ExpressionFormatter. Unknown tags resolve to empty string per the
+ * PipeFormatter. Unknown tags resolve to empty string per the
  * null-over-placeholder rule.
  *
  * Default values: `[[[key ?? literal]]]` emits the literal text VERBATIM when
@@ -34,7 +34,7 @@ use App\Support\Dsl;
  * overlays (template-scoped) or be user-scoped - we don't care, because all the
  * streamer wants is a single switch to mute TTS.
  */
-class AlertExpressionRenderer
+class AlertMessageRenderer
 {
     // Group 1: tag key. Group 2 (optional): pipe formatter. Group 3 (optional,
     // after `??`): literal default emitted when the value resolves empty.
@@ -103,7 +103,7 @@ class AlertExpressionRenderer
                 }
 
                 if ($pipe !== null) {
-                    $value = ExpressionFormatter::apply($value, $pipe, $locale);
+                    $value = PipeFormatter::apply($value, $pipe, $locale);
                 }
 
                 return $value;

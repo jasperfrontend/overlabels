@@ -58,7 +58,7 @@ export function getDefaultCurrency(locale: string): string {
  * e.g. "uppercase" → { name: "uppercase", args: undefined }
  */
 export function parsePipe(pipe: string): { name: string; args?: string } {
-  // Trim to match PHP's ExpressionFormatter::apply(), which has always trimmed.
+  // Trim to match PHP's PipeFormatter::apply(), which has always trimmed.
   // Without this the two runtimes disagree on a stray edge space: PHP resolves
   // `currency:EUR ` to a valid EUR format while Intl.NumberFormat rejects the
   // code "EUR " outright (spec D8). Only the edges are trimmed, so patterns with
@@ -348,7 +348,7 @@ function formatSpeed(value: string, args?: string, locale?: string): string {
  * For URLs like https://twitch.tv/[[[bot:args.0|login]]] where a chatter's
  * "@name" mention would 404. Twitch logins are case-insensitive and their
  * canonical profile URL is lowercase, so @UserName56 -> username56.
- * Mirrors ExpressionFormatter::login() on the PHP side.
+ * Mirrors PipeFormatter::login() on the PHP side.
  */
 function formatLogin(value: string): string {
   return value.trim().replace(/^@+/, '').toLowerCase();
@@ -357,7 +357,7 @@ function formatLogin(value: string): string {
 /**
  * Chat mention: ensure exactly one leading @, so a chatter who omits it still
  * pings and @@ collapses to one. Empty stays empty (never a bare @).
- * Mirrors ExpressionFormatter::mention() on the PHP side.
+ * Mirrors PipeFormatter::mention() on the PHP side.
  */
 function formatMention(value: string): string {
   const trimmed = value.trim();

@@ -2,8 +2,8 @@
 
 namespace App\Services\Bot;
 
+use App\Models\BotBuiltin;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Models\User;
 use App\Support\BotTags;
 use Illuminate\Support\Facades\Validator;
@@ -11,24 +11,24 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Shared validation for Bot Expressions. Used by the web settings
+ * Shared validation for Bot Commands. Used by the web settings
  * controller (form posts) and the chat-driven `!ol cmd ...` admin path
  * so the same rules gate both surfaces. Returns a normalised payload
  * (lowercased command, '!' stripped); throws ValidationException with
  * field-keyed messages on any failure.
  */
-class BotExpressionValidator
+class BotCommandValidator
 {
     public function __construct(
         private readonly BotCounterService $counters,
     ) {}
 
     /**
-     * @param  array<string,mixed>  $input  Raw input (command, permission_level, cooldown_seconds, expression, enabled, hidden_from_commands).
-     * @param  BotExpression|null  $existing  Set for updates so the duplicate check ignores the row being edited.
-     * @return array<string,mixed> Normalised payload ready to feed into BotExpression::create() / ::update().
+     * @param  array<string,mixed>  $input  Raw input (command, permission_level, cooldown_seconds, reply, enabled, hidden).
+     * @param  BotCommand|null  $existing  Set for updates so the duplicate check ignores the row being edited.
+     * @return array<string,mixed> Normalised payload ready to feed into BotCommand::create() / ::update().
      */
-    public function validateAndNormalize(int $userId, array $input, ?BotExpression $existing = null): array
+    public function validateAndNormalize(int $userId, array $input, ?BotCommand $existing = null): array
     {
         $data = Validator::make($input, [
             'command' => [
@@ -37,11 +37,11 @@ class BotExpressionValidator
                 'max:30',
                 'regex:/^!?[a-zA-Z0-9_-]{1,30}$/',
             ],
-            'permission_level' => ['required', Rule::in(BotCommand::PERMISSION_LEVELS)],
+            'permission_level' => ['required', Rule::in(BotBuiltin::PERMISSION_LEVELS)],
             'cooldown_seconds' => ['required', 'integer', 'min:0', 'max:86400'],
-            'expression' => ['required', 'string', 'max:2000'],
+            'reply' => ['required', 'string', 'max:2000'],
             'enabled' => ['required', 'boolean'],
-            'hidden_from_commands' => ['required', 'boolean'],
+            'hidden' => ['required', 'boolean'],
             // Optional self-destruct timer, whole hours 1-8760 (one year);
             // null/absent means "no timer". Only the web form sends this - the
             // chat-admin path manages destroy_at through its own option flow.
@@ -51,13 +51,13 @@ class BotExpressionValidator
         // Reject slash commands. The bot replies via the Send Chat Message API,
         // which transmits literal text only - Twitch drops a leading `/timeout`
         // (or any slash command) and posts the rest as a plain message, so the
-        // expression silently does nothing useful. We check the raw template
+        // reply silently does nothing useful. We check the raw template
         // pre-substitution, so chatter args can never inject the leading slash
         // (the single-pass resolver guarantees this). Kept to one sentence so it
         // reads under the form field and as a single relayed chat line.
-        if (str_starts_with(ltrim($data['expression']), '/')) {
+        if (str_starts_with(ltrim($data['reply']), '/')) {
             throw ValidationException::withMessages([
-                'expression' => "Expressions can't start with '/'. Slash commands like /timeout only work in Twitch's own chat box; the overlabels bot sends plain text and powers your overlays, it doesn't moderate chat.",
+                'reply' => "Replies can't start with '/'. Slash commands like /timeout only work in Twitch's own chat box; the overlabels bot sends plain text and powers your overlays, it doesn't moderate chat.",
             ]);
         }
 
@@ -67,26 +67,26 @@ class BotExpressionValidator
         // is a typo the streamer can't see (it just goes blank mid-stream), and
         // a bad counter key would have us silently not counting. Both are
         // cheaper to refuse at the point of writing than to debug live.
-        $this->assertTagsAreReadable($data['expression']);
-        $this->assertRandRangesAreValid($data['expression']);
-        $this->assertCounterKeysAreValid($userId, $data['expression']);
+        $this->assertTagsAreReadable($data['reply']);
+        $this->assertRandRangesAreValid($data['reply']);
+        $this->assertCounterKeysAreValid($userId, $data['reply']);
 
         $command = strtolower(ltrim($data['command'], '!'));
 
-        $reserved = array_column(BotCommand::DEFAULTS, 'command');
+        $reserved = array_column(BotBuiltin::DEFAULTS, 'command');
         if (in_array($command, $reserved, true)) {
             throw ValidationException::withMessages([
-                'command' => "'!$command' is a built-in bot command and can't be reused as an expression.",
+                'command' => "'!$command' is a built-in bot command and can't be reused as a custom command.",
             ]);
         }
 
-        $duplicate = BotExpression::where('user_id', $userId)
+        $duplicate = BotCommand::where('user_id', $userId)
             ->where('command', $command)
             ->when($existing, fn ($q) => $q->where('id', '!=', $existing->id))
             ->exists();
         if ($duplicate) {
             throw ValidationException::withMessages([
-                'command' => "You already have an expression for '!$command'.",
+                'command' => "You already have a command for '!$command'.",
             ]);
         }
 
@@ -108,30 +108,30 @@ class BotExpressionValidator
      *
      * @throws ValidationException
      */
-    private function assertTagsAreReadable(string $expression): void
+    private function assertTagsAreReadable(string $reply): void
     {
-        foreach (BotTags::malformedTags($expression) as $snippet) {
+        foreach (BotTags::malformedTags($reply) as $snippet) {
             throw ValidationException::withMessages([
-                'expression' => "I can't read '$snippet', so chat would see it exactly as written. Tag names join up with a colon and no spaces, like [[[counter:wins]]].",
+                'reply' => "I can't read '$snippet', so chat would see it exactly as written. Tag names join up with a colon and no spaces, like [[[counter:wins]]].",
             ]);
         }
 
-        foreach (BotTags::underBracketedTags($expression) as $snippet) {
+        foreach (BotTags::underBracketedTags($reply) as $snippet) {
             $inner = trim($snippet, '[]');
 
             throw ValidationException::withMessages([
-                'expression' => "'$snippet' needs three brackets on each side. Try [[[$inner]]] instead.",
+                'reply' => "'$snippet' needs three brackets on each side. Try [[[$inner]]] instead.",
             ]);
         }
 
-        foreach (BotTags::unknownNamespaces($expression) as $key => $suggestion) {
+        foreach (BotTags::unknownNamespaces($reply) as $key => $suggestion) {
             $namespace = explode(':', $key)[0];
 
             $message = $suggestion !== null
                 ? "There's no '$namespace' tag, so nothing would show up where you put [[[$key]]]. Did you mean '$suggestion'?"
                 : "There's no '$namespace' tag, so nothing would show up where you put [[[$key]]]. The ones you can use in chat are: ".BotTags::namespaceList().'.';
 
-            throw ValidationException::withMessages(['expression' => $message]);
+            throw ValidationException::withMessages(['reply' => $message]);
         }
     }
 
@@ -145,15 +145,15 @@ class BotExpressionValidator
      *
      * @throws ValidationException
      */
-    private function assertRandRangesAreValid(string $expression): void
+    private function assertRandRangesAreValid(string $reply): void
     {
-        foreach (BotTags::randArgs($expression) as $arg) {
+        foreach (BotTags::randArgs($reply) as $arg) {
             if (BotTags::parseRange($arg) !== null) {
                 continue;
             }
 
             throw ValidationException::withMessages([
-                'expression' => "'[[[rand:$arg]]]' isn't a valid range - write two whole numbers low to high, like [[[rand:0-69]]]. Negative numbers aren't supported.",
+                'reply' => "'[[[rand:$arg]]]' isn't a valid range - write two whole numbers low to high, like [[[rand:0-69]]]. Negative numbers aren't supported.",
             ]);
         }
     }
@@ -164,12 +164,12 @@ class BotExpressionValidator
      *
      * @throws ValidationException
      */
-    private function assertCounterKeysAreValid(int $userId, string $expression): void
+    private function assertCounterKeysAreValid(int $userId, string $reply): void
     {
-        foreach (BotTags::counterKeys($expression) as $key) {
+        foreach (BotTags::counterKeys($reply) as $key) {
             if (! BotTags::isValidCounterKey($key)) {
                 throw ValidationException::withMessages([
-                    'expression' => "'$key' isn't a usable counter name - use lowercase letters, numbers and underscores, starting with a letter, like [[[counter:wins]]].",
+                    'reply' => "'$key' isn't a usable counter name - use lowercase letters, numbers and underscores, starting with a letter, like [[[counter:wins]]].",
                 ]);
             }
         }
@@ -180,9 +180,9 @@ class BotExpressionValidator
             return;
         }
 
-        foreach ($this->counters->conflictingTypes($user, $expression) as $key => $type) {
+        foreach ($this->counters->conflictingTypes($user, $reply) as $key => $type) {
             throw ValidationException::withMessages([
-                'expression' => "You already have a $type control named '$key', which can't hold a count. Pick another name for the counter.",
+                'reply' => "You already have a $type control named '$key', which can't hold a count. Pick another name for the counter.",
             ]);
         }
     }

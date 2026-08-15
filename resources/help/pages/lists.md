@@ -257,7 +257,7 @@ Each appender configures:
 - **Permission level** - everyone, follower, subscriber, vip, moderator, broadcaster
 - **Cooldown** - global cooldown in seconds (broadcaster bypasses)
 - **Value template** - the string to append. Uses the same template language as
-  [Bot Expressions](/help/expressions): `[[[bot:from_user]]]`, `[[[bot:args]]]`, control reads, pipe
+  [Bot Commands](/help/bot/commands): `[[[bot:from_user]]]`, `[[[bot:args]]]`, control reads, pipe
   formatters
 - **Empty-args reply** - what to say when the chatter forgot to type an argument the template expects
 - **Dedup policy** - `none`, `per_chatter`, or `per_chatter_per_stream`
@@ -495,7 +495,7 @@ looser (everyone, follower, subscriber, etc).
 
 ### Command-name collisions are checked at save time.
 
-A chat appender's command, the `!list` meta-command, your Bot Expressions, your recipe triggers, and the
+A chat appender's command, the `!list` meta-command, your Bot Commands, your recipe triggers, and the
 built-in commands all share the same namespace. Save-time validation refuses collisions with a clear
 error rather than silently letting one of them win at runtime.
 

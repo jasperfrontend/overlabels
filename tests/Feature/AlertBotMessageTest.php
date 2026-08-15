@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 uses(DatabaseTransactions::class);
 
-function makeUserWithBotAlert(?string $botExpression = null, bool $botEnabled = true): array
+function makeUserWithBotAlert(?string $botCommand = null, bool $botEnabled = true): array
 {
     $user = User::factory()->create([
         'twitch_id' => (string) fake()->unique()->randomNumber(9),
@@ -22,7 +22,7 @@ function makeUserWithBotAlert(?string $botExpression = null, bool $botEnabled = 
         'fork_of_id' => null,
         'type' => 'alert',
         'slug' => 'alert-'.fake()->unique()->lexify('????????'),
-        'bot_message_expression' => $botExpression,
+        'chat_message' => $botCommand,
     ]);
 
     ExternalEventTemplateMapping::create([
@@ -75,7 +75,7 @@ test('alert does NOT queue a bot chat message when bot is disabled', function ()
     expect(BotChatOutbox::where('user_id', $user->id)->exists())->toBeFalse();
 });
 
-test('alert does NOT queue a bot chat message when the expression is null', function () {
+test('alert does NOT queue a bot chat message when chat_message is null', function () {
     [$user] = makeUserWithBotAlert(null);
 
     $event = makeBotKofiEvent($user, ['event.from_name' => 'Henry']);
@@ -85,7 +85,7 @@ test('alert does NOT queue a bot chat message when the expression is null', func
     expect(BotChatOutbox::where('user_id', $user->id)->exists())->toBeFalse();
 });
 
-test('alert does NOT queue a bot chat message when the expression renders to empty', function () {
+test('alert does NOT queue a bot chat message when chat_message renders to empty', function () {
     [$user] = makeUserWithBotAlert('[[[event.nonexistent_tag]]]');
 
     $event = makeBotKofiEvent($user, ['event.from_name' => 'Iris']);

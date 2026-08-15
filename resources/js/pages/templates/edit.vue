@@ -96,8 +96,8 @@ interface Props {
     view_count: number;
     fork_count: number;
     template_tags: string[] | null | undefined;
-    tts_expression: string | null;
-    bot_message_expression: string | null;
+    tts_message: string | null;
+    chat_message: string | null;
     tts_delay_ms: number | null;
     alert_sound_url: string | null;
   };
@@ -157,8 +157,8 @@ const form = useForm({
   css: props?.template?.css || '',
   compiled_css: props?.template?.compiled_css || '',
   is_public: props?.template?.is_public,
-  tts_expression: props?.template?.tts_expression || '',
-  bot_message_expression: props?.template?.bot_message_expression || '',
+  tts_message: props?.template?.tts_message || '',
+  chat_message: props?.template?.chat_message || '',
   tts_delay_ms: props?.template?.tts_delay_ms ?? 0,
   alert_sound_url: props?.template?.alert_sound_url || '',
 });
@@ -844,16 +844,16 @@ onMounted(() => {
                     <p class="text-xs text-foreground/80">Spoken by Kaylin, the voice of Overlabels. Empty disables TTS for this alert.</p>
                   </header>
 
-                  <label for="tts_expression" class="mb-1 block text-xs font-medium text-accent-foreground"> Expression </label>
+                  <label for="tts_message" class="mb-1 block text-xs font-medium text-accent-foreground"> Message </label>
                   <textarea
-                    id="tts_expression"
-                    v-model="form.tts_expression"
+                    id="tts_message"
+                    v-model="form.tts_message"
                     rows="3"
                     maxlength="2000"
                     class="input-border w-full font-mono text-sm"
                     placeholder="[[[event.user_name]]] just resubscribed for [[[event.streak_months|number]]] months!"
                   />
-                  <div v-if="form.errors.tts_expression" class="mt-1 text-sm text-red-600">{{ form.errors.tts_expression }}</div>
+                  <div v-if="form.errors.tts_message" class="mt-1 text-sm text-red-600">{{ form.errors.tts_message }}</div>
 
                   <label for="tts_delay_ms" class="mt-3 mb-1 block text-xs font-medium text-accent-foreground"> Wait before speaking (ms) </label>
                   <input
@@ -876,7 +876,7 @@ onMounted(() => {
                         v-for="tag in template.template_tags"
                         :key="tag"
                         class="cursor-pointer rounded bg-muted px-1.5 py-0.5 text-xs hover:bg-muted/70"
-                        @click="form.tts_expression = (form.tts_expression || '') + `[[[${tag}]]]`"
+                        @click="form.tts_message = (form.tts_message || '') + `[[[${tag}]]]`"
                         >[[[{{ tag }}]]]</code
                       >
                     </div>
@@ -903,16 +903,16 @@ onMounted(() => {
                     </p>
                   </header>
 
-                  <label for="bot_message_expression" class="mb-1 block text-xs font-medium text-accent-foreground"> Message </label>
+                  <label for="chat_message" class="mb-1 block text-xs font-medium text-accent-foreground"> Message </label>
                   <textarea
-                    id="bot_message_expression"
-                    v-model="form.bot_message_expression"
+                    id="chat_message"
+                    v-model="form.chat_message"
                     rows="3"
                     maxlength="500"
                     class="input-border w-full font-mono text-sm"
                     placeholder="[[[event.user_name]]] just resubscribed for [[[event.streak_months|number]]] months! Thank you!"
                   />
-                  <div v-if="form.errors.bot_message_expression" class="mt-1 text-sm text-red-600">{{ form.errors.bot_message_expression }}</div>
+                  <div v-if="form.errors.chat_message" class="mt-1 text-sm text-red-600">{{ form.errors.chat_message }}</div>
                   <p class="mt-1 text-xs text-foreground/70">
                     Same tags as TTS. No <code class="rounded bg-muted px-1">[[[if]]]</code> logic - plain text and tags only. Capped at 500
                     characters (Twitch's chat limit).
@@ -925,7 +925,7 @@ onMounted(() => {
                         v-for="tag in template.template_tags"
                         :key="tag"
                         class="cursor-pointer rounded bg-muted px-1.5 py-0.5 text-xs hover:bg-muted/70"
-                        @click="form.bot_message_expression = (form.bot_message_expression || '') + `[[[${tag}]]]`"
+                        @click="form.chat_message = (form.chat_message || '') + `[[[${tag}]]]`"
                         >[[[{{ tag }}]]]</code
                       >
                     </div>

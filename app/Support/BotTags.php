@@ -10,7 +10,7 @@ use Random\RandomException;
  *
  * No DB, no side effects - this class only reads a template string and reports
  * what it found. The writing half lives in BotCounterService; the reading half
- * is wired into BotExpressionResolver::lookup().
+ * is wired into BotCommandResolver::lookup().
  *
  * Both namespaces are declared in resources/dsl/dsl.json with an explicit
  * `scope: ["bot"]`, and both parse under the existing shared tag regex with no
@@ -35,19 +35,19 @@ final class BotTags
     private const string RANGE_PATTERN = '/^(\d{1,15})-(\d{1,15})$/';
 
     /**
-     * Every tag key in $expression, pipe and `?? default` stripped.
+     * Every tag key in $text, pipe and `?? default` stripped.
      *
      * @return array<int,string>
      */
-    public static function keys(string $expression): array
+    public static function keys(string $text): array
     {
-        preg_match_all(Dsl::tagKeyPattern(), $expression, $matches);
+        preg_match_all(Dsl::tagKeyPattern(), $text, $matches);
 
         return $matches[1] ?? [];
     }
 
     /**
-     * The distinct counter keys this expression increments when it fires.
+     * The distinct counter keys this text increments when it fires.
      *
      * Deduplicated on purpose: writing `[[[counter:wins]]]` twice in one
      * message must still count one win. The service bumps this list, not the
@@ -55,11 +55,11 @@ final class BotTags
      *
      * @return array<int,string>
      */
-    public static function counterKeys(string $expression): array
+    public static function counterKeys(string $text): array
     {
         $keys = [];
 
-        foreach (self::keys($expression) as $key) {
+        foreach (self::keys($text) as $key) {
             if (str_starts_with($key, self::COUNTER_PREFIX)) {
                 $keys[] = substr($key, strlen(self::COUNTER_PREFIX));
             }
@@ -75,11 +75,11 @@ final class BotTags
      *
      * @return array<int,string>
      */
-    public static function randArgs(string $expression): array
+    public static function randArgs(string $text): array
     {
         $args = [];
 
-        foreach (self::keys($expression) as $key) {
+        foreach (self::keys($text) as $key) {
             if (str_starts_with($key, self::RAND_PREFIX)) {
                 $args[] = substr($key, strlen(self::RAND_PREFIX));
             }
@@ -110,7 +110,7 @@ final class BotTags
 
     /**
      * Resolve a `rand:` argument to a value string. A malformed range resolves
-     * empty rather than throwing: the validator refuses to save an expression
+     * empty rather than throwing: the validator refuses to save a command
      * carrying one, so reaching this with bad input means a row predates the
      * validation, and a live chat command is not the place to raise.
      *
@@ -154,7 +154,7 @@ final class BotTags
     // ─────────────────────────────────────────────────────────────────────
 
     /**
-     * Namespaces that resolve in a bot expression. `c` covers `c:list` too,
+     * Namespaces that resolve in a bot command. `c` covers `c:list` too,
      * since only the first segment is checked.
      *
      * `event` and `loop` are deliberately absent: the bot resolver does no
@@ -175,11 +175,11 @@ final class BotTags
      *
      * @return array<string,string|null> tag key => suggested namespace or null
      */
-    public static function unknownNamespaces(string $expression): array
+    public static function unknownNamespaces(string $text): array
     {
         $unknown = [];
 
-        foreach (self::keys($expression) as $key) {
+        foreach (self::keys($text) as $key) {
             if (! str_contains($key, ':')) {
                 continue;
             }
@@ -224,11 +224,11 @@ final class BotTags
      *
      * @return array<int,string> The offending snippets, as written.
      */
-    public static function malformedTags(string $expression): array
+    public static function malformedTags(string $text): array
     {
         // Strip everything that parses, then anything still holding brackets
         // is by definition something the resolver would leave alone.
-        $leftovers = preg_replace(Dsl::tagPattern(), '', $expression) ?? '';
+        $leftovers = preg_replace(Dsl::tagPattern(), '', $text) ?? '';
 
         $open = Dsl::spec()['lexical']['open'] ?? '\[\[\[';
         $close = Dsl::spec()['lexical']['close'] ?? '\]\]\]';
@@ -255,9 +255,9 @@ final class BotTags
      *
      * @return array<int,string> The offending snippets, as written.
      */
-    public static function underBracketedTags(string $expression): array
+    public static function underBracketedTags(string $text): array
     {
-        $leftovers = preg_replace(Dsl::tagPattern(), '', $expression) ?? '';
+        $leftovers = preg_replace(Dsl::tagPattern(), '', $text) ?? '';
 
         preg_match_all('/\[\[([^\[\]]+)\]\]/', $leftovers, $matches, PREG_SET_ORDER);
 

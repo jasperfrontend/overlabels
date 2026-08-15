@@ -20,7 +20,7 @@ use App\Models\User;
  *
  * COALESCED PER REQUEST. Both events are ShouldBroadcastNow and broadcasts are
  * the metered resource here, while one user action can touch many rows -
- * opting into the bot seeds seventeen BotCommand rows, and one gamejam round
+ * opting into the bot seeds seventeen BotBuiltin rows, and one gamejam round
  * writes several outbox messages. The bot re-reads everything pending either
  * way, so a second broadcast in the same request carries no information the
  * first did not.
@@ -48,7 +48,7 @@ class BotPushAnnouncer
             return;
         }
 
-        // BotCommandController::index() only lists users with bot_enabled, so
+        // BotCommandMapController::index() only lists users with bot_enabled, so
         // a user who has not opted in contributes nothing to the map and there
         // is nothing for the bot to re-read. Signing up seeds the default
         // command set while the bot is still off, and broadcasts are metered -

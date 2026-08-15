@@ -15,7 +15,7 @@ use App\Models\User;
  * so the guard, the toggle button, and the overlay banner all share one source
  * of truth. Absent control = not muted. The control is user-scoped
  * (overlay_template_id NULL) and source_managed, so the toggle endpoints are
- * its only writers; the sibling of AlertExpressionRenderer's `tts` gate.
+ * its only writers; the sibling of AlertMessageRenderer's `tts` gate.
  */
 class AlertMuteService
 {

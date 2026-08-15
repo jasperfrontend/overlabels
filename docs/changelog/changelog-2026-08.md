@@ -2,6 +2,31 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 15th, 2026 - refactor: "expression" meant six things, and now it means one
+
+A joke made in passing, "oh you mean bot expressions, expression controls and control's expressions?", turned out to be an accurate census. The word was doing six jobs: jsep formulas in Expression Controls, user-authored chat commands, the pipe formatter, the string an alert speaks, the string an alert posts to chat, and a `bot_commands` table that held something else entirely.
+
+It was not only ugly. It was already producing wrong links in shipped documentation. Four places said "Bot Expressions" and pointed at `/help/expressions`, which is the Haversine-distance math page. Someone reading about aliases and clicking through to learn about chat commands landed on trigonometry.
+
+**The user-authored chat commands are Bot Commands now**, which is what the database has said all along: the trigger column is `command`, the chat verb is `!ol cmd add`, and every other bot in the ecosystem calls them commands. The July rename to "Expressions" was copy-only and the code never followed it.
+
+- **Three renames, because the name was occupied.** `bot_expressions` becomes `bot_commands`; the table that held it, a per-user registry of which built-in verbs are on and at what tier, becomes `bot_builtins`. The wire had already made this call: the command map has emitted `type: "builtin"` for those rows since the day it was written.
+- **Both table renames run in one migration** because they are a swap and one name has to be vacated before the other can take it. Postgres does DDL transactionally, so it is atomic.
+- **Index and constraint names move too.** They do not follow a table rename in Postgres and they share one schema-wide namespace, so leaving them would have meant a future `unique(['user_id', 'command'])` on `bot_commands` colliding with the identically named constraint still sitting on `bot_builtins`.
+- **`expression` became `reply`**, which is what that column holds: the templated text the bot speaks. `hidden_from_commands` became `hidden`, since on a table now called `bot_commands` the old name read circular. Aliases carry the same toggle and the docs promise the two vocabularies match one for one, so it moved with them.
+- **`tts_expression` and `bot_message_expression` became `tts_message` and `chat_message`.** Neither was ever a formula. Both hold a templated string an alert renders and sends somewhere.
+- **`ExpressionFormatter` became `PipeFormatter`** and moved to `App\Services\Messages` alongside `AlertMessageRenderer`. It formats `[[[tag|round:2]]]`, has nothing to do with jsep, and was the last thing standing between this change and the sentence being true.
+- **"Expression" now means a jsep formula in an Expression Control. Nothing else, anywhere.**
+
+**The bot deploys from its own repo, so this ships in three steps.** The command map's `type` discriminator goes from `expression` to `custom`, and the fire endpoint moves from `/expressions/fire` to `/commands/fire`. Both are cross-repo contracts, and the two sides deploy independently.
+
+- **The bot ships first**, accepting `custom` and `expression` alike. If that branch is not live before the app starts emitting the new name, every custom command in every channel goes quiet in the gap.
+- **The old fire path stays as a deprecated alias** so the URL switch can happen on the bot's own schedule instead of during the same deploy window. There is a test pinning it, to be deleted alongside the route.
+- **`/help/bot/expressions` 301s to `/help/bot/commands`**, the `.md` variant included, because llms.txt named that exact URL and crawlers hold it.
+- **`expressions` stays as a search keyword in the command palette.** A retired name is exactly the thing search should still answer to.
+
+Migrations and past changelogs were left alone. They are the record of what was true when they ran, and rewriting them would have produced a history that never happened. The one design doc that got swept up was reverted for the same reason.
+
 ## August 15th, 2026 - fix(templates): a tag typed in chat could resolve inside a foreach
 
 Overlay data is not trustworthy, and the rule that keeps that survivable is old and well documented: a value the renderer substitutes is data, and is never re-read as template source. `tagParser.ts` has carried that note since day one, calling out donor names and chat messages containing `[[[c:foo]]]` as exactly the thing it exists to stop.

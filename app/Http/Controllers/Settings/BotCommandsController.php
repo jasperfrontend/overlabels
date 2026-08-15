@@ -3,23 +3,23 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Models\BotBuiltin;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Models\OverlayControl;
+use App\Services\Bot\BotCommandResolver;
+use App\Services\Bot\BotCommandValidator;
 use App\Services\Bot\BotCounterService;
-use App\Services\Bot\BotExpressionResolver;
-use App\Services\Bot\BotExpressionValidator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class BotExpressionsController extends Controller
+class BotCommandsController extends Controller
 {
     public function __construct(
-        private readonly BotExpressionResolver $resolver,
-        private readonly BotExpressionValidator $validator,
+        private readonly BotCommandResolver $resolver,
+        private readonly BotCommandValidator $validator,
         private readonly BotCounterService $counters,
     ) {}
 
@@ -27,52 +27,52 @@ class BotExpressionsController extends Controller
     {
         $user = $request->user();
 
-        $expressions = BotExpression::where('user_id', $user->id)
+        $commands = BotCommand::where('user_id', $user->id)
             ->orderBy('command')
             ->get()
-            ->map(fn (BotExpression $e) => $this->serialize($e))
+            ->map(fn (BotCommand $c) => $this->serialize($c))
             ->all();
 
-        return Inertia::render('settings/bot/expressions/Index', [
-            'expressions' => $expressions,
+        return Inertia::render('settings/bot/commands/Index', [
+            'commands' => $commands,
             'botEnabled' => (bool) $user->bot_enabled,
         ]);
     }
 
     public function create(Request $request): Response
     {
-        return Inertia::render('settings/bot/expressions/Edit', [
-            'expression' => null,
-            'permissionLevels' => BotCommand::PERMISSION_LEVELS,
-            'reservedCommands' => array_column(BotCommand::DEFAULTS, 'command'),
+        return Inertia::render('settings/bot/commands/Edit', [
+            'command' => null,
+            'permissionLevels' => BotBuiltin::PERMISSION_LEVELS,
+            'reservedCommands' => array_column(BotBuiltin::DEFAULTS, 'command'),
             'availableControlKeys' => $this->availableControlKeys($request->user()->id),
         ]);
     }
 
-    public function edit(Request $request, BotExpression $botExpression): Response
+    public function edit(Request $request, BotCommand $botCommand): Response
     {
-        abort_unless($botExpression->user_id === $request->user()->id, 404);
+        abort_unless($botCommand->user_id === $request->user()->id, 404);
 
-        return Inertia::render('settings/bot/expressions/Edit', [
-            'expression' => $this->serialize($botExpression),
-            'permissionLevels' => BotCommand::PERMISSION_LEVELS,
-            'reservedCommands' => array_column(BotCommand::DEFAULTS, 'command'),
+        return Inertia::render('settings/bot/commands/Edit', [
+            'command' => $this->serialize($botCommand),
+            'permissionLevels' => BotBuiltin::PERMISSION_LEVELS,
+            'reservedCommands' => array_column(BotBuiltin::DEFAULTS, 'command'),
             'availableControlKeys' => $this->availableControlKeys($request->user()->id),
         ]);
     }
 
-    private function serialize(BotExpression $e): array
+    private function serialize(BotCommand $c): array
     {
         return [
-            'id' => $e->id,
-            'command' => $e->command,
-            'permission_level' => $e->permission_level,
-            'cooldown_seconds' => $e->cooldown_seconds,
-            'expression' => $e->expression,
-            'enabled' => $e->enabled,
-            'hidden_from_commands' => $e->hidden_from_commands,
-            'last_fired_at' => $e->last_fired_at?->toIso8601String(),
-            'destroy_at' => $e->destroy_at?->toIso8601String(),
+            'id' => $c->id,
+            'command' => $c->command,
+            'permission_level' => $c->permission_level,
+            'cooldown_seconds' => $c->cooldown_seconds,
+            'reply' => $c->reply,
+            'enabled' => $c->enabled,
+            'hidden' => $c->hidden,
+            'last_fired_at' => $c->last_fired_at?->toIso8601String(),
+            'destroy_at' => $c->destroy_at?->toIso8601String(),
         ];
     }
 
@@ -81,53 +81,53 @@ class BotExpressionsController extends Controller
         $data = $this->validatePayload($request);
         $user = $request->user();
 
-        BotExpression::create([
+        BotCommand::create([
             'user_id' => $user->id,
             'command' => $data['command'],
             'permission_level' => $data['permission_level'],
             'cooldown_seconds' => $data['cooldown_seconds'],
-            'expression' => $data['expression'],
+            'reply' => $data['reply'],
             'enabled' => $data['enabled'],
-            'hidden_from_commands' => $data['hidden_from_commands'],
+            'hidden' => $data['hidden'],
             'destroy_at' => $this->destroyAtFromHours($data['destroy_hours'] ?? null),
         ]);
 
         // Any counter: tag names a counter control; create the ones that don't
         // exist yet so they show up in the UI immediately. Idempotent, and
         // bump() provisions again at fire time, so this is convenience only.
-        $this->counters->provision($user, $data['expression']);
+        $this->counters->provision($user, $data['reply']);
 
-        return redirect()->route('settings.bot.expressions.index');
+        return redirect()->route('settings.bot.commands.index');
     }
 
-    public function update(Request $request, BotExpression $botExpression): RedirectResponse
+    public function update(Request $request, BotCommand $botCommand): RedirectResponse
     {
-        abort_unless($botExpression->user_id === $request->user()->id, 404);
+        abort_unless($botCommand->user_id === $request->user()->id, 404);
 
-        $data = $this->validatePayload($request, $botExpression);
+        $data = $this->validatePayload($request, $botCommand);
 
-        $botExpression->update([
+        $botCommand->update([
             'command' => $data['command'],
             'permission_level' => $data['permission_level'],
             'cooldown_seconds' => $data['cooldown_seconds'],
-            'expression' => $data['expression'],
+            'reply' => $data['reply'],
             'enabled' => $data['enabled'],
-            'hidden_from_commands' => $data['hidden_from_commands'],
+            'hidden' => $data['hidden'],
             'destroy_at' => $this->destroyAtFromHours($data['destroy_hours'] ?? null),
         ]);
 
-        $this->counters->provision($request->user(), $data['expression']);
+        $this->counters->provision($request->user(), $data['reply']);
 
-        return redirect()->route('settings.bot.expressions.index');
+        return redirect()->route('settings.bot.commands.index');
     }
 
-    public function destroy(Request $request, BotExpression $botExpression): RedirectResponse
+    public function destroy(Request $request, BotCommand $botCommand): RedirectResponse
     {
-        abort_unless($botExpression->user_id === $request->user()->id, 404);
+        abort_unless($botCommand->user_id === $request->user()->id, 404);
 
-        $botExpression->delete();
+        $botCommand->delete();
 
-        return redirect()->route('settings.bot.expressions.index');
+        return redirect()->route('settings.bot.commands.index');
     }
 
     /**
@@ -138,7 +138,7 @@ class BotExpressionsController extends Controller
     public function preview(Request $request)
     {
         $data = $request->validate([
-            'expression' => 'required|string|max:5000',
+            'reply' => 'required|string|max:5000',
         ]);
 
         $stubContext = [
@@ -156,7 +156,7 @@ class BotExpressionsController extends Controller
 
         $resolved = $this->resolver->resolve(
             $request->user(),
-            $data['expression'],
+            $data['reply'],
             $stubContext,
             dryRun: true,
         );
@@ -167,7 +167,7 @@ class BotExpressionsController extends Controller
         ]);
     }
 
-    private function validatePayload(Request $request, ?BotExpression $existing = null): array
+    private function validatePayload(Request $request, ?BotCommand $existing = null): array
     {
         return $this->validator->validateAndNormalize($request->user()->id, $request->all(), $existing);
     }
@@ -175,8 +175,8 @@ class BotExpressionsController extends Controller
     /**
      * Turn the form's "hours from now" timer into an absolute destroy_at,
      * mirroring the chat-admin `destroy` option. Null or 0 clears the timer.
-     * The countdown always restarts from now, so re-saving an expression is a
-     * free extend/shorten (or cancel) - identical to re-running the command.
+     * The countdown always restarts from now, so re-saving a command is a
+     * free extend/shorten (or cancel) - identical to re-running it from chat.
      */
     private function destroyAtFromHours(?int $hours): ?Carbon
     {

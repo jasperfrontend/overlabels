@@ -10,7 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Sibling of BotExpressionController and BotRecipeTriggerController. The
+ * Sibling of BotCommandController and BotRecipeTriggerController. The
  * bot POSTs here when a chatter fires a command flagged in the synced
  * commandMap as type=list_append. We gate (enabled / permission /
  * cooldown), then call ListAppendService::fire which resolves the

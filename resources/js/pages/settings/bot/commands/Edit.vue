@@ -12,26 +12,26 @@ import { Textarea } from '@/components/ui/textarea';
 import { type BreadcrumbItem } from '@/types';
 import { ChevronLeft, Sparkles, AlertTriangle, Clock } from '@lucide/vue';
 
-interface BotExpression {
+interface BotCommand {
   id: number;
   command: string;
   permission_level: string;
   cooldown_seconds: number;
-  expression: string;
+  reply: string;
   enabled: boolean;
-  hidden_from_commands: boolean;
+  hidden: boolean;
   last_fired_at: string | null;
   destroy_at: string | null;
 }
 
 const props = defineProps<{
-  expression: BotExpression | null;
+  command: BotCommand | null;
   permissionLevels: string[];
   reservedCommands: string[];
   availableControlKeys: string[];
 }>();
 
-const isEdit = computed(() => props.expression !== null);
+const isEdit = computed(() => props.command !== null);
 
 // The destroy timer is stored as an absolute timestamp but authored as
 // "hours from now" (mirroring the !ol cmd options ... destroy <hours> chat
@@ -63,30 +63,30 @@ function expiresIn(iso: string): string {
 const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Integrations', href: '/settings/integrations' },
-  { title: 'Bot expressions', href: '/settings/bot/expressions' },
+  { title: 'Bot commands', href: '/settings/bot/commands' },
   {
-    title: isEdit.value ? `Edit !${props.expression?.command}` : 'New expression',
+    title: isEdit.value ? `Edit !${props.command?.command}` : 'New command',
     href: '#',
   },
 ];
 
 const form = useForm({
-  command: props.expression?.command ?? '',
-  permission_level: props.expression?.permission_level ?? 'everyone',
-  cooldown_seconds: props.expression?.cooldown_seconds ?? 0,
-  expression: props.expression?.expression ?? 'Hi [[[bot:from_user|mention]]]!',
-  enabled: props.expression?.enabled ?? true,
-  hidden_from_commands: props.expression?.hidden_from_commands ?? false,
-  destroy_hours: remainingHours(props.expression?.destroy_at),
+  command: props.command?.command ?? '',
+  permission_level: props.command?.permission_level ?? 'everyone',
+  cooldown_seconds: props.command?.cooldown_seconds ?? 0,
+  reply: props.command?.reply ?? 'Hi [[[bot:from_user|mention]]]!',
+  enabled: props.command?.enabled ?? true,
+  hidden: props.command?.hidden ?? false,
+  destroy_hours: remainingHours(props.command?.destroy_at),
 });
 
 function submit() {
   if (isEdit.value) {
-    form.patch(`/settings/bot/expressions/${props.expression!.id}`, {
+    form.patch(`/settings/bot/commands/${props.command!.id}`, {
       preserveScroll: true,
     });
   } else {
-    form.post('/settings/bot/expressions', {
+    form.post('/settings/bot/commands', {
       preserveScroll: true,
     });
   }
@@ -102,10 +102,12 @@ let previewTimer: ReturnType<typeof setTimeout> | null = null;
 // The auto-update resolves on every keystroke (debounced), errors and all,
 // which some authors find distracting while mid-edit. Let them switch it off
 // and render on demand instead. The choice is per-browser so it sticks across
-// expressions and sessions; default on so existing behaviour is unchanged.
+// commands and sessions; default on so existing behaviour is unchanged.
+// The storage key keeps its old wording deliberately: a renamed key reads as
+// "no preference set" and would silently flip every existing author back on.
 const LIVE_PREVIEW_KEY = 'ol:bot-expr-live-preview';
 const livePreview = ref(readLivePreviewPref());
-// True when the expression changed since the last render while live preview
+// True when the reply changed since the last render while live preview
 // is off, so the shown output is stale and worth a manual refresh.
 const previewStale = ref(false);
 
@@ -120,7 +122,7 @@ function readLivePreviewPref(): boolean {
 async function refreshPreview() {
   previewStale.value = false;
 
-  if (!form.expression) {
+  if (!form.reply) {
     previewOutput.value = '';
     previewLength.value = 0;
     previewError.value = null;
@@ -131,8 +133,8 @@ async function refreshPreview() {
   previewError.value = null;
 
   try {
-    const { data } = await axios.post('/settings/bot/expressions/preview', {
-      expression: form.expression,
+    const { data } = await axios.post('/settings/bot/commands/preview', {
+      reply: form.reply,
     });
     previewOutput.value = data.resolved;
     previewLength.value = data.length;
@@ -147,7 +149,7 @@ async function refreshPreview() {
 refreshPreview();
 
 watch(
-  () => form.expression,
+  () => form.reply,
   () => {
     if (!livePreview.value) {
       previewStale.value = true;
@@ -175,7 +177,7 @@ const charsLeft = computed(() => 500 - previewLength.value);
 
 function insertSnippet(snippet: string) {
   // Append at end if no selection.
-  form.expression = (form.expression ?? '') + snippet;
+  form.reply = (form.reply ?? '') + snippet;
 }
 
 // Slash commands never make it out of the bot: the Send Chat Message API
@@ -183,27 +185,24 @@ function insertSnippet(snippet: string) {
 // command) and posts the rest as plain chat. The server validator rejects
 // these too - this just warns the author live, before they submit, rather
 // than bouncing them off a save error.
-const startsWithSlash = computed(() => (form.expression ?? '').trimStart().startsWith('/'));
+const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith('/'));
 </script>
 
 <template>
   <Head>
-    <title>{{ isEdit ? `Edit !${props.expression?.command}` : 'New bot expression' }} - Overlabels</title>
+    <title>{{ isEdit ? `Edit !${props.command?.command}` : 'New bot command' }} - Overlabels</title>
   </Head>
 
   <AppLayout :breadcrumbs="breadcrumbItems">
     <SettingsLayout>
       <div class="space-y-6">
         <div>
-          <Link
-            href="/settings/bot/expressions"
-            class="mb-2 inline-flex cursor-pointer items-center text-sm text-foreground/70 hover:text-foreground"
-          >
+          <Link href="/settings/bot/commands" class="mb-2 inline-flex cursor-pointer items-center text-sm text-foreground/70 hover:text-foreground">
             <ChevronLeft class="mr-1 size-4" />
-            Back to bot expressions
+            Back to bot commands
           </Link>
           <HeadingSmall
-            :title="isEdit ? `Edit !${props.expression?.command}` : 'New bot expression'"
+            :title="isEdit ? `Edit !${props.command?.command}` : 'New bot command'"
             description="Build a chat command. The bot replies with whatever you template here."
           />
         </div>
@@ -223,20 +222,20 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
             </p>
           </div>
 
-          <!-- Expression -->
+          <!-- Reply -->
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <Label for="expression">Expression</Label>
+              <Label for="reply">Reply</Label>
               <span class="text-xs" :class="charsLeft < 0 ? 'text-rose-400' : 'text-foreground/60'"> {{ previewLength }} / 500 chars </span>
             </div>
             <Textarea
-              id="expression"
-              v-model="form.expression"
+              id="reply"
+              v-model="form.reply"
               :rows="4"
               class="font-mono text-sm"
               placeholder="Hi [[[bot:from_user]]], the count is [[[c:my_counter]]]"
             />
-            <p v-if="form.errors.expression" class="text-sm text-rose-400">{{ form.errors.expression }}</p>
+            <p v-if="form.errors.reply" class="text-sm text-rose-400">{{ form.errors.reply }}</p>
             <div v-if="startsWithSlash" class="flex items-start gap-2 rounded border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
               <AlertTriangle class="mt-0.5 size-4 shrink-0" />
               <span>
@@ -400,9 +399,9 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
               Automatically deletes this command after a set number of whole hours (max 8760 = one year). Leave empty to keep it forever. Saving
               restarts the countdown from now.
             </p>
-            <p v-if="isEdit && props.expression?.destroy_at" class="inline-flex items-center gap-1 text-xs text-amber-400">
+            <p v-if="isEdit && props.command?.destroy_at" class="inline-flex items-center gap-1 text-xs text-amber-400">
               <Clock class="size-3" />
-              Currently self-destructs in {{ expiresIn(props.expression.destroy_at) }}
+              Currently self-destructs in {{ expiresIn(props.command.destroy_at) }}
             </p>
           </div>
 
@@ -412,15 +411,15 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
               <input type="checkbox" v-model="form.enabled" class="mt-1 size-4 cursor-pointer" />
               <div>
                 <p class="text-sm font-medium">Enabled</p>
-                <p class="text-xs text-foreground/60">Disabled expressions stay in your library but don't fire.</p>
+                <p class="text-xs text-foreground/60">Disabled commands stay in your library but don't fire.</p>
               </div>
             </label>
             <label class="flex cursor-pointer items-start gap-3">
-              <input type="checkbox" v-model="form.hidden_from_commands" class="mt-1 size-4 cursor-pointer" />
+              <input type="checkbox" v-model="form.hidden" class="mt-1 size-4 cursor-pointer" />
               <div>
                 <p class="text-sm font-medium">Hide from <code>!commands</code> listing</p>
                 <p class="text-xs text-foreground/60">
-                  When the bot eventually exposes a <code>!commands</code> meta-command, this expression won't be listed.
+                  When the bot eventually exposes a <code>!commands</code> meta-command, this command won't be listed.
                 </p>
               </div>
             </label>
@@ -429,10 +428,10 @@ const startsWithSlash = computed(() => (form.expression ?? '').trimStart().start
           <!-- Actions -->
           <div class="flex items-center justify-end gap-2 pt-2">
             <Button as-child variant="ghost" class="cursor-pointer">
-              <Link href="/settings/bot/expressions">Cancel</Link>
+              <Link href="/settings/bot/commands">Cancel</Link>
             </Button>
             <Button type="submit" :disabled="form.processing" class="cursor-pointer">
-              {{ isEdit ? 'Save changes' : 'Create expression' }}
+              {{ isEdit ? 'Save changes' : 'Create command' }}
             </Button>
           </div>
         </form>

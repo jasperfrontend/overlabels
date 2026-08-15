@@ -10,11 +10,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Sibling of BotExpressionController. The bot POSTs here when a chatter
+ * Sibling of BotCommandController. The bot POSTs here when a chatter
  * fires a command flagged in the synced commandMap as type=recipe_trigger.
  * We gate (enabled / permission / cooldown), then fire the picker. No
  * outbox row is written - recipe triggers are deliberately silent in chat,
- * per the producer/consumer split (announcements live in Bot Expressions).
+ * per the producer/consumer split (announcements live in Bot Commands).
  */
 class BotRecipeTriggerController extends Controller
 {

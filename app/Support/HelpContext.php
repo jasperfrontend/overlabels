@@ -113,7 +113,7 @@ final class HelpContext
                     'exact' => $exact,
                     'constraints' => count($entry['constraints']),
                     // A longer literal prefix is a more deliberate wildcard:
-                    // settings.bot.expressions.* beats settings.bot.*
+                    // settings.bot.commands.* beats settings.bot.*
                     'literal' => strlen(str_replace('*', '', $pattern)),
                 ];
 

@@ -67,8 +67,8 @@ resolution.** Expression Controls already do the second half today.
 | # | Location | Role | Pattern |
 |---|---|---|---|
 | 1 | `resources/js/utils/tagParser.ts:22` | Overlay render substitution | `/\[\[\[([\w.:\-]+)(?:\|([\w.:\- ]+))?(?:\s*\?\?\s*(.*?))?]]]/g` |
-| 2 | `app/Services/Bot/BotExpressionResolver.php:54` | Bot expression substitution | identical to #1 |
-| 3 | `app/Services/Expressions/AlertExpressionRenderer.php:40` | Alert expression substitution | identical to #1 |
+| 2 | `app/Services/Bot/BotCommandResolver.php:54` | Bot command substitution | identical to #1 |
+| 3 | `app/Services/Messages/AlertMessageRenderer.php:40` | Alert message substitution | identical to #1 |
 | 4 | `app/Models/OverlayTemplate.php:171` | Tag **extraction** for the data allowlist | `/\[\[\[([a-zA-Z0-9_.][a-zA-Z0-9_.:\-]*?)(?:\|[a-zA-Z0-9_.:% -]+)?(?:\s*\?\?\s*.*?)?]]]/` |
 | 5 | `app/Models/UserTemplate.php:89` | Legacy model | `/\[\[\[([^]]+)]]]/` |
 
@@ -127,9 +127,9 @@ own factory references the model); rewired anyway so no matcher in the codebase 
 Found while writing the tests for the fixes above, and the only divergence here with a user-visible
 failure rather than a silent one. The pipe character class includes a space (needed for
 `date:dd-MM-yyyy HH:mm`) and is greedy, so `[[[c:kofi:total|currency:EUR ?? none]]]` captures the pipe
-as `currency:EUR ` - with a trailing space. `ExpressionFormatter::apply()` in PHP has always called
+as `currency:EUR ` - with a trailing space. `PipeFormatter::apply()` in PHP has always called
 `trim()` and shrugs it off; the TypeScript `parsePipe()` did not, so the overlay renderer handed
-`Intl.NumberFormat` the currency code `"EUR "` and threw. **The same tag worked in a bot expression
+`Intl.NumberFormat` the currency code `"EUR "` and threw. **The same tag worked in a bot command
 and broke in an overlay.** Fixed twice over: the pipe may no longer end on whitespace, and
 `parsePipe()` now trims and lowercases like its PHP counterpart.
 
@@ -271,8 +271,8 @@ and `resources/js/utils/dsl.ts` compile identical patterns from it. Every former
 | Was | Now |
 |---|---|
 | `tagParser.ts` inline regex | `tagPattern()` |
-| `BotExpressionResolver::TAG_REGEX` | `Dsl::tagPattern()` |
-| `AlertExpressionRenderer::TAG_REGEX` | `Dsl::tagPattern()` |
+| `BotCommandResolver::TAG_REGEX` | `Dsl::tagPattern()` |
+| `AlertMessageRenderer::TAG_REGEX` | `Dsl::tagPattern()` |
 | `OverlayTemplate::extractTemplateTags` | `Dsl::tagKeyPattern()` |
 | `OverlayTemplate::extractConditionalTags` | `Dsl::conditionPattern()` |
 | `OverlayTemplate::detectRequiredServices` | `Dsl::tagKeyPattern()` + registry check |
@@ -313,7 +313,7 @@ Warnings (allow save, surface in editor):
    body falls out for free.
 6. Retire the five ad-hoc regexes onto the parser, one call site at a time.
 
-Steps 1-3 are independently useful. Step 5 is the item folded in from the Bot Expression backlog.
+Steps 1-3 are independently useful. Step 5 is the item folded in from the Bot Command backlog.
 
 ---
 

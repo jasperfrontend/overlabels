@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 /**
- * Sibling of BotExpressionController / BotRecipeTriggerController /
+ * Sibling of BotCommandController / BotRecipeTriggerController /
  * BotListAppenderController. The bot POSTs here when a chatter fires
  * the user's `!list` meta-command. We confirm the meta-command exists
  * and is enabled, hand the args + chatter badges to ListActionService,

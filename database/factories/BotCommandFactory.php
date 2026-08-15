@@ -2,16 +2,16 @@
 
 namespace Database\Factories;
 
-use App\Models\BotExpression;
+use App\Models\BotCommand;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<BotExpression>
+ * @extends Factory<BotCommand>
  */
-class BotExpressionFactory extends Factory
+class BotCommandFactory extends Factory
 {
-    protected $model = BotExpression::class;
+    protected $model = BotCommand::class;
 
     public function definition(): array
     {
@@ -20,9 +20,9 @@ class BotExpressionFactory extends Factory
             'command' => 'distance',
             'permission_level' => 'everyone',
             'cooldown_seconds' => 0,
-            'expression' => 'Hello, [[[bot:from_user]]]!',
+            'reply' => 'Hello, [[[bot:from_user]]]!',
             'enabled' => true,
-            'hidden_from_commands' => false,
+            'hidden' => false,
             'last_fired_at' => null,
         ];
     }

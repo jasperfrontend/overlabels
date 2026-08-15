@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * yet. Missing one brings back exactly the bug this fixes, in one command type
  * only, which is the kind of thing that goes unnoticed for months.
  *
- * `saved` covers create and update: an expression that is renamed, disabled or
+ * `saved` covers create and update: a command that is renamed, disabled or
  * has its permission level changed moves the map just as much as a new one.
  */
 class BotCommandMapObserver

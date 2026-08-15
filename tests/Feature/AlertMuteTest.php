@@ -141,7 +141,7 @@ test('session mute endpoint requires auth', function () {
 test('a live external event fires no alert and no bot message while muted, but is still recorded', function () {
     $user = muteTestUser();
     $alertTemplate = muteTestAlertTemplate($user);
-    $alertTemplate->update(['bot_message_expression' => 'Thanks [[[event.from_name]]]!']);
+    $alertTemplate->update(['chat_message' => 'Thanks [[[event.from_name]]]!']);
     $user->update(['bot_enabled' => true]);
     $integration = muteTestKofiPipeline($user, $alertTemplate);
 

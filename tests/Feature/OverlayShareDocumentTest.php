@@ -328,7 +328,7 @@ it('describes alert behaviour and the author triggers', function () {
     $template = shareTemplate([
         'type' => 'alert',
         'html' => '<div>[[[event.user_name]]] cheered [[[event.bits]]]</div>',
-        'tts_expression' => 'Thanks [[[event.user_name]]]',
+        'tts_message' => 'Thanks [[[event.user_name]]]',
         'tts_delay_ms' => 500,
     ], $owner);
 

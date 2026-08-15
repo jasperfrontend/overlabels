@@ -8,8 +8,8 @@ use App\Models\ExternalEventTemplateMapping;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Models\User;
-use App\Services\Expressions\AlertExpressionRenderer;
 use App\Services\HtmlSanitizationService;
+use App\Services\Messages\AlertMessageRenderer;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
 
 uses(DatabaseTransactions::class);
 
-function makeUserWithAlertTemplate(?string $ttsExpression = null): array
+function makeUserWithAlertTemplate(?string $ttsMessage = null): array
 {
     $user = User::factory()->create(['twitch_id' => (string) fake()->unique()->randomNumber(9)]);
 
@@ -26,7 +26,7 @@ function makeUserWithAlertTemplate(?string $ttsExpression = null): array
         'fork_of_id' => null,
         'type' => 'alert',
         'slug' => 'alert-'.fake()->unique()->lexify('????????'),
-        'tts_expression' => $ttsExpression,
+        'tts_message' => $ttsMessage,
     ]);
 
     ExternalEventTemplateMapping::create([
@@ -53,7 +53,7 @@ function makeKofiDonationEvent(User $user, array $tags): ExternalEvent
     ]);
 }
 
-test('AlertTriggered carries rendered tts_text when tts_expression is set', function () {
+test('AlertTriggered carries rendered tts_text when tts_message is set', function () {
     Event::fake([AlertTriggered::class]);
 
     [$user] = makeUserWithAlertTemplate(
@@ -72,7 +72,7 @@ test('AlertTriggered carries rendered tts_text when tts_expression is set', func
     });
 });
 
-test('AlertTriggered ships null tts_text when tts_expression is null', function () {
+test('AlertTriggered ships null tts_text when tts_message is null', function () {
     Event::fake([AlertTriggered::class]);
 
     [$user] = makeUserWithAlertTemplate(null);
@@ -86,7 +86,7 @@ test('AlertTriggered ships null tts_text when tts_expression is null', function 
     });
 });
 
-test('AlertTriggered ships null tts_text when expression renders to empty string', function () {
+test('AlertTriggered ships null tts_text when tts_message renders to empty string', function () {
     Event::fake([AlertTriggered::class]);
 
     // Only references a tag that's not in the payload - resolves to empty
@@ -210,7 +210,7 @@ test('AlertTriggered ships tts_delay_ms from the alert template', function () {
         'fork_of_id' => null,
         'type' => 'alert',
         'slug' => 'alert-'.fake()->unique()->lexify('????????'),
-        'tts_expression' => 'Hello [[[event.from_name]]]',
+        'tts_message' => 'Hello [[[event.from_name]]]',
         'tts_delay_ms' => 2500,
     ]);
 
@@ -481,12 +481,12 @@ test('TtsAudioReady ships null target_overlay_slugs when the alert targets all o
 
 test('alert renderer fills an absent value with its default, and a present value ignores it', function () {
     $user = User::factory()->create();
-    $renderer = app(AlertExpressionRenderer::class);
-    $expr = 'thanks [[[event.user_name ?? a kind stranger]]]';
+    $renderer = app(AlertMessageRenderer::class);
+    $command = 'thanks [[[event.user_name ?? a kind stranger]]]';
 
     // Absent -> default renders; present -> default ignored (absence backstop).
-    expect($renderer->renderMessage($user, $expr, []))
+    expect($renderer->renderMessage($user, $command, []))
         ->toBe('thanks a kind stranger')
-        ->and($renderer->renderMessage($user, $expr, ['event.user_name' => 'Alice']))
+        ->and($renderer->renderMessage($user, $command, ['event.user_name' => 'Alice']))
         ->toBe('thanks Alice');
 });

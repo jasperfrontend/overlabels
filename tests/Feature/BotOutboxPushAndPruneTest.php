@@ -2,9 +2,9 @@
 
 use App\Events\BotOutboxPending;
 use App\Models\BotChatOutbox;
-use App\Models\BotExpression;
+use App\Models\BotCommand;
 use App\Models\User;
-use App\Services\Bot\BotExpressionService;
+use App\Services\Bot\BotCommandService;
 use App\Services\TwitchApiService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -55,17 +55,17 @@ it('nudges the bot the moment a message is queued', function () {
 
 it('nudges the bot when a chat command produces a reply', function () {
     $user = outboxUser();
-    $expression = BotExpression::create([
+    $command = BotCommand::create([
         'user_id' => $user->id, 'command' => 'wins', 'permission_level' => 'everyone',
-        'cooldown_seconds' => 0, 'expression' => 'won [[[counter:wins]]] times',
-        'enabled' => true, 'hidden_from_commands' => false,
+        'cooldown_seconds' => 0, 'reply' => 'won [[[counter:wins]]] times',
+        'enabled' => true, 'hidden' => false,
     ]);
     app()->forgetScopedInstances();
 
     Event::fake([BotOutboxPending::class]);
 
     // The end-to-end path a chatter actually triggers.
-    $message = app(BotExpressionService::class)->fire($expression, []);
+    $message = app(BotCommandService::class)->fire($command, []);
 
     expect($message)->toBe('won 1 times');
     Event::assertDispatched(BotOutboxPending::class);

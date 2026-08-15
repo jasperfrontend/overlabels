@@ -19,12 +19,12 @@ use Illuminate\Database\Eloquent\Collection;
  * together, which is the thing a chat-only counter cannot do.
  *
  * WHERE THE INCREMENT LIVES MATTERS. bump() is called from
- * BotExpressionService::fire() - before the resolver runs and outside it
+ * BotCommandService::fire() - before the resolver runs and outside it
  * entirely. The resolver stays a pure read, so:
  *   - the builder's dry-run preview and the validator never mutate anything,
  *   - a tag used twice in one message still counts once (keys are deduped),
  *   - `[[[counter:wins]]]` reads the POST-increment value, like SE's ${count}.
- * Do not move the increment into BotExpressionResolver::lookup().
+ * Do not move the increment into BotCommandResolver::lookup().
  */
 class BotCounterService
 {
@@ -32,19 +32,19 @@ class BotCounterService
     private const array NUMERIC_TYPES = ['number', 'counter'];
 
     /**
-     * Create any counter control named by $expression that does not exist yet.
+     * Create any counter control named by $reply that does not exist yet.
      *
      * Idempotent, and called on every save rather than only the first, for the
      * same reason integration provisioning is (see DonationIntegrationController):
-     * an expression that gains a counter later picks it up on the next edit.
+     * a command that gains a counter later picks it up on the next edit.
      *
      * @return array<int,string> Keys actually created, for the chat reply.
      */
-    public function provision(User $user, string $expression): array
+    public function provision(User $user, string $reply): array
     {
         $created = [];
 
-        foreach (BotTags::counterKeys($expression) as $key) {
+        foreach (BotTags::counterKeys($reply) as $key) {
             if (! BotTags::isValidCounterKey($key)) {
                 continue;
             }
@@ -77,21 +77,21 @@ class BotCounterService
     }
 
     /**
-     * Increment every counter named by $expression by one and broadcast each
+     * Increment every counter named by $reply by one and broadcast each
      * new value, so overlays update in the same instant chat does.
      *
      * Provisions first, so a counter deleted from the UI after the command was
      * written silently comes back instead of breaking the command.
      */
-    public function bump(User $user, string $expression): void
+    public function bump(User $user, string $reply): void
     {
-        $keys = BotTags::counterKeys($expression);
+        $keys = BotTags::counterKeys($reply);
 
         if ($keys === []) {
             return;
         }
 
-        $this->provision($user, $expression);
+        $this->provision($user, $reply);
 
         foreach ($keys as $key) {
             if (! BotTags::isValidCounterKey($key)) {
@@ -142,16 +142,16 @@ class BotCounterService
 
     /**
      * Types of any existing non-source-managed controls for each counter key
-     * in $expression, keyed by key. Used by the validator to refuse a counter
+     * in $reply, keyed by key. Used by the validator to refuse a counter
      * tag that points at, say, an existing text control.
      *
      * @return array<string,string> key => the first conflicting control's type
      */
-    public function conflictingTypes(User $user, string $expression): array
+    public function conflictingTypes(User $user, string $reply): array
     {
         $conflicts = [];
 
-        foreach (BotTags::counterKeys($expression) as $key) {
+        foreach (BotTags::counterKeys($reply) as $key) {
             foreach ($this->controlsFor($user, $key) as $control) {
                 if (! in_array($control->type, self::NUMERIC_TYPES, true)) {
                     $conflicts[$key] = $control->type;

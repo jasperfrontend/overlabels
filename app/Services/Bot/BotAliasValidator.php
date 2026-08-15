@@ -3,8 +3,8 @@
 namespace App\Services\Bot;
 
 use App\Models\BotAlias;
+use App\Models\BotBuiltin;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
  * field-keyed messages on any failure.
  *
  * Rules enforced here that go beyond plain field validation:
- *  - command can't collide with builtins or the user's own expressions.
+ *  - command can't collide with builtins or the user's own commands.
  *  - target_template can't start with the alias's own command (no self-loop)
  *    nor with another alias for the same user (no alias->alias chains; the
  *    bot does one hop only).
@@ -26,7 +26,7 @@ use Illuminate\Validation\ValidationException;
 class BotAliasValidator
 {
     /**
-     * @param  array<string,mixed>  $input  Raw input (command, target_template, permission_level, cooldown_seconds, enabled, hidden_from_commands).
+     * @param  array<string,mixed>  $input  Raw input (command, target_template, permission_level, cooldown_seconds, enabled, hidden).
      * @param  BotAlias|null  $existing  Set for updates so the duplicate check ignores the row being edited.
      * @return array<string,mixed> Normalised payload ready to feed into BotAlias::create() / ::update().
      */
@@ -45,28 +45,28 @@ class BotAliasValidator
                 'max:200',
                 'regex:/^!?[a-zA-Z0-9_-]{1,30}(\s.*)?$/u',
             ],
-            'permission_level' => ['required', Rule::in(BotCommand::PERMISSION_LEVELS)],
+            'permission_level' => ['required', Rule::in(BotBuiltin::PERMISSION_LEVELS)],
             'cooldown_seconds' => ['required', 'integer', 'min:0', 'max:86400'],
             'enabled' => ['required', 'boolean'],
-            'hidden_from_commands' => ['required', 'boolean'],
+            'hidden' => ['required', 'boolean'],
         ])->validate();
 
         $command = strtolower(ltrim($data['command'], '!'));
         $target = $this->normalizeTargetTemplate($data['target_template']);
 
-        $reservedBuiltins = array_column(BotCommand::DEFAULTS, 'command');
+        $reservedBuiltins = array_column(BotBuiltin::DEFAULTS, 'command');
         if (in_array($command, $reservedBuiltins, true)) {
             throw ValidationException::withMessages([
                 'command' => "'!$command' is a built-in bot command and can't be used as an alias name.",
             ]);
         }
 
-        $clashesWithExpression = BotExpression::where('user_id', $userId)
+        $clashesWithCommand = BotCommand::where('user_id', $userId)
             ->where('command', $command)
             ->exists();
-        if ($clashesWithExpression) {
+        if ($clashesWithCommand) {
             throw ValidationException::withMessages([
-                'command' => "You already have an expression for '!$command'. Pick a different alias name.",
+                'command' => "You already have a command for '!$command'. Pick a different alias name.",
             ]);
         }
 

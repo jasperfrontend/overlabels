@@ -8,7 +8,7 @@ use App\Models\BotChatOutbox;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\User;
 use App\Services\AlertMuteService;
-use App\Services\Expressions\AlertExpressionRenderer;
+use App\Services\Messages\AlertMessageRenderer;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -51,9 +51,9 @@ class ExternalAlertService
             : null;
 
         try {
-            $ttsText = app(AlertExpressionRenderer::class)->render(
+            $ttsText = app(AlertMessageRenderer::class)->render(
                 $user,
-                $template->tts_expression,
+                $template->tts_message,
                 $data,
             );
 
@@ -80,9 +80,9 @@ class ExternalAlertService
             // Optional bot chat message - queued for the bot to post. Gated on
             // bot_enabled so we never enqueue a message the bot can't deliver.
             if ($user->bot_enabled) {
-                $botMessage = app(AlertExpressionRenderer::class)->renderMessage(
+                $botMessage = app(AlertMessageRenderer::class)->renderMessage(
                     $user,
-                    $template->bot_message_expression,
+                    $template->chat_message,
                     $data,
                 );
                 if ($botMessage !== null) {

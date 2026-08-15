@@ -9,32 +9,32 @@ import { Plus, Pencil, Trash2, MessageSquare, Clock } from '@lucide/vue';
 import { useConfirm } from '@/composables/useConfirm';
 
 const { confirm } = useConfirm();
-interface BotExpression {
+interface BotCommand {
   id: number;
   command: string;
   permission_level: string;
   cooldown_seconds: number;
-  expression: string;
+  reply: string;
   enabled: boolean;
-  hidden_from_commands: boolean;
+  hidden: boolean;
   last_fired_at: string | null;
   destroy_at: string | null;
 }
 
 const props = defineProps<{
-  expressions: BotExpression[];
+  commands: BotCommand[];
   botEnabled: boolean;
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Integrations', href: '/settings/integrations' },
-  { title: 'Bot expressions', href: '/settings/bot/expressions' },
+  { title: 'Bot commands', href: '/settings/bot/commands' },
 ];
 
-async function deleteExpression(expression: BotExpression) {
-  if (!(await confirm({ message: `Delete "!${expression.command}"? This cannot be undone.`, confirmLabel: 'Delete' }))) return;
-  router.delete(`/settings/bot/expressions/${expression.id}`, {
+async function deleteCommand(command: BotCommand) {
+  if (!(await confirm({ message: `Delete "!${command.command}"? This cannot be undone.`, confirmLabel: 'Delete' }))) return;
+  router.delete(`/settings/bot/commands/${command.id}`, {
     preserveScroll: true,
   });
 }
@@ -64,21 +64,21 @@ function expiresIn(iso: string): string {
 
 <template>
   <Head>
-    <title>Bot expressions - Overlabels</title>
+    <title>Bot commands - Overlabels</title>
   </Head>
 
   <AppLayout :breadcrumbs="breadcrumbItems">
     <SettingsLayout>
       <div class="space-y-6">
         <HeadingSmall
-          title="Bot expressions"
+          title="Bot commands"
           description="Custom chat commands that read from your controls, Twitch data, and the chatter who fired them. The bot speaks the resolved string."
         />
         <div>
-          <a class="btn btn-primary" href="/help/bot/expressions" target="_blank">Learn how Bot Expressions work</a>
+          <a class="btn btn-primary" href="/help/bot/commands" target="_blank">Learn how Bot Commands work</a>
         </div>
         <div v-if="!botEnabled" class="rounded border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
-          <p class="text-foreground">The Overlabels bot isn't enabled yet. Bot expressions are saved here, but nothing fires until the bot is on.</p>
+          <p class="text-foreground">The Overlabels bot isn't enabled yet. Bot commands are saved here, but nothing fires until the bot is on.</p>
           <Link href="/settings/integrations" class="mt-2 inline-block cursor-pointer underline hover:text-amber-400">
             Enable it on the Integrations page →
           </Link>
@@ -86,56 +86,56 @@ function expiresIn(iso: string): string {
 
         <div class="flex justify-end">
           <Button as-child class="cursor-pointer">
-            <Link href="/settings/bot/expressions/create">
+            <Link href="/settings/bot/commands/create">
               <Plus class="mr-2 size-4" />
-              New expression
+              New command
             </Link>
           </Button>
         </div>
 
-        <div v-if="props.expressions.length === 0" class="rounded border border-sidebar-border p-8 text-center">
+        <div v-if="props.commands.length === 0" class="rounded border border-sidebar-border p-8 text-center">
           <MessageSquare class="mx-auto size-10 text-foreground/40" />
-          <p class="mt-4 text-foreground">You haven't authored any bot expressions yet.</p>
+          <p class="mt-4 text-foreground">You haven't authored any bot commands yet.</p>
           <p class="mt-1 text-sm text-foreground/70">Create one to let chatters fire a command and have the bot reply with a templated string.</p>
         </div>
 
         <div v-else class="space-y-3">
           <div
-            v-for="expression in props.expressions"
-            :key="expression.id"
+            v-for="command in props.commands"
+            :key="command.id"
             class="flex flex-col gap-3 rounded border border-sidebar-border p-4 sm:flex-row sm:items-start sm:justify-between"
           >
             <div class="min-w-0 flex-1 space-y-2">
               <div class="flex flex-wrap items-center gap-2">
-                <code class="rounded bg-muted px-2 py-0.5 font-mono text-sm">!{{ expression.command }}</code>
+                <code class="rounded bg-muted px-2 py-0.5 font-mono text-sm">!{{ command.command }}</code>
                 <span
                   class="rounded px-2 py-0.5 text-xs tracking-wide uppercase"
-                  :class="expression.enabled ? 'bg-emerald-500/15 text-emerald-400' : 'bg-foreground/10 text-foreground/60'"
+                  :class="command.enabled ? 'bg-emerald-500/15 text-emerald-400' : 'bg-foreground/10 text-foreground/60'"
                 >
-                  {{ expression.enabled ? 'enabled' : 'disabled' }}
+                  {{ command.enabled ? 'enabled' : 'disabled' }}
                 </span>
                 <span class="text-xs text-foreground/70">
-                  {{ expression.permission_level }}
+                  {{ command.permission_level }}
                 </span>
-                <span v-if="expression.cooldown_seconds > 0" class="text-xs text-foreground/70"> cooldown: {{ expression.cooldown_seconds }}s </span>
+                <span v-if="command.cooldown_seconds > 0" class="text-xs text-foreground/70"> cooldown: {{ command.cooldown_seconds }}s </span>
                 <span
-                  v-if="expression.destroy_at"
+                  v-if="command.destroy_at"
                   class="inline-flex items-center gap-1 rounded bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400"
-                  :title="`Self-destructs at ${formatDate(expression.destroy_at)}`"
+                  :title="`Self-destructs at ${formatDate(command.destroy_at)}`"
                 >
                   <Clock class="size-3" />
-                  self-destructs in {{ expiresIn(expression.destroy_at) }}
+                  self-destructs in {{ expiresIn(command.destroy_at) }}
                 </span>
               </div>
 
-              <p class="font-mono text-sm wrap-break-word text-foreground/80">{{ expression.expression }}</p>
+              <p class="font-mono text-sm wrap-break-word text-foreground/80">{{ command.reply }}</p>
 
-              <p class="text-xs text-foreground/60">Last fired: {{ formatDate(expression.last_fired_at) }}</p>
+              <p class="text-xs text-foreground/60">Last fired: {{ formatDate(command.last_fired_at) }}</p>
             </div>
 
             <div class="flex shrink-0 gap-2">
               <Button as-child variant="secondary" size="sm" class="cursor-pointer">
-                <Link :href="`/settings/bot/expressions/${expression.id}/edit`">
+                <Link :href="`/settings/bot/commands/${command.id}/edit`">
                   <Pencil class="mr-1 size-3.5" />
                   Edit
                 </Link>
@@ -144,7 +144,7 @@ function expiresIn(iso: string): string {
                 variant="ghost"
                 size="sm"
                 class="cursor-pointer text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
-                @click="deleteExpression(expression)"
+                @click="deleteCommand(command)"
               >
                 <Trash2 class="size-3.5" />
               </Button>

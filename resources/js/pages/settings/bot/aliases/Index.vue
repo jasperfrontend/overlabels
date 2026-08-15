@@ -16,7 +16,7 @@ interface BotAlias {
   permission_level: string;
   cooldown_seconds: number;
   enabled: boolean;
-  hidden_from_commands: boolean;
+  hidden: boolean;
   last_fired_at: string | null;
 }
 

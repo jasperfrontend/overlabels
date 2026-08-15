@@ -130,8 +130,11 @@ Route::get('/help/integration-presets', function () {
     return Inertia::render('help/IntegrationPresets');
 })->name('help.integration-presets');
 
-// Renamed from /help/bot/commands - keep old links and indexed URLs working.
-Route::redirect('/help/bot/commands', '/help/bot/expressions', 301);
+// This page was /help/bot/commands until Jul 2026, spent a month at
+// /help/bot/expressions, and is back. Both old URLs stay pointed at it - the
+// .md variant included, because llms.txt named it and crawlers have it.
+Route::redirect('/help/bot/expressions', '/help/bot/commands', 301);
+Route::redirect('/help/bot/expressions.md', '/help/bot/commands.md', 301);
 
 Route::get('/help/gamejam', function () {
     return Inertia::render('help/gamejam/Index');

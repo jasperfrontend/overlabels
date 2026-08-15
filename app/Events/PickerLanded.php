@@ -10,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * Fired (and broadcast) when a Picker primitive settles on a result.
- * Consumers: Alerts (via overlay renderer), Bot Expressions, future
+ * Consumers: Alerts (via overlay renderer), Bot Commands, future
  * Recipe install layer that mirrors the result into overlay_controls.
  *
  * Broadcast channel matches the user-scoped controls channel so the

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\BotAlias;
+use App\Models\BotBuiltin;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Services\Bot\BotAliasValidator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,7 +38,7 @@ class BotAliasesController extends Controller
     {
         return Inertia::render('settings/bot/aliases/Edit', [
             'alias' => null,
-            'permissionLevels' => BotCommand::PERMISSION_LEVELS,
+            'permissionLevels' => BotBuiltin::PERMISSION_LEVELS,
             'knownCommands' => $this->knownCommandsForUser($request->user()->id),
         ]);
     }
@@ -49,7 +49,7 @@ class BotAliasesController extends Controller
 
         return Inertia::render('settings/bot/aliases/Edit', [
             'alias' => $this->serialize($botAlias),
-            'permissionLevels' => BotCommand::PERMISSION_LEVELS,
+            'permissionLevels' => BotBuiltin::PERMISSION_LEVELS,
             'knownCommands' => $this->knownCommandsForUser($request->user()->id, exceptAliasId: $botAlias->id),
         ]);
     }
@@ -63,7 +63,7 @@ class BotAliasesController extends Controller
             'permission_level' => $a->permission_level,
             'cooldown_seconds' => $a->cooldown_seconds,
             'enabled' => $a->enabled,
-            'hidden_from_commands' => $a->hidden_from_commands,
+            'hidden' => $a->hidden,
             'last_fired_at' => $a->last_fired_at?->toIso8601String(),
         ];
     }
@@ -80,7 +80,7 @@ class BotAliasesController extends Controller
             'permission_level' => $data['permission_level'],
             'cooldown_seconds' => $data['cooldown_seconds'],
             'enabled' => $data['enabled'],
-            'hidden_from_commands' => $data['hidden_from_commands'],
+            'hidden' => $data['hidden'],
         ]);
 
         return redirect()->route('settings.bot.aliases.index');
@@ -98,7 +98,7 @@ class BotAliasesController extends Controller
             'permission_level' => $data['permission_level'],
             'cooldown_seconds' => $data['cooldown_seconds'],
             'enabled' => $data['enabled'],
-            'hidden_from_commands' => $data['hidden_from_commands'],
+            'hidden' => $data['hidden'],
         ]);
 
         return redirect()->route('settings.bot.aliases.index');
@@ -119,24 +119,24 @@ class BotAliasesController extends Controller
     }
 
     /**
-     * Surface a hint list to the editor UI: builtins + the user's own expressions.
+     * Surface a hint list to the editor UI: builtins + the user's own commands.
      * Aliases are excluded because chains aren't allowed.
      *
      * @return array<int,array{command:string,kind:string}>
      */
     private function knownCommandsForUser(int $userId, ?int $exceptAliasId = null): array
     {
-        $builtins = collect(BotCommand::DEFAULTS)->map(fn ($d) => [
+        $builtins = collect(BotBuiltin::DEFAULTS)->map(fn ($d) => [
             'command' => $d['command'],
             'kind' => 'builtin',
         ]);
 
-        $expressions = BotExpression::where('user_id', $userId)
+        $customCommands = BotCommand::where('user_id', $userId)
             ->orderBy('command')
             ->pluck('command')
-            ->map(fn (string $c) => ['command' => $c, 'kind' => 'expression']);
+            ->map(fn (string $c) => ['command' => $c, 'kind' => 'custom']);
 
-        return $builtins->merge($expressions)
+        return $builtins->merge($customCommands)
             ->sortBy('command')
             ->values()
             ->all();

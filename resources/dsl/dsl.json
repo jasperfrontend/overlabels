@@ -60,7 +60,7 @@
     "counter": {
       "resolvesAgainst": "controls",
       "scope": ["bot"],
-      "description": "Reads a counter control AND declares that firing this expression increments it by one. The increment happens once per fire in BotExpressionService, never inside the resolver, so the tag itself stays a pure read and preview never mutates. Use `c:<key>` to read the same counter without incrementing. Bot-only: nothing else in the DSL has an effect attached, and a render is not a fire."
+      "description": "Reads a counter control AND declares that firing this command increments it by one. The increment happens once per fire in BotCommandService, never inside the resolver, so the tag itself stays a pure read and preview never mutates. Use `c:<key>` to read the same counter without incrementing. Bot-only: nothing else in the DSL has an effect attached, and a render is not a fire."
     }
   },
 
