@@ -1,11 +1,11 @@
 <?php
 
+use App\Models\BotBuiltin;
 use App\Models\BotChatOutbox;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Models\OverlayControl;
 use App\Models\User;
-use App\Services\Bot\BotExpressionResolver;
+use App\Services\Bot\BotCommandResolver;
 use App\Services\TwitchApiService;
 use App\Services\TwitchTokenService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -61,7 +61,7 @@ function firePayload(array $overrides = []): array
 function fireRequest(array $payload): TestResponse
 {
     return test()->postJson(
-        '/api/internal/bot/expressions/fire',
+        '/api/internal/bot/commands/fire',
         $payload,
         ['X-Internal-Secret' => 'test-bot-secret'],
     );
@@ -72,13 +72,13 @@ function fireRequest(array $payload): TestResponse
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('fire returns 403 without secret', function () {
-    $this->postJson('/api/internal/bot/expressions/fire', firePayload())
+    $this->postJson('/api/internal/bot/commands/fire', firePayload())
         ->assertStatus(403);
 });
 
 test('fire returns 403 with wrong secret', function () {
     $this->postJson(
-        '/api/internal/bot/expressions/fire',
+        '/api/internal/bot/commands/fire',
         firePayload(),
         ['X-Internal-Secret' => 'wrong'],
     )->assertStatus(403);
@@ -94,24 +94,48 @@ test('fire returns channel_not_found when login does not match opted-in user', f
         ->assertJson(['queued' => false, 'reason' => 'channel_not_found']);
 });
 
-test('fire returns expression_not_found when command has no matching expression', function () {
+test('fire returns command_not_found when there is no matching command', function () {
     makeOptedInBotUser();
 
     fireRequest(firePayload())
         ->assertOk()
-        ->assertJson(['queued' => false, 'reason' => 'expression_not_found']);
+        ->assertJson(['queued' => false, 'reason' => 'command_not_found']);
+});
+
+// The bot deploys from a separate repo, so there is always a window where one
+// side has the rename and the other does not. A bot still POSTing to the old
+// path must keep firing commands, not silently stop. Delete this test in the
+// same change that deletes the alias route.
+test('the deprecated expressions/fire path still fires a command', function () {
+    $user = makeOptedInBotUser();
+
+    BotCommand::create([
+        'user_id' => $user->id,
+        'command' => 'hi',
+        'permission_level' => 'everyone',
+        'cooldown_seconds' => 0,
+        'reply' => 'hello there',
+        'enabled' => true,
+        'hidden' => false,
+    ]);
+
+    $this->postJson(
+        '/api/internal/bot/expressions/fire',
+        firePayload(['command' => 'hi']),
+        ['X-Internal-Secret' => 'test-bot-secret'],
+    )->assertOk()->assertJson(['queued' => true]);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Fire endpoint - gating
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('fire returns gate when expression is disabled', function () {
+test('fire returns gate when the command is disabled', function () {
     $user = makeOptedInBotUser();
-    BotExpression::factory()->create([
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'distance',
-        'expression' => 'hi',
+        'reply' => 'hi',
         'enabled' => false,
     ]);
 
@@ -124,10 +148,10 @@ test('fire returns gate when expression is disabled', function () {
 
 test('fire returns gate when chatter lacks permission', function () {
     $user = makeOptedInBotUser();
-    BotExpression::factory()->create([
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'distance',
-        'expression' => 'mods only',
+        'reply' => 'mods only',
         'permission_level' => 'moderator',
     ]);
 
@@ -136,12 +160,12 @@ test('fire returns gate when chatter lacks permission', function () {
         ->assertJson(['queued' => false, 'reason' => 'gate']);
 });
 
-test('fire allows subscriber for moderator-tier expression via tier ladder', function () {
+test('fire allows subscriber for moderator-tier command via tier ladder', function () {
     $user = makeOptedInBotUser();
-    BotExpression::factory()->create([
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'distance',
-        'expression' => 'allowed',
+        'reply' => 'allowed',
         'permission_level' => 'subscriber',
     ]);
 
@@ -152,10 +176,10 @@ test('fire allows subscriber for moderator-tier expression via tier ladder', fun
 
 test('fire respects cooldown for non-broadcaster', function () {
     $user = makeOptedInBotUser();
-    $expr = BotExpression::factory()->create([
+    $command = BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'distance',
-        'expression' => 'pong',
+        'reply' => 'pong',
         'cooldown_seconds' => 60,
         'last_fired_at' => Carbon::now()->subSeconds(10),
     ]);
@@ -167,10 +191,10 @@ test('fire respects cooldown for non-broadcaster', function () {
 
 test('fire bypasses cooldown for broadcaster', function () {
     $user = makeOptedInBotUser();
-    BotExpression::factory()->create([
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'distance',
-        'expression' => 'pong',
+        'reply' => 'pong',
         'cooldown_seconds' => 60,
         'last_fired_at' => Carbon::now()->subSeconds(10),
     ]);
@@ -186,10 +210,10 @@ test('fire bypasses cooldown for broadcaster', function () {
 
 test('fire resolves bot tags and writes to outbox', function () {
     $user = makeOptedInBotUser();
-    BotExpression::factory()->create([
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'shoutout',
-        'expression' => 'Hi [[[bot:from_user]]], shouting out [[[bot:args.0]]]!',
+        'reply' => 'Hi [[[bot:from_user]]], shouting out [[[bot:args.0]]]!',
     ]);
 
     fireRequest(firePayload([
@@ -220,10 +244,10 @@ test('fire resolves c tags from own controls', function () {
         'value' => '42',
         'source_managed' => false,
     ]);
-    BotExpression::factory()->create([
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'goal',
-        'expression' => 'goal is [[[c:goal_km]]]km',
+        'reply' => 'goal is [[[c:goal_km]]]km',
     ]);
 
     fireRequest(firePayload(['command' => 'goal']))
@@ -243,10 +267,10 @@ test('fire resolves c tags from service-managed controls via broadcastKey', func
         'value' => '7',
         'source_managed' => true,
     ]);
-    BotExpression::factory()->create([
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'donations',
-        'expression' => '[[[c:kofi:donations_received]]] donations today',
+        'reply' => '[[[c:kofi:donations_received]]] donations today',
     ]);
 
     fireRequest(firePayload(['command' => 'donations']))
@@ -256,24 +280,24 @@ test('fire resolves c tags from service-managed controls via broadcastKey', func
 
 test('fire stamps last_fired_at', function () {
     $user = makeOptedInBotUser();
-    $expr = BotExpression::factory()->create([
+    $command = BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'distance',
-        'expression' => 'hi',
+        'reply' => 'hi',
         'last_fired_at' => null,
     ]);
 
     fireRequest(firePayload())->assertOk();
 
-    expect($expr->fresh()->last_fired_at)->not->toBeNull();
+    expect($command->fresh()->last_fired_at)->not->toBeNull();
 });
 
 test('fire skips outbox write when resolved message is empty', function () {
     $user = makeOptedInBotUser();
-    BotExpression::factory()->create([
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'empty',
-        'expression' => '[[[c:nonexistent]]]',
+        'reply' => '[[[c:nonexistent]]]',
     ]);
 
     fireRequest(firePayload(['command' => 'empty']))
@@ -301,33 +325,33 @@ test('commands sync includes builtins with type=builtin', function () {
     }
 });
 
-test('commands sync merges expressions with type=expression', function () {
+test('commands sync merges custom commands with type=custom', function () {
     $user = makeOptedInBotUser('streamer_a');
-    BotExpression::factory()->create([
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'distance',
         'permission_level' => 'everyone',
-        'expression' => 'hi',
+        'reply' => 'hi',
     ]);
 
     $payload = $this->getJson('/api/internal/bot/commands', ['X-Internal-Secret' => 'test-bot-secret'])
         ->assertOk()
         ->json('channels.streamer_a');
 
-    $expressions = array_filter($payload, fn ($e) => $e['type'] === 'expression');
-    expect($expressions)->toHaveCount(1);
+    $custom = array_filter($payload, fn ($e) => $e['type'] === 'custom');
+    expect($custom)->toHaveCount(1);
 
-    $first = array_values($expressions)[0];
+    $first = array_values($custom)[0];
     expect($first['command'])->toBe('distance')
         ->and($first['permission_level'])->toBe('everyone');
 });
 
-test('commands sync excludes disabled expressions', function () {
+test('commands sync excludes disabled custom commands', function () {
     $user = makeOptedInBotUser('streamer_a');
-    BotExpression::factory()->create([
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'distance',
-        'expression' => 'hi',
+        'reply' => 'hi',
         'enabled' => false,
     ]);
 
@@ -335,17 +359,17 @@ test('commands sync excludes disabled expressions', function () {
         ->assertOk()
         ->json('channels.streamer_a');
 
-    $expressions = array_filter($payload, fn ($e) => $e['type'] === 'expression');
-    expect($expressions)->toBeEmpty();
+    $custom = array_filter($payload, fn ($e) => $e['type'] === 'custom');
+    expect($custom)->toBeEmpty();
 });
 
-test('commands sync drops expression that collides with builtin', function () {
+test('commands sync drops a custom command that collides with a builtin', function () {
     $user = makeOptedInBotUser('streamer_a');
-    // 'set' is a builtin (BotCommand::DEFAULTS).
-    BotExpression::factory()->create([
+    // 'set' is a builtin (BotBuiltin::DEFAULTS).
+    BotCommand::factory()->create([
         'user_id' => $user->id,
         'command' => 'set',
-        'expression' => 'should be ignored',
+        'reply' => 'should be ignored',
     ]);
 
     $payload = $this->getJson('/api/internal/bot/commands', ['X-Internal-Secret' => 'test-bot-secret'])
@@ -373,7 +397,7 @@ test('resolver applies number formatter with locale', function () {
         'source_managed' => false,
     ]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
     $output = $resolver->resolve($user, '[[[c:count|number]]]');
 
     // en-US locale defaults to comma thousands.
@@ -391,7 +415,7 @@ test('resolver applies distance formatter to convert meters', function () {
         'source_managed' => false,
     ]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[c:session_distance|distance:mi]]]'))->toBe('5.41')
         ->and($resolver->resolve($user, '[[[c:session_distance|distance:km]]]'))->toBe('8.7');
@@ -399,7 +423,7 @@ test('resolver applies distance formatter to convert meters', function () {
 
 test('resolver applies uppercase formatter', function () {
     $user = makeOptedInBotUser();
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
     $context = ['from_user' => 'alice'];
 
     expect($resolver->resolve($user, '[[[bot:from_user|uppercase]]]', $context))->toBe('ALICE');
@@ -407,7 +431,7 @@ test('resolver applies uppercase formatter', function () {
 
 test('resolver login formatter strips the @ for URLs, mention keeps it', function () {
     $user = makeOptedInBotUser();
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     // Chatter typed "!so @Johnny45" - args arrives with the @ already attached.
     $context = ['args.0' => '@Johnny45'];
@@ -421,7 +445,7 @@ test('resolver login formatter strips the @ for URLs, mention keeps it', functio
 
 test('mention formatter adds the @ when the chatter omitted it', function () {
     $user = makeOptedInBotUser();
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     // Chatter typed "!so Johnny45" - no @.
     $context = ['args.0' => 'Johnny45'];
@@ -434,7 +458,7 @@ test('mention formatter adds the @ when the chatter omitted it', function () {
 
 test('login formatter lowercases mixed-case names for clean URLs', function () {
     $user = makeOptedInBotUser();
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     // Chatter typed "!so @UserName56".
     $context = ['args.0' => '@UserName56'];
@@ -447,7 +471,7 @@ test('login formatter lowercases mixed-case names for clean URLs', function () {
 
 test('login and mention formatters leave empty args empty', function () {
     $user = makeOptedInBotUser();
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[bot:args.0|login]]]', []))->toBe('')
         ->and($resolver->resolve($user, '[[[bot:args.0|mention]]]', []))->toBe('');
@@ -477,7 +501,7 @@ test('resolver refreshes the token then resolves bare Twitch tags', function () 
         }
     });
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, 'latest: [[[followers_latest_user_name]]]'))->toBe('latest: Zoe');
 });
@@ -508,7 +532,7 @@ test('resolver leaves Twitch tags empty when the token cannot be refreshed', fun
         }
     });
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, 'latest: [[[followers_latest_user_name]]]'))->toBe('latest: ');
 });
@@ -532,7 +556,7 @@ test('resolver does not re-scan substituted values for tags (single-pass)', func
         'source_managed' => false,
     ]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
     $output = $resolver->resolve($user, '[[[c:sneaky]]]');
 
     // Single-pass: the literal "[[[c:goal_km]]]" survives in the output. If we
@@ -554,7 +578,7 @@ test('resolver dry run skips Twitch fetch', function () {
         }
     });
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
     $output = $resolver->resolve($user, 'followers: [[[followers_total]]]', [], dryRun: true);
 
     expect($output)->toBe('followers: ');
@@ -562,17 +586,17 @@ test('resolver dry run skips Twitch fetch', function () {
 
 test('resolver caps output at 500 characters', function () {
     $user = makeOptedInBotUser();
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
-    $longExpression = str_repeat('a', 600);
-    $output = $resolver->resolve($user, $longExpression);
+    $longReply = str_repeat('a', 600);
+    $output = $resolver->resolve($user, $longReply);
 
     expect(mb_strlen($output))->toBe(500);
 });
 
 test('default value fills an absent bot arg', function () {
     $user = makeOptedInBotUser();
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     // No args.0 in context -> the value is empty -> the default renders.
     expect($resolver->resolve($user, 'shoutout [[[bot:args.0 ?? everyone]]]', []))
@@ -581,7 +605,7 @@ test('default value fills an absent bot arg', function () {
 
 test('a present value ignores its default', function () {
     $user = makeOptedInBotUser();
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     // args.0 present -> default never fires (it backstops absence, not "wrong").
     expect($resolver->resolve($user, 'shoutout [[[bot:args.0 ?? everyone]]]', ['args.0' => 'bob']))
@@ -590,7 +614,7 @@ test('a present value ignores its default', function () {
 
 test('default is emitted verbatim and bypasses the pipe', function () {
     $user = makeOptedInBotUser();
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     // Control missing -> default '5000' renders literally, NOT '5,000': the
     // |number formatter applies to a present value, never to the default.
@@ -608,14 +632,14 @@ test('pipe still formats a present value that also has a default', function () {
         'source_managed' => false,
     ]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[c:count|number ?? 5000]]]'))->toBe('1,234,567');
 });
 
 test('default preserves literal punctuation and spaces', function () {
     $user = makeOptedInBotUser();
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     // '100% sure' would be mangled by a formatter or a restrictive charset;
     // the default is raw literal text, so it survives intact.
@@ -634,7 +658,7 @@ test('default text is never re-scanned as a tag (single-pass)', function () {
         'source_managed' => false,
     ]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
     $output = $resolver->resolve($user, '[[[bot:nope ?? [[[c:goal_km]]]]]]', []);
 
     // The tag-shaped default is emitted as inert text, never resolved to '999'.
@@ -652,7 +676,7 @@ test('an empty control value triggers its default', function () {
         'source_managed' => false,
     ]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[c:blank ?? nothing yet]]]'))->toBe('nothing yet');
 });

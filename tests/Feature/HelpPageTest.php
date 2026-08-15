@@ -11,7 +11,7 @@ use App\Support\HelpPage;
  */
 it('finds every shipped help page', function () {
     expect(HelpPage::all())->not->toBeEmpty()
-        ->and(HelpPage::all())->toContain('blocks', 'conditionals', 'bot/aliases', 'bot/expressions');
+        ->and(HelpPage::all())->toContain('blocks', 'conditionals', 'bot/aliases', 'bot/commands');
 });
 
 it('rejects a traversal attempt in the slug', function () {
@@ -75,7 +75,7 @@ it('serves the markdown twin as text/markdown', function () {
 
 it('serves markdown for nested bot pages too', function () {
     $this->get('/help/bot/aliases.md')->assertOk();
-    $this->get('/help/bot/expressions.md')->assertOk();
+    $this->get('/help/bot/commands.md')->assertOk();
 });
 
 it('serves the markdown byte-identically to the source file', function () {
@@ -93,7 +93,7 @@ it('keeps every original help route name working', function () {
         'help.expressions', 'help.math', 'help.blocks', 'help.builder',
         'help.manifesto', 'help.resources', 'help.for-creators', 'help.for-designers',
         'help.overlays-vs-alerts', 'help.lists-realtime', 'help.why-kofi',
-        'help.why-overlabels', 'help.bot.aliases', 'help.bot.expressions',
+        'help.why-overlabels', 'help.bot.aliases', 'help.bot.commands',
     ] as $name) {
         expect(route($name, absolute: false))->toBeString();
     }
@@ -142,8 +142,12 @@ it('makes every markdown page reachable from the index', function () {
     }
 });
 
-it('still redirects the old bot commands url', function () {
-    $this->get('/help/bot/commands')->assertRedirect('/help/bot/expressions');
+it('still redirects the bot expressions url this page briefly lived at', function () {
+    // The page was /help/bot/commands, moved to /help/bot/expressions in Jul
+    // 2026, and moved back. The .md variant matters as much as the HTML one:
+    // llms.txt named it, so crawlers hold that exact URL.
+    $this->get('/help/bot/expressions')->assertRedirect('/help/bot/commands');
+    $this->get('/help/bot/expressions.md')->assertRedirect('/help/bot/commands.md');
 });
 
 it('leaves the interactive preset page as a vue component', function () {

@@ -2,8 +2,8 @@
 
 use App\Events\BotChannelsChanged;
 use App\Models\BotAlias;
+use App\Models\BotBuiltin;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Models\ListAppender;
 use App\Models\ListMetaCommand;
 use App\Models\RecipeChatTrigger;
@@ -33,7 +33,7 @@ function mapUser(string $login = 'streamer'): User
 
 it('tells the bot to refresh when a command-map model is saved', function (string $kind) {
     // Build the user BEFORE faking. Creating a user seeds the whole default
-    // BotCommand set, which legitimately announces - if that ran inside the
+    // BotBuiltin set, which legitimately announces - if that ran inside the
     // fake, every dataset below would pass whether or not its own model is
     // observed at all. Forgetting the scoped announcer then makes this read as
     // a fresh request, so the assertion can only be satisfied by the save.
@@ -43,10 +43,10 @@ it('tells the bot to refresh when a command-map model is saved', function (strin
     Event::fake([BotChannelsChanged::class]);
 
     match ($kind) {
-        'expression' => BotExpression::create([
+        'reply' => BotCommand::create([
             'user_id' => $user->id, 'command' => 'wins', 'permission_level' => 'everyone',
-            'cooldown_seconds' => 0, 'expression' => 'hi', 'enabled' => true,
-            'hidden_from_commands' => false,
+            'cooldown_seconds' => 0, 'reply' => 'hi', 'enabled' => true,
+            'hidden' => false,
         ]),
         'alias' => BotAlias::create([
             'user_id' => $user->id, 'command' => 'w', 'target_template' => 'increment wins {1}',
@@ -54,7 +54,7 @@ it('tells the bot to refresh when a command-map model is saved', function (strin
         ]),
         // Builtins are seeded with the user, so the realistic change here is a
         // permission edit rather than an insert.
-        'builtin' => BotCommand::where('user_id', $user->id)
+        'builtin' => BotBuiltin::where('user_id', $user->id)
             ->where('command', 'control')
             ->firstOrFail()
             ->update(['permission_level' => 'moderator']),
@@ -69,7 +69,7 @@ it('tells the bot to refresh when a command-map model is saved', function (strin
         fn (BotChannelsChanged $e) => $e->login === 'streamer',
     );
 })->with([
-    'expression',
+    'reply',
     'alias',
     'builtin',
     'list appender',
@@ -83,10 +83,10 @@ it('tells the bot to refresh when a command-map model is saved', function (strin
 
 it('tells the bot to refresh when a command is renamed, disabled or deleted', function (string $action) {
     $user = mapUser();
-    $expression = BotExpression::create([
+    $command = BotCommand::create([
         'user_id' => $user->id, 'command' => 'wins', 'permission_level' => 'everyone',
-        'cooldown_seconds' => 0, 'expression' => 'hi', 'enabled' => true,
-        'hidden_from_commands' => false,
+        'cooldown_seconds' => 0, 'reply' => 'hi', 'enabled' => true,
+        'hidden' => false,
     ]);
 
     // The edit is a separate request from the create in real use, and the
@@ -99,10 +99,10 @@ it('tells the bot to refresh when a command is renamed, disabled or deleted', fu
 
     match ($action) {
         // A rename leaves the old name live in the bot's map until it refreshes.
-        'rename' => $expression->update(['command' => 'victories']),
+        'rename' => $command->update(['command' => 'victories']),
         // A disabled command drops out of the map, so it must push too.
-        'disable' => $expression->update(['enabled' => false]),
-        'delete' => $expression->delete(),
+        'disable' => $command->update(['enabled' => false]),
+        'delete' => $command->delete(),
     };
 
     Event::assertDispatched(BotChannelsChanged::class);
@@ -140,10 +140,10 @@ it('announces a login once per request no matter how many rows move', function (
     // resource, so a bulk edit must not put a burst on the wire. Ten rows, one
     // announcement - the bot re-reads the whole map either way.
     foreach (range(1, 10) as $i) {
-        BotExpression::create([
+        BotCommand::create([
             'user_id' => $user->id, 'command' => "cmd$i", 'permission_level' => 'everyone',
-            'cooldown_seconds' => 0, 'expression' => 'hi', 'enabled' => true,
-            'hidden_from_commands' => false,
+            'cooldown_seconds' => 0, 'reply' => 'hi', 'enabled' => true,
+            'hidden' => false,
         ]);
     }
 
@@ -153,11 +153,11 @@ it('announces a login once per request no matter how many rows move', function (
 it('coalesces the whole default command set seeded on signup into one announcement', function () {
     Event::fake([BotChannelsChanged::class]);
 
-    // Signing up seeds seventeen-odd BotCommand rows in a loop. Before the
+    // Signing up seeds seventeen-odd BotBuiltin rows in a loop. Before the
     // announcer coalesced, that was one synchronous broadcast per row.
     $user = mapUser();
 
-    expect(BotCommand::where('user_id', $user->id)->count())->toBeGreaterThan(5);
+    expect(BotBuiltin::where('user_id', $user->id)->count())->toBeGreaterThan(5);
     Event::assertDispatchedTimes(BotChannelsChanged::class, 1);
 });
 
@@ -173,10 +173,10 @@ it('stays quiet for a user who has not turned the bot on', function () {
         'twitch_id' => (string) fake()->unique()->randomNumber(9),
     ]);
 
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id, 'command' => 'wins', 'permission_level' => 'everyone',
-        'cooldown_seconds' => 0, 'expression' => 'hi', 'enabled' => true,
-        'hidden_from_commands' => false,
+        'cooldown_seconds' => 0, 'reply' => 'hi', 'enabled' => true,
+        'hidden' => false,
     ]);
 
     Event::assertNotDispatched(BotChannelsChanged::class);
@@ -190,10 +190,10 @@ it('still announces each distinct streamer separately', function () {
     Event::fake([BotChannelsChanged::class]);
 
     foreach ([$first, $second] as $user) {
-        BotExpression::create([
+        BotCommand::create([
             'user_id' => $user->id, 'command' => 'wins', 'permission_level' => 'everyone',
-            'cooldown_seconds' => 0, 'expression' => 'hi', 'enabled' => true,
-            'hidden_from_commands' => false,
+            'cooldown_seconds' => 0, 'reply' => 'hi', 'enabled' => true,
+            'hidden' => false,
         ]);
     }
 
@@ -207,10 +207,10 @@ it('says nothing for a user the bot could never reach', function () {
 
     Event::fake([BotChannelsChanged::class]);
 
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id, 'command' => 'wins', 'permission_level' => 'everyone',
-        'cooldown_seconds' => 0, 'expression' => 'hi', 'enabled' => true,
-        'hidden_from_commands' => false,
+        'cooldown_seconds' => 0, 'reply' => 'hi', 'enabled' => true,
+        'hidden' => false,
     ]);
 
     Event::assertNotDispatched(BotChannelsChanged::class);
@@ -225,7 +225,7 @@ it('observes every model the command map endpoint is built from', function () {
     // Derived from the controller's own imports rather than a second hardcoded
     // list, so adding a seventh command type to the endpoint fails here until
     // AppServiceProvider observes it too. A hand-copied list would just drift.
-    $source = file_get_contents(app_path('Http/Controllers/Api/Internal/BotCommandController.php'));
+    $source = file_get_contents(app_path('Http/Controllers/Api/Internal/BotCommandMapController.php'));
 
     preg_match_all('/^use App\\\\Models\\\\(\w+);/m', $source, $matches);
 

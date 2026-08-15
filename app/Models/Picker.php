@@ -15,7 +15,7 @@ use RuntimeException;
  * A Picker is the RNG / selection engine over an OptionSet. Calling
  * fire() picks one item, stores it as last_result, optionally marks
  * that index consumed, and broadcasts PickerLanded so consumers
- * (alerts, bot expressions, the future recipe-layer control bridge)
+ * (alerts, bot commands, the future recipe-layer control bridge)
  * can react.
  *
  * Recipes-layer primitive. Power-user accessible via tinker today;

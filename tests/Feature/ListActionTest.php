@@ -1,7 +1,7 @@
 <?php
 
+use App\Models\BotBuiltin;
 use App\Models\BotChatOutbox;
-use App\Models\BotCommand;
 use App\Models\ListMetaCommand;
 use App\Models\ListSnapshot;
 use App\Models\OptionSet;
@@ -618,10 +618,10 @@ it('meta-command endpoint creates and updates', function () {
 it('meta-command rejects collisions with existing commands', function () {
     $user = actionUser();
     // Use a non-default command name to avoid the unique-key clash
-    // with whatever the BotCommand seeder/observer auto-creates for
+    // with whatever the BotBuiltin seeder/observer auto-creates for
     // new bot-enabled users. The collision check itself is what we're
     // testing here, not the row creation.
-    BotCommand::create([
+    BotBuiltin::create([
         'user_id' => $user->id,
         'command' => 'mycustomcmd',
         'permission_level' => 'everyone',

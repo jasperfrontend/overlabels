@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Expressions;
+namespace App\Services\Messages;
 
 use Carbon\Carbon;
 use NumberFormatter;
@@ -8,13 +8,13 @@ use Throwable;
 
 /**
  * Server-side mirror of the pipe-formatter subset used by overlay templates
- * (resources/js/utils/formatters.ts). Shared across BotExpressionResolver and
- * AlertExpressionRenderer so chat output and TTS strings format identically.
+ * (resources/js/utils/formatters.ts). Shared across BotCommandResolver and
+ * AlertMessageRenderer so chat output and TTS strings format identically.
  *
  * Unknown formatters pass the value through unchanged so a typo in a template
  * never breaks the substitution.
  */
-class ExpressionFormatter
+class PipeFormatter
 {
     public static function apply(string $value, string $pipe, string $locale): string
     {

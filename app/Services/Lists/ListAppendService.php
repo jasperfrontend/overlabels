@@ -8,8 +8,8 @@ use App\Models\ListAppender;
 use App\Models\ListAppendHistory;
 use App\Models\OptionSet;
 use App\Models\User;
-use App\Services\Bot\BotExpressionResolver;
-use App\Services\Bot\BotExpressionService;
+use App\Services\Bot\BotCommandResolver;
+use App\Services\Bot\BotCommandService;
 use App\Support\BotChatGate;
 use App\Support\ListItems;
 use Illuminate\Support\Carbon;
@@ -17,13 +17,13 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
- * Mirrors the canFire / fire pattern of BotExpressionService and
+ * Mirrors the canFire / fire pattern of BotCommandService and
  * RecipeChatTriggerService. fire() appends a resolved string value to
  * the linked OptionSet (a List), respecting dedup policy and max_size,
  * and records every successful fire in list_append_history.
  *
- * The value to append goes through BotExpressionResolver so the
- * template language is identical to Bot Expressions ([[[bot:from_user]]],
+ * The value to append goes through BotCommandResolver so the
+ * template language is identical to Bot Commands ([[[bot:from_user]]],
  * [[[c:foo:bar]]], pipe formatters, etc.). Args_empty_reply and
  * success_reply, when present, are resolved the same way and queued
  * into bot_chat_outbox.
@@ -31,8 +31,8 @@ use Throwable;
 readonly class ListAppendService
 {
     public function __construct(
-        private BotExpressionResolver $resolver,
-        private BotExpressionService $expressionService,
+        private BotCommandResolver $resolver,
+        private BotCommandService $commandService,
     ) {}
 
     /**
@@ -90,7 +90,7 @@ readonly class ListAppendService
                 return ['fired' => false, 'reason' => 'list_disabled'];
             }
 
-            $context = $this->expressionService->buildBotContext($appender->command, $payload);
+            $context = $this->commandService->buildBotContext($appender->command, $payload);
             $args = (string) ($context['args'] ?? '');
 
             // Args-empty gate: only triggers when the template references

@@ -3,14 +3,14 @@
 namespace App\Services\Bot;
 
 use App\Models\BotAlias;
+use App\Models\BotBuiltin;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
 /**
  * Backs the `!ol <subverb>` chat-admin meta-command. The bot relays a
- * structured payload here; we mutate the user's expressions / aliases /
+ * structured payload here; we mutate the user's commands / aliases /
  * options and return a single chat-ready reply string. The controller is
  * responsible for queueing that reply into bot_chat_outbox.
  *
@@ -25,7 +25,7 @@ use Illuminate\Validation\ValidationException;
 readonly class BotChatAdminService
 {
     public function __construct(
-        private BotExpressionValidator $exprValidator,
+        private BotCommandValidator $exprValidator,
         private BotAliasValidator $aliasValidator,
         private BotCounterService $counters,
     ) {}
@@ -71,7 +71,7 @@ readonly class BotChatAdminService
         };
     }
 
-    // ------- cmd (Bot Expressions) -------
+    // ------- cmd (Bot Commands) -------
 
     private function cmdAdd(User $owner, array $payload): string
     {
@@ -81,14 +81,14 @@ readonly class BotChatAdminService
         try {
             $data = $this->exprValidator->validateAndNormalize($owner->id, [
                 'command' => $name,
-                'expression' => $body,
+                'reply' => $body,
                 'permission_level' => 'everyone',
                 'cooldown_seconds' => 0,
                 'enabled' => true,
-                'hidden_from_commands' => false,
+                'hidden' => false,
             ]);
 
-            BotExpression::create([
+            BotCommand::create([
                 'user_id' => $owner->id,
                 ...$data,
             ]);
@@ -98,7 +98,7 @@ readonly class BotChatAdminService
             // deleted. Doing it now means the counter shows up in the UI right
             // away and the reply can confirm it, which is the whole reason a
             // streamer can set this up mid-stream without leaving chat.
-            $created = $this->counters->provision($owner, $data['expression']);
+            $created = $this->counters->provision($owner, $data['reply']);
 
             return "added !{$data['command']}".$this->describeCounters($created);
         } catch (ValidationException $e) {
@@ -111,26 +111,26 @@ readonly class BotChatAdminService
         $name = $this->stripBang($payload['name'] ?? '');
         $body = trim((string) ($payload['payload'] ?? ''));
 
-        $existing = BotExpression::where('user_id', $owner->id)
+        $existing = BotCommand::where('user_id', $owner->id)
             ->where('command', $name)
             ->first();
         if (! $existing) {
-            return "no expression named !$name to edit";
+            return "no command named !$name to edit";
         }
 
         try {
             $data = $this->exprValidator->validateAndNormalize($owner->id, [
                 'command' => $existing->command,
-                'expression' => $body,
+                'reply' => $body,
                 'permission_level' => $existing->permission_level,
                 'cooldown_seconds' => $existing->cooldown_seconds,
                 'enabled' => $existing->enabled,
-                'hidden_from_commands' => $existing->hidden_from_commands,
+                'hidden' => $existing->hidden,
             ], $existing);
 
             $existing->update($data);
 
-            $created = $this->counters->provision($owner, $data['expression']);
+            $created = $this->counters->provision($owner, $data['reply']);
 
             return "updated !{$existing->command}".$this->describeCounters($created);
         } catch (ValidationException $e) {
@@ -142,11 +142,11 @@ readonly class BotChatAdminService
     {
         $name = $this->stripBang($payload['name'] ?? '');
 
-        $existing = BotExpression::where('user_id', $owner->id)
+        $existing = BotCommand::where('user_id', $owner->id)
             ->where('command', $name)
             ->first();
         if (! $existing) {
-            return "no expression named !$name to delete";
+            return "no command named !$name to delete";
         }
 
         $existing->delete();
@@ -160,11 +160,11 @@ readonly class BotChatAdminService
         $option = strtolower(trim((string) ($payload['option'] ?? '')));
         $rawValue = trim((string) ($payload['value'] ?? ''));
 
-        $existing = BotExpression::where('user_id', $owner->id)
+        $existing = BotCommand::where('user_id', $owner->id)
             ->where('command', $name)
             ->first();
         if (! $existing) {
-            return "no expression named !$name";
+            return "no command named !$name";
         }
 
         return $this->applyOption(
@@ -189,7 +189,7 @@ readonly class BotChatAdminService
                 'permission_level' => 'moderator',
                 'cooldown_seconds' => 0,
                 'enabled' => true,
-                'hidden_from_commands' => false,
+                'hidden' => false,
             ]);
 
             BotAlias::create([
@@ -222,7 +222,7 @@ readonly class BotChatAdminService
                 'permission_level' => $existing->permission_level,
                 'cooldown_seconds' => $existing->cooldown_seconds,
                 'enabled' => $existing->enabled,
-                'hidden_from_commands' => $existing->hidden_from_commands,
+                'hidden' => $existing->hidden,
             ], $existing);
 
             $existing->update($data);
@@ -273,7 +273,7 @@ readonly class BotChatAdminService
     // ------- list / help -------
 
     /**
-     * `!ol list` with no filter returns expressions + aliases; `!ol list cmd`
+     * `!ol list` with no filter returns commands + aliases; `!ol list cmd`
      * or `!ol list alias` filters one. Twitch caps chat at 500 chars; we
      * truncate with a "..." tail rather than splitting across messages.
      */
@@ -284,7 +284,7 @@ readonly class BotChatAdminService
         $parts = [];
 
         if ($filter === '' || $filter === 'cmd') {
-            $exprs = BotExpression::where('user_id', $owner->id)
+            $exprs = BotCommand::where('user_id', $owner->id)
                 ->orderBy('command')
                 ->pluck('command')
                 ->map(fn (string $c) => "!$c")
@@ -330,11 +330,11 @@ readonly class BotChatAdminService
     // ------- option dispatch (shared expr/alias) -------
 
     /**
-     * Applies a single option to an existing expression or alias. Returns a
+     * Applies a single option to an existing command or alias. Returns a
      * chat reply describing what happened, including for failed lookups so
      * the streamer sees why nothing changed.
      */
-    private function applyOption(BotExpression|BotAlias $row, string $option, string $rawValue, string $label): string
+    private function applyOption(BotCommand|BotAlias $row, string $option, string $rawValue, string $label): string
     {
         $option = $this->canonicalOption($option);
 
@@ -374,12 +374,12 @@ readonly class BotChatAdminService
                 if ($bool === null) {
                     return 'hidden must be true or false';
                 }
-                $row->update(['hidden_from_commands' => $bool]);
+                $row->update(['hidden' => $bool]);
 
                 return "command $label is now ".($bool ? 'hidden' : 'visible').' in !commands listings';
 
             case 'destroy':
-                // Self-destruct timer. Expressions only - aliases have no
+                // Self-destruct timer. Commands only - aliases have no
                 // destroy_at column and the friend's use case is temporary
                 // commands. Whole hours, 1-8760 (one year); 0 cancels.
                 if ($row instanceof BotAlias) {
@@ -414,14 +414,14 @@ readonly class BotChatAdminService
             'cd', 'cooldown_seconds' => 'cooldown',
             'perm', 'permission_level' => 'permission',
             'enable', 'enabled' => 'enabled',
-            'hide', 'hidden_from_commands' => 'hidden',
+            'hide', 'hidden' => 'hidden',
             'selfdestruct', 'self_destruct', 'kill', 'destroy_at' => 'destroy',
             default => $raw,
         };
     }
 
     /**
-     * Map short forms to the canonical BotCommand::PERMISSION_LEVELS values.
+     * Map short forms to the canonical BotBuiltin::PERMISSION_LEVELS values.
      * Returns null for anything we don't recognise.
      */
     private function canonicalPermissionLevel(string $raw): ?string

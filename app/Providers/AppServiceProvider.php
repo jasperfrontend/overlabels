@@ -6,9 +6,9 @@ use App\Broadcasting\MeteredBroadcaster;
 use App\Events\UserRegistered;
 use App\Listeners\OnboardNewUserListener;
 use App\Models\BotAlias;
+use App\Models\BotBuiltin;
 use App\Models\BotChatOutbox;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Models\ListAppender;
 use App\Models\ListMetaCommand;
 use App\Models\RecipeChatTrigger;
@@ -62,7 +62,7 @@ class AppServiceProvider extends ServiceProvider
 
         // One announcer per request so its "already nudged the bot about this"
         // bag covers the whole request. Opting into the bot seeds seventeen
-        // BotCommand rows in a loop and one gamejam round writes several
+        // BotBuiltin rows in a loop and one gamejam round writes several
         // outbox messages; without the shared instance each row would be its
         // own synchronous broadcast.
         //
@@ -195,12 +195,12 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
 
         // Everything the bot's command map is built from. This list must stay
-        // in step with BotCommandController::index(), which is the endpoint the
+        // in step with BotCommandMapController::index(), which is the endpoint the
         // bot reads - a model that feeds that response but is missing here is
         // one whose changes the bot won't see for up to a minute.
         foreach ([
+            BotBuiltin::class,
             BotCommand::class,
-            BotExpression::class,
             BotAlias::class,
             RecipeChatTrigger::class,
             ListAppender::class,

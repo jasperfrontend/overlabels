@@ -4,7 +4,7 @@ description: "Add random numbers and running counters to your Twitch chat comman
 heading: Random Rolls and Counters
 lead: Roll a random number or keep a running count, set up from chat in one line. Your counters are real Controls, so the number in chat and the number on your overlay are the same number.
 canonical: https://overlabels.com/help/bot/random-and-counters
-context: settings.bot.expressions.*
+context: settings.bot.commands.*
 section: Bot
 ---
 
@@ -134,8 +134,8 @@ If you already have a Control by that name that can't hold a number (a text Cont
 
 ## Where these work
 
-Both tags are for the bot. They work in Bot Expressions - commands you write with `!ol cmd add` or on
-the Bot Expressions page - and nowhere else.
+Both tags are for the bot. They work in Bot Commands - commands you write with `!ol cmd add` or on
+the Bot Commands page - and nowhere else.
 
 **Random doesn't belong in an overlay,** because an overlay redraws whenever anything changes, so a
 random number in one would reroll at moments you didn't pick. If you want a number that shuffles on
@@ -186,6 +186,6 @@ a command runs and part of the sentence is missing, a misspelled tag name is the
 
 ## See also
 
-- [Bot Expressions](/help/bot/expressions) - everything else the bot understands
+- [Bot Commands](/help/bot/commands) - everything else the bot understands
 - [Controls](/help/controls) - what a Control is and what else it can do
 - [Formatting](/help/formatting) - the `|` formatters you can put on any tag

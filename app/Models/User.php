@@ -283,9 +283,9 @@ class User extends Authenticatable
         return $this->hasOne(StreamState::class);
     }
 
-    public function botCommands(): HasMany
+    public function botBuiltins(): HasMany
     {
-        return $this->hasMany(BotCommand::class);
+        return $this->hasMany(BotBuiltin::class);
     }
 
     public function streamSessions(): HasMany

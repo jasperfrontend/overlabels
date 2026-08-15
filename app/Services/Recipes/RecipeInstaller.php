@@ -2,8 +2,8 @@
 
 namespace App\Services\Recipes;
 
+use App\Models\BotBuiltin;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
 use App\Models\Picker;
@@ -198,9 +198,9 @@ class RecipeInstaller
 
     /**
      * Walks the manifest's chat_command triggers and refuses the install
-     * if any of the command names collide with an existing BotCommand,
-     * BotExpression, or RecipeChatTrigger for this user. Resolution at
-     * runtime falls back to builtin > expression > recipe_trigger order
+     * if any of the command names collide with an existing BotBuiltin,
+     * BotCommand, or RecipeChatTrigger for this user. Resolution at
+     * runtime falls back to builtin > custom > recipe_trigger order
      * but enforcing here gives the user a clear error message rather
      * than a silently-unreachable install.
      *
@@ -222,7 +222,7 @@ class RecipeInstaller
             return;
         }
 
-        $builtinCollision = BotCommand::where('user_id', $user->id)
+        $builtinCollision = BotBuiltin::where('user_id', $user->id)
             ->whereIn('command', $commands)
             ->value('command');
         if ($builtinCollision) {
@@ -231,12 +231,12 @@ class RecipeInstaller
             );
         }
 
-        $expressionCollision = BotExpression::where('user_id', $user->id)
+        $commandCollision = BotCommand::where('user_id', $user->id)
             ->whereIn('command', $commands)
             ->value('command');
-        if ($expressionCollision) {
+        if ($commandCollision) {
             throw new RuntimeException(
-                "Chat trigger '!{$expressionCollision}' collides with an existing Bot Expression."
+                "Chat trigger '!{$commandCollision}' collides with an existing Bot Command."
             );
         }
 

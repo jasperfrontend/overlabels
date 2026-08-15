@@ -93,9 +93,9 @@ interface ShareTrigger {
 
 interface ShareAlert {
   sound_url: string | null;
-  tts_expression: string | null;
+  tts_message: string | null;
   tts_delay_ms: number | null;
-  bot_message_expression: string | null;
+  chat_message: string | null;
   triggers: ShareTrigger[];
 }
 
@@ -547,17 +547,17 @@ function submitReport() {
           <div class="space-y-3 p-4 text-sm text-foreground">
             <ul class="space-y-1">
               <li v-if="share.alert.sound_url">Plays a sound when it fires.</li>
-              <li v-if="share.alert.tts_expression">
+              <li v-if="share.alert.tts_message">
                 Speaks via text to speech<span v-if="share.alert.tts_delay_ms"> after {{ share.alert.tts_delay_ms }}ms</span>:
-                <code class="bg-sidebar px-1 py-0.5 text-xs">{{ share.alert.tts_expression }}</code>
+                <code class="bg-sidebar px-1 py-0.5 text-xs">{{ share.alert.tts_message }}</code>
               </li>
-              <li v-if="share.alert.bot_message_expression">
+              <li v-if="share.alert.chat_message">
                 Posts to chat:
                 <code class="bg-sidebar px-1 py-0.5 text-xs">
-                  {{ share.alert.bot_message_expression }}
+                  {{ share.alert.chat_message }}
                 </code>
               </li>
-              <li v-if="!share.alert.sound_url && !share.alert.tts_expression && !share.alert.bot_message_expression">
+              <li v-if="!share.alert.sound_url && !share.alert.tts_message && !share.alert.chat_message">
                 No sound, speech or chat message. This alert is purely visual.
               </li>
             </ul>

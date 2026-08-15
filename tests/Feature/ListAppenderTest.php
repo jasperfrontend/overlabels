@@ -1,8 +1,8 @@
 <?php
 
 use App\Events\ListUpdated;
+use App\Models\BotBuiltin;
 use App\Models\BotChatOutbox;
-use App\Models\BotCommand;
 use App\Models\ListAppender;
 use App\Models\ListAppendHistory;
 use App\Models\OptionSet;
@@ -273,7 +273,7 @@ it('builtin wins on command-name collision with an appender', function () {
     $user = appenderUser('streamer_collide');
     $list = appenderList($user);
     appenderRow($user, $list, ['command' => 'raffle']);
-    BotCommand::create([
+    BotBuiltin::create([
         'user_id' => $user->id,
         'command' => 'raffle',
         'permission_level' => 'broadcaster',

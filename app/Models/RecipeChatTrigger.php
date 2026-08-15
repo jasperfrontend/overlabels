@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 /**
  * A chat-command trigger materialised from a Recipe manifest's
  * triggers[].kind === "chat_command". Fires a Picker on invocation;
- * does not produce chat output (announcement is the Bot Expression
+ * does not produce chat output (announcement is the Bot Command
  * layer's job, optionally bundled by a Kit).
  *
  * @property int $id

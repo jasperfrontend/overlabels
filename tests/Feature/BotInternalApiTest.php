@@ -1,8 +1,8 @@
 <?php
 
 use App\Events\ControlValueUpdated;
+use App\Models\BotBuiltin;
 use App\Models\BotChatOutbox;
-use App\Models\BotCommand;
 use App\Models\BotToken;
 use App\Models\OverlayControl;
 use App\Models\User;
@@ -216,16 +216,16 @@ function makeOptedInUser(string $login = 'streamer_a', bool $enabled = true, boo
 test('opting into the bot seeds the default command set', function () {
     $user = User::factory()->create(['bot_enabled' => false]);
 
-    expect(BotCommand::where('user_id', $user->id)->count())->toBe(0);
+    expect(BotBuiltin::where('user_id', $user->id)->count())->toBe(0);
 
     $user->update(['bot_enabled' => true]);
 
-    $commands = BotCommand::where('user_id', $user->id)->pluck('command')->all();
+    $commands = BotBuiltin::where('user_id', $user->id)->pluck('command')->all();
 
-    expect($commands)->toHaveCount(count(BotCommand::DEFAULTS))
+    expect($commands)->toHaveCount(count(BotBuiltin::DEFAULTS))
         ->and($commands)->toContain('control', 'set', 'increment', 'decrement', 'reset', 'enable', 'disable', 'toggle');
 
-    $setCommand = BotCommand::where('user_id', $user->id)->where('command', 'set')->first();
+    $setCommand = BotBuiltin::where('user_id', $user->id)->where('command', 'set')->first();
     expect($setCommand->permission_level)->toBe('moderator')
         ->and($setCommand->enabled)->toBeTrue();
 });
@@ -237,27 +237,27 @@ test('toggling bot_enabled off then on does not duplicate default commands', fun
     $user->update(['bot_enabled' => false]);
     $user->update(['bot_enabled' => true]);
 
-    expect(BotCommand::where('user_id', $user->id)->count())
-        ->toBe(count(BotCommand::DEFAULTS));
+    expect(BotBuiltin::where('user_id', $user->id)->count())
+        ->toBe(count(BotBuiltin::DEFAULTS));
 });
 
 test('creating a user with bot_enabled true seeds defaults', function () {
     $user = User::factory()->create(['bot_enabled' => true]);
 
-    expect(BotCommand::where('user_id', $user->id)->count())
-        ->toBe(count(BotCommand::DEFAULTS));
+    expect(BotBuiltin::where('user_id', $user->id)->count())
+        ->toBe(count(BotBuiltin::DEFAULTS));
 });
 
 test('seedDefaults preserves existing permission_level overrides', function () {
     $user = makeOptedInUser();
 
-    BotCommand::where('user_id', $user->id)
+    BotBuiltin::where('user_id', $user->id)
         ->where('command', 'set')
         ->update(['permission_level' => 'broadcaster']);
 
-    BotCommand::seedDefaults($user);
+    BotBuiltin::seedDefaults($user);
 
-    $setCommand = BotCommand::where('user_id', $user->id)->where('command', 'set')->first();
+    $setCommand = BotBuiltin::where('user_id', $user->id)->where('command', 'set')->first();
     expect($setCommand->permission_level)->toBe('broadcaster');
 });
 
@@ -288,7 +288,7 @@ test('commands returns commands keyed by lowercased login', function () {
         ->json('channels');
 
     expect($response)->toHaveKey('jasperdiscovers')
-        ->and($response['jasperdiscovers'])->toHaveCount(count(BotCommand::DEFAULTS));
+        ->and($response['jasperdiscovers'])->toHaveCount(count(BotBuiltin::DEFAULTS));
 
     $control = collect($response['jasperdiscovers'])->firstWhere('command', 'control');
     expect($control)->toBe(['command' => 'control', 'permission_level' => 'everyone', 'type' => 'builtin']);
@@ -297,7 +297,7 @@ test('commands returns commands keyed by lowercased login', function () {
 test('commands excludes disabled rows', function () {
     $user = makeOptedInUser();
 
-    BotCommand::where('user_id', $user->id)
+    BotBuiltin::where('user_id', $user->id)
         ->where('command', 'reset')
         ->update(['enabled' => false]);
 

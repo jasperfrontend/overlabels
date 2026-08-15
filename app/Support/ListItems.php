@@ -269,7 +269,7 @@ final class ListItems
      *
      * The single source of truth for sum parity across the overlay render
      * (OverlayTemplateController), the bot reply resolver
-     * (BotExpressionResolver), and the frontend renderer's computeListSum.
+     * (BotCommandResolver), and the frontend renderer's computeListSum.
      *
      * @param  array<int, string>  $values
      */

@@ -17,13 +17,13 @@ interface BotAlias {
   permission_level: string;
   cooldown_seconds: number;
   enabled: boolean;
-  hidden_from_commands: boolean;
+  hidden: boolean;
   last_fired_at: string | null;
 }
 
 interface KnownCommand {
   command: string;
-  kind: 'builtin' | 'expression';
+  kind: 'builtin' | 'custom';
 }
 
 const props = defineProps<{
@@ -50,7 +50,7 @@ const form = useForm({
   permission_level: props.alias?.permission_level ?? 'moderator',
   cooldown_seconds: props.alias?.cooldown_seconds ?? 0,
   enabled: props.alias?.enabled ?? true,
-  hidden_from_commands: props.alias?.hidden_from_commands ?? false,
+  hidden: props.alias?.hidden ?? false,
 });
 
 function submit() {
@@ -130,7 +130,7 @@ const previewExample = computed(() => {
             </div>
             <p v-if="form.errors.command" class="text-sm text-rose-400">{{ form.errors.command }}</p>
             <p v-else class="text-xs text-foreground/60">
-              Letters, numbers, hyphens, underscores. Can't collide with built-ins or your own expressions.
+              Letters, numbers, hyphens, underscores. Can't collide with built-ins or your own commands.
             </p>
           </div>
 
@@ -178,11 +178,11 @@ const previewExample = computed(() => {
                     </button>
                   </div>
                 </div>
-                <div v-if="props.knownCommands.some((c) => c.kind === 'expression')">
-                  <p class="mb-1 text-xs font-semibold text-foreground">Your expressions</p>
+                <div v-if="props.knownCommands.some((c) => c.kind === 'custom')">
+                  <p class="mb-1 text-xs font-semibold text-foreground">Your commands</p>
                   <div class="flex flex-wrap gap-1.5">
                     <button
-                      v-for="c in props.knownCommands.filter((c) => c.kind === 'expression')"
+                      v-for="c in props.knownCommands.filter((c) => c.kind === 'custom')"
                       :key="`e-${c.command}`"
                       type="button"
                       class="cursor-pointer rounded bg-muted px-1.5 py-0.5 font-mono text-xs hover:bg-foreground/10"
@@ -242,7 +242,7 @@ const previewExample = computed(() => {
               </div>
             </label>
             <label class="flex cursor-pointer items-start gap-3">
-              <input type="checkbox" v-model="form.hidden_from_commands" class="mt-1 size-4 cursor-pointer" />
+              <input type="checkbox" v-model="form.hidden" class="mt-1 size-4 cursor-pointer" />
               <div>
                 <p class="text-sm font-medium">Hide from <code>!commands</code> listing</p>
                 <p class="text-xs text-foreground/60">When the bot exposes a <code>!commands</code> meta-command, this alias won't be listed.</p>
@@ -255,7 +255,9 @@ const previewExample = computed(() => {
             <div class="flex items-start gap-2">
               <Info class="mt-0.5 size-4 shrink-0 text-foreground/60" />
               <div class="space-y-1 text-xs text-foreground/70">
-                <p>Aliases are one hop only. An alias can't point at another alias - point it at the underlying built-in or expression instead.</p>
+                <p>
+                  Aliases are one hop only. An alias can't point at another alias - point it at the underlying built-in or custom command instead.
+                </p>
                 <p>
                   After rewrite, the target command runs with the chatter's original badges, so target-side permission checks still gate (e.g.
                   <code class="text-foreground/80">!increment</code> stays moderator-only even if the alias is open to everyone).

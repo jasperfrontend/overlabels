@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Events\ListUpdated;
+use App\Models\BotBuiltin;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Models\ListAppender;
 use App\Models\ListMetaCommand;
 use App\Models\ListSnapshot;
@@ -195,7 +195,7 @@ class ListActionWebController extends Controller
      * PUT /dashboard/lists/meta-command
      * Body: { command: "list", enabled: true }
      * Creates or updates the user's meta-command config. Refuses on
-     * collision with existing builtin / expression / recipe_trigger /
+     * collision with existing builtin / custom / recipe_trigger /
      * list_append command names.
      */
     public function saveMeta(Request $request): JsonResponse
@@ -207,13 +207,13 @@ class ListActionWebController extends Controller
                 'required', 'string', 'max:30', 'regex:/^[a-z][a-z0-9_]*$/',
                 function ($attribute, $value, $fail) use ($userId) {
                     $cmd = strtolower($value);
-                    if (BotCommand::where('user_id', $userId)->where('command', $cmd)->exists()) {
+                    if (BotBuiltin::where('user_id', $userId)->where('command', $cmd)->exists()) {
                         $fail("'{$cmd}' collides with an existing built-in command.");
 
                         return;
                     }
-                    if (BotExpression::where('user_id', $userId)->where('command', $cmd)->exists()) {
-                        $fail("'{$cmd}' collides with an existing Bot Expression.");
+                    if (BotCommand::where('user_id', $userId)->where('command', $cmd)->exists()) {
+                        $fail("'{$cmd}' collides with an existing Bot Command.");
 
                         return;
                     }

@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\BotAlias;
-use App\Models\BotExpression;
+use App\Models\BotCommand;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
@@ -14,63 +14,63 @@ function sweepUser(): User
     ]);
 }
 
-it('deletes expressions whose destroy_at has elapsed', function () {
+it('deletes commands whose destroy_at has elapsed', function () {
     $user = sweepUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'expired',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'bye',
+        'reply' => 'bye',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
         'destroy_at' => now()->subMinute(),
     ]);
 
     $this->artisan('bot:sweep-destroyed')->assertExitCode(0);
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'expired')->exists())->toBeFalse();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'expired')->exists())->toBeFalse();
 });
 
-it('leaves expressions whose timer has not elapsed or is unset', function () {
+it('leaves commands whose timer has not elapsed or is unset', function () {
     $user = sweepUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'future',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'stay',
+        'reply' => 'stay',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
         'destroy_at' => now()->addHour(),
     ]);
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'permanent',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'stay',
+        'reply' => 'stay',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
         'destroy_at' => null,
     ]);
 
     $this->artisan('bot:sweep-destroyed')->assertExitCode(0);
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'future')->exists())->toBeTrue();
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'permanent')->exists())->toBeTrue();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'future')->exists())->toBeTrue();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'permanent')->exists())->toBeTrue();
 });
 
 it('deletes dependent aliases but leaves unrelated ones intact', function () {
     $user = sweepUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'doomed',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'bye',
+        'reply' => 'bye',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
         'destroy_at' => now()->subMinute(),
     ]);
 
@@ -82,7 +82,7 @@ it('deletes dependent aliases but leaves unrelated ones intact', function () {
         'permission_level' => 'moderator',
         'cooldown_seconds' => 0,
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     // Forwards elsewhere - should survive.
@@ -93,12 +93,12 @@ it('deletes dependent aliases but leaves unrelated ones intact', function () {
         'permission_level' => 'moderator',
         'cooldown_seconds' => 0,
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     $this->artisan('bot:sweep-destroyed')->assertExitCode(0);
 
-    expect(BotExpression::where('user_id', $user->id)->where('command', 'doomed')->exists())->toBeFalse();
+    expect(BotCommand::where('user_id', $user->id)->where('command', 'doomed')->exists())->toBeFalse();
     expect(BotAlias::where('user_id', $user->id)->where('command', 'd')->exists())->toBeFalse();
     expect(BotAlias::where('user_id', $user->id)->where('command', 'w')->exists())->toBeTrue();
 });
@@ -107,14 +107,14 @@ it('does not touch another users dependent aliases', function () {
     $owner = sweepUser();
     $other = sweepUser();
 
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $owner->id,
         'command' => 'doomed',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'bye',
+        'reply' => 'bye',
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
         'destroy_at' => now()->subMinute(),
     ]);
 
@@ -126,7 +126,7 @@ it('does not touch another users dependent aliases', function () {
         'permission_level' => 'moderator',
         'cooldown_seconds' => 0,
         'enabled' => true,
-        'hidden_from_commands' => false,
+        'hidden' => false,
     ]);
 
     $this->artisan('bot:sweep-destroyed')->assertExitCode(0);

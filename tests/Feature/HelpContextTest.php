@@ -90,11 +90,11 @@ it('offers a page once even when several of its contexts match', function () {
 });
 
 it('prefers the more literal wildcard', function () {
-    // settings.bot.expressions.* is a more deliberate claim on the expressions
+    // settings.bot.commands.* is a more deliberate claim on the bot commands
     // pages than the settings.bot.* catch-all.
-    $slugs = array_column(HelpContext::for('settings.bot.expressions.index'), 'slug');
+    $slugs = array_column(HelpContext::for('settings.bot.commands.index'), 'slug');
 
-    expect($slugs[0])->toBe('bot/expressions')
+    expect($slugs[0])->toBe('bot/commands')
         ->and($slugs)->toContain('bot/index');
 });
 

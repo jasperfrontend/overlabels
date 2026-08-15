@@ -5,16 +5,16 @@ namespace App\Support;
 use Carbon\Carbon;
 
 /**
- * Stateless permission + cooldown gate shared between BotExpressionService
+ * Stateless permission + cooldown gate shared between BotCommandService
  * and RecipeChatTriggerService. Pulled out because both layers run the
  * same gate before they fire, with the same broadcaster-bypass semantics,
- * against the same BotCommand::PERMISSION_LEVELS vocabulary.
+ * against the same BotBuiltin::PERMISSION_LEVELS vocabulary.
  */
 final class BotChatGate
 {
     /**
      * Permission tiers in least-to-most-privileged order, matching
-     * BotCommand::PERMISSION_LEVELS exactly.
+     * BotBuiltin::PERMISSION_LEVELS exactly.
      */
     public const array TIER_ORDER = [
         'everyone' => 0,

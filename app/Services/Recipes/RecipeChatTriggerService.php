@@ -7,13 +7,13 @@ use App\Support\BotChatGate;
 use Illuminate\Support\Carbon;
 
 /**
- * Mirrors the shape of BotExpressionService: a canFire() gate followed by
+ * Mirrors the shape of BotCommandService: a canFire() gate followed by
  * a fire() that does the side-effect. Differs in that fire() invokes a
  * Picker rather than queueing a chat message - the recipe-trigger layer
  * is deliberately silent on chat per the doc's producer/consumer split.
  *
- * Announcing the picked value in chat is a Bot Expression's job; Kits
- * are expected to bundle a default Bot Expression alongside the recipe
+ * Announcing the picked value in chat is a Bot Command's job; Kits
+ * are expected to bundle a default Bot Command alongside the recipe
  * for that purpose.
  */
 class RecipeChatTriggerService

@@ -1082,7 +1082,7 @@ async function loadMeta() {
           <div>
             <h3 class="text-sm font-semibold text-foreground">Append commands</h3>
             <p class="mt-0.5 text-xs text-muted-foreground">
-              Chat commands that append to this list when fired. Use Bot Expression syntax like
+              Chat commands that append to this list when fired. Use Bot Command syntax like
               <span class="font-mono">[[[bot:from_user]]]</span> in the value template.
             </p>
           </div>
@@ -1167,7 +1167,7 @@ async function loadMeta() {
                 placeholder="[[[bot:from_user]]]"
               ></textarea>
               <p class="mt-1 text-xs text-muted-foreground">
-                Bot Expression syntax. Pipe formatters work:
+                Bot Command syntax. Pipe formatters work:
                 <span class="font-mono">[[[bot:fired_at|date:HH:mm]]]</span>.
               </p>
             </div>

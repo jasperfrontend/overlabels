@@ -14,8 +14,8 @@ use App\Models\User;
 use App\Models\UserEventsubSubscription;
 use App\Services\AlertMuteService;
 use App\Services\EventMeter;
-use App\Services\Expressions\AlertExpressionRenderer;
 use App\Services\LockdownService;
+use App\Services\Messages\AlertMessageRenderer;
 use App\Services\StreamSessionService;
 use App\Services\StreamStateMachineService;
 use App\Services\TemplateDataMapperService;
@@ -620,9 +620,9 @@ class TwitchEventSubController extends Controller
                 ? $mapping->template->targetStaticOverlays->pluck('slug')->all()
                 : null;
 
-            $ttsText = app(AlertExpressionRenderer::class)->render(
+            $ttsText = app(AlertMessageRenderer::class)->render(
                 $user,
-                $mapping->template->tts_expression,
+                $mapping->template->tts_message,
                 $templateData,
             );
 
@@ -654,9 +654,9 @@ class TwitchEventSubController extends Controller
             // bot_enabled so we never enqueue a message the bot can't deliver
             // (it only joins channels where the flag is on).
             if ($user->bot_enabled) {
-                $botMessage = app(AlertExpressionRenderer::class)->renderMessage(
+                $botMessage = app(AlertMessageRenderer::class)->renderMessage(
                     $user,
-                    $mapping->template->bot_message_expression,
+                    $mapping->template->chat_message,
                     $templateData,
                 );
                 if ($botMessage !== null) {

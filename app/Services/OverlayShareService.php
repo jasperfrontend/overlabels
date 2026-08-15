@@ -306,9 +306,9 @@ class OverlayShareService
 
         return [
             'sound_url' => $template->alert_sound_url,
-            'tts_expression' => $template->tts_expression,
+            'tts_message' => $template->tts_message,
             'tts_delay_ms' => $template->tts_delay_ms,
-            'bot_message_expression' => $template->bot_message_expression,
+            'chat_message' => $template->chat_message,
             'triggers' => $this->triggers($template),
         ];
     }
@@ -688,14 +688,14 @@ class OverlayShareService
             $configured = true;
         }
 
-        if ($alert['tts_expression']) {
+        if ($alert['tts_message']) {
             $delay = $alert['tts_delay_ms'] ? " after a {$alert['tts_delay_ms']}ms delay" : '';
-            $out .= "- Speaks via text to speech{$delay}: `".$alert['tts_expression']."`\n";
+            $out .= "- Speaks via text to speech{$delay}: `".$alert['tts_message']."`\n";
             $configured = true;
         }
 
-        if ($alert['bot_message_expression']) {
-            $out .= '- Posts to Twitch chat via the @overlabels bot: `'.$alert['bot_message_expression']."`\n";
+        if ($alert['chat_message']) {
+            $out .= '- Posts to Twitch chat via the @overlabels bot: `'.$alert['chat_message']."`\n";
             $configured = true;
         }
 

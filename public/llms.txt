@@ -539,7 +539,7 @@ Inertia/Vue page and will give you an app shell, not prose - always use the `.md
 | The Builder | `/help/builder.md` |
 | Overlays vs Alerts | `/help/overlays-vs-alerts.md` |
 | Twitch bot index | `/help/bot.md` |
-| Bot expressions reference | `/help/bot/expressions.md` |
+| Bot commands reference | `/help/bot/commands.md` |
 | Bot aliases | `/help/bot/aliases.md` |
 | For creators (system overview) | `/help/for-creators.md` |
 | For designers (handoff guide) | `/help/for-designers.md` |

@@ -326,7 +326,7 @@ function formatDate(iso: string | null): string {
                 </p>
                 <p v-else class="text-sm text-muted-foreground">
                   Enable to have the bot join your channel. Default
-                  <a :href="route('help.bot.expressions')" target="_blank" class="underline hover:text-foreground">bot expressions</a> are enabled
+                  <a :href="route('help.bot.commands')" target="_blank" class="underline hover:text-foreground">bot commands</a> are enabled
                   automatically the first time you enable it.
                 </p>
               </div>
@@ -337,10 +337,10 @@ function formatDate(iso: string | null): string {
             <div v-if="props.bot.enabled" class="mt-4 space-y-3 border-t border-sidebar-border pt-4">
               <div class="flex items-center justify-between gap-4">
                 <p class="text-sm text-foreground">
-                  Bot expressions: custom <code class="rounded bg-muted px-1 py-0.5 text-xs">!command</code> chat replies templated against your
-                  controls and Twitch data.
+                  Bot commands: custom <code class="rounded bg-muted px-1 py-0.5 text-xs">!command</code> chat replies templated against your controls
+                  and Twitch data.
                 </p>
-                <Link href="/settings/bot/expressions" class="btn btn-tertiary shrink-0 cursor-pointer"> Manage expressions </Link>
+                <Link href="/settings/bot/commands" class="btn btn-tertiary shrink-0 cursor-pointer"> Manage commands </Link>
               </div>
               <div class="flex items-center justify-between gap-4">
                 <p class="text-sm text-foreground">

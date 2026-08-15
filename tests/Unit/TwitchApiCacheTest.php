@@ -5,11 +5,11 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * Guards the cache contract in TwitchApiService::getCachedData() - the layer
- * behind every getExtendedUserData() read (overlays, Bot Expressions, alerts).
+ * behind every getExtendedUserData() read (overlays, Bot Commands, alerts).
  *
  * The bug this protects against: a single failed fetch used to be cached as []
  * for 365 days, silently emptying tags like [[[followers_latest_user_name]]]
- * for cold readers (Bot Expressions have no live EventSub patch to mask it).
+ * for cold readers (Bot Commands have no live EventSub patch to mask it).
  *
  * getCachedData is private; we drive it by reflection because it IS the unit
  * under test and mocking six Helix endpoints would obscure what we're checking.

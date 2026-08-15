@@ -1,7 +1,7 @@
 <?php
 
+use App\Models\BotBuiltin;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Models\Recipe;
 use App\Models\RecipeChatTrigger;
 use App\Models\User;
@@ -93,26 +93,26 @@ it('materialises chat_command triggers as recipe_chat_triggers rows', function (
         ->and($trigger->picker_id)->toBe($instance->pickers->first()->id);
 });
 
-it('refuses to install when a chat trigger collides with an existing BotExpression', function () {
+it('refuses to install when a chat trigger collides with an existing BotCommand', function () {
     $recipe = seedCoinFlip();
     $user = botUser();
-    BotExpression::create([
+    BotCommand::create([
         'user_id' => $user->id,
         'command' => 'flip',
         'permission_level' => 'everyone',
         'cooldown_seconds' => 0,
-        'expression' => 'Hi',
+        'reply' => 'Hi',
         'enabled' => true,
     ]);
 
     expect(fn () => app(RecipeInstaller::class)->install($recipe, $user, 'main'))
-        ->toThrow(RuntimeException::class, 'collides with an existing Bot Expression');
+        ->toThrow(RuntimeException::class, 'collides with an existing Bot Command');
 });
 
-it('refuses to install when a chat trigger collides with an existing builtin BotCommand', function () {
+it('refuses to install when a chat trigger collides with an existing builtin BotBuiltin', function () {
     $recipe = seedCoinFlip();
     $user = botUser();
-    BotCommand::create([
+    BotBuiltin::create([
         'user_id' => $user->id,
         'command' => 'flip',
         'permission_level' => 'everyone',
@@ -218,7 +218,7 @@ it('rejects requests without the X-Internal-Secret header', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
-// BotCommandController surfaces recipe triggers
+// BotCommandMapController surfaces recipe triggers
 // ──────────────────────────────────────────────────────────────────────────────
 
 it('exposes recipe triggers in the bot commandMap with type=recipe_trigger', function () {
@@ -249,7 +249,7 @@ it('lets a builtin win over a recipe trigger with the same name', function () {
     // Install first, then sneak in a colliding builtin (skipping the
     // installer's collision check that would normally prevent this).
     app(RecipeInstaller::class)->install($recipe, $user, 'main');
-    BotCommand::create([
+    BotBuiltin::create([
         'user_id' => $user->id,
         'command' => 'flip',
         'permission_level' => 'broadcaster',

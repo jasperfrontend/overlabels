@@ -17,14 +17,14 @@ class BotAlias extends Model
         'permission_level',
         'cooldown_seconds',
         'enabled',
-        'hidden_from_commands',
+        'hidden',
         'last_fired_at',
     ];
 
     protected $casts = [
         'cooldown_seconds' => 'integer',
         'enabled' => 'boolean',
-        'hidden_from_commands' => 'boolean',
+        'hidden' => 'boolean',
         'last_fired_at' => 'datetime',
     ];
 

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BotBuiltin;
 use App\Models\BotCommand;
-use App\Models\BotExpression;
 use App\Models\ListAppender;
 use App\Models\OptionSet;
 use App\Models\RecipeChatTrigger;
@@ -20,10 +20,10 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * instead of full-page-reloady.
  *
  * Command-name collision rules at save time: refuse if the chosen
- * command conflicts with an existing BotCommand (builtin),
- * BotExpression, RecipeChatTrigger, or another ListAppender for this
+ * command conflicts with an existing BotBuiltin (builtin),
+ * BotCommand, RecipeChatTrigger, or another ListAppender for this
  * user. The bot's commandMap also resolves ties at runtime
- * (builtin > expression > recipe_trigger > list_append), but failing
+ * (builtin > custom > recipe_trigger > list_append), but failing
  * loudly at save time gives the streamer a clear error.
  */
 class ListAppenderController extends Controller
@@ -122,13 +122,13 @@ class ListAppenderController extends Controller
                 function ($attribute, $value, $fail) use ($userId, $ignoreAppenderId) {
                     $command = strtolower($value);
 
-                    if (BotCommand::where('user_id', $userId)->where('command', $command)->exists()) {
+                    if (BotBuiltin::where('user_id', $userId)->where('command', $command)->exists()) {
                         $fail("Command '!{$command}' collides with an existing built-in bot command.");
 
                         return;
                     }
-                    if (BotExpression::where('user_id', $userId)->where('command', $command)->exists()) {
-                        $fail("Command '!{$command}' collides with an existing Bot Expression.");
+                    if (BotCommand::where('user_id', $userId)->where('command', $command)->exists()) {
+                        $fail("Command '!{$command}' collides with an existing Bot Command.");
 
                         return;
                     }

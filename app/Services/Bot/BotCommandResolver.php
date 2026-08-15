@@ -5,7 +5,7 @@ namespace App\Services\Bot;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
 use App\Models\User;
-use App\Services\Expressions\ExpressionFormatter;
+use App\Services\Messages\PipeFormatter;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchTokenService;
@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Resolves a Bot Expression template string into a chat-ready string.
+ * Resolves a Bot Command template string into a chat-ready string.
  *
  * SINGLE-PASS BY DESIGN: the regex matches once over the input. Substituted
  * values are never re-scanned for tags. Mirrors the day-one rule from the
@@ -34,7 +34,7 @@ use Throwable;
  *
  * `counter:` READS HERE AND ONLY READS HERE. It resolves exactly like `c:`;
  * the increment it declares is applied once by BotCounterService::bump() from
- * BotExpressionService::fire(), before this runs. That split is what keeps the
+ * BotCommandService::fire(), before this runs. That split is what keeps the
  * dry-run preview and the validator free of side effects and makes a tag used
  * twice count once. Do not move the increment into lookup().
  *
@@ -55,7 +55,7 @@ use Throwable;
  * control's stored value. Chat output is a plain-text sink, so the default
  * needs no HTML encoding here.
  */
-class BotExpressionResolver
+class BotCommandResolver
 {
     // Group 1: tag key. Group 2 (optional): pipe formatter. Group 3 (optional,
     // after `??`): literal default emitted when the value resolves empty. The
@@ -77,7 +77,7 @@ class BotExpressionResolver
     ) {}
 
     /**
-     * Resolve $expression for $user, given $botContext for the invocation.
+     * Resolve $reply for $user, given $botContext for the invocation.
      *
      * @param  array<string,mixed>  $botContext  Keys: from_user, from_user_login,
      *                                           from_user_id, command, args (string),
@@ -86,7 +86,7 @@ class BotExpressionResolver
      *                        fetch and resolves bare tags to empty. Used by the
      *                        builder UI's live preview and the validator.
      */
-    public function resolve(User $user, string $expression, array $botContext = [], bool $dryRun = false): string
+    public function resolve(User $user, string $reply, array $botContext = [], bool $dryRun = false): string
     {
         $controls = $this->loadControls($user);
         $lists = $this->loadLists($user);
@@ -108,12 +108,12 @@ class BotExpressionResolver
                 }
 
                 if ($pipe !== null) {
-                    $value = ExpressionFormatter::apply($value, $pipe, $locale);
+                    $value = PipeFormatter::apply($value, $pipe, $locale);
                 }
 
                 return $value;
             },
-            $expression
+            $reply
         );
 
         if (mb_strlen($resolved) > self::MAX_RESOLVED_LENGTH) {
@@ -250,7 +250,7 @@ class BotExpressionResolver
         // need no token. ensureValidToken() mutates $user in place, so the
         // fetch below uses the freshly refreshed access_token.
         if (! $this->tokens->ensureValidToken($user)) {
-            Log::warning('bot_expression.token_refresh_failed', ['user_id' => $user->id]);
+            Log::warning('bot_command.token_refresh_failed', ['user_id' => $user->id]);
 
             return [];
         }
@@ -260,7 +260,7 @@ class BotExpressionResolver
 
             return $this->mapper->mapTwitchDataForTemplates($data, '');
         } catch (Throwable $e) {
-            Log::warning('bot_expression.twitch_fetch_failed', [
+            Log::warning('bot_command.twitch_fetch_failed', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);

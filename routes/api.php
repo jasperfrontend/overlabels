@@ -8,8 +8,8 @@ use App\Http\Controllers\Api\Internal\BotAccountageController;
 use App\Http\Controllers\Api\Internal\BotChannelController;
 use App\Http\Controllers\Api\Internal\BotChatAdminController;
 use App\Http\Controllers\Api\Internal\BotCommandController;
+use App\Http\Controllers\Api\Internal\BotCommandMapController;
 use App\Http\Controllers\Api\Internal\BotControlController;
-use App\Http\Controllers\Api\Internal\BotExpressionController;
 use App\Http\Controllers\Api\Internal\BotFollowageController;
 use App\Http\Controllers\Api\Internal\BotGamejamActionController;
 use App\Http\Controllers\Api\Internal\BotListActionController;
@@ -201,8 +201,13 @@ Route::prefix('/internal/bot')
             Route::get('/channels', [BotChannelController::class, 'index']);
             Route::get('/tokens', [BotTokenController::class, 'show']);
             Route::post('/tokens', [BotTokenController::class, 'store']);
-            Route::get('/commands', [BotCommandController::class, 'index']);
-            Route::post('/expressions/fire', [BotExpressionController::class, 'fire']);
+            Route::get('/commands', [BotCommandMapController::class, 'index']);
+            Route::post('/commands/fire', [BotCommandController::class, 'fire']);
+            // Deprecated alias. The bot and this app deploy independently, so
+            // the endpoint has to answer to both names across the window where
+            // one is updated and the other is not. Remove once the bot has
+            // shipped its switch to /commands/fire.
+            Route::post('/expressions/fire', [BotCommandController::class, 'fire']);
             Route::post('/recipe-triggers/fire', [BotRecipeTriggerController::class, 'fire']);
             Route::post('/list-appenders/fire', [BotListAppenderController::class, 'fire']);
             Route::post('/list-actions/fire', [BotListActionController::class, 'fire']);

@@ -158,6 +158,31 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
 - Global locale stored on `users.locale` (default `en-US`), passed via API response as `json.locale`
 - Settings UI: Appearance page has locale picker with live number/currency/date preview
 
+## Bot Commands, and what "expression" is allowed to mean (renamed Aug 2026)
+
+- **"Expression" means a jsep formula in an Expression Control. Nothing else.** It previously meant six
+  things. If you are about to name something "expression", it had better be evaluated by
+  `expression-engine.mjs`.
+- `BotCommand` / `bot_commands` = the user's custom chat commands (was `BotExpression` /
+  `bot_expressions`). `BotBuiltin` / `bot_builtins` = the per-user registry of which BUILT-IN verbs are
+  enabled and at what tier (was `BotCommand` / `bot_commands`). The two swapped names in one migration.
+- Columns: `bot_commands.reply` is the templated text the bot speaks (was `expression`).
+  `bot_commands.hidden` and `bot_aliases.hidden` (were `hidden_from_commands`).
+- `overlay_templates.tts_message` and `overlay_templates.chat_message` (were `tts_expression` and
+  `bot_message_expression`). `App\Services\Messages\PipeFormatter` (was `Expressions\ExpressionFormatter`)
+  and `AlertMessageRenderer` (was `AlertExpressionRenderer`).
+- `BotCommandMapController` serves the whole command map (`GET /internal/bot/commands`).
+  `BotCommandController` is the fire endpoint. Do not conflate them.
+- **The command map `type` discriminator and the fire URL are cross-repo contracts.** The bot lives in
+  its own repo and deploys independently, so any change to either is a three-step rollout: the bot
+  learns the new value first, the app then emits it, the bot drops the old value last. `type` is
+  `builtin | custom | alias | recipe_trigger | list_append | list_meta`; `custom` was `expression`.
+- `POST /api/internal/bot/expressions/fire` survives as a deprecated alias of `/commands/fire`, pinned by
+  a test in `BotCommandsApiTest`. Delete both together once the bot has shipped its URL switch.
+- Migrations and past changelog entries were deliberately NOT rewritten by the rename. They record what
+  was true when they ran. Same for the dated design specs in `resources/help/reference/*.md` (depth 0,
+  not served - `HelpReferenceService` scans `depth == 1` only).
+
 ## External Integrations (Implemented Mar 2026)
 
 - Pipeline: ExternalWebhookController -> verifyRequest -> parsePayload -> normalizeEvent -> ExternalEvent (dedup on service+message_id) -> ExternalControlService.applyUpdates -> ExternalAlertService.dispatch

@@ -18,10 +18,10 @@ hops.
 
 Aliases are **per-user**. They live on your account; another streamer creating `!w` on their channel
 doesn't affect yours. Aliases can target Overlabels built-ins (`!inc`, `!set`, `!reset`...) or your own
-[Bot Expressions](/help/expressions).
+[Bot Commands](/help/bot/commands).
 
 What aliases **can't** do: target another alias (one hop only), point to themselves, or collide with a
-name already taken by a built-in or one of your expressions. The dashboard and the chat admin command
+name already taken by a built-in or one of your commands. The dashboard and the chat admin command
 (`!ol alias add`) both validate against the same rules, so chat-side mistakes get caught with the same
 error message.
 
@@ -32,7 +32,7 @@ Two surfaces, identical validation. Pick whichever fits the moment.
 ### From the dashboard
 
 Settings > Integrations > [Manage aliases](/settings/bot/aliases). The editor has quick-insert chips for
-the placeholders and a "Target a command" expander listing all built-ins and your expressions. It also
+the placeholders and a "Target a command" expander listing all built-ins and your commands. It also
 renders a live example showing how a sample call site resolves. Best path when you're building a
 complicated target with multiple placeholders and want to see the rewrite preview before saving.
 
@@ -47,7 +47,7 @@ bot's outbox.
 ```
 
 Full `!ol alias` reference (add / edit / delete / options) lives on
-[/help/bot/expressions](/help/bot/expressions#ol).
+[/help/bot/commands](/help/bot/commands#ol).
 
 ## Placeholder syntax
 
@@ -95,7 +95,7 @@ map data. This keeps the model simple to reason about and immune to loops.
 
 ## Options - cooldown, permission, enabled, hidden
 
-Each alias has four toggles that match the Bot Expression vocabulary one-for-one. Editable from the
+Each alias has four toggles that match the Bot Command vocabulary one-for-one. Editable from the
 dashboard or via `!ol alias options <name> <option> <value>` in chat.
 
 | Option | Value |
@@ -151,19 +151,19 @@ Positionals can appear anywhere in the target template, with literal text in bet
 # Rewrites to !give @alice from @bob
 ```
 
-### Aliasing a Bot Expression
+### Aliasing a Bot Command
 
-Aliases can target your own [Bot Expressions](/help/expressions), not just built-ins. Useful when you
+Aliases can target your own [Bot Commands](/help/bot/commands), not just built-ins. Useful when you
 want a short trigger for a long templated reply.
 
 ```
-# Suppose !discord is one of your Bot Expressions.
+# Suppose !discord is one of your Bot Commands.
 # Make !d an alias for it.
 !ol alias add d !discord
 
 # Use
 @viewer: !d
-# Rewrites to !discord, which the bot resolves as an expression
+# Rewrites to !discord, which the bot resolves as a custom command
 # and speaks the template result.
 ```
 
@@ -174,7 +174,7 @@ want a short trigger for a long templated reply.
 - **Target permission still applies.** After the rewrite, the target command's own permission gate runs
   against the original chatter. An alias can't escalate privilege.
 - **Cooldown is per-alias.** The alias's `cooldown_seconds` gates how often the alias itself fires. If
-  the target also has a cooldown (e.g. a Bot Expression), that runs independently on the second hop.
+  the target also has a cooldown (e.g. a Bot Command), that runs independently on the second hop.
 - **Missing args are silent.** `{1}` with no arg substitutes empty string. The rewritten command keeps
   running - it just sees a shorter arg list. No error to chat.
 - **Negative numbers work.** Args pass through verbatim. `!w -2` with target `!inc wins {1}` expands to
@@ -207,9 +207,9 @@ Dashboard: [/settings/bot/aliases](/settings/bot/aliases)
 
 ## Related
 
-- [Bot Expressions](/help/expressions) - custom `!command` chat replies templated against your controls,
+- [Bot Commands](/help/bot/commands) - custom `!command` chat replies templated against your controls,
   Twitch data, and the chatter who fired them.
-- [Bot Expressions reference](/help/bot/expressions) - every built-in chat expression the @overlabels bot
+- [Bot Commands reference](/help/bot/commands) - every built-in chat command the @overlabels bot
   ships with, plus the full `!ol` chat-admin vocabulary.
 - [Lists](/help/lists) - if you find yourself aliasing list operations, the underlying `!list`
   meta-command is documented end-to-end here.

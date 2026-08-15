@@ -120,12 +120,14 @@ const items = computed<PaletteItem[]>(() => {
     },
 
     {
-      id: 'bot-expressions',
-      label: 'Bot Expressions',
+      id: 'bot-commands',
+      label: 'Bot Commands',
       section: 'Chat bot',
-      href: route('settings.bot.expressions.index'),
+      href: route('settings.bot.commands.index'),
       icon: MessageSquare,
-      keywords: ['bot', 'commands', 'chat'],
+      // 'expressions' is the name this feature carried until Aug 2026. Search
+      // keywords are exactly where a retired name should keep working.
+      keywords: ['bot', 'commands', 'chat', 'expressions'],
     },
     {
       id: 'bot-aliases',

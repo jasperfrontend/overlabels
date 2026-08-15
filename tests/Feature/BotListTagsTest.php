@@ -4,7 +4,7 @@ use App\Models\BotChatOutbox;
 use App\Models\ListAppender;
 use App\Models\OptionSet;
 use App\Models\User;
-use App\Services\Bot\BotExpressionResolver;
+use App\Services\Bot\BotCommandResolver;
 use App\Services\Lists\ListAppendService;
 use App\Services\TwitchApiService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -47,7 +47,7 @@ it('resolves :count, :first, :last, :empty for a bot reply', function () {
         'items' => ['Alice', 'Bob', 'Carol'],
     ]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[c:list:donors:count]]]'))->toBe('3')
         ->and($resolver->resolve($user, '[[[c:list:donors:first]]]'))->toBe('Alice')
@@ -59,7 +59,7 @@ it('resolves :empty to "1" and value tags to empty for an empty list', function 
     $user = makeListUser();
     OptionSet::create(['user_id' => $user->id, 'slug' => 'nobody', 'items' => []]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[c:list:nobody:empty]]]'))->toBe('1')
         ->and($resolver->resolve($user, '[[[c:list:nobody:count]]]'))->toBe('0')
@@ -72,7 +72,7 @@ it('resolves :sum and surfaces its loud-failure string', function () {
     OptionSet::create(['user_id' => $user->id, 'slug' => 'tips', 'items' => ['5', '10', '15.5']]);
     OptionSet::create(['user_id' => $user->id, 'slug' => 'broken', 'items' => ['10', 'abc']]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[c:list:tips:sum]]]'))->toBe('30.5')
         ->and($resolver->resolve($user, '[[[c:list:broken:sum]]]'))
@@ -83,7 +83,7 @@ it('resolves :random to one of the list items', function () {
     $user = makeListUser();
     OptionSet::create(['user_id' => $user->id, 'slug' => 'colors', 'items' => ['red', 'green', 'blue']]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[c:list:colors:random]]]'))->toBeIn(['red', 'green', 'blue']);
 });
@@ -101,7 +101,7 @@ it('resolves :expires_at and :countdown as a static snapshot', function () {
         'expires_at' => now()->addSeconds(90),
     ]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     // countdown is seconds-until-expiry, clamped >= 0. now()->addSeconds(90)
     // can land on 89 or 90 depending on sub-second timing, so allow both.
@@ -119,7 +119,7 @@ it('clamps :countdown to 0 for an already-expired list', function () {
         'expires_at' => now()->subMinutes(5),
     ]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[c:list:stale:countdown]]]'))->toBe('0');
 });
@@ -128,7 +128,7 @@ it('resolves expiry tags to empty when the list has no deadline', function () {
     $user = makeListUser();
     OptionSet::create(['user_id' => $user->id, 'slug' => 'forever', 'items' => ['x']]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[c:list:forever:expires_at]]]'))->toBe('')
         ->and($resolver->resolve($user, '[[[c:list:forever:countdown]]]'))->toBe('');
@@ -142,7 +142,7 @@ it('drops the bare c:list:<slug> array tag to empty in chat', function () {
     $user = makeListUser();
     OptionSet::create(['user_id' => $user->id, 'slug' => 'donors', 'items' => ['Alice', 'Bob']]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     // No raw JSON array dumped into chat.
     expect($resolver->resolve($user, '[[[c:list:donors]]]'))->toBe('')
@@ -157,7 +157,7 @@ it('applies a pipe formatter to a list tag', function () {
     $user = makeListUser();
     OptionSet::create(['user_id' => $user->id, 'slug' => 'raffle', 'items' => [], 'expires_at' => now()->addSeconds(125)]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     // 125s -> mm:ss. Allow the boundary second from sub-second timing.
     expect($resolver->resolve($user, '[[[c:list:raffle:countdown|duration:mm:ss]]]'))
@@ -168,7 +168,7 @@ it('falls back to a ?? default when a list value is empty', function () {
     $user = makeListUser();
     OptionSet::create(['user_id' => $user->id, 'slug' => 'quotes', 'items' => []]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($user, '[[[c:list:quotes:last ?? no quotes yet]]]'))->toBe('no quotes yet');
 });
@@ -182,7 +182,7 @@ it('does not resolve another user\'s list', function () {
     $other = makeListUser('other');
     OptionSet::create(['user_id' => $owner->id, 'slug' => 'secret', 'items' => ['a', 'b']]);
 
-    $resolver = app(BotExpressionResolver::class);
+    $resolver = app(BotCommandResolver::class);
 
     expect($resolver->resolve($other, '[[[c:list:secret:count]]]'))->toBe('');
 });

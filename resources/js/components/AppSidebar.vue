@@ -64,7 +64,7 @@ const mainNavItems = computed<NavItem[]>(() =>
 const botNavItems = computed<NavItem[]>(() =>
   user.value
     ? [
-        { title: 'Expressions', href: route('settings.bot.expressions.index'), icon: MessageSquare },
+        { title: 'Commands', href: route('settings.bot.commands.index'), icon: MessageSquare },
         { title: 'Aliases', href: route('settings.bot.aliases.index'), icon: MessageSquareCode },
       ]
     : [],
