@@ -167,3 +167,125 @@ describe('renderTemplateSource / defusing does not damage ordinary data', () => 
     expect(out).toBe('JASPER');
   });
 });
+
+/**
+ * Loop scoping contract.
+ *
+ * A foreach body has to see three things at once: the current item under its
+ * alias, the `loop.*` counters, and the entire outer payload (so a condition
+ * inside a loop can branch on whether the stream is live). Historically that was
+ * achieved by copying the whole payload into a fresh object per iteration, which
+ * made the render cost quadratic in payload size x message count.
+ *
+ * These tests pin the SEMANTICS so that cost can be attacked without changing
+ * behaviour. Every one of them passed before the optimisation and must keep
+ * passing after it. The dotted-outer-key and shadowing cases are the two that a
+ * prototype-chain lookup gets wrong if done carelessly.
+ */
+describe('renderTemplateSource / foreach scope', () => {
+  const OUTER = {
+    'twitch.stream.is_live': '1',
+    'twitch.user.display_name': 'CasualElephant',
+    'c:alerts:muted': '0',
+    tier: 'gold',
+    'chat.0.text': 'first',
+    'chat.0.name': 'ana',
+    'chat.1.text': 'second',
+    'chat.1.name': 'bo',
+    'chat.count': 2,
+  };
+
+  it('resolves the alias sub-field and the bare alias', () => {
+    expect(renderTemplateSource('[[[foreach:chat as m]]][[[m.name]]];[[[endforeach]]]', OUTER, LOCALE)).toBe('ana;bo;');
+
+    expect(
+      renderTemplateSource('[[[foreach:names as n]]][[[n]]];[[[endforeach]]]', { 'names.0': 'x', 'names.1': 'y', 'names.count': 2 }, LOCALE),
+    ).toBe('x;y;');
+  });
+
+  it('exposes loop.index, loop.first, loop.last and loop.count', () => {
+    const out = renderTemplateSource(
+      '[[[foreach:chat as m]]][[[loop.index]]]/[[[loop.count]]] f=[[[loop.first]]] l=[[[loop.last]]];[[[endforeach]]]',
+      OUTER,
+      LOCALE,
+    );
+
+    expect(out).toBe('0/2 f=1 l=0;1/2 f=0 l=1;');
+  });
+
+  it('lets a condition inside the loop read a plain outer key', () => {
+    const out = renderTemplateSource('[[[foreach:chat as m]]][[[if:tier = gold]]]*[[[endif]]][[[m.name]]];[[[endforeach]]]', OUTER, LOCALE);
+
+    expect(out).toBe('*ana;*bo;');
+  });
+
+  it('lets a condition inside the loop read a DOTTED outer key', () => {
+    // The payload is flat: the key is literally "twitch.stream.is_live", not a
+    // nested object. A lookup that walks dots before checking the flat key, or
+    // that only checks own properties on a prototype-linked scope, breaks here.
+    const out = renderTemplateSource(
+      '[[[foreach:chat as m]]][[[if:twitch.stream.is_live = 1]]]LIVE:[[[endif]]][[[m.name]]];[[[endforeach]]]',
+      OUTER,
+      LOCALE,
+    );
+
+    expect(out).toBe('LIVE:ana;LIVE:bo;');
+  });
+
+  it('lets a condition inside the loop read a namespaced outer control key', () => {
+    const out = renderTemplateSource('[[[foreach:chat as m]]][[[if:c:alerts:muted = 0]]]on[[[endif]]];[[[endforeach]]]', OUTER, LOCALE);
+
+    expect(out).toBe('on;on;');
+  });
+
+  it('resolves outer tags written inside a loop body', () => {
+    // Non-scoped tags are left untouched by pass 1 and resolved by pass 2, so
+    // the same outer value repeats once per iteration.
+    const out = renderTemplateSource('[[[foreach:chat as m]]][[[twitch.user.display_name]]]:[[[m.name]]];[[[endforeach]]]', OUTER, LOCALE);
+
+    expect(out).toBe('CasualElephant:ana;CasualElephant:bo;');
+  });
+
+  it('branches on a scoped field', () => {
+    const out = renderTemplateSource('[[[foreach:chat as m]]][[[if:m.name = ana]]]HI [[[endif]]][[[m.text]]];[[[endforeach]]]', OUTER, LOCALE);
+
+    expect(out).toBe('HI first;second;');
+  });
+
+  it('gives the scoped alias precedence over an outer key of the same name', () => {
+    const out = renderTemplateSource(
+      '[[[foreach:rows as r]]][[[r.v]]];[[[endforeach]]]',
+      { 'r.v': 'OUTER', 'rows.0.v': 'inner', 'rows.count': 1 },
+      LOCALE,
+    );
+
+    expect(out).toBe('inner;');
+  });
+
+  it('does not leak scoped tokens outside the loop', () => {
+    const out = renderTemplateSource('[[[foreach:chat as m]]][[[m.name]]];[[[endforeach]]]|[[[m.name]]]', OUTER, LOCALE);
+
+    // The trailing tag has no scope to resolve against, so it renders empty
+    // rather than picking up the last iteration's value.
+    expect(out).toBe('ana;bo;|');
+  });
+
+  it('keeps outer data visible through a nested loop', () => {
+    const out = renderTemplateSource(
+      '[[[foreach:rooms as room]]][[[foreach:chat as m]]][[[if:tier = gold]]]g[[[endif]]][[[room.id]]]-[[[m.name]]];[[[endforeach]]][[[endforeach]]]',
+      { ...OUTER, 'rooms.0.id': 'A', 'rooms.count': 1 },
+      LOCALE,
+    );
+
+    expect(out).toBe('gA-ana;gA-bo;');
+  });
+
+  it('iterates only over indices that have data, not up to count', () => {
+    // count is the source-of-truth size and may exceed what the payload
+    // carries once a foreach cap has trimmed it. Padding the difference with
+    // empty objects would render blank rows.
+    const out = renderTemplateSource('[[[foreach:chat as m]]][[[m.name]]];[[[endforeach]]]', { 'chat.0.name': 'solo', 'chat.count': 25 }, LOCALE);
+
+    expect(out).toBe('solo;');
+  });
+});
