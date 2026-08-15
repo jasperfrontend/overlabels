@@ -274,6 +274,34 @@ function buildScopedData(outer: Record<string, any>, alias: string, item: any, i
 }
 
 /**
+ * Neutralise `[` / `]` so a `[[[...]]]` sequence that arrived as DATA cannot be
+ * read as template source by the caller's outer substitution pass.
+ *
+ * This is the pass-1 half of the single-pass rule documented in tagParser.ts.
+ * Pass 2 gets that rule for free (one `String.replace` never re-scans its own
+ * output), but anything substituted here is substituted BEFORE pass 2 runs, so
+ * without this a chatter typing `[[[c:kofi:total_received]]]` into a list
+ * appender would have it resolved against the real payload - which carries
+ * every control and list on the account, not just the ones the template names.
+ *
+ * Applied to values only, never to authored template text: an author writing a
+ * tag in their own template is the feature, not the attack.
+ *
+ * Unconditional rather than "only when the value contains `[[[`", because one
+ * attacker usually controls several fields of the same item, and `[` + `[[c:x]]]`
+ * across two adjacent scoped tags concatenates into a live tag while neither
+ * half looks dangerous alone.
+ *
+ * Entities rather than stripping, so nothing is silently eaten: browsers render
+ * these as the literal characters, so `[AFK] brb` still reads as `[AFK] brb`.
+ * The CSS sink (encode=false) gets the same treatment - it has the same pass
+ * boundary, and an inert entity in a stylesheet beats a resolved tag.
+ */
+function defuseBrackets(value: string): string {
+  return value.replace(/\[/g, '&#91;').replace(/]/g, '&#93;');
+}
+
+/**
  * Substitute scoped tokens (`alias.*`, bare `alias`, `loop.*`, bare `loop`) in
  * an already-rendered loop body. Non-scoped tokens are left alone for the
  * caller's outer substitution pass. HTML-encodes by default; honours pipe
@@ -293,10 +321,7 @@ function substituteScopedTokens(template: string, alias: string, scoped: Record<
         json = String(scoped[alias]);
       }
       if (encode) json = encodeHtml(json);
-      // Defuse any `[` / `]` in the JSON so a stray `[[[...]]]` in the
-      // data can't re-enter the outer tag substitution pass. Browsers
-      // still render these as literal brackets.
-      return json.replace(/\[/g, '&#91;').replace(/]/g, '&#93;');
+      return defuseBrackets(json);
     }
 
     const isScoped = key === alias || key.startsWith(`${alias}.`) || key === 'loop' || key.startsWith('loop.');
@@ -314,7 +339,7 @@ function substituteScopedTokens(template: string, alias: string, scoped: Record<
     }
 
     const formatted = pipe ? applyFormatter(strVal, pipe, locale) : strVal;
-    return encode ? encodeHtml(formatted) : formatted;
+    return defuseBrackets(encode ? encodeHtml(formatted) : formatted);
   });
 }
 

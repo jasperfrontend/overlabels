@@ -82,6 +82,18 @@ jobs:
       - name: Typecheck Frontend
         run: npm run typecheck
 
+      # Vitest covers the pure TypeScript that Pest cannot reach: the DSL, the
+      # tag parser and the two-pass template renderer. That pipeline decides
+      # what a chatter-supplied string is allowed to do inside an overlay, so it
+      # needs a gate of its own - the single-pass invariant it guards was
+      # already broken across the pass boundary and nothing caught it.
+      #
+      # Sits next to typecheck, and for the same reason: it needs only
+      # node_modules and committed source, so it fails in seconds instead of
+      # after the install-migrate-build chain.
+      - name: Unit Test Frontend
+        run: npm test
+
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
