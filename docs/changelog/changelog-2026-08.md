@@ -2,6 +2,29 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - perf(templates): a foreach copied your whole account, once per item
+
+Every `foreach` iteration started by cloning the entire render payload. Not the item, the whole thing: every control on the account, every list, every Twitch field, copied fresh for each row of the loop.
+
+That made rendering quadratic. The payload grows with the data being looped over, so doubling the item count doubled both the number of copies and the size of each one. A 50-message chat feed spent roughly three quarters of its render time copying keys it never read.
+
+The loop scope is now prototype-linked to the payload instead of copied from it. Lookup walks the chain, which costs nothing to set up, and own properties still shadow outer keys, so an alias that collides with a payload key wins exactly as before.
+
+| items | before | after | |
+|---|---|---|---|
+| 10 | 0.31 ms | 0.14 ms | 2.3x |
+| 25 | 1.68 ms | 0.24 ms | 6.9x |
+| 50 | 6.84 ms | 0.48 ms | 14x |
+| 100 | 31.9 ms | 0.97 ms | 33x |
+| 500 | 525 ms | 5.07 ms | 104x |
+
+- **The curve is linear now.** That is the real result, not any single row. Before, every item you added made every other item more expensive. The 500-item case went from half a second to five milliseconds because the penalty compounded hardest where there was most of it.
+- **Payload size stopped mattering.** The control experiment: 25 items rendered with 300 unrelated keys sitting in the payload alongside them used to cost 3.18x the same 25 items rendered lean. It is now 1.02x. Loop cost is a function of what you loop over, not of how much you own.
+- **This is not a chat feature.** It lands on every `foreach` that already exists: poll choices, subscriber and follower lists, hype train contributors, list-driven wheels and leaderboards. Anyone iterating anything got faster today, and the users who got the biggest lift are the ones with the most controls, who were paying the largest hidden multiplier.
+- **Two lookups had to learn about inheritance.** `resolvePath` checks `in` rather than `hasOwnProperty`, or flat dotted keys like `twitch.stream.is_live` fall through to dot-walking and resolve to nothing against a flat payload. `resolveIterable` uses `for...in` rather than `Object.keys`, or a nested loop cannot see the iterable it is meant to iterate. Both are pinned by tests that fail loudly if reverted.
+- **Eleven tests were written first, against the old code.** They pin the scoping contract rather than the implementation: outer keys readable from inside a loop, dotted outer keys, namespaced control keys, `loop.*` counters, scoped-shadows-outer, no leakage past `endforeach`, and outer data surviving a nested loop. All eleven passed before the change and after it, which is the only reason to trust a rewrite of the hottest path in the renderer.
+- **`OverlayTemplateController` still merges every control and list into the payload wholesale** (the tag allowlist covers only the Twitch half). That is why the multiplier was your whole account rather than your template. It is now a hardening question rather than a performance one, and it is worth doing on its own: the reasons it is not a one-line change are expression controls reading each other's values, list foreach caps that would silently truncate long lists, and `template_tags` being a stored column that can go stale.
+
 ## August 16th, 2026 - chore: the rename's last scaffolding comes down
 
 The Bot Commands rename shipped behind two compatibility shims, because the bot deploys from its own repo and the two sides are never updated in the same instant. Both are now redundant, and this removes the app's half.

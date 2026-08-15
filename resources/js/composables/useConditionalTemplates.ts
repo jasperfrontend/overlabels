@@ -167,8 +167,14 @@ function splitTopLevel(inner: string, firstCondition: string): ConditionalBlock[
  * `choice.title` work alongside flat keys like `event.user_name`.
  */
 function resolvePath(data: Record<string, any>, path: string): any {
-  if (data == null) return undefined;
-  if (Object.prototype.hasOwnProperty.call(data, path)) return data[path];
+  if (data == null || typeof data !== 'object') return undefined;
+  // `in` rather than hasOwnProperty: a foreach scope is prototype-linked to the
+  // outer payload (see buildScopedData), so the outer keys a condition inside a
+  // loop needs to read are INHERITED, not own. Checking own properties only
+  // would send flat dotted keys like `twitch.stream.is_live` down the
+  // dot-walking fallback, where they resolve to undefined because the payload is
+  // flat and there is no `twitch` object to walk into.
+  if (path in data) return data[path];
   return path.split('.').reduce<any>((obj, key) => (obj == null ? undefined : obj[key]), data);
 }
 
@@ -191,7 +197,12 @@ function resolveIterable(data: Record<string, any>, path: string): any[] {
 
   const byIndex = new Map<number, any>();
 
-  for (const key of Object.keys(data)) {
+  // `for...in` rather than Object.keys: a nested foreach resolves its iterable
+  // against the enclosing loop's scope, which is prototype-linked to the outer
+  // payload, so the indexed keys it needs are inherited. Object.keys sees only
+  // own properties and would find nothing. Object.prototype's own members are
+  // non-enumerable, so they are excluded here for free.
+  for (const key in data) {
     if (!key.startsWith(prefix)) continue;
     const rest = key.slice(prefix.length);
     if (rest === 'count') continue;
@@ -244,9 +255,26 @@ function resolveIterable(data: Record<string, any>, path: string): any[] {
  * existing flat-lookup substitution works, and as a nested structure
  * (`choice: { title }`, `loop: { index, first, last }`) so `resolvePath`
  * can walk deeper if the template writes `[[[choice.nested.field]]]`.
+ *
+ * The scope is PROTOTYPE-LINKED to the outer payload rather than a copy of it.
+ * A loop body has to see the whole payload - a condition inside a foreach can
+ * legitimately branch on whether the stream is live - and this used to be done
+ * with `{ ...outer }`, once per iteration. That made the render cost quadratic:
+ * doubling the item count doubled both the number of copies and the size of
+ * each one, since the payload grows with the data being looped over. A 50-item
+ * chat feed spent roughly three quarters of its render time copying keys it
+ * never read, and the payload includes every control and list on the account
+ * (OverlayTemplateController builds it wholesale), so the multiplier is the
+ * user's whole account, not the template.
+ *
+ * Object.create() makes lookup walk the chain instead, which is O(1) to set up.
+ * Own properties assigned below still shadow the outer payload, so an alias that
+ * collides with an outer key wins exactly as it did before. The two places that
+ * had to learn about inheritance are resolvePath (`in`, not hasOwnProperty) and
+ * resolveIterable (`for...in`, not Object.keys).
  */
 function buildScopedData(outer: Record<string, any>, alias: string, item: any, index: number, total: number): Record<string, any> {
-  const scoped: Record<string, any> = { ...outer };
+  const scoped: Record<string, any> = Object.create(outer ?? null);
   const loop = {
     index,
     first: index === 0,
