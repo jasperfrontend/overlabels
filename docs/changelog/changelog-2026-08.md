@@ -2,6 +2,17 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - chore: the rename's last scaffolding comes down
+
+The Bot Commands rename shipped behind two compatibility shims, because the bot deploys from its own repo and the two sides are never updated in the same instant. Both are now redundant, and this removes the app's half.
+
+- **`POST /api/internal/bot/expressions/fire` is gone**, along with the test that pinned it. The bot has shipped and deployed its switch to `/commands/fire`, so the alias was answering nobody.
+- **Verified against the bot's `main` before deleting**, not assumed: it POSTs to `/commands/fire` and its dispatcher accepts `type === 'custom'` only. An alias is only safe to remove once you have looked at what is actually calling it.
+
+That closes the four-step sequence a cross-repo rename needs: the bot learns the new value while still accepting the old, the app switches behind an alias, the bot drops the old value, the app deletes the alias. `CLAUDE.md` now describes it that way rather than as three steps, with this rename as the worked example, because the fourth step is the one that is easy to forget and leaves dead surface area behind forever.
+
+It also records a trap found on the bot side: a local dispatcher in `bot.js` must never share a name with the API function it imports, or the inner call resolves to itself and recurses forever on every fire. `node --check` caught it; the bot repo has no test or lint script, so that is the only net there is.
+
 ## August 15th, 2026 - refactor: "expression" meant six things, and now it means one
 
 A joke made in passing, "oh you mean bot expressions, expression controls and control's expressions?", turned out to be an accurate census. The word was doing six jobs: jsep formulas in Expression Controls, user-authored chat commands, the pipe formatter, the string an alert speaks, the string an alert posts to chat, and a `bot_commands` table that held something else entirely.

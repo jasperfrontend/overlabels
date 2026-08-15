@@ -173,12 +173,17 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   and `AlertMessageRenderer` (was `AlertExpressionRenderer`).
 - `BotCommandMapController` serves the whole command map (`GET /internal/bot/commands`).
   `BotCommandController` is the fire endpoint. Do not conflate them.
-- **The command map `type` discriminator and the fire URL are cross-repo contracts.** The bot lives in
-  its own repo and deploys independently, so any change to either is a three-step rollout: the bot
-  learns the new value first, the app then emits it, the bot drops the old value last. `type` is
-  `builtin | custom | alias | recipe_trigger | list_append | list_meta`; `custom` was `expression`.
-- `POST /api/internal/bot/expressions/fire` survives as a deprecated alias of `/commands/fire`, pinned by
-  a test in `BotCommandsApiTest`. Delete both together once the bot has shipped its URL switch.
+- **The command map `type` discriminator and every `/internal/bot/*` URL are cross-repo contracts.** The
+  bot lives in its own repo and deploys independently, so changing one is a four-step rollout, in order:
+  the bot learns the new value while still accepting the old, the app switches to emitting the new one
+  behind a compatibility alias, the bot drops the old value, the app deletes the alias. Skipping ahead
+  breaks every custom chat command in every channel for the length of the gap. `type` is
+  `builtin | custom | alias | recipe_trigger | list_append | list_meta`; `custom` was `expression` until
+  Aug 2026, and the rename above is the worked example of the full sequence.
+- In the bot's `src/bot.js`, a local dispatcher must never share a name with the API function it
+  imports from `overlabelsApi.js` - the inner call resolves to the dispatcher itself and recurses
+  forever. Convention there is API `fireX`, local `fireXInvocation`. The bot repo has no test or lint
+  script, so `node --check` every file you touch.
 - Migrations and past changelog entries were deliberately NOT rewritten by the rename. They record what
   was true when they ran. Same for the dated design specs in `resources/help/reference/*.md` (depth 0,
   not served - `HelpReferenceService` scans `depth == 1` only).

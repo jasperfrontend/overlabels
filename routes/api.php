@@ -203,11 +203,6 @@ Route::prefix('/internal/bot')
             Route::post('/tokens', [BotTokenController::class, 'store']);
             Route::get('/commands', [BotCommandMapController::class, 'index']);
             Route::post('/commands/fire', [BotCommandController::class, 'fire']);
-            // Deprecated alias. The bot and this app deploy independently, so
-            // the endpoint has to answer to both names across the window where
-            // one is updated and the other is not. Remove once the bot has
-            // shipped its switch to /commands/fire.
-            Route::post('/expressions/fire', [BotCommandController::class, 'fire']);
             Route::post('/recipe-triggers/fire', [BotRecipeTriggerController::class, 'fire']);
             Route::post('/list-appenders/fire', [BotListAppenderController::class, 'fire']);
             Route::post('/list-actions/fire', [BotListActionController::class, 'fire']);
