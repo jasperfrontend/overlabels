@@ -53,7 +53,10 @@ export function useEmoteParser() {
 
     const fetcher = new EmoteFetcher(); // No Twitch credentials — BTTV/FFZ/7TV only
     parser = new EmoteParser(fetcher, {
-      template: '<img class="overlay-emote" alt="{name}" src="{link}" style="display:inline;vertical-align:middle;height:1.5em;">',
+      // No inline styles. Sizing lives in the overlay's base stylesheet as a
+      // `.overlay-emote` rule, so a template can override it with an ordinary
+      // selector instead of having to out-shout `style=""` with `!important`.
+      template: '<img class="overlay-emote" alt="{name}" src="{link}">',
       match: /([a-zA-Z0-9_-]+)/g,
     });
 
@@ -124,7 +127,7 @@ export function useEmoteParser() {
   function parseToken(token: string): string {
     const twitchUrl = twitchEmoteMap.get(token);
     if (twitchUrl) {
-      return `<img class="overlay-emote twitch-emote" alt="${encodeHtml(token)}" src="${twitchUrl}" style="display:inline;vertical-align:middle;height:1.5em;">`;
+      return `<img class="overlay-emote twitch-emote" alt="${encodeHtml(token)}" src="${twitchUrl}">`;
     }
     const encoded = encodeHtml(token);
     return parser ? parser.parse(encoded) : encoded;
@@ -169,9 +172,7 @@ export function useEmoteParser() {
       }
       const emoteName = text.slice(emote.begin, emote.end + 1);
       const url = `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/dark/1.0`;
-      parts.push(
-        `<img class="overlay-emote twitch-emote" alt="${encodeHtml(emoteName)}" src="${url}" style="display:inline;vertical-align:middle;height:1.5em;">`,
-      );
+      parts.push(`<img class="overlay-emote twitch-emote" alt="${encodeHtml(emoteName)}" src="${url}">`);
       lastIndex = emote.end + 1;
     }
 

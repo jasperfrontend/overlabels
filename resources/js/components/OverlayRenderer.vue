@@ -472,6 +472,43 @@ watchEffect(
 // declared (see after the alert section).
 const alertContainer = ref<HTMLElement | null>(null);
 
+/**
+ * Defaults for markup the renderer generates itself, rather than the user.
+ *
+ * These used to be inline `style=""` attributes on every emote `<img>`, which
+ * meant a template could only override them with `!important` - inline styles
+ * outrank any selector. As a stylesheet rule at plain class specificity, an
+ * ordinary `.overlay-emote { height: 1em }` in the template now wins, because
+ * this sheet is inserted first in <head>.
+ *
+ * `1.5em` rather than a pixel value on purpose: it scales with the font-size of
+ * whatever the emote sits in, so a feed stays proportional at any overlay
+ * scale. Templates that disagree can say so in one line.
+ *
+ * Badges deliberately have no rule here. They ship class-only (`ol-badge`) and
+ * the help page tells authors to size them, which is the same freedom this
+ * change gives emotes.
+ */
+const BASE_OVERLAY_CSS = `.overlay-emote {
+  display: inline;
+  vertical-align: middle;
+  height: 1.5em;
+}`;
+
+/**
+ * Inserted FIRST in <head> so every later sheet - compiled utilities, and the
+ * template's own CSS - beats it at equal specificity. Order is the whole
+ * mechanism here, so do not switch this to appendChild.
+ */
+function injectBaseStyle() {
+  if (document.getElementById('overlay-base-style')) return;
+
+  const style = document.createElement('style');
+  style.id = 'overlay-base-style';
+  style.textContent = BASE_OVERLAY_CSS;
+  document.head.insertBefore(style, document.head.firstChild);
+}
+
 function injectStyle(styleString: string) {
   const existing = document.getElementById('overlay-style');
   if (existing) existing.remove();
@@ -649,6 +686,10 @@ function injectAlertCompiledStyle(styleString: string) {
 
 onMounted(async () => {
   data.value = {};
+
+  // Before the payload, so it is already first in <head> when the template's
+  // own CSS arrives and lands after it.
+  injectBaseStyle();
 
   // Use resilient fetch with retry
   const result = await health.fetchWithRetry(props.slug, props.token);

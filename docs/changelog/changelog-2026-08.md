@@ -2,6 +2,23 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - fix(overlay): emote sizing is yours now
+
+Every emote image was being written with its styling baked into the tag: `style="display:inline;vertical-align:middle;height:1.5em;"`, stamped on by us, three times over, in three different places in the code.
+
+Inline styles beat every selector you can write. So `1.5em` was not a default, it was a decision, and the only way past it was `!important`.
+
+The same three declarations now live in the overlay's base stylesheet as a `.overlay-emote` rule, loaded before your CSS. Nothing looks any different, but this works now:
+
+```css
+.overlay-emote { height: 1em; }
+```
+
+- **1.5em is still the default**, and it earns it: an `em` scales with whatever text the emote sits in, so a feed stays proportional at any overlay size. A pixel value would not.
+- Twitch emotes also carry `twitch-emote`, so you can size those separately from 7TV, BTTV and FFZ ones if you want.
+- Badges never had this problem - they always shipped class-only. Emotes just predated that decision and nobody went back.
+- A test now fails if inline styles reappear on generated markup, because the tempting fix for "my emotes are the wrong size" is to reach for the nearest string template.
+
 ## August 16th, 2026 - feat(chat): how many chat messages is now yours to decide
 
 Chat was the only foreach loop with a limit you could not change. Fifty messages, take it or leave it, while Subscribers, Goals, Followers and Followed channels all had a box on the settings page. That was an oversight rather than a decision.
