@@ -23,6 +23,21 @@ interface ParsedCondition {
 interface ProcessOptions {
   locale?: string;
   encode?: boolean;
+  /**
+   * Fields whose value is ALREADY SAFE HTML, keyed by iterable name.
+   *
+   * `{ chat: ['html'] }` means that inside `[[[foreach:chat as msg]]]`, and
+   * nowhere else, `[[[msg.html]]]` is emitted without entity-encoding so the
+   * `<img>` tags an emote parser produced survive.
+   *
+   * Keyed by ITERABLE, not by field name alone, so the exemption cannot leak to
+   * another loop that happens to have a field called `html`. The producer of
+   * such a field owes the same guarantee `useEmoteParser` makes: every piece of
+   * user text is escaped before any markup is added.
+   *
+   * Bracket defusing still applies - see the note in substituteScopedTokens.
+   */
+  htmlSafeFields?: Record<string, readonly string[]>;
 }
 
 // ---------------------------------------------------------------------------
@@ -335,7 +350,14 @@ function defuseBrackets(value: string): string {
  * caller's outer substitution pass. HTML-encodes by default; honours pipe
  * formatters via the existing utility.
  */
-function substituteScopedTokens(template: string, alias: string, scoped: Record<string, any>, locale: string, encode: boolean): string {
+function substituteScopedTokens(
+  template: string,
+  alias: string,
+  scoped: Record<string, any>,
+  locale: string,
+  encode: boolean,
+  htmlSafeFields: readonly string[] = [],
+): string {
   TAG_REGEX.lastIndex = 0;
   return template.replace(TAG_REGEX, (match, key: string, pipe: string | undefined, def: string | undefined) => {
     // [[[raw]]] inside a foreach dumps the current iteration item as
@@ -352,6 +374,8 @@ function substituteScopedTokens(template: string, alias: string, scoped: Record<
       return defuseBrackets(json);
     }
 
+    const isHtmlSafe = (k: string) => htmlSafeFields.some((field) => k === `${alias}.${field}`);
+
     const isScoped = key === alias || key.startsWith(`${alias}.`) || key === 'loop' || key.startsWith('loop.');
     // Non-scoped tags (incl. any `?? default`) are left intact for the outer
     // substitution pass, which resolves their values and defaults.
@@ -367,6 +391,18 @@ function substituteScopedTokens(template: string, alias: string, scoped: Record<
     }
 
     const formatted = pipe ? applyFormatter(strVal, pipe, locale) : strVal;
+
+    // A declared html-safe field skips entity-encoding so markup its producer
+    // generated (emote <img> tags) survives to the DOM.
+    //
+    // It does NOT skip defuseBrackets, and that is the whole reason this is
+    // safe. encodeHtml never touched `[`, so without defusing, a chatter typing
+    // `[[[c:kofi:total_received]]]` would land literally in the output and be
+    // resolved by the outer substitution pass - the exact tag-injection hole
+    // closed in #230, reopened through a side door. Emote markup contains no
+    // square brackets, so defusing costs it nothing.
+    if (isHtmlSafe(key)) return defuseBrackets(formatted);
+
     return defuseBrackets(encode ? encodeHtml(formatted) : formatted);
   });
 }
@@ -498,6 +534,10 @@ export function useConditionalTemplates() {
         const inner = out.substring(t.index + t.length, endTag.index);
         const items = resolveIterable(data, t.iterable);
 
+        // Looked up by ITERABLE name, so `chat`'s html exemption cannot leak
+        // into some other loop that also has a field called `html`.
+        const htmlSafeFields = options.htmlSafeFields?.[t.iterable] ?? [];
+
         let rendered = '';
         for (let i = 0; i < items.length; i++) {
           const scoped = buildScopedData(data, t.alias, items[i], i, items.length);
@@ -507,7 +547,7 @@ export function useConditionalTemplates() {
           // Resolve scoped tokens now — they can't survive into the
           // outer substitution pass because the alias won't be bound
           // there.
-          iterationOut = substituteScopedTokens(iterationOut, t.alias, scoped, locale, encode);
+          iterationOut = substituteScopedTokens(iterationOut, t.alias, scoped, locale, encode, htmlSafeFields);
           rendered += iterationOut;
         }
 

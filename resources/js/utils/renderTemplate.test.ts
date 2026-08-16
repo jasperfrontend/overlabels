@@ -289,3 +289,86 @@ describe('renderTemplateSource / foreach scope', () => {
     expect(out).toBe('solo;');
   });
 });
+
+/**
+ * The html-safe escape hatch.
+ *
+ * `chat.N.html` is the one foreach field rendered WITHOUT entity-encoding, so
+ * that emote `<img>` tags survive. That is a deliberate hole in the escaping
+ * hardened above, and these tests are what keep it a hole rather than a wound.
+ *
+ * Two properties must both hold: markup that the emote parser produced gets
+ * through, and a chatter still cannot reach the tag substitution pass. The
+ * second is the one that would silently regress.
+ */
+describe('renderTemplateSource / html-safe foreach fields', () => {
+  const SAFE = { chat: ['html'] };
+
+  it('emits a declared html field without entity-encoding', () => {
+    const out = renderTemplateSource(
+      '[[[foreach:chat as msg]]][[[msg.html]]][[[endforeach]]]',
+      { 'chat.0.html': 'hi <img class="overlay-emote" alt="Kappa" src="https://cdn/x.png">', 'chat.count': 1 },
+      LOCALE,
+      true,
+      SAFE,
+    );
+
+    expect(out).toContain('<img class="overlay-emote"');
+    expect(out).not.toContain('&lt;img');
+  });
+
+  it('still defuses tag brackets inside an html field', () => {
+    // encodeHtml never touched `[`, so without defusing here a chatter typing
+    // a tag would land literally in the output and be resolved by pass 2 -
+    // the injection hole closed in #230, reopened through a side door.
+    const out = renderTemplateSource(
+      '[[[foreach:chat as msg]]][[[msg.html]]][[[endforeach]]]',
+      { 'chat.0.html': `[[[${SECRET_TAG}]]]`, 'chat.count': 1, [SECRET_TAG]: SECRET_VALUE },
+      LOCALE,
+      true,
+      SAFE,
+    );
+
+    expect(out).not.toContain(SECRET_VALUE);
+    expect(out).toContain('&#91;&#91;&#91;');
+  });
+
+  it('does not exempt any other field of the same loop', () => {
+    const out = renderTemplateSource(
+      '[[[foreach:chat as msg]]][[[msg.text]]][[[endforeach]]]',
+      { 'chat.0.text': '<img src=x onerror=xss>', 'chat.count': 1 },
+      LOCALE,
+      true,
+      SAFE,
+    );
+
+    expect(out).toContain('&lt;img');
+    expect(out).not.toContain('<img');
+  });
+
+  it('does not exempt a field called html on a DIFFERENT iterable', () => {
+    // The exemption is keyed by iterable precisely so it cannot leak to some
+    // other loop that happens to have a field with the same name.
+    const out = renderTemplateSource(
+      '[[[foreach:c:list:notes as n]]][[[n.html]]][[[endforeach]]]',
+      { 'c:list:notes.0.html': '<img src=x onerror=xss>', 'c:list:notes.count': 1 },
+      LOCALE,
+      true,
+      SAFE,
+    );
+
+    expect(out).toContain('&lt;img');
+    expect(out).not.toContain('<img');
+  });
+
+  it('encodes everything when no exemption is passed at all', () => {
+    const out = renderTemplateSource(
+      '[[[foreach:chat as msg]]][[[msg.html]]][[[endforeach]]]',
+      { 'chat.0.html': '<img src=x>', 'chat.count': 1 },
+      LOCALE,
+    );
+
+    expect(out).toContain('&lt;img');
+    expect(out).not.toContain('<img');
+  });
+});

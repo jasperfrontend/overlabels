@@ -26,10 +26,11 @@ export function renderTemplateSource(
   data: Record<string, unknown>,
   locale: string,
   encode: boolean = true,
+  htmlSafeFields?: Record<string, readonly string[]>,
 ): string {
   if (!source) return '';
 
-  const withBlocks = processTemplate(source, data, { locale, encode });
+  const withBlocks = processTemplate(source, data, { locale, encode, htmlSafeFields });
 
   return replaceTagsWithFormatting(withBlocks, data, locale, encode);
 }

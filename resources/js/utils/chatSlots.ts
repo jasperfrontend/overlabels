@@ -15,6 +15,18 @@ import type { ChatMessage } from './ircParser';
 export const CHAT_SLOT_PREFIX = 'chat.';
 
 /**
+ * Turns a message into SAFE HTML for `chat.N.html`.
+ *
+ * The contract is the one `useEmoteParser` already keeps for alerts: every
+ * piece of chatter-supplied text is entity-escaped BEFORE any markup is added,
+ * so the only tags in the result are `<img>` elements this app generated. That
+ * slot is rendered without escaping, so a producer that breaks this contract is
+ * writing an XSS hole - which is why the type exists rather than the renderer
+ * just accepting any string.
+ */
+export type EmoteRenderer = (message: ChatMessage) => string;
+
+/**
  * Booleans render as `1` / empty string rather than `true` / `false`.
  *
  * `useConditionalTemplates` treats `'0'` and `''` as falsy but the STRING
@@ -33,13 +45,16 @@ function flag(value: boolean): string {
  * Index 0 is the OLDEST visible message, so a template iterating in order
  * renders top-to-bottom the way Twitch chat reads.
  */
-export function chatSlots(messages: readonly ChatMessage[]): Record<string, string> {
+export function chatSlots(messages: readonly ChatMessage[], toHtml?: EmoteRenderer): Record<string, string> {
   const slots: Record<string, string> = {
     'chat.count': String(messages.length),
   };
 
   messages.forEach((m, i) => {
     const k = `${CHAT_SLOT_PREFIX}${i}.`;
+    // Only emitted when a renderer is supplied, so a caller with no emote
+    // pipeline never produces a slot that claims to be safe HTML.
+    if (toHtml) slots[`${k}html`] = toHtml(m);
     slots[`${k}id`] = m.id;
     slots[`${k}author`] = m.author;
     slots[`${k}login`] = m.login;
@@ -71,7 +86,7 @@ export function chatSlots(messages: readonly ChatMessage[]): Record<string, stri
  * while `chat.count` is small, and would reappear the moment the window grew
  * back past it - a deleted message resurrected by an unrelated new one.
  */
-export function withChatSlots(data: Record<string, unknown>, messages: readonly ChatMessage[]): Record<string, unknown> {
+export function withChatSlots(data: Record<string, unknown>, messages: readonly ChatMessage[], toHtml?: EmoteRenderer): Record<string, unknown> {
   const next: Record<string, unknown> = {};
 
   for (const key in data) {
@@ -79,5 +94,5 @@ export function withChatSlots(data: Record<string, unknown>, messages: readonly 
     next[key] = data[key];
   }
 
-  return Object.assign(next, chatSlots(messages));
+  return Object.assign(next, chatSlots(messages, toHtml));
 }

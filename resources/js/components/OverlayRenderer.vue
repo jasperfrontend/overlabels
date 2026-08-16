@@ -42,6 +42,7 @@ import { useOverlayHealth } from '@/composables/useOverlayHealth';
 import { useEmoteParser } from '@/composables/useEmoteParser';
 import { useTwitchChat } from '@/composables/useTwitchChat';
 import { withChatSlots } from '@/utils/chatSlots';
+import type { ChatMessage } from '@/utils/ircParser';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
 import { useCssCustomProperties } from '@/composables/useCssCustomProperties';
 import { EVENT_RULES } from '@/composables/useTwitchEventRules';
@@ -128,6 +129,22 @@ const templateUsesChat = computed(() => {
 });
 
 /**
+ * Render one chat message to safe HTML for the `chat.N.html` slot.
+ *
+ * Reuses the alert emote pipeline rather than growing a second one, so Twitch,
+ * 7TV, BTTV and FFZ emotes all work in chat the moment they work in an alert.
+ * `parseEmotes` entity-escapes the chatter's text BEFORE inserting any `<img>`,
+ * which is the guarantee that makes the unescaped slot safe to render.
+ *
+ * Twitch emote positions ride along from the IRC `emotes` tag, which is more
+ * accurate than code-matching: it cannot false-positive on a word that merely
+ * contains an emote name.
+ */
+function chatMessageHtml(m: ChatMessage): string {
+  return emoteParser.parseEmotes(m.text, m.emotes.length ? JSON.stringify(m.emotes) : undefined);
+}
+
+/**
  * Project the chat window into `chat.*` data slots whenever it changes.
  *
  * The composable already buffers, so this fires at most a few times a second
@@ -135,10 +152,22 @@ const templateUsesChat = computed(() => {
  * instead of patching it, so a shrinking window cannot leave a deleted message
  * behind to reappear later.
  */
-watch(twitchChat.messages, (list) => {
+function refreshChatSlots(list: readonly ChatMessage[]): void {
   if (!data.value || typeof data.value !== 'object') return;
-  data.value = withChatSlots(data.value, list);
-});
+  data.value = withChatSlots(data.value, list, chatMessageHtml);
+}
+
+watch(twitchChat.messages, refreshChatSlots);
+
+// The emote library loads asynchronously, so the first messages of a stream can
+// arrive before it is ready and would otherwise keep their plain-text rendering
+// for as long as they stay in the window. Rebuild once when it becomes ready.
+watch(
+  () => emoteParser.isReady.value,
+  (ready) => {
+    if (ready) refreshChatSlots(twitchChat.messages.value);
+  },
+);
 
 // Phase 1 surgical-patching state. When fastPath is true, the user's CSS was
 // rewritten at mount to reference CSS custom properties (`var(--ol-...)`) for
@@ -247,12 +276,27 @@ const currentAlert = ref<AlertData | null>(null);
 const alertTimeout = ref<number | null>(null);
 const userId = ref<string | null>(null);
 
+/**
+ * The ONLY foreach fields rendered without entity-encoding, keyed by iterable.
+ *
+ * `chat.N.html` is produced by chatMessageHtml() above, which runs the chatter's
+ * text through the emote parser's escape-then-markup path, so the only tags in
+ * it are `<img>` elements this app generated. Bracket defusing still applies, so
+ * a chatter typing a `[[[tag]]]` cannot reach the substitution pass.
+ *
+ * Keep this list tiny and keep every entry's producer honest. Adding a field
+ * here without an escaping guarantee on the other end is an XSS hole, and it is
+ * the kind that no test notices because the markup only appears when a real
+ * stranger sends it.
+ */
+const HTML_SAFE_FOREACH_FIELDS = { chat: ['html'] } as const;
+
 function parseSource(source: string | null | undefined, encode: boolean = true): string {
   if (!source) return '';
   let result = source;
 
   if (data.value && typeof data.value === 'object') {
-    result = processTemplate(result, data.value, { locale: userLocale.value, encode });
+    result = processTemplate(result, data.value, { locale: userLocale.value, encode, htmlSafeFields: HTML_SAFE_FOREACH_FIELDS });
     result = replaceTagsWithFormatting(result, data.value, userLocale.value, encode);
   }
 

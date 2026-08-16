@@ -25,7 +25,19 @@ The overlay connects to Twitch **directly**, over anonymous IRC-over-WebSocket. 
 - **Validated against live traffic, not just fixtures.** Pointed at an 86,000-viewer chat: 73 lines, 73 parsed, 56 messages, and 5 real moderation actions caught. The window correctly stayed at 50 through four timeouts, which is the proof that a targeted purge is not being mistaken for a room clear.
 - **Chat text is escaped like any other value**, including the `[[[` defusing added yesterday, so a chatter typing a tag gets a tag rendered as text rather than resolved.
 
-**Not in this slice, deliberately:** emotes and badge artwork. Both need message text to arrive as trusted HTML, which means a documented hole through the exact escaping that was hardened yesterday to stop chat-driven tag injection. That deserves its own pass with its own tests rather than riding along here. Badges are available now as names (`[[[msg.badges]]]` gives `broadcaster subscriber`) which is what you want for CSS anyway. The four chat controls and the filtering settings page are also still to come.
+### Emotes
+
+`[[[msg.html]]]` renders the message with Twitch, 7TV, BTTV and FFZ emotes as images. `[[[msg.text]]]` stays available as plain escaped text, so a template picks.
+
+This required a deliberate hole in the escaping, and it is worth knowing exactly how narrow it is.
+
+- **It reuses the alert emote pipeline** rather than growing a second one, so an emote works in chat the moment it works in an alert. Twitch emote positions come from the IRC `emotes` tag, which is more accurate than matching by name: it cannot false-positive on a word that merely contains an emote's name.
+- **The exemption is keyed by iterable, not by field name.** `{ chat: ['html'] }` means `msg.html` inside a chat loop and nothing else. A different loop with a field called `html` is still escaped, and there is a test for exactly that.
+- **Bracket defusing still applies inside the html field**, and this is the part that keeps yesterday's fix intact. `encodeHtml` never touched `[`, so skipping only the entity-encoding would let a chatter typing `[[[c:kofi:total_received]]]` land literally in the output and be resolved by the substitution pass - the injection hole from #230, reopened through a side door. Emote markup contains no square brackets, so defusing costs it nothing.
+- **The safety guarantee lives with the producer.** The emote parser escapes every piece of chatter text before adding any markup, so the only tags in that slot are `<img>` elements this app generated. The type is named `EmoteRenderer` rather than `string` to make that contract something you have to opt into.
+- **A caller with no emote pipeline emits no html slot at all**, rather than one that merely claims to be safe.
+
+**Still to come:** badge artwork (badges are names today, which is what CSS wants anyway), the four chat controls, and the filtering settings page.
 
 ## August 16th, 2026 - perf(build): every page was downloading a code editor it wasn't showing
 

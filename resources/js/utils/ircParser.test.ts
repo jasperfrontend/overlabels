@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseIrcLine, parseTags, toChatMessage, toModerationAction } from './ircParser';
+import { parseEmoteTag, parseIrcLine, parseTags, toChatMessage, toModerationAction } from './ircParser';
 
 /**
  * The wire format is a stranger's keyboard.
@@ -182,5 +182,49 @@ describe('toModerationAction', () => {
 
   it('is not triggered by an ordinary message', () => {
     expect(toModerationAction(parseIrcLine(PRIVMSG)!)).toBeNull();
+  });
+});
+
+describe('parseEmoteTag', () => {
+  it('parses a single emote occurrence', () => {
+    expect(parseEmoteTag('25:0-4')).toEqual([{ id: '25', begin: 0, end: 4 }]);
+  });
+
+  it('parses repeats of the same emote', () => {
+    expect(parseEmoteTag('25:0-4,6-10')).toEqual([
+      { id: '25', begin: 0, end: 4 },
+      { id: '25', begin: 6, end: 10 },
+    ]);
+  });
+
+  it('parses several different emotes', () => {
+    expect(parseEmoteTag('25:0-4/1902:6-10')).toEqual([
+      { id: '25', begin: 0, end: 4 },
+      { id: '1902', begin: 6, end: 10 },
+    ]);
+  });
+
+  it('returns nothing for a message with no emotes', () => {
+    expect(parseEmoteTag('')).toEqual([]);
+  });
+
+  it('skips malformed segments instead of throwing', () => {
+    // Runs inside a socket handler on attacker-influenced input, so a
+    // surprise here must never be able to take the overlay down.
+    expect(parseEmoteTag('garbage')).toEqual([]);
+    expect(parseEmoteTag('25:notarange/1902:6-10')).toEqual([{ id: '1902', begin: 6, end: 10 }]);
+    expect(parseEmoteTag(':0-4')).toEqual([]);
+    expect(parseEmoteTag('25:5-1')).toEqual([]);
+    expect(parseEmoteTag('25:-3--1')).toEqual([]);
+  });
+
+  it('rides along on a parsed message', () => {
+    const line = parseIrcLine('@emotes=25:0-4;id=1 :a!a@a PRIVMSG #c :Kappa hello')!;
+
+    expect(toChatMessage(line)!.emotes).toEqual([{ id: '25', begin: 0, end: 4 }]);
+  });
+
+  it('leaves emotes empty when the tag is absent', () => {
+    expect(toChatMessage(parseIrcLine(':a!a@a PRIVMSG #c :plain')!)!.emotes).toEqual([]);
   });
 });

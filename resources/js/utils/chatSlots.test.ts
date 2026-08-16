@@ -18,6 +18,7 @@ function msg(over: Partial<ChatMessage> = {}): ChatMessage {
     isBroadcaster: false,
     isFirstMessage: false,
     sourceRoomId: '',
+    emotes: [],
     ...over,
   };
 }
@@ -94,5 +95,28 @@ describe('withChatSlots', () => {
     expect(original['chat.0.id']).toBe('stale');
     expect(out['chat.0.id']).toBe('fresh');
     expect(out['keep']).toBe('yes');
+  });
+});
+
+describe('chatSlots / the html slot', () => {
+  it('is absent unless a renderer is supplied', () => {
+    // That slot is rendered WITHOUT escaping, so a caller with no emote
+    // pipeline must never produce one that merely claims to be safe HTML.
+    expect(chatSlots([msg()])['chat.0.html']).toBeUndefined();
+  });
+
+  it('is produced by the supplied renderer', () => {
+    const slots = chatSlots([msg({ text: 'Kappa' })], (m) => `<img alt="${m.text}">`);
+
+    expect(slots['chat.0.html']).toBe('<img alt="Kappa">');
+    // The plain text slot stays alongside it, so a template can choose.
+    expect(slots['chat.0.text']).toBe('Kappa');
+  });
+
+  it('is cleared along with the rest of the window', () => {
+    const withOne = withChatSlots({}, [msg()], () => '<img>');
+    const afterClear = withChatSlots(withOne, []);
+
+    expect(afterClear['chat.0.html']).toBeUndefined();
   });
 });

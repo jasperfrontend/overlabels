@@ -59,6 +59,62 @@ export interface ChatMessage {
    * `room-id` is Twitch's own discriminator.
    */
   sourceRoomId: string;
+  /**
+   * Twitch emote positions, as character ranges into `text`.
+   *
+   * Shaped to match what `useEmoteParser` already consumes for alert payloads,
+   * so chat reuses the alert emote pipeline rather than growing a second one.
+   * Third-party emotes (7TV, BTTV, FFZ) are not in here - they carry no
+   * positions on the wire and are matched by token further down.
+   */
+  emotes: TwitchEmotePosition[];
+}
+
+/** A Twitch emote occurrence: an inclusive character range into the message. */
+export interface TwitchEmotePosition {
+  begin: number;
+  end: number;
+  id: string;
+}
+
+/**
+ * Parse the IRC `emotes` tag into positions.
+ *
+ * Wire format is `id:start-end,start-end/id:start-end`, where the ranges are
+ * inclusive and count CODE POINTS rather than UTF-16 units - a message with an
+ * astral-plane emoji before an emote shifts the indices. That mismatch is
+ * handled where the ranges are applied, not here; this stays a literal reading
+ * of the tag.
+ *
+ * Malformed segments are skipped rather than throwing. This runs inside a socket
+ * handler on attacker-influenced input, so a surprise here must never be able to
+ * take the overlay down.
+ */
+export function parseEmoteTag(raw: string): TwitchEmotePosition[] {
+  if (!raw) return [];
+
+  const positions: TwitchEmotePosition[] = [];
+
+  for (const group of raw.split('/')) {
+    const colon = group.indexOf(':');
+    if (colon === -1) continue;
+
+    const id = group.slice(0, colon);
+    if (!id) continue;
+
+    for (const range of group.slice(colon + 1).split(',')) {
+      const dash = range.indexOf('-');
+      if (dash === -1) continue;
+
+      const begin = Number(range.slice(0, dash));
+      const end = Number(range.slice(dash + 1));
+      if (!Number.isInteger(begin) || !Number.isInteger(end) || begin < 0 || end < begin) continue;
+
+      positions.push({ begin, end, id });
+    }
+  }
+
+  return positions;
 }
 
 /**
@@ -220,6 +276,7 @@ export function toChatMessage(line: IrcLine): ChatMessage | null {
     isBroadcaster: badgeSet.has('broadcaster'),
     isFirstMessage: t['first-msg'] === '1',
     sourceRoomId,
+    emotes: parseEmoteTag(t['emotes'] ?? ''),
   };
 }
 
