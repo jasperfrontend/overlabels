@@ -140,6 +140,54 @@ const templateUsesChat = computed(() => {
  * accurate than code-matching: it cannot false-positive on a word that merely
  * contains an emote name.
  */
+/**
+ * Emote library loading, in two speeds.
+ *
+ * Nothing needs this library at mount. An alert fires minutes or hours into a
+ * stream, and a chat message rendered plain for one flush is invisible because
+ * the slots rebuild when the library becomes ready. So the mount path SCHEDULES
+ * the load for idle time rather than racing the overlay's own first paint,
+ * while anything that needs it right now starts it immediately.
+ *
+ * Both are idempotent, because the server-side preload hint is only a hint: an
+ * alert template edited to use `event.message.text` after this overlay mounted
+ * is not in `alerts_need_emotes`, and the alert path picks it up instead.
+ */
+let emoteLoadStarted = false;
+let emoteIdleHandle: number | null = null;
+
+function loadEmoteParser(): void {
+  if (emoteLoadStarted || !userId.value) return;
+  emoteLoadStarted = true;
+
+  if (emoteIdleHandle !== null) {
+    if (typeof cancelIdleCallback === 'function') cancelIdleCallback(emoteIdleHandle);
+    emoteIdleHandle = null;
+  }
+
+  emoteParser.initialize(Number(userId.value)).catch(() => {
+    console.warn('[OverlayRenderer] Emote parser failed to initialize');
+  });
+}
+
+function scheduleEmoteParser(): void {
+  if (emoteLoadStarted || emoteIdleHandle !== null) return;
+
+  // The timeout is a ceiling, not a target: it guarantees the load happens even
+  // on an overlay that never goes idle, which a busy animated one might not.
+  if (typeof requestIdleCallback === 'function') {
+    emoteIdleHandle = requestIdleCallback(
+      () => {
+        emoteIdleHandle = null;
+        loadEmoteParser();
+      },
+      { timeout: 2000 },
+    );
+  } else {
+    setTimeout(loadEmoteParser, 500);
+  }
+}
+
 function chatMessageHtml(m: ChatMessage): string {
   return emoteParser.parseEmotes(m.text, m.emotes.length ? JSON.stringify(m.emotes) : undefined);
 }
@@ -610,11 +658,14 @@ onMounted(async () => {
 
     userId.value = json.data?.user_twitch_id || json.data?.user_id || json.data?.channel_id || json.data?.twitch_id || null;
 
-    // Start loading emotes for this broadcaster's channel
-    if (userId.value) {
-      emoteParser.initialize(Number(userId.value)).catch(() => {
-        console.warn('[OverlayRenderer] Emote parser failed to initialize');
-      });
+    // Preload the emote library only when something on this overlay can
+    // actually use it: a chat feed, or an alert that renders an emote-parsed
+    // field and can fire here. `alerts_need_emotes` is computed server-side
+    // because only the server knows which alert templates target this overlay -
+    // and an untargeted alert fires on EVERY static overlay, so "is this overlay
+    // targeted" would have been the wrong question entirely.
+    if (userId.value && (templateUsesChat.value || json.alerts_need_emotes)) {
+      scheduleEmoteParser();
     }
 
     // Join Twitch chat, but ONLY when this template actually renders it.
@@ -977,6 +1028,11 @@ function handleAlertTriggered(event: any) {
 
   for (const { field, emotesField } of EMOTE_TEXT_FIELDS) {
     if (typeof processedData[field] === 'string' && processedData[field]) {
+      // Safety net for an alert template that started using an emote field
+      // after this overlay mounted, so the preload hint missed it. parseEmotes
+      // passes the text through untouched while the library is still loading,
+      // so this alert renders plain and every later one renders emotes.
+      loadEmoteParser();
       processedData[field] = emoteParser.parseEmotes(processedData[field], emotesField ? processedData[emotesField] : undefined);
     }
   }
