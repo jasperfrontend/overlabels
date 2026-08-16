@@ -691,6 +691,14 @@ onMounted(async () => {
   // own CSS arrives and lands after it.
   injectBaseStyle();
 
+  // Synthetic chat firehose for load-testing the renderer. The condition is
+  // inlined by Vite at build time, so an ordinary production build eliminates
+  // this block entirely and the dev module never enters the graph. Build with
+  // VITE_CHAT_HOSE=1 to get it.
+  if (import.meta.env.VITE_CHAT_HOSE === '1') {
+    void import('@/dev/chatHose').then(({ installChatHose }) => installChatHose(twitchChat));
+  }
+
   // Use resilient fetch with retry
   const result = await health.fetchWithRetry(props.slug, props.token);
 
