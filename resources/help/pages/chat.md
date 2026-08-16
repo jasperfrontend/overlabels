@@ -108,6 +108,18 @@ overlay in OBS to pick up a change.
 Every badge image carries the class `ol-badge`, so you can target them without touching the wrapper.
 Use one, the other, or both - a template that only wants coloured borders never loads any images.
 
+### Sizing emotes
+
+Emote images carry the class `overlay-emote`, and Twitch's own emotes additionally carry
+`twitch-emote`. They default to `height: 1.5em`, which keeps them proportional to whatever text they
+sit in. Override it like any other rule:
+
+```css
+.overlay-emote { height: 1em; }
+```
+
+No `!important` needed - the default is an ordinary stylesheet rule, and yours comes later.
+
 ## Messages that get deleted
 
 If a moderator deletes a message, or times someone out, or clears the room, your overlay follows
