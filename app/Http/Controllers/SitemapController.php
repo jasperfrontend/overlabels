@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\HelpReferenceService;
+use App\Support\HelpCorpus;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
@@ -14,6 +14,10 @@ class SitemapController extends Controller
      * template management) are excluded - they require login and have no
      * SEO value.
      */
+    /**
+     * Paths with no file behind them. Everything under /help is derived from
+     * the corpus instead - see below.
+     */
     private const STATIC_PATHS = [
         ['path' => '/', 'priority' => '1.0', 'changefreq' => 'weekly'],
         // Not an HTML page, but a sitemap may list any URL on the site, and this
@@ -24,22 +28,25 @@ class SitemapController extends Controller
         ['path' => '/llms.txt', 'priority' => '0.9', 'changefreq' => 'monthly'],
         ['path' => '/privacy', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/terms', 'priority' => '0.3', 'changefreq' => 'yearly'],
-        ['path' => '/help', 'priority' => '0.8', 'changefreq' => 'monthly'],
-        ['path' => '/help/conditionals', 'priority' => '0.7', 'changefreq' => 'monthly'],
-        ['path' => '/help/controls', 'priority' => '0.7', 'changefreq' => 'monthly'],
-        ['path' => '/help/formatting', 'priority' => '0.7', 'changefreq' => 'monthly'],
-        ['path' => '/help/math', 'priority' => '0.7', 'changefreq' => 'monthly'],
-        ['path' => '/help/resources', 'priority' => '0.7', 'changefreq' => 'monthly'],
-        ['path' => '/help/why-kofi', 'priority' => '0.6', 'changefreq' => 'monthly'],
-        ['path' => '/help/why-overlabels', 'priority' => '0.7', 'changefreq' => 'monthly'],
-        ['path' => '/help/manifesto', 'priority' => '0.6', 'changefreq' => 'monthly'],
-        ['path' => '/help/bot', 'priority' => '0.7', 'changefreq' => 'monthly'],
-        ['path' => '/help/bot/commands', 'priority' => '0.7', 'changefreq' => 'monthly'],
-        ['path' => '/help/gamejam', 'priority' => '0.6', 'changefreq' => 'monthly'],
         ['path' => '/help/reference', 'priority' => '0.8', 'changefreq' => 'weekly'],
+        // The two help pages that are Vue components rather than markdown, so
+        // HelpCorpus does not know about them.
+        ['path' => '/help/integration-presets', 'priority' => '0.6', 'changefreq' => 'monthly'],
+        ['path' => '/help/gamejam', 'priority' => '0.6', 'changefreq' => 'monthly'],
     ];
 
-    public function __invoke(HelpReferenceService $service): Response
+    /**
+     * Priority by kind. Tutorials outrank guides because they are the pages
+     * someone arrives wanting, and reference entries sit lowest only because
+     * there are 147 of them and a flat 0.8 would say nothing.
+     */
+    private const KIND_PRIORITY = [
+        HelpCorpus::KIND_TUTORIAL => '0.8',
+        HelpCorpus::KIND_GUIDE => '0.7',
+        HelpCorpus::KIND_REFERENCE => '0.6',
+    ];
+
+    public function __invoke(): Response
     {
         $today = now()->toDateString();
         $urls = [];
@@ -53,13 +60,25 @@ class SitemapController extends Controller
             ];
         }
 
-        foreach ($service->all() as $entry) {
-            $mtime = @filemtime($entry['path']);
+        /*
+         * Every help document, derived rather than listed.
+         *
+         * This used to be a hand-maintained array, and by the time it was
+         * replaced it had rotted by fourteen pages: /help/chat, /help/builder,
+         * /help/blocks, /help/lists, /help/expressions, /help/rendering,
+         * /help/testing, /help/tokens, /help/overlays-vs-alerts,
+         * /help/for-creators, /help/for-designers, /help/lists-realtime and
+         * both /help/bot/* subpages were all missing. Writing a page is now
+         * the whole job of getting it indexed.
+         */
+        foreach (HelpCorpus::all() as $doc) {
+            $mtime = $doc['path'] !== '' ? @filemtime($doc['path']) : false;
+
             $urls[] = [
-                'loc' => self::BASE_URL."/help/reference/{$entry['category']}/{$entry['slug']}",
+                'loc' => self::BASE_URL.$doc['url'],
                 'lastmod' => $mtime ? date('Y-m-d', $mtime) : $today,
                 'changefreq' => 'monthly',
-                'priority' => '0.6',
+                'priority' => self::KIND_PRIORITY[$doc['kind']] ?? '0.6',
             ];
         }
 

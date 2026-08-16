@@ -3,21 +3,26 @@
 Every prose help page on Overlabels is fetchable as plain markdown by appending `.md` to its URL.
 
 ```
-https://overlabels.com/help/conditionals      -> HTML (a Vue app shell)
+https://overlabels.com/help/conditionals      -> HTML, server-rendered, carries the full prose
 https://overlabels.com/help/conditionals.md   -> text/markdown, the full source
 ```
 
 The `.md` response is byte-identical to the file the site renders, so there is nothing to build and
 nothing that can drift out of sync.
 
-## Use the .md form
+## Either form works
 
-The bare help URLs render an Inertia/Vue application. A crawler or a `fetch` that follows one gets an
-app shell and almost no prose. Always append `.md`.
+Every page under `/help` is plain server-rendered HTML, the reference and the prose pages alike. A
+crawler or a `fetch` that follows a bare URL gets the whole document, and every page is listed
+individually in `sitemap.xml`.
 
-The exceptions are the pages under `/help/reference` - the page you are reading now. Those are plain
-server-rendered HTML on purpose, so they can be read directly with no suffix, and they are the pages
-listed individually in `sitemap.xml`.
+This was not always true. The prose pages used to be an Inertia/Vue application that answered with an
+app shell and almost no content, which is why this page once said to always append `.md`. That is no
+longer a correctness requirement.
+
+The `.md` form is still the better one to fetch: it is the source rather than a rendering of it, and
+it carries no navigation, search box or footer to strip out. Prefer it, but nothing breaks if you
+follow a bare URL.
 
 ## Public overlays have a .md too
 

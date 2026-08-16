@@ -2,11 +2,9 @@
 
 namespace App\Services;
 
+use App\Support\HelpCorpus;
+use App\Support\HelpMarkdown;
 use Illuminate\Support\Facades\Cache;
-use League\CommonMark\Environment\Environment;
-use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
-use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
-use League\CommonMark\MarkdownConverter;
 use Symfony\Component\Finder\Finder;
 
 class HelpReferenceService
@@ -92,8 +90,11 @@ class HelpReferenceService
     }
 
     /**
-     * Map slug -> category for the first-seen occurrence. Used by the wikilink
-     * preprocessor to resolve `[[slug]]` to `/help/reference/{category}/{slug}`.
+     * Map slug -> category for the first-seen occurrence.
+     *
+     * Wikilink resolution moved to HelpCorpus::linkMap(), which spans every
+     * kind of document; this remains the reference-only view of the same idea
+     * and is what tests assert a documented slug against.
      *
      * @return array<string, string>
      */
@@ -112,113 +113,29 @@ class HelpReferenceService
     public function flush(): void
     {
         Cache::forget($this->cacheKey());
+
+        // HelpCorpus memoises this corpus for the request; dropping the cache
+        // underneath it while leaving the memo would serve stale entries to
+        // the nav and the wikilink map.
+        HelpCorpus::flush();
     }
 
     /**
-     * Convert a markdown body into the same HTML the JS pipeline produced:
-     *  - Obsidian-style `[[slug]]` and `[[slug|label]]` become real
-     *    `/help/reference/{category}/{slug}` links (or inline code if the slug
-     *    is unknown).
-     *  - Triple-bracket `[[[tag]]]` snippets become click-to-copy widgets.
-     * Both transforms are applied outside fenced and inline code spans so that
-     * authors can show literal syntax inside backticks without it being
-     * rewritten.
+     * Render a reference body.
+     *
+     * The pipeline itself lives in HelpMarkdown, shared with every other kind
+     * of help document. Two things are specific to this corpus:
+     *
+     *  - Soft breaks become `<br />`. Reference entries are written one
+     *    statement per line and read as nonsense when those lines are joined.
+     *  - Wikilinks resolve against the WHOLE corpus now, not just the reference,
+     *    so an entry can link out to the guide that explains it.
      */
     public function render(string $body): string
     {
-        $preprocessed = $this->preprocessMarkdown($body);
-        $html = (string) $this->converter()->convert($preprocessed);
+        [$html] = HelpMarkdown::render($body, HelpCorpus::linkMap(), softBreaks: true);
 
-        return $this->enhanceTagsInHtml($html);
-    }
-
-    private function preprocessMarkdown(string $md): string
-    {
-        $slugToCategory = $this->slugToCategory();
-
-        // Split by fenced code blocks (```...```). Even indexes are prose, odd
-        // are code blocks left untouched.
-        $fenceParts = preg_split('/(```[\s\S]*?```)/', $md, -1, PREG_SPLIT_DELIM_CAPTURE);
-        if ($fenceParts === false) {
-            return $md;
-        }
-
-        foreach ($fenceParts as $i => $part) {
-            if ($i % 2 === 1) {
-                continue; // fenced code, preserve
-            }
-            // Within prose, also preserve inline-code spans.
-            $inlineParts = preg_split('/(`[^`\n]*`)/', $part, -1, PREG_SPLIT_DELIM_CAPTURE);
-            if ($inlineParts === false) {
-                continue;
-            }
-            foreach ($inlineParts as $j => $seg) {
-                if ($j % 2 === 1) {
-                    continue;
-                }
-                $inlineParts[$j] = $this->rewriteWikilinks($seg, $slugToCategory);
-            }
-            $fenceParts[$i] = implode('', $inlineParts);
-        }
-
-        return implode('', $fenceParts);
-    }
-
-    private function rewriteWikilinks(string $text, array $slugToCategory): string
-    {
-        // `[[slug]]` or `[[slug|label]]`. Negative lookbehind/lookahead so we
-        // don't bite into the inner `[[` of a triple-bracket template tag.
-        return preg_replace_callback(
-            '/(?<!\[)\[\[([^\]|\[]+?)(?:\|([^\]]+))?]](?!])/',
-            function (array $m) use ($slugToCategory): string {
-                $slug = trim($m[1]);
-                $label = trim($m[2] ?? $slug);
-                if (isset($slugToCategory[$slug])) {
-                    $cat = $slugToCategory[$slug];
-
-                    return "[{$label}](/help/reference/{$cat}/{$slug})";
-                }
-
-                return "`{$label}`";
-            },
-            $text,
-        ) ?? $text;
-    }
-
-    private function enhanceTagsInHtml(string $html): string
-    {
-        // Unwrap any single-tag inline `<code>[[[...]]]</code>` so we don't
-        // produce nested <code><code>...</code></code>.
-        $out = preg_replace(
-            '/<code>\s*(\[\[\[[^\[\]<>]+]]])\s*<\/code>/',
-            '$1',
-            $html,
-        ) ?? $html;
-
-        // Wrap every remaining [[[tag]]] in a clickable <code>.
-        return preg_replace_callback(
-            '/\[\[\[([^\[\]<>]+?)]]]/',
-            function (array $m): string {
-                $tag = "[[[{$m[1]}]]]";
-                $attr = htmlspecialchars($tag, ENT_QUOTES, 'UTF-8');
-
-                return '<code class="ov-tag" role="button" tabindex="0" data-tag="'.$attr.'" title="Click to copy">'.$tag.'</code>';
-            },
-            $out,
-        ) ?? $out;
-    }
-
-    private function converter(): MarkdownConverter
-    {
-        $env = new Environment([
-            'renderer' => [
-                'soft_break' => "<br />\n",
-            ],
-        ]);
-        $env->addExtension(new CommonMarkCoreExtension);
-        $env->addExtension(new GithubFlavoredMarkdownExtension);
-
-        return new MarkdownConverter($env);
+        return $html;
     }
 
     private function cacheKey(): string

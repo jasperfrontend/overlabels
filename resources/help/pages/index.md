@@ -1,19 +1,35 @@
 ---
 title: Help - Overlabels
-description: Learn how to build Twitch overlays with Overlabels - conditional tags, controls, formatting, and more.
+description: Learn how to build Twitch overlays with Overlabels - tutorials, conditional tags, controls, formatting, and a searchable reference.
 heading: Welcome to Overlabels Help
-lead: "Everything you need to build dynamic Twitch overlays - from template syntax to live controls. This page is a bit of a clusterf*ck, but I'll get around to cleaning this up eventually."
+lead: Start with something you want on screen. The tutorials are short and end with a working overlay; the guides underneath explain how the pieces work when you want to go further.
 canonical: https://overlabels.com/help
 ---
 
 > [!TIP]
 > **Reading this as a machine?** Every page below is also available as plain markdown - append `.md` to
-> any URL (`/help/conditionals.md`). This index is at `/help.md`. The bare URLs render a Vue app, so the
-> `.md` form is the one you want. For a single self-contained primer on writing overlays, start with
+> any URL (`/help/conditionals.md`). This index is at `/help.md`. The bare URLs are real server-rendered
+> HTML and carry the full prose, so either form works; the `.md` is just the same content without the
+> navigation around it. For a single self-contained primer on writing overlays, start with
 > [`/llms.txt`](https://overlabels.com/llms.txt) - what it contains and how to hand it to an assistant
 > is explained at [llms.txt](/help/reference/for-machines/llms-txt).
 
-## Start here
+## I want to...
+
+Short, copy-and-paste tutorials. Each one ends with something on screen.
+
+- [**Show chat on screen**](/help/tutorials/show-chat-on-screen) - live Twitch chat in your overlay with
+  one loop. Badges, emotes, colours, and the settings that decide what gets drawn.
+- [**Show my latest follower**](/help/tutorials/latest-follower) - one tag, plus what to draw when you
+  have no followers yet and why that matters.
+- [**Show my last 5 subscribers**](/help/tutorials/last-five-subs) - a list on screen, with gifted subs
+  credited to the person who paid.
+- [**Show my latest donator, from any source**](/help/tutorials/latest-donator) - one name across all
+  five donation services, using `latest()` and the automatic `_at` timestamps.
+
+## How it works
+
+### Getting oriented
 
 - [**Why Overlabels**](/help/why-overlabels) - the pitch, for coders. Third-party data normalization,
   math on any value, Expression Controls, and why this thing is a bit special.
@@ -24,7 +40,7 @@ canonical: https://overlabels.com/help
   deliverables checklist.
 - [**Manifesto**](/help/manifesto) - what Overlabels is, why it exists, and the principles behind it.
 
-## Building overlays
+### Building overlays
 
 - [**Overlays vs Alerts**](/help/overlays-vs-alerts) - the two kinds of overlay and how they fit
   together: why alerts are most powerful rendered inside a static overlay's DOM, plus Targeting vs
@@ -38,7 +54,7 @@ canonical: https://overlabels.com/help
 - [**Testing your alerts**](/help/testing) - fire any of 28 real Twitch events at your own account from a
   terminal, instead of waiting for a real follower.
 
-## The template language
+### The template language
 
 - [**Conditional and Event Tags**](/help/conditionals) - if/else logic, comparisons, event data tags, and
   integration tags for Ko-fi and StreamLabs.
@@ -47,7 +63,7 @@ canonical: https://overlabels.com/help
 - [**Math Engine**](/help/math) - waves, modulo wheels, pseudo-random one-liners, timestamp racing - the
   math behind live overlays.
 
-## Live data
+### Live data
 
 - [**Controls**](/help/controls) - mutable values you can change live - text, numbers, toggles, timers,
   and more.
@@ -61,7 +77,7 @@ canonical: https://overlabels.com/help
   live updates over WebSocket, and add your own custom page (a wheel, a leaderboard) to OBS. Step by
   step.
 
-## Chat
+### Chat
 
 - [**Twitch Chat in an Overlay**](/help/chat) - render live chat with one foreach loop. Every
   per-message tag, badges and emotes, Shared Chat, the display filters, and the four chat controls.
@@ -70,10 +86,11 @@ canonical: https://overlabels.com/help
 - [**Chat Castle**](/help/gamejam) - chat-driven dungeon raid. Commands, rounds, energy blocks, chest
   contents, and how to not lose the HP pool.
 
-## Reference and extras
+## Look something up
 
-- [**Reference**](/help/reference) - fuzzy-searchable reference for every template tag, EventSub event,
-  and foreach field. Press Alt+r from anywhere.
+- [**Reference**](/help/reference) - every template tag, EventSub event, and foreach field. Press
+  `Alt+R` from anywhere, or use the search box at the top of this page - it covers tutorials, guides and
+  reference entries at once.
 - [**Overlay Access Tokens**](/help/tokens) - what the 64-character token in your overlay URL is, why it
   lives after the `#`, and what to do the moment one leaks.
 - [**Why Ko-fi**](/help/why-kofi) - why we chose Ko-fi as our first External Integration over Patreon,

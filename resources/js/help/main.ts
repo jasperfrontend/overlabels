@@ -1,52 +1,50 @@
-import Fuse from 'fuse.js';
+import type Fuse from 'fuse.js';
 import '../../css/app.css';
-import './styles.css';
+import { buildHelpFuse, rankedSearch, type HelpDoc } from '../utils/helpSearch';
 
-interface IndexEntry {
-  category: string;
-  categoryLabel: string;
-  slug: string;
-  title: string;
-  body: string;
-}
-
-const SIDEBAR_SCROLL_KEY = 'help-reference-sidebar-scroll';
+/**
+ * The one script for every help page.
+ *
+ * It was `help-reference/main.ts` and ran on the reference only; the prose pages
+ * were an Inertia app with their own copy of the maths rendering and no search
+ * at all. Both halves are Blade now, so this is search, click-to-copy and KaTeX
+ * for tutorials, guides and reference entries alike.
+ *
+ * There is deliberately no framework here. The pages are server-rendered HTML
+ * and this is the handful of behaviours that HTML cannot express on its own.
+ */
+const SIDEBAR_SCROLL_KEY = 'help-sidebar-scroll';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const sidebar = document.getElementById('help-reference-sidebar');
-  const tree = document.getElementById('help-reference-tree');
-  const results = document.getElementById('help-reference-results');
-  const input = document.getElementById('help-reference-search') as HTMLInputElement | null;
-  const clearBtn = document.getElementById('help-reference-search-clear');
+  const sidebar = document.getElementById('help-sidebar');
+  const tree = document.getElementById('help-nav-tree');
+  const results = document.getElementById('help-search-results');
+  const input = document.getElementById('help-search') as HTMLInputElement | null;
+  const clearBtn = document.getElementById('help-search-clear');
 
-  restoreSidebarScroll(sidebar);
+  // Landing on a deep reference entry used to leave the sidebar scrolled to the
+  // top, with the highlighted entry hundreds of pixels below the fold - the one
+  // piece of "where am I" the nav exists to give you. An active entry wins over
+  // the remembered position, since it is the more specific answer.
+  if (!scrollActiveIntoView(sidebar)) {
+    restoreSidebarScroll(sidebar);
+  }
   sidebar?.addEventListener('scroll', () => saveSidebarScroll(sidebar, input));
 
   wireCopyButtons();
   wireBodyTagClicks();
   wireGlobalShortcut(input);
+  addCodeBlockCopyButtons();
+  void renderMath();
 
   if (!input || !tree || !results || !clearBtn) return;
 
-  let fuse: Fuse<IndexEntry> | null = null;
-  let entries: IndexEntry[] = [];
+  let fuse: Fuse<HelpDoc> | null = null;
 
-  fetch('/help-reference-index.json', { cache: 'force-cache' })
+  fetch('/help-index.json')
     .then((r) => r.json())
-    .then((data: IndexEntry[]) => {
-      entries = data;
-      fuse = new Fuse(entries, {
-        keys: [
-          { name: 'title', weight: 2 },
-          { name: 'slug', weight: 2 },
-          { name: 'categoryLabel', weight: 0.3 },
-          { name: 'body', weight: 1 },
-        ],
-        threshold: 0.35,
-        ignoreLocation: true,
-        minMatchCharLength: 2,
-        includeScore: true,
-      });
+    .then((data: HelpDoc[]) => {
+      fuse = buildHelpFuse(data);
     })
     .catch(() => {
       // Search becomes a no-op if the index 404s; the static tree still
@@ -71,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const matches = fuse.search(q, { limit: 50 }).map((r) => r.item);
+    const matches = rankedSearch(fuse, q, 50);
     if (matches.length === 0) {
       results.innerHTML = '<div class="p-4 text-center text-xs text-red-400">Nothing matched.</div>';
       return;
@@ -81,10 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = matches
       .map(
         (e) => `
-            <a href="/help/reference/${e.category}/${e.slug}"
+            <a href="${escapeHtml(e.url)}"
                class="flex w-full flex-col items-start gap-0.5 rounded-md px-2 py-1.5 text-left text-sm cursor-pointer hover:bg-accent">
-              <span class="font-mono text-xs truncate w-full">${escapeHtml(e.title)}</span>
-              <span class="text-[10px] uppercase tracking-wide text-muted-foreground/70">${escapeHtml(e.categoryLabel)}</span>
+              <span class="${e.kind === 'reference' ? 'font-mono ' : ''}text-xs truncate w-full">${escapeHtml(e.title)}</span>
+              <span class="text-[10px] uppercase tracking-wide text-muted-foreground/70">${escapeHtml(e.kindLabel)}</span>
             </a>`,
       )
       .join('');
@@ -108,6 +106,81 @@ document.addEventListener('DOMContentLoaded', () => {
     input.focus();
   });
 });
+
+/**
+ * Render any TeX the server left as `.help-math` placeholders. KaTeX is
+ * client-side only, so the markdown pipeline stashes the source in a data
+ * attribute and we typeset it here. Loaded lazily so the 24 pages without
+ * maths never pay for the library.
+ */
+async function renderMath() {
+  const nodes = document.querySelectorAll<HTMLElement>('.help-math:not([data-rendered])');
+  if (!nodes.length) return;
+
+  const [{ default: katex }] = await Promise.all([import('katex'), import('katex/dist/katex.min.css')]);
+
+  nodes.forEach((node) => {
+    const tex = node.dataset.tex ?? '';
+    try {
+      katex.render(tex, node, {
+        displayMode: node.dataset.display === '1',
+        throwOnError: false,
+        output: 'html',
+      });
+    } catch {
+      node.textContent = tex;
+    }
+    node.dataset.rendered = '1';
+  });
+}
+
+/**
+ * Give every fenced code block a Copy button.
+ *
+ * The tutorials are built around "paste this in and you have a chat feed", and
+ * until this existed the only thing you could copy was one tag at a time - so
+ * the page that says copy the whole block made you select it by hand.
+ *
+ * Added client-side rather than in the markdown pipeline because it is a pure
+ * affordance: it needs JS to do anything, and baking it into the HTML would put
+ * the word "Copy" inside every code sample a crawler or an LLM reads.
+ *
+ * `textContent` is what gets copied, which is exactly right even though the
+ * block is full of `.ov-tag` widgets - each one renders its own tag as its text,
+ * so the result is the raw snippet the author wrote.
+ */
+function addCodeBlockCopyButtons() {
+  document.querySelectorAll<HTMLPreElement>('.help-prose pre').forEach((pre) => {
+    const source = pre.textContent ?? '';
+    if (!source.trim()) return;
+
+    // The wrapper owns the positioning context. Putting it on the <pre> itself
+    // would scroll the button out of sight with a wide line.
+    const wrapper = document.createElement('div');
+    wrapper.className = 'help-code';
+    pre.parentNode?.insertBefore(wrapper, pre);
+    wrapper.appendChild(pre);
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'help-code-copy';
+    button.textContent = 'Copy';
+    // Always visible, not hover-revealed: a touch device has no hover, and this
+    // is the primary action on a tutorial page rather than a secondary one.
+    button.addEventListener('click', async () => {
+      const lines = source.trimEnd().split('\n').length;
+      await copyToClipboard(source, undefined, `Copied ${lines} line${lines === 1 ? '' : 's'} to clipboard`);
+      button.textContent = 'Copied!';
+      button.classList.add('is-copied');
+      window.setTimeout(() => {
+        button.textContent = 'Copy';
+        button.classList.remove('is-copied');
+      }, 1200);
+    });
+
+    wrapper.appendChild(button);
+  });
+}
 
 function wireCopyButtons() {
   document.addEventListener('click', (e) => {
@@ -159,12 +232,17 @@ function wireGlobalShortcut(input: HTMLInputElement | null) {
   });
 }
 
-async function copyToClipboard(text: string, flashTarget?: HTMLElement) {
+/**
+ * `message` exists because a whole code block is not something you can echo
+ * back: quoting a single tag confirms what you got, quoting forty lines just
+ * fills the screen with what you already copied.
+ */
+async function copyToClipboard(text: string, flashTarget?: HTMLElement, message?: string) {
   if (!text) return;
   try {
     await navigator.clipboard.writeText(text);
     if (flashTarget) flashCopied(flashTarget);
-    showToast(`Copied ${text} to clipboard`);
+    showToast(message ?? `Copied ${text} to clipboard`);
   } catch {
     // clipboard blocked; ignore
   }
@@ -214,6 +292,18 @@ function saveSidebarScroll(sidebar: HTMLElement, input: HTMLInputElement | null)
   } catch {
     // storage blocked; ignore
   }
+}
+
+/**
+ * Centre the current page's sidebar entry, if it has one. Returns whether it
+ * did anything, so the caller can fall back to the remembered scroll position.
+ */
+function scrollActiveIntoView(sidebar: HTMLElement | null): boolean {
+  const active = sidebar?.querySelector<HTMLElement>('[data-help-active]');
+  if (!sidebar || !active) return false;
+
+  sidebar.scrollTop = Math.max(0, active.offsetTop - sidebar.clientHeight / 2);
+  return true;
 }
 
 function restoreSidebarScroll(sidebar: HTMLElement | null) {

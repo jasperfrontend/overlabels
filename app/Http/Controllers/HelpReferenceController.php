@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\HelpReferenceService;
 use App\Services\OgImageService;
+use App\Support\HelpNav;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -49,6 +50,8 @@ class HelpReferenceController extends Controller
 
         return response()->view('help.reference', [
             'groups' => $this->service->grouped(),
+            'helpSection' => 'reference',
+            'navGroups' => HelpNav::referenceGroups($entry['category'] ?? null, $entry['slug'] ?? null),
             'totalCount' => $totalCount,
             'entry' => $entry,
             'renderedBody' => $renderedBody,

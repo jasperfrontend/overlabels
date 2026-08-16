@@ -103,12 +103,12 @@ it('no longer carries the stale "all four integrations" claim', function () {
     expect($bodies)->not->toContain('identical across all four integrations');
 });
 
-it('keeps the category registered in php and typescript', function () {
-    $ts = (string) file_get_contents(resource_path('js/composables/useHelpReference.ts'));
-
+it('keeps the category registered and labelled on the page', function () {
+    // The typescript half of this assertion is gone with the duplicate label
+    // map it guarded - see the equivalent test in LlmsTxtDiscoverabilityTest.
     expect(HelpReferenceService::CATEGORY_LABELS['integration-controls'])->toBe('Integration Controls')
         ->and(HelpReferenceService::CATEGORY_ORDER)->toContain('integration-controls')
-        ->and($ts)->toContain("'integration-controls': 'Integration Controls'");
+        ->and($this->get('/help/reference')->getContent())->toContain('Integration Controls');
 });
 
 it('resolves the index page wikilinks to real service pages', function () {
