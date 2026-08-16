@@ -195,6 +195,33 @@ it('ships the filters in the overlay render payload', function () {
         ->assertJsonPath('chat_filters.hidden_logins', ['spambot', 'anotherbot']);
 });
 
+it('ships the chat foreach cap as the overlay window size', function () {
+    // The other foreach caps are applied server-side before this payload is
+    // built. This one cannot be - the overlay reads chat straight from Twitch -
+    // so it travels to the client and becomes the socket's window size.
+    $this->user->setPreference('foreach_caps.chat', 8);
+    $this->user->save();
+
+    renderChatOverlay($this->user->fresh())
+        ->assertOk()
+        ->assertJsonPath('chat_window', 8);
+});
+
+it('ships the default chat window when the user never set one', function () {
+    renderChatOverlay($this->user)
+        ->assertOk()
+        ->assertJsonPath('chat_window', 50);
+});
+
+it('clamps an out-of-range chat window before it reaches the overlay', function () {
+    $this->user->setPreference('foreach_caps.chat', 9999);
+    $this->user->save();
+
+    renderChatOverlay($this->user->fresh())
+        ->assertOk()
+        ->assertJsonPath('chat_window', User::FOREACH_CAP_MAX);
+});
+
 it('ships the permissive defaults when nothing was ever saved', function () {
     renderChatOverlay($this->user)
         ->assertOk()

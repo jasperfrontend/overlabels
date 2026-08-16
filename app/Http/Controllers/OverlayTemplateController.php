@@ -884,6 +884,12 @@ class OverlayTemplateController extends Controller
                 // holding this overlay's token, which is already true of
                 // everything else in this payload.
                 'chat_filters' => $user->chatFilters(),
+                // How many messages the chat foreach expands to. The other
+                // foreach caps are applied server-side before this payload is
+                // built; this one cannot be, because the overlay reads chat
+                // directly from Twitch, so it travels to the client and becomes
+                // the socket's window size.
+                'chat_window' => $user->foreachCaps()['chat'],
             ]);
 
         } catch (Exception $e) {

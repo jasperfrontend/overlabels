@@ -129,6 +129,18 @@ class User extends Authenticatable
             'goals' => 3,
             'followers' => 5,
             'followed' => 5,
+            // Enforced CLIENT-SIDE, unlike the four above. Those slice a Twitch
+            // payload in TemplateDataMapperService before the overlay ever sees
+            // it; chat has no server-side array to slice, because the overlay
+            // reads chat straight from Twitch. The cap is the socket's window
+            // size instead, shipped in the render payload and applied by
+            // useTwitchChat. It is the same promise to the user either way:
+            // how many items the foreach expands to.
+            //
+            // 50 is the previous hardcoded window, so existing overlays are
+            // unchanged. FOREACH_CAP_MAX keeps it there as a ceiling, which is
+            // the measured limit rather than an arbitrary one.
+            'chat' => 50,
         ],
         // Chat overlay display filters. Both default to showing everything:
         // deciding for the streamer which of their chatters is worth rendering
