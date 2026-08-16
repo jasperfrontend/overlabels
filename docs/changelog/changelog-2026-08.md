@@ -2,6 +2,19 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - feat(help): tutorials, and an index that starts with what you want
+
+The help index opened with "Why Overlabels" and "Manifesto". Both are worth reading and neither is what someone arrives wanting. People turn up with a goal - *put chat on screen* - and the docs answered with a table of contents organised around our concepts instead of their intent. Its own frontmatter described it as a clusterf\*ck.
+
+`/help` now opens with **I want to...** and four tutorials that each end with something on screen. The concept guides sit under **How it works** below them, and the reference under **Look something up**. Nothing was deleted; it was reordered around intent.
+
+- **Show chat on screen** - the whole feature is one loop, then badges, per-chatter styling, the window size and the display filters.
+- **Show my latest follower** - one tag, then the two things that actually matter around it: what to draw when there is no follower yet, and the difference between a value that sits there and an alert that fires.
+- **Show my last 5 subscribers** - a foreach list, with gifted subs credited to the person who paid. It leads with the thing people get wrong: there is no `limit 5` in the loop, the count is a foreach cap applied server-side.
+- **Show my latest donator, from any source** - the one nobody finds alone. Five donation services each track their own latest donor and none of them is true about your stream. `latest()` plus the automatic `_at` companion every control carries picks the real one. It also warns that the `argmax()` variant is currency-naive, since comparing 50 JPY against 40 EUR will confidently pick wrong.
+- **Tutorials needed no new machinery.** They are ordinary pages under `resources/help/pages/tutorials/`, so the route, the `.md` twin, the sitemap and the search index all picked them up from the filesystem. Writing the file was the entire job.
+- **Both HelpContext guard tests earned their keep.** The first draft gave all four tutorials `templates.show?type=static`, which `chat.md` already owned - the "no context resolves to more than 3 pages" test caught the link farm forming on its first commit. The panel-copy test caught a heading one character over the 40-char limit. Each tutorial now claims one distinct context, or none.
+
 ## August 16th, 2026 - feat(help): one documentation site instead of four
 
 Help was built four different ways. Prose pages under `/help` were an Inertia app with one markdown pipeline; the reference under `/help/reference` was server-rendered Blade with a second, incompatible one; the Alt+R palette bundled a third copy of the reference into the app; and `/updates` rendered markdown in the browser with a fourth. Two of them defined `.help-prose`, and the two definitions were loaded on the same page.
