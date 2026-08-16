@@ -292,5 +292,21 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
     }
   }
 
-  return { messages, isConnected, connect, disconnect, setFilters, setWindowSize };
+  /**
+   * Feed a raw IRC line in as though it had arrived on the socket.
+   *
+   * The seam the dev chat hose uses to load-test the renderer. Going in HERE
+   * rather than pushing straight into `messages` is the whole point: it
+   * exercises parsing, filtering, the ordered queue, flush batching, window
+   * trimming and moderation - everything a real message touches except the
+   * socket, which is the one part that is never the bottleneck.
+   *
+   * Harmless in production. It only affects what the caller's own browser
+   * draws; nothing is sent anywhere and no other viewer is involved.
+   */
+  function injectRawLine(raw: string): void {
+    handleLine(raw);
+  }
+
+  return { messages, isConnected, connect, disconnect, setFilters, setWindowSize, injectRawLine };
 }

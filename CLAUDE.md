@@ -334,6 +334,14 @@ counts them ("five donation services", "five pipes") lives in `resources/views/w
 - `chat.N.html` is the ONLY foreach field rendered unescaped (`htmlSafeFields`, keyed by iterable). **Bracket defusing still applies inside it** - skipping that reopens the PR #230 injection hole through a side door.
 - Deletions are not optional: CLEARMSG removes one message, CLEARCHAT purges a user or clears the room. Purge by user id, falling back to login, and NEVER to "clear everything".
 
+### Chat load testing (Aug 2026)
+
+- `resources/js/dev/chatHose.ts` synthesizes tagged IRC lines and feeds them through `useTwitchChat.injectRawLine()` - the REAL parser - so a load test exercises parsing, filters, the ordered queue, flush batching, window trimming and moderation. Injecting into `messages` directly would skip everything worth measuring.
+- **Gated at BUILD time**: `import.meta.env.VITE_CHAT_HOSE === '1'`. Vite inlines it, so an ordinary build eliminates the import site and the module never enters the graph - zero bytes, nothing to leave switched on. Build with `VITE_CHAT_HOSE=1 npm run build`, then drive it from the console with `__olChatHose.start({ rate: 50 })`.
+- Do NOT convert that to a runtime check (query param, window flag, server boolean). It would compile in. `DevToolsExcludedFromBuildTest` inspects the BUILT assets and was verified to fail against a `VITE_CHAT_HOSE=1` build.
+- `chatHose.test.ts` runs generated lines through `parseIrcLine`/`toChatMessage`, including that emote POSITIONS line up with the text. A malformed fixture would mean debugging the instrument instead of the overlay.
+- **Chat volume does not load the server at all.** The overlay reads Twitch directly, and the bot posts one aggregated summary per channel per 30-60s, so a channel doing 50k messages/min costs Laravel exactly what a quiet one does. Server load scales with NUMBER OF CHANNELS, not chat volume - a "hammer prod with chat" test measures nothing.
+
 ### keepNames is load-bearing (fixed Aug 2026)
 
 - **`build.rollupOptions.output.keepNames: true` in `vite.config.mts` is NOT cosmetic. Do not remove it.** `@mkody/twitch-emoticons` guards its abstract base with `if (new.target.name === Emote.name) throw`. The minifier renamed the base class AND all four subclasses to `e`, so the guard was true for every subclass and constructing any BTTV/FFZ/7TV emote threw "Base Emote class cannot be used".
