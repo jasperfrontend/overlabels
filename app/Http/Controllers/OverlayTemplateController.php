@@ -877,6 +877,13 @@ class OverlayTemplateController extends Controller
                 'random_controls' => $randomControls,
                 'stream_live' => StreamSessionService::isLive($user),
                 'locale' => $user->locale ?? 'en-US',
+                // Chat display filters. They have to reach the client because
+                // the overlay reads chat directly from Twitch - the server
+                // never sees a message, so it cannot filter one. Reaching the
+                // client means the hidden-logins list is visible to anyone
+                // holding this overlay's token, which is already true of
+                // everything else in this payload.
+                'chat_filters' => $user->chatFilters(),
             ]);
 
         } catch (Exception $e) {

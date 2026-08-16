@@ -328,6 +328,15 @@ counts them ("five donation services", "five pipes") lives in `resources/views/w
 - `chat.N.html` is the ONLY foreach field rendered unescaped (`htmlSafeFields`, keyed by iterable). **Bracket defusing still applies inside it** - skipping that reopens the PR #230 injection hole through a side door.
 - Deletions are not optional: CLEARMSG removes one message, CLEARCHAT purges a user or clears the room. Purge by user id, falling back to login, and NEVER to "clear everything".
 
+### Chat display filters (Aug 2026)
+
+- Two per-user settings at `/settings/chat`: `hide_commands` (hide messages starting with `!`) and `hidden_logins`. Stored in the `preferences` jsonb column via `User::PREFERENCE_DEFAULTS['chat_filters']` - **no migration, no new table**. Both default to showing everything: deciding for the streamer which chatters are worth rendering was explicitly rejected.
+- **`chat_filters` is deliberately NOT in `User::$appends`**, unlike `locale` and `foreach_caps`. A list of logins the streamer has hidden is private, and appending it would leak it into every incidental User serialisation. Callers ask for it explicitly - the settings page and the render payload, nowhere else. Pinned by a test.
+- The filters MUST reach the client: the overlay reads chat directly from Twitch, so the server never sees a message and cannot filter one. That means the hidden list is visible to anyone holding the overlay token, which is already true of everything else in that payload.
+- **Filtering happens at INGEST** in `useTwitchChat.handleLine()`, not at render. A hidden message must not occupy one of the 50 window slots, or a chatter spamming commands pushes real messages off the overlay while showing nothing themselves.
+- `resources/js/utils/chatFilters.ts` is the pure part (`toChatFilters`, `shouldHideMessage`); it degrades to "show everything" on a malformed payload rather than throwing inside the socket handler. Filters apply to Shared Chat foreign messages too.
+- **This is NOT a moderation or safety feature and must never be described as one** - see the standing rule that Overlabels is not a safety tool. Deletions (CLEARMSG/CLEARCHAT) are a separate mechanism, are not optional, and are honoured regardless of these settings. The settings page says so in as many words.
+
 ### Chat controls (Aug 2026)
 
 - Four controls, all `source='twitch'`, `source_managed=true`: `chat_messages_this_stream`, `unique_chatters_this_stream`, `latest_chatter_name`, `latest_chat_message`. The first two ARE on `PER_STREAM_CONTROL_KEYS`; the `latest_*` pair deliberately is NOT (same rule as `latest_cheer*`).

@@ -130,9 +130,23 @@ class User extends Authenticatable
             'followers' => 5,
             'followed' => 5,
         ],
+        // Chat overlay display filters. Both default to showing everything:
+        // deciding for the streamer which of their chatters is worth rendering
+        // is not this app's call.
+        'chat_filters' => [
+            'hide_commands' => false,
+            'hidden_logins' => [],
+        ],
     ];
 
     public const int FOREACH_CAP_MAX = 50;
+
+    /**
+     * Ceiling on hidden chat logins. The list ships in every overlay render
+     * payload, so it is capped to keep that response small rather than because
+     * anyone plausibly needs more.
+     */
+    public const int MAX_HIDDEN_LOGINS = 200;
 
     /**
      * The attributes that should be hidden for serialization.
@@ -232,6 +246,36 @@ class User extends Authenticatable
         }
 
         return $merged;
+    }
+
+    /**
+     * Chat overlay display filters, merged with defaults and normalised.
+     *
+     * Deliberately NOT in $appends, unlike locale and foreach_caps. Those are
+     * harmless anywhere a User gets serialised; a list of logins the streamer
+     * has chosen to hide is not, and appending it would leak it into every
+     * incidental serialisation. Callers ask for it explicitly: the settings
+     * page and the overlay render payload, and nowhere else.
+     *
+     * @return array{hide_commands: bool, hidden_logins: list<string>}
+     */
+    public function chatFilters(): array
+    {
+        $defaults = self::PREFERENCE_DEFAULTS['chat_filters'];
+        $stored = (array) ($this->preference('chat_filters') ?? []);
+
+        $logins = collect($stored['hidden_logins'] ?? $defaults['hidden_logins'])
+            ->map(fn ($login) => strtolower(trim((string) $login)))
+            ->filter()
+            ->unique()
+            ->take(self::MAX_HIDDEN_LOGINS)
+            ->values()
+            ->all();
+
+        return [
+            'hide_commands' => (bool) ($stored['hide_commands'] ?? $defaults['hide_commands']),
+            'hidden_logins' => $logins,
+        ];
     }
 
     /**

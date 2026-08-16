@@ -2,6 +2,19 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - feat(chat): decide what your chat overlay draws
+
+A new Chat page in settings, with two switches: hide messages starting with `!`, and a list of chatters whose messages your overlay skips.
+
+Both default to off, and that is the actual design decision. Deciding for you that bot commands are clutter, or that a particular chatter is not worth rendering, is not this app's call to make. So neither is a default; they are both a thing you turn on.
+
+- **This is not moderation, and the page says so out loud.** Hiding something here keeps it off your overlay. The message is still in chat, still in the VOD, and every viewer and moderator still sees it. Deletions are the separate mechanism that actually removes things, they are not optional, and your overlay honours them whatever these settings say.
+- **The filter runs at the door, not at the window.** A hidden message is dropped as it arrives rather than skipped when drawing. Otherwise a chatter spamming commands would quietly push fifty real messages off the overlay while showing nothing themselves.
+- **A hidden chatter is hidden wherever they type from**, including from another channel during a shared chat collab. Any other reading would be a surprise.
+- **The hidden list is not on the guest list for anything else.** It rides in the overlay payload because it has to - your overlay talks to Twitch directly, so the server never sees a message and cannot filter one for you. Everywhere else it is left out on purpose, including the ordinary serialisation that carries your locale and loop limits around the app. There is a test that fails if someone adds it.
+- **The textarea takes a mess.** Extra blank lines, stray commas, a leading `@`, the same name twice, mixed case: all fine. Throwing a validation error at someone pasting a list when the fix is obvious would just be rude.
+- No migration. It lives in the preferences column that already holds your locale and foreach caps.
+
 ## August 16th, 2026 - feat(chat): four chat controls, counted server-side
 
 Chat has been renderable in an overlay since this morning, but only as a feed. These are the numbers: `chat_messages_this_stream`, `unique_chatters_this_stream`, `latest_chatter_name` and `latest_chat_message`, usable anywhere a control tag is, including alerts and bot replies.
