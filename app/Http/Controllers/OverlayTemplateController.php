@@ -787,6 +787,13 @@ class OverlayTemplateController extends Controller
             // Build final data: Twitch data + controls + lists + Twitch ID
             $finalData = array_merge($mapped, $controlData, $listData, [
                 'user_twitch_id' => $user->twitch_id,
+                // The chat overlay joins Twitch IRC directly, and IRC addresses
+                // channels by login (`JOIN #name`), not by the numeric id every
+                // other integration uses. Shipped unconditionally next to the id
+                // because it is one short public string, and deriving it in the
+                // browser would mean an authenticated Helix call from an overlay
+                // that deliberately holds no credentials.
+                'user_login' => strtolower((string) ($user->twitch_data['login'] ?? '')),
             ]);
 
             // Preload compiled_css for every alert template owned by this user that

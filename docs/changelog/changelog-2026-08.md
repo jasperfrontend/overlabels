@@ -2,6 +2,43 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - feat(chat): Twitch chat in an overlay
+
+```
+[[[foreach:chat as msg]]]
+  <div class="msg [[[msg.badges]]]">
+    <span style="color: [[[msg.color]]]">[[[msg.author]]]</span>
+    <span>[[[msg.text]]]</span>
+  </div>
+[[[endforeach]]]
+```
+
+That is the whole feature. Drop it in any static overlay and chat appears.
+
+The overlay connects to Twitch **directly**, over anonymous IRC-over-WebSocket. Nothing is relayed through Overlabels: no ingestion cost, no metering, no added latency, and chat that keeps working while Overlabels is down. Chat is public and an anonymous `justinfan` login needs no credentials, so no secret ever reaches an OBS browser source.
+
+- **No DSL change was needed.** `resolveIterable` already synthesizes an array from flat dotted keys with no registration anywhere, so putting `chat.0.author` and `chat.count` into the data map is enough for `foreach` to work. The feature is a data source, not new syntax.
+- **Deleted messages disappear, and that is the part that actually matters.** CLEARMSG removes one message, CLEARCHAT purges a user or clears the room. A slur a moderator removed staying on the overlay would be burned into the stream, the VOD, and every clip of it. Timeouts purge by user id, falling back to login when the id tag is absent - never to "clear everything", because failing open wipes the overlay on every timeout and failing closed leaves the banned chatter on screen.
+- **Shared Chat is handled.** A message duplicated in from a collab partner exposes `[[[msg.source_channel]]]`, empty for a native message, so a template can mark it rather than passing a partner's audience off as its own. Their badges come from the channel they typed in, matching Twitch's own UI.
+- **The window is 50 messages, applied at most five times a second.** The batching is not a throughput fix - the renderer does a 50-message feed in under half a millisecond now. It is an animation fix: the overlay re-renders by replacing innerHTML, which kills any CSS transition mid-flight, so message-enter animations need the breathing room. 200 ms of latency on chat is invisible.
+- **The socket only opens if the template renders chat.** Same discipline as the emote library: an overlay that never shows a message should not hold a WebSocket open for an entire stream.
+- **Validated against live traffic, not just fixtures.** Pointed at an 86,000-viewer chat: 73 lines, 73 parsed, 56 messages, and 5 real moderation actions caught. The window correctly stayed at 50 through four timeouts, which is the proof that a targeted purge is not being mistaken for a room clear.
+- **Chat text is escaped like any other value**, including the `[[[` defusing added yesterday, so a chatter typing a tag gets a tag rendered as text rather than resolved.
+
+### Emotes
+
+`[[[msg.html]]]` renders the message with Twitch, 7TV, BTTV and FFZ emotes as images. `[[[msg.text]]]` stays available as plain escaped text, so a template picks.
+
+This required a deliberate hole in the escaping, and it is worth knowing exactly how narrow it is.
+
+- **It reuses the alert emote pipeline** rather than growing a second one, so an emote works in chat the moment it works in an alert. Twitch emote positions come from the IRC `emotes` tag, which is more accurate than matching by name: it cannot false-positive on a word that merely contains an emote's name.
+- **The exemption is keyed by iterable, not by field name.** `{ chat: ['html'] }` means `msg.html` inside a chat loop and nothing else. A different loop with a field called `html` is still escaped, and there is a test for exactly that.
+- **Bracket defusing still applies inside the html field**, and this is the part that keeps yesterday's fix intact. `encodeHtml` never touched `[`, so skipping only the entity-encoding would let a chatter typing `[[[c:kofi:total_received]]]` land literally in the output and be resolved by the substitution pass - the injection hole from #230, reopened through a side door. Emote markup contains no square brackets, so defusing costs it nothing.
+- **The safety guarantee lives with the producer.** The emote parser escapes every piece of chatter text before adding any markup, so the only tags in that slot are `<img>` elements this app generated. The type is named `EmoteRenderer` rather than `string` to make that contract something you have to opt into.
+- **A caller with no emote pipeline emits no html slot at all**, rather than one that merely claims to be safe.
+
+**Still to come:** badge artwork (badges are names today, which is what CSS wants anyway), the four chat controls, and the filtering settings page.
+
 ## August 16th, 2026 - perf(build): every page was downloading a code editor it wasn't showing
 
 Vue had no explicit home in the chunking config, so Rolldown parked it inside the first manual chunk it could find, which happened to be `codemirror`. Every entry needs Vue. So every entry pulled a 678 kB code editor along with it: the overlay, which contains no editor anywhere, and the dashboard's first paint, where the editor lives on lazily-loaded pages that had not been visited yet.
