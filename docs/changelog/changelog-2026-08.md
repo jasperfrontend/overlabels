@@ -49,6 +49,20 @@ Everything under `/help` is now one Blade layout, one renderer, one stylesheet, 
 - **Three documents were making a claim that is no longer true.** The help index, `for-machines/markdown-endpoints`, and `llms.txt` all told machine readers that bare help URLs return an app shell and to always append `.md`. That was accurate when written and is not any more. The `.md` form is still the better fetch - it is the source, with no navigation around it - but it is no longer a correctness requirement, and all three now say so.
 - **Landing on a deep reference entry no longer opens the sidebar scrolled to the top**, with the highlighted entry hundreds of pixels below the fold. An active entry beats the remembered scroll position, since it is the more specific answer to "where am I".
 
+## August 16th, 2026 - chore(dev): a chat firehose, for finding the ceiling
+
+A development tool that invents thousands of chat messages a second and feeds them to an overlay, so the renderer can be pushed until it breaks rather than politely confirmed to survive a trickle.
+
+The real measurement that prompted it: an 86,000-viewer chat produced about **134 messages per minute**. That is two a second. The overlay was never going to struggle with that, so it told us nothing about where the limit actually is.
+
+- **It goes in through the real parser.** Generated lines are proper tagged IRC and enter at the same point a real message does, so a run exercises parsing, filtering, batching, window trimming and moderation - not just the drawing.
+- **Reproducible, unlike a real channel.** A busy stream's rate swings wildly minute to minute, so you can never re-run the same test after a change. This is a dial.
+- **It can be harder than reality.** Emote density, message length, chatter count, deletions and shared-chat messages are all adjustable, including combinations no real channel would produce.
+- **It reports what matters**: not "did it keep up" but "did it drop frames". A stuttering overlay is the actual failure mode, so it counts frames over 50ms.
+- **It cannot ship.** The switch is read when the code is compiled, not when it runs, so an ordinary build removes the entire thing - and a test inspects the built files to prove it, having first been checked to fail against a build that does include it.
+
+Nothing about this touches the server, because chat never does: the overlay talks to Twitch directly, and the bot sends one summary per channel every half minute or so. A channel doing 50,000 messages a minute costs Overlabels exactly what a quiet one does.
+
 ## August 16th, 2026 - fix(overlay): emote sizing is yours now
 
 Every emote image was being written with its styling baked into the tag: `style="display:inline;vertical-align:middle;height:1.5em;"`, stamped on by us, three times over, in three different places in the code.
