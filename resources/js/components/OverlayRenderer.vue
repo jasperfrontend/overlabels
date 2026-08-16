@@ -40,6 +40,8 @@ import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
 import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
 import { useOverlayHealth } from '@/composables/useOverlayHealth';
 import { useEmoteParser } from '@/composables/useEmoteParser';
+import { useTwitchChat } from '@/composables/useTwitchChat';
+import { withChatSlots } from '@/utils/chatSlots';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
 import { useCssCustomProperties } from '@/composables/useCssCustomProperties';
 import { EVENT_RULES } from '@/composables/useTwitchEventRules';
@@ -110,6 +112,33 @@ const health = useOverlayHealth();
 const emoteParser = useEmoteParser();
 const expressionEngine = useExpressionEngine(data);
 const cssApplier = useCssCustomProperties();
+const twitchChat = useTwitchChat();
+
+/**
+ * Does this template render chat at all?
+ *
+ * Gating the connection on the template source, rather than joining for every
+ * overlay, keeps a WebSocket from sitting open for an entire stream in an OBS
+ * source that never displays a message. Matches how the emote library is now
+ * loaded only when something asks for it.
+ */
+const templateUsesChat = computed(() => {
+  const source = `${rawHtml.value ?? ''}\n${css.value ?? ''}`;
+  return /\[\[\[foreach:\s*chat\s+as\s/.test(source) || /\[\[\[chat\.count\b/.test(source);
+});
+
+/**
+ * Project the chat window into `chat.*` data slots whenever it changes.
+ *
+ * The composable already buffers, so this fires at most a few times a second
+ * rather than once per message. `withChatSlots` replaces the whole `chat.*` set
+ * instead of patching it, so a shrinking window cannot leave a deleted message
+ * behind to reappear later.
+ */
+watch(twitchChat.messages, (list) => {
+  if (!data.value || typeof data.value !== 'object') return;
+  data.value = withChatSlots(data.value, list);
+});
 
 // Phase 1 surgical-patching state. When fastPath is true, the user's CSS was
 // rewritten at mount to reference CSS custom properties (`var(--ol-...)`) for
@@ -544,6 +573,14 @@ onMounted(async () => {
       });
     }
 
+    // Join Twitch chat, but ONLY when this template actually renders it.
+    // Same discipline as the emote library: an overlay that never shows chat
+    // should not hold a WebSocket open for hours in an OBS source.
+    const chatChannel = String(json.data?.user_login ?? '');
+    if (chatChannel && templateUsesChat.value) {
+      twitchChat.connect(chatChannel);
+    }
+
     // Initialise user locale for pipe formatters
     userLocale.value = json.locale ?? 'en-US';
 
@@ -634,6 +671,10 @@ onUnmounted(() => {
   health.destroy();
   expressionEngine.destroy();
   cssApplier.teardown();
+  // Closes the socket, cancels the reconnect backoff and drops any queued
+  // flush. Without this an OBS source that reloads leaks a connection per
+  // reload, and the backoff timer keeps reopening one after the component dies.
+  twitchChat.disconnect();
   for (const key of Object.keys(timerIntervals)) {
     stopTimerTick(key);
   }

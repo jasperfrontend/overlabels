@@ -2,6 +2,31 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - feat(chat): Twitch chat in an overlay
+
+```
+[[[foreach:chat as msg]]]
+  <div class="msg [[[msg.badges]]]">
+    <span style="color: [[[msg.color]]]">[[[msg.author]]]</span>
+    <span>[[[msg.text]]]</span>
+  </div>
+[[[endforeach]]]
+```
+
+That is the whole feature. Drop it in any static overlay and chat appears.
+
+The overlay connects to Twitch **directly**, over anonymous IRC-over-WebSocket. Nothing is relayed through Overlabels: no ingestion cost, no metering, no added latency, and chat that keeps working while Overlabels is down. Chat is public and an anonymous `justinfan` login needs no credentials, so no secret ever reaches an OBS browser source.
+
+- **No DSL change was needed.** `resolveIterable` already synthesizes an array from flat dotted keys with no registration anywhere, so putting `chat.0.author` and `chat.count` into the data map is enough for `foreach` to work. The feature is a data source, not new syntax.
+- **Deleted messages disappear, and that is the part that actually matters.** CLEARMSG removes one message, CLEARCHAT purges a user or clears the room. A slur a moderator removed staying on the overlay would be burned into the stream, the VOD, and every clip of it. Timeouts purge by user id, falling back to login when the id tag is absent - never to "clear everything", because failing open wipes the overlay on every timeout and failing closed leaves the banned chatter on screen.
+- **Shared Chat is handled.** A message duplicated in from a collab partner exposes `[[[msg.source_channel]]]`, empty for a native message, so a template can mark it rather than passing a partner's audience off as its own. Their badges come from the channel they typed in, matching Twitch's own UI.
+- **The window is 50 messages, applied at most five times a second.** The batching is not a throughput fix - the renderer does a 50-message feed in under half a millisecond now. It is an animation fix: the overlay re-renders by replacing innerHTML, which kills any CSS transition mid-flight, so message-enter animations need the breathing room. 200 ms of latency on chat is invisible.
+- **The socket only opens if the template renders chat.** Same discipline as the emote library: an overlay that never shows a message should not hold a WebSocket open for an entire stream.
+- **Validated against live traffic, not just fixtures.** Pointed at an 86,000-viewer chat: 73 lines, 73 parsed, 56 messages, and 5 real moderation actions caught. The window correctly stayed at 50 through four timeouts, which is the proof that a targeted purge is not being mistaken for a room clear.
+- **Chat text is escaped like any other value**, including the `[[[` defusing added yesterday, so a chatter typing a tag gets a tag rendered as text rather than resolved.
+
+**Not in this slice, deliberately:** emotes and badge artwork. Both need message text to arrive as trusted HTML, which means a documented hole through the exact escaping that was hardened yesterday to stop chat-driven tag injection. That deserves its own pass with its own tests rather than riding along here. Badges are available now as names (`[[[msg.badges]]]` gives `broadcaster subscriber`) which is what you want for CSS anyway. The four chat controls and the filtering settings page are also still to come.
+
 ## August 16th, 2026 - perf(build): every page was downloading a code editor it wasn't showing
 
 Vue had no explicit home in the chunking config, so Rolldown parked it inside the first manual chunk it could find, which happened to be `codemirror`. Every entry needs Vue. So every entry pulled a 678 kB code editor along with it: the overlay, which contains no editor anywhere, and the dashboard's first paint, where the editor lives on lazily-loaded pages that had not been visited yet.
