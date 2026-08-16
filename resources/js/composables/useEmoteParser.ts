@@ -1,5 +1,8 @@
 import { encodeHtml } from '@/utils/tagParser';
-import { EmoteFetcher, EmoteParser } from '@mkody/twitch-emoticons';
+// TYPE-ONLY on purpose: this import is erased at compile time, so it creates no
+// runtime dependency and the library stays out of the overlay's entry bundle.
+// The value import lives inside initialize(), below. See the note there.
+import type { EmoteParser } from '@mkody/twitch-emoticons';
 import { ref } from 'vue';
 
 interface TwitchEmotePosition {
@@ -19,7 +22,35 @@ export function useEmoteParser() {
   // Twitch emotes fetched from backend proxy (credentials stay server-side)
   const twitchEmoteMap = new Map<string, string>(); // code → CDN URL
 
+  /**
+   * Load the emote library and warm its caches for one channel.
+   *
+   * The library is pulled in with a DYNAMIC import so it becomes its own chunk
+   * instead of riding in the overlay's entry bundle. Only two fields are ever
+   * emote-parsed (`event.message.text` and `event.user_input`, see
+   * HTML_SAFE_ALERT_FIELDS in OverlayRenderer), and both belong to alerts - yet
+   * every overlay was paying to download and evaluate the library before first
+   * paint, including overlays no alert template targets.
+   *
+   * This is safe to make async because nothing awaits initialize(): OverlayRenderer
+   * calls it fire-and-forget with a `.catch()`, and parseEmotes() already returns
+   * its input untouched while `isReady` is false. The download window simply joins
+   * the fetch window that was always there.
+   *
+   * It also degrades better than the static import did. A chunk that fails to load
+   * (network blip, or a stale chunk reference after a deploy) now rejects here,
+   * leaves `parser` null, and renders emotes as plain text. Previously the same
+   * failure took the whole entry bundle - and therefore the whole overlay - with it.
+   *
+   * NOTE: the emote parser belongs in the static overlay and should stay here.
+   * Alerts render inside the static overlay's DOM, so this is the only JS context
+   * that exists, and emote sets are per-channel rather than per-alert - fetching
+   * once at mount and reusing is what keeps a cheer from hitting 7TV every time.
+   * The eagerness was the bug, not the placement.
+   */
   async function initialize(channelId: number): Promise<void> {
+    const { EmoteFetcher, EmoteParser } = await import('@mkody/twitch-emoticons');
+
     const fetcher = new EmoteFetcher(); // No Twitch credentials — BTTV/FFZ/7TV only
     parser = new EmoteParser(fetcher, {
       template: '<img class="overlay-emote" alt="{name}" src="{link}" style="display:inline;vertical-align:middle;height:1.5em;">',
