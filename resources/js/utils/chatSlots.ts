@@ -27,6 +27,17 @@ export const CHAT_SLOT_PREFIX = 'chat.';
 export type EmoteRenderer = (message: ChatMessage) => string;
 
 /**
+ * Turns a message's badges into SAFE HTML for `chat.N.badge_images`.
+ *
+ * Same contract as EmoteRenderer, and the same reason for being a named type
+ * rather than a bare string: this slot is rendered without entity-encoding, so
+ * a producer that echoes anything from chat into it is writing an XSS hole.
+ * `badgeRenderer.ts` is the only implementation, and it emits `<img>` elements
+ * built entirely from the server-supplied badge manifest.
+ */
+export type BadgeRenderer = (message: ChatMessage) => string;
+
+/**
  * Booleans render as `1` / empty string rather than `true` / `false`.
  *
  * `useConditionalTemplates` treats `'0'` and `''` as falsy but the STRING
@@ -45,7 +56,7 @@ function flag(value: boolean): string {
  * Index 0 is the OLDEST visible message, so a template iterating in order
  * renders top-to-bottom the way Twitch chat reads.
  */
-export function chatSlots(messages: readonly ChatMessage[], toHtml?: EmoteRenderer): Record<string, string> {
+export function chatSlots(messages: readonly ChatMessage[], toHtml?: EmoteRenderer, toBadges?: BadgeRenderer): Record<string, string> {
   const slots: Record<string, string> = {
     'chat.count': String(messages.length),
   };
@@ -55,6 +66,10 @@ export function chatSlots(messages: readonly ChatMessage[], toHtml?: EmoteRender
     // Only emitted when a renderer is supplied, so a caller with no emote
     // pipeline never produces a slot that claims to be safe HTML.
     if (toHtml) slots[`${k}html`] = toHtml(m);
+    // Same rule for badge art: no manifest, no slot. A template asking for
+    // badge images before the manifest loads gets nothing rather than broken
+    // <img> elements pointing at undefined.
+    if (toBadges) slots[`${k}badge_images`] = toBadges(m);
     slots[`${k}id`] = m.id;
     slots[`${k}author`] = m.author;
     slots[`${k}login`] = m.login;
@@ -86,7 +101,12 @@ export function chatSlots(messages: readonly ChatMessage[], toHtml?: EmoteRender
  * while `chat.count` is small, and would reappear the moment the window grew
  * back past it - a deleted message resurrected by an unrelated new one.
  */
-export function withChatSlots(data: Record<string, unknown>, messages: readonly ChatMessage[], toHtml?: EmoteRenderer): Record<string, unknown> {
+export function withChatSlots(
+  data: Record<string, unknown>,
+  messages: readonly ChatMessage[],
+  toHtml?: EmoteRenderer,
+  toBadges?: BadgeRenderer,
+): Record<string, unknown> {
   const next: Record<string, unknown> = {};
 
   for (const key in data) {
@@ -94,5 +114,5 @@ export function withChatSlots(data: Record<string, unknown>, messages: readonly 
     next[key] = data[key];
   }
 
-  return Object.assign(next, chatSlots(messages, toHtml));
+  return Object.assign(next, chatSlots(messages, toHtml, toBadges));
 }

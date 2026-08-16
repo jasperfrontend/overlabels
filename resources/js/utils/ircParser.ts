@@ -44,6 +44,12 @@ export interface ChatMessage {
   color: string;
   /** Space-separated badge set names, e.g. `broadcaster moderator subscriber`. */
   badges: string;
+  /**
+   * The same badges WITH their versions, in wire order, e.g.
+   * `['broadcaster/1', 'subscriber/12']`. Badge artwork is keyed this way,
+   * because a 3-month and a 12-month subscriber badge are different images.
+   */
+  badgeVersions: string[];
   /** Unix SECONDS, honouring the project-wide timestamp contract. */
   at: number;
   isMod: boolean;
@@ -218,8 +224,9 @@ function loginFromPrefix(prefix: string | null): string {
  * Badge set names only, dropping the version.
  *
  * `badges=broadcaster/1,subscriber/12` becomes `broadcaster subscriber`, which
- * is what a template wants for styling (`.badge-subscriber`). The versions
- * matter only for rendering Twitch's badge artwork, which is a separate concern.
+ * is what a template wants for styling (`.badge-subscriber`). This stays the
+ * value of `msg.badges` and must not change - templates in the wild use it for
+ * CSS class names.
  */
 function badgeNames(raw: string): string {
   if (!raw) return '';
@@ -228,6 +235,25 @@ function badgeNames(raw: string): string {
     .map((b) => b.split('/')[0])
     .filter(Boolean)
     .join(' ');
+}
+
+/**
+ * Badge identifiers WITH their version, in wire order.
+ *
+ * `badges=broadcaster/1,subscriber/12` becomes `['broadcaster/1',
+ * 'subscriber/12']`. Badge artwork needs the version: a 3-month and a 12-month
+ * subscriber badge are different images from the same set, and the manifest is
+ * keyed exactly this way.
+ *
+ * Kept separate from badgeNames() rather than replacing it, because the two
+ * answer different questions and `msg.badges` is a published contract.
+ */
+function badgeVersions(raw: string): string[] {
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .map((b) => b.trim())
+    .filter((b) => b.includes('/'));
 }
 
 /**
@@ -276,6 +302,7 @@ export function toChatMessage(line: IrcLine): ChatMessage | null {
     isBroadcaster: badgeSet.has('broadcaster'),
     isFirstMessage: t['first-msg'] === '1',
     sourceRoomId,
+    badgeVersions: badgeVersions(effectiveBadges),
     emotes: parseEmoteTag(t['emotes'] ?? ''),
   };
 }

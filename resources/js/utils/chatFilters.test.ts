@@ -18,6 +18,7 @@ function msg(over: Partial<ChatMessage> = {}): ChatMessage {
     isBroadcaster: false,
     isFirstMessage: false,
     sourceRoomId: '',
+    badgeVersions: [],
     emotes: [],
     ...over,
   };
