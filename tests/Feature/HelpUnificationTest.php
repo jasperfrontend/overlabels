@@ -79,22 +79,37 @@ it('resolves wikilinks across both corpora without shadowing a page', function (
 
     expect($map)->toHaveKey('new-follower')
         ->and($map['new-follower'])->toBe('/help/reference/eventsub-events/new-follower')
-        ->and($map)->toHaveKey('chat')
-        ->and($map['chat'])->toBe('/help/chat');
+        ->and($map)->toHaveKey('lists')
+        ->and($map['lists'])->toBe('/help/lists');
 
     // Reference slugs are registered first and win collisions, because all 147
-    // reference files were written against that namespace. That only stays
-    // harmless while no page slug collides - if one ever does, its wikilinks
-    // silently point at a tag instead of the page.
+    // reference files were written against that namespace. `chat` is the one
+    // deliberate casualty and is declared as such; anything else colliding is
+    // an accident that silently repoints existing wikilinks at a different
+    // document, so it has to fail here.
     $referenceSlugs = array_column(
         array_filter(HelpCorpus::all(), fn ($d) => $d['kind'] === HelpCorpus::KIND_REFERENCE),
         'slug'
     );
 
+    // `toContain` is variadic, so a second argument would be read as another
+    // needle rather than a failure message. These have to be boolean asserts.
     foreach (HelpCorpus::docs() as $doc) {
-        expect($referenceSlugs)->not->toContain(
-            $doc['slug'],
-            "Page slug '{$doc['slug']}' collides with a reference entry and is unreachable by wikilink."
+        if (in_array($doc['slug'], HelpCorpus::SHADOWED_PAGE_SLUGS, true)) {
+            continue;
+        }
+
+        expect(in_array($doc['slug'], $referenceSlugs, true))->toBeFalse(
+            "Page slug '{$doc['slug']}' collides with a reference entry and is unreachable by wikilink. "
+            .'Rename one, or add it to HelpCorpus::SHADOWED_PAGE_SLUGS if the shadowing is intended.'
+        );
+    }
+
+    // The declared shadowing must be real, so the list cannot rot into a set of
+    // exemptions for collisions that no longer exist.
+    foreach (HelpCorpus::SHADOWED_PAGE_SLUGS as $slug) {
+        expect(in_array($slug, $referenceSlugs, true))->toBeTrue(
+            "'{$slug}' is declared as shadowed but no reference entry claims it."
         );
     }
 })->group('help');

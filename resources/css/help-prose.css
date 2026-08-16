@@ -127,6 +127,35 @@
   }
 
   /*
+     * Fenced code blocks get a Copy button, injected client-side.
+     *
+     * The wrapper carries the positioning context rather than the <pre>, which
+     * scrolls horizontally - anchoring to the <pre> would slide the button out
+     * of view on a wide line. The <pre> keeps its own margin so the rhythm of
+     * the page is unchanged; the wrapper adds none.
+     */
+  .help-code {
+    @apply relative;
+  }
+
+  .help-code > pre {
+    /* Room for the button, so a long first line never runs under it. */
+    @apply pr-20;
+  }
+
+  .help-code-copy {
+    @apply absolute top-2 right-2 cursor-pointer rounded border border-sidebar-border bg-card px-2 py-1 text-xs text-muted-foreground transition-colors;
+  }
+
+  .help-code-copy:hover {
+    @apply bg-accent text-foreground;
+  }
+
+  .help-code-copy.is-copied {
+    @apply border-violet-400 bg-violet-400 text-violet-950;
+  }
+
+  /*
      * Click-to-copy template tags, from `[[[tag]]]` in any help document.
      *
      * These lived in resources/js/help-reference/styles.css, an unlayered

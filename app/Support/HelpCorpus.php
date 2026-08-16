@@ -32,6 +32,20 @@ final class HelpCorpus
     /** The subdirectory under resources/help/pages that makes a page a tutorial. */
     public const TUTORIAL_PREFIX = 'tutorials/';
 
+    /**
+     * Page slugs that a reference entry deliberately shadows in the wikilink map.
+     *
+     * `[[chat]]` is written inside the reference vault, where it sits alongside
+     * `[[subscribers]]` and `[[goals]]` and plainly means the foreach loop. The
+     * guide at /help/chat wants the same name and cannot have it, which is fine:
+     * wikilinks are an authoring convenience for the reference, and prose pages
+     * are linked with ordinary markdown links that name the URL outright.
+     *
+     * Anything not on this list must not collide - see HelpUnificationTest. A
+     * silent collision would repoint existing links to a different document.
+     */
+    public const SHADOWED_PAGE_SLUGS = ['chat'];
+
     public const KIND_LABELS = [
         self::KIND_TUTORIAL => 'Tutorial',
         self::KIND_GUIDE => 'Guide',

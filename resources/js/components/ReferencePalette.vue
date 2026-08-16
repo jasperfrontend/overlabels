@@ -2,20 +2,27 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import { useHelpReference, type HelpEntry } from '@/composables/useHelpReference';
+import { useHelpReference, type HelpDoc } from '@/composables/useHelpReference';
 import { BookOpen, Search } from '@lucide/vue';
 
-const { search } = useHelpReference();
+const { search, loading, failed, loadIndex } = useHelpReference();
 
 const open = ref(false);
 const query = ref('');
 const selectedIndex = ref(0);
 const inputRef = ref<HTMLInputElement | null>(null);
 
-const results = computed<HelpEntry[]>(() => search(query.value, 40));
+// `loading` is a dependency of search() only through the corpus it populates,
+// which is a shallowRef the fuse index does not touch. Reading it here is what
+// makes the list re-evaluate once the fetch lands.
+const results = computed<HelpDoc[]>(() => (loading.value ? [] : search(query.value, 40)));
 
-// Short snippet from body for preview, with query term bias if present.
-function snippet(entry: HelpEntry): string {
+// Short snippet for preview, with query term bias if present. The lead is
+// written to introduce the page, so prefer it and fall back to the body for
+// reference entries, which have no lead.
+function snippet(entry: HelpDoc): string {
+  if (entry.lead) return entry.lead;
+
   const body = entry.body
     .replace(/^#+\s+.*$/gm, '')
     .replace(/\s+/g, ' ')
@@ -39,13 +46,20 @@ watch(open, (val) => {
   if (val) {
     query.value = '';
     selectedIndex.value = 0;
+    void loadIndex();
     nextTick(() => inputRef.value?.focus());
   }
 });
 
-function navigate(entry: HelpEntry) {
+/**
+ * Open in a new tab, deliberately. Help is server-rendered Blade rather than
+ * part of the Inertia app, so router.visit would hit the 409 hard-load guard -
+ * and the point of the palette is looking something up while you keep working
+ * on the page you are on.
+ */
+function navigate(entry: HelpDoc) {
   open.value = false;
-  window.open(`/help/reference/${entry.category}/${entry.slug}`, '_blank', 'noopener,noreferrer');
+  window.open(entry.url, '_blank', 'noopener,noreferrer');
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -83,7 +97,7 @@ onMounted(() => {
     () => {
       open.value = !open.value;
     },
-    { description: 'Tags reference' },
+    { description: 'Search the docs' },
   );
 });
 </script>
@@ -91,14 +105,14 @@ onMounted(() => {
 <template>
   <Dialog v-model:open="open">
     <DialogContent class="flex max-h-[85vh] max-w-xl flex-col gap-0 overflow-hidden bg-sidebar p-0" @interact-outside="open = false">
-      <DialogTitle class="sr-only">Help reference search</DialogTitle>
+      <DialogTitle class="sr-only">Search the documentation</DialogTitle>
       <div class="flex items-center gap-2 border-b border-sidebar-border px-3">
         <Search class="size-4 shrink-0 text-muted-foreground" />
         <input
           ref="inputRef"
           v-model="query"
           type="text"
-          placeholder="Search tags, events, fields... (e.g. follower, raid, hype)"
+          placeholder="Search tutorials, guides and tags... (e.g. chat, follower, raid)"
           class="flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
           @keydown="onKeydown"
         />
@@ -106,11 +120,18 @@ onMounted(() => {
       </div>
 
       <div class="min-h-0 flex-1 overflow-y-auto p-1">
-        <div v-if="results.length === 0" class="p-6 text-center text-sm text-muted-foreground">Nothing matched "{{ query }}".</div>
+        <div v-if="loading" class="p-6 text-center text-sm text-muted-foreground">Loading the docs...</div>
+
+        <div v-else-if="failed" class="p-6 text-center text-sm text-muted-foreground">
+          Could not load the docs index.
+          <a href="/help" target="_blank" rel="noopener noreferrer" class="cursor-pointer text-violet-400 underline">Browse help instead</a>.
+        </div>
+
+        <div v-else-if="results.length === 0" class="p-6 text-center text-sm text-muted-foreground">Nothing matched "{{ query }}".</div>
 
         <button
           v-for="(entry, i) in results"
-          :key="`${entry.category}/${entry.slug}`"
+          :key="entry.url"
           :data-ref-palette-selected="i === selectedIndex"
           class="flex w-full cursor-pointer items-start gap-3 rounded-md px-3 py-2 text-left transition-colors"
           :class="i === selectedIndex ? 'bg-card text-accent-foreground' : 'text-foreground hover:bg-card'"
@@ -120,11 +141,10 @@ onMounted(() => {
           <BookOpen class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
-              <span class="truncate font-mono text-sm">{{ entry.title }}</span>
-              <span class="shrink-0 text-[10px] tracking-wide text-muted-foreground/70 uppercase">{{ entry.categoryLabel }}</span>
+              <span class="truncate text-sm" :class="entry.kind === 'reference' ? 'font-mono' : 'font-medium'">{{ entry.title }}</span>
+              <span class="shrink-0 text-[10px] tracking-wide text-muted-foreground/70 uppercase">{{ entry.kindLabel }}</span>
             </div>
             <p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{{ snippet(entry) }}</p>
-            <div class="font-mono text-sm">{{ entry.tag }}</div>
           </div>
         </button>
       </div>

@@ -105,14 +105,13 @@ it('keeps the prebuilt json index in step with the markdown sources', function (
         ->and(count($json))->toBe(count(app(HelpReferenceService::class)->all()));
 });
 
-it('labels the for-machines category the same in php and typescript', function () {
-    // useHelpReference.ts holds its own copy for the Alt+R palette. A category
-    // missing there renders as a humanised slug ("For Machines" happens to match,
-    // but the order array does not fall back to anything sensible).
-    $ts = (string) file_get_contents(resource_path('js/composables/useHelpReference.ts'));
-
+it('labels the for-machines category everywhere it is shown', function () {
+    // This used to assert that useHelpReference.ts carried a hand-kept copy of
+    // CATEGORY_LABELS for the Alt+R palette. That copy is gone: the palette
+    // reads the server-built index, so PHP and the client can no longer
+    // disagree about a label. What is still worth pinning is that the category
+    // is registered and that the label actually reaches the page.
     expect(HelpReferenceService::CATEGORY_LABELS['for-machines'])->toBe('For Machines')
         ->and(HelpReferenceService::CATEGORY_ORDER)->toContain('for-machines')
-        ->and($ts)->toContain("'for-machines': 'For Machines'")
-        ->and($ts)->toContain("'for-machines'];");
+        ->and($this->get('/help/reference')->getContent())->toContain('For Machines');
 });

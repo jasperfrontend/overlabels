@@ -1,5 +1,6 @@
-import Fuse from 'fuse.js';
+import type Fuse from 'fuse.js';
 import '../../css/app.css';
+import { buildHelpFuse, rankedSearch, type HelpDoc } from '../utils/helpSearch';
 
 /**
  * The one script for every help page.
@@ -12,16 +13,6 @@ import '../../css/app.css';
  * There is deliberately no framework here. The pages are server-rendered HTML
  * and this is the handful of behaviours that HTML cannot express on its own.
  */
-interface IndexEntry {
-  kind: string;
-  kindLabel: string;
-  slug: string;
-  title: string;
-  lead: string;
-  url: string;
-  body: string;
-}
-
 const SIDEBAR_SCROLL_KEY = 'help-sidebar-scroll';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,28 +34,17 @@ document.addEventListener('DOMContentLoaded', () => {
   wireCopyButtons();
   wireBodyTagClicks();
   wireGlobalShortcut(input);
+  addCodeBlockCopyButtons();
   void renderMath();
 
   if (!input || !tree || !results || !clearBtn) return;
 
-  let fuse: Fuse<IndexEntry> | null = null;
+  let fuse: Fuse<HelpDoc> | null = null;
 
-  fetch('/help-index.json', { cache: 'force-cache' })
+  fetch('/help-index.json')
     .then((r) => r.json())
-    .then((data: IndexEntry[]) => {
-      fuse = new Fuse(data, {
-        keys: [
-          { name: 'title', weight: 2 },
-          { name: 'slug', weight: 2 },
-          { name: 'lead', weight: 1 },
-          { name: 'kindLabel', weight: 0.3 },
-          { name: 'body', weight: 1 },
-        ],
-        threshold: 0.35,
-        ignoreLocation: true,
-        minMatchCharLength: 2,
-        includeScore: true,
-      });
+    .then((data: HelpDoc[]) => {
+      fuse = buildHelpFuse(data);
     })
     .catch(() => {
       // Search becomes a no-op if the index 404s; the static tree still
@@ -89,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const matches = fuse.search(q, { limit: 50 }).map((r) => r.item);
+    const matches = rankedSearch(fuse, q, 50);
     if (matches.length === 0) {
       results.innerHTML = '<div class="p-4 text-center text-xs text-red-400">Nothing matched.</div>';
       return;
@@ -154,6 +134,54 @@ async function renderMath() {
   });
 }
 
+/**
+ * Give every fenced code block a Copy button.
+ *
+ * The tutorials are built around "paste this in and you have a chat feed", and
+ * until this existed the only thing you could copy was one tag at a time - so
+ * the page that says copy the whole block made you select it by hand.
+ *
+ * Added client-side rather than in the markdown pipeline because it is a pure
+ * affordance: it needs JS to do anything, and baking it into the HTML would put
+ * the word "Copy" inside every code sample a crawler or an LLM reads.
+ *
+ * `textContent` is what gets copied, which is exactly right even though the
+ * block is full of `.ov-tag` widgets - each one renders its own tag as its text,
+ * so the result is the raw snippet the author wrote.
+ */
+function addCodeBlockCopyButtons() {
+  document.querySelectorAll<HTMLPreElement>('.help-prose pre').forEach((pre) => {
+    const source = pre.textContent ?? '';
+    if (!source.trim()) return;
+
+    // The wrapper owns the positioning context. Putting it on the <pre> itself
+    // would scroll the button out of sight with a wide line.
+    const wrapper = document.createElement('div');
+    wrapper.className = 'help-code';
+    pre.parentNode?.insertBefore(wrapper, pre);
+    wrapper.appendChild(pre);
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'help-code-copy';
+    button.textContent = 'Copy';
+    // Always visible, not hover-revealed: a touch device has no hover, and this
+    // is the primary action on a tutorial page rather than a secondary one.
+    button.addEventListener('click', async () => {
+      const lines = source.trimEnd().split('\n').length;
+      await copyToClipboard(source, undefined, `Copied ${lines} line${lines === 1 ? '' : 's'} to clipboard`);
+      button.textContent = 'Copied!';
+      button.classList.add('is-copied');
+      window.setTimeout(() => {
+        button.textContent = 'Copy';
+        button.classList.remove('is-copied');
+      }, 1200);
+    });
+
+    wrapper.appendChild(button);
+  });
+}
+
 function wireCopyButtons() {
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement | null;
@@ -204,12 +232,17 @@ function wireGlobalShortcut(input: HTMLInputElement | null) {
   });
 }
 
-async function copyToClipboard(text: string, flashTarget?: HTMLElement) {
+/**
+ * `message` exists because a whole code block is not something you can echo
+ * back: quoting a single tag confirms what you got, quoting forty lines just
+ * fills the screen with what you already copied.
+ */
+async function copyToClipboard(text: string, flashTarget?: HTMLElement, message?: string) {
   if (!text) return;
   try {
     await navigator.clipboard.writeText(text);
     if (flashTarget) flashCopied(flashTarget);
-    showToast(`Copied ${text} to clipboard`);
+    showToast(message ?? `Copied ${text} to clipboard`);
   } catch {
     // clipboard blocked; ignore
   }
