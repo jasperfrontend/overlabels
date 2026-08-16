@@ -57,22 +57,56 @@ export function useEmoteParser() {
       match: /([a-zA-Z0-9_-]+)/g,
     });
 
-    await Promise.allSettled([
-      fetcher.fetchBTTVEmotes(),
-      fetcher.fetchBTTVEmotes(Number(channelId)),
-      fetcher.fetchSevenTVEmotes(),
-      fetcher.fetchSevenTVEmotes(channelId),
-      fetcher.fetchFFZEmotes(),
-      fetcher.fetchFFZEmotes(Number(channelId)),
-      // Fetch Twitch emotes via backend proxy so credentials never reach the browser
-      fetch(`/api/overlay/emotes/${channelId}`)
-        .then((r) => r.json())
-        .then((entries: TwitchEmoteEntry[]) => {
-          for (const { code, url } of entries) {
-            twitchEmoteMap.set(code, url);
-          }
-        }),
-    ]);
+    // Named so a failure can say WHICH source broke. This used to be a bare
+    // Promise.allSettled with the results discarded, which meant every one of
+    // these could fail and produce no signal at all - the overlay just rendered
+    // emote codes as text forever.
+    //
+    // That is not hypothetical: a minifier collision between the emote
+    // library's base class and its subclasses made every emote constructor
+    // throw in production and nothing anywhere said so. See the keepNames note
+    // in vite.config.mts.
+    const sources: Array<[string, Promise<unknown>]> = [
+      ['bttv:global', fetcher.fetchBTTVEmotes()],
+      ['bttv:channel', fetcher.fetchBTTVEmotes(Number(channelId))],
+      ['7tv:global', fetcher.fetchSevenTVEmotes()],
+      ['7tv:channel', fetcher.fetchSevenTVEmotes(channelId)],
+      ['ffz:global', fetcher.fetchFFZEmotes()],
+      ['ffz:channel', fetcher.fetchFFZEmotes(Number(channelId))],
+      // Twitch emotes via our own proxy, so credentials never reach the browser.
+      [
+        'twitch:proxy',
+        fetch(`/api/overlay/emotes/${channelId}`)
+          .then((r) => r.json())
+          .then((entries: TwitchEmoteEntry[]) => {
+            for (const { code, url } of entries) {
+              twitchEmoteMap.set(code, url);
+            }
+          }),
+      ],
+    ];
+
+    const results = await Promise.allSettled(sources.map(([, promise]) => promise));
+
+    const failed: string[] = [];
+    results.forEach((result, i) => {
+      if (result.status !== 'rejected') return;
+      const name = sources[i][0];
+      failed.push(name);
+      console.warn(`[emotes] ${name} failed:`, result.reason?.message ?? result.reason);
+    });
+
+    // Still a partial failure worth naming: every source can resolve and yet
+    // cache nothing, which looks identical on screen to not loading at all.
+    const thirdPartyCount = fetcher.emotes?.size ?? 0;
+    if (thirdPartyCount === 0) {
+      console.warn(`[emotes] no BTTV/FFZ/7TV emotes cached for channel ${channelId}. ` + 'Those emotes will render as plain text.');
+    }
+
+    console.info(
+      `[emotes] ready - ${thirdPartyCount} third-party, ${twitchEmoteMap.size} twitch` +
+        (failed.length ? `, ${failed.length} source(s) failed: ${failed.join(', ')}` : ''),
+    );
 
     isReady.value = true;
   }

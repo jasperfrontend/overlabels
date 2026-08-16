@@ -41,6 +41,29 @@ export default defineConfig(() => ({
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
             output: {
+                // Preserve function and class `name` values through minification.
+                //
+                // NOT cosmetic, and not for debugging. `@mkody/twitch-emoticons`
+                // guards its abstract base class with
+                // `if (new.target.name === Emote.name) throw`, and the minifier
+                // renamed the base class AND all four subclasses to `e`. That
+                // made the guard true for every subclass, so constructing any
+                // BTTV/FFZ/7TV emote threw "Base Emote class cannot be used".
+                //
+                // It only broke in production - dev is unminified - and it was
+                // silent, because useEmoteParser wraps the fetches in
+                // Promise.allSettled. Symptom was third-party emotes rendering
+                // as plain text on prod while Twitch emotes worked, since those
+                // come from IRC tag positions and never construct a library
+                // object.
+                //
+                // The library's own build script uses esbuild `--keep-names` for
+                // exactly this reason. Bundling its `src/` ourselves opted us out.
+                //
+                // Verify with a build, not by reading: `class e extends n` in the
+                // emote chunk means it has regressed.
+                keepNames: true,
+
                 // Rolldown's native chunking API, NOT rollup's `manualChunks`.
                 //
                 // `manualChunks` is a compatibility shim here and it silently
