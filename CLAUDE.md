@@ -311,8 +311,64 @@ counts them ("five donation services", "five pipes") lives in `resources/views/w
 - `HelpContext::for()` returns ALL matches, best first: exact-over-wildcard, then constraint count, then literal pattern length, then slug. No `priority:` key on purpose - specificity is the only currency.
 - Shared as the `help` Inertia prop (`HelpLink[]`: slug, title, lead, url). Card copy uses the page's `heading` + `lead`, NOT `title` + `description` - the latter are written for browser tabs and search results and run too long for a 375px panel. A test caps both at panel length.
 - `HelpBeacon.vue` renders it: floating bottom-right button on every app page (mounted once in `AppLayout`), dot when help matched, 375x650 panel. Links open in a new tab - the point is helping with the page you are on, so navigating away from it would undo the feature.
-- `Alt+H` toggles the beacon, next to `Alt+R` for the tags reference (Alt = open a panel to read, Ctrl = do something). Registered via `useKeyboardShortcuts`, so it self-lists in the `Ctrl+K` dialog - there is no static shortcut list anywhere to update.
+- `Alt+H` toggles the beacon, next to `Alt+R` for the docs search (Alt = open a panel to read, Ctrl = do something). Registered via `useKeyboardShortcuts`, so it self-lists in the `Ctrl+K` dialog - there is no static shortcut list anywhere to update.
 - Two tests are load-bearing: every declared context must name a real route (catches renames), and no single context may resolve to more than 3 pages (stops generic routes rotting into a link farm). Both verified to fail when violated - keep them.
+
+## Help Documentation (unified Aug 2026)
+
+Everything under `/help` is ONE system: one Blade layout, one markdown renderer, one index, one stylesheet, one search index. Before PR #248 it was four (Inertia prose, Blade reference, a copy of the reference bundled into the app for Alt+R, and browser-rendered `/updates`), with two competing definitions of `.help-prose` loaded on the same page.
+
+### Writing a help page or a tutorial
+
+**The directory decides everything. That is the whole API.**
+
+```
+resources/help/pages/<slug>.md              -> a guide,    /help/<slug>
+resources/help/pages/tutorials/<slug>.md    -> a tutorial, /help/tutorials/<slug>
+resources/help/reference/<category>/<slug>.md -> a reference entry
+```
+
+Dropping a file in gets you the route, the `.md` twin, the sitemap entry, the search index entry, the sidebar group and (for tutorials) the badge. **Never add a table, controller, route or component for a help page** - if that seems necessary, something has gone wrong. `HelpPage::all()` walks `pages/` recursively and `HelpCorpus::kindOf()` reads the `tutorials/` prefix; that prefix is the only difference between a guide and a tutorial.
+
+Filename is the URL: lowercase, digits, hyphens between words, at most one level of nesting. `HelpPage::SLUG_PATTERN` rejects anything else and the page silently will not exist.
+
+Frontmatter is FLAT `key: value`. No YAML parser, nothing nested:
+
+```markdown
+---
+title: Show a donation goal bar - Overlabels Tutorial
+description: Longer sentence for the meta description and the search result.
+heading: Show a donation goal bar
+lead: The paragraph under the H1, and the HelpBeacon card body.
+context: templates.create?type=static
+canonical: https://overlabels.com/help/tutorials/donation-goal-bar
+---
+```
+
+- `title` / `description` are for the browser tab and Google, and may run long.
+- `heading` / `lead` are the on-page H1 and intro AND the beacon card copy.
+- **If the page declares a `context:`, `heading` is capped at 40 chars and `lead` at 320** (the panel is 375px). No context, no cap. `HelpContextTest` names the offending slug.
+- `context:` is optional and often should be omitted. **Max 3 pages may resolve to one context.** As of Aug 2026 `templates.create?type=static` is FULL at 3 of 3 (bare `templates.create` from `conditionals`/`formatting` matches any bag, plus one tutorial), so claiming it means displacing something. Check before adding one: `HelpContext::for('some.route', ['type' => 'static'])` in tinker returns everything that would resolve.
+
+**Link every new page from `resources/help/pages/index.md`.** A test enforces it: `llms.txt` names `/help.md` as the crawl entry point, so an unlinked page is undiscoverable.
+
+Free in the body: `##` becomes a TOC with stable anchors, fenced blocks get a Copy button, `[[[tag]]]` becomes a click-to-copy pill (inside code blocks too), `> [!NOTE|TIP|WARNING|IMPORTANT]` become callouts, `[[slug]]` resolves to a reference entry, `$$tex$$` renders with KaTeX.
+
+Then: `php artisan help:build-index` (so local search sees it) and `php artisan test --filter=Help`. Deploy needs nothing manual - the entrypoint runs `route:cache` and `help:build-index`.
+
+### Architecture
+
+- **`App\Support\HelpMarkdown` is the one pipeline.** Stage order is load-bearing and commented: extract math -> wikilinks -> convert -> restore math -> callouts -> tag widgets -> heading anchors. Steps 2 and 6 cannot swap: the wikilink regex relies on its lookbehind to stay out of `[[[tag]]]`, so the tags must still be intact when it runs.
+- **Soft breaks are per-kind, not global.** Reference entries are written one statement per line and need `<br />`; guides are prose wrapped at ~100 columns and would break mid-sentence. `HelpMarkdown::render($body, $links, softBreaks:)` - the caller decides. Test-pinned in both directions.
+- `App\Support\HelpCorpus` is the unified index behind the nav, the sitemap, the wikilink map and search. `HelpNav` builds the section-aware sidebar (tutorials/guides list on prose, category tree on reference - a 147-entry tree is the wrong nav for a tutorial).
+- **These pages are Blade, not Inertia, and must stay that way.** Documentation a crawler cannot read is documentation only existing users can find. `HelpController::show()` and `HelpReferenceController::show()` both answer an `X-Inertia` request with 409 + `X-Inertia-Location` so in-app `<Link>`s hard-load instead of parsing HTML as an Inertia payload. **This is not SSR** - it is a hand-written Blade view, and the SSR ban is unrelated and still absolute.
+- A test asserts, for every page of every kind, that the whole rendered body appears byte-for-byte in the response. It fails for the entire corpus at once if anything puts these back behind a shell.
+- **The sitemap is derived from `HelpCorpus`, never hand-listed.** The old array had rotted by fourteen pages.
+- `/help/integration-presets` and `/help/gamejam` stay Inertia deliberately (live data from `controlPresets.ts`, and a Vue app). `HelpLayout.vue` exists only for them. Do not "finish the job" by converting them.
+- **`public/help-reference-index.json` is a documented public contract** ("BYOF" on the reference page, plus `/help/reference/for-machines/help-reference-index-json`). It is still emitted byte-identically alongside the newer unified `help-index.json`. Do not merge or reshape it.
+- Search ranking lives in `resources/js/utils/helpSearch.ts` and is shared by the Alt+R palette and the on-page search box, so "search the docs" cannot mean two things. `body` is weighted 0.5 on purpose (a ~20KB guide otherwise weakly matches everything) and results scoring above 0.5 are dropped - measured scores are bimodal, real matches under 0.15 and coincidence above 0.78. A dotted query falls back to its root, so `chat.0.text` finds the `chat` entry.
+- **Do not restore `cache: 'force-cache'` on the index fetch.** It served a corpus predating the last deploy.
+- The `chat` reference slug deliberately shadows the `/help/chat` page slug in the wikilink map, declared in `HelpCorpus::SHADOWED_PAGE_SLUGS` and pinned in both directions. Any other collision is a bug.
 
 ## Collection List (Implemented Aug 2026)
 
