@@ -2,6 +2,27 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - perf(overlay): the emote library is no longer in everyone's critical path
+
+With `foreach` fixed, the next thing you could feel on an overlay load was the 7TV/BTTV/FFZ emote library. It was a static import, and `manualChunks` only splits codemirror, websocket and leaflet, so it rode along inside the overlay's entry bundle: downloaded, parsed and evaluated before anything painted, on every overlay, every load.
+
+Only two fields are ever emote-parsed, `event.message.text` and `event.user_input`, and both belong to alerts. So an overlay that no alert template even targets was paying the full price for a feature it could never use.
+
+It is a dynamic import now, which makes it its own chunk.
+
+| | before | after |
+|---|---|---|
+| overlay entry, raw | 382.6 kB | 35.6 kB |
+| overlay entry, gzipped | 84.8 kB | 12.2 kB |
+
+That is 72.6 kB gzipped off the critical path of every single overlay load, and the entry is 90% smaller. The library still downloads, as its own 72.8 kB gzipped chunk, but only once something actually asks for emotes.
+
+- **Nothing had to be restructured, because the layering was already right.** It is tempting to read "the static overlay carries 7TV so that alerts can use it" as a mistake. It is not one. Alerts render inside the static overlay's DOM, so that is the only JS context in existence, and emote sets are per-channel rather than per-alert, so fetching once at mount and reusing is exactly what stops a cheer from hitting 7TV every time. The eagerness was the bug, not the placement.
+- **Safe to make async because nothing was ever waiting on it.** `OverlayRenderer` calls `initialize()` fire-and-forget with a `.catch()`, and `parseEmotes()` already returned its input untouched while `isReady` was false. The download window just joins the fetch window that was always there.
+- **It fails better than it used to.** A chunk that does not load, from a network blip or a stale reference after a deploy, now leaves the parser null and renders emotes as plain text. The same failure used to take the entry bundle, and therefore the entire overlay, down with it.
+- **The type import is load-bearing.** `import type { EmoteParser }` is erased at compile time, so it keeps `InstanceType<typeof EmoteParser>` working without pulling the library back into the bundle. Changing it to a value import silently undoes this whole change, with no test failing to tell you.
+- **Still eager, still worth doing later:** `initialize()` runs on every mount regardless, firing roughly seven requests (BTTV, 7TV and FFZ global plus channel, and the Twitch proxy). The render response already preloads compiled CSS for every alert template that could fire on this overlay, which is a ready-made signal for whether any of this is needed at all.
+
 ## August 16th, 2026 - perf(templates): a foreach copied your whole account, once per item
 
 Every `foreach` iteration started by cloning the entire render payload. Not the item, the whole thing: every control on the account, every list, every Twitch field, copied fresh for each row of the loop.
