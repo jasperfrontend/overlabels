@@ -1,3 +1,4 @@
+import { type ChatFilters, EMPTY_CHAT_FILTERS, hasActiveFilters, shouldHideMessage } from '@/utils/chatFilters';
 import { type ChatMessage, type ModerationAction, parseIrcLine, toChatMessage, toModerationAction } from '@/utils/ircParser';
 import { ref } from 'vue';
 
@@ -49,6 +50,12 @@ export interface UseTwitchChatOptions {
 export function useTwitchChat(options: UseTwitchChatOptions = {}) {
   const windowSize = Math.max(1, options.windowSize ?? DEFAULT_WINDOW);
   const flushMs = Math.max(0, options.flushMs ?? DEFAULT_FLUSH_MS);
+
+  // Set once the render payload arrives. Until then nothing is filtered, which
+  // is the right way round: showing a message the streamer wanted hidden for
+  // the first instant is recoverable, and defaulting to hiding everything
+  // would render an empty overlay on any payload problem.
+  let filters: ChatFilters = EMPTY_CHAT_FILTERS;
 
   const messages = ref<ChatMessage[]>([]);
   const isConnected = ref(false);
@@ -131,6 +138,11 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
 
     const message = toChatMessage(line);
     if (message) {
+      // Filtered at INGEST, not at render. A hidden message must not occupy
+      // one of the 50 window slots, or a chatter spamming commands would push
+      // real messages off the overlay while showing nothing themselves.
+      if (hasActiveFilters(filters) && shouldHideMessage(message, filters)) return;
+
       queue.push({ kind: 'add', message });
       scheduleFlush();
       return;
@@ -218,5 +230,17 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
     isConnected.value = false;
   }
 
-  return { messages, isConnected, connect, disconnect };
+  /**
+   * Apply display filters. Safe to call before or after connect().
+   *
+   * Only affects messages arriving from now on - anything already in the
+   * window stays. Re-filtering the existing window would make a settings
+   * change retroactively blank out messages already on screen, which reads as
+   * a glitch rather than as the setting taking effect.
+   */
+  function setFilters(next: ChatFilters): void {
+    filters = next;
+  }
+
+  return { messages, isConnected, connect, disconnect, setFilters };
 }

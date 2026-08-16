@@ -16,6 +16,7 @@ const sidebarNavGroups: NavGroup[] = [
     label: null,
     items: [
       { title: 'Account', href: '/settings/account' },
+      { title: 'Chat', href: '/settings/chat' },
       { title: 'Integrations', href: '/settings/integrations' },
       { title: 'Usage', href: '/settings/usage' },
       { title: 'Controls', href: '/settings/controls' },

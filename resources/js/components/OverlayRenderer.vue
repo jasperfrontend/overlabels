@@ -41,6 +41,7 @@ import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
 import { useOverlayHealth } from '@/composables/useOverlayHealth';
 import { useEmoteParser } from '@/composables/useEmoteParser';
 import { useTwitchChat } from '@/composables/useTwitchChat';
+import { toChatFilters } from '@/utils/chatFilters';
 import { withChatSlots } from '@/utils/chatSlots';
 import type { ChatMessage } from '@/utils/ircParser';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
@@ -673,6 +674,10 @@ onMounted(async () => {
     // should not hold a WebSocket open for hours in an OBS source.
     const chatChannel = String(json.data?.user_login ?? '');
     if (chatChannel && templateUsesChat.value) {
+      // Set before connecting, so the first messages through the socket are
+      // already filtered rather than flashing on screen and being excluded
+      // only from the second batch onward.
+      twitchChat.setFilters(toChatFilters(json.chat_filters));
       twitchChat.connect(chatChannel);
     }
 

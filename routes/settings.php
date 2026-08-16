@@ -35,6 +35,40 @@ Route::middleware('auth.redirect')->group(function () {
     Route::get('/settings/controls', [ControlUsageController::class, 'index'])
         ->name('settings.controls');
 
+    Route::get('/settings/chat', function (Request $request) {
+        return inertia('settings/Chat', [
+            'chatFilters' => $request->user()->chatFilters(),
+        ]);
+    })->name('settings.chat');
+
+    // Display filters for the chat overlay. These only decide what the overlay
+    // draws - the overlay reads chat straight from Twitch, so nothing here
+    // touches Twitch, the chatter, or anyone else's view of the channel.
+    Route::patch('/settings/chat', function (Request $request) {
+        $validated = $request->validate([
+            'hide_commands' => 'required|boolean',
+            'hidden_logins' => 'nullable|string|max:10000',
+        ]);
+
+        // Accepted as free text (one login per line) rather than a structured
+        // list, because the UI is a textarea and a streamer pasting a messy
+        // list should not get a validation error thrown back at them.
+        $logins = collect(preg_split('/[\r\n,]+/', $validated['hidden_logins'] ?? ''))
+            ->map(fn (string $login) => strtolower(trim(ltrim($login, '@'))))
+            ->filter(fn (string $login) => $login !== '' && preg_match('/^[a-z0-9_]{1,25}$/', $login) === 1)
+            ->unique()
+            ->take(User::MAX_HIDDEN_LOGINS)
+            ->values()
+            ->all();
+
+        $user = $request->user();
+        $user->setPreference('chat_filters.hide_commands', $validated['hide_commands']);
+        $user->setPreference('chat_filters.hidden_logins', $logins);
+        $user->save();
+
+        return back();
+    })->name('settings.chat.update');
+
     Route::patch('/settings/locale', function (Request $request) {
         $request->validate(['locale' => 'required|string|max:10']);
         $request->user()->setPreference('locale', $request->input('locale'))->save();
