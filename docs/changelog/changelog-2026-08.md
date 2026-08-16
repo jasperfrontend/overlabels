@@ -2,6 +2,23 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - fix(overlay): 7TV, BTTV and FFZ emotes were broken on production only
+
+Third-party emotes rendered as plain text on overlabels.com while working perfectly on a local machine. Twitch emotes were fine in both. Same code, same browser, same account.
+
+The cause was a single character. The emote library protects its base class like this:
+
+```js
+if (new.target.name === Emote.name) throw new Error('Base Emote class cannot be used');
+```
+
+That compares class names at runtime. The production minifier renamed the base class to `e` - and all four of its subclasses to `e` as well. So the check meant "is `e` equal to `e`", which it always is, and every single emote threw on construction. Development builds are not minified, so it only ever happened in production.
+
+- **Twitch emotes survived by accident.** They come from position data on the chat message itself and never construct one of the library's objects, so they sailed past the broken guard. That is exactly what made this look so strange: the same message could show a Twitch emote and the literal text "Sadge" side by side.
+- **Nothing said a word about it.** The seven emote sources are loaded together and the results were being thrown away, so seven different failures could happen in silence. They are now loaded by name, and anything that fails says which one it was and why. There is also a warning for the case where everything succeeds and still nothing is cached, which looks identical on screen.
+- **The library's own build already worked around this** - its author passes `--keep-names` to their minifier. Bundling the library's source through our build quietly opted out of that. We now keep names too, which costs about 18 kB on a chunk that is already loaded lazily.
+- **A test now inspects the actual built file**, because no ordinary test could ever have caught this. Every test runs against unminified source, so the entire suite stayed green while production was broken.
+
 ## August 16th, 2026 - docs(chat): the chat overlay, written down
 
 Chat went from nothing to a complete feature in a day, and none of it was documented. [Twitch Chat in an Overlay](/help/chat) covers the lot: the foreach loop, every per-message tag, badges and emotes, what happens during a collab, the display filters, and the four chat controls.

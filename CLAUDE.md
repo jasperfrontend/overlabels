@@ -333,6 +333,15 @@ counts them ("five donation services", "five pipes") lives in `resources/views/w
 - `chat.N.html` is the ONLY foreach field rendered unescaped (`htmlSafeFields`, keyed by iterable). **Bracket defusing still applies inside it** - skipping that reopens the PR #230 injection hole through a side door.
 - Deletions are not optional: CLEARMSG removes one message, CLEARCHAT purges a user or clears the room. Purge by user id, falling back to login, and NEVER to "clear everything".
 
+### keepNames is load-bearing (fixed Aug 2026)
+
+- **`build.rollupOptions.output.keepNames: true` in `vite.config.mts` is NOT cosmetic. Do not remove it.** `@mkody/twitch-emoticons` guards its abstract base with `if (new.target.name === Emote.name) throw`. The minifier renamed the base class AND all four subclasses to `e`, so the guard was true for every subclass and constructing any BTTV/FFZ/7TV emote threw "Base Emote class cannot be used".
+- Symptom was **prod-only and silent**: third-party emotes rendered as plain text on prod while Twitch emotes worked (those come from IRC tag positions and never construct a library object), and dev was fine because dev is not minified. `Promise.allSettled` in `useEmoteParser` swallowed all seven failures with no logging.
+- The library's own build script uses esbuild `--keep-names` for exactly this reason. Bundling its `src/` through our build opted us out of that.
+- Cost is ~+18 KB on the (lazy, idle-loaded) emote chunk and ~+190 KB across all JS uncompressed. Correctness wins.
+- Pinned by `tests/Feature/EmoteLibraryMinificationTest.php`, which inspects the BUILT chunk. CI runs `npm run build` before Pest, so it has a real artifact; it skips locally when `public/build` is absent. Verified to fail when `keepNames` is removed. **No unit test can catch this class of bug** - they all run against unminified source, so the suite stays green while prod is broken.
+- `useEmoteParser.initialize()` now names each source and logs which one failed, plus a warning when zero third-party emotes cached. That is the diagnostic that was missing.
+
 ### Chat badge artwork (Aug 2026)
 
 - `[[[msg.badge_images]]]` renders Twitch badge `<img>` tags. `[[[msg.badges]]]` still emits bare set names for CSS classes and MUST NOT change - templates in the wild use it.
