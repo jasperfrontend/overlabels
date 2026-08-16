@@ -2,6 +2,16 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - docs(chat): the chat overlay, written down
+
+Chat went from nothing to a complete feature in a day, and none of it was documented. [Twitch Chat in an Overlay](/help/chat) covers the lot: the foreach loop, every per-message tag, badges and emotes, what happens during a collab, the display filters, and the four chat controls.
+
+It shows up on its own in two places: when you are looking at a static overlay, and on the Chat settings page. Those are the two moments you would want it.
+
+- **It answers the questions the feature raises rather than listing tags.** Why a partner's subscriber badge does not draw during a collab. Why the counters show a smaller number than the feed. Why hiding a chatter is not the same as moderating them. Those are the things that look like bugs until someone explains them.
+- **A worked example at the bottom** you can paste in and have a chat feed, badges and all.
+- One existing test had to change, and the change made it better. It used "a static overlay has no help page" as its control for *nobody claimed this*. All three overlay types have a page now, so the control became a type that cannot exist - which tests the matching rather than which pages happen to be written.
+
 ## August 16th, 2026 - feat(chat): badges, as actual badges
 
 ```

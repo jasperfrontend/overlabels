@@ -63,6 +63,8 @@ canonical: https://overlabels.com/help
 
 ## Chat
 
+- [**Twitch Chat in an Overlay**](/help/chat) - render live chat with one foreach loop. Every
+  per-message tag, badges and emotes, Shared Chat, the display filters, and the four chat controls.
 - [**Twitch Chat Bot**](/help/bot) - the @overlabels bot joins your channel so viewers and mods can
   change controls from chat.
 - [**Chat Castle**](/help/gamejam) - chat-driven dungeon raid. Commands, rounds, energy blocks, chest

@@ -102,12 +102,21 @@ it('reads context the URL does not carry', function () {
     // /templates/{template} serves blocks, alerts and static overlays alike;
     // the discriminator is the model. A controller injects it, and it matches
     // through the same path as a real query parameter.
-    $slugs = array_column(HelpContext::for('templates.show', ['type' => 'alert']), 'slug');
+    //
+    // All three real types now have a page, so the "nobody claimed this"
+    // control uses a type that cannot exist. That is the stronger form anyway:
+    // it tests the matcher rather than which types happen to be documented.
+    $alert = array_column(HelpContext::for('templates.show', ['type' => 'alert']), 'slug');
+    $block = array_column(HelpContext::for('templates.show', ['type' => 'block']), 'slug');
+    $static = array_column(HelpContext::for('templates.show', ['type' => 'static']), 'slug');
 
-    expect($slugs)->toContain('overlays-vs-alerts')
-        ->and(array_column(HelpContext::for('templates.show', ['type' => 'block']), 'slug'))
-        ->toContain('blocks')
-        ->and(HelpContext::for('templates.show', ['type' => 'static']))->toBeEmpty();
+    expect($alert)->toContain('overlays-vs-alerts')
+        ->and($block)->toContain('blocks')
+        ->and($static)->toContain('chat')
+        // Each type gets its own page and not the others'.
+        ->and($static)->not->toContain('blocks')
+        ->and($block)->not->toContain('chat')
+        ->and(HelpContext::for('templates.show', ['type' => 'no-such-type']))->toBeEmpty();
 });
 
 it('points every declared context at a route that exists', function () {
