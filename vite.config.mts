@@ -41,19 +41,35 @@ export default defineConfig(() => ({
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
             output: {
-                // Rolldown (Vite 8) only accepts the function form of manualChunks.
-                // Match by node_modules path to preserve the previous object grouping.
-                manualChunks(id) {
-                    if (!id.includes('node_modules')) return;
-                    if (id.includes('/vue-codemirror/') || id.includes('/codemirror/') || id.includes('/@codemirror/')) {
-                        return 'codemirror';
-                    }
-                    if (id.includes('/pusher-js/') || id.includes('/laravel-echo/')) {
-                        return 'websocket';
-                    }
-                    if (id.includes('/leaflet/')) {
-                        return 'leaflet';
-                    }
+                // Rolldown's native chunking API, NOT rollup's `manualChunks`.
+                //
+                // `manualChunks` is a compatibility shim here and it silently
+                // could not do this job: returning a chunk name for a vendor
+                // package works (codemirror/websocket/leaflet all landed), but
+                // returning one for Vue was ignored outright, with no warning and
+                // no build error. Vue stayed welded into the codemirror chunk and
+                // the only symptom was a 678 kB download.
+                //
+                // Which mattered because Vue had no explicit home, so Rolldown
+                // parked it inside the first manual chunk it could - codemirror.
+                // Every entry needs Vue, so every entry pulled codemirror with it:
+                // the overlay (no editor anywhere in it) and the dashboard's first
+                // paint (the editor lives on lazily-loaded pages) both paid 237 kB
+                // gzipped for a code editor they were not showing.
+                //
+                // Vue is listed FIRST and that ordering is the fix. Groups are
+                // evaluated in order, so Vue claims its modules before the
+                // codemirror pattern can absorb them.
+                //
+                // If you add a group, verify with a build rather than by reading:
+                // `manualChunks` looked correct for months while doing nothing.
+                advancedChunks: {
+                    groups: [
+                        { name: 'vue', test: /node_modules[\\/](@vue|vue)[\\/]/ },
+                        { name: 'codemirror', test: /node_modules[\\/](vue-codemirror|codemirror|@codemirror)[\\/]/ },
+                        { name: 'websocket', test: /node_modules[\\/](pusher-js|laravel-echo)[\\/]/ },
+                        { name: 'leaflet', test: /node_modules[\\/]leaflet[\\/]/ },
+                    ],
                 },
             },
         },

@@ -2,6 +2,27 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - perf(build): every page was downloading a code editor it wasn't showing
+
+Vue had no explicit home in the chunking config, so Rolldown parked it inside the first manual chunk it could find, which happened to be `codemirror`. Every entry needs Vue. So every entry pulled a 678 kB code editor along with it: the overlay, which contains no editor anywhere, and the dashboard's first paint, where the editor lives on lazily-loaded pages that had not been visited yet.
+
+Vue now has its own chunk, and CodeMirror is left to the three components that actually import it.
+
+| critical path, gzipped | before | after | |
+|---|---|---|---|
+| overlay | 282.4 kB | 90.3 kB | -68% |
+| dashboard | 327.8 kB | 135.8 kB | -59% |
+| events feed | 339.6 kB | 147.4 kB | -57% |
+| map | 393.7 kB | 201.6 kB | -49% |
+
+Roughly 192 kB gzipped off the front of every page in the app, from one config change and no source changes at all.
+
+- **`manualChunks` could not do this, and failed silently.** It is a compatibility shim over Rolldown. Returning a chunk name for a vendor package works, which is why the codemirror, websocket and leaflet groups all landed and looked healthy. Returning one for Vue was ignored outright: no warning, no build error, no chunk. The config read as correct while doing nothing, and the only symptom was a large download. The fix is Rolldown's native `advancedChunks`, and all four groups moved over to it.
+- **Group order is load-bearing.** Groups are evaluated in order, so Vue is listed first and claims its modules before the codemirror pattern can absorb them. Reorder them and the bug comes straight back.
+- **Verify chunking with a build, never by reading the config.** That is the actual lesson here, and it is now a comment in `vite.config.mts`. This had been quietly true for months.
+- **Nothing regressed.** All five entries were measured before and after. The welcome page is unchanged because it never loaded Vue in the first place. CodeMirror is now imported by exactly three chunks: the template code editor, the builder's source sync, and the admin updates editor.
+- **The emitted chunk graph has no cycles**, checked across 203 chunks and 1123 import edges. Regrouping chunks is exactly the kind of change that can introduce a circular import and a runtime TDZ error that no test would catch, so it was worth confirming rather than assuming.
+
 ## August 16th, 2026 - perf(overlay): the emote library is no longer in everyone's critical path
 
 With `foreach` fixed, the next thing you could feel on an overlay load was the 7TV/BTTV/FFZ emote library. It was a static import, and `manualChunks` only splits codemirror, websocket and leaflet, so it rode along inside the overlay's entry bundle: downloaded, parsed and evaluated before anything painted, on every overlay, every load.
