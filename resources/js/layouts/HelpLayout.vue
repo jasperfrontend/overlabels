@@ -1,4 +1,13 @@
 <script setup lang="ts">
+/**
+ * Layout for the help pages that are Vue components rather than markdown.
+ *
+ * That is a short list and meant to stay one: /help/gamejam and, via AppLayout
+ * directly, /help/integration-presets. Both render live data - the presets page
+ * reads controlPresets.ts - so freezing them into prose would drift from their
+ * source. Every other help page is server-rendered Blade through
+ * resources/views/layouts/help.blade.php, which is where new pages go.
+ */
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';

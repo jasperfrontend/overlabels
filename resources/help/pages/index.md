@@ -8,8 +8,9 @@ canonical: https://overlabels.com/help
 
 > [!TIP]
 > **Reading this as a machine?** Every page below is also available as plain markdown - append `.md` to
-> any URL (`/help/conditionals.md`). This index is at `/help.md`. The bare URLs render a Vue app, so the
-> `.md` form is the one you want. For a single self-contained primer on writing overlays, start with
+> any URL (`/help/conditionals.md`). This index is at `/help.md`. The bare URLs are real server-rendered
+> HTML and carry the full prose, so either form works; the `.md` is just the same content without the
+> navigation around it. For a single self-contained primer on writing overlays, start with
 > [`/llms.txt`](https://overlabels.com/llms.txt) - what it contains and how to hand it to an assistant
 > is explained at [llms.txt](/help/reference/for-machines/llms-txt).
 

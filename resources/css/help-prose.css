@@ -126,6 +126,41 @@
     @apply rounded border border-sidebar-border px-1 font-mono text-xs;
   }
 
+  /*
+     * Click-to-copy template tags, from `[[[tag]]]` in any help document.
+     *
+     * These lived in resources/js/help-reference/styles.css, an unlayered
+     * stylesheet loaded after this one - so it won the cascade wholesale and
+     * the reference pages silently got its plainer typography instead of the
+     * rules above. Worse, it styled these tags with `hsl(var(--primary))`,
+     * and the tokens in app.css are already complete `hsl(...)` values, so
+     * every colour in it resolved to `hsl(hsl(0 0% 9%))` and was dropped as
+     * invalid. The tags had no background and no border for months.
+     */
+  .help-prose .ov-tag {
+    @apply inline-block cursor-pointer rounded-md border border-violet-400/40 bg-violet-400/15 px-2 py-0.5 font-mono text-[0.85em] leading-normal text-violet-300 transition-colors select-none;
+  }
+
+  .help-prose .ov-tag:hover {
+    @apply border-violet-400/70 bg-violet-400/30;
+  }
+
+  .help-prose .ov-tag:active {
+    @apply translate-y-px;
+  }
+
+  .help-prose .ov-tag:focus-visible {
+    @apply outline-2 outline-offset-2 outline-violet-400;
+  }
+
+  .help-prose .ov-tag-copied {
+    @apply border-violet-400 bg-violet-400 text-violet-950;
+  }
+
+  .help-prose pre .ov-tag {
+    @apply border-violet-400/50 bg-violet-400/20;
+  }
+
   /* Callouts, from `> [!NOTE]` style blockquotes. Colours match the boxes the
        hand-written help pages used before the markdown conversion. */
   .help-callout {

@@ -7,14 +7,17 @@ use RuntimeException;
 
 /**
  * Reads a help page from resources/help/pages/<slug>.md and turns it into
- * everything the Vue renderer needs: metadata, rendered HTML, and a table of
+ * everything the Blade view needs: metadata, rendered HTML, and a table of
  * contents derived from the headings.
  *
- * Markdown is the single source of truth for help prose. The same file is
- * copied verbatim to public/help/<slug>.md by `php artisan help:build`, so a
- * machine can fetch the real content instead of the empty Inertia shell that
- * the old hand-written .vue pages served. One source, two outputs, no drift -
- * the same principle as resources/dsl/dsl.json.
+ * Markdown is the single source of truth for help prose. The same file is also
+ * served verbatim at /help/<slug>.md, so a machine reads byte-identical content
+ * to what the site renders. One source, two outputs, no drift - the same
+ * principle as resources/dsl/dsl.json.
+ *
+ * A slug's directory decides its kind: `tutorials/foo` is a tutorial, anything
+ * else is a guide. Reference entries are a separate corpus (HelpReferenceService)
+ * that joins these in HelpCorpus. Rendering for all of them is HelpMarkdown.
  *
  * Frontmatter is deliberately FLAT `key: value` pairs. No YAML parser, no
  * nesting, nothing to get clever with. Breadcrumbs are derived, not authored.
@@ -146,8 +149,8 @@ final class HelpPage
      * Render a page.
      *
      * @return array{
-     *     slug:string, title:string, description:string, heading:string,
-     *     lead:string, canonical:string, section:?string,
+     *     slug:string, kind:string, title:string, description:string,
+     *     heading:string, lead:string, canonical:string, section:?string,
      *     html:string, toc:array<int,array{id:string,text:string}>
      * }
      */
@@ -167,27 +170,18 @@ final class HelpPage
 
         [$meta, $body] = self::splitFrontmatter($raw);
 
-        // Math is lifted out BEFORE the markdown pass so CommonMark cannot
-        // mangle TeX: `_` would become emphasis and `\` would be eaten as an
-        // escape. Placeholders go back in as elements once the HTML exists.
-        [$body, $math] = self::extractMath($body);
-
-        $html = Str::markdown($body, [
-            'html_input' => 'allow',
-            'allow_unsafe_links' => false,
-        ]);
-
-        $html = self::restoreMath($html, $math);
-        $html = self::transformCallouts($html);
-        [$html, $toc] = self::addHeadingAnchors($html);
+        // Guides are prose wrapped at ~100 columns, so soft breaks stay soft.
+        // See HelpMarkdown::converter() for why that is a per-kind choice.
+        [$html, $toc] = HelpMarkdown::render($body, HelpCorpus::linkMap(), softBreaks: false);
 
         return [
             'slug' => $slug,
+            'kind' => HelpCorpus::kindOf($slug),
             'title' => $meta['title'] ?? Str::headline($slug),
             'description' => $meta['description'] ?? '',
             'heading' => $meta['heading'] ?? $meta['title'] ?? Str::headline($slug),
             'lead' => $meta['lead'] ?? $meta['description'] ?? '',
-            'canonical' => $meta['canonical'] ?? 'https://overlabels.com/help/'.$slug,
+            'canonical' => $meta['canonical'] ?? 'https://overlabels.com'.self::url($slug),
             'section' => $meta['section'] ?? null,
             'html' => $html,
             'toc' => $toc,
@@ -239,153 +233,5 @@ final class HelpPage
         }
 
         return $meta;
-    }
-
-    /**
-     * Pull TeX out of the source and leave inert placeholders behind.
-     *
-     * Delimiters are `$$...$$` for display math and `\(...\)` for inline.
-     * Bare `$...$` is deliberately NOT supported: other help pages talk about
-     * money ("$1 or $1,000"), and a single-dollar rule would happily swallow
-     * the text between two currency amounts.
-     *
-     * @return array{0:string,1:array<int,array{tex:string,display:bool}>}
-     */
-    private static function extractMath(string $body): array
-    {
-        $math = [];
-
-        $stash = function (string $tex, bool $display) use (&$math): string {
-            $math[] = ['tex' => trim($tex), 'display' => $display];
-
-            return '@@OLMATH'.(count($math) - 1).'@@';
-        };
-
-        $body = preg_replace_callback(
-            '/\$\$(.+?)\$\$/s',
-            fn (array $m): string => $stash($m[1], true),
-            $body
-        );
-
-        return [
-            preg_replace_callback(
-                '/\\\\\((.+?)\\\\\)/s',
-                fn (array $m): string => $stash($m[1], false),
-                $body
-            ),
-            $math,
-        ];
-    }
-
-    /**
-     * Swap the placeholders for elements the client renders with KaTeX.
-     *
-     * @param  array<int,array{tex:string,display:bool}>  $math
-     */
-    private static function restoreMath(string $html, array $math): string
-    {
-        foreach ($math as $i => $item) {
-            $tag = $item['display'] ? 'div' : 'span';
-            $element = sprintf(
-                '<%s class="help-math" data-display="%s" data-tex="%s"></%s>',
-                $tag,
-                $item['display'] ? '1' : '0',
-                htmlspecialchars($item['tex'], ENT_QUOTES | ENT_HTML5, 'UTF-8'),
-                $tag
-            );
-
-            $html = str_replace('@@OLMATH'.$i.'@@', $element, $html);
-        }
-
-        return $html;
-    }
-
-    /**
-     * Turn GitHub-style alert blockquotes into styled callouts.
-     *
-     *   > [!NOTE]
-     *   > Snapshots are a promise in both directions.
-     *
-     * The syntax is deliberately GitHub's: it is widely recognised, LLMs know
-     * it, and it still reads correctly as plain text when the raw .md is
-     * fetched from public/help. Anything else stays an ordinary blockquote.
-     */
-    private static function transformCallouts(string $html): string
-    {
-        $kinds = [
-            'NOTE' => 'note',
-            'TIP' => 'tip',
-            'IMPORTANT' => 'important',
-            'WARNING' => 'warning',
-            'CAUTION' => 'warning',
-        ];
-
-        return preg_replace_callback(
-            '/<blockquote>\s*(.*?)\s*<\/blockquote>/s',
-            function (array $m) use ($kinds): string {
-                $inner = $m[1];
-
-                if (! preg_match('/\[!([A-Z]+)]/', $inner, $tag)) {
-                    return $m[0];
-                }
-
-                $kind = $kinds[$tag[1]] ?? null;
-
-                if ($kind === null) {
-                    return $m[0];
-                }
-
-                // Drop the marker, plus the now-empty paragraph if it was alone.
-                $inner = str_replace($tag[0], '', $inner);
-                $inner = preg_replace('/<p>\s*<\/p>/', '', $inner);
-                $inner = preg_replace('/<p>\s*<br\s*\/?>\s*/', '<p>', $inner);
-
-                return sprintf('<div class="help-callout help-callout--%s">%s</div>', $kind, trim($inner));
-            },
-            $html
-        );
-    }
-
-    /**
-     * Give every h2/h3 a stable id and collect the h2s as a table of contents.
-     *
-     * Generating the TOC removes a whole class of rot: the old .vue pages each
-     * carried a hand-written list of anchors that had to be kept in step with
-     * the sections by hand.
-     *
-     * @return array{0:string,1:array<int,array{id:string,text:string}>}
-     */
-    private static function addHeadingAnchors(string $html): array
-    {
-        $toc = [];
-        $used = [];
-
-        $html = preg_replace_callback(
-            '/<h([23])>(.*?)<\/h\1>/s',
-            function (array $m) use (&$toc, &$used): string {
-                $level = (int) $m[1];
-                $inner = $m[2];
-                $text = trim(html_entity_decode(strip_tags($inner), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-
-                // "1. Writing block CSS" -> "writing-block-css"
-                $base = Str::slug(preg_replace('/^\s*\d+[.)]\s*/', '', $text)) ?: 'section';
-
-                $id = $base;
-                $n = 2;
-                while (isset($used[$id])) {
-                    $id = $base.'-'.$n++;
-                }
-                $used[$id] = true;
-
-                if ($level === 2) {
-                    $toc[] = ['id' => $id, 'text' => $text];
-                }
-
-                return sprintf('<h%d id="%s">%s</h%d>', $level, $id, $inner, $level);
-            },
-            $html
-        );
-
-        return [$html, $toc];
     }
 }

@@ -3,19 +3,33 @@
 namespace App\Console\Commands;
 
 use App\Services\HelpReferenceService;
+use App\Support\HelpCorpus;
 use Illuminate\Console\Command;
 
 class BuildHelpReferenceIndex extends Command
 {
     protected $signature = 'help:build-index';
 
-    protected $description = 'Emit public/help-reference-index.json for the client-side fuzzy search.';
+    protected $description = 'Emit the help search indexes to public/ for the client-side fuzzy search.';
 
+    /**
+     * Two indexes, on purpose.
+     *
+     * `help-index.json` is the one the site searches: every tutorial, guide and
+     * reference entry, so one search box answers "where is this documented"
+     * regardless of which pile the answer lives in.
+     *
+     * `help-reference-index.json` is the reference alone, and it stays exactly
+     * as it was. It is a documented public contract - linked from the reference
+     * page as "BYOF" and explained at
+     * /help/reference/for-machines/help-reference-index-json - so anything
+     * built against its shape keeps working.
+     */
     public function handle(HelpReferenceService $service): int
     {
         $service->flush();
 
-        $entries = array_map(
+        $reference = array_map(
             fn (array $e) => [
                 'category' => $e['category'],
                 'categoryLabel' => $e['categoryLabel'],
@@ -26,21 +40,41 @@ class BuildHelpReferenceIndex extends Command
             $service->all(),
         );
 
-        $path = public_path('help-reference-index.json');
-        $json = json_encode($entries, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if ($json === false) {
-            $this->error('Failed to encode JSON.');
+        $unified = array_map(
+            fn (array $d) => [
+                'kind' => $d['kind'],
+                'kindLabel' => $d['kindLabel'],
+                'slug' => $d['slug'],
+                'title' => $d['title'],
+                'lead' => $d['lead'],
+                'url' => $d['url'],
+                'body' => $d['body'],
+            ],
+            HelpCorpus::all(),
+        );
 
-            return self::FAILURE;
+        foreach ([
+            'help-index.json' => $unified,
+            'help-reference-index.json' => $reference,
+        ] as $file => $entries) {
+            $json = json_encode($entries, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            if ($json === false) {
+                $this->error("Failed to encode {$file}.");
+
+                return self::FAILURE;
+            }
+
+            $path = public_path($file);
+            file_put_contents($path, $json);
+
+            $this->info(sprintf(
+                'Wrote %d entries to %s (%s)',
+                count($entries),
+                $path,
+                $this->humanBytes(strlen($json)),
+            ));
         }
-
-        file_put_contents($path, $json);
-        $this->info(sprintf(
-            'Wrote %d entries to %s (%s)',
-            count($entries),
-            $path,
-            $this->humanBytes(strlen($json)),
-        ));
 
         return self::SUCCESS;
     }

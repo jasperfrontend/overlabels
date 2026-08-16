@@ -1,45 +1,63 @@
 import Fuse from 'fuse.js';
 import '../../css/app.css';
-import './styles.css';
 
+/**
+ * The one script for every help page.
+ *
+ * It was `help-reference/main.ts` and ran on the reference only; the prose pages
+ * were an Inertia app with their own copy of the maths rendering and no search
+ * at all. Both halves are Blade now, so this is search, click-to-copy and KaTeX
+ * for tutorials, guides and reference entries alike.
+ *
+ * There is deliberately no framework here. The pages are server-rendered HTML
+ * and this is the handful of behaviours that HTML cannot express on its own.
+ */
 interface IndexEntry {
-  category: string;
-  categoryLabel: string;
+  kind: string;
+  kindLabel: string;
   slug: string;
   title: string;
+  lead: string;
+  url: string;
   body: string;
 }
 
-const SIDEBAR_SCROLL_KEY = 'help-reference-sidebar-scroll';
+const SIDEBAR_SCROLL_KEY = 'help-sidebar-scroll';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const sidebar = document.getElementById('help-reference-sidebar');
-  const tree = document.getElementById('help-reference-tree');
-  const results = document.getElementById('help-reference-results');
-  const input = document.getElementById('help-reference-search') as HTMLInputElement | null;
-  const clearBtn = document.getElementById('help-reference-search-clear');
+  const sidebar = document.getElementById('help-sidebar');
+  const tree = document.getElementById('help-nav-tree');
+  const results = document.getElementById('help-search-results');
+  const input = document.getElementById('help-search') as HTMLInputElement | null;
+  const clearBtn = document.getElementById('help-search-clear');
 
-  restoreSidebarScroll(sidebar);
+  // Landing on a deep reference entry used to leave the sidebar scrolled to the
+  // top, with the highlighted entry hundreds of pixels below the fold - the one
+  // piece of "where am I" the nav exists to give you. An active entry wins over
+  // the remembered position, since it is the more specific answer.
+  if (!scrollActiveIntoView(sidebar)) {
+    restoreSidebarScroll(sidebar);
+  }
   sidebar?.addEventListener('scroll', () => saveSidebarScroll(sidebar, input));
 
   wireCopyButtons();
   wireBodyTagClicks();
   wireGlobalShortcut(input);
+  void renderMath();
 
   if (!input || !tree || !results || !clearBtn) return;
 
   let fuse: Fuse<IndexEntry> | null = null;
-  let entries: IndexEntry[] = [];
 
-  fetch('/help-reference-index.json', { cache: 'force-cache' })
+  fetch('/help-index.json', { cache: 'force-cache' })
     .then((r) => r.json())
     .then((data: IndexEntry[]) => {
-      entries = data;
-      fuse = new Fuse(entries, {
+      fuse = new Fuse(data, {
         keys: [
           { name: 'title', weight: 2 },
           { name: 'slug', weight: 2 },
-          { name: 'categoryLabel', weight: 0.3 },
+          { name: 'lead', weight: 1 },
+          { name: 'kindLabel', weight: 0.3 },
           { name: 'body', weight: 1 },
         ],
         threshold: 0.35,
@@ -81,10 +99,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = matches
       .map(
         (e) => `
-            <a href="/help/reference/${e.category}/${e.slug}"
+            <a href="${escapeHtml(e.url)}"
                class="flex w-full flex-col items-start gap-0.5 rounded-md px-2 py-1.5 text-left text-sm cursor-pointer hover:bg-accent">
-              <span class="font-mono text-xs truncate w-full">${escapeHtml(e.title)}</span>
-              <span class="text-[10px] uppercase tracking-wide text-muted-foreground/70">${escapeHtml(e.categoryLabel)}</span>
+              <span class="${e.kind === 'reference' ? 'font-mono ' : ''}text-xs truncate w-full">${escapeHtml(e.title)}</span>
+              <span class="text-[10px] uppercase tracking-wide text-muted-foreground/70">${escapeHtml(e.kindLabel)}</span>
             </a>`,
       )
       .join('');
@@ -108,6 +126,33 @@ document.addEventListener('DOMContentLoaded', () => {
     input.focus();
   });
 });
+
+/**
+ * Render any TeX the server left as `.help-math` placeholders. KaTeX is
+ * client-side only, so the markdown pipeline stashes the source in a data
+ * attribute and we typeset it here. Loaded lazily so the 24 pages without
+ * maths never pay for the library.
+ */
+async function renderMath() {
+  const nodes = document.querySelectorAll<HTMLElement>('.help-math:not([data-rendered])');
+  if (!nodes.length) return;
+
+  const [{ default: katex }] = await Promise.all([import('katex'), import('katex/dist/katex.min.css')]);
+
+  nodes.forEach((node) => {
+    const tex = node.dataset.tex ?? '';
+    try {
+      katex.render(tex, node, {
+        displayMode: node.dataset.display === '1',
+        throwOnError: false,
+        output: 'html',
+      });
+    } catch {
+      node.textContent = tex;
+    }
+    node.dataset.rendered = '1';
+  });
+}
 
 function wireCopyButtons() {
   document.addEventListener('click', (e) => {
@@ -214,6 +259,18 @@ function saveSidebarScroll(sidebar: HTMLElement, input: HTMLInputElement | null)
   } catch {
     // storage blocked; ignore
   }
+}
+
+/**
+ * Centre the current page's sidebar entry, if it has one. Returns whether it
+ * did anything, so the caller can fall back to the remembered scroll position.
+ */
+function scrollActiveIntoView(sidebar: HTMLElement | null): boolean {
+  const active = sidebar?.querySelector<HTMLElement>('[data-help-active]');
+  if (!sidebar || !active) return false;
+
+  sidebar.scrollTop = Math.max(0, active.offsetTop - sidebar.clientHeight / 2);
+  return true;
 }
 
 function restoreSidebarScroll(sidebar: HTMLElement | null) {

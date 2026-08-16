@@ -522,8 +522,9 @@ every other page. If you want to crawl the documentation, that one URL is the en
 
 **Every help page is fetchable as plain markdown by appending `.md` to its URL.**
 `https://overlabels.com/help/conditionals.md` returns the full source with
-`Content-Type: text/markdown`, byte-identical to what the HTML page renders. The bare URL is an
-Inertia/Vue page and will give you an app shell, not prose - always use the `.md` form.
+`Content-Type: text/markdown`, byte-identical to what the HTML page renders. The bare URL is
+server-rendered HTML and carries the full prose too, so either works - prefer the `.md` form, which
+is the source itself with no navigation around it.
 
 | Page | Markdown |
 |---|---|

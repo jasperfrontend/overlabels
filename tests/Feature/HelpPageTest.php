@@ -58,11 +58,32 @@ it('protects TeX from the markdown pass', function () {
         ->and($html)->not->toContain('@@OLMATH');
 });
 
-it('serves each help page as an inertia page carrying the prose', function () {
-    $response = $this->get('/help/conditionals');
+it('serves every help page as crawlable html carrying its whole rendered body', function () {
+    // The strongest form this assertion can take: the view echoes the rendered
+    // markdown raw, so the entire body must appear byte-for-byte in the
+    // response. An Inertia shell (which is what these pages used to serve)
+    // fails it for every page at once.
+    foreach (HelpPage::all() as $slug) {
+        $page = HelpPage::render($slug);
+        $response = $this->get(HelpPage::url($slug));
 
-    $response->assertOk();
-    expect($response->getContent())->toContain('Nested Conditionals');
+        $response->assertOk();
+
+        expect($response->getContent())
+            ->toContain($page['html'])
+            ->toContain($page['heading']);
+    }
+});
+
+it('tells inertia to hard-load a help page instead of parsing the html', function () {
+    // In-app links (AppSidebar, CommandPalette) are Inertia <Link>s pointing at
+    // /help. Without this the client would try to parse a Blade document as an
+    // Inertia payload. The reference has answered this way since it went
+    // server-rendered; the prose pages now match.
+    $response = $this->get('/help/conditionals', ['X-Inertia' => 'true']);
+
+    $response->assertStatus(409);
+    $response->assertHeader('X-Inertia-Location', url('/help/conditionals'));
 });
 
 it('serves the markdown twin as text/markdown', function () {
