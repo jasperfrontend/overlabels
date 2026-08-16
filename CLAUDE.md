@@ -182,8 +182,13 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   Aug 2026, and the rename above is the worked example of the full sequence.
 - In the bot's `src/bot.js`, a local dispatcher must never share a name with the API function it
   imports from `overlabelsApi.js` - the inner call resolves to the dispatcher itself and recurses
-  forever. Convention there is API `fireX`, local `fireXInvocation`. The bot repo has no test or lint
-  script, so `node --check` every file you touch.
+  forever. Convention there is API `fireX`, local `fireXInvocation`.
+- **The bot repo has a test suite as of Aug 2026: `npm test`** (56 tests, `node:test`, zero
+  dependencies, CI on PRs). Run it for anything you touch there. It still has NO lint script, so
+  `node --check` remains the only check for files the suite does not reach (`reverbClient.js`, most
+  of `bot.js`). Tests stub `global.fetch` rather than mocking `overlabelsApi.js`, because that is
+  the single door everything outbound goes through - keep new tests on that pattern, and import
+  `test/setup.js` FIRST in every test file or `config.js` throws on missing env at import time.
 - Migrations and past changelog entries were deliberately NOT rewritten by the rename. They record what
   was true when they ran. Same for the dated design specs in `resources/help/reference/*.md` (depth 0,
   not served - `HelpReferenceService` scans `depth == 1` only).
