@@ -806,9 +806,24 @@ class OverlayTemplateController extends Controller
             // off first-play latency vs. instantiating Audio() lazily on dispatch.
             $alertCssPreload = [];
             $alertSoundPreload = [];
+            // Whether the emote library is worth downloading for this overlay.
+            //
+            // The library exists for exactly two alert fields (event.message.text
+            // and event.user_input) plus the chat feed, but it was being fetched
+            // by every overlay on every load - roughly 77 kB for most of them.
+            //
+            // Gating on "is this overlay targeted by an alert" would be WRONG:
+            // an alert with no targeting fires on every static overlay, which is
+            // the deliberate backward-compatible default. So the question is not
+            // whether an alert can fire here (almost always yes) but whether any
+            // alert that can fire here actually renders an emote-parsed field.
+            //
+            // Computed in Postgres so the html blobs never leave the database.
+            $alertsNeedEmotes = false;
             if ($template->type === 'static') {
                 $alertTemplates = OverlayTemplate::query()
                     ->select(['id', 'slug', 'compiled_css', 'alert_sound_url'])
+                    ->selectRaw("(html LIKE '%event.message.text%' OR html LIKE '%event.user_input%') AS uses_emote_fields")
                     ->where('owner_id', $user->id)
                     ->where('type', 'alert')
                     ->with(['targetStaticOverlays:id'])
@@ -819,6 +834,9 @@ class OverlayTemplateController extends Controller
                     $firesHere = empty($targetIds) || in_array($template->id, $targetIds, true);
                     if (! $firesHere) {
                         continue;
+                    }
+                    if ($alertTemplate->uses_emote_fields) {
+                        $alertsNeedEmotes = true;
                     }
                     if (! empty($alertTemplate->compiled_css)) {
                         $alertCssPreload[$alertTemplate->slug] = $alertTemplate->compiled_css;
@@ -840,6 +858,11 @@ class OverlayTemplateController extends Controller
                 ],
                 'alert_css_preload' => $alertCssPreload,
                 'alert_sound_preload' => $alertSoundPreload,
+                // Tells the overlay whether to preload the emote library. Only a
+                // hint: the renderer also loads it lazily if an alert turns up
+                // needing it, so a template edited after this overlay mounted
+                // still gets emotes rather than silently rendering codes.
+                'alerts_need_emotes' => $alertsNeedEmotes,
                 'meta' => [
                     'name' => $template->name,
                     'slug' => $template->slug,

@@ -2,6 +2,20 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - perf(overlay): the emote library waits its turn
+
+The emote library was fetched by every overlay on every load, roughly 77 kB and seven requests to BTTV, 7TV, FFZ and our own proxy. It exists for exactly two alert fields and the chat feed, so most overlays were paying for nothing.
+
+The obvious gate turned out to be the wrong question, which is worth recording because it is an easy mistake to repeat.
+
+**"Is this overlay targeted by an alert?" is not the test.** An alert with no targeting fires on EVERY static overlay - that is the deliberate backward-compatible default from March. So almost every overlay can host alerts, and gating on targeting would have quietly stopped emotes rendering in most people's sub alerts. The real question is whether any alert that can fire here actually renders `event.message.text` or `event.user_input`, which the server can answer exactly because it already assembles that candidate set for the CSS preload.
+
+- **The honest measurement: that gate helps rarely.** Checked against real data before shipping - every single account with alerts had at least one untargeted alert using a message field, so the gate alone would have changed nothing for any of them. It is kept because it is exact and free, and it does help an account with no emote-using alerts at all, but it is not where the win is.
+- **The win is deferral, not skipping.** Nothing needs this library at mount. An alert fires minutes or hours into a stream, and a chat message rendered plain for one flush is invisible because the slots rebuild the moment the library is ready. So the load is scheduled for idle time instead of racing the overlay's own first paint, with a 2 s ceiling so an overlay that never goes idle still gets it.
+- **Anything that needs it now still gets it now.** The alert path starts the load immediately rather than waiting for idle, and cancels a pending idle callback so the two cannot race.
+- **The preload flag is a hint, not a contract.** An alert template edited to use a message field after an overlay mounted is not in `alerts_need_emotes`, so the alert path loads the library itself. That costs one alert its emotes instead of every alert for the rest of the stream.
+- **Eight tests pin the gate**, and three of them were verified to fail against the naive targeting-based version - including the exact case that would have broken sub alerts for everyone.
+
 ## August 16th, 2026 - feat(chat): Twitch chat in an overlay
 
 ```
