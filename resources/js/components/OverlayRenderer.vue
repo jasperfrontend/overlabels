@@ -41,6 +41,7 @@ import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
 import { useOverlayHealth } from '@/composables/useOverlayHealth';
 import { useEmoteParser } from '@/composables/useEmoteParser';
 import { useTwitchChat } from '@/composables/useTwitchChat';
+import { type BadgeManifest, EMPTY_BADGE_MANIFEST, badgeImages, toBadgeManifest } from '@/utils/badgeRenderer';
 import { toChatFilters } from '@/utils/chatFilters';
 import { withChatSlots } from '@/utils/chatSlots';
 import type { ChatMessage } from '@/utils/ircParser';
@@ -130,6 +131,21 @@ const templateUsesChat = computed(() => {
 });
 
 /**
+ * Does this template render badge ARTWORK?
+ *
+ * Separate from templateUsesChat because most chat templates want
+ * `[[[msg.badges]]]` for CSS classes and nothing more. Those must not pay for
+ * a badge manifest they never draw - the same discipline as the emote library.
+ *
+ * Matches the field name rather than the loop alias, since the alias is
+ * whatever the author called it (`msg`, `m`, `line`).
+ */
+const templateUsesBadgeArt = computed(() => {
+  const source = `${rawHtml.value ?? ''}\n${css.value ?? ''}`;
+  return /\[\[\[[\w]+\.badge_images\b/.test(source);
+});
+
+/**
  * Render one chat message to safe HTML for the `chat.N.html` slot.
  *
  * Reuses the alert emote pipeline rather than growing a second one, so Twitch,
@@ -194,6 +210,33 @@ function chatMessageHtml(m: ChatMessage): string {
 }
 
 /**
+ * Badge artwork, fetched once per overlay from our own server.
+ *
+ * Credentials stay server-side and the response is cached 24 h there, so this
+ * is one small request per overlay load. Only fired when the template actually
+ * renders badge images.
+ */
+const badgeManifest = ref<BadgeManifest>(EMPTY_BADGE_MANIFEST);
+
+async function loadBadgeManifest(channelId: string): Promise<void> {
+  try {
+    const response = await fetch(`/api/overlay/badges/${channelId}`);
+    if (!response.ok) return;
+    badgeManifest.value = toBadgeManifest(await response.json());
+  } catch {
+    // No badge art is a fine outcome. The names are still in `msg.badges`,
+    // and an overlay that throws here would lose the whole chat feed over
+    // decoration.
+    console.warn('[OverlayRenderer] Badge manifest failed to load');
+  }
+}
+
+/** Render one message's badges for the `chat.N.badge_images` slot. */
+function chatBadgeHtml(m: ChatMessage): string {
+  return badgeImages(m, badgeManifest.value);
+}
+
+/**
  * Project the chat window into `chat.*` data slots whenever it changes.
  *
  * The composable already buffers, so this fires at most a few times a second
@@ -203,10 +246,21 @@ function chatMessageHtml(m: ChatMessage): string {
  */
 function refreshChatSlots(list: readonly ChatMessage[]): void {
   if (!data.value || typeof data.value !== 'object') return;
-  data.value = withChatSlots(data.value, list, chatMessageHtml);
+  data.value = withChatSlots(data.value, list, chatMessageHtml, templateUsesBadgeArt.value ? chatBadgeHtml : undefined);
 }
 
 watch(twitchChat.messages, refreshChatSlots);
+
+// The badge manifest is fetched asynchronously, so the first messages of a
+// stream can arrive before it lands. Rebuild once it does, exactly as the
+// emote library does below, so those messages gain their badges instead of
+// staying bare until they scroll out of the window.
+watch(
+  () => badgeManifest.value,
+  () => {
+    if (templateUsesBadgeArt.value) refreshChatSlots(twitchChat.messages.value);
+  },
+);
 
 // The emote library loads asynchronously, so the first messages of a stream can
 // arrive before it is ready and would otherwise keep their plain-text rendering
@@ -333,12 +387,18 @@ const userId = ref<string | null>(null);
  * it are `<img>` elements this app generated. Bracket defusing still applies, so
  * a chatter typing a `[[[tag]]]` cannot reach the substitution pass.
  *
+ * `chat.N.badge_images` is produced by badgeImages() in badgeRenderer.ts. It
+ * echoes NOTHING from chat: every `src` comes from the badge manifest our own
+ * server fetched from Twitch and is additionally pinned to Twitch's CDN, the
+ * alt text is escaped anyway, and an unknown badge key produces no element at
+ * all rather than being interpolated into the output.
+ *
  * Keep this list tiny and keep every entry's producer honest. Adding a field
  * here without an escaping guarantee on the other end is an XSS hole, and it is
  * the kind that no test notices because the markup only appears when a real
  * stranger sends it.
  */
-const HTML_SAFE_FOREACH_FIELDS = { chat: ['html'] } as const;
+const HTML_SAFE_FOREACH_FIELDS = { chat: ['html', 'badge_images'] } as const;
 
 function parseSource(source: string | null | undefined, encode: boolean = true): string {
   if (!source) return '';
@@ -679,6 +739,11 @@ onMounted(async () => {
       // only from the second batch onward.
       twitchChat.setFilters(toChatFilters(json.chat_filters));
       twitchChat.connect(chatChannel);
+
+      // Badge art is keyed by the numeric broadcaster id, not the login.
+      if (templateUsesBadgeArt.value && userId.value) {
+        void loadBadgeManifest(String(userId.value));
+      }
     }
 
     // Initialise user locale for pipe formatters

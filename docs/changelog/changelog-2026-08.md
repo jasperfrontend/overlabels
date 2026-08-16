@@ -2,6 +2,24 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - feat(chat): badges, as actual badges
+
+```
+[[[foreach:chat as msg]]]
+  <span class="badges">[[[msg.badge_images]]]</span>
+  <b>[[[msg.author]]]</b>: [[[msg.html]]]
+[[[endforeach]]]
+```
+
+Chat badges have been available as names since the feed shipped this morning - `broadcaster subscriber`, which is what CSS wants and is genuinely useful. Now the artwork is available too, the same emblems Twitch's own chat draws.
+
+- **The names did not change.** `[[[msg.badges]]]` still gives you `broadcaster subscriber` for styling. The art is a second, separate tag, because a template that wants a coloured border per badge should not be forced to load images to get it.
+- **The version matters, and it was being thrown away.** A 3-month and a 12-month subscriber badge are different pictures from the same set, so the parser now keeps `subscriber/12` alongside the bare name rather than discarding the number.
+- **A collab partner's subscriber badge is not our subscriber badge.** During a shared chat session, a message duplicated in from another channel carries that channel's badge versions, and the art for their channel-specific badges lives somewhere we never fetched. Rendering our own emblem for it would be worse than rendering nothing: it would state something false about a viewer. So foreign messages get the badges that are true everywhere on Twitch - moderator, VIP, staff, broadcaster - and their channel-specific ones simply do not draw.
+- **The art comes from our server, never from chat.** This is the second field ever allowed to render as unescaped HTML, next to the emote-parsed message body, so it earns that the hard way: every image URL comes from the manifest our own server fetched from Twitch and is pinned to Twitch's CDN, the alt text is escaped anyway, and a badge name we do not recognise produces no element at all rather than being pasted into the output. Three tests cover those, and each was checked to fail with the guard removed.
+- **Only templates that draw badges pay for them.** Most chat templates want the class names and nothing else; those never fetch the manifest. Same discipline as the emote library earlier today.
+- 36px art. Twitch draws badges at 18px, so it stays crisp when OBS scales your source without costing four times the bytes for something the size of a full stop.
+
 ## August 16th, 2026 - feat(chat): decide what your chat overlay draws
 
 A new Chat page in settings, with two switches: hide messages starting with `!`, and a list of chatters whose messages your overlay skips.

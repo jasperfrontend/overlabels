@@ -751,4 +751,80 @@ class TwitchApiService
 
         return $emotes;
     }
+
+    /**
+     * Chat badge art, keyed the way the IRC `badges` tag addresses it.
+     *
+     * The tag looks like `moderator/1,subscriber/12`, so the map is keyed
+     * "set/version" and the overlay can look a badge up without knowing
+     * anything about Twitch's response shape.
+     *
+     * Two separate keys are returned rather than one merged map, because a
+     * Shared Chat message from a collab partner carries THEIR badge versions,
+     * and their channel-specific art (subscriber, bits, founder) lives in a
+     * manifest we have not fetched. Resolving those against this channel's map
+     * would render the wrong emblem - showing a partner's subscriber as one of
+     * ours. `global` is safe for anyone in any channel; `channel` is only
+     * correct for native messages.
+     *
+     * Channel entries override global for the same set/version: subscriber and
+     * bits badges exist in both, and the channel's own art is the correct one.
+     *
+     * @return array{global: array<string, array{url: string, title: string}>, channel: array<string, array{url: string, title: string}>}
+     */
+    public function getChannelBadges(string $appToken, string $broadcasterId): array
+    {
+        $global = $this->badgeMapFrom(
+            $this->makeApiRequest($appToken, 'chat/badges/global', [], 'get global Twitch badges')
+        );
+
+        $channel = $this->badgeMapFrom(
+            $this->makeApiRequest($appToken, 'chat/badges', ['broadcaster_id' => $broadcasterId], 'get channel Twitch badges')
+        );
+
+        return [
+            'global' => $global,
+            // Merged so a native message needs one lookup, and so a channel
+            // that overrides only some versions still resolves the rest.
+            'channel' => array_merge($global, $channel),
+        ];
+    }
+
+    /**
+     * Flatten Twitch's set/versions response into a "set/version" => art map.
+     *
+     * Uses image_url_2x (36px). Twitch's own web chat renders badges at 18px,
+     * so 2x stays crisp on a 1080p or 1440p overlay and when OBS scales the
+     * source, without paying 4x the bytes for something drawn ~18px tall.
+     *
+     * @return array<string, array{url: string, title: string}>
+     */
+    private function badgeMapFrom(?array $response): array
+    {
+        $map = [];
+
+        foreach ($response['data'] ?? [] as $set) {
+            $setId = $set['set_id'] ?? null;
+            if (! $setId) {
+                continue;
+            }
+
+            foreach ($set['versions'] ?? [] as $version) {
+                $versionId = $version['id'] ?? null;
+                $url = $version['image_url_2x'] ?? $version['image_url_1x'] ?? null;
+                if (! $versionId || ! $url) {
+                    continue;
+                }
+
+                $map["$setId/$versionId"] = [
+                    'url' => $url,
+                    // Twitch's own accessible label, e.g. "Moderator" or
+                    // "Subscriber (12 months)". Used as the img alt text.
+                    'title' => (string) ($version['title'] ?? $setId),
+                ];
+            }
+        }
+
+        return $map;
+    }
 }

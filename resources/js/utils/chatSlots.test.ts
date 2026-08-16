@@ -18,6 +18,7 @@ function msg(over: Partial<ChatMessage> = {}): ChatMessage {
     isBroadcaster: false,
     isFirstMessage: false,
     sourceRoomId: '',
+    badgeVersions: [],
     emotes: [],
     ...over,
   };
@@ -118,5 +119,35 @@ describe('chatSlots / the html slot', () => {
     const afterClear = withChatSlots(withOne, []);
 
     expect(afterClear['chat.0.html']).toBeUndefined();
+  });
+});
+
+describe('chatSlots / the badge_images slot', () => {
+  it('is absent unless a renderer is supplied', () => {
+    // Also rendered WITHOUT escaping. A template asking for badge art before
+    // the manifest lands should get nothing, not broken <img> elements.
+    expect(chatSlots([msg()])['chat.0.badge_images']).toBeUndefined();
+    expect(chatSlots([msg()], () => '<img>')['chat.0.badge_images']).toBeUndefined();
+  });
+
+  it('is produced by the supplied renderer', () => {
+    const slots = chatSlots([msg()], undefined, () => '<img class="ol-badge">');
+
+    expect(slots['chat.0.badge_images']).toBe('<img class="ol-badge">');
+  });
+
+  it('leaves the bare badge names alone', () => {
+    // `msg.badges` is what templates use for CSS classes and must not change
+    // when artwork is added alongside it.
+    const slots = chatSlots([msg({ badges: 'moderator subscriber' })], undefined, () => '<img>');
+
+    expect(slots['chat.0.badges']).toBe('moderator subscriber');
+  });
+
+  it('is cleared along with the rest of the window', () => {
+    const withOne = withChatSlots({}, [msg()], undefined, () => '<img>');
+    const afterClear = withChatSlots(withOne, []);
+
+    expect(afterClear['chat.0.badge_images']).toBeUndefined();
   });
 });

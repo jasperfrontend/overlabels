@@ -89,6 +89,30 @@ describe('toChatMessage', () => {
     expect(msg.badges).toBe('broadcaster subscriber');
   });
 
+  it('keeps badge versions alongside the bare names', () => {
+    // `badges` is a published contract used for CSS class names and must stay
+    // version-free. Badge ARTWORK needs the version, because a 3-month and a
+    // 12-month subscriber badge are different images from the same set.
+    const msg = toChatMessage(parseIrcLine(PRIVMSG)!)!;
+
+    expect(msg.badges).toBe('broadcaster subscriber');
+    expect(msg.badgeVersions).toEqual(['broadcaster/1', 'subscriber/12']);
+  });
+
+  it('has no badge versions when the tag is absent', () => {
+    const msg = toChatMessage(parseIrcLine('@id=1 :a!a@a PRIVMSG #c :hi')!)!;
+
+    expect(msg.badgeVersions).toEqual([]);
+  });
+
+  it('ignores a badge entry with no version rather than inventing one', () => {
+    const msg = toChatMessage(parseIrcLine('@id=1;badges=moderator/1,broken :a!a@a PRIVMSG #c :hi')!)!;
+
+    expect(msg.badgeVersions).toEqual(['moderator/1']);
+    // The name still counts for styling and for isMod.
+    expect(msg.badges).toBe('moderator broken');
+  });
+
   it('converts tmi-sent-ts from milliseconds to seconds', () => {
     // Every timestamp in the project is Unix SECONDS; the wire is ms.
     expect(toChatMessage(parseIrcLine(PRIVMSG)!)!.at).toBe(1755273600);
@@ -136,6 +160,9 @@ describe('toChatMessage / Shared Chat', () => {
     // own UI shows - a partner's moderator reads as a moderator.
     expect(msg.badges).toBe('moderator');
     expect(msg.isMod).toBe(true);
+    // Their versions too, so badge art can resolve them - against the GLOBAL
+    // map only, since their channel-specific art is not ours to guess at.
+    expect(msg.badgeVersions).toEqual(['moderator/1']);
   });
 
   it('treats a native message as native even when source-room-id is echoed back', () => {

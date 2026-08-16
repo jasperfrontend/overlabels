@@ -119,6 +119,37 @@ Route::prefix('/overlay')->group(function () {
 
         return response()->json($emotes);
     })->middleware(['throttle:60,1'])->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+
+    // Returns Twitch chat badge art as { global: {...}, channel: {...} }, each
+    // keyed "set/version" to match the IRC `badges` tag (`moderator/1`).
+    // Same shape as the emote endpoint above: server-side app credentials,
+    // cached 24 h, rate-limited.
+    //
+    // global and channel stay SEPARATE because a Shared Chat message carries a
+    // collab partner's badge versions, whose channel-specific art lives in a
+    // manifest we have not fetched. Foreign messages resolve against `global`
+    // only, so they can never render this channel's subscriber emblem for
+    // someone who subscribes elsewhere.
+    Route::get('/badges/{channelId}', function (string $channelId) {
+        if (! ctype_digit($channelId)) {
+            return response()->json(['error' => 'Invalid channel ID'], 400);
+        }
+
+        $badges = Cache::remember(
+            "twitch_channel_badges_{$channelId}",
+            now()->addHours(24),
+            function () use ($channelId) {
+                $appToken = app(TwitchEventSubService::class)->getAppAccessToken();
+                if (! $appToken) {
+                    return ['global' => [], 'channel' => []];
+                }
+
+                return app(TwitchApiService::class)->getChannelBadges($appToken, $channelId);
+            }
+        );
+
+        return response()->json($badges);
+    })->middleware(['throttle:60,1'])->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 });
 
 // Get all template tags (API endpoint)

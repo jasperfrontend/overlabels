@@ -333,6 +333,16 @@ counts them ("five donation services", "five pipes") lives in `resources/views/w
 - `chat.N.html` is the ONLY foreach field rendered unescaped (`htmlSafeFields`, keyed by iterable). **Bracket defusing still applies inside it** - skipping that reopens the PR #230 injection hole through a side door.
 - Deletions are not optional: CLEARMSG removes one message, CLEARCHAT purges a user or clears the room. Purge by user id, falling back to login, and NEVER to "clear everything".
 
+### Chat badge artwork (Aug 2026)
+
+- `[[[msg.badge_images]]]` renders Twitch badge `<img>` tags. `[[[msg.badges]]]` still emits bare set names for CSS classes and MUST NOT change - templates in the wild use it.
+- `GET /api/overlay/badges/{channelId}` mirrors the emote endpoint exactly: app token server-side, 24 h cache, `throttle:60,1`, no auth (badge art is public). Returns `{ global: {...}, channel: {...} }`, each keyed `set/version` to match the IRC tag (`moderator/1,subscriber/12`).
+- **`global` and `channel` are returned separately on purpose, do not merge them.** A Shared Chat message carries a collab partner's badge VERSIONS, but their channel-specific art (subscriber, bits, founder) lives in a manifest we never fetched. Resolving those against our channel map renders OUR subscriber emblem for someone who subscribes elsewhere - it states something false about a viewer, which is worse than rendering nothing. `badgeImages()` picks `global` whenever `sourceRoomId` is set. `channel` already has global folded in, so a native message needs one lookup.
+- Uses `image_url_2x` (36px). Twitch's own chat renders badges at 18px, so 2x survives OBS scaling without paying 4x the bytes.
+- `ircParser.ts` has BOTH `badgeNames()` (names, for `msg.badges`) and `badgeVersions()` (`['moderator/1']`, for art). They answer different questions - do not collapse them.
+- **`badge_images` is the SECOND entry in `HTML_SAFE_FOREACH_FIELDS`**, so it renders unescaped. It is safe only because `badgeRenderer.ts` echoes nothing from chat: `src` comes from the server-fetched manifest and is pinned to `static-cdn.jtvnw.net`, alt/title are escaped anyway, and an unknown badge key produces NO element rather than being interpolated. All three are test-pinned and were verified to fail when removed.
+- The manifest fetch is gated on `templateUsesBadgeArt` - most chat templates only want the CSS class names, and must not pay for art they never draw.
+
 ### Chat display filters (Aug 2026)
 
 - Two per-user settings at `/settings/chat`: `hide_commands` (hide messages starting with `!`) and `hidden_logins`. Stored in the `preferences` jsonb column via `User::PREFERENCE_DEFAULTS['chat_filters']` - **no migration, no new table**. Both default to showing everything: deciding for the streamer which chatters are worth rendering was explicitly rejected.
