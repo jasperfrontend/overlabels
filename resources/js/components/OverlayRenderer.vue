@@ -738,6 +738,9 @@ onMounted(async () => {
       // already filtered rather than flashing on screen and being excluded
       // only from the second batch onward.
       twitchChat.setFilters(toChatFilters(json.chat_filters));
+      // The chat foreach cap. Set before connecting so the very first messages
+      // land in a correctly sized window.
+      twitchChat.setWindowSize(Number(json.chat_window));
       twitchChat.connect(chatChannel);
 
       // Badge art is keyed by the numeric broadcaster id, not the login.

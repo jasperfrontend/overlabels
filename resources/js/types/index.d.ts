@@ -119,6 +119,8 @@ export interface ForeachCaps {
   goals: number;
   followers: number;
   followed: number;
+  /** Chat is the one cap enforced client-side, as the socket's window size. */
+  chat: number;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;

@@ -2,6 +2,17 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - feat(chat): how many chat messages is now yours to decide
+
+Chat was the only foreach loop with a limit you could not change. Fifty messages, take it or leave it, while Subscribers, Goals, Followers and Followed channels all had a box on the settings page. That was an oversight rather than a decision.
+
+**Chat messages** now sits with the rest of them under Foreach loop limits, same box, same 1 to 50 range. Want a four-line feed? Or one? Set it and reload the overlay.
+
+- **Nothing changes unless you change it.** The default is 50, exactly what it was.
+- **It is a real limit, not a trim at the end.** Setting it to four means the overlay keeps four messages, rather than keeping fifty and drawing four of them. Counting your way out of a loop by index was always possible, but that is a workaround, and a workaround is not an interface.
+- **It is the only one of the five applied in your browser.** The other four get sliced out of the Twitch data before your overlay ever sees it. Chat cannot work that way, because your overlay reads chat straight from Twitch and nothing passes through us. Same promise to you, different place it happens.
+- Lowering it takes effect immediately rather than waiting for the next message to push the old ones out.
+
 ## August 16th, 2026 - fix(overlay): 7TV, BTTV and FFZ emotes were broken on production only
 
 Third-party emotes rendered as plain text on overlabels.com while working perfectly on a local machine. Twitch emotes were fine in both. Same code, same browser, same account.

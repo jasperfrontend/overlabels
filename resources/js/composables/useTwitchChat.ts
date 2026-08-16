@@ -15,15 +15,47 @@ import { ref } from 'vue';
  * sending overlay data back out. This is read-only, one way, to a third party
  * the overlay is already about.
  *
- * The window is small and fixed. Twitch's own chat panel shows roughly 20 lines
- * at 1080p and 30 at 1440p, so 50 is comfortably more than anyone can see, and
- * beyond it we are paying to render messages that are scrolled out of existence.
+ * The window is small and user-configurable up to a ceiling. Twitch's own chat
+ * panel shows roughly 20 lines at 1080p and 30 at 1440p, so the default of 50 is
+ * comfortably more than anyone can see, and beyond it we would be paying to
+ * render messages that are scrolled out of existence. A streamer who wants a
+ * three-line feed sets it on /settings/account with the other foreach caps.
  */
 
 const TWITCH_IRC_URL = 'wss://irc-ws.chat.twitch.tv:443';
 
-/** Newest-N kept. Deliberately not configurable upward without measuring. */
+/**
+ * Newest-N kept, when the user has expressed no preference.
+ *
+ * The user-facing setting lives with the other foreach caps on
+ * /settings/account, because `[[[foreach:chat as msg]]]` is a foreach loop like
+ * any other and "how many items does it expand to" should be the same question
+ * everywhere. It arrives as `chat_window` in the render payload.
+ */
 const DEFAULT_WINDOW = 50;
+
+/**
+ * Hard ceiling, matching User::FOREACH_CAP_MAX server-side.
+ *
+ * Deliberately not raisable without measuring: 50 is already well past what
+ * fits on screen (Twitch's own chat shows ~20 lines at 1080p, ~30 at 1440p),
+ * and beyond it the overlay pays to render messages nobody can see.
+ */
+const MAX_WINDOW = 50;
+
+/**
+ * Coerce a requested window size into something usable.
+ *
+ * Exported for tests. The NaN branch is the one that matters in practice:
+ * `Number(json.chat_window)` on a payload from an older server is NaN, and
+ * falling through to `Math.max(1, ...)` would silently pin every overlay to a
+ * one-message feed. An absent setting means "the default", not "one".
+ */
+export function clampWindow(size: number): number {
+  if (!Number.isFinite(size)) return DEFAULT_WINDOW;
+
+  return Math.max(1, Math.min(MAX_WINDOW, Math.floor(size)));
+}
 
 /**
  * How long changes are allowed to queue before being applied.
@@ -48,7 +80,7 @@ export interface UseTwitchChatOptions {
 }
 
 export function useTwitchChat(options: UseTwitchChatOptions = {}) {
-  const windowSize = Math.max(1, options.windowSize ?? DEFAULT_WINDOW);
+  let windowSize = clampWindow(options.windowSize ?? DEFAULT_WINDOW);
   const flushMs = Math.max(0, options.flushMs ?? DEFAULT_FLUSH_MS);
 
   // Set once the render payload arrives. Until then nothing is filtered, which
@@ -242,5 +274,23 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
     filters = next;
   }
 
-  return { messages, isConnected, connect, disconnect, setFilters };
+  /**
+   * Set how many messages the window holds. Safe before or after connect().
+   *
+   * Trims immediately rather than waiting for the next message, so lowering the
+   * setting takes visible effect at once instead of leaving a too-long feed
+   * until chat happens to move.
+   */
+  function setWindowSize(size: number): void {
+    const next = clampWindow(size);
+    if (next === windowSize) return;
+
+    windowSize = next;
+
+    if (messages.value.length > windowSize) {
+      messages.value = messages.value.slice(messages.value.length - windowSize);
+    }
+  }
+
+  return { messages, isConnected, connect, disconnect, setFilters, setWindowSize };
 }

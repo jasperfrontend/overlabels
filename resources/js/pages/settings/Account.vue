@@ -28,6 +28,7 @@ const FOREACH_CAP_DEFAULTS: ForeachCaps = {
   goals: 3,
   followers: 5,
   followed: 5,
+  chat: 50,
 };
 
 const page = usePage<AppPageProps>();
@@ -145,6 +146,7 @@ const FOREACH_CAP_FIELDS: { key: keyof ForeachCaps; label: string; hint: string 
   { key: 'goals', label: 'Goals', hint: 'Items available in [[[foreach:goals as g]]]' },
   { key: 'followers', label: 'Followers', hint: 'Items available in [[[foreach:channel_followers as f]]]' },
   { key: 'followed', label: 'Followed channels', hint: 'Items available in [[[foreach:followed_channels as f]]]' },
+  { key: 'chat', label: 'Chat messages', hint: 'Messages kept in [[[foreach:chat as msg]]]. Reload your overlay in OBS to apply.' },
 ];
 
 function clampCap(value: number | string): number {

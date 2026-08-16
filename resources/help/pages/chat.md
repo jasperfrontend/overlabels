@@ -76,7 +76,10 @@ downside to either.
 ### Newest last
 
 Message `0` is the **oldest** one on screen. Looping in order renders top to bottom, the way chat reads.
-The feed holds the most recent 50 messages, which is comfortably more than fits on screen at 1440p.
+The feed holds the most recent 50 messages by default, which is comfortably more than fits on screen
+at 1440p. If you want a shorter feed - four lines, or even one - set it under **Chat messages** in
+[Foreach loop limits](/settings/account), alongside the limits for every other loop. Reload the
+overlay in OBS to pick up a change.
 
 ## Styling badges
 
