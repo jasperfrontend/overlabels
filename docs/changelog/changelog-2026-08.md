@@ -2,6 +2,19 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 16th, 2026 - feat(chat): four chat controls, counted server-side
+
+Chat has been renderable in an overlay since this morning, but only as a feed. These are the numbers: `chat_messages_this_stream`, `unique_chatters_this_stream`, `latest_chatter_name` and `latest_chat_message`, usable anywhere a control tag is, including alerts and bot replies.
+
+The overlay is not what counts them. It reads chat directly from Twitch for display and it never phones home, so the numbers come from the bot instead, which was already watching chat for command handling.
+
+- **One summary every 30-60 seconds, not one request per message.** The bot aggregates in memory per channel and POSTs a single summary, so Laravel sees roughly 60-120 requests an hour per channel instead of thousands. The alternative - subscribing to `channel.chat.message` by webhook - would have been one synchronous POST per message into a handler doing six to ten database writes, and a webhook that falls behind risks Twitch disabling that user's *other* subscriptions.
+- **The bot sends who talked; the server decides who is new.** The summary carries the distinct logins from that window only. Deduplicating across the whole stream happens here, because the bot is a thin relay with no notion of where a stream begins and would lose the set every time it restarts.
+- **The unique-chatter count never counts down.** It is backed by a cached set, and a cache flush mid-stream would otherwise restart it from zero and walk the number backwards live on stream. It holds its peak instead and resumes climbing. The flip side is that the go-live reset has to clear the set as well as the control, or the counter spends the next stream frozen at the last one's total. Both halves have a test that was checked to fail without them.
+- **Two of the four reset at go-live and two do not.** The counters promise "this stream" and are on the reset list. The `latest_*` pair are most-recent values, and every equivalent across the five donation services persists across streams - sweeping those into the reset is exactly the bug that took four months to notice last time.
+- **The counts are native-only.** Shared Chat messages duplicated in from a collab partner show up in the feed but are not counted, so a collab cannot inflate your numbers. The feed showing more than the counter counts is deliberate.
+- **`latest_chat_message` is stored exactly as typed.** Running `strip_tags()` over it looks like the careful thing to do right up until someone types "i <3 you" and the overlay renders "i ", because it eats everything from the `<` onward. Escaping belongs at render time, where it already is.
+
 ## August 16th, 2026 - perf(overlay): the emote library waits its turn
 
 The emote library was fetched by every overlay on every load, roughly 77 kB and seven requests to BTTV, 7TV, FFZ and our own proxy. It exists for exactly two alert fields and the chat feed, so most overlays were paying for nothing.

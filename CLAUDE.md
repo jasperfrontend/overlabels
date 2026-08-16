@@ -136,7 +136,7 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
 
 ### Control reset lifecycle (fixed Aug 2026)
 
-- **The go-live reset is scoped by KEY, never by source.** `StreamSessionService::resetControls()` selects on `PER_STREAM_CONTROL_KEYS`, the eight `*_this_stream` counters. Do not widen it back to `where('source', 'twitch')` with no key filter.
+- **The go-live reset is scoped by KEY, never by source.** `StreamSessionService::resetControls()` selects on `PER_STREAM_CONTROL_KEYS`, the ten `*_this_stream` counters. Do not widen it back to `where('source', 'twitch')` with no key filter.
 - A key belongs on that list only if its label promises per-stream scope. The reset is the *only* thing implementing that promise: `handleEvent()` increments purely additively (`$current + $step`) and nothing else ever zeroes a counter.
 - The three `latest_cheer*` presets deliberately do NOT reset. They are most-recent values, and all 25 equivalents across the five donation services persist across streams. They were swept into the reset for four months because they share `source='twitch'` with controls the filter predated - which broke the bits/donation parity they were added (`c6be780`) to provide.
 - `latest_cheerer_name` is a `text` control with no `config`, so the old reset wrote `(string) ($control->config['reset_value'] ?? 0)` = the literal string `"0"` into it. `"0"` is falsy in conditionals (`useConditionalTemplates.ts`) but a bare `[[[c:key]]]` renders it verbatim - `replaceTagsWithFormatting` blanks only on undefined/null/object/`''`, and `?? default` backstops absence only.
@@ -319,6 +319,25 @@ counts them ("five donation services", "five pipes") lives in `resources/views/w
 - **`EventsTable.vue` and `ControlsManager.vue` are deliberately NOT converted.** Each row is wrapped in a popover / collapsible respectively, so they are a different shape, not the same row with different content. They stay on `.collection-row` so they still move with the skin. Do not "finish the job" unprompted.
 - Empty states go through `EmptyState.vue` (via `emptyMessage`/`emptyDashed` props or the `empty` slot), not hand-rolled dashed divs.
 - External event labels derive from `SERVICE_LABELS` in `resources/js/utils/services.ts`. The old hardcoded per-service map covered Ko-fi and Streamlabs only and had rotted into "bmac: donation" for the three donation services added after it was written.
+
+## Twitch Chat Overlay (Implemented Aug 2026)
+
+- `[[[foreach:chat as msg]]]` renders live chat in any static overlay. **The overlay connects to Twitch DIRECTLY**, anonymous IRC-over-WebSocket (`justinfan`, no credentials). Nothing is relayed through Overlabels, and the overlay never phones home.
+- Files: `utils/ircParser.ts` (parsing), `utils/chatSlots.ts` (window -> `chat.*` slots), `composables/useTwitchChat.ts` (socket). The socket only opens when the template actually renders chat.
+- Per-message tags: `author`, `login`, `text`, `html`, `color`, `badges`, `at`, `id`, `mod`, `sub`, `vip`, `broadcaster`, `first`, `source_channel`, plus `chat.count`. Index 0 is OLDEST. `at` is Unix seconds.
+- `chat.N.html` is the ONLY foreach field rendered unescaped (`htmlSafeFields`, keyed by iterable). **Bracket defusing still applies inside it** - skipping that reopens the PR #230 injection hole through a side door.
+- Deletions are not optional: CLEARMSG removes one message, CLEARCHAT purges a user or clears the room. Purge by user id, falling back to login, and NEVER to "clear everything".
+
+### Chat controls (Aug 2026)
+
+- Four controls, all `source='twitch'`, `source_managed=true`: `chat_messages_this_stream`, `unique_chatters_this_stream`, `latest_chatter_name`, `latest_chat_message`. The first two ARE on `PER_STREAM_CONTROL_KEYS`; the `latest_*` pair deliberately is NOT (same rule as `latest_cheer*`).
+- **Fed by the BOT, never by the overlay.** `POST /internal/bot/chat-stats/{login}` takes one aggregated summary every 30-60s: `{message_count, chatters[], latest_chatter_name, latest_chat_message}`. Rejected: Laravel subscribing to `channel.chat.message` by webhook (one synchronous POST per message, and a slow webhook risks Twitch killing the user's OTHER subscriptions via `notification_failures_exceeded`).
+- `chatters` is the distinct logins seen in THAT WINDOW. Stream-scoped uniqueness is resolved server-side in `mergeChatters()` against a cached set (`chat:chatters:{user_id}`), because the bot is a thin relay and would lose the set on every restart.
+- `unique_chatters_this_stream` only ever moves UPWARD within a stream. A cache flush restarts the set from empty, and without the `max()` guard the counter would visibly count down on stream. `resetControls()` therefore has to `Cache::forget()` the set at go-live, or the counter stays pinned at last stream's total.
+- Counts are **native-only**: the bot excludes Shared Chat foreign messages so a collab cannot inflate the numbers. The feed shows more than the counter counts - that is intended.
+- The summary is ignored unless the channel is confidently live, and returns 200 with `applied:false` so the bot does not retry.
+- `latest_chat_message` is stored RAW, like `latest_cheer_message`. Do NOT "sanitize" it with `strip_tags()`: that eats from `<` to the next `>` or end of string, so "i <3 you" becomes "i ". Render-side encoding plus `defuseBrackets()` is what makes it safe.
+- Pinned by `tests/Feature/BotChatStatsTest.php` (18 tests); the go-live cache clear and the upward-only guard were both verified to fail when removed.
 
 ## Development Workflow
 

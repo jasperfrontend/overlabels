@@ -69,6 +69,13 @@ export const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'latest_cheerer_name', label: 'Latest Cheerer Name', type: 'text' },
   { key: 'latest_cheer_amount', label: 'Latest Cheer Amount (bits)', type: 'number' },
   { key: 'latest_cheer_message', label: 'Latest Cheer Message', type: 'text' },
+  // Fed by the bot's aggregated chat summary, not by the overlay's own IRC
+  // connection. Counts are native-only, so a Shared Chat collab shows more
+  // messages in the feed than these count.
+  { key: 'chat_messages_this_stream', label: 'Chat Messages This Stream', type: 'counter' },
+  { key: 'unique_chatters_this_stream', label: 'Unique Chatters This Stream', type: 'counter' },
+  { key: 'latest_chatter_name', label: 'Latest Chatter Name', type: 'text' },
+  { key: 'latest_chat_message', label: 'Latest Chat Message', type: 'text' },
 ];
 
 // System namespace, not an integration: alerts:muted mirrors the global
