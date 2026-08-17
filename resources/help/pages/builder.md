@@ -7,7 +7,7 @@ canonical: https://overlabels.com/help/builder
 context: builder.create, templates.blocks.library
 ---
 
-## 1. What the Builder is
+## What the Builder is
 
 The Builder is a visual composer for static overlays. You place [blocks](/help/blocks) - small, reusable
 overlay pieces made by you or by the community - on a CSS grid sized to a 1920x1080 canvas, exactly the
@@ -19,7 +19,7 @@ runtime. When you save, your composition compiles down to the same HTML and CSS 
 overlay is made of. Everything that works for a hand-written static overlay works for a composed one,
 automatically.
 
-## 2. Composing: the grid and the picker
+## Composing: the grid and the picker
 
 Open the Builder from the templates page (the **Builder** button) or the command palette. You start with
 a 12x8 grid - presets for 6x4 and 16x9 are one click away, and you can set anything up to 24x24 plus the
@@ -35,7 +35,7 @@ a real overlay instead of a wireframe.
 > Saw a full static overlay you like? Its **Copy** action can copy it *as a block* - which means the
 > entire public overlay library is potential Builder material, not just things that were born as blocks.
 
-## 3. Arranging: drag, keys, preview
+## Arranging: drag, keys, preview
 
 - **Drag** a block to move it. It snaps cell to cell and refuses to overlap another block - it simply
   stops at the last valid spot.
@@ -48,7 +48,7 @@ Blocks can never overlap, by design. Every position and size runs through the sa
 whether it came from a drag, a button, or a keyboard shortcut. A composed overlay is always a clean,
 gap-respecting grid.
 
-## 4. Saving: you get a plain static overlay
+## Saving: you get a plain static overlay
 
 Hitting Save compiles the grid and every placed block into one static overlay. The output is genuinely
 simple - a fixed 1920x1080 grid container and one wrapper per block:
@@ -76,7 +76,7 @@ it, live values update over WebSockets, and it shows up in your overlay list lik
 "Builder runtime" - just HTML and CSS you could have written by hand, if you had the time and the
 inclination.
 
-## 5. Controls come along
+## Controls come along
 
 Blocks that use [Controls](/help/controls) bring them with them: when you save, any control a placed
 block needs is created on your overlay automatically. On the overlay's Controls tab, each of those
@@ -88,7 +88,7 @@ controls wears a little pill naming the block that uses it, so you always know w
   are flagged "Not used by any block" on the Controls tab, where deleting them is one click - your call,
   never automatic.
 
-## 6. Making it yours: CSS and fonts
+## Making it yours: CSS and fonts
 
 Blocks arrive with their own look, and for a lot of overlays that's the end of it. When it isn't,
 open **Your CSS and fonts** under the canvas. It's optional, it starts closed, and nothing about the
@@ -125,22 +125,22 @@ everywhere else.
 > and every layout change. Tags work in CSS too: `color: [[[c:accent_color]]]` makes a control drive
 > your styling live.
 
-## 7. Editing later, refreshing blocks, ejecting
+## Editing later, refreshing blocks, ejecting
 
 Reopen a composed overlay's edit page and the Code tab shows the grid editor again, with your layout
 exactly as you left it. Two things worth knowing:
 
 - **Refresh from source.** Placing a block copies its code at that moment, so a block author editing
   their block can never silently change your overlay. When a source block *has* changed, the editor tells
-  you - a "Source updated" badge on the placement and a sync bar above the canvas - and updating to the
-  new version is one click, keeping the block's position and size. Nothing changes until you save.
+  you: a "Source updated" badge on the placement and a sync bar above the canvas. Updating to the
+  new version is one click, keeping the block's position and size. Nothing changes to your template until you save.
 - **Open in code editor.** The overlay's actions menu can convert a composed overlay to a hand-edited
   one: you get the full compiled HTML and CSS in the regular code editor, and the grid tools go away for
-  that overlay. It's a one-way door - great when you've outgrown the grid, permanent once you walk
+  that overlay. It's a one-way door: great when you've outgrown the grid, permanent once you walk
   through it.
 
 > [!WARNING]
-> **Heads up:** ejecting to the code editor cannot be undone. The compiled code stays exactly as it was -
+> **Heads up:** ejecting to the code editor cannot be undone. The compiled code stays exactly as it was: 
 > you lose nothing except the grid editing tools for that overlay.
 
 > [!IMPORTANT]

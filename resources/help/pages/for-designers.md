@@ -13,7 +13,7 @@ Mockups that look pristine in Figma can fall apart the second a username goes fr
 "xX_LongUsername2024_Xx", or the streamer switches from a dark dungeon to a blown-out outdoor scene where
 the horizon is pure white. This page is the pre-flight checklist.
 
-## 1. The two surfaces: static and alert
+## The two surfaces: static and alert
 
 An Overlabels overlay is two distinct surfaces, with different constraints. Designing them as one thing
 is the most common mistake.
@@ -38,7 +38,7 @@ holds for a few seconds with the event data on screen, animates out, vanishes.
 and a duration (typically 4-8 seconds total). The hold phase needs to be readable in a second or two by a
 viewer who looks up at it after the streamer reacts. Animation can be loud; copy cannot be wordy.
 
-## 2. The background is unknown
+## The background is unknown
 
 The overlay sits on top of whatever the streamer is showing - dark dungeon, sunlit IRL street, white
 starting-soon screen, a cycling horizon that swings between pavement and overblown sky. A design that
@@ -56,20 +56,20 @@ Standard strategies for "readable on any background":
 **Designer deliverable:** mock against four backgrounds - dark game, sunlit-overblown IRL, night-time
 IRL, and pure white. If the design holds in all four, ship.
 
-## 3. Every text field is variable-length
+## Every text field is variable-length
 
 Live data fields are not fixed-width. A username can be 3 characters or 25. A donation amount can be $1
 or $1,000. A donation message can be empty or 200 characters of emoji and exclamation marks. A follower
 count can be 12 or 12,000,000. The same overlay slot has to accommodate all of these without breaking.
 
-| Field | Realistic short | Realistic medium | Realistic worst-case |
-|---|---|---|---|
-| Twitch username | an | JasperDiscovers | xX_DragonSlayer2024_Xx (25 chars max) |
-| Donation amount | $1 | $25 | $1,234,567 |
-| Donation message | (empty) | "Love the stream!" | 200 chars of mixed text and emoji |
-| Follower count | 12 | 8,432 | 12,847,392 |
-| Game / category title | Doom | Elden Ring, or "Just Chatting" | Tom Clancy's Rainbow Six Siege Extraction, or "Travel & Outdoors" |
-| GPS speed | 0 km/h | 42 km/h | 217 km/h (or m/s with three decimals) |
+| Field                 | Realistic short | Realistic medium               | Realistic worst-case                                              |
+|-----------------------|-----------------|--------------------------------|-------------------------------------------------------------------|
+| Twitch username       | an              | JasperDiscovers                | xX_DragonSlayer2024_Xx (25 chars max)                             |
+| Donation amount       | $1              | $25                            | $1,234,567                                                        |
+| Donation message      | (empty)         | "Love the stream!"             | 200 chars of mixed text and emoji                                 |
+| Follower count        | 12              | 8,432                          | 12,847,392                                                        |
+| Game / category title | Doom            | Elden Ring, or "Just Chatting" | Tom Clancy's Rainbow Six Siege Extraction, or "Travel & Outdoors" |
+| GPS speed             | 0 km/h          | 42 km/h                        | 217 km/h (or m/s with three decimals)                             |
 
 **Strategies:**
 
@@ -82,7 +82,7 @@ count can be 12 or 12,000,000. The same overlay slot has to accommodate all of t
 - **Test against the worst case.** Mock up the alert with the longest realistic donor name and message.
   If it survives, ship.
 
-## 4. Fluid layout, not pixel-perfect
+## Fluid layout, not pixel-perfect
 
 The reference resolution is 1920x1080. But OBS scales browser sources, streamers run different DPI, and a
 "fits perfectly at exactly 1920" design tends to look fragile at 1280 or wrong at 2560. Design in a way
@@ -98,7 +98,7 @@ that survives:
   webcams often live in known zones). Identify safe areas in the design and avoid putting critical info
   in them.
 
-## 5. Animation lives in CSS
+## Animation lives in CSS
 
 Overlabels overlays don't run JavaScript (this is a deliberate security and shareability decision - see
 ["The constraint is the feature"](/help/for-creators#the-constraint-is-the-feature) on the For Creators
@@ -182,7 +182,7 @@ follower count", "latest Ko-fi donor", "GPS speed"). The implementer maps these 
 Controls and template tags. The [Integration Presets](/help/integration-presets) page is the catalog of
 every available live data field.
 
-## 7. What not to deliver
+## What not to deliver
 
 - **A single flattened PNG of the overlay.** Looks great, useless for implementation.
 - **Mockups with placeholder Lorem Ipsum.** Use realistic strings: real-length usernames, real donation
@@ -200,7 +200,7 @@ every available live data field.
 - **Adobe After Effects projects with no Lottie export and no video reference.** The implementer can't
   open the .aep, and CSS animation is not video animation. Lottie or video, not project files.
 
-## 8. Working with the implementer
+## Working with the implementer
 
 The implementer (the streamer themselves, or someone they hired to translate the design into Overlabels)
 needs three things to start: the Figma file, the asset exports, and the live-data field list. Everything
@@ -231,7 +231,7 @@ else can be questions during the build.
 > donation might be $0.50 or $5,000, and your beautifully balanced "thanks for the sub" panel has to
 > absorb both without tanking. Design once, survive everything the audience throws at it.
 
-## 9. Deep dives
+## Deep dives
 
 The technical pages a designer might want to skim, to see what their design will be implemented against:
 

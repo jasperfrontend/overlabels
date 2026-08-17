@@ -10,7 +10,7 @@ This page is for the math-heads. If you came here for gentle examples, try
 [Conditionals](/help/conditionals) or [Formatting Pipes](/help/formatting) first. Still here? Good. Put
 on the goggles.
 
-## 1. The toolbox
+## The toolbox
 
 Everything the engine understands. Anything not on this list is intentionally absent - no `eval`, no
 `new Function`, no prototype walking. The sandbox is the point.
@@ -37,24 +37,24 @@ reactive). The two substrates never parse each other's syntax.
 
 ### Scalar math
 
-| Call | Meaning |
-|---|---|
-| `max(a, b, ...)` | Largest of the args |
-| `min(a, b, ...)` | Smallest of the args |
-| `clamp(lo, x, hi)` | x pinned to [lo, hi] |
-| `sum(a, b, ...)` | Arithmetic sum |
-| `avg(a, b, ...)` | Arithmetic mean |
-| `abs(x)` | \|x\| |
-| `round(x)` / `round(x, n)` | Nearest integer, or n decimals |
-| `floor(x)` / `ceil(x)` | Round toward −∞ / +∞ |
-| `sin(x)` / `cos(x)` / `tan(x)` | Trig, x in *radians* |
-| `asin(x)` / `acos(x)` / `atan(x)` | Inverse trig, returns radians |
-| `atan2(y, x)` | Angle from coordinates, all four quadrants. Pair with `sqrt` for haversine |
-| `sqrt(x)` | Square root. Returns 0 for negative x |
-| `fract(x)` | x − floor(x). Always ∈ [0, 1) |
-| `mod(a, b)` | Floor-modulo (GLSL-style, not JS `%`) |
-| `now()` | Unix timestamp in seconds (integer) |
-| `now_ms()` | Unix timestamp in milliseconds - for sub-second animation |
+| Call                              | Meaning                                                                    |
+|-----------------------------------|----------------------------------------------------------------------------|
+| `max(a, b, ...)`                  | Largest of the args                                                        |
+| `min(a, b, ...)`                  | Smallest of the args                                                       |
+| `clamp(lo, x, hi)`                | x pinned to [lo, hi]                                                       |
+| `sum(a, b, ...)`                  | Arithmetic sum                                                             |
+| `avg(a, b, ...)`                  | Arithmetic mean                                                            |
+| `abs(x)`                          | \|x\|                                                                      |
+| `round(x)` / `round(x, n)`        | Nearest integer, or n decimals                                             |
+| `floor(x)` / `ceil(x)`            | Round toward −∞ / +∞                                                       |
+| `sin(x)` / `cos(x)` / `tan(x)`    | Trig, x in *radians*                                                       |
+| `asin(x)` / `acos(x)` / `atan(x)` | Inverse trig, returns radians                                              |
+| `atan2(y, x)`                     | Angle from coordinates, all four quadrants. Pair with `sqrt` for haversine |
+| `sqrt(x)`                         | Square root. Returns 0 for negative x                                      |
+| `fract(x)`                        | x − floor(x). Always ∈ [0, 1)                                              |
+| `mod(a, b)`                       | Floor-modulo (GLSL-style, not JS `%`)                                      |
+| `now()`                           | Unix timestamp in seconds (integer)                                        |
+| `now_ms()`                        | Unix timestamp in milliseconds - for sub-second animation                  |
 
 ### Argument-pair family
 
@@ -70,7 +70,7 @@ oldest(v1, l1, v2, l2, ...)    // alias of argmin
 Values are coerced to numbers. Strings that parse as numbers work. Strings that look like ISO dates are
 parsed as milliseconds since epoch.
 
-## 2. The heartbeat: `now()`
+## The heartbeat: `now()`
 
 Every time-based trick in this page reduces to one identity. Let \(t = \text{now}()\) be the current Unix
 time in seconds. Time only matters once you *take its fractional part*, *feed it through trig*, or
@@ -91,7 +91,7 @@ now() - t.followers_latest_date_at
 Pipe the result through `|duration:mm:ss` and you have a "last follow was N minutes ago" display built
 from subtraction alone.
 
-## 3. Waves from trigonometry
+## Waves from trigonometry
 
 The canonical animation primitive. A sine wave with amplitude \(A\), period \(T\), and baseline \(C\):
 
@@ -137,7 +137,7 @@ one orbit:
 40 * cos(2 * PI * now_ms() / 7500)
 ```
 
-## 4. Sawtooth, ramps, and `fract()`
+## Sawtooth, ramps, and `fract()`
 
 `fract(x) = x - floor(x)`. It discards the integer part and keeps the fraction. Feed it a rising quantity
 and you get a *sawtooth*: a 0 → 1 ramp that snaps back to zero forever.
@@ -159,7 +159,7 @@ The triangle trick deserves its own line. Start with a sawtooth, scale it to \([
 centre on zero, then take the absolute value. You just built a piecewise-linear tent function from two
 primitives.
 
-## 5. Decoded: the pseudo-random one-liner
+## Decoded: the pseudo-random one-liner
 
 This expression returns a seemingly random integer from 1 to 9, changing once per second:
 
@@ -204,7 +204,7 @@ Note the `floor(now() / N)` trick: quantising time before you sin it turns a con
 into a step function. The "random" output then stays stable for *N* seconds before jumping, which is what
 you actually want for most UI.
 
-## 6. The modulo wheel
+## The modulo wheel
 
 `mod(a, b)` in Overlabels is *floor*-modulo, the one mathematicians wrote on the chalkboard:
 
@@ -236,7 +236,7 @@ mod(floor(now() / 8), 3)
 [[[if:c:banner_index = 2]]]!commands for the full list.[[[endif]]]
 ```
 
-## 7. Clamp, round, abs: the cleanup crew
+## Clamp, round, abs: the cleanup crew
 
 The engine's cleanup functions exist so you can pipe raw inputs into CSS without worrying about extremes,
 floats, or negative values.
@@ -262,7 +262,7 @@ round(c.wins / (c.wins + c.losses) * 100, 1)
 Taking the absolute value of a sine folds the negative half up. You get twice the frequency visually and
 a lighthouse-style pulse that never dips below zero. Great for "intensity".
 
-## 8. Winners and timestamp racing
+## Winners and timestamp racing
 
 This is the trick the rest of the streaming ecosystem does not have. Every control in Overlabels has an
 automatic `_at` companion that stores *the Unix timestamp of its last write*. That means you can race
@@ -310,7 +310,7 @@ t.subscribers_latest_is_gift
 
 The ternary is your friend. Chain them for switch-like behaviour: `a ? x : b ? y : z`.
 
-## 9. Live Twitch values: the `t.*` namespace
+## Live Twitch values: the `t.*` namespace
 
 The `t.*` namespace exposes every tag that EventSub mutates - follower totals, the latest cheer user,
 peak raid viewers, the latest sub's gift flag, and so on - directly in expressions. These are *live*:
@@ -376,7 +376,7 @@ t.last_raid_from ? t.last_raid_from + " raided with " + t.last_raid_viewers_peak
 > syntax, and template tags never evaluate expressions. Use `t.tag` in expressions, `[[[tag]]]` in HTML.
 > That separation is how the engine stays secure.
 
-## 10. Pitfalls and things that will not work
+## Pitfalls and things that will not work
 
 ### Time resolution: `now()` vs `now_ms()`
 

@@ -7,7 +7,7 @@ canonical: https://overlabels.com/help/overlays-vs-alerts
 context: templates.index, templates.show?type=alert
 ---
 
-## 1. The two kinds: static and alert
+## The two kinds: static and alert
 
 ### Static overlay
 
@@ -22,7 +22,7 @@ The one-shot layer. It fires when an event arrives (a follow, a sub, a raid, a K
 event data for a few seconds, and disappears. An alert is not a standalone scene - it's designed to
 render *inside* a static overlay you've already built.
 
-## 2. Alerts render inside your static overlay
+## Alerts render inside your static overlay
 
 Here's the key idea. When an alert is targeted at a static overlay, it doesn't open its own page - it's
 appended into the static overlay's DOM, right before the closing `</body>` tag. Same document, same
@@ -69,7 +69,7 @@ When a sub alert fires inside that static overlay, the document looks like this:
 > define your structure and styling in one place, and your alerts inherit it for free. The result is a
 > beautifully uniform overlay and alert system that all rely on the same definitions.
 
-## 3. Adding an alert straight to OBS
+## Adding an alert straight to OBS
 
 You *can* add an alert directly to OBS as its own browser source, and it'll render perfectly fine on its
 own whenever it fires. Who are we to judge - sometimes that's exactly what you want. But be aware of what
@@ -89,7 +89,7 @@ No `--brand` variable, no `.avatar` rule, none of your static overlay's scaffold
 works, but you style it from scratch and it won't automatically match the rest of your overlay. If you
 want that uniform look, render it inside a static overlay instead (see above).
 
-## 4. Targeting vs Triggers
+## Targeting vs Triggers
 
 To render an alert inside a static overlay, open the alert and visit the **Targeting** tab, then choose
 one or more static overlays where this alert should render.
