@@ -10,7 +10,7 @@ This page is the long-form description of what that actually means. It's written
 broad sense: streamers who want to know what they're holding, and creative coders who might want to help
 map the space.
 
-## 1. The thesis
+## The thesis
 
 Overlabels is a **reactive value graph** that happens to render to a browser source. Every overlay is a
 tree of named values. Every value can be a constant, a live data feed, a formula derived from other
@@ -19,7 +19,7 @@ it recomputes. When a formula's result lands in your overlay's HTML or CSS, the 
 
 That's it. The rest is just primitives.
 
-## 2. The primitives
+## The primitives
 
 ### Values (Controls)
 
@@ -87,7 +87,7 @@ Templates can react two ways:
 - **Push** - an Alert template fires once when an EventSub event arrives (a follow, a sub, a raid, a
   donation), animates, and disappears.
 
-## 3. What this means for creators
+## What this means for creators
 
 A streamer wants a thing on their overlay to react to data. The conventional overlay tool gives them a
 knob to turn or a widget to drop in. Overlabels gives them a number, a formula, and a CSS rule. The
@@ -109,22 +109,22 @@ CSS rule:
 None of those require deploying code, restarting OBS, or shipping a plugin update. The streamer types
 into a textbox, hits save, and the change is live within a second.
 
-## 4. Why this is different from other overlay tools
+## Why this is different from other overlay tools
 
-| Tool | What you get | Composability |
-|---|---|---|
-| Streamlabs / StreamElements widgets | Pre-built widgets with config knobs | You configure. You can't really compose. |
-| OBS source plugins | Anything, in code | Per-streamer engineering. Compile, deploy, restart. |
-| Browser-source HTML overlays | A static page that polls or listens | You write the JS. You host the page. You handle reconnects. |
-| **Overlabels** | **Any value, any source, any formula, any consumer.** | **Composable end-to-end. Live in <1s after save.** |
+| Tool                                | What you get                                          | Composability                                               |
+|-------------------------------------|-------------------------------------------------------|-------------------------------------------------------------|
+| Streamlabs / StreamElements widgets | Pre-built widgets with config knobs                   | You configure. You can't really compose.                    |
+| OBS source plugins                  | Anything, in code                                     | Per-streamer engineering. Compile, deploy, restart.         |
+| Browser-source HTML overlays        | A static page that polls or listens                   | You write the JS. You host the page. You handle reconnects. |
+| **Overlabels**                      | **Any value, any source, any formula, any consumer.** | **Composable end-to-end. Live in <1s after save.**          |
 
-The Overlabels overlay is the cheap part. The expensive part is the reactive value graph underneath, and
+The Overlabels overlay is the inexpensive part. The expensive part is the reactive value graph underneath, and
 the integrations that pump real data into it.
 
 ## 5. The constraint is the feature
 
 > [!TIP]
-> The "no JavaScript" rule isn't an oversight - it's the load-bearing security and shareability decision
+> The "no JavaScript" rule is **NOT** an oversight: it's the load-bearing security and shareability decision
 > the whole system rests on.
 
 Templates flow between users. Streamers copy each other's overlays, paste tags from screenshots, and
@@ -137,7 +137,7 @@ node.
 So templates get sanitized server-side before they ever reach a browser source. No `<script>`, no
 `<iframe>`, no `on*=` handlers, no inline `javascript:` URLs. Tags are parsed exactly once per render, so
 even Control values can't smuggle markup through a template-injection trick. Rendered overlays don't
-phone home either - the URL-fragment auth-token model means the page literally can't report telemetry
+phone home either: the URL-fragment auth-token model means the page literally can't report telemetry
 back, by design.
 
 What you do instead: **the expression engine and CSS animation are your runtime.** Anything you would
@@ -154,19 +154,19 @@ Overlabels recipe book carry the same guarantee every other template does: nothi
 sandbox, ever. The constraint is what makes the whole "copy someone else's clever overlay" loop work at
 all.
 
-## 6. Honest gaps
+## Honest gaps
 
 Things creators ask for that aren't possible yet. If you're a creative coder evaluating the surface, you
-should know where the walls are:
+probably know where the walls are:
 
-- **Audio analysis** - no mic level, no music BPM detection. Open question.
-- **MIDI / hardware controllers** - no mapping today.
-- **Direct EventSub data in expressions** - EventSub triggers update preset Controls (which you can
+- **Audio analysis**: no mic level, no music BPM detection. Open question.
+- **MIDI / hardware controllers**: no mapping today.
+- **Direct EventSub data in expressions**: EventSub triggers update preset Controls (which you can
   reference) and fire Alerts (one-shot animations), but there's no direct `e.<event>.<field>` namespace
   inside expressions.
-- **Persistent state across stream sessions for arbitrary expressions** - counters and sliders persist;
+- **Persistent state across stream sessions for arbitrary expressions**: counters and sliders persist;
   computed values are re-derived from inputs each time.
-- **Multi-overlay synchronization** - each overlay is independent.
+- **Multi-overlay synchronization**: each overlay is independent.
 
 ## 7. Looking for collaborators
 
@@ -176,11 +176,11 @@ sentence, here's the gig:
 I'm looking to co-author a recipe book of Expression Control examples. Each recipe is a screenshot or
 gif, the formulas, and the HTML/CSS that consumes them. Think Shadertoy entries, but each one is a
 self-contained overlay effect a streamer can copy in 30 seconds. Donation pulses, GPS-driven sprites,
-subathon-timer tints, follow-count auras, raid wormhole transitions, vote-bar wobbles - any combination
+subathon-timer tints, follow-count auras, raid wormhole transitions, vote-bar wobbles&hellip; Any combination
 of value source + expression + CSS that's worth its own gif.
 
 Paid. Open call. Attribution included. The bar is "would another creative coder find this clever", not
-"is it useful to the median streamer" - the median streamer copies what other people built.
+"is it useful to the median streamer". The median streamer copies what other people built.
 
 Mail: [jasper@emailjasper.com](mailto:jasper@emailjasper.com). Include a portfolio link, a paragraph on
 what kind of effect you'd want to start with, and a rate.
@@ -189,12 +189,12 @@ what kind of effect you'd want to start with, and a rate.
 
 The rest of the help section is the developer-style reference for each primitive:
 
-- [Controls](/help/controls) - the seven control types and how they behave on an overlay.
-- [Expression Controls](/help/expressions) - the math layer in full, with the Haversine walkthrough.
-- [Integration Presets](/help/integration-presets) - the catalog of every auto-managed Control across
+- [Controls](/help/controls): the seven control types and how they behave on an overlay.
+- [Expression Controls](/help/expressions): the math layer in full, with the Haversine walkthrough.
+- [Integration Presets](/help/integration-presets): the catalog of every auto-managed Control across
   Twitch, Ko-fi, Streamlabs, Fourthwall, BMAC, and Overlabels GPS.
-- [Math Engine](/help/math) - waves, modulo wheels, pseudo-random one-liners, timestamp racing.
-- [Conditional and Event Tags](/help/conditionals) - if/else logic in templates.
-- [Formatting Pipes](/help/formatting) - locale-aware number, currency, duration, distance, and speed
+- [Math Engine](/help/math): waves, modulo wheels, pseudo-random one-liners, timestamp racing.
+- [Conditional and Event Tags](/help/conditionals): if/else logic in templates.
+- [Formatting Pipes](/help/formatting): locale-aware number, currency, duration, distance, and speed
   formatting.
-- [Manifesto](/help/manifesto) - principles and philosophy, if that's your thing.
+- [Manifesto](/help/manifesto): principles and philosophy, if that's your thing.
