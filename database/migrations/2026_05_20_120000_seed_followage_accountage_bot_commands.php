@@ -31,6 +31,19 @@ return new class extends Migration
 
     public function down(): void
     {
-        BotCommand::whereIn('command', ['followage', 'accountage'])->delete();
+        // Deliberately empty, and it has to stay that way.
+        //
+        // This used to be BotCommand::whereIn('command', [...])->delete(). When it
+        // ran, App\Models\BotCommand pointed at the per-user builtin registry, so
+        // that deleted exactly the rows up() created. The Aug 2026 rename moved
+        // that table to bot_builtins and handed the bot_commands name to the
+        // user-authored custom commands, which means the same line now reaches a
+        // completely different table and would delete real user content.
+        //
+        // Retargeting it at BotBuiltin would be safe but still wrong: followage
+        // and accountage are in BotBuiltin::DEFAULTS now, so every opted-in user
+        // is entitled to those rows regardless of this migration. Deleting them
+        // on rollback would just desync them from the seeder that puts them back.
+        // Nothing to undo.
     }
 };

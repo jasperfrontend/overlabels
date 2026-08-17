@@ -50,6 +50,8 @@ class BotBuiltin extends Model
         ['command' => 'enablecontrols', 'permission_level' => 'broadcaster'],
         ['command' => 'disablecontrols', 'permission_level' => 'broadcaster'],
         ['command' => 'ol', 'permission_level' => 'moderator'],
+        ['command' => 'followage', 'permission_level' => 'everyone'],
+        ['command' => 'accountage', 'permission_level' => 'everyone'],
     ];
 
     /**

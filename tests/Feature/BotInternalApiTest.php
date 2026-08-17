@@ -230,6 +230,26 @@ test('opting into the bot seeds the default command set', function () {
         ->and($setCommand->enabled)->toBeTrue();
 });
 
+/**
+ * Regression: followage and accountage shipped as a one-off backfill migration in
+ * May 2026 without ever being added to DEFAULTS, so everyone who opted in after
+ * that date had no row, never landed in the command map, and got silence in chat.
+ * A builtin that exists in the bot's handler table but not here is invisible.
+ */
+test('opting into the bot seeds followage and accountage', function () {
+    $user = User::factory()->create(['bot_enabled' => false]);
+
+    $user->update(['bot_enabled' => true]);
+
+    $rows = BotBuiltin::where('user_id', $user->id)
+        ->whereIn('command', ['followage', 'accountage'])
+        ->get();
+
+    expect($rows)->toHaveCount(2)
+        ->and($rows->pluck('permission_level')->unique()->all())->toBe(['everyone'])
+        ->and($rows->every(fn ($row) => $row->enabled))->toBeTrue();
+});
+
 test('toggling bot_enabled off then on does not duplicate default commands', function () {
     $user = User::factory()->create(['bot_enabled' => false]);
 
