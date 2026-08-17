@@ -1,13 +1,7 @@
 <?php
 
-use App\Models\BotAlias;
-use App\Models\BotBuiltin;
-use App\Models\BotCommand;
-use App\Models\ListAppender;
-use App\Models\ListMetaCommand;
-use App\Models\RecipeChatTrigger;
-use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -31,36 +25,59 @@ use Illuminate\Support\Facades\Log;
  * in BotCommandMapController's resolution order, so seeding blindly would
  * silently shadow whatever they built. Those users keep their own version and
  * are logged below.
+ *
+ * Table names are literal here, not reached through Eloquent models, for the
+ * reason the 2026-04-14 seed spells out: a model reference in a migration means
+ * whatever that class points at today, and this file is expected to still run
+ * correctly after the next rename.
  */
 return new class extends Migration
 {
     private const COMMANDS = ['followage', 'accountage'];
 
+    /** Every table a user can claim a command name in, all of which builtins outrank. */
+    private const USER_OWNED_TABLES = [
+        'bot_commands',
+        'bot_aliases',
+        'recipe_chat_triggers',
+        'list_appenders',
+        'list_meta_commands',
+    ];
+
     public function up(): void
     {
+        $now = now();
         $seeded = 0;
         $skipped = [];
 
-        User::where('bot_enabled', true)->chunkById(200, function ($users) use (&$seeded, &$skipped) {
-            foreach ($users as $user) {
-                foreach (self::COMMANDS as $command) {
-                    if ($this->userHasOwnCommand($user->id, $command)) {
-                        $skipped[] = "{$user->id}:{$command}";
+        DB::table('users')
+            ->where('bot_enabled', true)
+            ->chunkById(200, function ($users) use ($now, &$seeded, &$skipped) {
+                $rows = [];
 
-                        continue;
-                    }
+                foreach ($users as $user) {
+                    foreach (self::COMMANDS as $command) {
+                        if ($this->userHasOwnCommand($user->id, $command)) {
+                            $skipped[] = "{$user->id}:{$command}";
 
-                    $row = BotBuiltin::firstOrCreate(
-                        ['user_id' => $user->id, 'command' => $command],
-                        ['permission_level' => 'everyone', 'enabled' => true],
-                    );
+                            continue;
+                        }
 
-                    if ($row->wasRecentlyCreated) {
-                        $seeded++;
+                        $rows[] = [
+                            'user_id' => $user->id,
+                            'command' => $command,
+                            'permission_level' => 'everyone',
+                            'enabled' => true,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
                     }
                 }
-            }
-        });
+
+                // Unique on (user_id, command), so users who already have the
+                // row - everyone from before the May cutoff - are left alone.
+                $seeded += DB::table('bot_builtins')->insertOrIgnore($rows);
+            });
 
         Log::info('Backfilled followage/accountage builtins.', [
             'seeded' => $seeded,
@@ -81,8 +98,8 @@ return new class extends Migration
      */
     private function userHasOwnCommand(int $userId, string $command): bool
     {
-        foreach ([BotCommand::class, BotAlias::class, RecipeChatTrigger::class, ListAppender::class, ListMetaCommand::class] as $model) {
-            if ($model::where('user_id', $userId)->where('command', $command)->exists()) {
+        foreach (self::USER_OWNED_TABLES as $table) {
+            if (DB::table($table)->where('user_id', $userId)->where('command', $command)->exists()) {
                 return true;
             }
         }

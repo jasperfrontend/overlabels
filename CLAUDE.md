@@ -189,9 +189,21 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   of `bot.js`). Tests stub `global.fetch` rather than mocking `overlabelsApi.js`, because that is
   the single door everything outbound goes through - keep new tests on that pattern, and import
   `test/setup.js` FIRST in every test file or `config.js` throws on missing env at import time.
-- Migrations and past changelog entries were deliberately NOT rewritten by the rename. They record what
-  was true when they ran. Same for the dated design specs in `resources/help/reference/*.md` (depth 0,
+- Past changelog entries were deliberately NOT rewritten by the rename. They record what was true when
+  they were written. Same for the dated design specs in `resources/help/reference/*.md` (depth 0,
   not served - `HelpReferenceService` scans `depth == 1` only).
+- **Migrations must not reference Eloquent models. Use `DB::table('literal_name')`.** A migration is
+  dated but its model references are not: `App\Models\X` resolves against today's codebase, so a
+  rename silently repoints an old migration at a different table and a moved method makes it fatal.
+  All six bot seed migrations had both problems after the rename above, and their `down()` deletes
+  would have taken real user rows with them (swept Aug 17th 2026 - that changelog entry is the worked
+  example). Freeze any seeded list as a literal in the file too, or a migration dated in April will
+  seed whatever the constant grew into by August.
+- **A new builtin bot command is two edits, always.** `BotBuiltin::DEFAULTS` for everyone who opts in
+  from now on, and a backfill migration for everyone who already has. Ship one without the other and
+  the command works for exactly one of those two groups and is silent for the other - no error
+  anywhere, because the bot's dispatcher drops commands missing from the map by design. This has
+  happened twice (`!s` in April, `!followage` / `!accountage` in May).
 
 ## External Integrations (Implemented Mar 2026)
 
