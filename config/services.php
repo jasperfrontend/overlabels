@@ -133,8 +133,9 @@ return [
         // Kaylin - "the voice of Overlabels". Single voice for all TTS.
         'voice_id' => env('ELEVENLABS_VOICE_ID'),
         // Flash 2.5 is the lowest-latency model and good enough quality for
-        // ~3s alert lines. Bump to eleven_multilingual_v2 if quality bites.
-        'model_id' => env('ELEVENLABS_MODEL_ID', 'eleven_flash_v2_5'),
+        // ~3s alert lines. Bumped to eleven_multilingual_v2 because quality was bad on the flash model,
+        // especially when pronouncing numbers.
+        'model_id' => env('ELEVENLABS_MODEL_ID', 'eleven_multilingual_v2'),
     ],
 
     // Sqids encoding for the public map slug. Encodes a Twitch ID into an

@@ -206,7 +206,7 @@ env:
     # secret per se but pinned here so a key swap can't accidentally change
     # the voice. Model defaults inside services.php; pinned here for clarity.
     ELEVENLABS_VOICE_ID: AYQJi30bKdh5rHiPdUGX
-    ELEVENLABS_MODEL_ID: eleven_flash_v2_5
+    ELEVENLABS_MODEL_ID: eleven_multilingual_v2
 
     # Cloudflare R2 target for the daily `backup:database` dump. Neither of
     # these is a credential; the account id and keys are secrets below. The
