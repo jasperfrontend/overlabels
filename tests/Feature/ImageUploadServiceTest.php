@@ -110,6 +110,49 @@ test('kit thumbnails land in their own folder', function () {
         ->and($upload->height)->toBe(1440);
 });
 
+/*
+ * Pixel ceiling.
+ *
+ * These drive the predicate with integers rather than generating fixtures. A
+ * test that actually built an 8000x5000 image would allocate the exact 160 MB
+ * bitmap the ceiling exists to prevent, so the fixture would be the bug.
+ */
+test('exceedsPixelLimit refuses images too large to decode', function () {
+    // Measured: 5200x3900 (20.3 MP, a 4.51 MB JPEG - under half the file cap)
+    // exhausted a 128M memory_limit with the framework booted.
+    expect(ImageUploadService::exceedsPixelLimit(8000, 5000))->toBeTrue()
+        ->and(ImageUploadService::exceedsPixelLimit(10000, 8000))->toBeTrue();
+});
+
+test('exceedsPixelLimit allows an 8K screenshot, which is the largest real input', function () {
+    // 7680x4320 = 33.2 MP. If this ever starts failing, the ceiling has been
+    // lowered below the point of the feature.
+    expect(ImageUploadService::exceedsPixelLimit(7680, 4320))->toBeFalse();
+});
+
+test('exceedsPixelLimit allows the sizes people actually upload', function () {
+    expect(ImageUploadService::exceedsPixelLimit(1920, 1080))->toBeFalse()  // 1080p
+        ->and(ImageUploadService::exceedsPixelLimit(2560, 1440))->toBeFalse()  // the recommended kit thumbnail
+        ->and(ImageUploadService::exceedsPixelLimit(3840, 2160))->toBeFalse()  // 4K
+        ->and(ImageUploadService::exceedsPixelLimit(5120, 2880))->toBeFalse(); // 5K
+});
+
+test('the pixel ceiling sits exactly on MAX_MEGAPIXELS', function () {
+    $limit = ImageUploadService::MAX_MEGAPIXELS * 1_000_000;
+
+    expect(ImageUploadService::exceedsPixelLimit($limit, 1))->toBeFalse()
+        ->and(ImageUploadService::exceedsPixelLimit($limit + 1, 1))->toBeTrue();
+});
+
+test('the memory_limit that makes the ceiling safe is actually configured', function () {
+    // The ceiling and the memory limit are a pair: 36 MP peaks at ~196 MB, so
+    // shipping the ceiling without the 256M would restore the fatal. This
+    // reads the ini we ship rather than trusting a comment.
+    $ini = file_get_contents(base_path('docker/php-uploads.ini'));
+
+    expect($ini)->toMatch('/^\s*memory_limit\s*=\s*256M\s*$/m');
+});
+
 test('claim stamps claimed_at on a matching unclaimed upload', function () {
     $user = makeOwner();
     $upload = ImageUpload::create([

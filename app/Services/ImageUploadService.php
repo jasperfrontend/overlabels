@@ -29,6 +29,25 @@ class ImageUploadService
     public const int MIN_HEIGHT = 400;
 
     /**
+     * Maximum total pixels, in megapixels.
+     *
+     * A FILE size limit does not bound decoding cost, and that gap is not
+     * theoretical: GD holds an uncompressed bitmap of width * height * 4
+     * bytes regardless of how well the source compressed, so a 4.51 MB JPEG
+     * at 5200x3900 needed ~150 MB and killed the request with "Allowed memory
+     * size exhausted" - under half the 10 MB file cap.
+     *
+     * 36 MP is chosen to clear an 8K screenshot (7680x4320 = 33.2 MP), which
+     * is the largest input anyone could legitimately be capturing. Measured
+     * with the framework booted, 36.2 MP peaks at 196 MB, leaving ~60 MB under
+     * the 256M memory_limit set in docker/php-uploads.ini.
+     *
+     * THAT PAIRING IS LOAD-BEARING. Raising this without raising memory_limit
+     * puts the fatal straight back.
+     */
+    public const int MAX_MEGAPIXELS = 36;
+
+    /**
      * The disk everything here reads and writes. Named rather than inlined
      * so the migrate-from-Cloudinary command and the tests agree with the
      * service about where images live.
@@ -80,6 +99,22 @@ class ImageUploadService
         if ($width < self::MIN_WIDTH || $height < self::MIN_HEIGHT) {
             throw ValidationException::withMessages([
                 'image' => 'Image must be at least '.self::MIN_WIDTH.'x'.self::MIN_HEIGHT.'px.',
+            ]);
+        }
+
+        // Checked here, against the header getimagesize() already read, so an
+        // image too big to decode is refused BEFORE anything tries to decode
+        // it. Doing this after handing the path to store() would be the same
+        // fatal it exists to prevent.
+        if (self::exceedsPixelLimit($width, $height)) {
+            throw ValidationException::withMessages([
+                'image' => sprintf(
+                    'Image is too large to process at %dx%dpx (%.1f megapixels). The limit is %d megapixels.',
+                    $width,
+                    $height,
+                    ($width * $height) / 1_000_000,
+                    self::MAX_MEGAPIXELS,
+                ),
             ]);
         }
 
@@ -149,6 +184,19 @@ class ImageUploadService
             'width' => $image->width(),
             'height' => $image->height(),
         ];
+    }
+
+    /**
+     * Whether an image of these dimensions is too big to decode safely.
+     *
+     * Split out as its own predicate so it can be tested against arbitrary
+     * dimensions without generating the fixture: a test that wanted to prove
+     * 8000x5000 is refused would otherwise have to allocate the very 160 MB
+     * bitmap this check exists to avoid.
+     */
+    public static function exceedsPixelLimit(int $width, int $height): bool
+    {
+        return $width * $height > self::MAX_MEGAPIXELS * 1_000_000;
     }
 
     /**
