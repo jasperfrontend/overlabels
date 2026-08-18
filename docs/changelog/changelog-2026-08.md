@@ -2,6 +2,17 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 18th, 2026 - fix(api): omitting an optional field 500'd two endpoints
+
+`nullable` means the key may be **absent**, not merely null. Laravel's `validated()` only returns keys that were actually present in the request, so reading `$validated['optional']` unconditionally throws `Undefined array key` and the request 500s. Two controllers had exactly that shape.
+
+- **`KitController::store()` and `update()` read `$validated['description']`** with the rule `nullable|string|max:1000`. `POST /kits` or `PUT /kits/{kit}` without a `description` field crashed.
+- **`AdminUpdateController::store()` and `update()` read `$data['slug']`** the same way. `?:` does not help here - unlike `??` it still evaluates its left operand, so a missing key throws before the fallback is ever reached. The neighbouring lines in that same method already do `$data['tags'] ?? null`, `$data['excerpt'] ?? null` and `$data['compiled_css'] ?? null`, so `slug` was simply the one that got missed.
+- **Both were unreachable through the UI, which is why they lasted.** Every Vue form initialises its fields (`useForm({ description: '', ... })`) and therefore always sends the key, so only a direct API call could trigger it. That is the sort of bug that stays broken for a year because no browser ever does the thing that breaks it.
+- **Semantics were a choice, not an accident.** An omitted kit description now means "no description": these are `PUT` endpoints where every other field is required, so the payload is the complete state. An omitted update slug instead keeps the existing one, because updates are linkable and indexed and a rename must never silently move a URL.
+- **Found by sweeping for the pattern rather than fixing the one report.** A scan of every `nullable`/`sometimes` rule in `app/` against unguarded `$validated[...]` reads turned up 23 candidates; all but these four were properly guarded by an enclosing `! empty()`, `array_key_exists()` or `??`.
+- **Six tests, four of them verified to fail** against the old code. The two that pass either way are the happy-path guards asserting a supplied value is still honoured.
+
 ## August 18th, 2026 - fix(security): nothing at all rate limited template creation
 
 Found while answering an idle question about the slug generator: what happens if someone exhausts the slug space? The answer turned out not to be about slugs. **Creating a template was limited by nothing.** `templates.store` and `templates.fork` carried exactly two middlewares, `web` and `RedirectIfUnauthenticated`, and there is no global throttle on the `web` group. The only guard was being logged in.

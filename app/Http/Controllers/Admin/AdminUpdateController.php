@@ -48,7 +48,7 @@ class AdminUpdateController extends Controller
 
         $update = Update::create([
             'title' => $data['title'],
-            'slug' => Update::makeUniqueSlug($data['slug'] ?: $data['title']),
+            'slug' => Update::makeUniqueSlug(($data['slug'] ?? '') ?: $data['title']),
             'tags' => $this->normalizeTags($data['tags'] ?? null),
             'excerpt' => $data['excerpt'] ?? null,
             'body' => $data['body'],
@@ -77,7 +77,7 @@ class AdminUpdateController extends Controller
     {
         $data = $this->validated($request, $update->id);
 
-        $newSlug = $data['slug'] ?: $update->slug;
+        $newSlug = ($data['slug'] ?? '') ?: $update->slug;
         if ($newSlug !== $update->slug) {
             $newSlug = Update::makeUniqueSlug($newSlug, $update->id);
         }
