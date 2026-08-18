@@ -205,11 +205,19 @@ SELECT count(*) FROM image_uploads     WHERE url            LIKE '%cloudinary%';
   value is. A frontend `onerror` retry would also hide it, but that treats the
   symptom and puts a retry loop behind every image on the site.
 
-  **Known unknown:** the *edge* negative TTL was never measured. It was still
-  `HIT` with `Age` climbing at 134 seconds and the probe was stopped there. The
-  header value of 14400 is what browsers are told; Cloudflare's own edge TTL is
-  a separate number and may be much shorter. Nobody needs it unless this
-  actually starts affecting people.
+  **The edge and the browser get very different TTLs, and that is the point.**
+  Measured by polling a key that never existed and watching `Age`:
+
+  ```
+  t=165s  HIT  age=164   <- Age tracking wall-clock, entry still alive
+  t=206s  HIT  age=20    <- reset: entry expired and was recreated ~t=186s
+  ```
+
+  So the **edge** negative TTL is roughly **180 seconds**, matching
+  Cloudflare's documented default for 404s. The edge heals itself in three
+  minutes. The `max-age=14400` in the header is what the **browser** is told,
+  and four hours against three minutes is the entire reason this entry
+  attributes the problem to the client.
 
   **Deliberately not acted on** (2026-08-18). One occurrence, self-healed, on a
   platform with three users. Recorded so the next person recognises it in a
