@@ -125,12 +125,19 @@ COPY docker/frankenphp.Caddyfile /etc/caddy/Caddyfile
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 RUN chmod +x /usr/local/bin/docker-entrypoint
 
-# Raise PHP upload limits to match Laravel's max:10240 (10MB) validation
-# on /cloudinary/upload. The frankenphp base image inherits PHP's stock
-# production defaults (upload_max_filesize=2M, post_max_size=8M), which
-# would reject clipboard-pasted screenshots at the SAPI level before
-# Laravel could surface a useful error.
+# Raise PHP upload limits to match Laravel's max:10240 (10MB) validation on
+# /images/upload. Without this a clipboard-pasted screenshot gets rejected at
+# the SAPI level, before Laravel can surface a useful error.
+#
+# Note what the base image actually gives us, because it is easy to get wrong
+# and we did: frankenphp ships php.ini-production and php.ini-development in
+# $PHP_INI_DIR but activates NEITHER. So PHP runs on its compiled-in defaults,
+# not on "production defaults". The upload numbers coincide (2M/8M either way),
+# which is what makes the assumption survive; display_errors does not, and that
+# is why zz-errors.ini below has to exist. Do not delete either file on the
+# theory that the base image already handles it.
 COPY docker/php-uploads.ini $PHP_INI_DIR/conf.d/zz-uploads.ini
+COPY docker/php-errors.ini $PHP_INI_DIR/conf.d/zz-errors.ini
 
 EXPOSE 80 443 443/udp
 
