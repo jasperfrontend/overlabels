@@ -81,7 +81,7 @@ class KitController extends Controller
         $kit = new Kit;
         $kit->owner_id = $request->user()->id;
         $kit->title = $validated['title'];
-        $kit->description = $validated['description'];
+        $kit->description = $validated['description'] ?? null;
         $kit->is_public = $validated['is_public'];
 
         if ($request->filled('thumbnail_url')) {
@@ -202,7 +202,7 @@ class KitController extends Controller
         }
 
         $kit->title = $validated['title'];
-        $kit->description = $validated['description'];
+        $kit->description = $validated['description'] ?? null;
         $kit->is_public = $validated['is_public'];
 
         if ($request->filled('thumbnail_url')) {
