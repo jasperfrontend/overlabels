@@ -57,10 +57,10 @@ class FunSlugGenerationService
     private array $isles = [
         'crete', 'corfu', 'malta', 'naxos', 'paros', 'milos', 'capri', 'elba', 'skye', 'iona',
         'mull', 'arran', 'islay', 'faroe', 'sylt', 'texel', 'aruba', 'saba', 'nevis', 'gozo',
-        'hvar', 'brac', 'samos', 'chios', 'symi', 'patmos', 'ithaca', 'lemnos', 'thira', 'oland',
-        'rhodes', 'ischia', 'sicily', 'azores', 'orkney', 'jersey', 'gotland', 'ameland', 'madeira', 'corsica',
-        'lombok', 'flores', 'palawan', 'okinawa', 'tahiti', 'moorea', 'kauai', 'tobago', 'bonaire', 'curacao',
-        'sardinia', 'shetland', 'guernsey', 'vlieland', 'zanzibar', 'langkawi', 'ikaria', 'lofoten', 'korcula', 'penang',
+        'hvar', 'atiu', 'samos', 'chios', 'mauke', 'patmos', 'ithaca', 'lemnos', 'thira', 'nassau',
+        'rhodes', 'manuae', 'sicily', 'azores', 'orkney', 'jersey', 'gotland', 'mangaia', 'madeira', 'mitiaro',
+        'lombok', 'takutea', 'palawan', 'okinawa', 'tahiti', 'moorea', 'penrhyn', 'tobago', 'bonaire', 'rarotonga',
+        'sardinia', 'aitutaki', 'guernsey', 'manihiki', 'pukapuka', 'suwarrow', 'rakahanga', 'lofoten', 'tongareva', 'penang',
     ];
 
     /**
