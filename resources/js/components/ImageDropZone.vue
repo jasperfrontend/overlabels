@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { ImageIcon, Trash2, Upload, Loader2 } from '@lucide/vue';
+import { ACCEPT_ATTRIBUTE, parseJsonSafely, uploadErrorMessage, validateImageFile } from '@/utils/imageUpload';
 
 const props = withDefaults(
   defineProps<{
@@ -30,6 +31,15 @@ function getCsrfToken(): string {
 }
 
 async function uploadImage(file: File) {
+  // Check before sending, not after. The server re-checks everything, but
+  // finding out a 31.6 MB bitmap was never acceptable should not cost a 31.6 MB
+  // upload first.
+  const problem = validateImageFile(file);
+  if (problem) {
+    emit('error', problem);
+    return;
+  }
+
   isUploading.value = true;
   emit('uploading', true);
 
@@ -49,16 +59,28 @@ async function uploadImage(file: File) {
       },
     });
 
+    // Never call response.json() directly. A body can be non-JSON even on a
+    // response that is otherwise fine - an HTML error page, or valid JSON with
+    // a PHP startup warning glued to the front of it. Letting the parser throw
+    // put "JSON.parse: unexpected character at line 1 column 1" in front of a
+    // user whose actual problem was an oversized file.
+    const payload = await parseJsonSafely(response);
+
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      const msg = data?.error ?? data?.errors?.image?.[0] ?? data?.errors?.kind?.[0] ?? data?.message ?? `Upload failed: ${response.statusText}`;
-      throw new Error(msg);
+      throw new Error(uploadErrorMessage(response.status, response.statusText, payload));
     }
 
-    const data = await response.json();
-    emit('update:modelValue', data.url);
-  } catch (err: any) {
-    emit('error', err.message || 'Upload failed');
+    const url = (payload as { url?: string } | null)?.url;
+    if (!url) {
+      throw new Error('The upload finished but the server sent back something unreadable. Try again.');
+    }
+
+    emit('update:modelValue', url);
+  } catch (err: unknown) {
+    // A rejected fetch (offline, connection dropped mid-upload) lands here too,
+    // and its native message is not something to show a streamer.
+    const message = err instanceof Error && err.message ? err.message : 'Upload failed. Check your connection and try again.';
+    emit('error', message);
   } finally {
     isUploading.value = false;
     emit('uploading', false);
@@ -92,9 +114,12 @@ function handlePaste(event: ClipboardEvent) {
 function handleDrop(event: DragEvent) {
   isDragging.value = false;
   const file = event.dataTransfer?.files[0];
-  if (file && file.type.startsWith('image/')) {
-    uploadImage(file);
-  }
+  if (!file) return;
+
+  // Anything dropped goes through uploadImage, which speaks up about what is
+  // wrong with it. Silently ignoring a dropped PDF looks like a broken drop
+  // zone rather than a refused file.
+  uploadImage(file);
 }
 
 function handleFileSelect(event: Event) {
@@ -163,7 +188,7 @@ function handleFileSelect(event: Event) {
           <Upload class="mr-1.5 h-3.5 w-3.5" />
           Browse files
         </button>
-        <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
+        <input ref="fileInput" type="file" :accept="ACCEPT_ATTRIBUTE" class="hidden" @change="handleFileSelect" />
       </template>
     </div>
   </div>
