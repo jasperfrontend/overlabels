@@ -104,6 +104,52 @@ return [
         ],
 
         /*
+         * Cloudflare R2, user-facing image storage: template screenshots and
+         * kit thumbnails. This is a SEPARATE bucket from the `r2` disk above
+         * on purpose - that one is private backups, this one is world-readable
+         * behind images.overlabels.com. Never point them at the same bucket.
+         *
+         * `url` is what gets persisted into overlay_templates.screenshot_url
+         * and kits.thumbnail, so changing it orphans every existing image
+         * until the migrate command is re-run. It has no trailing slash.
+         *
+         * R2 buckets are not public by default: the bucket needs a custom
+         * domain attached in the Cloudflare dashboard, which is what serves
+         * these objects. See docs/deploy/image-storage.md.
+         */
+        'images' => [
+            'driver' => 's3',
+            'key' => env('R2_IMAGES_ACCESS_KEY_ID'),
+            'secret' => env('R2_IMAGES_SECRET_ACCESS_KEY'),
+            // R2 has no regions; the S3 SDK still demands the key be present.
+            'region' => 'auto',
+            'bucket' => env('R2_IMAGES_BUCKET', 'overlabels-images'),
+            'url' => rtrim(env('R2_IMAGES_URL', 'https://images.overlabels.com'), '/'),
+            'endpoint' => env('R2_IMAGES_ENDPOINT') ?: sprintf(
+                'https://%s.%s.r2.cloudflarestorage.com',
+                env('R2_IMAGES_ACCOUNT_ID', env('R2_ACCOUNT_ID')),
+                env('R2_IMAGES_JURISDICTION', 'eu'),
+            ),
+            'use_path_style_endpoint' => true,
+            /*
+             * Unlike the backup disks this one is NOT `throw => true`. An
+             * upload failure here is a user-facing 500 that the controller
+             * already catches and turns into "Upload failed, please try
+             * again"; a thrown exception mid-request would bypass that and
+             * lose the friendly message.
+             */
+            'throw' => false,
+            'report' => false,
+            /*
+             * Same reasoning as the `r2` backup disk: aws-sdk-php >= 3.337
+             * sends CRC32 integrity trailers by default and R2's S3
+             * compatibility layer has been inconsistent about accepting them.
+             */
+            'request_checksum_calculation' => 'when_required',
+            'response_checksum_validation' => 'when_required',
+        ],
+
+        /*
          * Scaleway Object Storage, the second off-site copy of the daily
          * dump. This is the "2 different providers" half of 3-2-1: R2 above is
          * the same object either way, but a Cloudflare account suspension, a

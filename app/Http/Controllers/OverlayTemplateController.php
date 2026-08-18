@@ -11,8 +11,8 @@ use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Models\UserFreesoundSound;
-use App\Services\CloudinaryUploadService;
 use App\Services\HtmlSanitizationService;
+use App\Services\ImageUploadService;
 use App\Services\OverlayShareService;
 use App\Services\StreamSessionService;
 use App\Services\TemplateDataMapperService;
@@ -366,7 +366,7 @@ class OverlayTemplateController extends Controller
     /**
      * Remove the specified template from storage
      */
-    public function destroy(Request $request, OverlayTemplate $template, CloudinaryUploadService $cloudinary)
+    public function destroy(Request $request, OverlayTemplate $template, ImageUploadService $images)
     {
         // Check ownership
         if ($template->owner_id !== $request->user()->id) {
@@ -388,9 +388,9 @@ class OverlayTemplateController extends Controller
 
         $template->delete();
 
-        // Delete the Cloudinary asset only if no other template/kit still
+        // Delete the stored image only if no other template/kit still
         // references it (forks share screenshot_url via replicate()).
-        $cloudinary->deleteByUrl($screenshotUrl);
+        $images->deleteByUrl($screenshotUrl);
 
         // For API/JSON requests
         if ($request->wantsJson() && ! $request->header('X-Inertia')) {
@@ -410,12 +410,12 @@ class OverlayTemplateController extends Controller
      * (which don't execute JS and never see Inertia's client-side Head) get
      * per-overlay OpenGraph + Twitter card metadata in the initial HTML.
      *
-     * Screenshots are served with the "Powered by Overlabels" watermark
-     * applied via Cloudinary URL transformation - the watermark lives in the
-     * delivery layer only, so the owner's edit screen still sees their raw
-     * upload.
+     * Screenshots are served exactly as uploaded. The old "Powered by
+     * Overlabels" watermark was a Cloudinary delivery-time URL transformation
+     * and did not survive the move to R2, which is plain object storage with
+     * no transformation layer.
      */
-    public function servePublic(string $slug, CloudinaryUploadService $cloudinary, OverlayShareService $share)
+    public function servePublic(string $slug, OverlayShareService $share)
     {
         $template = OverlayTemplate::where('slug', $slug)
             ->with('owner:id,name,avatar')
@@ -437,10 +437,9 @@ class OverlayTemplateController extends Controller
         $description = $template->description
             ?: "A Twitch {$typeLabel} by {$ownerName} on Overlabels. View the source, copy it to your account, and customise it for your stream.";
 
-        $fallbackImage = 'https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg';
+        $fallbackImage = asset('ogimage.jpg');
         $hasScreenshot = ! empty($template->screenshot_url);
-        $brandedScreenshot = $hasScreenshot ? $cloudinary->brandedUrl($template->screenshot_url) : null;
-        $image = $brandedScreenshot ?? $fallbackImage;
+        $image = $template->screenshot_url ?: $fallbackImage;
 
         view()->share('og', [
             'title' => "{$template->name} - Overlabels {$typeLabel} by {$ownerName}",
@@ -470,7 +469,7 @@ class OverlayTemplateController extends Controller
                 'head' => $template->head,
                 'html' => $template->html,
                 'css' => $template->css,
-                'screenshot_url' => $brandedScreenshot,
+                'screenshot_url' => $template->screenshot_url,
                 'view_count' => $template->view_count,
                 'fork_count' => $template->fork_count,
                 'created_at' => $template->created_at,
@@ -1010,7 +1009,7 @@ class OverlayTemplateController extends Controller
     /**
      * Store new template
      */
-    public function store(Request $request, CloudinaryUploadService $cloudinary)
+    public function store(Request $request, ImageUploadService $images)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -1039,7 +1038,7 @@ class OverlayTemplateController extends Controller
         $template->save();
 
         if (! empty($validated['screenshot_url'])) {
-            $cloudinary->claim($validated['screenshot_url']);
+            $images->claim($validated['screenshot_url']);
         }
 
         // For Inertia requests, redirect to the show page
@@ -1340,7 +1339,7 @@ class OverlayTemplateController extends Controller
     /**
      * Update screenshot URL for a template
      */
-    public function updateScreenshot(Request $request, OverlayTemplate $template, CloudinaryUploadService $cloudinary): RedirectResponse
+    public function updateScreenshot(Request $request, OverlayTemplate $template, ImageUploadService $images): RedirectResponse
     {
         abort_unless($template->owner_id === auth()->id(), 403);
 
@@ -1353,13 +1352,13 @@ class OverlayTemplateController extends Controller
 
         if ($oldUrl !== $newUrl) {
             // Delete the previous asset (guarded against forks that share the URL).
-            $cloudinary->deleteByUrl($oldUrl, excludeTemplateId: $template->id);
+            $images->deleteByUrl($oldUrl, excludeTemplateId: $template->id);
         }
 
         $template->update(['screenshot_url' => $newUrl]);
 
         // Mark the new upload as claimed so the orphan sweeper leaves it alone.
-        $cloudinary->claim($newUrl);
+        $images->claim($newUrl);
 
         return back()->with('message', 'Screenshot updated.')->with('type', 'success');
     }

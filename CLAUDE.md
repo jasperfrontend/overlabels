@@ -285,6 +285,19 @@ counts them ("five donation services", "five pipes") lives in `resources/views/w
 - The `r2` disk is the only one with `throw => true` (a silent false would report a failed upload as a good backup) and pins `request_checksum_calculation`/`response_checksum_validation` to `when_required`, because aws-sdk-php >= 3.337 defaults to CRC32 trailers that R2 has been inconsistent about accepting.
 - Adding any Kamal secret means THREE places: the `env:` block in `.github/workflows/deploy.yml`, the variable list in the loop that writes `.kamal/secrets`, and `env.secret:` in `config/deploy.yml`. GitHub secrets are the source of truth; `.kamal/secrets` is regenerated every deploy. The local `.kamal/secrets` is drifted and unused.
 
+## Image Storage on R2 (moved off Cloudinary Aug 2026)
+
+- Template screenshots and kit thumbnails live on the **`images`** disk (Cloudflare R2 bucket `overlabels-images`, EU), served from `https://images.overlabels.com`. `POST /images/upload` -> `ImageUploadController` -> `ImageUploadService`. Rows in `image_uploads` (was `cloudinary_uploads`; `public_id` -> `path`, `secure_url` -> `url`). See `docs/deploy/image-storage.md`.
+- **`images` is a SEPARATE bucket and a SEPARATE API token from the `r2` backup disk.** The images token is used on the web request path; a leak of it must not reach `overlabels-backups`. Do not merge the disks or reuse the credentials.
+- Cloudinary's named upload presets became Intervention Image at upload time: crop to 16:9, WebP q82, metadata stripped. `template_screenshot` -> 1280x720, `kit_thumbnail` -> 2560x1440. **`coverDown`, never `cover`** - a small upload is cropped to the ratio but never upscaled to the ceiling.
+- **`pathForUrl()` returning null for foreign URLs is load-bearing.** A row still holding a Cloudinary URL must never resolve to a key in our bucket, or `deleteByUrl` deletes whatever collides. It also rejects traversal and query strings. Test-pinned both ways.
+- **There is no watermark and R2 cannot bring it back as it was.** `brandedUrl()` was a Cloudinary delivery-time URL transformation; R2 is plain object storage with no transformation layer. Reinstating it means baking a second derivative at upload. Deliberately dropped, not overlooked - do not re-pitch a URL-transform watermark.
+- `php artisan images:migrate-from-cloudinary` reads the **live Cloudinary URLs in the DB**, NOT `docs/private/Cloudinary_Archive_*.zip`. That export is flat, prefix-stripped and `-1`-suffixed on collisions, so it cannot be mapped back to a `public_id`. Re-runnable, commits per URL. Must run before the Cloudinary account is cancelled.
+- Objects are immutable: keys carry a ULID and are written `Cache-Control: public, max-age=31536000, immutable`. A replaced image is a new key; the old one goes when `deleteByUrl` finds nothing referencing it.
+- The `images` disk is `throw => false` unlike the backup disks - the controller catches and renders a friendly message, and a thrown exception would bypass it.
+- **`R2_IMAGES_URL` is persisted into every stored URL, not derived at render.** Changing it orphans every existing image until the rows are rewritten.
+- `images.overlabels.com` requires the **whole overlabels.com zone on Cloudflare DNS** (records grey-clouded; only `images` proxied). Subdomain zones are Enterprise, partial CNAME setup is Business, `r2.dev` is rate-limited and dev-only. There is no free way to attach just the subdomain.
+
 ## Admin Panel (Implemented Feb 2026)
 
 - `role` varchar + `is_system_user` bool + `softDeletes` on `users` table

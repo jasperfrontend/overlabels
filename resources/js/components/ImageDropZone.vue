@@ -29,7 +29,7 @@ function getCsrfToken(): string {
   return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? '';
 }
 
-async function uploadToCloudinary(file: File) {
+async function uploadImage(file: File) {
   isUploading.value = true;
   emit('uploading', true);
 
@@ -38,7 +38,7 @@ async function uploadToCloudinary(file: File) {
     formData.append('image', file);
     formData.append('kind', props.kind);
 
-    const response = await fetch('/cloudinary/upload', {
+    const response = await fetch('/images/upload', {
       method: 'POST',
       body: formData,
       credentials: 'same-origin',
@@ -85,7 +85,7 @@ function handlePaste(event: ClipboardEvent) {
   const file = extractImageFile(items);
   if (file) {
     event.preventDefault();
-    uploadToCloudinary(file);
+    uploadImage(file);
   }
 }
 
@@ -93,7 +93,7 @@ function handleDrop(event: DragEvent) {
   isDragging.value = false;
   const file = event.dataTransfer?.files[0];
   if (file && file.type.startsWith('image/')) {
-    uploadToCloudinary(file);
+    uploadImage(file);
   }
 }
 
@@ -101,7 +101,7 @@ function handleFileSelect(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   if (file) {
-    uploadToCloudinary(file);
+    uploadImage(file);
   }
   input.value = '';
 }

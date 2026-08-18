@@ -21,7 +21,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const ogImage = 'https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg';
+const ogImage = '/ogimage.jpg';
 const ogImageAlt = 'Overlabels - build Twitch overlays with HTML, CSS, and live data';
 </script>
 

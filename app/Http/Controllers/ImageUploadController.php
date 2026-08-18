@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CloudinaryUpload;
-use App\Services\CloudinaryUploadService;
+use App\Models\ImageUpload;
+use App\Services\ImageUploadService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
-class CloudinaryUploadController extends Controller
+class ImageUploadController extends Controller
 {
-    public function __construct(private readonly CloudinaryUploadService $service) {}
+    public function __construct(private readonly ImageUploadService $service) {}
 
     public function upload(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'image' => ['required', 'image', 'mimes:jpeg,jpg,png,webp,gif', 'max:10240'],
-            'kind' => ['required', 'in:'.CloudinaryUpload::KIND_TEMPLATE_SCREENSHOT.','.CloudinaryUpload::KIND_KIT_THUMBNAIL],
+            'kind' => ['required', 'in:'.ImageUpload::KIND_TEMPLATE_SCREENSHOT.','.ImageUpload::KIND_KIT_THUMBNAIL],
         ]);
 
         try {
@@ -34,7 +34,7 @@ class CloudinaryUploadController extends Controller
             // the generic 500 fallback below.
             throw $e;
         } catch (Exception $e) {
-            Log::error('Cloudinary upload failed', [
+            Log::error('Image upload failed', [
                 'user_id' => $request->user()?->id,
                 'kind' => $validated['kind'] ?? null,
                 'error' => $e->getMessage(),
@@ -46,7 +46,7 @@ class CloudinaryUploadController extends Controller
         }
 
         return response()->json([
-            'url' => $upload->secure_url,
+            'url' => $upload->url,
             'width' => $upload->width,
             'height' => $upload->height,
         ]);

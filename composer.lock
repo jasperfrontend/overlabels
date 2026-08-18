@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cbdeeb7fb7fec53b69f9f4f94b0f3511",
+    "content-hash": "a944c747fd820aa7f33a75bb09f4f601",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -284,130 +284,6 @@
                 }
             ],
             "time": "2024-02-09T16:56:22+00:00"
-        },
-        {
-            "name": "cloudinary/cloudinary_php",
-            "version": "3.1.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/cloudinary/cloudinary_php.git",
-                "reference": "4b989f4d69f933afbe9cf0776234a9f46fb71587"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/cloudinary/cloudinary_php/zipball/4b989f4d69f933afbe9cf0776234a9f46fb71587",
-                "reference": "4b989f4d69f933afbe9cf0776234a9f46fb71587",
-                "shasum": ""
-            },
-            "require": {
-                "cloudinary/transformation-builder-sdk": "^2",
-                "ext-json": "*",
-                "guzzlehttp/guzzle": "^7.4.5",
-                "guzzlehttp/promises": "^1.5.3|^2.0",
-                "guzzlehttp/psr7": "^2.7",
-                "monolog/monolog": "^2|^3",
-                "php": ">=8.0.0",
-                "psr/log": "^2|^3"
-            },
-            "require-dev": {
-                "ext-dom": "*",
-                "ext-libxml": "*",
-                "ext-zip": "*",
-                "friendsofphp/php-cs-fixer": "*",
-                "phpmd/phpmd": "*",
-                "squizlabs/php_codesniffer": "*",
-                "symfony/phpunit-bridge": "^7.2"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "src"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Cloudinary",
-                    "homepage": "https://github.com/cloudinary/cloudinary_php/graphs/contributors"
-                }
-            ],
-            "description": "Cloudinary PHP SDK",
-            "homepage": "https://github.com/cloudinary/cloudinary_php",
-            "keywords": [
-                "cdn",
-                "cloud",
-                "cloudinary",
-                "image management",
-                "sdk"
-            ],
-            "support": {
-                "email": "info@cloudinary.com",
-                "issues": "https://github.com/cloudinary/cloudinary_php/issues",
-                "source": "https://github.com/cloudinary/cloudinary_php/tree/3.1.3"
-            },
-            "time": "2026-04-26T16:04:32+00:00"
-        },
-        {
-            "name": "cloudinary/transformation-builder-sdk",
-            "version": "2.1.5",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/cloudinary/php-transformation-builder-sdk.git",
-                "reference": "e8de59409e8e3c6abc553d1713f82d1dc71ce212"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/cloudinary/php-transformation-builder-sdk/zipball/e8de59409e8e3c6abc553d1713f82d1dc71ce212",
-                "reference": "e8de59409e8e3c6abc553d1713f82d1dc71ce212",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "php": ">=8.0.0"
-            },
-            "require-dev": {
-                "ext-dom": "*",
-                "ext-libxml": "*",
-                "ext-zip": "*",
-                "friendsofphp/php-cs-fixer": "*",
-                "phpmd/phpmd": "*",
-                "squizlabs/php_codesniffer": "*",
-                "symfony/phpunit-bridge": "^7.2"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "src"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Cloudinary",
-                    "homepage": "https://github.com/cloudinary/php-transformation-builder-sdk/graphs/contributors"
-                }
-            ],
-            "description": "Cloudinary PHP Transformation Builder SDK",
-            "homepage": "https://github.com/cloudinary/php-transformation-builder-sdk",
-            "keywords": [
-                "cdn",
-                "cloud",
-                "cloudinary",
-                "image management",
-                "sdk"
-            ],
-            "support": {
-                "email": "info@cloudinary.com",
-                "issues": "https://github.com/cloudinary/php-transformation-builder-sdk/issues",
-                "source": "https://github.com/cloudinary/php-transformation-builder-sdk/tree/2.1.5"
-            },
-            "time": "2026-04-29T12:17:58+00:00"
         },
         {
             "name": "clue/redis-protocol",

@@ -41,7 +41,7 @@
     @php
         $resolvedOgImage = !empty($ogImage)
             ? (str_starts_with($ogImage, 'http') ? $ogImage : url($ogImage))
-            : 'https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg';
+            : asset('ogimage.jpg');
     @endphp
 
     <meta property="og:type" content="website" />

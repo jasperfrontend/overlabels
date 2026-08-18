@@ -4,7 +4,6 @@ use App\Console\Commands\GamejamDebug;
 use App\Events\GameStateChanged;
 use App\Events\UserRegistered;
 use App\Http\Controllers\AlertMuteController;
-use App\Http\Controllers\CloudinaryUploadController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventDeletionController;
 use App\Http\Controllers\EventTemplateMappingController;
@@ -14,6 +13,7 @@ use App\Http\Controllers\GamejamAdminController;
 use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HelpReferenceController;
+use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\IntegrationSuggestionController;
 use App\Http\Controllers\KitController;
 use App\Http\Controllers\ListActionWebController;
@@ -612,12 +612,12 @@ Route::middleware('auth.redirect')->group(function () {
         Route::put('/{template}/screenshot', [OverlayTemplateController::class, 'updateScreenshot'])->name('screenshot');
     });
 
-    // Cloudinary uploads - all image uploads route through here so we can
+    // Image uploads - all image uploads route through here so we can
     // rate-limit, validate dimensions, and track for orphan cleanup. The
-    // frontend no longer talks to Cloudinary directly.
-    Route::post('/cloudinary/upload', [CloudinaryUploadController::class, 'upload'])
-        ->middleware('throttle:cloudinary-upload')
-        ->name('cloudinary.upload');
+    // frontend never talks to the storage provider directly.
+    Route::post('/images/upload', [ImageUploadController::class, 'upload'])
+        ->middleware('throttle:image-upload')
+        ->name('images.upload');
 
     // Integration Suggestions (rate limited: 3 per hour per user)
     Route::post('/integration-suggestions', [IntegrationSuggestionController::class, 'store'])

@@ -130,10 +130,10 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
-        // Cloudinary uploads: 20/hour per user, 100/hour per IP. Generous for
-        // normal use, hostile to abuse. Frontend uploads are now routed
-        // through our backend so this is the only choke point.
-        RateLimiter::for('cloudinary-upload', function (Request $request) {
+        // Image uploads: 20/hour per user, 100/hour per IP. Generous for
+        // normal use, hostile to abuse. Frontend uploads are routed through
+        // our backend so this is the only choke point.
+        RateLimiter::for('image-upload', function (Request $request) {
             $userId = $request->user()?->id;
 
             return [
