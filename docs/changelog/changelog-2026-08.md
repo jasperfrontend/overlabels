@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 19th, 2026 - chore(deps): routine sweep, both trees clean and no majors waiting
+
+A scheduled dependency sweep with nothing dramatic in it, which is the point of doing them regularly. Both advisory databases came back empty before any changes were made, so nothing here is a security fix. Lockfiles only: `package.json` and `composer.json` are byte-identical to before.
+
+- **Zero advisories in either tree**, on both the before and after pass. The `ws`, `shell-quote` and `brace-expansion` entries in `overrides` were left untouched, and `npm audit fix` was not run (it tries to install the two Linux-only optionals and drags in 37 packages the tree does not want).
+- **In-range only.** On the npm side: Inertia 3.6.1 to 3.7.0, Lucide, CodeMirror, marked, Vitest, vue-tsc, ziggy-js and concurrently. On the composer side: Laravel 13.25.0 to 13.26.1, Socialite, Sail, Mockery, Ziggy, and aws-sdk-php 3.392.2 to 3.393.1.
+- **Two transitive majors rode along, and neither came from widening a range.** `guzzlehttp/uri-template` 1.0.10 to 2.0.0 and `hamcrest/hamcrest-php` 2.1.1 to 3.0.0 (via Mockery). Both were already permitted by their parents' existing constraints, so `composer update` was entitled to take them. The full gate is green with them in.
+- **The expected-noise baseline still holds exactly.** Post-sweep `npm outdated` returns the same three rows and nothing else: the two Linux-only optionals reported MISSING because they skip on Windows and resolve in the production image, plus TypeScript held at 6.0.3 against an available 7.0.2. That hold is deliberate and unchanged, TypeScript 7 has no public compiler API for `vue-tsc` to embed. Composer's direct dependencies are fully up to date, so there are no majors sitting in the waiting room this time.
+- **aws-sdk-php moved and the test suite cannot prove anything about it.** Nothing in the suite writes to a real bucket, so R2 and Scaleway are unverified until a nightly backup succeeds at 16:00 UTC. Re-confirmed by hand that both the `r2` and `scaleway` disks still carry `throw => true` and both checksum settings pinned to `when_required`, which is the known trap in SDK 3.337 and later. A regression there would surface as a missing backup rather than as a failing test.
+
 ## August 18th, 2026 - fix(php): a 4.5 MB photo could kill a request, and traces were logging their arguments
 
 The warnings-in-response-bodies fix below raised a fair question: that configuration was set up by hand during the Railway to Linode migration, so what else got left on a default nobody chose? Audited the running image rather than guessing, and the honest answer is **nothing was ever configured**.
