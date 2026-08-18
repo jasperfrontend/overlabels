@@ -8,6 +8,43 @@ Last updated: 2026-08-06
 
 This is a Laravel 12 + Vue 3 application for managing Twitch overlays. It uses Inertia.js for seamless frontend/backend integration, TypeScript for type safety, and TailwindCSS v4 with Shadcn/Vue components for UI.
 
+## Scope Discipline
+
+**Do exactly what was asked. The stated scope is the deliverable.** Overstepping it is
+the single thing in this project that has produced an outright angry rejection, and both
+times the code that got "improved" was working fine before it was touched.
+
+- **Working code is not a bug because it lacks a guard.** If a fix seems to require
+  changing unrelated code that currently works, STOP and say so before touching it.
+  Worked example: a cosmetic empty-string edge case was reframed as a broken headline
+  feature, the year-old `latest()` pattern was rewritten with defensive gates, and the
+  whole thing had to be reverted.
+- **Never widen a small ask into an infrastructure change.** "Scrub the bucket name out
+  of this PR description" is an edit to a PR description. It is not a new bucket and a
+  rewritten git history. Asking permission first does not make the wide version the right
+  proposal - propose the narrow one.
+- Never rewrite git history, force-push, recreate cloud resources, or touch prod unless
+  asked in that moment. Approval for one of these never carries to the next.
+- **Smallest diff that solves the stated problem.** Refactors, renames and "while I was in
+  there" cleanups are separate work and need their own green light.
+- **Finding a bigger underlying problem is a reason to stop and report, not a licence to
+  fix it.** Present the finding and wait. That is a good outcome, not an interruption.
+
+## Reporting Back
+
+- **Five bullets maximum, plain language.** Lead with what changed and what to look at.
+  Dense end-of-task summaries have twice produced "no idea what this all means", which
+  costs a whole extra round trip to undo.
+- No file-by-file inventories, no listing what the tests are called, no restating the
+  design decisions already recorded elsewhere. Detail that only matters to a future
+  maintainer belongs in the changelog or in this file, not in the summary.
+- **A root cause is a hypothesis until evidence proves it.** Say "likely X, verifying",
+  then show the reproduction, the failing-then-passing test, or the actual output. Never
+  assert a fix works without it. Three separate sessions were lost to confident wrong
+  diagnoses that had to be unwound. See the `/rootcause` skill.
+- Say plainly what was skipped, left out or is still unverified. A quiet omission reads as
+  done and gets found out later.
+
 ## Essential Commands
 
 ### Development
