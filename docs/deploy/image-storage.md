@@ -133,28 +133,47 @@ collisions resolved by `-1` suffixes, so there is no reliable mapping from a
 file in it back to the `public_id` a database row references. The URLs in the
 database are unambiguous by definition.
 
-**Run it before cancelling the Cloudinary account.** Once those URLs stop
-resolving the command has no source and the zip becomes a manual, ambiguous
-restore.
+**It must run before the Cloudinary account is cancelled.** Once those URLs
+stop resolving the command has no source and the zip becomes a manual,
+ambiguous restore.
+
+### How it runs in production
+
+Deploys here are push-to-GitHub, and prod commands are not run by hand from a
+local shell. So this one rides along with a deploy: the entrypoint runs it on
+the **web role only**, after migrations, gated on
+`ENTRYPOINT_RUN_IMAGE_MIGRATION=1` in `config/deploy.yml`.
+
+It cannot break a deploy. The call is wrapped in `|| echo`, so a non-zero exit
+is logged and the boot continues; rows it could not move keep their Cloudinary
+URLs and are retried on the next boot. An outer `timeout 420` bounds a hung
+Cloudinary fetch, which would otherwise stall a container start for as long as
+the per-image HTTP timeouts add up to.
+
+Locally the command is just:
 
 ```bash
-# see what would move, touching nothing
-kamal app exec "php artisan images:migrate-from-cloudinary --dry-run"
-
-# do it
-kamal app exec "php artisan images:migrate-from-cloudinary"
+php artisan images:migrate-from-cloudinary --dry-run   # report only
+php artisan images:migrate-from-cloudinary             # do it
 ```
 
-It is safe to re-run: anything already on the images disk is skipped, so an
-interrupted run resumes. Each URL commits in its own transaction, so a run that
-dies halfway leaves what it already moved consistently rewritten.
+### This is temporary scaffolding
 
-Afterwards, confirm nothing is left behind:
+It has a defined removal trigger, so it does not quietly become permanent.
+Once a deploy logs `No Cloudinary URLs left in the database`, delete **all
+four** in one PR:
+
+1. the `ENTRYPOINT_RUN_IMAGE_MIGRATION` block in `docker/docker-entrypoint.sh`
+2. `ENTRYPOINT_RUN_IMAGE_MIGRATION` in `config/deploy.yml`
+3. `app/Console/Commands/MigrateImagesFromCloudinary.php`
+4. this section
+
+Confirm with the deploy log, or directly:
 
 ```sql
 SELECT count(*) FROM overlay_templates WHERE screenshot_url LIKE '%cloudinary%';
-SELECT count(*) FROM kits            WHERE thumbnail      LIKE '%cloudinary%';
-SELECT count(*) FROM image_uploads   WHERE url            LIKE '%cloudinary%';
+SELECT count(*) FROM kits              WHERE thumbnail      LIKE '%cloudinary%';
+SELECT count(*) FROM image_uploads     WHERE url            LIKE '%cloudinary%';
 ```
 
 All three must be zero before the Cloudinary account is closed.
