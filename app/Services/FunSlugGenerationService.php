@@ -7,53 +7,65 @@ use Illuminate\Support\Facades\DB;
 
 class FunSlugGenerationService
 {
-    // Word pools for generating fun slugs
-    private array $adjectives1 = [
-        'happy', 'bright', 'quick', 'calm', 'bold', 'cool', 'warm', 'fast', 'slow', 'big',
-        'tiny', 'loud', 'quiet', 'smooth', 'rough', 'soft', 'hard', 'light', 'dark', 'fresh',
-        'old', 'new', 'wild', 'tame', 'free', 'brave', 'shy', 'smart', 'fun', 'silly',
-        'wise', 'magic', 'super', 'mega', 'ultra', 'epic', 'rare', 'common', 'special', 'plain',
-        'fancy', 'simple', 'complex', 'easy', 'tough', 'gentle', 'fierce', 'kind', 'mean', 'nice',
-        'oddly', 'strange', 'weird', 'crazy', 'scary', 'scarier', 'scariest',
+    /**
+     * Word pools for generating slugs.
+     *
+     * These are place names on purpose. A slug is the permanent, public URL of
+     * someone's overlay (/overlay/{slug}/public) and there is no path to change
+     * it after creation, so the pools must not be able to produce a combination
+     * the owner would be embarrassed to share. Proper nouns cannot: suggestion
+     * needs a verb or an intensity word and there are none here. The previous
+     * pools paired a mood adjective with an -ing verb, an object noun and a
+     * material, which could and did produce genuinely unfortunate URLs.
+     *
+     * Curation rules, if you add words:
+     * - ASCII, lowercase, single token, at most 8 characters. The route
+     *   constraint is [a-z0-9]+(-[a-z0-9]+)*, so "sao-paulo" would smuggle a
+     *   hyphen inside one word and break the four-word shape.
+     * - Nothing conflict-loaded or territorially disputed. Individually neutral
+     *   names can still land badly side by side, and a random generator must not
+     *   accidentally take a side on a stranger's overlay.
+     * - Current names only, never superseded colonial ones (Denali, not McKinley).
+     * - Read it out loud first. Several real places are excluded from these lists
+     *   purely because the English reading is unfortunate.
+     * - Mostly recognizable, with enough deep cuts to stay interesting.
+     * - No word may appear in two pools, or slugs will stutter.
+     */
+    private array $peaks = [
+        'alps', 'andes', 'atlas', 'etna', 'eiger', 'fuji', 'jura', 'harz', 'hekla', 'teide',
+        'tatra', 'ural', 'bromo', 'shasta', 'denali', 'sierra', 'elbrus', 'taurus', 'aoraki', 'vosges',
+        'olympus', 'rainier', 'cascade', 'troodos', 'whitney', 'ruapehu', 'rinjani', 'toubkal', 'pindus', 'rockies',
+        'apennine', 'pyrenees', 'vesuvius', 'cotopaxi', 'kinabalu', 'dolomite', 'triglav', 'monviso',
     ];
 
-    private array $adjectives2 = [
-        'dancing', 'flying', 'running', 'jumping', 'swimming', 'climbing', 'rolling', 'spinning', 'bouncing', 'sliding',
-        'glowing', 'shining', 'sparkling', 'twinkling', 'blazing', 'floating', 'drifting', 'rushing', 'crawling', 'racing',
-        'singing', 'humming', 'whistling', 'laughing', 'smiling', 'giggling', 'cheering', 'celebrating', 'playing', 'working',
-        'sleeping', 'dreaming', 'thinking', 'wondering', 'exploring', 'discovering', 'creating', 'building', 'making', 'crafting',
-        'painting', 'drawing', 'writing', 'reading', 'learning', 'teaching', 'helping', 'caring', 'loving', 'sharing',
-        'healing', 'doing', 'dabbling', 'tinkering', 'architecting', 'engineering', 'designing', 'planning', 'preparing',
-
+    private array $waters = [
+        'nile', 'rhine', 'seine', 'loire', 'arno', 'ebro', 'elbe', 'tyne', 'avon', 'waal',
+        'tiber', 'volga', 'rhone', 'adige', 'douro', 'tagus', 'weser', 'ijssel', 'neva', 'indus',
+        'danube', 'thames', 'mekong', 'ganges', 'severn', 'meuse', 'murray', 'fraser', 'hudson', 'liffey',
+        'yangtze', 'zambezi', 'orinoco', 'moselle', 'garonne', 'shannon', 'vltava', 'potomac', 'colorado', 'missouri',
     ];
 
-    private array $nouns = [
-        'star', 'moon', 'sun', 'cloud', 'wave', 'rock', 'tree', 'leaf', 'flower', 'grass',
-        'mountain', 'valley', 'river', 'lake', 'ocean', 'beach', 'island', 'forest', 'desert', 'field',
-        'bridge', 'tower', 'castle', 'house', 'garden', 'path', 'road', 'trail', 'door', 'window',
-        'book', 'song', 'dance', 'game', 'toy', 'ball', 'box', 'key', 'coin', 'gem',
-        'fire', 'ice', 'wind', 'earth', 'water', 'thunder', 'lightning', 'rainbow', 'prism', 'crystal',
+    private array $cities = [
+        'oslo', 'riga', 'brno', 'pisa', 'nara', 'york', 'lima', 'ghent', 'delft', 'turku',
+        'porto', 'kyoto', 'osaka', 'siena', 'turin', 'genoa', 'quito', 'cusco', 'busan', 'kandy',
+        'lisbon', 'bruges', 'leiden', 'verona', 'bergen', 'tromso', 'aarhus', 'odense', 'gdansk', 'krakow',
+        'prague', 'vienna', 'zagreb', 'dublin', 'galway', 'oxford', 'bilbao', 'toledo', 'oaxaca', 'hobart',
+        'tallinn', 'vilnius', 'seville', 'granada', 'bologna', 'ravenna', 'utrecht', 'haarlem', 'coimbra', 'tampere',
+        'valletta', 'kanazawa', 'sapporo', 'dunedin', 'salzburg', 'funchal', 'jaipur', 'mysore', 'ohrid', 'kotor',
     ];
 
-    private array $adjectives3 = [
-        'golden', 'silver', 'bronze', 'crystal', 'diamond', 'emerald', 'ruby', 'sapphire', 'pearl', 'copper',
-        'wooden', 'stone', 'metal', 'glass', 'plastic', 'fabric', 'paper', 'leather', 'silk', 'wool',
-        'striped', 'spotted', 'dotted', 'lined', 'curved', 'hooked', 'round', 'square', 'triangle', 'spiral',
-        'frozen', 'melted', 'heated', 'cooled', 'twisted', 'bent', 'broken', 'fixed', 'lost', 'found',
-        'hidden', 'visible', 'secret', 'open', 'closed', 'locked', 'unlocked', 'empty', 'full', 'half',
-    ];
-
-    private array $animals = [
-        'cat', 'dog', 'fox', 'wolf', 'bear', 'lion', 'tiger', 'leopard', 'cheetah', 'panda',
-        'rabbit', 'hare', 'deer', 'elk', 'moose', 'horse', 'zebra', 'giraffe', 'elephant', 'rhino',
-        'bird', 'eagle', 'hawk', 'owl', 'raven', 'swan', 'duck', 'goose', 'penguin', 'flamingo',
-        'fish', 'shark', 'whale', 'dolphin', 'seal', 'otter', 'crab', 'lobster', 'octopus', 'squid',
-        'butterfly', 'bee', 'ant', 'spider', 'dragonfly', 'beetle', 'moth', 'cricket', 'grasshopper', 'firefly',
+    private array $isles = [
+        'crete', 'corfu', 'malta', 'naxos', 'paros', 'milos', 'capri', 'elba', 'skye', 'iona',
+        'mull', 'arran', 'islay', 'faroe', 'sylt', 'texel', 'aruba', 'saba', 'nevis', 'gozo',
+        'hvar', 'brac', 'samos', 'chios', 'symi', 'patmos', 'ithaca', 'lemnos', 'thira', 'oland',
+        'rhodes', 'ischia', 'sicily', 'azores', 'orkney', 'jersey', 'gotland', 'ameland', 'madeira', 'corsica',
+        'lombok', 'flores', 'palawan', 'okinawa', 'tahiti', 'moorea', 'kauai', 'tobago', 'bonaire', 'curacao',
+        'sardinia', 'shetland', 'guernsey', 'vlieland', 'zanzibar', 'langkawi', 'ikaria', 'lofoten', 'korcula', 'penang',
     ];
 
     /**
-     * Generate a fun, unique slug with this pattern: adjective-adjective-noun-adjective-animal
-     * Example: bright-dancing-star-golden-fox
+     * Generate a unique slug with this pattern: peak-water-city-isle
+     * Example: eiger-danube-lisbon-crete
      */
     public function generateUniqueSlug(int $maxAttempts = 10): string
     {
@@ -87,13 +99,12 @@ class FunSlugGenerationService
      */
     private function generateRandomSlug(): string
     {
-        $adj1 = $this->adjectives1[array_rand($this->adjectives1)];
-        $adj2 = $this->adjectives2[array_rand($this->adjectives2)];
-        $noun = $this->nouns[array_rand($this->nouns)];
-        $adj3 = $this->adjectives3[array_rand($this->adjectives3)];
-        $animal = $this->animals[array_rand($this->animals)];
+        $peak = $this->peaks[array_rand($this->peaks)];
+        $water = $this->waters[array_rand($this->waters)];
+        $city = $this->cities[array_rand($this->cities)];
+        $isle = $this->isles[array_rand($this->isles)];
 
-        return "$adj1-$adj2-$noun-$adj3-$animal";
+        return "$peak-$water-$city-$isle";
     }
 
     /**
@@ -112,7 +123,7 @@ class FunSlugGenerationService
         }
 
         // Database check with index (should be ~1-2 ms even with 500k+ records)
-        $exists = DB::table('overlay_hashes')
+        $exists = DB::table('overlay_templates')
             ->where('slug', $slug)
             ->exists();
 
@@ -129,11 +140,10 @@ class FunSlugGenerationService
      */
     public function getTotalPossibleCombinations(): int
     {
-        return count($this->adjectives1) *
-               count($this->adjectives2) *
-               count($this->nouns) *
-               count($this->adjectives3) *
-               count($this->animals);
+        return count($this->peaks) *
+               count($this->waters) *
+               count($this->cities) *
+               count($this->isles);
     }
 
     /**
@@ -142,7 +152,7 @@ class FunSlugGenerationService
     public function getCollisionRisk(): array
     {
         $totalPossible = $this->getTotalPossibleCombinations();
-        $currentCount = DB::table('overlay_hashes')->count();
+        $currentCount = DB::table('overlay_templates')->count();
         $collisionRisk = ($currentCount / $totalPossible) * 100;
 
         return [
@@ -154,13 +164,13 @@ class FunSlugGenerationService
     }
 
     /**
-     * Regenerate slug for existing overlay (useful for conflicts)
+     * Regenerate slug for an existing template (useful for conflicts)
      */
     public function regenerateSlugForOverlay(int $overlayId): string
     {
         $newSlug = $this->generateUniqueSlug();
 
-        DB::table('overlay_hashes')
+        DB::table('overlay_templates')
             ->where('id', $overlayId)
             ->update(['slug' => $newSlug]);
 
@@ -192,7 +202,7 @@ class FunSlugGenerationService
 
         // Batch database check for uncached slugs
         if (! empty($uncachedSlugs)) {
-            $existingSlugs = DB::table('overlay_hashes')
+            $existingSlugs = DB::table('overlay_templates')
                 ->whereIn('slug', $uncachedSlugs)
                 ->pluck('slug')
                 ->toArray();
