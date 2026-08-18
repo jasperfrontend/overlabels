@@ -1,7 +1,5 @@
 # CHANGELOG AUGUST 2026
 
-> Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
-
 ## August 18th, 2026 - fix(api): omitting an optional field 500'd two endpoints
 
 `nullable` means the key may be **absent**, not merely null. Laravel's `validated()` only returns keys that were actually present in the request, so reading `$validated['optional']` unconditionally throws `Undefined array key` and the request 500s. Two controllers had exactly that shape.
