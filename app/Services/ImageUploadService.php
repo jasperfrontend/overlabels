@@ -99,14 +99,13 @@ class ImageUploadService
 
     /**
      * Crop, encode and write one image to the images disk, returning the
-     * stored object's metadata. Does NOT touch the database - `upload()`
-     * records the row, and `images:migrate-from-cloudinary` rewrites
-     * existing ones.
+     * stored object's metadata. Does NOT touch the database - `upload()` is
+     * what records the row.
      *
-     * `$source` is anything Intervention's `decode()` accepts: a local path or
-     * the raw binary body, which is what lets the migrate command pipe a
-     * downloaded Cloudinary response straight through here without a temp
-     * file.
+     * `$source` is anything Intervention's `decode()` accepts: a local path
+     * or the raw binary body. Keeping it that wide is deliberate - it lets a
+     * caller holding bytes already in memory (a fetched response, a generated
+     * image) store them without a temp file round trip.
      *
      * `coverDown` rather than `cover`: it crops to the target ratio but never
      * scales a small image UP to the target box, which would just spend bytes
