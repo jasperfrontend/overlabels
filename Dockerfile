@@ -138,6 +138,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint
 # theory that the base image already handles it.
 COPY docker/php-uploads.ini $PHP_INI_DIR/conf.d/zz-uploads.ini
 COPY docker/php-errors.ini $PHP_INI_DIR/conf.d/zz-errors.ini
+COPY docker/php-hardening.ini $PHP_INI_DIR/conf.d/zz-hardening.ini
 
 EXPOSE 80 443 443/udp
 

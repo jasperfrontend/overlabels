@@ -1,5 +1,24 @@
 # CHANGELOG AUGUST 2026
 
+## August 18th, 2026 - fix(php): a 4.5 MB photo could kill a request, and traces were logging their arguments
+
+The warnings-in-response-bodies fix below raised a fair question: that configuration was set up by hand during the Railway to Linode migration, so what else got left on a default nobody chose? Audited the running image rather than guessing, and the honest answer is **nothing was ever configured**.
+
+```
+Loaded Configuration File => (none)
+/usr/local/etc/php/ ->  conf.d/  php.ini-development  php.ini-production
+```
+
+Both tuned files ship in the image. Neither is active. Every setting was a compiled-in default, and the only ini present before ours did nothing but enable an extension.
+
+- **A 4.51 MB JPEG could kill a request, and that is the actual bug.** A file-size cap does not bound decoding cost: GD holds an uncompressed `width * height * 4` bitmap no matter how well the source compressed. Measured with the framework booted, where Laravel is ~30 MB before any image work: 6 MP peaks at 64 MB, 12 MP at 88 MB, 16 MP at 108 MB, and **20.3 MP dies** with "Allowed memory size of 134217728 bytes exhausted". That 20.3 MP image was a 4.51 MB file, under half the 10 MB cap. Any recent phone photo or DSLR shot used as a kit thumbnail hit it. Until the fix below deployed, the fatal was also being printed into the response.
+- **Fixed with a megapixel ceiling, checked against the header `getimagesize()` had already read.** The dimensions were sitting right there next to the existing 400x400 minimum, so the guard costs nothing and refuses the image *before* anything tries to decode it. 36 MP clears an 8K screenshot (33.2 MP), which is the largest thing anyone could legitimately be capturing, and `memory_limit` goes 128M to 256M to hold it: 36.2 MP peaks at 196 MB, leaving ~60 MB of headroom. **The ceiling and the limit are a pair** and a test reads the shipped ini to make sure they stay one.
+- **Exception traces were recording their arguments.** `zend.exception_ignore_args` defaults to Off with no php.ini, and Laravel writes traces to `storage/logs`, so any exception thrown below a function that received a token, a password, a webhook secret or a decrypted credential wrote that value into the log in plaintext. Now On, with `zend.exception_string_param_max_len = 0` closing the companion route where a string parameter gets interpolated into the exception's own text.
+- **`X-Powered-By: PHP/8.4.24` was live on production**, confirmed with `curl -I`, announcing the exact patch level to anyone who asked. `expose_php = Off`. Worth noting this one is *not* a deviation from `php.ini-production`, which also ships On - it is upstream's choice and there is no reason to take it.
+- **`log_errors` was Off, which is the detail that reframes yesterday's bug.** Those warnings were not going to a log *and* to the browser. They were going **only** to the browser. There was no server-side record of any of it.
+- **OPcache was checked and is genuinely fine**, which is worth recording so nobody re-derives it. `max_accelerated_files = 10000` looks alarming beside a Laravel vendor tree, but OPcache rounds up to a prime and the real table is **16,229** slots. A `--no-dev` install is **11,405** files across 117 packages plus 468 app files: 70% used, 4,824 spare. Enabled, 128 MB, no action.
+- **The new tests target the failure mode, not the settings.** The original bug was invisible because an ini nobody loads fails silently, so the load-bearing test asserts that every `docker/php-*.ini` is actually `COPY`d into `$PHP_INI_DIR/conf.d/`. Verified by dropping an unwired ini in and watching it fail. The rest pin the individual values, and the pixel ceiling is driven with integers rather than fixtures, because a test that built an 8000x5000 image would allocate the precise 160 MB bitmap the ceiling exists to prevent.
+
 ## August 18th, 2026 - fix(uploads): production was printing PHP warnings into response bodies
 
 Someone dropped a 31.6 MB uncompressed 3840x2160 desktop wallpaper into the screenshot uploader to see what would happen. What happened was `Error: JSON.parse: unexpected character at line 1 column 1 of the JSON data`, which is a terrible answer to a reasonable question.
