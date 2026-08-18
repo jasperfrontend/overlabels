@@ -21,7 +21,6 @@ asset library at the time of the move was about 14 MB.
 | Resize, crop, encode, store | `App\Services\ImageUploadService` |
 | Row per object | `image_uploads` table / `App\Models\ImageUpload` |
 | Orphan sweep | `routes/console.php`, `images:sweep-orphans`, every 15 min |
-| One-shot Cloudinary import | `php artisan images:migrate-from-cloudinary` |
 
 Uploads are cropped to 16:9 and encoded as WebP at quality 82 with metadata
 stripped. Two kinds, with different ceilings:
@@ -121,62 +120,46 @@ Unlike the backups bucket there is nothing to expire here - these objects are
 referenced by live rows. Do **not** add a retention rule; it would delete
 screenshots out from under templates that still point at them.
 
-## Migrating off Cloudinary
+## The move off Cloudinary (history)
 
-`php artisan images:migrate-from-cloudinary` pulls each image from its **live
-Cloudinary URL** and re-uploads it to R2, then rewrites
-`overlay_templates.screenshot_url`, `kits.thumbnail` and `image_uploads`.
+Production migrated on **2026-08-18** and the importer that did it has been
+removed. This is here because the rename it left behind is otherwise
+unexplained, and because the local situation is different from prod.
 
-It deliberately does not read the archive zip in `docs/private/`. That export
-is a flat directory of sanitised filenames with the folder prefix stripped and
-collisions resolved by `-1` suffixes, so there is no reliable mapping from a
-file in it back to the `public_id` a database row references. The URLs in the
-database are unambiguous by definition.
+A one-shot `images:migrate-from-cloudinary` command pulled each image from its
+live Cloudinary delivery URL and re-uploaded it to R2, rewriting
+`overlay_templates.screenshot_url`, `kits.thumbnail` and `image_uploads`. It
+ran from the entrypoint rather than by hand, because deploys here are
+push-to-GitHub. Both it and its `ENTRYPOINT_RUN_IMAGE_MIGRATION` flag are gone;
+it was built with an explicit removal trigger so it would not become permanent
+scaffolding.
 
-**It must run before the Cloudinary account is cancelled.** Once those URLs
-stop resolving the command has no source and the zip becomes a manual,
-ambiguous restore.
+Notes worth keeping:
 
-### How it runs in production
+- **It read the live URLs, never the archive zip** in `docs/private/`. That
+  export is a flat directory of sanitised filenames with the folder prefix
+  stripped and collisions resolved by `-1` suffixes, so nothing in it maps
+  back to the `public_id` a database row referenced. If images ever need
+  recovering from it, that mapping is a manual job.
+- **`image_uploads` was `cloudinary_uploads`**, with `public_id` -> `path` and
+  `secure_url` -> `url`. See
+  `database/migrations/2026_08_18_210000_rename_cloudinary_uploads_to_image_uploads.php`.
+- **Local development was deliberately not migrated.** `overlabels.test` may
+  still render screenshots from Cloudinary. Uploads there fail unless the disk
+  is configured, and they fail safely - the controller catches it and shows
+  "Upload failed. Please try again."
+- **Do not point a local install at the production images bucket.**
+  `deleteByUrl()` checks the *local* database for remaining references before
+  deleting an object, so deleting a template or kit locally would destroy an
+  image production still points at. A local setup needs its own bucket.
 
-Deploys here are push-to-GitHub, and prod commands are not run by hand from a
-local shell. So this one rides along with a deploy: the entrypoint runs it on
-the **web role only**, after migrations, gated on
-`ENTRYPOINT_RUN_IMAGE_MIGRATION=1` in `config/deploy.yml`.
-
-It cannot break a deploy. The call is wrapped in `|| echo`, so a non-zero exit
-is logged and the boot continues; rows it could not move keep their Cloudinary
-URLs and are retried on the next boot. An outer `timeout 420` bounds a hung
-Cloudinary fetch, which would otherwise stall a container start for as long as
-the per-image HTTP timeouts add up to.
-
-Locally the command is just:
-
-```bash
-php artisan images:migrate-from-cloudinary --dry-run   # report only
-php artisan images:migrate-from-cloudinary             # do it
-```
-
-### This is temporary scaffolding
-
-It has a defined removal trigger, so it does not quietly become permanent.
-Once a deploy logs `No Cloudinary URLs left in the database`, delete **all
-four** in one PR:
-
-1. the `ENTRYPOINT_RUN_IMAGE_MIGRATION` block in `docker/docker-entrypoint.sh`
-2. `ENTRYPOINT_RUN_IMAGE_MIGRATION` in `config/deploy.yml`
-3. `app/Console/Commands/MigrateImagesFromCloudinary.php`
-4. this section
-
-Confirm with the deploy log, or directly:
+To check whether anything anywhere still references the old host:
 
 ```sql
 SELECT count(*) FROM overlay_templates WHERE screenshot_url LIKE '%cloudinary%';
 SELECT count(*) FROM kits              WHERE thumbnail      LIKE '%cloudinary%';
 SELECT count(*) FROM image_uploads     WHERE url            LIKE '%cloudinary%';
 ```
-
-All three must be zero before the Cloudinary account is closed.
 
 ## Gotchas
 

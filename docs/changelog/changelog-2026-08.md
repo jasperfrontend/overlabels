@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 18th, 2026 - chore(deploy): the Cloudinary importer removed itself on schedule
+
+The one-shot import that moved every screenshot and thumbnail onto R2 earlier today is gone, along with the entrypoint hook that carried it to production. This is the boring half of the entry above it, and it is in the changelog rather than being done silently because a temporary thing surviving its purpose is how deploy scripts rot.
+
+- **It was built with a removal trigger, and the trigger fired.** The rule written into the code was: once prod stops reporting Cloudinary URLs, four things come out in one PR - the `ENTRYPOINT_RUN_IMAGE_MIGRATION` block in `docker/docker-entrypoint.sh`, the flag in `config/deploy.yml`, `MigrateImagesFromCloudinary.php`, and the operational half of `docs/deploy/image-storage.md`. All four are out.
+- **Verification was sampling, not a count, and that is worth being honest about.** Five public overlays were checked by hand and every one resolved to `images.overlabels.com`; no public surface references `res.cloudinary.com`; the two other accounts on the platform have never uploaded a screenshot. Nobody ran `SELECT count(*) ... LIKE '%cloudinary%'` against prod. With no users yet that is a fine place to stop, and the SQL to close it properly is still in the doc.
+- **The doc kept a history section instead of deleting the story.** Otherwise `image_uploads` is a table with an unexplained rename migration pointing at it, and the next person to find `docs/private/Cloudinary_Archive_*.zip` has no way to know it is not a usable restore source. It is flat, prefix-stripped and `-1`-suffixed on collisions, so nothing in it maps back to a `public_id`.
+- **Two hazards got written down while they were still fresh.** Local development was deliberately not migrated, so `overlabels.test` still renders Cloudinary URLs and its uploads fail - safely, caught by the controller, showing "Upload failed". The fix for that is emphatically **not** pasting the production image credentials into a local `.env`: `deleteByUrl()` checks the *local* database for remaining references before deleting an object, so deleting a template locally would destroy an image production still points at. A local setup needs its own bucket.
+- **The rename migration's own comment was left pointing at the deleted command,** deliberately. It is dated the same day the command existed and describes what was true when it ran. Rewriting it to pretend otherwise is the same mistake as editing any other history in this chain.
+
 ## August 18th, 2026 - feat(images): off Cloudinary, onto Cloudflare R2
 
 Cloudinary's free tier is generous and the next one up is $99 a month, with nothing in between. That is the entire reason for this move: not a bill that arrived, but the shape of the one that eventually would, arriving all at once on a morning nobody chose. R2 is $0.015/GB-month with **zero egress**, and the free tier is 10 GB, 1M writes and 10M reads. The whole asset library is about 14 MB, so this is permanently free and stays cheap at a thousand times the size.

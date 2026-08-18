@@ -51,13 +51,6 @@ servers:
         # Creates public/storage -> storage/app/public symlink so the public
         # disk's url() helper resolves over HTTP. Web role only; idempotent.
         ENTRYPOINT_RUN_STORAGE_LINK: "1"
-        # TEMPORARY. One-shot import of the remaining Cloudinary-hosted images
-        # onto R2, riding along with a deploy because prod commands are not run
-        # by hand here. Web role only so it happens once per deploy, and after
-        # migrations because it needs the renamed image_uploads table.
-        # Remove this along with the entrypoint block and the command once prod
-        # reports no Cloudinary URLs left. See docs/deploy/image-storage.md.
-        ENTRYPOINT_RUN_IMAGE_MIGRATION: "1"
         SERVER_NAME: ":80"
 
   queue:
