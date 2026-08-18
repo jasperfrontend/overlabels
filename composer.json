@@ -12,7 +12,6 @@
     "require": {
         "php": "^8.4.1",
         "ext-pdo": "*",
-        "cloudinary/cloudinary_php": "^3.1",
         "inertiajs/inertia-laravel": "^3.0",
         "intervention/image": "^4.0",
         "laravel/framework": "^13.0",

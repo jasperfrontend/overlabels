@@ -54,7 +54,7 @@ const toggleTemplate = (templateId: number, checked: boolean) => {
 };
 
 const submit = () => {
-  // Use put method for Cloudinary URL submission
+  // Use put method for hosted-URL submission
   form.put(`/kits/${props.kit.id}`, {
     preserveScroll: true,
   });

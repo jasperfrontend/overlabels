@@ -62,7 +62,7 @@
                 'site_name' => 'Overlabels',
                 'title' => 'Overlabels - A live overlay DSL for Twitch streamers',
                 'description' => 'Write HTML and CSS. Bind live Twitch data with triple-bracket tags. React to every Twitch event. Free, open source overlay engine for OBS.',
-                'image' => 'https://res.cloudinary.com/dy185omzf/image/upload/v1771771091/ogimage_fepcyf.jpg',
+                'image' => asset('ogimage.jpg'),
                 'image_alt' => 'Overlabels - write HTML and CSS, bind live Twitch data with triple-bracket tags',
                 'twitter_card' => 'summary_large_image',
             ];

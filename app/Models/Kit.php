@@ -109,7 +109,7 @@ class Kit extends Model
                 throw new Exception('Cannot delete a kit that has been forked.');
             }
 
-            // Delete thumbnail if exists and is local storage (not Cloudinary URL)
+            // Delete thumbnail if exists and is local storage (not a hosted URL)
             if ($kit->thumbnail && ! filter_var($kit->thumbnail, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($kit->thumbnail)) {
                 Storage::disk('public')->delete($kit->thumbnail);
             }
@@ -224,7 +224,7 @@ class Kit extends Model
             return null;
         }
 
-        // If the thumbnail is already a full URL (Cloudinary), return as-is
+        // If the thumbnail is already a full URL (object storage), return as-is
         if (filter_var($this->thumbnail, FILTER_VALIDATE_URL)) {
             return $this->thumbnail;
         }

@@ -24,11 +24,11 @@ it('allows owner to set screenshot URL', function () {
 
     $response = $this->actingAs($user)->put(
         route('templates.screenshot', $template),
-        ['screenshot_url' => 'https://res.cloudinary.com/example/image/upload/test.png']
+        ['screenshot_url' => 'https://images.overlabels.com/overlays/screenshots/test.webp']
     );
 
     $response->assertRedirect();
-    expect($template->fresh()->screenshot_url)->toBe('https://res.cloudinary.com/example/image/upload/test.png');
+    expect($template->fresh()->screenshot_url)->toBe('https://images.overlabels.com/overlays/screenshots/test.webp');
 });
 
 it('allows owner to remove screenshot', function () {

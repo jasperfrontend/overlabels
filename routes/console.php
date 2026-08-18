@@ -2,15 +2,15 @@
 
 use App\Jobs\VerifyStreamState;
 use App\Models\BotChatOutbox;
-use App\Models\CloudinaryUpload;
 use App\Models\ExternalEvent;
+use App\Models\ImageUpload;
 use App\Models\ListSnapshot;
 use App\Models\OverlayAccessLog;
 use App\Models\OverlayReport;
 use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
-use App\Services\CloudinaryUploadService;
+use App\Services\ImageUploadService;
 use App\Services\LockdownService;
 use App\Services\StreamSessionService;
 use Illuminate\Foundation\Inspiring;
@@ -222,21 +222,21 @@ Schedule::call(fn () => ListSnapshot::where('pinned', false)
     ->delete()
 )->daily()->name('prune:list-snapshots')->withoutOverlapping();
 
-// Sweep orphaned Cloudinary uploads. Frontend uploads land in cloudinary_uploads
+// Sweep orphaned image uploads. Frontend uploads land in image_uploads
 // unclaimed; if no template/kit save references them within 30 minutes, delete
-// the asset and the row. Closes the abuse vector where someone uploads then
-// abandons the form to use Cloudinary as free image hosting.
+// the object and the row. Closes the abuse vector where someone uploads then
+// abandons the form to use our bucket as free image hosting.
 Schedule::call(function () {
-    $service = app(CloudinaryUploadService::class);
-    $orphans = CloudinaryUpload::whereNull('claimed_at')
+    $service = app(ImageUploadService::class);
+    $orphans = ImageUpload::whereNull('claimed_at')
         ->where('created_at', '<=', now()->subMinutes(30))
         ->limit(200)
         ->get();
 
     foreach ($orphans as $orphan) {
-        $service->deleteByUrl($orphan->secure_url);
+        $service->deleteByUrl($orphan->url);
     }
-})->everyFifteenMinutes()->name('cloudinary:sweep-orphans')->withoutOverlapping();
+})->everyFifteenMinutes()->name('images:sweep-orphans')->withoutOverlapping();
 
 // Stream state safety net - catches stuck states if verification chain breaks
 Schedule::call(function () {

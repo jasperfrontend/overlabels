@@ -51,6 +51,13 @@ servers:
         # Creates public/storage -> storage/app/public symlink so the public
         # disk's url() helper resolves over HTTP. Web role only; idempotent.
         ENTRYPOINT_RUN_STORAGE_LINK: "1"
+        # TEMPORARY. One-shot import of the remaining Cloudinary-hosted images
+        # onto R2, riding along with a deploy because prod commands are not run
+        # by hand here. Web role only so it happens once per deploy, and after
+        # migrations because it needs the renamed image_uploads table.
+        # Remove this along with the entrypoint block and the command once prod
+        # reports no Cloudinary URLs left. See docs/deploy/image-storage.md.
+        ENTRYPOINT_RUN_IMAGE_MIGRATION: "1"
         SERVER_NAME: ":80"
 
   queue:
@@ -253,8 +260,6 @@ env:
     - FW_REDIRECT_URL
     - FW_HMAC
 
-    - CLOUDINARY_URL
-
     - FREESOUND_API_KEY
 
     - INTEGRATION_SUGGESTION_WEBHOOK_URL
@@ -270,6 +275,13 @@ env:
     - R2_ACCESS_KEY_ID
     - R2_SECRET_ACCESS_KEY
     - R2_ACCOUNT_ID
+    # R2 credentials for the user-facing images bucket (template screenshots
+    # and kit thumbnails), served from images.overlabels.com. A SEPARATE token
+    # from the backup one above, scoped to Object Read & Write on
+    # overlabels-images only - the whole point of two tokens is that a leak of
+    # the one the web request path uses cannot touch the backups.
+    - R2_IMAGES_ACCESS_KEY_ID
+    - R2_IMAGES_SECRET_ACCESS_KEY
     # Scaleway credentials for the second copy of the daily backup. Only the
     # access key and secret are needed - Scaleway's S3-compatible API resolves
     # the project from the key, so SCW_DEFAULT_ORGANIZATION_ID and

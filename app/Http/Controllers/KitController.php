@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Kit;
 use App\Models\OverlayTemplate;
-use App\Services\CloudinaryUploadService;
+use App\Services\ImageUploadService;
 use App\Services\KitShareService;
 use Exception;
 use Illuminate\Http\Request;
@@ -57,7 +57,7 @@ class KitController extends Controller
     /**
      * Store a newly created kit in storage.
      */
-    public function store(Request $request, CloudinaryUploadService $cloudinary)
+    public function store(Request $request, ImageUploadService $images)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -91,7 +91,7 @@ class KitController extends Controller
         $kit->save();
 
         // Mark the upload as claimed so it survives the orphan sweep.
-        $cloudinary->claim($kit->thumbnail);
+        $images->claim($kit->thumbnail);
 
         // Attach templates
         $kit->templates()->attach($userTemplateIds);
@@ -175,7 +175,7 @@ class KitController extends Controller
     /**
      * Update the specified kit in storage.
      */
-    public function update(Request $request, Kit $kit, CloudinaryUploadService $cloudinary)
+    public function update(Request $request, Kit $kit, ImageUploadService $images)
     {
         // Only owner can update
         if ($kit->owner_id !== auth()->id()) {
@@ -209,14 +209,14 @@ class KitController extends Controller
             $oldThumbnail = $kit->thumbnail;
             $newThumbnail = $request->input('thumbnail_url');
 
-            // Legacy local thumbnail cleanup (pre-Cloudinary kits).
+            // Legacy local thumbnail cleanup (pre-object-storage kits).
             if ($oldThumbnail && ! filter_var($oldThumbnail, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($oldThumbnail)) {
                 Storage::disk('public')->delete($oldThumbnail);
             }
 
-            // Cloudinary cleanup when replacing one URL with another.
+            // Stored-image cleanup when replacing one URL with another.
             if ($oldThumbnail && filter_var($oldThumbnail, FILTER_VALIDATE_URL) && $oldThumbnail !== $newThumbnail) {
-                $cloudinary->deleteByUrl($oldThumbnail, excludeKitId: $kit->id);
+                $images->deleteByUrl($oldThumbnail, excludeKitId: $kit->id);
             }
 
             $kit->thumbnail = $newThumbnail;
@@ -224,7 +224,7 @@ class KitController extends Controller
 
         $kit->save();
 
-        $cloudinary->claim($kit->thumbnail);
+        $images->claim($kit->thumbnail);
 
         // Sync templates
         $kit->templates()->sync($userTemplateIds);
@@ -236,7 +236,7 @@ class KitController extends Controller
     /**
      * Remove the specified kit from storage.
      */
-    public function destroy(Kit $kit, CloudinaryUploadService $cloudinary)
+    public function destroy(Kit $kit, ImageUploadService $images)
     {
         // Only the owner can delete a kit
         if ($kit->owner_id !== auth()->id()) {
@@ -253,7 +253,7 @@ class KitController extends Controller
         $kit->delete();
 
         if ($thumbnail && filter_var($thumbnail, FILTER_VALIDATE_URL)) {
-            $cloudinary->deleteByUrl($thumbnail);
+            $images->deleteByUrl($thumbnail);
         }
 
         return redirect()->route('kits.index')
