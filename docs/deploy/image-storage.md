@@ -180,24 +180,40 @@ SELECT count(*) FROM image_uploads     WHERE url            LIKE '%cloudinary%';
   **Why it can bite a successful upload.** The upload path is fully
   synchronous: encode, `Storage::put()`, database row, JSON response. R2 has
   acknowledged the write before the browser is ever told the URL, so there is
-  no window in our code where the object is missing. But if a request for that
-  key reaches an edge in the instant before the object is visible there, the
-  edge caches the miss - and then serves a 404 for up to four hours for an
-  object that exists. Symptom: upload succeeds, image is broken, nothing in the
-  logs, and it fixes itself later. Do not go looking for a queue; there isn't
-  one.
+  no window in our code where the object is missing, and there is no queue to
+  blame. But if anything requests the key in the instant before the object is
+  visible, that 404 gets cached - and the four-hour `max-age` goes to **the
+  browser**, which is the copy that matters.
 
-  **The lever we have is a Cloudflare Cache Rule**, not code: match hostname
-  `images.overlabels.com`, set **Edge TTL by response status -> 404 -> 1
-  second** (or bypass). Cache Rules support status-code TTLs on the free plan.
-  That removes the landmine without touching the one-year TTL on real objects,
-  which is where all the caching value actually is. A frontend `onerror` retry
-  would also hide it, but that treats the symptom and puts a retry loop behind
-  every image on the site.
+  **It is the browser cache that makes this durable, not the edge.** That
+  distinction is the whole entry. Server-side everything looks perfect, R2 is
+  serving the object, purging Cloudflare changes nothing, and the affected
+  person still sees a broken image because their own browser is not asking. It
+  is per-viewer and invisible from here.
 
-  If you are debugging a "missing" image, check `cf-cache-status` before
-  concluding anything: a `HIT` on a 404 means you are talking to the cache, not
-  to the bucket. `curl -sSI <url>` shows it.
+  **So the first diagnostic move is a hard reload.** If that fixes it, it was
+  the client's cache and there is nothing to fix on the server.
+  `cf-cache-status` is the second check and only tells you about the edge; a
+  browser-cached 404 never leaves the machine, so it will not appear there at
+  all.
+
+  **If it ever becomes worth fixing, the lever is a Cloudflare Cache Rule**,
+  not code: match hostname `images.overlabels.com` and set TTL by response
+  status for 404. It must set **Browser TTL**, not only Edge TTL - an
+  edge-only rule would not have helped the case that prompted this entry. Real
+  objects keep their one-year TTL either way, which is where all the caching
+  value is. A frontend `onerror` retry would also hide it, but that treats the
+  symptom and puts a retry loop behind every image on the site.
+
+  **Known unknown:** the *edge* negative TTL was never measured. It was still
+  `HIT` with `Age` climbing at 134 seconds and the probe was stopped there. The
+  header value of 14400 is what browsers are told; Cloudflare's own edge TTL is
+  a separate number and may be much shorter. Nobody needs it unless this
+  actually starts affecting people.
+
+  **Deliberately not acted on** (2026-08-18). One occurrence, self-healed, on a
+  platform with three users. Recorded so the next person recognises it in a
+  minute instead of an afternoon, not because it needs work.
 - **The jurisdiction is part of the endpoint hostname.** An EU bucket answers
   on `<account>.eu.r2.cloudflarestorage.com` and returns 403 on the plain
   `<account>.r2.cloudflarestorage.com` host. That 403 looks exactly like a bad
