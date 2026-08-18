@@ -2,6 +2,14 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 18th, 2026 - chore(db): drop overlay_hashes, dead since April and unreferenced since this morning
+
+`overlay_hashes` was the original hash-based public-link scheme, superseded by `OverlayAccessToken` and its 64-char fragment token. The April 13th cleanup deleted the model, the controller and the factory, and deliberately kept the migrations because the table still held historical state on existing deployments. What that cleanup could not see was that one reader survived it: `FunSlugGenerationService` was still checking slug uniqueness against this table, four months after slugs had moved to `overlay_templates`. Repointing that check in the entry below left the table referenced by nothing at all.
+
+- **Verified before dropping, not assumed.** No references anywhere in `app/`, `routes/`, `resources/`, `tests/`, `database/factories` or `database/seeders`. What is left is its own three migrations, two historical changelog entries and a line in a local log file. Nothing has been able to write to it since the model was deleted in April, and nothing has read from it since this morning.
+- **`down()` recreates the table, so a rollback restores the schema.** All fourteen columns in their original order, both compound indexes and the slug index. Verified by actually running the round trip rather than reasoning about it. The rows are not recoverable, which is the honest limit of a table drop, but they describe a link scheme no code has read since April.
+- **The three original migrations are untouched.** They record what was true when they ran, and rewriting them to pretend the table never existed would be the same mistake as editing history anywhere else in this chain.
+
 ## August 18th, 2026 - fix(slugs): the fun slug generator could name your overlay something you would not want to share
 
 Every hosted overlay gets a generated slug at creation, and that slug is its permanent public URL. There is no path to change it: it is written once in `OverlayTemplate::boot()`, no controller validates or updates it, and the only escape is copying the template and hoping for better luck. So it had better not be `hard-loving-toy-leather-bear`, which the old pools could produce and which is one of the tamer examples.
