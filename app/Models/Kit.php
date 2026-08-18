@@ -61,6 +61,20 @@ class Kit extends Model
 {
     use HasFactory;
 
+    /**
+     * Most templates a kit may hold.
+     *
+     * This is a rate-limiting concern, not a product one. fork() loops the kit's
+     * templates and forks each, so one request to kits.fork creates as many rows
+     * (and burns as many slugs) as the kit holds. Without a ceiling that request
+     * is an unbounded write amplifier, and a per-request throttle cannot cap
+     * something whose per-request cost is unbounded.
+     *
+     * 50 is deliberately far above real use: the largest kit that exists holds
+     * 9 templates and the heaviest user owns 27 in total.
+     */
+    public const MAX_TEMPLATES = 50;
+
     protected $fillable = [
         'owner_id',
         'title',

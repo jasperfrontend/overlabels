@@ -2,6 +2,18 @@
 
 > Oh, and happy birthday to me. Jasper turns 44 today, and celebrated by finally giving his own repo a licence. 🎂
 
+## August 18th, 2026 - fix(security): nothing at all rate limited template creation
+
+Found while answering an idle question about the slug generator: what happens if someone exhausts the slug space? The answer turned out not to be about slugs. **Creating a template was limited by nothing.** `templates.store` and `templates.fork` carried exactly two middlewares, `web` and `RedirectIfUnauthenticated`, and there is no global throttle on the `web` group. The only guard was being logged in.
+
+The seven limiters that do exist all face the other way. `overlay`, `overlay-api`, `overlay-auth-failed`, `overlay-report` guard overlay serving; `cloudinary-upload` guards uploads; `bot-internal` and `bot-gamejam-action` guard bot ingress. Every one is on reads and ingress. Authoring had nothing, and neither did `lockdown`, which is wired across `routes/api.php` and absent from every creation path.
+
+- **`template-write`: 30/minute and 200/hour, keyed per user.** Creating a template requires a session, so the Twitch account is the real identity and the IP fallback is only there in case that stops being true. `templates.store` and `templates.fork` share one bucket deliberately, so the two routes cannot be alternated to double the rate.
+- **`kit-fork` is much tighter at 3/minute and 10/hour, because it is the amplified path.** `Kit::fork()` loops the kit's templates and forks each one, so a single request writes as many rows as the kit holds rather than one. A per-request throttle cannot cap a request whose cost is unbounded, which is the actual reason the second limiter exists rather than reusing the first.
+- **Kits are capped at 50 templates** (`Kit::MAX_TEMPLATES`). `template_ids` validated `min:1` with no `max`, so the amplifier had no ceiling: create N templates, put all N in a kit, then fork it repeatedly. The cap is what makes the `kit-fork` numbers mean anything. 50 is far above real use, where the largest kit that exists holds 9 templates and the heaviest account owns 27 in total.
+- **Slug exhaustion was never the risk, and it is worth saying why.** It takes ~2.7 million templates before slugs even begin growing numeric suffixes, and the generator degrades rather than failing: simulated past 16x total saturation of the base space it never threw once, because the `-NN` retry path multiplies the space by 90. Millions of rows carrying HTML and CSS would wreck disk and the nightly `pg_dump` long before a slug ran out. The gap was unbounded authenticated row creation; slugs were just the symptom that happened to get asked about.
+- **Seven tests pin it, and six were verified to fail without the fix.** They cover the ceiling on each route, that the buckets are per user so one account cannot starve another, that the two template routes share a budget while kit forking has its own, and the kit cap in both directions.
+
 ## August 18th, 2026 - chore(db): drop overlay_hashes, dead since April and unreferenced since this morning
 
 `overlay_hashes` was the original hash-based public-link scheme, superseded by `OverlayAccessToken` and its 64-char fragment token. The April 13th cleanup deleted the model, the controller and the factory, and deliberately kept the migrations because the table still held historical state on existing deployments. What that cleanup could not see was that one reader survived it: `FunSlugGenerationService` was still checking slug uniqueness against this table, four months after slugs had moved to `overlay_templates`. Repointing that check in the entry below left the table referenced by nothing at all.

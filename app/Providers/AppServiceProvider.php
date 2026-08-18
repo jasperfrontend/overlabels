@@ -176,6 +176,41 @@ class AppServiceProvider extends ServiceProvider
                 });
         });
 
+        // Template creation. Every one of these writes a row and burns a slug,
+        // and until Aug 2026 none of them were limited at all: the only guard on
+        // templates.store and templates.fork was "are you logged in". The other
+        // limiters here all face the overlay-serving and bot-ingress side, so
+        // nothing covered authoring. Keyed per user because creating a template
+        // requires a session, so the Twitch account is the real identity; the IP
+        // fallback is only there for safety if that ever stops being true.
+        // 30/min is far above what a person clicking Copy can manage and far
+        // below what a script does, and the hourly bucket is what actually caps
+        // sustained abuse.
+        RateLimiter::for('template-write', function (Request $request) {
+            $key = $request->user()?->id ?: $request->ip();
+
+            return [
+                Limit::perMinute(30)->by('template-write:'.$key),
+                Limit::perHour(200)->by('template-write:'.$key),
+            ];
+        });
+
+        // Forking a kit is the amplified path: Kit::fork() loops the kit's
+        // templates and forks each one, so a single request creates as many rows
+        // as the kit holds rather than one. Kits are capped at 50 templates
+        // (KitController), so this bucket is deliberately much tighter than
+        // template-write - 10/hour * 50 is already 500 rows. Forking a kit is
+        // also a rare deliberate act: the largest kit in existence holds 9
+        // templates and onboarding forks the starter kit exactly once.
+        RateLimiter::for('kit-fork', function (Request $request) {
+            $key = $request->user()?->id ?: $request->ip();
+
+            return [
+                Limit::perMinute(3)->by('kit-fork:'.$key),
+                Limit::perHour(10)->by('kit-fork:'.$key),
+            ];
+        });
+
         Event::listen(function (SocialiteWasCalled $event) {
             $event->extendSocialite('twitch', Provider::class);
         });
