@@ -163,6 +163,41 @@ SELECT count(*) FROM image_uploads     WHERE url            LIKE '%cloudinary%';
 
 ## Gotchas
 
+- **Cloudflare caches 404s on `images.overlabels.com` for four hours.** This is
+  the one that will waste your afternoon, because it presents as a bug in the
+  uploader and is not one. Observed 2026-08-18 against a key that had never
+  existed:
+
+  ```
+  request 1:  404   Cache-Control: max-age=14400   cf-cache-status: MISS
+  request 2:  404   Cache-Control: max-age=14400   cf-cache-status: HIT
+  request 3:  404   Cache-Control: max-age=14400   cf-cache-status: HIT
+  ```
+
+  `max-age=14400` is R2's public-bucket default for a miss and is nothing we
+  set - our own objects carry `max-age=31536000, immutable`.
+
+  **Why it can bite a successful upload.** The upload path is fully
+  synchronous: encode, `Storage::put()`, database row, JSON response. R2 has
+  acknowledged the write before the browser is ever told the URL, so there is
+  no window in our code where the object is missing. But if a request for that
+  key reaches an edge in the instant before the object is visible there, the
+  edge caches the miss - and then serves a 404 for up to four hours for an
+  object that exists. Symptom: upload succeeds, image is broken, nothing in the
+  logs, and it fixes itself later. Do not go looking for a queue; there isn't
+  one.
+
+  **The lever we have is a Cloudflare Cache Rule**, not code: match hostname
+  `images.overlabels.com`, set **Edge TTL by response status -> 404 -> 1
+  second** (or bypass). Cache Rules support status-code TTLs on the free plan.
+  That removes the landmine without touching the one-year TTL on real objects,
+  which is where all the caching value actually is. A frontend `onerror` retry
+  would also hide it, but that treats the symptom and puts a retry loop behind
+  every image on the site.
+
+  If you are debugging a "missing" image, check `cf-cache-status` before
+  concluding anything: a `HIT` on a 404 means you are talking to the cache, not
+  to the bucket. `curl -sSI <url>` shows it.
 - **The jurisdiction is part of the endpoint hostname.** An EU bucket answers
   on `<account>.eu.r2.cloudflarestorage.com` and returns 403 on the plain
   `<account>.r2.cloudflarestorage.com` host. That 403 looks exactly like a bad
