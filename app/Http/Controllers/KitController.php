@@ -64,7 +64,7 @@ class KitController extends Controller
             'description' => 'nullable|string|max:1000',
             'is_public' => 'required|boolean',
             'thumbnail_url' => 'nullable|url',
-            'template_ids' => 'required|array|min:1',
+            'template_ids' => 'required|array|min:1|max:'.Kit::MAX_TEMPLATES,
             'template_ids.*' => 'exists:overlay_templates,id',
         ]);
 
@@ -187,7 +187,7 @@ class KitController extends Controller
             'description' => 'nullable|string|max:1000',
             'is_public' => 'required|boolean',
             'thumbnail_url' => 'nullable|url',
-            'template_ids' => 'required|array|min:1',
+            'template_ids' => 'required|array|min:1|max:'.Kit::MAX_TEMPLATES,
             'template_ids.*' => 'exists:overlay_templates,id',
         ]);
 

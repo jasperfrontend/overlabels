@@ -596,7 +596,8 @@ Route::middleware('auth.redirect')->group(function () {
     Route::prefix('templates')->name('templates.')->group(function () {
         Route::get('/', [OverlayTemplateController::class, 'index'])->name('index');
         Route::get('/create', [OverlayTemplateController::class, 'create'])->name('create');
-        Route::post('/', [OverlayTemplateController::class, 'store'])->name('store');
+        Route::post('/', [OverlayTemplateController::class, 'store'])
+            ->middleware('throttle:template-write')->name('store');
         // Block routes must precede the {template} wildcard.
         Route::get('/blocks/library', [OverlayTemplateController::class, 'blockLibrary'])->name('blocks.library');
         Route::get('/blocks/{template}/snapshot', [OverlayTemplateController::class, 'blockSnapshot'])->name('blocks.snapshot');
@@ -604,7 +605,8 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/{template}/edit', [OverlayTemplateController::class, 'edit'])->name('edit');
         Route::put('/{template}', [OverlayTemplateController::class, 'update'])->name('update');
         Route::delete('/{template}', [OverlayTemplateController::class, 'destroy'])->name('destroy');
-        Route::post('/{template}/fork', [OverlayTemplateController::class, 'fork'])->name('fork');
+        Route::post('/{template}/fork', [OverlayTemplateController::class, 'fork'])
+            ->middleware('throttle:template-write')->name('fork');
         Route::put('/{template}/target-overlays', [OverlayTemplateController::class, 'updateTargetOverlays'])->name('target-overlays');
         Route::put('/{template}/triggers', [OverlayTemplateController::class, 'updateTriggers'])->name('triggers');
         Route::put('/{template}/screenshot', [OverlayTemplateController::class, 'updateScreenshot'])->name('screenshot');
@@ -653,7 +655,8 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/{kit}/edit', [KitController::class, 'edit'])->name('edit');
         Route::put('/{kit}', [KitController::class, 'update'])->name('update');
         Route::delete('/{kit}', [KitController::class, 'destroy'])->name('destroy');
-        Route::post('/{kit}/fork', [KitController::class, 'fork'])->name('fork');
+        Route::post('/{kit}/fork', [KitController::class, 'fork'])
+            ->middleware('throttle:kit-fork')->name('fork');
     });
 
     // Trigger overview - read-only matrix; per-template editing lives on
