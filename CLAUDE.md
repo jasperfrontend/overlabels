@@ -32,6 +32,8 @@ php artisan pint         # PHP code style fixes
 CI runs the check-mode variants (`pint --test`, `format:check`, `lint:check`) plus `npm test`,
 `npm run typecheck` and `pest`. All of them must pass before a PR merges.
 
+Never use bash heredoc (<<EOF) to write files. Always use the Write or Edit tool directly.
+
 ### Build & Deploy
 ```bash
 npm run build            # Production build
