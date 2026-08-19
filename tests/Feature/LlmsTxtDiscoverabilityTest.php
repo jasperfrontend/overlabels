@@ -63,7 +63,10 @@ it('anchors llms.txt from the homepage', function () {
 });
 
 it('links llms.txt from every reference page, not just the index', function () {
-    foreach (['/help/reference', '/help/reference/template-tags/channel_followers'] as $url) {
+    // channel_id rather than a sampled-at-random entry: it is a core tag that
+    // cannot stop existing, so this test fails for the reason it is about
+    // rather than because the page it happened to name got retired.
+    foreach (['/help/reference', '/help/reference/template-tags/channel_id'] as $url) {
         expect($this->get($url)->getContent())
             ->toContain('href="/llms.txt"')
             ->toContain('rel="llms-txt"');

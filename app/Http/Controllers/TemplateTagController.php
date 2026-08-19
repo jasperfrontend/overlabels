@@ -8,7 +8,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\CleanupRedundantTags;
 use App\Jobs\GenerateTemplateTags;
 use App\Models\TemplateTag;
 use App\Models\TemplateTagCategory;
@@ -62,7 +61,7 @@ class TemplateTagController extends Controller
 
             // Return with empty data rather than failing completely
             return Inertia::render('TemplateTagGenerator', [
-                'twitchData' => $this->getEmptyTwitchData(),
+                'twitchData' => (object) [],
                 'existingTags' => $this->parser->getOrganizedTemplateTagsForUser($user->id),
                 'hasExistingTags' => false,
                 'error' => 'Failed to load Twitch data. You can still generate template tags.',
@@ -143,11 +142,9 @@ class TemplateTagController extends Controller
         }
 
         try {
-            // Get current Twitch data
+            // Get current Twitch data. Arr::get() resolves a missing path to
+            // null on its own, so no pre-shaping of the payload is needed here.
             $twitchData = $this->twitch->getExtendedUserData($user->access_token, $user->twitch_id);
-
-            // Ensure data arrays exist
-            $twitchData = $this->ensureDataArraysExist($twitchData);
 
             // Get the formatted output for this tag
             $output = $tag->getFormattedOutput($twitchData);
@@ -209,68 +206,6 @@ class TemplateTagController extends Controller
 
             return response()->json([
                 'error' => 'Failed to clear template tags',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Clean up redundant _data_X_ tags (async)
-     * Removes tags like channel_followers_data_3_user_id, followed_channels_data_7_broadcaster_name, etc.
-     */
-    public function cleanupRedundantTags(Request $request)
-    {
-        try {
-            $user = $request->user();
-            if (! $user) {
-                return response()->json(['error' => 'User not authenticated'], 401);
-            }
-
-            // Check if there's already a pending or processing cleanup job
-            $existingJob = TemplateTagJob::where('user_id', $user->id)
-                ->where('job_type', 'cleanup')
-                ->whereIn('status', ['pending', 'processing'])
-                ->first();
-
-            if ($existingJob) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Template tag cleanup is already in progress',
-                    'job_id' => $existingJob->id,
-                    'status' => $existingJob->status,
-                ]);
-            }
-
-            // Create job record
-            $jobRecord = TemplateTagJob::create([
-                'user_id' => $user->id,
-                'job_type' => 'cleanup',
-                'status' => 'pending',
-            ]);
-
-            // Dispatch the job
-            CleanupRedundantTags::dispatch($user, $jobRecord);
-
-            Log::info('Template tag cleanup job dispatched', [
-                'user_id' => $user->id,
-                'job_id' => $jobRecord->id,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Template tag cleanup started!',
-                'job_id' => $jobRecord->id,
-                'status' => 'pending',
-            ]);
-
-        } catch (Exception $e) {
-            Log::error('Error dispatching template tag cleanup job', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'error' => 'Failed to start template tag cleanup',
                 'message' => $e->getMessage(),
             ], 500);
         }
@@ -367,92 +302,5 @@ class TemplateTagController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
-    }
-
-    /**
-     * Ensure all required data arrays exist to prevent "Undefined array key" errors
-     */
-    private function ensureDataArraysExist(array $twitchData): array
-    {
-        // Ensure top-level structures exist
-        $requiredStructures = [
-            'user' => [],
-            'channel' => [],
-            'channel_followers' => ['total' => 0, 'data' => []],
-            'followed_channels' => ['total' => 0, 'data' => []],
-            'subscribers' => ['total' => 0, 'points' => 0, 'data' => []],
-            'goals' => ['data' => []],
-        ];
-
-        foreach ($requiredStructures as $key => $defaultValue) {
-            if (! isset($twitchData[$key])) {
-                $twitchData[$key] = $defaultValue;
-                Log::warning("Missing Twitch data structure: $key, using default");
-            }
-        }
-
-        // Ensure data arrays have at least empty objects to prevent index errors
-        $dataArrays = ['channel_followers', 'followed_channels', 'subscribers', 'goals'];
-
-        foreach ($dataArrays as $arrayKey) {
-            if (isset($twitchData[$arrayKey]['data']) && empty($twitchData[$arrayKey]['data'])) {
-                // Add empty object so index 0 access doesn't fail
-                $twitchData[$arrayKey]['data'] = [[]];
-                Log::info("Added empty data object for $arrayKey to prevent index errors");
-            }
-        }
-
-        return $twitchData;
-    }
-
-    /**
-     * Get empty Twitch data structure for fallback
-     */
-    private function getEmptyTwitchData(): array
-    {
-        return [
-            'user' => [
-                'id' => '',
-                'login' => '',
-                'display_name' => '',
-                'type' => '',
-                'broadcaster_type' => '',
-                'description' => '',
-                'profile_image_url' => '',
-                'offline_image_url' => '',
-                'view_count' => 0,
-                'email' => '',
-                'created_at' => '',
-            ],
-            'channel' => [
-                'broadcaster_id' => '',
-                'broadcaster_login' => '',
-                'broadcaster_name' => '',
-                'broadcaster_language' => '',
-                'game_id' => '',
-                'game_name' => '',
-                'title' => '',
-                'delay' => 0,
-                'tags' => [],
-                'content_classification_labels' => [],
-                'is_branded_content' => false,
-            ],
-            'channel_followers' => [
-                'total' => 0,
-                'data' => [[]],
-            ],
-            'followed_channels' => [
-                'total' => 0,
-                'data' => [[]],
-            ],
-            'subscribers' => [
-                'total' => 0,
-                'points' => 0,
-                'data' => [[]],
-            ],
-            'goals' => [
-                'data' => [[]],
-            ],
-        ];
     }
 }

@@ -687,10 +687,6 @@ Route::middleware('auth.redirect')->group(function () {
     Route::delete('/template-tags/clear', [TemplateTagController::class, 'clearAllTags'])
         ->name('tags.clear');
 
-    // Clean up redundant _data_X_ tags
-    Route::post('/template-tags/cleanup', [TemplateTagController::class, 'cleanupRedundantTags'])
-        ->name('tags.cleanup');
-
     // Replay a historical event as an alert
     Route::post('/events/{twitchEvent}/replay', [TwitchEventSubController::class, 'replay'])->name('events.replay');
 
