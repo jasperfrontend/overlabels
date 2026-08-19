@@ -5,7 +5,6 @@ use App\Models\TemplateTagCategory;
 use App\Models\User;
 use App\Services\JsonTemplateParserService;
 use App\Services\TemplateDataMapperService;
-use App\Services\TwitchScopeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -67,9 +66,7 @@ function tagNamesFor(User $user): array
 }
 
 beforeEach(function () {
-    $this->user = User::factory()->create([
-        'twitch_scopes' => TwitchScopeService::REQUIRED_SCOPES,
-    ]);
+    $this->user = User::factory()->create();
 });
 
 /*
@@ -136,7 +133,7 @@ it('offers the same tags regardless of what the account currently contains', fun
     syncFor($this->user, $full);
     $fromFull = tagNamesFor($this->user);
 
-    $other = User::factory()->create(['twitch_scopes' => TwitchScopeService::REQUIRED_SCOPES]);
+    $other = User::factory()->create();
     syncFor($other, $empty);
 
     expect(tagNamesFor($other))->toBe($fromFull);
@@ -182,65 +179,68 @@ it('deletes rows that are not in the catalogue', function () {
 });
 
 it('drops a category once nothing is left in it', function () {
-    syncFor($this->user, twitchPayload('affiliate'));
-    expect(TemplateTagCategory::where('user_id', $this->user->id)->pluck('name'))->toContain('subscribers');
+    syncFor($this->user, twitchPayload());
 
-    // Losing affiliate status takes the subscriber tags, and the empty category with them.
-    syncFor($this->user, twitchPayload(''));
+    // A category holding nothing but artefacts goes when they are pruned.
+    $orphan = TemplateTagCategory::create([
+        'user_id' => $this->user->id,
+        'name' => 'legacy',
+        'display_name' => 'Legacy',
+        'description' => 'from the old walker',
+        'is_group' => false,
+        'sort_order' => 99,
+    ]);
+    TemplateTag::factory()->create([
+        'user_id' => $this->user->id,
+        'category_id' => $orphan->id,
+        'tag_name' => 'channel_followers_pagination_cursor',
+    ]);
 
-    expect(TemplateTagCategory::where('user_id', $this->user->id)->pluck('name'))->not->toContain('subscribers');
+    syncFor($this->user, twitchPayload());
+
+    expect(TemplateTagCategory::where('user_id', $this->user->id)->pluck('name'))->not->toContain('legacy');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Per-account tailoring, declared rather than emergent
+| No tailoring: everyone gets the same list
 |--------------------------------------------------------------------------
+|
+| Withholding the subscriber and goal tags from non-affiliates was built and
+| then removed. Twitch serves those endpoints only to affiliates, so the tags
+| resolve to 0 or empty for everyone else - and empty renders as nothing, which
+| is the same outcome as not having the tag. Meanwhile the starter template
+| every account copies references subscribers_*, so hiding them left a
+| non-affiliate looking at a tag in their own overlay that the browser denied
+| existed.
 */
 
-it('withholds subscriber and goal tags from an account that is not an affiliate', function () {
+it('offers the subscriber and goal tags to an account that is not an affiliate', function () {
     syncFor($this->user, twitchPayload(''));
-
-    $names = tagNamesFor($this->user);
-
-    expect($names)->not->toContain('subscribers_total')
-        ->and($names)->not->toContain('goals_latest_target')
-        ->and($names)->toContain('followers_total');
-});
-
-it('offers subscriber and goal tags to an affiliate', function () {
-    syncFor($this->user, twitchPayload('affiliate'));
 
     expect(tagNamesFor($this->user))
         ->toContain('subscribers_total')
         ->toContain('goals_latest_target');
 });
 
-it('withholds a tag whose scope the user never granted', function () {
-    $this->user->update([
-        'twitch_scopes' => array_values(array_diff(
-            TwitchScopeService::REQUIRED_SCOPES,
-            ['channel:read:subscriptions']
-        )),
-    ]);
+it('gives an affiliate and a non-affiliate byte-identical tag lists', function () {
+    $plebeian = User::factory()->create();
+    $affiliate = User::factory()->create();
 
-    syncFor($this->user, twitchPayload('partner'));
+    syncFor($plebeian, twitchPayload(''));
+    syncFor($affiliate, twitchPayload('partner'));
 
-    $names = tagNamesFor($this->user);
-
-    expect($names)->not->toContain('subscribers_total')
-        // goals has its own scope and is unaffected
-        ->and($names)->toContain('goals_latest_target');
+    expect(tagNamesFor($plebeian))->toBe(tagNamesFor($affiliate));
 });
 
-it('falls back to the account broadcaster_type when the payload has no user block', function () {
-    $this->user->update(['twitch_data' => ['broadcaster_type' => 'partner']]);
+it('still renders a withheld-looking tag as empty rather than absent', function () {
+    // The reason no gate is needed: a non-affiliate's subscriber tags resolve,
+    // they just resolve to nothing.
+    $mapped = app(TemplateDataMapperService::class)
+        ->mapForTemplate(twitchPayload(''), 'overlay', ['subscribers_latest_user_name']);
 
-    $payload = twitchPayload('affiliate');
-    unset($payload['user']);
-
-    syncFor($this->user, $payload);
-
-    expect(tagNamesFor($this->user))->toContain('subscribers_total');
+    expect($mapped)->toHaveKey('subscribers_latest_user_name')
+        ->and($mapped['subscribers_latest_user_name'])->toBe('');
 });
 
 /*
@@ -348,9 +348,8 @@ it('resolves channel_avatar to the owner profile image, alongside user_avatar', 
         ->and($mapped['channel_avatar'])->toBe($mapped['user_avatar']);
 });
 
-it('offers channel_avatar to every account, with no gate', function () {
+it('offers channel_avatar to every account', function () {
     syncFor($this->user, twitchPayload(''));
 
-    expect(tagNamesFor($this->user))->toContain('channel_avatar')
-        ->and(TemplateDataMapperService::gatesFor('channel_avatar'))->toBe([]);
+    expect(tagNamesFor($this->user))->toContain('channel_avatar');
 });

@@ -33,7 +33,6 @@ class JsonTemplateParserService
 {
     public function __construct(
         private readonly TemplateDataMapperService $templateDataMapper,
-        private readonly TwitchScopeService $scopes,
     ) {}
 
     /**
@@ -48,7 +47,7 @@ class JsonTemplateParserService
      */
     public function syncTagsForUser(User $user, array $twitchData): array
     {
-        $eligible = $this->eligibleTags($user, $twitchData);
+        $eligible = TemplateDataMapperService::tagCatalog();
 
         return DB::transaction(function () use ($user, $eligible, $twitchData) {
             $categoryIds = $this->syncCategories($user, $eligible);
@@ -57,56 +56,6 @@ class JsonTemplateParserService
 
             return $result;
         });
-    }
-
-    /**
-     * The catalogue entries this user qualifies for, keyed by tag name.
-     *
-     * @return array<string, array<string, mixed>>
-     */
-    public function eligibleTags(User $user, array $twitchData): array
-    {
-        $broadcasterType = (string) (
-            $twitchData['user']['broadcaster_type']
-            ?? $user->twitch_data['broadcaster_type']
-            ?? ''
-        );
-
-        return array_filter(
-            TemplateDataMapperService::tagCatalog(),
-            fn (string $tagName) => $this->passesGates(
-                TemplateDataMapperService::gatesFor($tagName),
-                $user,
-                $broadcasterType
-            ),
-            ARRAY_FILTER_USE_KEY
-        );
-    }
-
-    /**
-     * A tag is offered only when every gate it declares holds. `affiliate`
-     * means Twitch will actually serve the endpoint (it 401s the subscriptions
-     * and goals endpoints for non-affiliates); anything else is an OAuth scope.
-     *
-     * @param  array<int, string>  $gates
-     */
-    private function passesGates(array $gates, User $user, string $broadcasterType): bool
-    {
-        foreach ($gates as $gate) {
-            if ($gate === 'affiliate') {
-                if (! in_array($broadcasterType, ['affiliate', 'partner'], true)) {
-                    return false;
-                }
-
-                continue;
-            }
-
-            if (! $this->scopes->hasScope($user, $gate)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**

@@ -137,7 +137,6 @@ class TemplateDataMapperService
      *   desc     - description shown in the tag browser.
      *   sample   - fallback sample, used for template previews and whenever the
      *              account has no live value for the path.
-     *   requires - optional gate, see gatesFor(). Absent means everyone gets it.
      */
     private const array TAG_CATALOG = [
         // ---- User (the most recent user who triggered an event; see TemplateTagsList.vue) ----
@@ -191,28 +190,30 @@ class TemplateDataMapperService
         'followed_latest_name' => ['path' => 'followed_channels.data.0.broadcaster_name', 'category' => 'followed', 'type' => 'string', 'label' => 'Latest Name', 'desc' => 'Latest followed channel name', 'sample' => 'CoolStreamer'],
         'followed_latest_date' => ['path' => 'followed_channels.data.0.followed_at', 'category' => 'followed', 'type' => 'datetime', 'label' => 'Latest Follow Date', 'desc' => 'Latest follow date', 'sample' => 1777593600],
 
-        // ---- Subscribers (Twitch serves these only to affiliates and partners) ----
-        'subscribers_total' => ['path' => 'subscribers.total', 'category' => 'subscribers', 'type' => 'integer', 'label' => 'Total', 'desc' => 'Total number of subscribers', 'sample' => 89, 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_points' => ['path' => 'subscribers.points', 'category' => 'subscribers', 'type' => 'integer', 'label' => 'Points', 'desc' => 'Total subscriber points', 'sample' => 12345, 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_user_id' => ['path' => 'subscribers.data.0.user_id', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Subscriber ID', 'desc' => 'Latest subscriber ID', 'sample' => '444555666', 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_user_login' => ['path' => 'subscribers.data.0.user_login', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Subscriber Login', 'desc' => 'Latest subscriber login', 'sample' => 'newsubscriber', 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_user_name' => ['path' => 'subscribers.data.0.user_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Subscriber Name', 'desc' => 'Latest subscriber display name', 'sample' => 'NewSubscriber', 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_tier' => ['path' => 'subscribers.data.0.tier', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Tier', 'desc' => 'Latest subscription tier (1000, 2000, 3000 or Prime)', 'sample' => '1000', 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_plan_name' => ['path' => 'subscribers.data.0.plan_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Plan Name', 'desc' => 'Latest subscription plan name', 'sample' => 'Tier 1', 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_is_gift' => ['path' => 'subscribers.data.0.is_gift', 'category' => 'subscribers', 'type' => 'boolean', 'label' => 'Latest Is Gift', 'desc' => 'Whether the latest subscription was gifted', 'sample' => false, 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_gifter_id' => ['path' => 'subscribers.data.0.gifter_id', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Gifter ID', 'desc' => 'Latest gifter ID', 'sample' => '', 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_gifter_login' => ['path' => 'subscribers.data.0.gifter_login', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Gifter Login', 'desc' => 'Latest gifter login', 'sample' => '', 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_gifter_name' => ['path' => 'subscribers.data.0.gifter_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Gifter Name', 'desc' => 'Latest gifter display name', 'sample' => '', 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_broadcaster_id' => ['path' => 'subscribers.data.0.broadcaster_id', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Broadcaster ID', 'desc' => 'Broadcaster ID on the latest subscription', 'sample' => '123456789', 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_broadcaster_login' => ['path' => 'subscribers.data.0.broadcaster_login', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Broadcaster Login', 'desc' => 'Broadcaster login on the latest subscription', 'sample' => 'streamername', 'requires' => ['affiliate', 'channel:read:subscriptions']],
-        'subscribers_latest_broadcaster_name' => ['path' => 'subscribers.data.0.broadcaster_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Broadcaster Name', 'desc' => 'Broadcaster name on the latest subscription', 'sample' => 'StreamerName', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        // ---- Subscribers (Twitch serves these only to affiliates and partners,
+        //      so they resolve to 0 / empty for everyone else - which renders as
+        //      nothing, and is why they are offered to every account) ----
+        'subscribers_total' => ['path' => 'subscribers.total', 'category' => 'subscribers', 'type' => 'integer', 'label' => 'Total', 'desc' => 'Total number of subscribers', 'sample' => 89],
+        'subscribers_points' => ['path' => 'subscribers.points', 'category' => 'subscribers', 'type' => 'integer', 'label' => 'Points', 'desc' => 'Total subscriber points', 'sample' => 12345],
+        'subscribers_latest_user_id' => ['path' => 'subscribers.data.0.user_id', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Subscriber ID', 'desc' => 'Latest subscriber ID', 'sample' => '444555666'],
+        'subscribers_latest_user_login' => ['path' => 'subscribers.data.0.user_login', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Subscriber Login', 'desc' => 'Latest subscriber login', 'sample' => 'newsubscriber'],
+        'subscribers_latest_user_name' => ['path' => 'subscribers.data.0.user_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Subscriber Name', 'desc' => 'Latest subscriber display name', 'sample' => 'NewSubscriber'],
+        'subscribers_latest_tier' => ['path' => 'subscribers.data.0.tier', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Tier', 'desc' => 'Latest subscription tier (1000, 2000, 3000 or Prime)', 'sample' => '1000'],
+        'subscribers_latest_plan_name' => ['path' => 'subscribers.data.0.plan_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Plan Name', 'desc' => 'Latest subscription plan name', 'sample' => 'Tier 1'],
+        'subscribers_latest_is_gift' => ['path' => 'subscribers.data.0.is_gift', 'category' => 'subscribers', 'type' => 'boolean', 'label' => 'Latest Is Gift', 'desc' => 'Whether the latest subscription was gifted', 'sample' => false],
+        'subscribers_latest_gifter_id' => ['path' => 'subscribers.data.0.gifter_id', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Gifter ID', 'desc' => 'Latest gifter ID', 'sample' => ''],
+        'subscribers_latest_gifter_login' => ['path' => 'subscribers.data.0.gifter_login', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Gifter Login', 'desc' => 'Latest gifter login', 'sample' => ''],
+        'subscribers_latest_gifter_name' => ['path' => 'subscribers.data.0.gifter_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Gifter Name', 'desc' => 'Latest gifter display name', 'sample' => ''],
+        'subscribers_latest_broadcaster_id' => ['path' => 'subscribers.data.0.broadcaster_id', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Broadcaster ID', 'desc' => 'Broadcaster ID on the latest subscription', 'sample' => '123456789'],
+        'subscribers_latest_broadcaster_login' => ['path' => 'subscribers.data.0.broadcaster_login', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Broadcaster Login', 'desc' => 'Broadcaster login on the latest subscription', 'sample' => 'streamername'],
+        'subscribers_latest_broadcaster_name' => ['path' => 'subscribers.data.0.broadcaster_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Broadcaster Name', 'desc' => 'Broadcaster name on the latest subscription', 'sample' => 'StreamerName'],
 
-        // ---- Goals (Twitch serves these only to affiliates and partners) ----
-        'goals_latest_type' => ['path' => 'goals.data.0.type', 'category' => 'goals', 'type' => 'string', 'label' => 'Latest Type', 'desc' => 'Latest goal type', 'sample' => 'follower', 'requires' => ['affiliate', 'channel:read:goals']],
-        'goals_latest_target' => ['path' => 'goals.data.0.target', 'category' => 'goals', 'type' => 'integer', 'label' => 'Latest Target', 'desc' => 'Latest goal target amount', 'sample' => 2000, 'requires' => ['affiliate', 'channel:read:goals']],
-        'goals_latest_current' => ['path' => 'goals.data.0.current', 'category' => 'goals', 'type' => 'integer', 'label' => 'Latest Current', 'desc' => 'Latest goal current amount', 'sample' => 1234, 'requires' => ['affiliate', 'channel:read:goals']],
-        'goals_latest_description' => ['path' => 'goals.data.0.description', 'category' => 'goals', 'type' => 'string', 'label' => 'Latest Description', 'desc' => 'Latest goal description', 'sample' => 'Road to 2K followers!', 'requires' => ['affiliate', 'channel:read:goals']],
-        'goals_latest_created_at' => ['path' => 'goals.data.0.created_at', 'category' => 'goals', 'type' => 'datetime', 'label' => 'Latest Created At', 'desc' => 'When the latest goal was created', 'sample' => 1777075200, 'requires' => ['affiliate', 'channel:read:goals']],
+        // ---- Goals (same as subscribers: empty rather than withheld) ----
+        'goals_latest_type' => ['path' => 'goals.data.0.type', 'category' => 'goals', 'type' => 'string', 'label' => 'Latest Type', 'desc' => 'Latest goal type', 'sample' => 'follower'],
+        'goals_latest_target' => ['path' => 'goals.data.0.target', 'category' => 'goals', 'type' => 'integer', 'label' => 'Latest Target', 'desc' => 'Latest goal target amount', 'sample' => 2000],
+        'goals_latest_current' => ['path' => 'goals.data.0.current', 'category' => 'goals', 'type' => 'integer', 'label' => 'Latest Current', 'desc' => 'Latest goal current amount', 'sample' => 1234],
+        'goals_latest_description' => ['path' => 'goals.data.0.description', 'category' => 'goals', 'type' => 'string', 'label' => 'Latest Description', 'desc' => 'Latest goal description', 'sample' => 'Road to 2K followers!'],
+        'goals_latest_created_at' => ['path' => 'goals.data.0.created_at', 'category' => 'goals', 'type' => 'datetime', 'label' => 'Latest Created At', 'desc' => 'When the latest goal was created', 'sample' => 1777075200],
     ];
 
     /**
@@ -255,18 +256,6 @@ class TemplateDataMapperService
     public static function tagCategoryMeta(): array
     {
         return self::TAG_CATEGORY_META;
-    }
-
-    /**
-     * Gates declared on a catalogue entry. 'affiliate' means the account must
-     * be an affiliate or partner; anything containing a colon is a Twitch OAuth
-     * scope. Both must hold for the tag to be offered.
-     *
-     * @return array<int, string>
-     */
-    public static function gatesFor(string $tagName): array
-    {
-        return self::tagCatalog()[$tagName]['requires'] ?? [];
     }
 
     /**
