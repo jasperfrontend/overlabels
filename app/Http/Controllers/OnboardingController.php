@@ -7,7 +7,6 @@ use App\Models\EventTemplateMapping;
 use App\Models\Kit;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayTemplate;
-use App\Models\TemplateTagJob;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -36,15 +35,10 @@ class OnboardingController extends Controller
 
         $alertMappings = EventTemplateMapping::where('user_id', $user->id)->get();
 
-        $latestTagJob = TemplateTagJob::where('user_id', $user->id)
-            ->where('job_type', 'generate')
-            ->latest()
-            ->first();
-
-        $tagsStatus = 'not_started';
-        if ($latestTagJob) {
-            $tagsStatus = $latestTagJob->status;
-        }
+        // Template tags are a code constant served to every account, so there
+        // is nothing to generate and nothing to wait for. The step is kept in
+        // the wizard because it still tells a new user the tags exist.
+        $tagsStatus = 'completed';
 
         $hasToken = $user->overlayAccessTokens()
             ->where('is_active', true)

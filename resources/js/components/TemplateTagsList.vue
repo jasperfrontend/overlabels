@@ -66,9 +66,9 @@ const userId = (page.props.auth as { user?: { id?: number | string } } | undefin
 const CACHE_KEY = userId ? `template_tags_cache_user_${userId}` : 'template_tags_cache_anon';
 const CACHE_VERSION_KEY = `${CACHE_KEY}_version`;
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
-// v3: the tag catalogue replaced the JSON-walking generator, so the cached list
-// holds artefacts (channel_count, *_pagination_cursor) that no longer exist.
-const CURRENT_CACHE_VERSION = 'v3';
+// v4: tags are no longer per-user rows. The payload lost `id` and gained
+// `is_live`, and the list itself changed, so any cached v3 copy is stale.
+const CURRENT_CACHE_VERSION = 'v4';
 
 interface CachedData {
   tags: Record<string, CategoryTag>;
@@ -158,8 +158,9 @@ function useGetTemplateTags(): void {
       const tags = response.data.tags;
       const isEmpty = !tags || Object.keys(tags).length === 0;
 
-      // Don't cache empty responses: during onboarding, tag generation runs async
-      // and an empty result would otherwise stick in localStorage for an hour.
+      // Don't cache empty responses. The catalogue is a constant so an empty
+      // list means the request failed, and caching that would hide working
+      // tags for an hour.
       if (!isEmpty) {
         setCachedTags(tags);
         processTags(tags);

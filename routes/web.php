@@ -671,21 +671,9 @@ Route::middleware('auth.redirect')->group(function () {
     Route::post('/eventsub/connect', [IntegrationController::class, 'connectEventSub'])
         ->name('eventsub.connect');
 
-    // Template tag generator interface
+    // Template tag reference, showing the account's current values
     Route::get('/tags', [TemplateTagController::class, 'index'])
         ->name('tags.generator');
-
-    // Generate standardized tags from current Twitch data
-    Route::post('/template-tags/generate', [TemplateTagController::class, 'generateTags'])
-        ->name('tags.generate');
-
-    // Preview a specific tag with current data
-    Route::get('/template-tags/{tag}/preview', [TemplateTagController::class, 'previewTag'])
-        ->name('tags.preview');
-
-    // Clear all template tags
-    Route::delete('/template-tags/clear', [TemplateTagController::class, 'clearAllTags'])
-        ->name('tags.clear');
 
     // Replay a historical event as an alert
     Route::post('/events/{twitchEvent}/replay', [TwitchEventSubController::class, 'replay'])->name('events.replay');

@@ -6,8 +6,6 @@ use App\Models\ExternalIntegration;
 use App\Models\Kit;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
-use App\Models\TemplateTag;
-use App\Models\TemplateTagCategory;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -36,8 +34,6 @@ class UserDeletionService
             });
 
             OverlayControl::where('user_id', $user->id)->delete();
-            TemplateTag::where('user_id', $user->id)->delete();
-            TemplateTagCategory::where('user_id', $user->id)->delete();
             ExternalIntegration::where('user_id', $user->id)->delete();
 
             $user->overlayAccessTokens()->delete();

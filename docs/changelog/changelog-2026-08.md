@@ -1,5 +1,17 @@
 # CHANGELOG AUGUST 2026
 
+## August 20th, 2026 - refactor(tags): template tags stopped being a per-user table
+
+Follow-on from the catalogue rewrite below. Once every account was getting an identical list, the obvious question was why the list is stored per account at all. It is not, any more.
+
+- **Production held 1155 tag rows expressing 82 distinct names across 19 accounts**, plus 122 category rows for 7 distinct categories. Zero rows had `tag_type` of `custom` and zero had `is_editable` true, so nobody had ever edited one in the year the table existed. At 1000 users the same list would have cost 64,000 identical rows.
+- **The storage was copying the old generator's shape.** The walker derived tag names from *your* Twitch payload, so its output was per-user by construction and the table followed. Nothing about a tag was ever account-specific; the affiliate gate briefly gave the split a second justification and that came out yesterday too.
+- **Most of the surrounding code existed only to manage the duplication.** Gone with it: the `GenerateTemplateTags` job, the `template_tag_jobs` table and its polling endpoint, the generate button and progress bar, `clearAllTags`, the tag deletion in `UserDeletionService`, the 30-line ghost-user reassignment block in `AdminUserController`, and the admin Tags screen with its six routes and sidebar entry. `JsonTemplateParserService` is deleted outright rather than renamed, since seeding was all it did.
+- **The Ghost User's 78 tag rows were not a mystery, they were the bill.** That reassignment block rehomed a deleted user's rows onto the ghost, deduping on `category_id:tag_name` - a key that can never match across users, because the category ids differ. So every account deletion added another full set. `user_templates` went too: it referenced tags by id, held zero rows, and nothing in the codebase referenced the model.
+- **`/tags` is now a live reference rather than a generator.** Same page, same grouping, but the values beside each tag are the account's own and are computed per request from the catalogue, so there is nothing to generate, poll or refresh. That also retired the per-tag preview button, which existed to fetch on demand exactly what the page now shows by default.
+- **`TemplateTag::formatData()`'s null guard went with the model, and that is fine.** It was added the day before to stop a `TypeError` reaching the `/tags` preview endpoint as a 500. Both the model and the endpoint are gone, so the failure mode is gone with them rather than being left unguarded somewhere else.
+- **The drop migration recreates the schema in `down()` but not the data**, deliberately. Restoring those rows would mean reinstating the generator that invented them, and the catalogue is now the only description of what a tag is.
+
 ## August 20th, 2026 - feat(tags): [[[channel_avatar]]]
 
 Twitch does not put an avatar on Get Channel Information, because it files the profile image under the user rather than the channel. That left no honest way to put your own face in an overlay: `[[[user_avatar]]]` looks like it works right up until the first follow, at which point it becomes the follower's picture and stays that way.

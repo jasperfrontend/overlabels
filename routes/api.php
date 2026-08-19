@@ -164,9 +164,6 @@ Route::get('/expression/tags', [ExpressionTagController::class, 'index'])
     ->middleware(['auth:sanctum', 'throttle:60,1']);
 
 // Get job status for template tag operations
-Route::get('/template-tags/jobs/{jobType?}', [TemplateTagController::class, 'getJobStatus'])
-    ->name('tags.api.jobs')
-    ->middleware('auth:sanctum');
 
 // GPS session map endpoints
 Route::get('/gps-sessions/{sessionId}/geojson', [GpsSessionMapController::class, 'authenticatedGeoJson'])
