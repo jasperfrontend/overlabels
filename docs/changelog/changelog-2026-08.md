@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 19th, 2026 - fix(proxy): the other half of the client IP fix
+
+The entry below shipped, deployed, and changed nothing. Sessions still recorded Cloudflare addresses after a full logout and login. The diagnosis in it was correct as far as it went and the change it made is still required, but it was one half of a fix that only works as a pair, and the missing half was in a different file.
+
+- **The evidence that settled it was in Caddy's own access log.** `"X-Forwarded-For": ["172.71.95.136"]` next to `"Cf-Connecting-Ip": ["172.235.171.209"]` and `"client_ip": "172.71.95.136"`. X-Forwarded-For holds a single entry and it is the Cloudflare edge. The real address was never in the chain, so telling Caddy to trust and skip Cloudflare's ranges left it nothing to fall through to. (That sample is the bot calling the app through Cloudflare from the same box, which is why the real address there is the origin's own - a separate curiosity, and worth a look sometime, since bot traffic is making a round trip to Amsterdam and back to reach a container on localhost.)
+- **kamal-proxy rebuilds the header from nothing whenever `ssl: true`.** Go's `httputil.ReverseProxy` strips `X-Forwarded-For` from the outbound request before the rewrite hook runs, and `internal/server/target.go` only copies the inbound value back when `ForwardHeaders` is set. Kamal defaults that flag to false when SSL is on. `req.SetXForwarded()` then appends the peer to an empty header, and the peer is Cloudflare.
+- **`forward_headers: true` on the web role is the missing half.** With it on, the inbound header is restored first and the peer is appended after, so Caddy receives `<client>, <cloudflare edge>` and can walk it. Neither change works alone: without the Caddyfile range list Caddy stops at the edge, and without this flag there is no chain to walk. They are one fix in two files and the comments in both now say so.
+- **This is still not a spoofing route, which is why the range list stays explicit.** A request sent directly to the origin has its forged header appended with the sender's real address, and Caddy stops at that first untrusted hop. `trusted_proxies *` would have turned the same setup into a way to walk past an IP ban.
+- **`ws.overlabels.com` is proxied too and was deliberately left alone.** Reverb has the same condition, but it is `reverb:start` rather than Caddy and parses forwarded headers on its own terms, so changing it belongs with someone actually looking at Reverb's client IPs rather than riding along with a session-logging fix.
+
 ## August 19th, 2026 - fix(proxy): every client IP in the app was Cloudflare's
 
 Orange-clouding `overlabels.com` and `www` today had a consequence nobody was watching for: the application stopped seeing real visitors. Every session row, every access log, every ban check resolved to a Cloudflare edge address. It got noticed as a broken IP lookup on `/admin/sessions`, which is comfortably the least important thing it broke.
