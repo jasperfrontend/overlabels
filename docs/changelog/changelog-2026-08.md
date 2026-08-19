@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 19th, 2026 - fix(proxy): every client IP in the app was Cloudflare's
+
+Orange-clouding `overlabels.com` and `www` today had a consequence nobody was watching for: the application stopped seeing real visitors. Every session row, every access log, every ban check resolved to a Cloudflare edge address. It got noticed as a broken IP lookup on `/admin/sessions`, which is comfortably the least important thing it broke.
+
+- **Nothing in PHP was wrong, and no application code changed.** Caddy decides what address Laravel is handed, and Caddy was handing it the wrong one. `trusted_proxies static private_ranges` covered kamal-proxy on the docker bridge, but Caddy walks `X-Forwarded-For` right to left and stops at the first hop it does not trust. With Cloudflare in front there was suddenly a second hop, a public one, so Caddy stopped there and called the edge the client.
+- **The timeline is exact rather than inferred.** `overlay_access_logs` holds zero Cloudflare-range addresses on every single day from 25 July through 18 August, then 13 of 261 on the 19th. The flip lands on the day the proxy went on.
+- **The rate limiter was the real damage, not the admin panel.** `RateLimitOverlayAccess` keys on `overlay-access:{ip}` at 100/min, so every overlay behind the same Cloudflare PoP shared one bucket and unrelated users could 429 each other. IP bans were broken in both directions too: a new ban would have landed on an edge shared by many real people, and the two addresses banned in March could never match again. Token IP allowlists carry the same flaw but nobody uses them, 0 of 74 active tokens.
+- **The range list is explicit on purpose and has to stay that way.** `trusted_proxies *` would have fixed the symptom and opened a hole, because the origin still answers directly on its Linode address: anything trusted by default could then spoof `X-Forwarded-For` and walk straight past a ban. With real ranges, a direct request arrives from an untrusted peer and Caddy ignores its headers in favour of the actual TCP address.
+- **Verified by compiling the config, not by reading it.** `frankenphp validate` passes and `frankenphp adapt` reports 28 trusted ranges: the 6 that `private_ranges` expands to plus all 22 Cloudflare CIDRs, v4 and v6. The "input is not formatted" warning on line 6 predates this change, was confirmed identical against the unmodified file, and was left alone.
+- **Restricting the origin to Cloudflare was considered and deliberately not done.** It is defence in depth rather than a requirement once the ranges are explicit, and it is not the one-liner it looks like: Docker publishes ports through its own nat path ahead of ufw's INPUT chain, which is why `ufw status` lists only port 22 while 80 and 443 are serving happily. Any future attempt belongs in `DOCKER-USER`, or in a Cloudflare Transform Rule adding a secret header. Existing session rows keep their Cloudflare addresses until those sessions cycle.
+
 ## August 19th, 2026 - chore(deps): routine sweep, both trees clean and no majors waiting
 
 A scheduled dependency sweep with nothing dramatic in it, which is the point of doing them regularly. Both advisory databases came back empty before any changes were made, so nothing here is a security fix. Lockfiles only: `package.json` and `composer.json` are byte-identical to before.
