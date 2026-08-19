@@ -29,6 +29,25 @@ servers:
         - overlabels.com
         - www.overlabels.com
       app_port: 80
+      # Required for the app to see real client IPs now that overlabels.com is
+      # proxied by Cloudflare. kamal-proxy defaults this to FALSE whenever
+      # `ssl: true`, and Go's ReverseProxy strips X-Forwarded-For from the
+      # outbound request before kamal-proxy's rewrite hook runs. With the flag
+      # off, `req.SetXForwarded()` therefore rebuilds the header from nothing
+      # and it reaches Caddy containing ONLY the Cloudflare edge address, so
+      # trusting Cloudflare's ranges in frankenphp.Caddyfile cannot help - the
+      # real address is not in the chain to be found.
+      #
+      # With it on, kamal-proxy copies the inbound header first and SetXForwarded
+      # appends the peer, giving Caddy `<client>, <cloudflare edge>` to walk.
+      # That is why this and the Caddyfile trusted_proxies list are one fix in
+      # two files: neither works alone.
+      #
+      # It is also why the range list must stay explicit. A direct request to the
+      # origin gets its forged header appended with the sender's real address,
+      # and Caddy stops at that first untrusted hop - so this does not open a
+      # spoofing route. `trusted_proxies *` would.
+      forward_headers: true
       healthcheck:
         interval: 5
         path: /up
