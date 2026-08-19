@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 20th, 2026 - feat(tags): [[[channel_avatar]]]
+
+Twitch does not put an avatar on Get Channel Information, because it files the profile image under the user rather than the channel. That left no honest way to put your own face in an overlay: `[[[user_avatar]]]` looks like it works right up until the first follow, at which point it becomes the follower's picture and stays that way.
+
+- **The data was already in hand and costs no extra request.** `getExtendedUserData()` fetches `/helix/users` and `/helix/channels` side by side keyed on the same broadcaster id, so `user.profile_image_url` in that payload is by construction the channel owner's avatar. It is copied onto the channel object as `channel.avatar` at composition time, deliberately not inside `getChannelInfo()`, so the cached `channel` entry stays byte-for-byte what Helix returned.
+- **Sourcing it from `users.avatar` was considered and rejected.** That column is only written during the OAuth callback, so it goes stale until the next re-login. The Helix `user` cache refreshes on a 6 hour TTL.
+- **The namespace is the whole point, and it is now test-pinned.** `OverlayRenderer.vue` spreads each inbound EventSub payload straight into the overlay's tag data, and Twitch names the acting user's fields `user_*`, so one follow repoints every bare `user_*` tag at the follower. EventSub calls the broadcaster `broadcaster_user_*` and never `channel_*`, so nothing in any event payload can collide with `channel_avatar`. One test asserts that intersection is empty for every channel tag; a companion test asserts the `user_*` collision still exists, so if the spread ever stops clobbering them the warning on the template editor gets revisited instead of quietly rotting.
+- **Adding the tag was one catalogue line**, which was the point of the rewrite in the entry below.
+- **`TemplateTagFactory` could emit rows the schema rejects.** `version` is `varchar(10)` and `tag_type` has a CHECK for `standard|custom`, and both were faker words, so a test using the factory failed whenever the dice came up long or unlucky. Pinned to valid values. It surfaced as a random failure in the new suite rather than as anything a user could hit.
+- **Existing accounts pick the tag up on the next "Refresh Tags"**, the same as any catalogue addition. The prune migration from the rewrite is dated and its frozen allowlist deliberately does not mention it.
+
 ## August 20th, 2026 - refactor(tags): the tag generator stopped guessing
 
 `[[[channel_avatar]]]` was the request. Chasing where a channel-scoped tag would even come from led into the template tag generator, which turned out to be inventing tag names by walking the Twitch JSON payload and naming things after whatever paths it found. It had been doing that since before anyone here understood the Helix API, and it held up for a year, but it was producing a different tag list for every account and a second job existed purely to delete the mess it made. The avatar tag is not in this entry. It comes next, and it is now one line.

@@ -612,14 +612,44 @@ class TwitchApiService
      */
     public function getExtendedUserData(string $accessToken, string $userId): array
     {
-        return [
+        return $this->withChannelAvatar([
             'user' => $this->getCachedUserInfo($accessToken, $userId),
             'channel' => $this->getCachedChannelInfo($accessToken, $userId),
             'followed_channels' => $this->getCachedFollowedChannels($accessToken, $userId),
             'channel_followers' => $this->getCachedChannelFollowers($accessToken, $userId),
             'subscribers' => $this->getCachedSubscribers($accessToken, $userId),
             'goals' => $this->getCachedGoals($accessToken, $userId),
-        ];
+        ]);
+    }
+
+    /**
+     * Copy the owner's profile image onto the channel object as `channel.avatar`.
+     *
+     * Helix has no avatar on GET /channels: Twitch files the profile image under
+     * the user, not the channel. But both calls above are keyed on the same
+     * broadcaster id, so `user.profile_image_url` here IS the channel owner's
+     * avatar, by construction and with no extra request.
+     *
+     * The distinction matters because `[[[user_avatar]]]` does not stay put. The
+     * overlay spreads each inbound EventSub payload straight into its tag data
+     * (OverlayRenderer.vue), and Twitch names the acting user's fields `user_*`,
+     * so one follow repoints every bare `user_*` tag at the follower. That is
+     * deliberate and documented. `channel_*` has no such collision - EventSub
+     * calls the broadcaster `broadcaster_user_*` - so this is the namespace an
+     * always-my-own-avatar tag has to live in.
+     *
+     * Injected here rather than inside getChannelInfo() so the cached `channel`
+     * entry stays exactly what Helix returned.
+     */
+    private function withChannelAvatar(array $twitchData): array
+    {
+        if (! is_array($twitchData['channel'] ?? null)) {
+            $twitchData['channel'] = [];
+        }
+
+        $twitchData['channel']['avatar'] = (string) ($twitchData['user']['profile_image_url'] ?? '');
+
+        return $twitchData;
     }
 
     /*
@@ -632,14 +662,14 @@ class TwitchApiService
      */
     public function getFreshTwitchData(string $accessToken, string $userId): array
     {
-        return [
+        return $this->withChannelAvatar([
             'user' => $this->getUserInfo($accessToken, $userId),
             'channel' => $this->getChannelInfo($accessToken, $userId),
             'followed_channels' => $this->getFollowedChannels($accessToken, $userId),
             'channel_followers' => $this->getChannelFollowers($accessToken, $userId),
             'subscribers' => $this->getChannelSubscribers($accessToken, $userId),
             'goals' => $this->getChannelGoals($accessToken, $userId),
-        ];
+        ]);
     }
 
     public function clearAllUserCaches(string $userId): void

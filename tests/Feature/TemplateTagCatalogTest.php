@@ -171,7 +171,6 @@ it('deletes rows that are not in the catalogue', function () {
             'user_id' => $this->user->id,
             'category_id' => $category->id,
             'tag_name' => $junk,
-            'tag_type' => 'standard',
         ]);
     }
 
@@ -292,4 +291,66 @@ it('renders nothing rather than erroring when a tag has no value', function () {
     // formatData() has a `: string` return type; a null here used to raise a
     // TypeError, which is an Error and slips past the controller's catch.
     expect($tag->getFormattedOutput(twitchPayload()))->toBe('');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Why channel_avatar lives in the channel namespace
+|--------------------------------------------------------------------------
+|
+| OverlayRenderer.vue spreads each inbound EventSub payload straight into the
+| overlay's tag data. Twitch names the acting user's fields `user_*`, so a
+| single follow repoints every bare user_* tag at the follower - deliberate,
+| and what the user_* callout in TemplateTagsList.vue warns about. A tag that
+| must always mean "me" therefore cannot live in that namespace.
+*/
+
+it('keeps every channel tag clear of the event payload keys that overwrite tag data', function () {
+    $mapper = app(TemplateDataMapperService::class);
+
+    // Top-level keys an event payload can carry, as the overlay would spread them.
+    $eventKeys = collect($mapper->getTagCategories()['event']['tags'])
+        ->map(fn ($tag) => substr($tag, strlen('event.')))
+        ->reject(fn ($key) => str_contains($key, '.'))
+        ->values();
+
+    $channelTags = collect(TemplateDataMapperService::tagCatalog())
+        ->filter(fn ($spec) => $spec['category'] === 'channel')
+        ->keys();
+
+    expect($channelTags->intersect($eventKeys)->all())->toBe([]);
+});
+
+it('documents the user_* collision it is working around', function () {
+    // If this ever comes back empty, the spread stopped clobbering user_* and
+    // the warning shown on the template editor needs revisiting.
+    $mapper = app(TemplateDataMapperService::class);
+
+    $eventKeys = collect($mapper->getTagCategories()['event']['tags'])
+        ->map(fn ($tag) => substr($tag, strlen('event.')))
+        ->reject(fn ($key) => str_contains($key, '.'));
+
+    $userTags = collect(TemplateDataMapperService::tagCatalog())
+        ->filter(fn ($spec) => $spec['category'] === 'user')
+        ->keys();
+
+    expect($userTags->intersect($eventKeys)->sort()->values()->all())
+        ->toBe(['user_avatar', 'user_id', 'user_login', 'user_name']);
+});
+
+it('resolves channel_avatar to the owner profile image, alongside user_avatar', function () {
+    $payload = twitchPayload();
+    $payload['channel']['avatar'] = $payload['user']['profile_image_url'];
+
+    $mapped = app(TemplateDataMapperService::class)->mapTwitchDataForTemplates($payload, 'overlay');
+
+    expect($mapped['channel_avatar'])->toBe('https://cdn.example/avatar.png')
+        ->and($mapped['channel_avatar'])->toBe($mapped['user_avatar']);
+});
+
+it('offers channel_avatar to every account, with no gate', function () {
+    syncFor($this->user, twitchPayload(''));
+
+    expect(tagNamesFor($this->user))->toContain('channel_avatar')
+        ->and(TemplateDataMapperService::gatesFor('channel_avatar'))->toBe([]);
 });

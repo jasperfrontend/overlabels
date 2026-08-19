@@ -154,6 +154,7 @@ class TemplateDataMapperService
         'user_created' => ['path' => 'user.created_at', 'category' => 'user', 'type' => 'datetime', 'label' => 'Created', 'desc' => 'Account creation date', 'sample' => 1714435200],
 
         // ---- Channel (always your own channel, never an event actor) ----
+        'channel_avatar' => ['path' => 'channel.avatar', 'category' => 'channel', 'type' => 'url', 'label' => 'Avatar', 'desc' => 'Your own profile image. Unlike user_avatar this never changes when someone triggers an event', 'sample' => 'https://static-cdn.jtvnw.net/jtv_user_pictures/7db44749-286f-4db0-9c99-574b16170d44-profile_image-300x300.png'],
         'channel_id' => ['path' => 'channel.broadcaster_id', 'category' => 'channel', 'type' => 'string', 'label' => 'ID', 'desc' => 'Channel ID', 'sample' => '123456789'],
         'channel_login' => ['path' => 'channel.broadcaster_login', 'category' => 'channel', 'type' => 'string', 'label' => 'Login', 'desc' => 'Channel login name', 'sample' => 'wilko_dj'],
         'channel_name' => ['path' => 'channel.broadcaster_name', 'category' => 'channel', 'type' => 'string', 'label' => 'Name', 'desc' => 'Channel display name', 'sample' => 'wilko_dj'],

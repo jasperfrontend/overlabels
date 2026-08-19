@@ -10,6 +10,7 @@ To use any of these tags, you'll have to wrap them with 3 `[[[brackets]]]` like 
 [[user_view_count]]
 [[user_email]]
 [[user_created]]
+[[channel_avatar]]
 [[channel_id]]
 [[channel_login]]
 [[channel_name]]

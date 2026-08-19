@@ -16,8 +16,10 @@ class TemplateTagFactory extends Factory
         return [
             'original_tag_name' => $this->faker->name(),
             'is_editable' => $this->faker->boolean(),
-            'version' => $this->faker->word(),
-            'tag_type' => $this->faker->word(),
+            // Both are schema-constrained: version is varchar(10) and tag_type
+            // has a CHECK for standard|custom, so a faker word fails at random.
+            'version' => '1.0',
+            'tag_type' => 'standard',
             'updated_at' => Carbon::now(),
             'created_at' => Carbon::now(),
             'is_active' => $this->faker->boolean(),
