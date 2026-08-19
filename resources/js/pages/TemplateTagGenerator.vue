@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Copy, Eye, RefreshCw, Trash2, AlertCircle, Sparkles } from '@lucide/vue';
+import { Copy, Eye, RefreshCw, Trash2, AlertCircle } from '@lucide/vue';
 import { useConfirm } from '@/composables/useConfirm';
 
 const { confirm } = useConfirm();
@@ -73,9 +73,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 // State with proper TypeScript types
 const isGenerating = ref(false);
-const isCleaningUp = ref(false);
 const currentGenerateJob = ref<TagJob | null>(null);
-const currentCleanupJob = ref<TagJob | null>(null);
 const jobPollingInterval = ref<number | null>(null);
 const tagPreviews = ref<Record<number, TagPreview>>({});
 const isLoadingPreview = ref<Record<number, boolean>>({});
@@ -115,6 +113,20 @@ onUnmounted(() => {
   stopJobPolling();
 });
 
+// A sync reports what it added, refreshed and removed rather than one total,
+// because a run on an account that already has tags is usually all updates.
+const summariseSync = (result: { tags?: number; updated?: number; removed?: number } | undefined): string => {
+  const added = result?.tags ?? 0;
+  const removed = result?.removed ?? 0;
+  const parts: string[] = [];
+
+  if (added) parts.push(`${added} added`);
+  if (removed) parts.push(`${removed} removed`);
+  if (!parts.length) parts.push('everything already up to date');
+
+  return `Template tags refreshed - ${parts.join(', ')}.`;
+};
+
 // Poll for job status updates
 const pollJobStatus = async () => {
   try {
@@ -133,7 +145,6 @@ const pollJobStatus = async () => {
 
     // Update current jobs
     const generateJob = data.jobs.find((job: TagJob) => job.job_type === 'generate' && ['pending', 'processing'].includes(job.status));
-    const cleanupJob = data.jobs.find((job: TagJob) => job.job_type === 'cleanup' && ['pending', 'processing'].includes(job.status));
 
     if (generateJob) {
       currentGenerateJob.value = generateJob;
@@ -143,7 +154,7 @@ const pollJobStatus = async () => {
       const completedJob = data.jobs.find((job: TagJob) => job.id === currentGenerateJob.value!.id);
       if (completedJob && completedJob.status === 'completed') {
         showToast.value = true;
-        toastMessage.value = `Successfully generated ${completedJob.result?.generated || 'template'} tags!`;
+        toastMessage.value = summariseSync(completedJob.result);
         toastType.value = 'success';
 
         // Refresh the page to show new tags
@@ -161,30 +172,8 @@ const pollJobStatus = async () => {
       isGenerating.value = false;
     }
 
-    if (cleanupJob) {
-      currentCleanupJob.value = cleanupJob;
-      isCleaningUp.value = true;
-    } else if (currentCleanupJob.value) {
-      // Job completed or failed
-      const completedJob = data.jobs.find((job: TagJob) => job.id === currentCleanupJob.value!.id);
-      if (completedJob && completedJob.status === 'completed') {
-        showToast.value = true;
-        toastMessage.value = `Successfully cleaned up ${completedJob.result?.deleted_tags_count || 0} redundant tags!`;
-        toastType.value = 'success';
-
-        // Refresh the page to show updated tags
-        router.reload();
-      } else if (completedJob && completedJob.status === 'failed') {
-        showToast.value = true;
-        toastMessage.value = `Failed to cleanup tags: ${completedJob.error_message}`;
-        toastType.value = 'error';
-      }
-      currentCleanupJob.value = null;
-      isCleaningUp.value = false;
-    }
-
     // Stop polling if no jobs are running
-    if (!generateJob && !cleanupJob) {
+    if (!generateJob) {
       stopJobPolling();
     }
   } catch (error) {
@@ -306,61 +295,6 @@ const clearAllTags = async () => {
   }
 };
 
-// Clean up redundant _data_X_ tags (async)
-const cleanupRedundantTags = async () => {
-  if (isCleaningUp.value) return;
-
-  if (
-    !(await confirm({
-      message: 'Clean up redundant tags like "channel_followers_data_3_user_id"? This will remove all tags with _data_[number]* patterns.',
-      confirmLabel: 'Clean up',
-    }))
-  ) {
-    return;
-  }
-
-  try {
-    const response = await fetch('/template-tags/cleanup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-      },
-    });
-
-    const data = await response.json();
-
-    if (response.ok && data.success) {
-      isCleaningUp.value = true;
-      currentCleanupJob.value = {
-        id: data.job_id,
-        job_type: 'cleanup',
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      };
-
-      showToast.value = true;
-      toastMessage.value = 'Template tag cleanup started!';
-      toastType.value = 'info';
-
-      // Start polling for status updates
-      startJobPolling();
-    } else {
-      console.error('❌ Cleanup failed:', data);
-
-      showToast.value = true;
-      toastMessage.value = `Failed to start cleanup: ${data.message || data.error}`;
-      toastType.value = 'error';
-    }
-  } catch (error) {
-    console.error('💥 Cleanup error:', error);
-
-    showToast.value = true;
-    toastMessage.value = 'Failed to start tag cleanup. Please try again.';
-    toastType.value = 'error';
-  }
-};
-
 // Preview a specific tag
 const previewTag = async (tagId: number) => {
   if (isLoadingPreview.value[tagId]) return;
@@ -464,16 +398,10 @@ const getDataTypeClass = (dataType: string) => {
           description="These template tags represent your Twitch account data. You can also view these tags while creating or editing an overlay or alert."
         />
         <div class="flex gap-2">
-          <button v-if="!hasExistingTags" @click="generateTags" :disabled="isGenerating" class="btn btn-primary">
+          <button @click="generateTags" :disabled="isGenerating" class="btn btn-primary">
             <RefreshCw v-if="isGenerating" class="h-4 w-4 animate-spin" />
             <RefreshCw v-else class="mr-3 h-4 w-4" />
-            {{ isGenerating ? 'Generating...' : 'Generate Tags' }}
-          </button>
-
-          <button v-if="hasExistingTags" @click="cleanupRedundantTags" :disabled="isCleaningUp" class="btn btn-warning">
-            <RefreshCw v-if="isCleaningUp" class="h-4 w-4 animate-spin" />
-            <Sparkles v-else class="mr-3 h-4 w-4" />
-            {{ isCleaningUp ? 'Cleaning...' : 'Clean Up Redundant' }}
+            {{ isGenerating ? 'Generating...' : hasExistingTags ? 'Refresh Tags' : 'Generate Tags' }}
           </button>
 
           <button v-if="hasExistingTags" @click="clearAllTags" class="btn btn-danger">
@@ -484,7 +412,7 @@ const getDataTypeClass = (dataType: string) => {
       </div>
 
       <!-- Job Progress Display -->
-      <div v-if="currentGenerateJob || currentCleanupJob" class="mb-6 space-y-4">
+      <div v-if="currentGenerateJob" class="mb-6 space-y-4">
         <!-- Generation Progress -->
         <div v-if="currentGenerateJob" class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div class="mb-2 flex items-center justify-between">
@@ -504,27 +432,6 @@ const getDataTypeClass = (dataType: string) => {
             </div>
           </div>
           <p v-else class="text-sm text-blue-700 dark:text-blue-300">Starting generation...</p>
-        </div>
-
-        <!-- Cleanup Progress -->
-        <div v-if="currentCleanupJob" class="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
-          <div class="mb-2 flex items-center justify-between">
-            <h3 class="text-sm font-medium text-orange-800 dark:text-orange-200">Template Tag Cleanup</h3>
-            <span class="text-xs text-orange-600 dark:text-orange-400">{{ currentCleanupJob.status }}</span>
-          </div>
-          <div v-if="currentCleanupJob.progress" class="space-y-2">
-            <div class="flex justify-between text-sm">
-              <span class="text-orange-700 dark:text-orange-300">{{ currentCleanupJob.progress.message }}</span>
-              <span class="text-orange-600 dark:text-orange-400">{{ currentCleanupJob.progress.progress }}%</span>
-            </div>
-            <div class="h-2 w-full rounded-full bg-orange-200 dark:bg-orange-800">
-              <div
-                class="h-2 rounded-full bg-orange-600 transition-all duration-300"
-                :style="{ width: currentCleanupJob.progress.progress + '%' }"
-              ></div>
-            </div>
-          </div>
-          <p v-else class="text-sm text-orange-700 dark:text-orange-300">Starting cleanup...</p>
         </div>
       </div>
 

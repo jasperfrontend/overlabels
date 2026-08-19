@@ -164,6 +164,14 @@ class TemplateTag extends Model
      */
     public function formatData($data): string
     {
+        // A tag whose path resolves to nothing renders as nothing. Without this
+        // the null falls through to a `: string` return and raises a TypeError,
+        // which is an Error and not an Exception - so the /tags preview handler
+        // catches nothing and the request 500s.
+        if ($data === null) {
+            return '';
+        }
+
         if (! $this->formatting_options) {
             return $data;
         }

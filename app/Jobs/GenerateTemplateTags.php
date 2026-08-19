@@ -34,7 +34,6 @@ class GenerateTemplateTags implements ShouldQueue
         JsonTemplateParserService $parser
     ): void {
         try {
-            // Mark job as processing
             $this->jobRecord->markAsProcessing();
 
             Log::info('Starting template tag generation job', [
@@ -42,86 +41,49 @@ class GenerateTemplateTags implements ShouldQueue
                 'job_id' => $this->jobRecord->id,
             ]);
 
-            // Update progress
             $this->jobRecord->updateProgress([
                 'step' => 'fetching_twitch_data',
                 'message' => 'Fetching Twitch data...',
-                'progress' => 10,
+                'progress' => 20,
             ]);
 
-            // Get Twitch data
             if (! $this->user->access_token) {
                 throw new Exception('User has no Twitch access token');
             }
 
+            // The tag list no longer depends on the shape of this payload - it
+            // comes from the catalogue. This is read only for the sample values
+            // shown in the tag browser and for the account's broadcaster_type,
+            // so a partial or empty response degrades to catalogue samples
+            // instead of silently producing a different set of tags.
             $twitchData = $twitchService->getExtendedUserData(
                 $this->user->access_token,
                 $this->user->twitch_id
             );
 
-            // Update progress
-            $this->jobRecord->updateProgress([
-                'step' => 'processing_data',
-                'message' => 'Processing Twitch data structures...',
-                'progress' => 30,
-            ]);
-
-            // Ensure data arrays exist before processing
-            $twitchData = $this->ensureDataArraysExist($twitchData);
-
-            // Update progress
             $this->jobRecord->updateProgress([
                 'step' => 'generating_tags',
                 'message' => 'Generating template tags...',
-                'progress' => 50,
+                'progress' => 60,
             ]);
 
-            // Generate template tags from the Twitch data
-            $generatedTags = $parser->parseJsonAndCreateTags($twitchData);
+            $result = $parser->syncTagsForUser($this->user, $twitchData);
 
-            // Update progress
-            $this->jobRecord->updateProgress([
-                'step' => 'saving_tags',
-                'message' => 'Saving tags to database...',
-                'progress' => 80,
-            ]);
-
-            // Save the generated tags to database with user_id
-            $saved = $parser->saveTagsToDatabaseForUser($generatedTags, $this->user->id);
-
-            // Clear the cache when tags are updated
             cache()->forget('template_tags_v1_user_'.$this->user->id);
 
-            // Update progress to completion
             $this->jobRecord->updateProgress([
                 'step' => 'completed',
                 'message' => 'Template tags generated successfully!',
                 'progress' => 100,
             ]);
 
-            // Mark job as completed
-            $this->jobRecord->markAsCompleted([
-                'generated' => $generatedTags['total_tags'],
-                'saved' => $saved,
-                'categories' => count($generatedTags['categories']),
-                'tags' => count($generatedTags['tags']),
-            ]);
+            $this->jobRecord->markAsCompleted($result);
 
             Log::info('Template tag generation job completed', [
                 'user_id' => $this->user->id,
                 'job_id' => $this->jobRecord->id,
-                'generated' => $generatedTags['total_tags'],
-                'saved' => $saved,
+                ...$result,
             ]);
-
-            // Dispatch cleanup job automatically
-            $cleanupJobRecord = TemplateTagJob::create([
-                'user_id' => $this->user->id,
-                'job_type' => 'cleanup',
-                'status' => 'pending',
-            ]);
-
-            CleanupRedundantTags::dispatch($this->user, $cleanupJobRecord);
 
         } catch (Exception $e) {
             Log::error('Template tag generation job failed', [
@@ -134,41 +96,5 @@ class GenerateTemplateTags implements ShouldQueue
             $this->jobRecord->markAsFailed($e->getMessage());
             throw $e;
         }
-    }
-
-    /**
-     * Ensure all required data arrays exist to prevent "Undefined array key" errors
-     */
-    private function ensureDataArraysExist(array $twitchData): array
-    {
-        // Ensure top-level structures exist
-        $requiredStructures = [
-            'user' => [],
-            'channel' => [],
-            'channel_followers' => ['total' => 0, 'data' => []],
-            'followed_channels' => ['total' => 0, 'data' => []],
-            'subscribers' => ['total' => 0, 'points' => 0, 'data' => []],
-            'goals' => ['data' => []],
-        ];
-
-        foreach ($requiredStructures as $key => $defaultValue) {
-            if (! isset($twitchData[$key])) {
-                $twitchData[$key] = $defaultValue;
-                Log::warning("Missing Twitch data structure: $key, using default");
-            }
-        }
-
-        // Ensure data arrays have at least empty objects to prevent index errors
-        $dataArrays = ['channel_followers', 'followed_channels', 'subscribers', 'goals'];
-
-        foreach ($dataArrays as $arrayKey) {
-            if (isset($twitchData[$arrayKey]['data']) && empty($twitchData[$arrayKey]['data'])) {
-                // Add empty object so index 0 access doesn't fail
-                $twitchData[$arrayKey]['data'] = [[]];
-                Log::info("Added empty data object for $arrayKey to prevent index errors");
-            }
-        }
-
-        return $twitchData;
     }
 }

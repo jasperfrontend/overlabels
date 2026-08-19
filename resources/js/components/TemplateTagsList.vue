@@ -66,7 +66,9 @@ const userId = (page.props.auth as { user?: { id?: number | string } } | undefin
 const CACHE_KEY = userId ? `template_tags_cache_user_${userId}` : 'template_tags_cache_anon';
 const CACHE_VERSION_KEY = `${CACHE_KEY}_version`;
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
-const CURRENT_CACHE_VERSION = 'v2';
+// v3: the tag catalogue replaced the JSON-walking generator, so the cached list
+// holds artefacts (channel_count, *_pagination_cursor) that no longer exist.
+const CURRENT_CACHE_VERSION = 'v3';
 
 interface CachedData {
   tags: Record<string, CategoryTag>;

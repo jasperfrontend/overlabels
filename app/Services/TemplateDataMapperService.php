@@ -75,87 +75,212 @@ class TemplateDataMapperService
     ];
 
     /**
-     * MASTER MAPPING - Single source of truth for all template tag mappings
+     * event.* tags the mapper emits at render time from an EventSub payload.
+     * They have no catalogue entry because they come from the event, not from
+     * the Twitch data snapshot - so they are declared here and surfaced through
+     * getTagCategories() only.
+     */
+    private const array EVENT_TAGS = [
+        'event.type', 'event.user_id', 'event.user_login', 'event.user_name', 'event.user_avatar',
+        'event.broadcaster_user_id', 'event.broadcaster_user_login', 'event.broadcaster_user_name', 'event.broadcaster_user_avatar',
+        'event.tier', 'event.tier_display', 'event.is_gift', 'event.total', 'event.cumulative_total', 'event.is_anonymous',
+        'event.message', 'event.bits', 'event.viewers', 'event.from_broadcaster_user_id',
+        'event.from_broadcaster_user_login', 'event.from_broadcaster_user_name', 'event.from_broadcaster_user_avatar',
+        'event.to_broadcaster_user_id', 'event.to_broadcaster_user_login', 'event.to_broadcaster_user_name', 'event.to_broadcaster_user_avatar',
+        'event.moderator_user_id', 'event.moderator_user_login', 'event.moderator_user_name', 'event.moderator_user_avatar',
+        'event.reason', 'event.banned_at', 'event.ends_at', 'event.is_permanent',
+        'event.reward_id', 'event.reward.title', 'event.reward.prompt', 'event.reward.cost',
+        'event.user_input', 'event.status', 'event.redeemed_at',
+        // Hype train
+        'event.level', 'event.progress', 'event.goal', 'event.started_at', 'event.expires_at',
+        'event.ended_at', 'event.cooldown_ends_at',
+        'event.top_contributions.count',
+        'event.top_contributions.0.user_name', 'event.top_contributions.0.user_avatar', 'event.top_contributions.0.type', 'event.top_contributions.0.total',
+        'event.last_contribution.user_name', 'event.last_contribution.user_avatar', 'event.last_contribution.type', 'event.last_contribution.total',
+        // Charity
+        'event.charity_name', 'event.charity_description', 'event.charity_logo', 'event.charity_website',
+        'event.amount.value', 'event.amount.decimal_places', 'event.amount.currency', 'event.amount.formatted',
+        'event.current_amount.formatted', 'event.target_amount.formatted', 'event.stopped_at',
+        // Goals
+        'event.description', 'event.current_amount', 'event.target_amount', 'event.is_achieved',
+        // Polls
+        'event.title', 'event.choices.count',
+        'event.choices.total_votes', 'event.choices.total_channel_points_votes', 'event.choices.total_bits_votes',
+        'event.choices.0.title', 'event.choices.0.votes', 'event.choices.0.channel_points_votes', 'event.choices.0.bits_votes',
+        'event.bits_voting.is_enabled', 'event.bits_voting.amount_per_vote',
+        'event.channel_points_voting.is_enabled', 'event.channel_points_voting.amount_per_vote',
+        // Predictions
+        'event.winning_outcome_id', 'event.outcomes.count',
+        'event.outcomes.total_users', 'event.outcomes.total_channel_points',
+        'event.outcomes.0.title', 'event.outcomes.0.color', 'event.outcomes.0.users', 'event.outcomes.0.channel_points',
+    ];
+
+    /**
+     * THE TAG CATALOGUE - the one and only declaration of a static template tag.
+     *
+     * getTemplateMappings(), getTagCategories(), getAvailableTemplateTags() and
+     * getSampleTemplateData() are all derived from this array, and
+     * JsonTemplateParserService seeds the database from it. Adding a tag is one
+     * entry here and nothing else.
+     *
+     * Before Aug 2026 these were four hand-maintained lists that had drifted
+     * apart: the tag browser advertised `followers_latest_name` and
+     * `channel_tags`, neither of which the mapping could ever produce, while the
+     * names that did work carried auto-generated descriptions. Deriving all four
+     * from one array is what makes that class of drift unrepresentable.
+     *
+     * Per entry:
+     *   path     - dot path into the payload getExtendedUserData() returns.
+     *   category - key into self::TAG_CATEGORY_META.
+     *   type     - data_type persisted on the tag row.
+     *   label    - display_name on the tag row.
+     *   desc     - description shown in the tag browser.
+     *   sample   - fallback sample, used for template previews and whenever the
+     *              account has no live value for the path.
+     *   requires - optional gate, see gatesFor(). Absent means everyone gets it.
+     */
+    private const array TAG_CATALOG = [
+        // ---- User (the most recent user who triggered an event; see TemplateTagsList.vue) ----
+        'user_id' => ['path' => 'user.id', 'category' => 'user', 'type' => 'string', 'label' => 'ID', 'desc' => 'User ID', 'sample' => '123456789'],
+        'user_login' => ['path' => 'user.login', 'category' => 'user', 'type' => 'string', 'label' => 'Login', 'desc' => 'User login name', 'sample' => 'wilko_dj'],
+        'user_name' => ['path' => 'user.display_name', 'category' => 'user', 'type' => 'string', 'label' => 'Name', 'desc' => 'User display name', 'sample' => 'wilko_dj'],
+        'user_type' => ['path' => 'user.type', 'category' => 'user', 'type' => 'string', 'label' => 'Type', 'desc' => 'User type', 'sample' => ''],
+        'user_broadcaster_type' => ['path' => 'user.broadcaster_type', 'category' => 'user', 'type' => 'string', 'label' => 'Broadcaster Type', 'desc' => 'Broadcaster type (partner, affiliate, etc.)', 'sample' => 'partner'],
+        'user_description' => ['path' => 'user.description', 'category' => 'user', 'type' => 'string', 'label' => 'Description', 'desc' => 'User bio/description', 'sample' => 'Welcome to my awesome stream!'],
+        'user_avatar' => ['path' => 'user.profile_image_url', 'category' => 'user', 'type' => 'url', 'label' => 'Avatar', 'desc' => 'Profile image URL', 'sample' => 'https://static-cdn.jtvnw.net/jtv_user_pictures/7db44749-286f-4db0-9c99-574b16170d44-profile_image-300x300.png'],
+        'user_offline_banner' => ['path' => 'user.offline_image_url', 'category' => 'user', 'type' => 'url', 'label' => 'Offline Banner', 'desc' => 'Offline image URL', 'sample' => ''],
+        'user_view_count' => ['path' => 'user.view_count', 'category' => 'user', 'type' => 'integer', 'label' => 'View Count', 'desc' => 'Total view count (Twitch deprecated this field; it reports 0 for every account)', 'sample' => 123456],
+        'user_email' => ['path' => 'user.email', 'category' => 'user', 'type' => 'string', 'label' => 'Email', 'desc' => 'Disabled - always returns a placeholder string', 'sample' => 'disabled@for-your-security'],
+        'user_created' => ['path' => 'user.created_at', 'category' => 'user', 'type' => 'datetime', 'label' => 'Created', 'desc' => 'Account creation date', 'sample' => 1714435200],
+
+        // ---- Channel (always your own channel, never an event actor) ----
+        'channel_id' => ['path' => 'channel.broadcaster_id', 'category' => 'channel', 'type' => 'string', 'label' => 'ID', 'desc' => 'Channel ID', 'sample' => '123456789'],
+        'channel_login' => ['path' => 'channel.broadcaster_login', 'category' => 'channel', 'type' => 'string', 'label' => 'Login', 'desc' => 'Channel login name', 'sample' => 'wilko_dj'],
+        'channel_name' => ['path' => 'channel.broadcaster_name', 'category' => 'channel', 'type' => 'string', 'label' => 'Name', 'desc' => 'Channel display name', 'sample' => 'wilko_dj'],
+        'channel_language' => ['path' => 'channel.broadcaster_language', 'category' => 'channel', 'type' => 'string', 'label' => 'Language', 'desc' => 'Channel language', 'sample' => 'en'],
+        'channel_game_id' => ['path' => 'channel.game_id', 'category' => 'channel', 'type' => 'string', 'label' => 'Game ID', 'desc' => 'Current game/category ID', 'sample' => '509658'],
+        'channel_game' => ['path' => 'channel.game_name', 'category' => 'channel', 'type' => 'string', 'label' => 'Game', 'desc' => 'Current game/category name', 'sample' => 'Just Chatting'],
+        'channel_title' => ['path' => 'channel.title', 'category' => 'channel', 'type' => 'string', 'label' => 'Title', 'desc' => 'Stream title', 'sample' => 'Playing Awesome Game - Come Join!'],
+        'channel_delay' => ['path' => 'channel.delay', 'category' => 'channel', 'type' => 'integer', 'label' => 'Delay', 'desc' => 'Stream delay in seconds', 'sample' => 0],
+        'channel_tags' => ['path' => 'channel.tags', 'category' => 'channel', 'type' => 'string', 'label' => 'Tags', 'desc' => 'All channel tags, comma separated', 'sample' => 'Gaming, Fun, Community'],
+        'channel_tags_0' => ['path' => 'channel.tags.0', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 1', 'desc' => 'Channel tag 1', 'sample' => 'Gaming'],
+        'channel_tags_1' => ['path' => 'channel.tags.1', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 2', 'desc' => 'Channel tag 2', 'sample' => 'Fun'],
+        'channel_tags_2' => ['path' => 'channel.tags.2', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 3', 'desc' => 'Channel tag 3', 'sample' => 'Community'],
+        'channel_tags_3' => ['path' => 'channel.tags.3', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 4', 'desc' => 'Channel tag 4', 'sample' => ''],
+        'channel_tags_4' => ['path' => 'channel.tags.4', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 5', 'desc' => 'Channel tag 5', 'sample' => ''],
+        'channel_tags_5' => ['path' => 'channel.tags.5', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 6', 'desc' => 'Channel tag 6', 'sample' => ''],
+        'channel_tags_6' => ['path' => 'channel.tags.6', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 7', 'desc' => 'Channel tag 7', 'sample' => ''],
+        'channel_tags_7' => ['path' => 'channel.tags.7', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 8', 'desc' => 'Channel tag 8', 'sample' => ''],
+        'channel_tags_8' => ['path' => 'channel.tags.8', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 9', 'desc' => 'Channel tag 9', 'sample' => ''],
+        'channel_tags_9' => ['path' => 'channel.tags.9', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 10', 'desc' => 'Channel tag 10', 'sample' => ''],
+        'channel_content_labels' => ['path' => 'channel.content_classification_labels', 'category' => 'channel', 'type' => 'string', 'label' => 'Content Labels', 'desc' => 'Content classification labels', 'sample' => ''],
+        'channel_is_branded' => ['path' => 'channel.is_branded_content', 'category' => 'channel', 'type' => 'boolean', 'label' => 'Is Branded', 'desc' => 'Whether the stream is flagged as branded content', 'sample' => false],
+
+        // ---- Followers ----
+        'followers_total' => ['path' => 'channel_followers.total', 'category' => 'followers', 'type' => 'integer', 'label' => 'Total', 'desc' => 'Total number of followers', 'sample' => 1234],
+        'followers_latest_user_id' => ['path' => 'channel_followers.data.0.user_id', 'category' => 'followers', 'type' => 'string', 'label' => 'Latest Follower ID', 'desc' => 'Latest follower ID', 'sample' => '987654321'],
+        'followers_latest_user_login' => ['path' => 'channel_followers.data.0.user_login', 'category' => 'followers', 'type' => 'string', 'label' => 'Latest Follower Login', 'desc' => 'Latest follower login', 'sample' => 'newfollower123'],
+        'followers_latest_user_name' => ['path' => 'channel_followers.data.0.user_name', 'category' => 'followers', 'type' => 'string', 'label' => 'Latest Follower Name', 'desc' => 'Latest follower display name', 'sample' => 'NewFollower123'],
+        'followers_latest_date' => ['path' => 'channel_followers.data.0.followed_at', 'category' => 'followers', 'type' => 'datetime', 'label' => 'Latest Follow Date', 'desc' => 'Latest follow date', 'sample' => 1777672800],
+
+        // ---- Followed channels ----
+        'followed_total' => ['path' => 'followed_channels.total', 'category' => 'followed', 'type' => 'integer', 'label' => 'Total', 'desc' => 'Total followed channels', 'sample' => 567],
+        'followed_latest_id' => ['path' => 'followed_channels.data.0.broadcaster_id', 'category' => 'followed', 'type' => 'string', 'label' => 'Latest ID', 'desc' => 'Latest followed channel ID', 'sample' => '111222333'],
+        'followed_latest_login' => ['path' => 'followed_channels.data.0.broadcaster_login', 'category' => 'followed', 'type' => 'string', 'label' => 'Latest Login', 'desc' => 'Latest followed channel login', 'sample' => 'coolstreamer'],
+        'followed_latest_name' => ['path' => 'followed_channels.data.0.broadcaster_name', 'category' => 'followed', 'type' => 'string', 'label' => 'Latest Name', 'desc' => 'Latest followed channel name', 'sample' => 'CoolStreamer'],
+        'followed_latest_date' => ['path' => 'followed_channels.data.0.followed_at', 'category' => 'followed', 'type' => 'datetime', 'label' => 'Latest Follow Date', 'desc' => 'Latest follow date', 'sample' => 1777593600],
+
+        // ---- Subscribers (Twitch serves these only to affiliates and partners) ----
+        'subscribers_total' => ['path' => 'subscribers.total', 'category' => 'subscribers', 'type' => 'integer', 'label' => 'Total', 'desc' => 'Total number of subscribers', 'sample' => 89, 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_points' => ['path' => 'subscribers.points', 'category' => 'subscribers', 'type' => 'integer', 'label' => 'Points', 'desc' => 'Total subscriber points', 'sample' => 12345, 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_user_id' => ['path' => 'subscribers.data.0.user_id', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Subscriber ID', 'desc' => 'Latest subscriber ID', 'sample' => '444555666', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_user_login' => ['path' => 'subscribers.data.0.user_login', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Subscriber Login', 'desc' => 'Latest subscriber login', 'sample' => 'newsubscriber', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_user_name' => ['path' => 'subscribers.data.0.user_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Subscriber Name', 'desc' => 'Latest subscriber display name', 'sample' => 'NewSubscriber', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_tier' => ['path' => 'subscribers.data.0.tier', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Tier', 'desc' => 'Latest subscription tier (1000, 2000, 3000 or Prime)', 'sample' => '1000', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_plan_name' => ['path' => 'subscribers.data.0.plan_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Plan Name', 'desc' => 'Latest subscription plan name', 'sample' => 'Tier 1', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_is_gift' => ['path' => 'subscribers.data.0.is_gift', 'category' => 'subscribers', 'type' => 'boolean', 'label' => 'Latest Is Gift', 'desc' => 'Whether the latest subscription was gifted', 'sample' => false, 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_gifter_id' => ['path' => 'subscribers.data.0.gifter_id', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Gifter ID', 'desc' => 'Latest gifter ID', 'sample' => '', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_gifter_login' => ['path' => 'subscribers.data.0.gifter_login', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Gifter Login', 'desc' => 'Latest gifter login', 'sample' => '', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_gifter_name' => ['path' => 'subscribers.data.0.gifter_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Gifter Name', 'desc' => 'Latest gifter display name', 'sample' => '', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_broadcaster_id' => ['path' => 'subscribers.data.0.broadcaster_id', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Broadcaster ID', 'desc' => 'Broadcaster ID on the latest subscription', 'sample' => '123456789', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_broadcaster_login' => ['path' => 'subscribers.data.0.broadcaster_login', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Broadcaster Login', 'desc' => 'Broadcaster login on the latest subscription', 'sample' => 'streamername', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+        'subscribers_latest_broadcaster_name' => ['path' => 'subscribers.data.0.broadcaster_name', 'category' => 'subscribers', 'type' => 'string', 'label' => 'Latest Broadcaster Name', 'desc' => 'Broadcaster name on the latest subscription', 'sample' => 'StreamerName', 'requires' => ['affiliate', 'channel:read:subscriptions']],
+
+        // ---- Goals (Twitch serves these only to affiliates and partners) ----
+        'goals_latest_type' => ['path' => 'goals.data.0.type', 'category' => 'goals', 'type' => 'string', 'label' => 'Latest Type', 'desc' => 'Latest goal type', 'sample' => 'follower', 'requires' => ['affiliate', 'channel:read:goals']],
+        'goals_latest_target' => ['path' => 'goals.data.0.target', 'category' => 'goals', 'type' => 'integer', 'label' => 'Latest Target', 'desc' => 'Latest goal target amount', 'sample' => 2000, 'requires' => ['affiliate', 'channel:read:goals']],
+        'goals_latest_current' => ['path' => 'goals.data.0.current', 'category' => 'goals', 'type' => 'integer', 'label' => 'Latest Current', 'desc' => 'Latest goal current amount', 'sample' => 1234, 'requires' => ['affiliate', 'channel:read:goals']],
+        'goals_latest_description' => ['path' => 'goals.data.0.description', 'category' => 'goals', 'type' => 'string', 'label' => 'Latest Description', 'desc' => 'Latest goal description', 'sample' => 'Road to 2K followers!', 'requires' => ['affiliate', 'channel:read:goals']],
+        'goals_latest_created_at' => ['path' => 'goals.data.0.created_at', 'category' => 'goals', 'type' => 'datetime', 'label' => 'Latest Created At', 'desc' => 'When the latest goal was created', 'sample' => 1777075200, 'requires' => ['affiliate', 'channel:read:goals']],
+    ];
+
+    /**
+     * Category metadata. `sort_order` is the array order.
+     */
+    private const array TAG_CATEGORY_META = [
+        'user' => ['display_name' => 'User Information', 'description' => 'The most recent user who triggered an event - not your own account'],
+        'channel' => ['display_name' => 'Channel Information', 'description' => 'Your channel settings and current stream info'],
+        'followers' => ['display_name' => 'Followers', 'description' => 'Follower statistics and latest follower info'],
+        'followed' => ['display_name' => 'Followed Channels', 'description' => 'Channels that you follow'],
+        'subscribers' => ['display_name' => 'Subscribers', 'description' => 'Subscriber statistics and latest subscriber info'],
+        'goals' => ['display_name' => 'Goals', 'description' => 'Channel goals and progress'],
+        'overlay' => ['display_name' => 'Overlay Metadata', 'description' => 'Information about the overlay itself'],
+        'event' => ['display_name' => 'Event Data', 'description' => 'Dynamic event data from Twitch EventSub'],
+    ];
+
+    /**
+     * Tags the mapper computes rather than reading from the Twitch payload.
+     * They are emitted at render time by mapTwitchDataForTemplates() and are
+     * listed here so the tag browser can show them; they have no `path`.
+     */
+    private const array COMPUTED_TAGS = [
+        'overlay_name' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Overlay Name', 'desc' => 'Name of the overlay', 'sample' => 'My Awesome Overlay'],
+        'timestamp' => ['category' => 'overlay', 'type' => 'datetime', 'label' => 'Timestamp', 'desc' => 'Current timestamp', 'sample' => '2026-08-20 12:00:00'],
+    ];
+
+    /**
+     * The full catalogue including computed tags, keyed by tag name.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function tagCatalog(): array
+    {
+        return array_merge(self::TAG_CATALOG, self::COMPUTED_TAGS);
+    }
+
+    /**
+     * @return array<string, array{display_name: string, description: string}>
+     */
+    public static function tagCategoryMeta(): array
+    {
+        return self::TAG_CATEGORY_META;
+    }
+
+    /**
+     * Gates declared on a catalogue entry. 'affiliate' means the account must
+     * be an affiliate or partner; anything containing a colon is a Twitch OAuth
+     * scope. Both must hold for the tag to be offered.
+     *
+     * @return array<int, string>
+     */
+    public static function gatesFor(string $tagName): array
+    {
+        return self::tagCatalog()[$tagName]['requires'] ?? [];
+    }
+
+    /**
+     * MASTER MAPPING - derived from TAG_CATALOG.
      * Format: 'json_path' => 'template_tag_name'
-     * This is used by BOTH JsonTemplateParserService AND template parsing
      */
     private function getTemplateMappings(): array
     {
-        return [
-            // User data mappings
-            'user.id' => 'user_id',
-            'user.login' => 'user_login',
-            'user.display_name' => 'user_name',
-            'user.type' => 'user_type',
-            'user.broadcaster_type' => 'user_broadcaster_type',
-            'user.description' => 'user_description',
-            'user.profile_image_url' => 'user_avatar',
-            'user.offline_image_url' => 'user_offline_banner',
-            'user.view_count' => 'user_view_count',
-            'user.email' => 'user_email',
-            'user.created_at' => 'user_created',
+        $mappings = [];
 
-            // Channel data mappings
-            'channel.broadcaster_id' => 'channel_id',
-            'channel.broadcaster_login' => 'channel_login',
-            'channel.broadcaster_name' => 'channel_name',
-            'channel.broadcaster_language' => 'channel_language',
-            'channel.game_id' => 'channel_game_id',
-            'channel.game_name' => 'channel_game',
-            'channel.title' => 'channel_title',
-            'channel.delay' => 'channel_delay',
-            'channel.tags' => 'channel_tags_count',
-            'channel.tags.0' => 'channel_tags_0',
-            'channel.tags.1' => 'channel_tags_1',
-            'channel.tags.2' => 'channel_tags_2',
-            'channel.tags.3' => 'channel_tags_3',
-            'channel.tags.4' => 'channel_tags_4',
-            'channel.tags.5' => 'channel_tags_5',
-            'channel.tags.6' => 'channel_tags_6',
-            'channel.tags.7' => 'channel_tags_7',
-            'channel.tags.8' => 'channel_tags_8',
-            'channel.tags.9' => 'channel_tags_9',
-            'channel.content_classification_labels' => 'channel_content_labels',
-            'channel.is_branded_content' => 'channel_is_branded',
+        foreach (self::TAG_CATALOG as $tagName => $spec) {
+            $mappings[$spec['path']] = $tagName;
+        }
 
-            // Channel Followers mappings
-            'channel_followers.total' => 'followers_total',
-            'channel_followers.data.0.user_id' => 'followers_latest_user_id',
-            'channel_followers.data.0.user_login' => 'followers_latest_user_login',
-            'channel_followers.data.0.user_name' => 'followers_latest_user_name',
-            'channel_followers.data.0.followed_at' => 'followers_latest_date',
-
-            // Followed channels mappings
-            'followed_channels.total' => 'followed_total',
-            'followed_channels.data.0.broadcaster_id' => 'followed_latest_id',
-            'followed_channels.data.0.broadcaster_login' => 'followed_latest_login',
-            'followed_channels.data.0.broadcaster_name' => 'followed_latest_name',
-            'followed_channels.data.0.followed_at' => 'followed_latest_date',
-
-            // Channel Subscribers mappings
-            'subscribers.points' => 'subscribers_points',
-            'subscribers.total' => 'subscribers_total',
-            'subscribers.data.0.broadcaster_id' => 'subscribers_latest_broadcaster_id',
-            'subscribers.data.0.broadcaster_login' => 'subscribers_latest_broadcaster_login',
-            'subscribers.data.0.broadcaster_name' => 'subscribers_latest_broadcaster_name',
-            'subscribers.data.0.gifter_id' => 'subscribers_latest_gifter_id',
-            'subscribers.data.0.gifter_login' => 'subscribers_latest_gifter_login',
-            'subscribers.data.0.gifter_name' => 'subscribers_latest_gifter_name',
-            'subscribers.data.0.is_gift' => 'subscribers_latest_is_gift',
-            'subscribers.data.0.plan_name' => 'subscribers_latest_plan_name',
-            'subscribers.data.0.tier' => 'subscribers_latest_tier',
-            'subscribers.data.0.user_id' => 'subscribers_latest_user_id',
-            'subscribers.data.0.user_name' => 'subscribers_latest_user_name',
-            'subscribers.data.0.user_login' => 'subscribers_latest_user_login',
-
-            // Goals mappings
-            'goals.total' => 'goals_data_count',
-            'goals.data.0.type' => 'goals_latest_type',
-            'goals.data.0.target' => 'goals_latest_target',
-            'goals.data.0.current' => 'goals_latest_current',
-            'goals.data.0.description' => 'goals_latest_description',
-            'goals.data.0.created_at' => 'goals_latest_created_at',
-        ];
+        return $mappings;
     }
 
     /**
@@ -274,238 +399,58 @@ class TemplateDataMapperService
     }
 
     /**
-     * Get sample data for template previews and testing
-     * This matches the structure of the real mapped data
+     * Get sample data for template previews and testing.
+     * Derived from TAG_CATALOG - see the docblock there.
      */
     public function getSampleTemplateData(): array
     {
-        return [
-            'overlay_name' => 'My Awesome Overlay',
-            'timestamp' => now()->format('Y-m-d H:i:s'),
+        $samples = [];
 
-            // User information
-            'user_id' => '123456789',
-            'user_login' => 'wilko_dj',
-            'user_name' => 'wilko_dj',
-            'user_type' => '',
-            'user_broadcaster_type' => 'partner',
-            'user_description' => 'Welcome to my awesome stream!',
-            'user_avatar' => 'https://static-cdn.jtvnw.net/jtv_user_pictures/7db44749-286f-4db0-9c99-574b16170d44-profile_image-300x300.png',
-            'user_offline_banner' => '',
-            'user_view_count' => '123,456',
-            'user_email' => 'disabled@for-your-security',
-            'user_created' => 1714435200,
+        foreach (self::tagCatalog() as $tagName => $spec) {
+            $samples[$tagName] = $spec['sample'];
+        }
 
-            // Channel information
-            'channel_id' => '123456789',
-            'channel_login' => 'wilko_dj',
-            'channel_name' => 'wilko_dj',
-            'channel_language' => 'en',
-            'channel_game_id' => '509658',
-            'channel_game' => 'Just Chatting',
-            'channel_title' => 'Playing Awesome Game - Come Join!',
-            'channel_delay' => '0',
-            'channel_tags' => 'Gaming, Fun, Community',
-            'channel_content_labels' => 'None',
-            'channel_is_branded' => 'false',
-
-            // Follower information
-            'followers_total' => '1,234',
-            'followers_latest_id' => '987654321',
-            'followers_latest_login' => 'newfollower123',
-            'followers_latest_name' => 'NewFollower123',
-            'followers_latest_date' => 1777672800,
-
-            // Followed channels information
-            'followed_total' => '567',
-            'followed_latest_id' => '111222333',
-            'followed_latest_login' => 'coolstreamer',
-            'followed_latest_name' => 'CoolStreamer',
-            'followed_latest_date' => 1777593600,
-
-            // Subscriber information
-            'subscribers_total' => '89',
-            'subscribers_points' => '12,345',
-            'subscribers_latest_user_id' => '444555666',
-            'subscribers_latest_user_login' => 'newsubscriber',
-            'subscribers_latest_user_name' => 'NewSubscriber',
-            'subscribers_latest_broadcaster_id' => '123456789',
-            'subscribers_latest_broadcaster_login' => 'streamername',
-            'subscribers_latest_broadcaster_name' => 'StreamerName',
-            'subscribers_latest_is_gift' => 'false',
-            'subscribers_latest_tier' => '1000',
-            'subscribers_latest_plan_name' => 'Tier 1',
-            'subscribers_latest_gifter_id' => 'N/A',
-            'subscribers_latest_gifter_login' => 'N/A',
-            'subscribers_latest_gifter_name' => 'N/A',
-
-            // Goal information
-            'goals_latest_type' => 'follower',
-            'goals_latest_target' => '2,000',
-            'goals_latest_current' => '1,234',
-            'goals_latest_description' => 'Road to 2K followers!',
-            'goals_latest_created_at' => 1777075200,
-        ];
+        return $samples;
     }
 
     /**
-     * Get a list of all available template tags with descriptions
-     * This helps with documentation and validation
+     * Get a list of all available template tags with descriptions.
+     * Derived from TAG_CATALOG, plus the event.* tags the mapper emits at
+     * render time from an EventSub payload.
      */
     public function getAvailableTemplateTags(): array
     {
-        return [
-            // Overlay metadata
-            'overlay_name' => 'Name of the overlay',
-            'timestamp' => 'Current timestamp',
+        $descriptions = [];
 
-            // User information
-            'user_id' => 'User ID',
-            'user_login' => 'User login name',
-            'user_name' => 'User display name',
-            'user_type' => 'User type',
-            'user_broadcaster_type' => 'Broadcaster type (partner, affiliate, etc.)',
-            'user_description' => 'User bio/description',
-            'user_avatar' => 'Profile image URL',
-            'user_offline_banner' => 'Offline image URL',
-            'user_view_count' => 'Total view count',
-            'user_email' => 'Disabled - returns a placeholder string',
-            'user_created' => 'Account creation date',
+        foreach (self::tagCatalog() as $tagName => $spec) {
+            $descriptions[$tagName] = $spec['desc'];
+        }
 
-            // Channel information
-            'channel_id' => 'Channel ID',
-            'channel_login' => 'Channel login name',
-            'channel_name' => 'Channel display name',
-            'channel_language' => 'Channel language',
-            'channel_game_id' => 'Current game/category ID',
-            'channel_game' => 'Current game/category name',
-            'channel_title' => 'Stream title',
-            'channel_delay' => 'Stream delay in seconds',
-            'channel_tags' => 'Channel tags',
-            'channel_content_labels' => 'Content classification labels',
-            'channel_is_branded' => 'Whether channel has branded content',
-
-            // Follower information
-            'followers_total' => 'Total number of followers',
-            'followers_latest_id' => 'Latest follower ID',
-            'followers_latest_login' => 'Latest follower login',
-            'followers_latest_name' => 'Latest follower name',
-            'followers_latest_date' => 'Latest follow date',
-
-            // Followed channels information
-            'followed_total' => 'Total followed channels',
-            'followed_latest_id' => 'Latest followed channel ID',
-            'followed_latest_login' => 'Latest followed channel login',
-            'followed_latest_name' => 'Latest followed channel name',
-            'followed_latest_date' => 'Latest follow date',
-
-            // Subscriber information
-            'subscribers_total' => 'Total number of subscribers',
-            'subscribers_points' => 'Subscriber points',
-            'subscribers_latest_user_id' => 'Latest subscriber user ID',
-            'subscribers_latest_user_login' => 'Latest subscriber login',
-            'subscribers_latest_user_name' => 'Latest subscriber name',
-            'subscribers_latest_broadcaster_id' => 'Broadcaster ID',
-            'subscribers_latest_broadcaster_login' => 'Broadcaster login',
-            'subscribers_latest_broadcaster_name' => 'Broadcaster name',
-            'subscribers_latest_is_gift' => 'Whether subscription is a gift',
-            'subscribers_latest_tier' => 'Subscription tier',
-            'subscribers_latest_plan_name' => 'Subscription plan name',
-            'subscribers_latest_gifter_id' => 'Gift giver ID (if applicable)',
-            'subscribers_latest_gifter_login' => 'Gift giver login (if applicable)',
-            'subscribers_latest_gifter_name' => 'Gift giver name (if applicable)',
-
-            // Goal information
-            'goals_latest_type' => 'Goal type',
-            'goals_latest_target' => 'Goal target',
-            'goals_latest_current' => 'Current progress',
-            'goals_latest_description' => 'Goal description',
-            'goals_latest_created_at' => 'Goal creation date',
-        ];
+        return $descriptions;
     }
 
     /**
-     * Get category mappings for organising template tags
-     * This is used by JsonTemplateParserService for database organisation
+     * Get category mappings for organising template tags.
+     * Derived from TAG_CATALOG + TAG_CATEGORY_META, so a category can never
+     * advertise a tag the mapping does not produce.
      */
     public function getTagCategories(): array
     {
-        return [
-            'user' => [
-                'display_name' => 'User Information',
-                'description' => 'Basic user account information',
-                'tags' => ['user_id', 'user_login', 'user_name', 'user_type', 'user_broadcaster_type', 'user_description', 'user_avatar', 'user_offline_banner', 'user_view_count', 'user_email', 'user_created'],
-            ],
-            'channel' => [
-                'display_name' => 'Channel Information',
-                'description' => 'Channel settings and current stream info',
-                'tags' => ['channel_id', 'channel_login', 'channel_name', 'channel_language', 'channel_game_id', 'channel_game', 'channel_title', 'channel_delay', 'channel_tags', 'channel_content_labels', 'channel_is_branded'],
-            ],
-            'followers' => [
-                'display_name' => 'Followers',
-                'description' => 'Follower statistics and latest follower info',
-                'tags' => ['followers_total', 'followers_latest_id', 'followers_latest_login', 'followers_latest_name', 'followers_latest_date'],
-            ],
-            'followed' => [
-                'display_name' => 'Followed Channels',
-                'description' => 'Channels that this user follows',
-                'tags' => ['followed_total', 'followed_latest_id', 'followed_latest_login', 'followed_latest_name', 'followed_latest_date'],
-            ],
-            'subscribers' => [
-                'display_name' => 'Subscribers',
-                'description' => 'Subscriber statistics and latest subscriber info',
-                'tags' => ['subscribers_total', 'subscribers_points', 'subscribers_latest_user_id', 'subscribers_latest_user_login', 'subscribers_latest_user_name', 'subscribers_latest_broadcaster_id', 'subscribers_latest_broadcaster_login', 'subscribers_latest_broadcaster_name', 'subscribers_latest_is_gift', 'subscribers_latest_tier', 'subscribers_latest_plan_name', 'subscribers_latest_gifter_id', 'subscribers_latest_gifter_login', 'subscribers_latest_gifter_name'],
-            ],
-            'goals' => [
-                'display_name' => 'Goals',
-                'description' => 'Channel goals and progress',
-                'tags' => ['goals_latest_type', 'goals_latest_target', 'goals_latest_current', 'goals_latest_description', 'goals_latest_created_at'],
-            ],
-            'overlay' => [
-                'display_name' => 'Overlay Metadata',
-                'description' => 'Information about the overlay itself',
-                'tags' => ['overlay_name', 'timestamp'],
-            ],
-            'event' => [
-                'display_name' => 'Event Data',
-                'description' => 'Dynamic event data from Twitch EventSub',
-                'tags' => [
-                    'event.type', 'event.user_id', 'event.user_login', 'event.user_name', 'event.user_avatar',
-                    'event.broadcaster_user_id', 'event.broadcaster_user_login', 'event.broadcaster_user_name', 'event.broadcaster_user_avatar',
-                    'event.tier', 'event.tier_display', 'event.is_gift', 'event.total', 'event.cumulative_total', 'event.is_anonymous',
-                    'event.message', 'event.bits', 'event.viewers', 'event.from_broadcaster_user_id',
-                    'event.from_broadcaster_user_login', 'event.from_broadcaster_user_name', 'event.from_broadcaster_user_avatar',
-                    'event.to_broadcaster_user_id', 'event.to_broadcaster_user_login', 'event.to_broadcaster_user_name', 'event.to_broadcaster_user_avatar',
-                    'event.moderator_user_id', 'event.moderator_user_login', 'event.moderator_user_name', 'event.moderator_user_avatar',
-                    'event.reason', 'event.banned_at', 'event.ends_at', 'event.is_permanent',
-                    'event.reward_id', 'event.reward.title', 'event.reward.prompt', 'event.reward.cost',
-                    'event.user_input', 'event.status', 'event.redeemed_at',
-                    // Hype train
-                    'event.level', 'event.progress', 'event.goal', 'event.started_at', 'event.expires_at',
-                    'event.ended_at', 'event.cooldown_ends_at',
-                    'event.top_contributions.count',
-                    'event.top_contributions.0.user_name', 'event.top_contributions.0.user_avatar', 'event.top_contributions.0.type', 'event.top_contributions.0.total',
-                    'event.last_contribution.user_name', 'event.last_contribution.user_avatar', 'event.last_contribution.type', 'event.last_contribution.total',
-                    // Charity
-                    'event.charity_name', 'event.charity_description', 'event.charity_logo', 'event.charity_website',
-                    'event.amount.value', 'event.amount.decimal_places', 'event.amount.currency', 'event.amount.formatted',
-                    'event.current_amount.formatted', 'event.target_amount.formatted', 'event.stopped_at',
-                    // Goals
-                    'event.description', 'event.current_amount', 'event.target_amount', 'event.is_achieved',
-                    // Polls
-                    'event.title', 'event.choices.count',
-                    'event.choices.total_votes', 'event.choices.total_channel_points_votes', 'event.choices.total_bits_votes',
-                    'event.choices.0.title', 'event.choices.0.votes', 'event.choices.0.channel_points_votes', 'event.choices.0.bits_votes',
-                    'event.bits_voting.is_enabled', 'event.bits_voting.amount_per_vote',
-                    'event.channel_points_voting.is_enabled', 'event.channel_points_voting.amount_per_vote',
-                    // Predictions
-                    'event.winning_outcome_id', 'event.outcomes.count',
-                    'event.outcomes.total_users', 'event.outcomes.total_channel_points',
-                    'event.outcomes.0.title', 'event.outcomes.0.color', 'event.outcomes.0.users', 'event.outcomes.0.channel_points',
-                    'event.locks_at',
-                ],
-            ],
-        ];
+        $categories = [];
+
+        foreach (self::TAG_CATEGORY_META as $key => $meta) {
+            $categories[$key] = $meta + ['tags' => []];
+        }
+
+        foreach (self::tagCatalog() as $tagName => $spec) {
+            $categories[$spec['category']]['tags'][] = $tagName;
+        }
+
+        // event.* tags are produced from the EventSub payload at render time,
+        // not from the Twitch data snapshot, so they have no catalogue entry.
+        $categories['event']['tags'] = self::EVENT_TAGS;
+
+        return $categories;
     }
 
     /*
@@ -559,6 +504,15 @@ class TemplateDataMapperService
         }
 
         return $all;
+    }
+
+    /**
+     * Public read of a dot path in a Twitch payload, so tag seeding can resolve
+     * a catalogue entry's real value without duplicating the traversal rules.
+     */
+    public function valueAtPath(array $data, string $path): mixed
+    {
+        return $this->getNestedValue($data, $path);
     }
 
     /**
