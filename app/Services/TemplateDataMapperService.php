@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\Log;
  * TemplateDataMapperService
  *
  * Centralised service for all template tag mapping and data transformation.
- * This consolidates the mapping logic from JsonTemplateParserService to avoid duplication.
  *
- * - This service is the SINGLE SOURCE OF TRUTH for template tag mappings
- * - Both template generation AND template parsing use this same mapping logic
- * - This ensures consistency between database tags and runtime template parsing
+ * - TAG_CATALOG is the SINGLE SOURCE OF TRUTH for what a static template tag is
+ * - The tag browser, the descriptions, the sample data and the render-time
+ *   mapping are all derived from it, so they cannot disagree
+ * - Nothing about a tag is stored per user; there is no tags table any more
  */
 class TemplateDataMapperService
 {
@@ -25,6 +25,16 @@ class TemplateDataMapperService
 
     private const array BOOLEAN_TAGS = [
         'channel_is_branded', 'subscribers_latest_is_gift',
+    ];
+
+    /**
+     * Tags whose Twitch value is a list, joined for display instead of
+     * JSON-encoded. Without this `channel_content_labels` rendered the literal
+     * `[]` into an overlay for the (overwhelmingly common) account with no
+     * content classification labels set.
+     */
+    private const array JOINED_ARRAY_TAGS = [
+        'channel_tags', 'channel_content_labels',
     ];
 
     /**
@@ -118,10 +128,9 @@ class TemplateDataMapperService
     /**
      * THE TAG CATALOGUE - the one and only declaration of a static template tag.
      *
-     * getTemplateMappings(), getTagCategories(), getAvailableTemplateTags() and
-     * getSampleTemplateData() are all derived from this array, and
-     * JsonTemplateParserService seeds the database from it. Adding a tag is one
-     * entry here and nothing else.
+     * getTemplateMappings(), getTagCategories(), getAvailableTemplateTags(),
+     * getSampleTemplateData() and tagBrowser() are all derived from this array.
+     * Adding a tag is one entry here and nothing else.
      *
      * Before Aug 2026 these were four hand-maintained lists that had drifted
      * apart: the tag browser advertised `followers_latest_name` and
@@ -132,8 +141,8 @@ class TemplateDataMapperService
      * Per entry:
      *   path     - dot path into the payload getExtendedUserData() returns.
      *   category - key into self::TAG_CATEGORY_META.
-     *   type     - data_type persisted on the tag row.
-     *   label    - display_name on the tag row.
+     *   type     - data type reported to the tag browser.
+     *   label    - short human-readable name for the tag browser.
      *   desc     - description shown in the tag browser.
      *   sample   - fallback sample, used for template previews and whenever the
      *              account has no live value for the path.
@@ -173,7 +182,7 @@ class TemplateDataMapperService
         'channel_tags_7' => ['path' => 'channel.tags.7', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 8', 'desc' => 'Channel tag 8', 'sample' => ''],
         'channel_tags_8' => ['path' => 'channel.tags.8', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 9', 'desc' => 'Channel tag 9', 'sample' => ''],
         'channel_tags_9' => ['path' => 'channel.tags.9', 'category' => 'channel', 'type' => 'string', 'label' => 'Tag 10', 'desc' => 'Channel tag 10', 'sample' => ''],
-        'channel_content_labels' => ['path' => 'channel.content_classification_labels', 'category' => 'channel', 'type' => 'string', 'label' => 'Content Labels', 'desc' => 'Content classification labels', 'sample' => ''],
+        'channel_content_labels' => ['path' => 'channel.content_classification_labels', 'category' => 'channel', 'type' => 'string', 'label' => 'Content Labels', 'desc' => 'Content classification labels, comma separated. Empty unless you have set any', 'sample' => ''],
         'channel_is_branded' => ['path' => 'channel.is_branded_content', 'category' => 'channel', 'type' => 'boolean', 'label' => 'Is Branded', 'desc' => 'Whether the stream is flagged as branded content', 'sample' => false],
 
         // ---- Followers ----
@@ -275,7 +284,7 @@ class TemplateDataMapperService
 
     /**
      * Get standardised template tag name from JSON path
-     * This replaces JsonTemplateParserService::getStandardizedTagName()
+     * Falls back to a path-derived name for anything not in the catalogue.
      */
     public function getStandardizedTagName(string $jsonPath): string
     {
@@ -591,8 +600,13 @@ class TemplateDataMapperService
     private function formatValueForTemplate(mixed $value, string $templateTag): mixed
     {
         if (is_array($value)) {
-            if ($templateTag === 'channel_tags') {
-                return implode(', ', $value);
+            if (in_array($templateTag, self::JOINED_ARRAY_TAGS, true)) {
+                // Scalars only: Twitch documents both of these as arrays of
+                // plain strings, and if that ever became an array of objects a
+                // bare implode() would raise "Array to string conversion" and
+                // print the word Array into somebody's overlay. An empty list
+                // joins to '', which renders as nothing.
+                return implode(', ', array_filter($value, 'is_scalar'));
             }
 
             return json_encode($value);

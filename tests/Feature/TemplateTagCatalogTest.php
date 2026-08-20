@@ -306,3 +306,51 @@ it('serves the same catalogue as JSON for the template editor', function () {
             app(TemplateDataMapperService::class)->tagBrowser([])
         ));
 });
+
+/*
+|--------------------------------------------------------------------------
+| List-valued tags join instead of JSON-encoding
+|--------------------------------------------------------------------------
+|
+| channel_content_labels used to render the literal `[]` into an overlay, which
+| is what every account without content classification labels set would see.
+*/
+
+it('renders channel_content_labels as nothing when the account has no labels', function () {
+    $mapped = app(TemplateDataMapperService::class)->mapTwitchDataForTemplates(twitchPayload(), 'overlay');
+
+    expect($mapped['channel_content_labels'])->toBe('');
+});
+
+it('joins channel_content_labels with commas when the account has labels', function () {
+    $payload = twitchPayload();
+    $payload['channel']['content_classification_labels'] = ['Gambling', 'DrugsIntoxication'];
+
+    $mapped = app(TemplateDataMapperService::class)->mapTwitchDataForTemplates($payload, 'overlay');
+
+    expect($mapped['channel_content_labels'])->toBe('Gambling, DrugsIntoxication');
+});
+
+it('does not print the word Array if Twitch ever returns label objects', function () {
+    // GET /channels documents plain strings, but the PATCH body for the same
+    // field uses {id, is_enabled} objects. A bare implode() on that shape would
+    // raise "Array to string conversion" and put "Array" on someone's stream.
+    $payload = twitchPayload();
+    $payload['channel']['content_classification_labels'] = [
+        ['id' => 'Gambling', 'is_enabled' => true],
+    ];
+
+    $mapped = app(TemplateDataMapperService::class)->mapTwitchDataForTemplates($payload, 'overlay');
+
+    expect($mapped['channel_content_labels'])->toBe('')
+        ->and($mapped['channel_content_labels'])->not->toContain('Array');
+});
+
+it('leaves channel_tags joining exactly as it was', function () {
+    $payload = twitchPayload();
+    $payload['channel']['tags'] = ['Gaming', 'Fun', 'Community'];
+
+    $mapped = app(TemplateDataMapperService::class)->mapTwitchDataForTemplates($payload, 'overlay');
+
+    expect($mapped['channel_tags'])->toBe('Gaming, Fun, Community');
+});
