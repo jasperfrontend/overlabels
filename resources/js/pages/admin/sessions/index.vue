@@ -291,7 +291,7 @@ const locationFields: { key: keyof IpLocation; label: string }[] = [
 
     <!-- IP Location Dialog -->
     <Dialog v-model:open="ipDialogOpen">
-      <DialogContent>
+      <DialogContent class="w-3xl">
         <DialogHeader>
           <DialogTitle>IP Location Lookup</DialogTitle>
           <DialogDescription>Geolocation data from ip-api.com</DialogDescription>
