@@ -3,88 +3,122 @@
 namespace App\Support;
 
 /**
- * Turns a facts bag into the thing /skills renders.
+ * Turns subjects into the thing /skills renders.
  *
- * Pure: takes an array of booleans, returns an array. No models, no database,
- * no user. That is what makes the interesting part - the ranking - testable
- * without touching Postgres.
+ * Pure: arrays in, arrays out. No models, no database, no user. That is what
+ * makes the interesting part - the ranking - testable without Postgres.
  *
- * The ranking IS the feature. A checklist of everything you could possibly set
- * up is noise; the point is loose ends. So:
- *
- *   - none satisfied      => `not_started`. Not a loose end. It is a feature
- *                            the streamer has not chosen to use, and nagging
- *                            about it is how a useful page becomes wallpaper.
- *   - all satisfied       => `complete`. Quiet.
- *   - some but not all    => `loose_end`. Work was started and stopped one
- *                            step short, so something that looks configured
- *                            does nothing. This is the whole reason the page
- *                            exists, and it sorts to the top.
- *
- * Within loose ends, fewest-missing first: one step from working is more
- * urgent than three.
+ * The ranking IS the feature. A checklist of everything you could set up is a
+ * score; the point is loose ends, meaning things that EXIST and cannot work.
+ * So a skill in NOT_APPLICABLE never counts, in either direction: it is not
+ * progress and it is not a gap. Only MISSING draws attention, and MISSING is
+ * only ever produced for something already built.
  */
 final class SkillReport
 {
-    public const NOT_STARTED = 'not_started';
-
+    /** At least one subject has something built that cannot work. */
     public const LOOSE_END = 'loose_end';
 
+    /** Subjects exist and nothing about them is broken. */
     public const COMPLETE = 'complete';
 
+    /** Nothing to evaluate. Not a defect, and deliberately silent. */
+    public const NOT_STARTED = 'not_started';
+
     /**
-     * @param  array<string, bool>  $facts
+     * @param  array<string, list<array<string, mixed>>>  $factsBySkillset
      * @return list<array<string, mixed>>
      */
-    public static function build(array $facts): array
+    public static function build(array $factsBySkillset): array
     {
         $sets = [];
 
-        foreach (SkillCatalog::SKILLSETS as $key => $set) {
-            $skills = [];
-            $satisfiedCount = 0;
+        foreach (SkillCatalog::SKILLSETS as $key => $definition) {
+            $subjects = [];
+            $attention = 0;
+            $applicableCount = 0;
 
-            foreach ($set['skills'] as $skillKey) {
-                $satisfied = $facts[$skillKey] ?? false;
-                $satisfiedCount += $satisfied ? 1 : 0;
+            foreach ($factsBySkillset[$key] ?? [] as $subject) {
+                $skills = [];
+                $subjectMissing = 0;
 
-                $skills[] = [
-                    'key' => $skillKey,
-                    'satisfied' => $satisfied,
-                ] + SkillCatalog::skill($skillKey);
+                foreach ($definition['skills'] as $skillKey) {
+                    $state = $subject['states'][$skillKey] ?? SkillCatalog::NOT_APPLICABLE;
+                    $subjectMissing += $state === SkillCatalog::MISSING ? 1 : 0;
+
+                    $copy = SkillCatalog::skill($skillKey);
+
+                    $skills[] = [
+                        'key' => $skillKey,
+                        'state' => $state,
+                        'label' => $copy['label'],
+                        'message' => $copy[$state] ?? '',
+                        'route' => $copy['route'],
+                        'cta' => $copy['cta'],
+                    ];
+                }
+
+                $attention += $subjectMissing > 0 ? 1 : 0;
+
+                // A subject whose every skill is NOT_APPLICABLE has nothing to
+                // say yet. It must not render as a tick: a green mark for
+                // something the streamer never built reads as an award for
+                // inaction, which is the achievement register this page avoids.
+                $applicable = collect($skills)->contains(
+                    fn (array $skill) => $skill['state'] !== SkillCatalog::NOT_APPLICABLE
+                );
+
+                $applicableCount += $applicable ? 1 : 0;
+
+                $subjects[] = [
+                    'key' => $subject['key'],
+                    'label' => $subject['label'],
+                    'context' => $subject['context'] ?? [],
+                    'skills' => $skills,
+                    'missing' => $subjectMissing,
+                    'applicable' => $applicable,
+                    'needsAttention' => $subjectMissing > 0,
+                ];
             }
 
-            $total = count($set['skills']);
-            $missing = $total - $satisfiedCount;
+            // Broken subjects first so the page leads with them, then stable
+            // by label so an untouched account does not reshuffle per request.
+            usort($subjects, fn (array $a, array $b) => [$a['needsAttention'] ? 0 : 1, $a['label']]
+                <=> [$b['needsAttention'] ? 0 : 1, $b['label']]);
 
             $sets[] = [
                 'key' => $key,
-                'label' => $set['label'],
-                'outcome' => $set['outcome'],
-                'skills' => $skills,
-                'satisfied' => $satisfiedCount,
-                'total' => $total,
-                'missing' => $missing,
-                'status' => self::status($satisfiedCount, $total),
+                'label' => $definition['label'],
+                'outcome' => $definition['outcome'],
+                'subject' => $definition['subject'],
+                'subjects' => $subjects,
+                'attention' => $attention,
+                'total' => count($subjects),
+                'status' => self::status($applicableCount, $attention),
             ];
         }
 
         usort($sets, function (array $a, array $b) {
-            $rank = [self::LOOSE_END => 0, self::NOT_STARTED => 1, self::COMPLETE => 2];
+            $rank = [self::LOOSE_END => 0, self::COMPLETE => 1, self::NOT_STARTED => 2];
 
-            return [$rank[$a['status']], $a['missing'], $a['key']]
-                <=> [$rank[$b['status']], $b['missing'], $b['key']];
+            return [$rank[$a['status']], -$a['attention'], $a['key']]
+                <=> [$rank[$b['status']], -$b['attention'], $b['key']];
         });
 
         return $sets;
     }
 
-    public static function status(int $satisfied, int $total): string
+    /**
+     * Counted in APPLICABLE subjects. An account with no chat commands has one
+     * subject and nothing to evaluate on it, which is not_started rather than
+     * complete - otherwise doing nothing reports as a finished outcome.
+     */
+    public static function status(int $applicableSubjects, int $attention): string
     {
-        if ($satisfied === 0) {
+        if ($applicableSubjects === 0) {
             return self::NOT_STARTED;
         }
 
-        return $satisfied === $total ? self::COMPLETE : self::LOOSE_END;
+        return $attention > 0 ? self::LOOSE_END : self::COMPLETE;
     }
 }

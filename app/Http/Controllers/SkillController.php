@@ -14,9 +14,13 @@ class SkillController extends Controller
     {
         $sets = SkillReport::build(SkillFacts::for($request->user()));
 
+        // Counted in subjects, not skillsets: "two lists are not shown
+        // anywhere" is actionable, "one area needs attention" is not.
+        $looseEnds = array_sum(array_column($sets, 'attention'));
+
         return Inertia::render('skills/index', [
             'skillsets' => $sets,
-            'looseEnds' => count(array_filter($sets, fn ($s) => $s['status'] === SkillReport::LOOSE_END)),
+            'looseEnds' => $looseEnds,
         ]);
     }
 }

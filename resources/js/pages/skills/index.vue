@@ -1,30 +1,41 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
-import { Check, CircleDashed, TriangleAlert } from '@lucide/vue';
+import EmptyState from '@/components/EmptyState.vue';
+import { Check, Circle, TriangleAlert } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
+
+type SkillState = 'satisfied' | 'missing' | 'not_applicable';
 
 interface Skill {
   key: string;
+  state: SkillState;
   label: string;
-  summary: string;
-  missing: string;
+  message: string;
   route: string;
   cta: string;
-  satisfied: boolean;
+}
+
+interface Subject {
+  key: string;
+  label: string;
+  context: string[];
+  skills: Skill[];
+  missing: number;
+  applicable: boolean;
+  needsAttention: boolean;
 }
 
 interface Skillset {
   key: string;
   label: string;
   outcome: string;
-  skills: Skill[];
-  satisfied: number;
+  subject: string;
+  subjects: Subject[];
+  attention: number;
   total: number;
-  missing: number;
-  status: 'loose_end' | 'not_started' | 'complete';
+  status: 'loose_end' | 'complete' | 'not_started';
 }
 
 const props = defineProps<{
@@ -34,87 +45,103 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Skills', href: '/skills' }];
 
-// The server already sorted these; the page must not re-sort and quietly
-// disagree with the ranking that is the whole point of the feature.
-const looseEnds = computed(() => props.skillsets.filter((s) => s.status === 'loose_end'));
-
 function href(skill: Skill): string {
   return route(skill.route);
+}
+
+// not_applicable is rendered as plain context, never as a half-tick. It is not
+// progress and it is not a gap, so giving it a state icon would read as a soft
+// failure for something the streamer never chose to build.
+function isFinding(skill: Skill): boolean {
+  return skill.state === 'missing';
+}
+
+// Shown as muted prose, never with an icon or a button: it explains why the
+// question does not arise, which is information, not a task.
+function isDormant(skill: Skill): boolean {
+  return skill.state === 'not_applicable' && skill.message !== '';
 }
 </script>
 
 <template>
   <Head>
     <title>Skills</title>
-    <meta name="description" content="What is wired up on your account, and what is one step short of working." />
+    <meta name="description" content="What is wired up on your account, and what is built but cannot work." />
   </Head>
 
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-6 p-4">
       <PageHeader
         title="Skills"
-        description="What is wired up on your account, and what is one step short of working."
+        description="What is wired up on your account, and what is built but cannot work."
         title-class="text-2xl font-bold"
       />
 
-      <!-- The headline is the loose ends, not a total. A count of everything
-           you could possibly set up is a score; a count of things that are
-           configured but silent is a to-do list. -->
-      <div v-if="looseEnds.length" class="flex gap-3 rounded border border-amber-500/40 bg-amber-500/10 p-4" role="alert">
+      <!-- The headline counts subjects, not areas. This page only ever speaks
+           about things that exist, so it can never nag about something the
+           streamer chose not to build. -->
+      <div v-if="props.looseEnds" class="flex gap-3 rounded border border-amber-500/40 bg-amber-500/10 p-4" role="alert">
         <TriangleAlert class="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
         <div>
           <p class="font-medium text-amber-700 dark:text-amber-300">
-            {{ looseEnds.length === 1 ? 'One thing is set up but not working' : `${looseEnds.length} things are set up but not working` }}
+            {{ props.looseEnds === 1 ? 'One thing is built but cannot work' : `${props.looseEnds} things are built but cannot work` }}
           </p>
-          <p class="mt-1 text-sm text-foreground">You have started these and stopped a step short, so they look configured but do nothing yet.</p>
+          <p class="mt-1 text-sm text-foreground">These exist on your account and something is stopping them doing anything.</p>
         </div>
       </div>
 
       <div v-else class="flex gap-3 rounded border border-border p-4">
         <Check class="mt-0.5 size-5 shrink-0 text-green-600 dark:text-green-400" />
-        <p class="text-foreground">Nothing is half-finished. Everything you have set up is actually working.</p>
+        <p class="text-foreground">Everything you have built can actually run.</p>
       </div>
 
       <section v-for="set in props.skillsets" :key="set.key" class="flex flex-col gap-3">
         <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 class="text-lg font-semibold text-foreground">{{ set.label }}</h2>
-          <span
-            class="text-sm tabular-nums"
-            :class="{
-              'text-amber-600 dark:text-amber-400': set.status === 'loose_end',
-              'text-green-600 dark:text-green-400': set.status === 'complete',
-              'text-muted-foreground': set.status === 'not_started',
-            }"
-          >
-            <template v-if="set.status === 'complete'">Working</template>
-            <template v-else-if="set.status === 'not_started'">Not set up</template>
-            <template v-else>{{ set.missing }} step{{ set.missing === 1 ? '' : 's' }} to go</template>
+          <span v-if="set.status === 'loose_end'" class="text-sm text-amber-600 tabular-nums dark:text-amber-400">
+            {{ set.attention }} of {{ set.total }} need attention
           </span>
         </div>
 
         <p class="max-w-prose text-sm text-foreground">{{ set.outcome }}</p>
 
-        <ul class="flex flex-col gap-2">
-          <li
-            v-for="skill in set.skills"
-            :key="skill.key"
-            class="collection-row flex flex-col gap-2 rounded border border-border p-3 sm:flex-row sm:items-center sm:gap-3"
-          >
-            <Check v-if="skill.satisfied" class="size-4 shrink-0 text-green-600 dark:text-green-400" />
-            <CircleDashed v-else class="size-4 shrink-0 text-muted-foreground" />
+        <EmptyState v-if="!set.subjects.length" :message="`No ${set.subject}s yet.`" />
 
-            <div class="min-w-0 flex-1">
-              <p class="font-medium text-foreground" :class="{ 'text-muted-foreground line-through': skill.satisfied }">
-                {{ skill.label }}
-              </p>
-              <p class="text-sm text-foreground">
-                {{ skill.satisfied ? skill.summary : skill.missing }}
-              </p>
+        <ul v-else class="flex flex-col gap-2">
+          <li
+            v-for="subject in set.subjects"
+            :key="subject.key"
+            class="collection-row rounded border p-3"
+            :class="subject.needsAttention ? 'border-amber-500/40' : 'border-border'"
+          >
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <TriangleAlert v-if="subject.needsAttention" class="size-4 shrink-0 self-center text-amber-600 dark:text-amber-400" />
+              <Check v-else-if="subject.applicable" class="size-4 shrink-0 self-center text-green-600 dark:text-green-400" />
+              <!-- Nothing built yet is neither a tick nor a warning. A green
+                   mark here would be an award for having done nothing. -->
+              <Circle v-else class="size-4 shrink-0 self-center text-muted-foreground" />
+              <p class="font-medium text-foreground">{{ subject.label }}</p>
             </div>
 
-            <Link v-if="!skill.satisfied" :href="href(skill)" class="btn btn-sm btn-secondary shrink-0 cursor-pointer">
-              {{ skill.cta }}
-            </Link>
+            <!-- Context is stated as fact, never as a step you skipped. -->
+            <ul v-if="subject.context.length" class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 pl-6">
+              <li v-for="line in subject.context" :key="line" class="text-sm text-muted-foreground">{{ line }}</li>
+            </ul>
+
+            <p v-for="skill in subject.skills.filter(isDormant)" :key="skill.key" class="mt-1 pl-6 text-sm text-muted-foreground">
+              {{ skill.message }}
+            </p>
+
+            <div
+              v-for="skill in subject.skills.filter(isFinding)"
+              :key="skill.key"
+              class="mt-2 flex flex-col gap-2 pl-6 sm:flex-row sm:items-center sm:gap-3"
+            >
+              <p class="min-w-0 flex-1 text-sm text-foreground">{{ skill.message }}</p>
+              <Link :href="href(skill)" class="btn btn-sm btn-secondary shrink-0 cursor-pointer">
+                {{ skill.cta }}
+              </Link>
+            </div>
           </li>
         </ul>
       </section>

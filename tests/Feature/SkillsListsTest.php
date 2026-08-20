@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\BotCommand;
 use App\Models\ListAppender;
 use App\Models\ListMetaCommand;
 use App\Models\OptionSet;
+use App\Models\OverlayTemplate;
 use App\Models\User;
 use App\Support\SkillCatalog;
 use App\Support\SkillFacts;
@@ -20,14 +22,14 @@ function skillUser(array $attrs = []): User
     ], $attrs));
 }
 
-function skillList(User $user): OptionSet
+function skillList(User $user, ?string $slug = null, array $attrs = []): OptionSet
 {
-    return OptionSet::create([
+    return OptionSet::create(array_merge([
         'user_id' => $user->id,
-        'slug' => 'list-'.fake()->unique()->lexify('??????'),
+        'slug' => $slug ?? 'list_'.fake()->unique()->lexify('??????'),
         'label' => 'Raffle',
         'items' => [],
-    ]);
+    ], $attrs));
 }
 
 function skillAppender(User $user, OptionSet $list, bool $enabled = true): ListAppender
@@ -41,17 +43,22 @@ function skillAppender(User $user, OptionSet $list, bool $enabled = true): ListA
     ]);
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// The catalogue and the facts must not drift apart
-// ──────────────────────────────────────────────────────────────────────────────
+/** @return list<array<string, mixed>> */
+function listSubjects(User $user): array
+{
+    return SkillFacts::for($user)['lists'];
+}
 
-test('every skill in the catalogue has a fact that answers it', function () {
-    // Evaluating a skill is a lookup, so a skill declared with no matching
-    // fact would read as unsatisfied forever and nothing would ever say so.
-    $facts = SkillFacts::for(skillUser());
+function listState(User $user, string $slug): string
+{
+    $subject = collect(listSubjects($user))->firstWhere('key', 'list:'.$slug);
 
-    expect(array_keys($facts))->toEqualCanonicalizing(SkillCatalog::skillKeys());
-});
+    return $subject['states']['lists.readable'];
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Drift guards
+// ──────────────────────────────────────────────────────────────────────────────
 
 test('every skill a skillset references is declared', function () {
     foreach (SkillCatalog::SKILLSETS as $key => $set) {
@@ -62,6 +69,14 @@ test('every skill a skillset references is declared', function () {
     }
 });
 
+test('every skillset has facts produced for it', function () {
+    // Evaluating a skillset reads $facts[$key]; one with no producer would
+    // render as permanently empty and nothing would say why.
+    $facts = SkillFacts::for(skillUser());
+
+    expect(array_keys($facts))->toEqualCanonicalizing(SkillCatalog::skillsetKeys());
+});
+
 test('every skill points at a route that exists', function () {
     foreach (SkillCatalog::SKILLS as $key => $skill) {
         expect(Route::has($skill['route']))
@@ -69,141 +84,242 @@ test('every skill points at a route that exists', function () {
     }
 });
 
+test('every skill carries copy for satisfied and missing', function () {
+    // not_applicable may be blank - some questions simply do not arise - but
+    // a state the page renders must never come out empty.
+    foreach (SkillCatalog::SKILLS as $key => $skill) {
+        expect($skill['satisfied'])->not->toBeEmpty("skill '{$key}' has no satisfied copy")
+            ->and($skill['missing'])->not->toBeEmpty("skill '{$key}' has no missing copy");
+    }
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
-// Facts are computed, never stored
+// Optional is not missing - what the first cut got wrong
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('a brand new account has none of the lists skills', function () {
+test('a list with no append command is not a finding', function () {
+    // Production had two such lists and both were correct: one fed by the
+    // recent-events feed, one a counter. Requiring an appender called two
+    // working setups broken.
+    $user = skillUser(['bot_enabled' => true]);
+    skillList($user, 'subgoal');
+    ListMetaCommand::create(['user_id' => $user->id, 'command' => 'list', 'enabled' => true]);
+
+    expect(listState($user, 'subgoal'))->toBe(SkillCatalog::SATISFIED);
+
+    $subject = collect(listSubjects($user))->firstWhere('key', 'list:subgoal');
+    expect($subject['context'])->toContain('You fill this one from the dashboard');
+});
+
+test('an event-feed list reports what fills it instead of demanding a command', function () {
+    $user = skillUser();
+    skillList($user, 'events', ['label' => 'Recent events', 'event_feed' => ['enabled' => true]]);
+
+    $subject = collect(listSubjects($user))->firstWhere('key', 'list:events');
+
+    expect($subject['context'])->toContain('Filled by the recent-events feed')
+        ->and($subject['context'])->not->toContain('You fill this one from the dashboard');
+});
+
+test('the bot skill is not applicable when there are no chat commands', function () {
     $facts = SkillFacts::for(skillUser());
 
-    expect($facts['lists.has_list'])->toBeFalse()
-        ->and($facts['lists.has_appender'])->toBeFalse()
-        ->and($facts['lists.has_reader'])->toBeFalse()
-        ->and($facts['bot.in_chat'])->toBeFalse();
+    expect($facts['bot'][0]['states']['bot.in_chat'])->toBe(SkillCatalog::NOT_APPLICABLE);
 });
 
-test('an empty list still satisfies the list skill', function () {
-    // A raffle list starts empty and fills from chat, so requiring items would
-    // call a perfectly good setup broken.
+test('the bot skill only becomes a finding once commands exist', function () {
     $user = skillUser();
-    skillList($user);
+    skillAppender($user, skillList($user));
 
-    expect(SkillFacts::for($user)['lists.has_list'])->toBeTrue();
+    expect(SkillFacts::for($user)['bot'][0]['states']['bot.in_chat'])->toBe(SkillCatalog::MISSING);
+
+    $user->update(['bot_enabled' => true]);
+
+    expect(SkillFacts::for($user->fresh())['bot'][0]['states']['bot.in_chat'])->toBe(SkillCatalog::SATISFIED);
 });
 
-test('a disabled appender does not count', function () {
+// ──────────────────────────────────────────────────────────────────────────────
+// Readability, per list
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('a list nothing reads is a finding', function () {
     $user = skillUser();
-    skillAppender($user, skillList($user), enabled: false);
+    skillList($user, 'orphan');
 
-    expect(SkillFacts::for($user)['lists.has_appender'])->toBeFalse();
+    expect(listState($user, 'orphan'))->toBe(SkillCatalog::MISSING);
 });
 
-test('an appender pointing at a deleted list does not count', function () {
-    // The exact false positive this page exists to prevent: a row that looks
-    // like a working append path but writes nowhere.
+test('the list meta-command makes every list readable at once', function () {
+    // Its vocabulary takes a slug, so one command covers all lists rather
+    // than one each.
     $user = skillUser();
-    $list = skillList($user);
-    skillAppender($user, $list);
+    skillList($user, 'one');
+    skillList($user, 'two');
 
-    expect(SkillFacts::for($user)['lists.has_appender'])->toBeTrue();
+    expect(listState($user, 'one'))->toBe(SkillCatalog::MISSING);
 
-    $list->delete();
+    ListMetaCommand::create(['user_id' => $user->id, 'command' => 'list', 'enabled' => true]);
 
-    expect(SkillFacts::for($user)['lists.has_appender'])->toBeFalse();
+    expect(listState($user, 'one'))->toBe(SkillCatalog::SATISFIED)
+        ->and(listState($user, 'two'))->toBe(SkillCatalog::SATISFIED);
 });
 
-test('another user\'s lists and commands never count as yours', function () {
+test('an overlay that renders the list makes it readable', function () {
+    $user = skillUser();
+    skillList($user, 'donors');
+
+    expect(listState($user, 'donors'))->toBe(SkillCatalog::MISSING);
+
+    OverlayTemplate::factory()->create([
+        'owner_id' => $user->id,
+        'fork_of_id' => null,
+        'type' => 'static',
+        'html' => '<div>[[[foreach:c:list:donors as d]]][[[d]]][[[endforeach]]]</div>',
+    ]);
+
+    expect(listState($user, 'donors'))->toBe(SkillCatalog::SATISFIED);
+});
+
+test('a bot command that reads the list makes it readable', function () {
+    $user = skillUser();
+    skillList($user, 'quotes');
+
+    BotCommand::create([
+        'user_id' => $user->id,
+        'command' => 'quote',
+        'permission_level' => 'everyone',
+        'reply' => 'Random quote: [[[c:list:quotes:random]]]',
+        'enabled' => true,
+    ]);
+
+    expect(listState($user, 'quotes'))->toBe(SkillCatalog::SATISFIED);
+});
+
+test('a longer slug sharing a prefix does not satisfy the shorter one', function () {
+    // Without the boundary, list `q` would report itself as read by any
+    // template mentioning `c:list:quotes`.
+    $user = skillUser();
+    skillList($user, 'q');
+    skillList($user, 'quotes');
+
+    OverlayTemplate::factory()->create([
+        'owner_id' => $user->id,
+        'fork_of_id' => null,
+        'type' => 'static',
+        'html' => '<div>[[[c:list:quotes]]]</div>',
+    ]);
+
+    expect(listState($user, 'quotes'))->toBe(SkillCatalog::SATISFIED)
+        ->and(listState($user, 'q'))->toBe(SkillCatalog::MISSING);
+});
+
+test('another user\'s overlay never makes your list readable', function () {
     $me = skillUser();
     $them = skillUser();
+    skillList($me, 'mine');
 
-    $theirList = skillList($them);
-    skillAppender($them, $theirList);
-    ListMetaCommand::create(['user_id' => $them->id, 'command' => 'list', 'enabled' => true]);
+    OverlayTemplate::factory()->create([
+        'owner_id' => $them->id,
+        'fork_of_id' => null,
+        'type' => 'static',
+        'html' => '<div>[[[c:list:mine]]]</div>',
+    ]);
 
-    $facts = SkillFacts::for($me);
+    expect(listState($me, 'mine'))->toBe(SkillCatalog::MISSING);
+});
 
-    expect($facts['lists.has_list'])->toBeFalse()
-        ->and($facts['lists.has_appender'])->toBeFalse()
-        ->and($facts['lists.has_reader'])->toBeFalse();
+test('a disabled bot command does not make a list readable', function () {
+    $user = skillUser();
+    skillList($user, 'quotes');
+
+    BotCommand::create([
+        'user_id' => $user->id,
+        'command' => 'quote',
+        'permission_level' => 'everyone',
+        'reply' => '[[[c:list:quotes:random]]]',
+        'enabled' => false,
+    ]);
+
+    expect(listState($user, 'quotes'))->toBe(SkillCatalog::MISSING);
 });
 
 test('facts follow the account rather than a stored record', function () {
-    // Delete the thing and the skill un-satisfies itself on the next request.
-    // That is the property that makes a table unnecessary.
     $user = skillUser();
-    $list = skillList($user);
+    $list = skillList($user, 'temp');
 
-    expect(SkillFacts::for($user)['lists.has_list'])->toBeTrue();
+    expect(listSubjects($user))->toHaveCount(1);
 
     $list->delete();
 
-    expect(SkillFacts::for($user->fresh())['lists.has_list'])->toBeFalse();
+    expect(listSubjects($user->fresh()))->toBeEmpty();
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
-// The ranking, which is the actual feature
+// Ranking
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('nothing set up is not_started, not a loose end', function () {
-    // Someone who has never touched lists has not left a loose end; nagging
-    // them is how this page turns into wallpaper.
+test('not_applicable counts as neither progress nor a gap', function () {
     $report = SkillReport::build([
-        'lists.has_list' => false,
-        'lists.has_appender' => false,
-        'lists.has_reader' => false,
-        'bot.in_chat' => false,
+        'bot' => [['key' => 'account', 'label' => 'Your channel', 'context' => [], 'states' => ['bot.in_chat' => SkillCatalog::NOT_APPLICABLE]]],
+        'lists' => [],
     ]);
 
-    expect($report[0]['status'])->toBe(SkillReport::NOT_STARTED);
+    $bot = collect($report)->firstWhere('key', 'bot');
+
+    // Not a gap: attention stays 0. Not progress either: the subject is not
+    // applicable, so the skillset is not_started rather than complete, and the
+    // page renders a neutral mark instead of a tick.
+    expect($bot['attention'])->toBe(0)
+        ->and($bot['subjects'][0]['applicable'])->toBeFalse()
+        ->and($bot['status'])->toBe(SkillReport::NOT_STARTED);
 });
 
-test('partly set up is a loose end', function () {
+test('no subjects at all is not_started and stays quiet', function () {
+    $report = SkillReport::build(['bot' => [], 'lists' => []]);
+
+    expect(collect($report)->firstWhere('key', 'lists')['status'])->toBe(SkillReport::NOT_STARTED);
+});
+
+test('broken subjects sort above healthy ones', function () {
     $report = SkillReport::build([
-        'lists.has_list' => true,
-        'lists.has_appender' => true,
-        'lists.has_reader' => false,
-        'bot.in_chat' => false,
+        'bot' => [],
+        'lists' => [
+            ['key' => 'list:aaa', 'label' => 'Aaa', 'context' => [], 'states' => ['lists.readable' => SkillCatalog::SATISFIED]],
+            ['key' => 'list:zzz', 'label' => 'Zzz', 'context' => [], 'states' => ['lists.readable' => SkillCatalog::MISSING]],
+        ],
     ]);
 
-    expect($report[0]['status'])->toBe(SkillReport::LOOSE_END)
-        ->and($report[0]['missing'])->toBe(2)
-        ->and($report[0]['satisfied'])->toBe(2);
+    $lists = collect($report)->firstWhere('key', 'lists');
+
+    expect($lists['subjects'][0]['key'])->toBe('list:zzz')
+        ->and($lists['status'])->toBe(SkillReport::LOOSE_END)
+        ->and($lists['attention'])->toBe(1);
 });
 
-test('fully set up is complete', function () {
+test('a skillset with a loose end sorts above one without', function () {
     $report = SkillReport::build([
-        'lists.has_list' => true,
-        'lists.has_appender' => true,
-        'lists.has_reader' => true,
-        'bot.in_chat' => true,
+        'bot' => [['key' => 'account', 'label' => 'Your channel', 'context' => [], 'states' => ['bot.in_chat' => SkillCatalog::SATISFIED]]],
+        'lists' => [
+            ['key' => 'list:a', 'label' => 'A', 'context' => [], 'states' => ['lists.readable' => SkillCatalog::MISSING]],
+        ],
     ]);
 
-    expect($report[0]['status'])->toBe(SkillReport::COMPLETE)
-        ->and($report[0]['missing'])->toBe(0);
+    expect($report[0]['key'])->toBe('lists');
 });
 
-test('status ranks loose ends above not-started above complete', function () {
-    // Pinned on the pure helper so the ordering survives new skillsets being
-    // added without a database anywhere near it.
-    expect(SkillReport::status(0, 4))->toBe(SkillReport::NOT_STARTED)
-        ->and(SkillReport::status(1, 4))->toBe(SkillReport::LOOSE_END)
-        ->and(SkillReport::status(3, 4))->toBe(SkillReport::LOOSE_END)
-        ->and(SkillReport::status(4, 4))->toBe(SkillReport::COMPLETE);
-});
-
-test('a missing skill carries the consequence, not just the gap', function () {
+test('a finding carries the consequence and a way to fix it', function () {
     $report = SkillReport::build([
-        'lists.has_list' => true,
-        'lists.has_appender' => false,
-        'lists.has_reader' => false,
-        'bot.in_chat' => false,
+        'bot' => [],
+        'lists' => [
+            ['key' => 'list:a', 'label' => 'A', 'context' => [], 'states' => ['lists.readable' => SkillCatalog::MISSING]],
+        ],
     ]);
 
-    $appender = collect($report[0]['skills'])->firstWhere('key', 'lists.has_appender');
+    $skill = collect($report)->firstWhere('key', 'lists')['subjects'][0]['skills'][0];
 
-    expect($appender['satisfied'])->toBeFalse()
-        ->and($appender['missing'])->not->toBeEmpty()
-        ->and($appender['cta'])->not->toBeEmpty();
+    expect($skill['state'])->toBe(SkillCatalog::MISSING)
+        ->and($skill['message'])->not->toBeEmpty()
+        ->and($skill['cta'])->not->toBeEmpty();
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -214,38 +330,31 @@ test('the skills page requires a login', function () {
     $this->get('/skills')->assertRedirect();
 });
 
-test('the skills page reports a real loose end for the account', function () {
-    $user = skillUser();
-    $list = skillList($user);
-    skillAppender($user, $list);
+test('the page counts loose ends in subjects, not areas', function () {
+    $user = skillUser(['bot_enabled' => true]);
+    skillList($user, 'orphan_one');
+    skillList($user, 'orphan_two');
 
-    // List and appender, but nothing reads it back and no bot: 2 of 4.
     $this->actingAs($user)
         ->get('/skills')
         ->assertOk()
         ->assertInertia(
             fn ($page) => $page
                 ->component('skills/index')
-                ->where('looseEnds', 1)
+                ->where('looseEnds', 2)
                 ->where('skillsets.0.key', 'lists')
                 ->where('skillsets.0.status', SkillReport::LOOSE_END)
-                ->where('skillsets.0.satisfied', 2)
-                ->where('skillsets.0.missing', 2)
         );
 });
 
-test('the skills page shows no loose ends once the chain is complete', function () {
+test('a fully wired account reports nothing to do', function () {
     $user = skillUser(['bot_enabled' => true]);
-    $list = skillList($user);
+    $list = skillList($user, 'raffle');
     skillAppender($user, $list);
     ListMetaCommand::create(['user_id' => $user->id, 'command' => 'list', 'enabled' => true]);
 
     $this->actingAs($user)
         ->get('/skills')
         ->assertOk()
-        ->assertInertia(
-            fn ($page) => $page
-                ->where('looseEnds', 0)
-                ->where('skillsets.0.status', SkillReport::COMPLETE)
-        );
+        ->assertInertia(fn ($page) => $page->where('looseEnds', 0));
 });
