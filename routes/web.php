@@ -20,7 +20,6 @@ use App\Http\Controllers\ListActionWebController;
 use App\Http\Controllers\ListAppenderController;
 use App\Http\Controllers\ListController;
 use App\Http\Controllers\MapController;
-use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayControlController;
 use App\Http\Controllers\OverlayReportController;
@@ -481,13 +480,13 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
         }
 
         // Redirect to the intended URL if it's a safe full-page destination.
-        // JSON-returning endpoints (onboarding/status, api/, etc.) must never be
-        // used here — they get stored as url.intended when fetch() follows a 302
-        // redirect to /login, which would land the user on a raw JSON response.
+        // JSON-returning endpoints (api/, etc.) must never be used here - they
+        // get stored as url.intended when fetch() follows a 302 redirect to
+        // /login, which would land the user on a raw JSON response.
         $intended = session()->pull('url.intended');
         if ($intended) {
             $path = parse_url($intended, PHP_URL_PATH) ?? '';
-            $jsonPaths = ['/onboarding/', '/api/'];
+            $jsonPaths = ['/api/'];
             $isSafe = ! collect($jsonPaths)->contains(fn ($prefix) => str_starts_with($path, $prefix));
             if ($isSafe) {
                 return redirect($intended);
@@ -522,13 +521,6 @@ Route::get('/auth/redirect/fw', [FourthwallIntegrationController::class, 'callba
 // wins. Editing it had no effect on anything.
 
 Route::middleware('auth.redirect')->group(function () {
-
-    // Onboarding
-    Route::prefix('onboarding')->name('onboarding.')->group(function () {
-        Route::get('/status', [OnboardingController::class, 'status'])->name('status');
-        Route::post('/token', [OnboardingController::class, 'createToken'])->name('token');
-        Route::post('/complete', [OnboardingController::class, 'complete'])->name('complete');
-    });
 
     // Testing Guide
     Route::get('/testing', [TestingController::class, 'index'])->name('testing.index');

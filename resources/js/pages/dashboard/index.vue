@@ -3,7 +3,6 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { computed, ref, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import OnboardingWizard from '@/components/OnboardingWizard.vue';
 import WelcomeCard from '@/components/WelcomeCard.vue';
 import TemplateCollection from '@/components/TemplateCollection.vue';
 import UpdatesList from '@/components/UpdatesList.vue';
@@ -44,8 +43,6 @@ const props = defineProps<{
   userStaticTemplates: OverlayTemplate[];
   userRecentEvents: UnifiedEvent[];
   recentUpdates: Update[];
-  needsOnboarding: boolean;
-  twitchId: string;
   usage: UsageSummary | null;
 }>();
 
@@ -66,13 +63,7 @@ const breadcrumbs = [
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4">
-      <!-- Onboarding Wizard -->
-      <section v-if="props.needsOnboarding" class="mb-6">
-        <OnboardingWizard :twitch-id="twitchId" />
-      </section>
-      <!-- // Onboarding Wizard -->
-
-      <div v-else>
+      <div>
         <WelcomeCard />
 
         <div class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">

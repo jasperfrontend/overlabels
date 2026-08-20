@@ -1,5 +1,19 @@
 # CHANGELOG AUGUST 2026
 
+## August 20th, 2026 - chore(onboarding): the onboarding wizard is gone
+
+The four-step wizard that greeted every new account has been deleted. It was doing almost nothing, and what it was doing turned out to be actively harmful.
+
+Three of its four steps were dead weight. Everything it claimed to be "setting up" is done by `OnboardNewUser`, a background job dispatched from the `UserRegistered` listener at signup, which the wizard could only watch: it polled `/onboarding/status` every three seconds, up to twenty times, for a job it had no control over. Its template-tags step had been hardcoded to `completed` since the tag catalogue became a code constant, so the "(generating...)" branch could never fire. Its token step duplicated `AddToObsButton` and `TokenUrlDialog`, which already do the same job per overlay with a drag-to-OBS target, a QR code and a screenshot of the correct browser-source settings.
+
+- **It could vanish mid-flow.** The dashboard computed `needsOnboarding` as `!isOnboarded() && !hasAlertMappings()`, and the background job assigns alert mappings. Once the job landed, any page reload removed the wizard for good with `onboarded_at` still null. Twelve of the eighteen accounts in production have a full set of seven alert mappings and never finished the wizard, which is the clearest evidence that it was never what wired alerts up.
+- **Its copy talked users out of the product.** The token step opened with "Stop!!! Read this first", four amber alarm panels, a blinking "one time", and "YOU MUST DO THIS RIGHT NOW" in red. Three known users completed that step and then deleted the token it had just given them, one of them a partnered streamer who said as much directly. The framing was also wrong on the facts: an overlay token is not "a password". Its entire reach is viewing that overlay, reading the event feed, muting alerts and replaying an event, and a replacement is two clicks.
+- **That failure mode is invisible in the data.** `OverlayAccessToken` has no `SoftDeletes` and `destroy()` hard-deletes, while `overlay_access_logs.token_id` is `cascadeOnDelete()`. Deleting a token therefore erases the token row and every record of every overlay ever loaded with it, so the database cannot tell "never made one" from "made one, used it, deleted it". Worth knowing before drawing conclusions from token counts.
+- **The kit fork and the alert mappings are untouched and must stay that way.** `OnboardNewUser`, its listener and `hasAlertMappings()` all remain exactly as they were. They are the only thing making a follow on stream do anything, and they are independent of both the wizard and EventSub. Removing the wizard does not change what a new account receives.
+- **What went with it:** `OnboardingWizard.vue`, `OnboardingController` and all three `/onboarding/*` routes, the `needsOnboarding` and `twitchId` dashboard props, and the admin "Preview Onboarding Wizard" button along with the Dev Tools card that held only it. The `onboarded_at` column stays for now - it is still shown on the admin user page - but nothing writes to it any more, so treat it as a record of who passed through the old flow rather than as current state.
+
+Nothing replaces it yet. New users now land on the ordinary dashboard, with the welcome card and their forked kit already present.
+
 ## August 20th, 2026 - fix(help): searching for a section returns the section again
 
 Typing `foreach` into the help search box returned "Nothing matched", and the six category cards on `/help/reference` were dead buttons - they set the search box to `Foreach Loops` and got the same nothing back. The same applied to the Alt+R palette. This worked before the three help surfaces were merged onto one search in PR #248.

@@ -167,8 +167,8 @@ const filteredGrouped = computed<{ family: EventFamily; label: string; events: E
       </div>
 
       <div v-if="!hasWebhookSecret" class="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-sm text-amber-300">
-        You don't have a per-user webhook secret yet. These commands use the global secret, which works but isn't unique to your account. Complete
-        onboarding to get a personal secret.
+        You don't have a per-user webhook secret yet. These commands use the global secret, which works but isn't unique to your account. Log out and
+        back in to get a personal one.
       </div>
 
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
