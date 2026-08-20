@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 20th, 2026 - fix(tags): /tags behaves like the Controls tab, and stops inventing values
+
+The rewritten `/tags` page looked right but did not work like the thing it resembles. `ControlsManager.vue` on a template's Controls tab has a filter box, a collapse/expand-all toggle, an "X across Y groups" count and collapsible groups with per-group counters. `/tags` is the same UI idea and now shares the same behaviour, built from the same markup and classes rather than a second interpretation of them.
+
+- **Same toolbar, same wording, same interactions.** Filter matches on tag name, display tag, description and group label. The count line reads "64 tags across 7 groups" and switches to "25 tags in 4 groups" while filtering, exactly as the controls one does. Expanded state persists to localStorage under its own key, so collapsing Subscribers on `/tags` does not collapse anything on a template.
+- **The page was showing made-up values as if they were yours.** `[[[overlay_name]]]` displayed "My Awesome Overlay" and `[[[timestamp]]]` a fixed date, both catalogue samples rather than account data, and `[[[goals_latest_target]]]` would have claimed a goal of 2000 to someone with no goals. The heading says the values are your own, so a tag with no live value now shows nothing at all, which is also the house rule for missing data. The static samples still do their real job in template previews.
+- **Found by looking at the page rather than the tests.** Every assertion passed the whole time; the payload carried `is_live` correctly and the template simply ignored it. A screenshot of the Overlay Metadata group is what surfaced it.
+- **Left alone deliberately:** `[[[channel_content_labels]]]` shows `[]` for an account with no labels. That is genuinely what the tag renders, because the mapper `json_encode`s arrays it has no join rule for, so the page is being accurate. Making it render as empty means changing what overlays output, which is a different change.
+
 ## August 20th, 2026 - refactor(tags): template tags stopped being a per-user table
 
 Follow-on from the catalogue rewrite below. Once every account was getting an identical list, the obvious question was why the list is stored per account at all. It is not, any more.
