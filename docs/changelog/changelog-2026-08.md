@@ -1,5 +1,19 @@
 # CHANGELOG AUGUST 2026
 
+## August 21st, 2026 - feat(skills): /skills shows what is built but cannot work
+
+First slice of Continuous Onboarding. Overlabels lets you build three quarters of a feature and says nothing: a list nothing ever shows, chat commands with no bot in the channel. Each is silent, and the silence looks identical to working. `/skills` names those.
+
+- **A skill is a query, never a record.** No table, no completion rows, no migration, no backfill, no invalidation. `SkillFacts::for($user)` is recomputed every request, so it cannot claim you still have something you deleted. A test deletes a list and asserts the subject disappears, because that property is why no table is needed. Same shape as `TAG_CATALOG` feeding `/tags`.
+- **A skill only ever describes something that can be BROKEN, never something you could have built.** The first cut made "chat can add to this list" a requirement. Production had two appender-less lists and both were correct: one is written by the recent-events feed, the other is a counter. That advice would have been wrong twice out of two, and would have called two working setups broken. Optional things are now context ("Filled by the recent-events feed", "You fill this one from the dashboard") or `NOT_APPLICABLE`, and neither counts in either direction.
+- **`NOT_APPLICABLE` is the mechanic that makes optionality honest.** It is not progress and it is not a gap. A subject whose every skill is inapplicable renders a neutral mark rather than a tick, because a green check for something never built is an award for inaction, and the skillset reads `not_started` rather than `complete`.
+- **Skillsets are evaluated per subject.** Lists is per list. Answered at account level, "do you have an append command" is satisfied by any appender on any list, which hid a half-wired list on two of the three accounts using lists in production. The bot is its own account-level subject because it is the prerequisite every future integration will share.
+- **Readability is detected in template SOURCE, not the payload.** Every list is injected into every overlay render regardless of use, so the payload cannot say which are read. A list counts as readable if the `!list` meta-command is enabled (its vocabulary takes a slug, so one command covers them all), or a `c:list:<slug>` tag appears in one of the user's overlay templates or enabled bot replies. The match needs a trailing non-slug character or list `q` reports itself as read by any template mentioning `c:list:quotes` - pinned by a test.
+
+24 tests. Four are drift guards: every skill a skillset references must be declared, every skillset must have facts produced for it, every skill's route must resolve, and every skill must carry copy for both states the page can render.
+
+Deliberately not built: any other skillset, per-integration declarations, help wiring, and anything resembling progress bars, XP or badges. The register is "what is wired up and what is not", never achievements.
+
 ## August 20th, 2026 - fix(admin): two starter kits locked the admin kits screen permanently
 
 `/admin/kits` had exactly one action, "Set as Starter", and it rendered only on kits that were not already the starter: `<Button v-if="!kit.is_starter_kit">` with `<Badge v-else>`. That is correct while one kit is flagged. The moment two are, every kit renders the badge, no kit renders a button, and the screen has no action anywhere. There is no demote action in `AdminKitController` either - you can promote a kit to starter, never unset one - so the state was unrecoverable from the UI. Found locally with "Wheel of Fortune" and "Midnight Purple" both flagged; production has only ever had one.
