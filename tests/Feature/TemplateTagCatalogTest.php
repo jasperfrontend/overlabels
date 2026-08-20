@@ -1,11 +1,10 @@
 <?php
 
-use App\Models\TemplateTag;
-use App\Models\TemplateTagCategory;
 use App\Models\User;
-use App\Services\JsonTemplateParserService;
 use App\Services\TemplateDataMapperService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -39,6 +38,7 @@ function twitchPayload(string $broadcasterType = '', array $overrides = []): arr
             'tags' => ['Gaming', 'Fun'],
             'content_classification_labels' => [],
             'is_branded_content' => false,
+            'avatar' => 'https://cdn.example/avatar.png',
         ],
         'channel_followers' => [
             'total' => 1234,
@@ -55,19 +55,25 @@ function twitchPayload(string $broadcasterType = '', array $overrides = []): arr
     ], $overrides);
 }
 
-function syncFor(User $user, array $payload): array
+function browserTagNames(array $browser): array
 {
-    return app(JsonTemplateParserService::class)->syncTagsForUser($user, $payload);
+    $names = [];
+
+    foreach ($browser as $category) {
+        foreach ($category['tags'] as $tag) {
+            $names[] = $tag['tag_name'];
+        }
+    }
+
+    sort($names);
+
+    return $names;
 }
 
-function tagNamesFor(User $user): array
+function browserTags(array $browser): Collection
 {
-    return TemplateTag::where('user_id', $user->id)->orderBy('tag_name')->pluck('tag_name')->all();
+    return collect($browser)->flatMap(fn ($c) => $c['tags'])->keyBy('tag_name');
 }
-
-beforeEach(function () {
-    $this->user = User::factory()->create();
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -112,160 +118,79 @@ it('gives every catalogue tag a category, a description and a sample', function 
 
 /*
 |--------------------------------------------------------------------------
-| Determinism
-|--------------------------------------------------------------------------
-*/
-
-it('offers the same tags regardless of what the account currently contains', function () {
-    // The old walker derived tag names from the payload, so an account with no
-    // followers that night simply never got followers_latest_*. The catalogue
-    // must not care.
-    $full = twitchPayload('affiliate');
-    $empty = [
-        'user' => ['broadcaster_type' => 'affiliate'],
-        'channel' => [],
-        'channel_followers' => ['total' => 0, 'data' => []],
-        'followed_channels' => ['total' => 0, 'data' => []],
-        'subscribers' => ['total' => 0, 'points' => 0, 'data' => []],
-        'goals' => ['data' => []],
-    ];
-
-    syncFor($this->user, $full);
-    $fromFull = tagNamesFor($this->user);
-
-    $other = User::factory()->create();
-    syncFor($other, $empty);
-
-    expect(tagNamesFor($other))->toBe($fromFull);
-});
-
-it('is idempotent', function () {
-    $payload = twitchPayload('affiliate');
-
-    $first = syncFor($this->user, $payload);
-    $second = syncFor($this->user, $payload);
-
-    expect($first['tags'])->toBeGreaterThan(0)
-        ->and($second['tags'])->toBe(0)
-        ->and($second['removed'])->toBe(0)
-        ->and(tagNamesFor($this->user))->toBe(array_keys(collect(TemplateDataMapperService::tagCatalog())->sortKeys()->all()));
-});
-
-/*
-|--------------------------------------------------------------------------
-| Pruning (what CleanupRedundantTags used to half-do)
-|--------------------------------------------------------------------------
-*/
-
-it('deletes rows that are not in the catalogue', function () {
-    syncFor($this->user, twitchPayload());
-
-    $category = TemplateTagCategory::where('user_id', $this->user->id)->first();
-
-    // The exact artefacts the old walker produced.
-    foreach (['channel_count', 'user', 'channel_followers_pagination_cursor', 'channel_content_classification_labels_0'] as $junk) {
-        TemplateTag::factory()->create([
-            'user_id' => $this->user->id,
-            'category_id' => $category->id,
-            'tag_name' => $junk,
-        ]);
-    }
-
-    $result = syncFor($this->user, twitchPayload());
-
-    expect($result['removed'])->toBe(4)
-        ->and(tagNamesFor($this->user))->not->toContain('channel_count')
-        ->and(tagNamesFor($this->user))->not->toContain('channel_followers_pagination_cursor');
-});
-
-it('drops a category once nothing is left in it', function () {
-    syncFor($this->user, twitchPayload());
-
-    // A category holding nothing but artefacts goes when they are pruned.
-    $orphan = TemplateTagCategory::create([
-        'user_id' => $this->user->id,
-        'name' => 'legacy',
-        'display_name' => 'Legacy',
-        'description' => 'from the old walker',
-        'is_group' => false,
-        'sort_order' => 99,
-    ]);
-    TemplateTag::factory()->create([
-        'user_id' => $this->user->id,
-        'category_id' => $orphan->id,
-        'tag_name' => 'channel_followers_pagination_cursor',
-    ]);
-
-    syncFor($this->user, twitchPayload());
-
-    expect(TemplateTagCategory::where('user_id', $this->user->id)->pluck('name'))->not->toContain('legacy');
-});
-
-/*
-|--------------------------------------------------------------------------
-| No tailoring: everyone gets the same list
+| Tags are a constant, not per-user rows
 |--------------------------------------------------------------------------
 |
-| Withholding the subscriber and goal tags from non-affiliates was built and
-| then removed. Twitch serves those endpoints only to affiliates, so the tags
-| resolve to 0 or empty for everyone else - and empty renders as nothing, which
-| is the same outcome as not having the tag. Meanwhile the starter template
-| every account copies references subscribers_*, so hiding them left a
-| non-affiliate looking at a tag in their own overlay that the browser denied
-| existed.
+| The tables that stored a copy per user are gone. Production held 1155 rows
+| for 82 distinct names across 19 accounts, none of them ever edited. The
+| browser is built from TAG_CATALOG on each request.
 */
 
-it('offers the subscriber and goal tags to an account that is not an affiliate', function () {
-    syncFor($this->user, twitchPayload(''));
+it('offers the same tags no matter whose data is passed in', function () {
+    $mapper = app(TemplateDataMapperService::class);
 
-    expect(tagNamesFor($this->user))
-        ->toContain('subscribers_total')
-        ->toContain('goals_latest_target');
+    $affiliate = $mapper->tagBrowser(twitchPayload('affiliate'));
+    $plebeian = $mapper->tagBrowser(twitchPayload(''));
+    $nothing = $mapper->tagBrowser([]);
+
+    expect(browserTagNames($plebeian))->toBe(browserTagNames($affiliate))
+        ->and(browserTagNames($nothing))->toBe(browserTagNames($affiliate));
 });
 
-it('gives an affiliate and a non-affiliate byte-identical tag lists', function () {
-    $plebeian = User::factory()->create();
-    $affiliate = User::factory()->create();
+it('covers the whole catalogue and nothing else', function () {
+    $browser = app(TemplateDataMapperService::class)->tagBrowser(twitchPayload());
 
-    syncFor($plebeian, twitchPayload(''));
-    syncFor($affiliate, twitchPayload('partner'));
+    $expected = array_keys(TemplateDataMapperService::tagCatalog());
+    sort($expected);
 
-    expect(tagNamesFor($plebeian))->toBe(tagNamesFor($affiliate));
+    expect(browserTagNames($browser))->toBe($expected);
 });
 
-it('still renders a withheld-looking tag as empty rather than absent', function () {
-    // The reason no gate is needed: a non-affiliate's subscriber tags resolve,
-    // they just resolve to nothing.
-    $mapped = app(TemplateDataMapperService::class)
-        ->mapForTemplate(twitchPayload(''), 'overlay', ['subscribers_latest_user_name']);
+it('leaves the event category out of the browser', function () {
+    // event.* tags exist only inside an alert render, so there is no value to
+    // show beside them.
+    $browser = app(TemplateDataMapperService::class)->tagBrowser(twitchPayload());
 
-    expect($mapped)->toHaveKey('subscribers_latest_user_name')
-        ->and($mapped['subscribers_latest_user_name'])->toBe('');
+    expect($browser)->not->toHaveKey('event');
+});
+
+it('has no tables left to store tags in', function () {
+    $tables = collect(DB::select('select tablename from pg_tables where schemaname = current_schema()'))
+        ->pluck('tablename');
+
+    expect($tables)->not->toContain('template_tags')
+        ->and($tables)->not->toContain('template_tag_categories')
+        ->and($tables)->not->toContain('template_tag_jobs')
+        ->and($tables)->not->toContain('user_templates');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Stored samples
+| Live values
 |--------------------------------------------------------------------------
 */
 
-it('stores the sample a tag actually renders, not the raw payload value', function () {
-    syncFor($this->user, twitchPayload());
+it('shows the value a tag actually renders, not the raw payload value', function () {
+    $tags = browserTags(app(TemplateDataMapperService::class)->tagBrowser(twitchPayload()));
 
-    $tags = TemplateTag::where('user_id', $this->user->id)->get()->keyBy('tag_name');
-
-    expect($tags['channel_tags']->sample_data)->toBe('Gaming, Fun')
-        ->and($tags['followers_latest_date']->sample_data)->toBeInt()
-        ->and($tags['followers_total']->sample_data)->toBe(1234);
+    expect($tags['channel_tags']['sample_data'])->toBe('Gaming, Fun')
+        ->and($tags['followers_total']['sample_data'])->toBe(1234)
+        ->and($tags['followers_latest_date']['sample_data'])->toBeInt();
 });
 
 it('falls back to the catalogue sample when the account has no value at that path', function () {
-    syncFor($this->user, twitchPayload());
-
-    $tag = TemplateTag::where('user_id', $this->user->id)->where('tag_name', 'channel_tags_7')->first();
+    $tags = browserTags(app(TemplateDataMapperService::class)->tagBrowser(twitchPayload()));
 
     // The account has two channel tags, so index 7 resolves to nothing.
-    expect($tag->sample_data)->toBe('');
+    expect($tags['channel_tags_7']['sample_data'])->toBe('')
+        ->and($tags['channel_tags_7']['is_live'])->toBeFalse()
+        ->and($tags['channel_tags_0']['is_live'])->toBeTrue();
+});
+
+it('marks nothing live when Twitch data is unavailable', function () {
+    $tags = browserTags(app(TemplateDataMapperService::class)->tagBrowser([]));
+
+    expect($tags->filter(fn ($t) => $t['is_live']))->toBeEmpty();
 });
 
 /*
@@ -283,14 +208,14 @@ it('renders channel_tags as a joined string', function () {
         ->and($mapped)->not->toHaveKey('channel_tags_count');
 });
 
-it('renders nothing rather than erroring when a tag has no value', function () {
-    syncFor($this->user, twitchPayload());
+it('still renders a tag the account has no data for as empty', function () {
+    // This is why no gate is needed: a non-affiliate's subscriber tags resolve,
+    // they just resolve to nothing, which renders as nothing.
+    $mapped = app(TemplateDataMapperService::class)
+        ->mapForTemplate(twitchPayload(''), 'overlay', ['subscribers_latest_user_name']);
 
-    $tag = TemplateTag::where('user_id', $this->user->id)->where('tag_name', 'channel_tags_7')->first();
-
-    // formatData() has a `: string` return type; a null here used to raise a
-    // TypeError, which is an Error and slips past the controller's catch.
-    expect($tag->getFormattedOutput(twitchPayload()))->toBe('');
+    expect($mapped)->toHaveKey('subscribers_latest_user_name')
+        ->and($mapped['subscribers_latest_user_name'])->toBe('');
 });
 
 /*
@@ -302,13 +227,12 @@ it('renders nothing rather than erroring when a tag has no value', function () {
 | overlay's tag data. Twitch names the acting user's fields `user_*`, so a
 | single follow repoints every bare user_* tag at the follower - deliberate,
 | and what the user_* callout in TemplateTagsList.vue warns about. A tag that
-| must always mean "me" therefore cannot live in that namespace.
+| must always mean "me" cannot live in that namespace.
 */
 
 it('keeps every channel tag clear of the event payload keys that overwrite tag data', function () {
     $mapper = app(TemplateDataMapperService::class);
 
-    // Top-level keys an event payload can carry, as the overlay would spread them.
     $eventKeys = collect($mapper->getTagCategories()['event']['tags'])
         ->map(fn ($tag) => substr($tag, strlen('event.')))
         ->reject(fn ($key) => str_contains($key, '.'))
@@ -339,17 +263,46 @@ it('documents the user_* collision it is working around', function () {
 });
 
 it('resolves channel_avatar to the owner profile image, alongside user_avatar', function () {
-    $payload = twitchPayload();
-    $payload['channel']['avatar'] = $payload['user']['profile_image_url'];
-
-    $mapped = app(TemplateDataMapperService::class)->mapTwitchDataForTemplates($payload, 'overlay');
+    $mapped = app(TemplateDataMapperService::class)->mapTwitchDataForTemplates(twitchPayload(), 'overlay');
 
     expect($mapped['channel_avatar'])->toBe('https://cdn.example/avatar.png')
         ->and($mapped['channel_avatar'])->toBe($mapped['user_avatar']);
 });
 
-it('offers channel_avatar to every account', function () {
-    syncFor($this->user, twitchPayload(''));
+/*
+|--------------------------------------------------------------------------
+| The page and the editor's list
+|--------------------------------------------------------------------------
+*/
 
-    expect(tagNamesFor($this->user))->toContain('channel_avatar');
+it('serves the tag browser to a connected user', function () {
+    $user = User::factory()->create(['access_token' => 'token', 'twitch_id' => '73327367']);
+
+    $this->actingAs($user)
+        ->get('/tags')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('TemplateTagGenerator')
+            ->has('tags.channel.tags')
+            ->has('liveValues')
+        );
+});
+
+it('refuses the tag browser to a user with no Twitch connection', function () {
+    $user = User::factory()->create(['access_token' => null]);
+
+    $this->actingAs($user)->get('/tags')->assertForbidden();
+});
+
+it('serves the same catalogue as JSON for the template editor', function () {
+    $user = User::factory()->create(['access_token' => 'token', 'twitch_id' => '73327367']);
+
+    $response = $this->actingAs($user)->getJson('/api/template-tags')->assertOk();
+
+    $tags = $response->json('tags');
+
+    expect($response->json('success'))->toBeTrue()
+        ->and(browserTagNames($tags))->toBe(browserTagNames(
+            app(TemplateDataMapperService::class)->tagBrowser([])
+        ));
 });

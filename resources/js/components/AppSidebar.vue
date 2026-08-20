@@ -118,7 +118,6 @@ const adminNavItems = computed<NavItem[]>(() => {
     { title: 'Users', href: route('admin.users.index'), icon: Users },
     { title: 'Overlays', href: route('admin.templates.index'), icon: Layers },
     { title: 'Events', href: route('admin.events.index'), icon: Radio },
-    { title: 'Tags', href: route('admin.tags.index'), icon: Brackets },
     { title: 'Tokens', href: route('admin.tokens.index'), icon: HashIcon },
     { title: 'Sessions', href: route('admin.sessions.index'), icon: House },
     { title: 'Bans', href: route('admin.bans.index'), icon: ShieldBan },

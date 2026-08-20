@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Models\EventTemplateMapping;
 use App\Models\Kit;
-use App\Models\TemplateTagJob;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -52,7 +51,6 @@ class OnboardNewUser implements ShouldQueue
         if ($forkedKit) {
             $this->autoAssignEventMappings($forkedKit);
         }
-        $this->dispatchTagGeneration();
 
         Log::info('OnboardNewUser: Pipeline completed', [
             'user_id' => $this->user->id,
@@ -179,30 +177,6 @@ class OnboardNewUser implements ShouldQueue
             'user_id' => $this->user->id,
             'matched' => $matched,
             'total_events' => count($eventKeywords),
-        ]);
-    }
-
-    private function dispatchTagGeneration(): void
-    {
-        if (! $this->user->access_token) {
-            Log::warning('OnboardNewUser: No access token, skipping tag generation', [
-                'user_id' => $this->user->id,
-            ]);
-
-            return;
-        }
-
-        $jobRecord = TemplateTagJob::create([
-            'user_id' => $this->user->id,
-            'job_type' => 'generate',
-            'status' => 'pending',
-        ]);
-
-        GenerateTemplateTags::dispatch($this->user, $jobRecord);
-
-        Log::info('OnboardNewUser: Dispatched tag generation', [
-            'user_id' => $this->user->id,
-            'job_record_id' => $jobRecord->id,
         ]);
     }
 }

@@ -10,7 +10,6 @@ use App\Http\Controllers\Admin\AdminLockdownController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminSessionController;
 use App\Http\Controllers\Admin\AdminTemplateController;
-use App\Http\Controllers\Admin\AdminTemplateTagController;
 use App\Http\Controllers\Admin\AdminTwitchBotController;
 use App\Http\Controllers\Admin\AdminTwitchEventController;
 use App\Http\Controllers\Admin\AdminUpdateController;
@@ -54,12 +53,6 @@ Route::prefix('admin')
         Route::get('/external-events/{externalEvent}', [AdminTwitchEventController::class, 'showExternal'])->name('events.external.show');
 
         // Tags — categories must come before {tag} to avoid route conflict
-        Route::get('/tags/categories', [AdminTemplateTagController::class, 'indexCategories'])->name('tags.categories.index');
-        Route::patch('/tags/categories/{category}', [AdminTemplateTagController::class, 'updateCategory'])->name('tags.categories.update');
-        Route::delete('/tags/categories/{category}', [AdminTemplateTagController::class, 'destroyCategory'])->name('tags.categories.destroy');
-        Route::get('/tags', [AdminTemplateTagController::class, 'index'])->name('tags.index');
-        Route::patch('/tags/{tag}', [AdminTemplateTagController::class, 'update'])->name('tags.update');
-        Route::delete('/tags/{tag}', [AdminTemplateTagController::class, 'destroy'])->name('tags.destroy');
 
         // Tokens
         Route::get('/tokens', [AdminAccessTokenController::class, 'index'])->name('tokens.index');

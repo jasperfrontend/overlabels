@@ -497,6 +497,61 @@ class TemplateDataMapperService
     }
 
     /**
+     * The catalogue grouped by category, shaped for the tag browser.
+     *
+     * Every account gets the same tags, so there is nothing to store per user
+     * and nothing to generate: this is built from TAG_CATALOG on each request.
+     * Pass a Twitch payload to fill `sample_data` with the account's own live
+     * value; without one, entries fall back to the catalogue's static sample.
+     *
+     * @param  array  $twitchData  payload from TwitchApiService::getExtendedUserData()
+     * @return array<string, array{category: array<string, mixed>, tags: array<int, array<string, mixed>>}>
+     */
+    public function tagBrowser(array $twitchData = []): array
+    {
+        // One pass through the real mapping, so a browser value is exactly the
+        // string the overlay would render - channel_tags joined rather than a
+        // raw array, dates as unix seconds.
+        $rendered = $twitchData === [] ? [] : $this->mapTwitchDataForTemplates($twitchData, '');
+
+        $grouped = [];
+        $sortOrder = 0;
+
+        foreach (self::TAG_CATEGORY_META as $name => $meta) {
+            // `event` is documentation for tags that come from an EventSub
+            // payload at render time; it has no catalogue entries and nothing
+            // to show a value for.
+            if ($name === 'event') {
+                continue;
+            }
+
+            $grouped[$name] = [
+                'category' => $meta + ['name' => $name, 'is_group' => false, 'sort_order' => $sortOrder++],
+                'tags' => [],
+            ];
+        }
+
+        foreach (self::tagCatalog() as $tagName => $spec) {
+            $path = $spec['path'] ?? null;
+            $hasLiveValue = $path !== null
+                && $this->valueAtPath($twitchData, $path) !== null;
+
+            $grouped[$spec['category']]['tags'][] = [
+                'tag_name' => $tagName,
+                'display_tag' => "[[[$tagName]]]",
+                'display_name' => $spec['label'],
+                'description' => $spec['desc'],
+                'data_type' => $spec['type'],
+                'json_path' => $path ?? $tagName,
+                'sample_data' => $hasLiveValue ? ($rendered[$tagName] ?? $spec['sample']) : $spec['sample'],
+                'is_live' => $hasLiveValue,
+            ];
+        }
+
+        return $grouped;
+    }
+
+    /**
      * Public read of a dot path in a Twitch payload, so tag seeding can resolve
      * a catalogue entry's real value without duplicating the traversal rules.
      */
