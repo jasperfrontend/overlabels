@@ -1,5 +1,19 @@
 # CHANGELOG AUGUST 2026
 
+## August 21st, 2026 - feat(skills): /skills shows what is one step short of working
+
+First slice of Continuous Onboarding. Overlabels lets you build three quarters of a feature and says nothing: a list with an append command but no way to read it back, alert templates with no overlay in OBS, chat commands with no bot in the channel. Each is silent, and the silence looks identical to working. `/skills` names those.
+
+One skillset ships in this slice - Lists - with four skills: a list exists, chat can add to it, chat can read it back, and the bot is in your chat.
+
+- **A skill is a query, never a record.** No `user_skills` table, no completion rows, no migration, no backfill, no invalidation. `SkillFacts::for($user)` is one pass of `exists()` checks and the answer is recomputed every request, so it cannot claim you have something you deleted five minutes ago. A test deletes a list and asserts the skill un-satisfies itself, because that property is the entire reason a table is unnecessary. Same shape as `TAG_CATALOG` feeding `/tags`.
+- **`SkillCatalog` holds no logic at all.** Every skill key is also the key of a boolean `SkillFacts` produces, so evaluating a skill is a lookup rather than a branch. Skillsets reference skills by key rather than nesting them, so a prerequisite shared by several outcomes - `bot.in_chat` will be shared by every integration - stays one declaration. Adding a skill is one entry plus one fact.
+- **Three drift guards, and the first was verified to fail when violated.** Every skill must have a fact behind it (without this, a skill declared with no fact reads as unsatisfied forever and nothing says so), every skill a skillset references must be declared, and every skill's `route` must resolve.
+- **The ranking is the feature, not the checklist.** Nothing set up is `not_started` and stays quiet: that is a feature the streamer has not chosen, and nagging about it is how a useful page becomes wallpaper. Everything set up is `complete` and also quiet. **Some but not all is a `loose_end`** and sorts to the top, fewest-missing first. `SkillReport` is pure - it takes an array of booleans and returns an array - so the ordering tests touch no database.
+- **Scoping is where the false positives would come from.** An appender is only counted when it is enabled AND its `target_list_id` still points at a list the user owns; an appender whose list was deleted is not a working append path, and calling it one would be exactly the lie this page exists to prevent. Disabled rows and other users' rows are pinned in both directions.
+
+Deliberately not built: any other skillset, per-integration declarations, help-page wiring, and anything resembling progress bars, XP or badges. The register is "what is wired up and what is not", not achievements.
+
 ## August 20th, 2026 - fix(admin): two starter kits locked the admin kits screen permanently
 
 `/admin/kits` had exactly one action, "Set as Starter", and it rendered only on kits that were not already the starter: `<Button v-if="!kit.is_starter_kit">` with `<Badge v-else>`. That is correct while one kit is flagged. The moment two are, every kit renders the badge, no kit renders a button, and the screen has no action anywhere. There is no demote action in `AdminKitController` either - you can promote a kit to starter, never unset one - so the state was unrecoverable from the UI. Found locally with "Wheel of Fortune" and "Midnight Purple" both flagged; production has only ever had one.

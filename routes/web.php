@@ -31,6 +31,7 @@ use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\SkillController;
 use App\Http\Controllers\StreamSessionController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TestingController;
@@ -521,6 +522,9 @@ Route::get('/auth/redirect/fw', [FourthwallIntegrationController::class, 'callba
 // wins. Editing it had no effect on anything.
 
 Route::middleware('auth.redirect')->group(function () {
+
+    // Skills - what is wired up and what is one step short of working.
+    Route::get('/skills', [SkillController::class, 'index'])->name('skills.index');
 
     // Testing Guide
     Route::get('/testing', [TestingController::class, 'index'])->name('testing.index');

@@ -11,6 +11,7 @@ import {
   BookOpen,
   Blocks,
   Brackets,
+  CircleCheck,
   FileText,
   Flag,
   HashIcon,
@@ -58,6 +59,7 @@ const mainNavItems = computed<NavItem[]>(() =>
         { title: 'Triggers', href: route('triggers.index'), icon: Megaphone },
         { title: 'Lists', href: route('lists.index'), icon: ListIcon },
         { title: 'Kits', href: route('kits.index'), icon: LayoutGrid },
+        { title: 'Skills', href: route('skills.index'), icon: CircleCheck },
       ]
     : [],
 );
