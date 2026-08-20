@@ -2,6 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import { computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,24 @@ interface Kit {
   owner: { id: number; name: string; twitch_id: string | null } | null;
 }
 
-defineProps<{ kits: Kit[] }>();
+const props = defineProps<{ kits: Kit[] }>();
+
+// Two kits flagged as starter is a state this screen cannot produce -
+// setStarter() clears every flag before setting one - but it has happened via
+// direct database edits. When it did, every flagged kit rendered its badge and
+// none rendered its button, so the page had no action left anywhere and no way
+// back out. Keep the action available on every kit while more than one is
+// flagged, so the state is always recoverable from here.
+const starterCount = computed(() => props.kits.filter((kit) => kit.is_starter_kit).length);
+const hasMultipleStarters = computed(() => starterCount.value > 1);
+
+function canSetStarter(kit: Kit): boolean {
+  return !kit.is_starter_kit || hasMultipleStarters.value;
+}
+
+function starterActionLabel(kit: Kit): string {
+  return kit.is_starter_kit ? 'Make this the only starter' : 'Set as Starter';
+}
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
@@ -44,6 +62,14 @@ function setStarter(kit: Kit) {
         starter kit at a time.
       </p>
 
+      <div v-if="hasMultipleStarters" class="rounded border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-foreground" role="alert">
+        <p class="font-medium text-amber-700 dark:text-amber-300">{{ starterCount }} kits are flagged as the starter kit.</p>
+        <p class="mt-1">
+          New accounts get whichever one the database happens to return first, which is not guaranteed to stay the same. Pick the one you want below
+          and the others will be cleared.
+        </p>
+      </div>
+
       <!-- Card view (< lg) -->
       <div class="space-y-2 lg:hidden">
         <EmptyState v-if="kits.length === 0" message="No original kits found." />
@@ -61,8 +87,12 @@ function setStarter(kit: Kit) {
               </div>
               <div v-if="kit.owner" class="text-xs text-muted-foreground">{{ kit.owner.name }}</div>
             </div>
-            <Button v-if="!kit.is_starter_kit" size="sm" variant="outline" @click="setStarter(kit)"> Set as Starter </Button>
-            <Badge v-else class="border-yellow-500/40 bg-yellow-500/20 text-yellow-300">Starter Kit</Badge>
+            <div class="flex shrink-0 flex-col items-end gap-1.5">
+              <Badge v-if="kit.is_starter_kit" class="border-yellow-500/40 bg-yellow-500/20 text-yellow-300">Starter Kit</Badge>
+              <Button v-if="canSetStarter(kit)" size="sm" variant="outline" @click="setStarter(kit)">
+                {{ starterActionLabel(kit) }}
+              </Button>
+            </div>
           </div>
           <div class="mt-2 flex flex-wrap gap-1.5">
             <Badge :variant="kit.is_public ? 'default' : 'secondary'">{{ kit.is_public ? 'public' : 'private' }}</Badge>
@@ -105,11 +135,15 @@ function setStarter(kit: Kit) {
               <td class="px-3 py-2">{{ kit.fork_count }}</td>
               <td class="px-3 py-2 text-xs text-muted-foreground">{{ kit.created_at }}</td>
               <td class="px-3 py-2">
-                <Badge v-if="kit.is_starter_kit" class="border-yellow-500/40 bg-yellow-500/20 text-yellow-300">
-                  <Star class="mr-1 h-3 w-3 fill-yellow-300" />
-                  Starter Kit
-                </Badge>
-                <Button v-else size="sm" variant="outline" @click="setStarter(kit)"> Set as Starter </Button>
+                <div class="flex flex-col items-start gap-1.5">
+                  <Badge v-if="kit.is_starter_kit" class="border-yellow-500/40 bg-yellow-500/20 text-yellow-300">
+                    <Star class="mr-1 h-3 w-3 fill-yellow-300" />
+                    Starter Kit
+                  </Badge>
+                  <Button v-if="canSetStarter(kit)" size="sm" variant="outline" @click="setStarter(kit)">
+                    {{ starterActionLabel(kit) }}
+                  </Button>
+                </div>
               </td>
             </tr>
             <EmptyState v-if="kits.length === 0" :colspan="6" message="No original kits found." />
