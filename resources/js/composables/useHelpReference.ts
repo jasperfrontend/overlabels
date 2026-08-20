@@ -1,5 +1,4 @@
-import { buildHelpFuse, rankedSearch, type HelpDoc } from '@/utils/helpSearch';
-import type Fuse from 'fuse.js';
+import { buildHelpSearch, type HelpDoc, type HelpSearch } from '@/utils/helpSearch';
 import { ref, shallowRef } from 'vue';
 
 /**
@@ -22,7 +21,7 @@ export const entries = shallowRef<HelpDoc[]>([]);
 export const loading = ref(false);
 export const failed = ref(false);
 
-let fuse: Fuse<HelpDoc> | null = null;
+let searcher: HelpSearch | null = null;
 let inflight: Promise<void> | null = null;
 
 /**
@@ -47,7 +46,7 @@ export function loadIndex(): Promise<void> {
     })
     .then((data: HelpDoc[]) => {
       entries.value = data;
-      fuse = buildHelpFuse(data);
+      searcher = buildHelpSearch(data);
     })
     .catch(() => {
       // The palette shows a "could not load" line. Retry on the next open
@@ -64,10 +63,7 @@ export function loadIndex(): Promise<void> {
 
 export function useHelpReference() {
   function search(query: string, limit = 30): HelpDoc[] {
-    const q = query.trim();
-    if (!fuse) return [];
-    if (!q) return entries.value.slice(0, limit);
-    return rankedSearch(fuse, q, limit);
+    return searcher ? searcher.search(query, limit) : [];
   }
 
   return { entries, loading, failed, loadIndex, search };

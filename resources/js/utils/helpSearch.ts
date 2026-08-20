@@ -16,6 +16,9 @@ export interface HelpDoc {
   lead: string;
   url: string;
   body: string;
+  /** Reference entries only - the folder under resources/help/reference. Null for pages. */
+  category?: string | null;
+  categoryLabel?: string | null;
 }
 
 export const FUSE_OPTIONS: IFuseOptions<HelpDoc> = {
@@ -101,6 +104,91 @@ export function rankedSearch(fuse: Fuse<HelpDoc>, query: string, limit: number):
   return root && root !== query.trim() ? rank(fuse, root, limit) : hits;
 }
 
-export function buildHelpFuse(docs: HelpDoc[]): Fuse<HelpDoc> {
-  return new Fuse(docs, FUSE_OPTIONS);
+/**
+ * The shortest query that may name a section. Two characters is `id`, `at`,
+ * `to` - words that happen to prefix a folder name are not a request for it.
+ */
+const MIN_SECTION_QUERY = 3;
+
+/** Lowercase, punctuation collapsed to single spaces. `Foreach-Loops` -> `foreach loops`. */
+function normalize(value: string | null | undefined): string {
+  return (value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/**
+ * Everything filed under a section the query names.
+ *
+ * Fuzzy search cannot answer "show me the foreach loops". The nine entries in
+ * that folder are named `chat`, `goals`, `raw`, `subscribers` and so on: not one
+ * of them contains the word, so a search for it scored 0.55 against the closest
+ * thing in the corpus and the cutoff correctly threw it away. The sidebar knows
+ * these nine belong together and search did not.
+ *
+ * Deliberately NOT solved by adding `category` to FUSE_OPTIONS. Fuse normalises
+ * a document's score across all its keys, so a sixth key moves every score in
+ * the corpus: measured against the real index it dropped `bot/random-and-counters`
+ * from "raid" and `all-ko-fi-events` from "kofi", both of which are the tuned
+ * behaviour the weights above exist to produce. This runs alongside the fuzzy
+ * pass instead of inside it, so ranking is bit-for-bit what it was.
+ *
+ * Prefix match, on the whole name rather than its words: `foreach`, `eventsub`
+ * and `integration` name a section, `tags` and `controls` do not - those are
+ * questions about tags and controls, and the guides answering them must keep
+ * winning. Punctuation is ignored, so the `Foreach Loops` button on the
+ * reference index and someone typing `foreach-loops` land in the same place.
+ */
+export function sectionMatch(docs: HelpDoc[], query: string): HelpDoc[] {
+  const q = normalize(query);
+
+  if (q.length < MIN_SECTION_QUERY) return [];
+
+  return docs.filter((d) => d.category != null && (normalize(d.categoryLabel).startsWith(q) || normalize(d.category).startsWith(q)));
+}
+
+/**
+ * The pile a result belongs to, as shown beside its title.
+ *
+ * A reference entry names its folder - "Foreach Loops", not the word
+ * "Reference". 146 of the 175 documents are reference entries, so "Reference"
+ * distinguishes nothing, and after searching for a section it is the one thing
+ * confirming the results ARE the section you asked for. The reference sidebar
+ * showed this before the three help surfaces were merged onto one search.
+ */
+export function docLabel(doc: HelpDoc): string {
+  return doc.categoryLabel || doc.kindLabel;
+}
+
+export interface HelpSearch {
+  /** Every document, in corpus order. */
+  all: HelpDoc[];
+  search(query: string, limit: number): HelpDoc[];
+}
+
+/**
+ * Ranked matches first, then the rest of any section the query named.
+ *
+ * That order matters: "template tags" has one genuine hit - the page listing
+ * all of them - and it must stay on top of the 64 individual entries that
+ * follow it.
+ */
+export function buildHelpSearch(docs: HelpDoc[]): HelpSearch {
+  const fuse = new Fuse(docs, FUSE_OPTIONS);
+
+  return {
+    all: docs,
+    search(query: string, limit: number): HelpDoc[] {
+      const q = query.trim();
+
+      if (!q) return docs.slice(0, limit);
+
+      const hits = rankedSearch(fuse, q, limit);
+      const seen = new Set(hits.map((h) => h.url));
+      const section = sectionMatch(docs, q).filter((d) => !seen.has(d.url));
+
+      return [...hits, ...section].slice(0, limit);
+    },
+  };
 }

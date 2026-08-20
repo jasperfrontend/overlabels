@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 20th, 2026 - fix(help): searching for a section returns the section again
+
+Typing `foreach` into the help search box returned "Nothing matched", and the six category cards on `/help/reference` were dead buttons - they set the search box to `Foreach Loops` and got the same nothing back. The same applied to the Alt+R palette. This worked before the three help surfaces were merged onto one search in PR #248.
+
+- **The unified index dropped the folder.** `help:build-index` emits two files; the reference-only one still carried `category` and `categoryLabel`, the unified one did not, and the shared Fuse config had swapped the `categoryLabel` key for `kindLabel`. So the nine foreach entries - `chat`, `goals`, `raw`, `subscribers` and the rest - had nothing left saying they belong together, and not one of them contains the word "foreach" anywhere in its title, slug or body. The closest thing in the corpus scored 0.55 and the cutoff correctly threw it away.
+- **Fixed alongside the fuzzy pass, not inside it.** Putting `category` back into `FUSE_OPTIONS` was tried first and rejected on measurement: Fuse normalises a document's score across all its keys, so a sixth key moves every score in the corpus. At weight 1 it dropped `bot/random-and-counters` from "raid" and `all-ko-fi-events` from "kofi" - the tuned behaviour those weights exist to produce. `sectionMatch()` runs beside the ranked search and unions into it, so ranking is bit-for-bit what it was.
+- **Prefix match on the whole name, not on its words.** `foreach`, `eventsub`, `template` and `integration` name a section; `tags`, `controls` and `loops` do not, and the guides answering those questions keep winning. Punctuation is ignored, so the card's `Foreach Loops` and someone typing `foreach-loops` land in the same place.
+- **Each card now returns exactly the count printed on it** - 65, 35, 27, 9, 7 and 3 - which needed the on-page result limit raised from 50. The score cutoff, not the limit, is what bounds an ordinary query: nothing in the current corpus keeps more than about fifty.
+- **Results name their folder again.** A row said "REFERENCE", which distinguishes nothing when 146 of 175 documents are reference entries; it now reads "FOREACH LOOPS", as the reference sidebar did before the merge. Pinned by `resources/js/utils/helpSearch.test.ts`, whose seven section assertions were verified to fail against the old behaviour.
+
 ## August 20th, 2026 - fix(tags): /tags behaves like the Controls tab, and stops inventing values
 
 The rewritten `/tags` page looked right but did not work like the thing it resembles. `ControlsManager.vue` on a template's Controls tab has a filter box, a collapse/expand-all toggle, an "X across Y groups" count and collapsible groups with per-group counters. `/tags` is the same UI idea and now shares the same behaviour, built from the same markup and classes rather than a second interpretation of them.
