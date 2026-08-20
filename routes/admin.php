@@ -90,9 +90,6 @@ Route::prefix('admin')
         Route::post('/lockdown/activate', [AdminLockdownController::class, 'activate'])->name('lockdown.activate');
         Route::post('/lockdown/deactivate', [AdminLockdownController::class, 'deactivate'])->name('lockdown.deactivate');
 
-        // Onboarding preview
-        Route::post('/onboarding-preview', [AdminDashboardController::class, 'previewOnboarding'])->name('onboarding.preview');
-
         // Twitch Bot (@overlabels shared account)
         Route::get('/twitchbot', [AdminTwitchBotController::class, 'index'])->name('twitchbot.index');
 

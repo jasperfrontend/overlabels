@@ -57,8 +57,6 @@ class DashboardController extends Controller
             'communityTemplates' => $communityTemplates,
             'userRecentEvents' => $userRecentEvents,
             'recentUpdates' => $recentUpdates,
-            'needsOnboarding' => $request->session()->pull('preview_onboarding', false) || (! $user->isOnboarded() && ! $user->hasAlertMappings()),
-            'twitchId' => $user->twitch_id,
             'usage' => config('metering.meter_mode', 'both') === 'broadcast'
                 ? ($user->twitch_id ? app(BroadcastMeter::class)->summaryFor((string) $user->twitch_id) : null)
                 : app(EventMeter::class)->summaryFor($user->id),

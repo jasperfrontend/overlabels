@@ -7,21 +7,12 @@ use App\Models\AdminAuditLog;
 use App\Models\OverlayTemplate;
 use App\Models\TwitchEvent;
 use App\Models\User;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Mchev\Banhammer\Models\Ban;
 
 class AdminDashboardController extends Controller
 {
-    public function previewOnboarding(Request $request): RedirectResponse
-    {
-        $request->session()->put('preview_onboarding', true);
-
-        return redirect()->route('dashboard.index');
-    }
-
     public function index(): Response
     {
         $stats = [
