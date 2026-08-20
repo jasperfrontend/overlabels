@@ -101,7 +101,7 @@ Critical variables:
 
 **Twitch Integration**: Deep integration through OAuth and EventSub webhooks. User authentication is based on `twitch_id` (not email). `TwitchApiService` handles all API interactions including token refresh.
 
-**Overlay System**: Templates stored in `overlay_templates` table with a custom tag system that parses Twitch data dynamically. Access controlled through `OverlayAccessToken` - 64-char hex token lives in the URL fragment (never sent to server), server stores sha256(plainToken). Render pipeline: `authenticate.blade.php` -> `overlay/app.js` (creates Echo/Reverb) -> `OverlayRenderer.vue`.
+**Overlay System**: Templates stored in `overlay_templates` table with a custom `[[[tag]]]` system that parses Twitch data dynamically (see Template Tags below). Access controlled through `OverlayAccessToken` - 64-char hex token lives in the URL fragment (never sent to server), server stores sha256(plainToken). Render pipeline: `authenticate.blade.php` -> `overlay/app.js` (creates Echo/Reverb) -> `OverlayRenderer.vue`.
 
 **Frontend Stack**: Vue 3 components in `/resources/js/`. Inertia.js eliminates separate API endpoints for most operations. Pages in `/Pages/`, reusable components in `/components/`, UI primitives in `/components/ui/`. Components follow Shadcn/Reka-UI/Vue patterns. Composables in `/composables/`, TypeScript types in `/types/`. Tailwind v4 with CSS layers.
 
@@ -136,7 +136,7 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
 - `TwitchApiService`: All Twitch API interactions (including `getStreamStatus()` for Helix stream checks)
 - `StreamStateMachineService`: Deterministic stream state machine with confidence-based Helix verification
 - `StreamSessionService`: Stream session lifecycle (open/close sessions, reset controls, per-stream counters)
-- `TemplateParserService`: Template tag parsing and validation
+- `TemplateDataMapperService`: owns `TAG_CATALOG` (every static template tag) and maps a Twitch payload onto it
 - `OverlayAccessService`: Access control for overlays
 - `AdminAuditService`: Append-only audit logging
 - `ExternalControlService`: External service control updates
@@ -196,6 +196,47 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
 - PHP `extractTemplateTags()` strips pipe expressions to extract clean tag names for the allowlist
 - Global locale stored on `users.locale` (default `en-US`), passed via API response as `json.locale`
 - Settings UI: Appearance page has locale picker with live number/currency/date preview
+
+## Template Tags (rewritten Aug 2026)
+
+- **`TemplateDataMapperService::TAG_CATALOG` is the one and only declaration of a static template
+  tag.** One entry per tag carrying path, category, type, label, description and sample.
+  `getTemplateMappings()`, `getTagCategories()`, `getAvailableTemplateTags()`,
+  `getSampleTemplateData()` and `tagBrowser()` are all derived from it. **Adding a tag is one entry
+  there and nothing else** - no migration, no seeding, no backfill.
+- **There is no tags table.** `template_tags`, `template_tag_categories`, `template_tag_jobs` and
+  `user_templates` were dropped in PR #264. Every account gets the identical list, so there was
+  nothing to store: prod held 1155 rows expressing 82 distinct names, none ever edited. Gone with
+  them: `JsonTemplateParserService`, `GenerateTemplateTags`, `CleanupRedundantTags`, the admin Tags
+  screen, the ghost-user tag reassignment and the deletion bookkeeping.
+- **Before that, the generator walked the Twitch JSON payload and invented tag names from paths**,
+  so your tag list was a snapshot of what your account happened to contain the night you signed up,
+  and a second job existed to delete a subset of the artefacts the first one made. Do not
+  reintroduce anything shaped like that.
+- **A drift guard test is load-bearing.** The mapping, categories, descriptions and samples used to
+  be four hand-maintained lists, and they disagreed: `[[[channel_tags]]]` and
+  `[[[followers_latest_name]]]` were advertised, described and previewed by the tag browser while
+  the mapping produced neither, so both rendered nothing for months. `TemplateTagCatalogTest`
+  asserts every tag the categories advertise is one the mapping produces. Keep it.
+- **Do not gate tags per account.** An affiliate/scope gate was built and deleted before merge:
+  Twitch serves subscriptions and goals only to affiliates, so those tags resolve to empty for
+  everyone else, and empty renders as nothing. Meanwhile the starter kit every account copies
+  already references `subscribers_*`, so a gate hides tags sitting in the user's own overlay.
+- **`user_*` is the most recent user who triggered an event, NOT your account.**
+  `OverlayRenderer.vue` spreads each inbound EventSub payload straight into the overlay's tag data,
+  and Twitch names the acting user's fields `user_*`, so one follow repoints every bare `user_*` tag
+  at the follower. This is intended and is what the callout in `TemplateTagsList.vue` warns about.
+  `[[[channel_avatar]]]` exists because of it: EventSub calls the broadcaster `broadcaster_user_*`
+  and never `channel_*`, so nothing in an event payload can collide with a `channel_*` tag. Two
+  tests pin that - one that no channel tag intersects the event keys, one that the `user_*`
+  collision still exists.
+- **`/tags` is a live reference, not a generator.** Built per request from the catalogue with the
+  account's own values. A tag with no live value shows NOTHING - never the catalogue sample, which
+  reads as real data (`overlay_name` once displayed "My Awesome Overlay"). It mirrors
+  `ControlsManager.vue` for filter, collapse-all and grouping; keep the two in step.
+- List-valued tags (`channel_tags`, `channel_content_labels`) join with commas via
+  `JOINED_ARRAY_TAGS` and join **scalars only** - Twitch's PATCH body for content labels uses
+  objects, and a bare `implode()` on that shape would print the word `Array` onto a stream.
 
 ## Bot Commands, and what "expression" is allowed to mean (renamed Aug 2026)
 
@@ -510,7 +551,12 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 3. For local webhook testing, use ngrok and update webhook URL in Twitch settings
 
 ### Working with Templates
-Templates use a custom tag system (e.g., `{{follower_count}}`) parsed by `TemplateParserService`. Tags are validated against available Twitch data. The template editor uses CodeMirror with custom syntax highlighting.
+Templates use `[[[tag_name]]]` syntax (see Template Tags above). **Nothing validates the tags you
+write**: `OverlayTemplate::extractTemplateTags()` regexes them out of your HTML and that list
+becomes the render allowlist, so a typo renders as nothing rather than erroring, and a brand new
+catalogue entry works the moment it exists. The editor is CodeMirror
+(`components/templates/TemplateCodeEditor.vue`) with custom syntax highlighting; Builder-composed
+overlays get the grid editor instead, and ejecting to code is one-way.
 
 ### Database Changes
 Always create migrations for schema changes. Test rollback before committing. Use seeders for test data generation.
