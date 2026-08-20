@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { useHelpReference, type HelpDoc } from '@/composables/useHelpReference';
+import { docLabel } from '@/utils/helpSearch';
 import { BookOpen, Search } from '@lucide/vue';
 
 const { search, loading, failed, loadIndex } = useHelpReference();
@@ -142,7 +143,7 @@ onMounted(() => {
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <span class="truncate text-sm" :class="entry.kind === 'reference' ? 'font-mono' : 'font-medium'">{{ entry.title }}</span>
-              <span class="shrink-0 text-[10px] tracking-wide text-muted-foreground/70 uppercase">{{ entry.kindLabel }}</span>
+              <span class="shrink-0 text-[10px] tracking-wide text-muted-foreground/70 uppercase">{{ docLabel(entry) }}</span>
             </div>
             <p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{{ snippet(entry) }}</p>
           </div>

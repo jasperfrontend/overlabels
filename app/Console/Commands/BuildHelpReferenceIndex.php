@@ -49,6 +49,13 @@ class BuildHelpReferenceIndex extends Command
                 'lead' => $d['lead'],
                 'url' => $d['url'],
                 'body' => $d['body'],
+                // The folder a document lives in is a thing people search for:
+                // "foreach" is expected to return the nine foreach loop fields,
+                // not just whichever ones happen to say the word. Reference
+                // entries carry the category they are filed under; a page's
+                // pile is already its kindLabel, so those stay null.
+                'category' => $d['category'],
+                'categoryLabel' => $d['categoryLabel'],
             ],
             HelpCorpus::all(),
         );

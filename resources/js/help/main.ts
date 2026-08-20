@@ -1,6 +1,5 @@
-import type Fuse from 'fuse.js';
 import '../../css/app.css';
-import { buildHelpFuse, rankedSearch, type HelpDoc } from '../utils/helpSearch';
+import { buildHelpSearch, docLabel, type HelpDoc, type HelpSearch } from '../utils/helpSearch';
 
 /**
  * The one script for every help page.
@@ -14,6 +13,15 @@ import { buildHelpFuse, rankedSearch, type HelpDoc } from '../utils/helpSearch';
  * and this is the handful of behaviours that HTML cannot express on its own.
  */
 const SIDEBAR_SCROLL_KEY = 'help-sidebar-scroll';
+
+/**
+ * Generous, because this list replaces the whole sidebar tree rather than
+ * popping up over it - and because naming a section has to return the section.
+ * `Template Tags` is 65 entries, and the card on the reference index promises
+ * exactly that number. The score cutoff, not this, is what bounds an ordinary
+ * query: no fuzzy search over the current corpus keeps more than about fifty.
+ */
+const SEARCH_LIMIT = 150;
 
 document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.getElementById('help-sidebar');
@@ -39,12 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!input || !tree || !results || !clearBtn) return;
 
-  let fuse: Fuse<HelpDoc> | null = null;
+  let searcher: HelpSearch | null = null;
 
   fetch('/help-index.json')
     .then((r) => r.json())
     .then((data: HelpDoc[]) => {
-      fuse = buildHelpFuse(data);
+      searcher = buildHelpSearch(data);
     })
     .catch(() => {
       // Search becomes a no-op if the index 404s; the static tree still
@@ -64,12 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
     tree.classList.add('hidden');
     results.classList.remove('hidden');
 
-    if (!fuse) {
+    if (!searcher) {
       results.innerHTML = '<div class="p-4 text-center text-xs text-muted-foreground">Loading...</div>';
       return;
     }
 
-    const matches = rankedSearch(fuse, q, 50);
+    const matches = searcher.search(q, SEARCH_LIMIT);
     if (matches.length === 0) {
       results.innerHTML = '<div class="p-4 text-center text-xs text-red-400">Nothing matched.</div>';
       return;
@@ -82,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <a href="${escapeHtml(e.url)}"
                class="flex w-full flex-col items-start gap-0.5 rounded-md px-2 py-1.5 text-left text-sm cursor-pointer hover:bg-accent">
               <span class="${e.kind === 'reference' ? 'font-mono ' : ''}text-xs truncate w-full">${escapeHtml(e.title)}</span>
-              <span class="text-[10px] uppercase tracking-wide text-muted-foreground/70">${escapeHtml(e.kindLabel)}</span>
+              <span class="text-[10px] uppercase tracking-wide text-muted-foreground/70">${escapeHtml(docLabel(e))}</span>
             </a>`,
       )
       .join('');
