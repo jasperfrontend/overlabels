@@ -86,23 +86,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Force HTTPS in production
+        // kamal-proxy terminates TLS and forwards plain HTTP to the container,
+        // so Laravel sees an http request and would generate http asset URLs -
+        // which the browser then blocks as mixed content on an https page.
+        // This is the thing that prevents that. `APP_FORCE_HTTPS` in
+        // config/deploy.yml is NOT; nothing reads it.
         if (config('app.env') === 'production') {
-            URL::forceScheme('https');
-        }
-
-        // Alternative: Force HTTPS if running on Railway
-        if (isset($_SERVER['RAILWAY_ENVIRONMENT'])) {
             URL::forceScheme('https');
         }
 
         // Force HTTPS if APP_URL contains https
         if (str_starts_with(config('app.url'), 'https://')) {
-            URL::forceScheme('https');
-        }
-
-        // Additional Railway detection
-        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
             URL::forceScheme('https');
         }
 

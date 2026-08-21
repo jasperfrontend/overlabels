@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 21st, 2026 - chore(https): drop two dead Railway checks from the HTTPS forcing
+
+`AppServiceProvider::boot()` had four separate `URL::forceScheme('https')` conditions. Two were Railway detection, from a platform this app has not run on since the Linode cutover in April: one keyed on `$_SERVER['RAILWAY_ENVIRONMENT']`, one on `$_SERVER['HTTP_X_FORWARDED_PROTO']`. Both are removed. The two that decide the outcome in production are unchanged.
+
+- **No behaviour change.** In production `APP_ENV` is `production` and `APP_URL` starts with `https://`, so the two remaining conditions each fire on their own and the removed pair could only ever repeat a decision already made. `HTTP_X_FORWARDED_PROTO` is a generic proxy header rather than a Railway-specific one, but it was labelled "Additional Railway detection" and is dead for the same reason: nothing reaches it without one of the first two having matched.
+- **The comment now records the mechanism**, which was the actually valuable part. kamal-proxy terminates TLS and forwards plain HTTP to the container, so Laravel sees an http request and generates http asset URLs, which the browser blocks as mixed content on an https page. `URL::forceScheme` is what prevents that.
+- **`APP_FORCE_HTTPS: "true"` in `config/deploy.yml` is cargo and is now labelled as such.** Nothing in `app/`, `bootstrap/` or `config/` reads it. It reads like the mechanism and is not one, which matters because it gets copied to new projects: it was the missing piece that shipped a sibling project's first deploy with assets loading over http.
+
+Left alone deliberately: the stale Railway comment on the `bot-internal` rate limiter in the same file, and Railway references in `config/trustedproxy.php`, two EventSub console commands and an admin page comment. None affect behaviour, and a repo-wide Railway sweep is its own change.
+
 ## August 21st, 2026 - feat(skills): /skills shows what is built but cannot work
 
 First slice of Continuous Onboarding. Overlabels lets you build three quarters of a feature and says nothing: a list nothing ever shows, chat commands with no bot in the channel. Each is silent, and the silence looks identical to working. `/skills` names those.
