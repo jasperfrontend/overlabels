@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - fix(templates): the tag list on a big template no longer swallows the page
+
+`TemplateMeta.vue` rendered every tag a template uses as one endless pill wall - fine at a dozen tags, dire on a big template. The list now shows the first 20 and collapses the rest.
+
+- **A dashed "View all (N more)" chip sits inline at the end of the pill list**, so the existence of more tags is visible right where the list stops. Clicking it expands the full list and flips the chip to "Show fewer".
+- Templates with 20 or fewer tags render exactly as before - no chip, no behaviour change.
+- Sorting (order of appearance / A - Z) still applies to the whole list; the visible slice follows the active sort.
+- Local component state only - no new components, no props, no server changes.
+
 ## August 23rd, 2026 - docs(help): Styling with Tailwind - the save-time compiler gets a page
 
 Tailwind utility classes have worked in templates since April, and the public docs never said so once. An agent that learned the whole DSL exclusively from overlabels.com concluded, honestly and wrongly, that overlays are vanilla-CSS-only - the grep across llms.txt, the reference index and fifteen help pages genuinely came back empty. When your docs are good enough to teach a machine everything except a headline feature, the missing page writes its own ticket.
