@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 22nd, 2026 - fix(bot): !ping answered everyone, whatever tier it was set to
+
+`!ping` had no `bot_builtins` row and never had one. It was the sole member of a hardcoded `BUILTINS` map in the bot's `registry.js`, and the dispatcher checked that map *before* `commandMap.lookup()`, so it dispatched on a cooldown check alone and never reached `canRun()`. Setting `permission: 'moderator'` on the bot's `ping.js` changed nothing, because nothing read that field: `canRun()` is only ever called with `permission_level` off a command map entry.
+
+- **`ping` is in `BotBuiltin::DEFAULTS` now, at `moderator`**, plus a backfill migration for the streamers already opted in. The two-edits rule, same as `!s` in April and `!followage` / `!accountage` in May. The bot change that pairs with this is in the bot repo and moves ping onto the ordinary path: command map lookup, `canRun()`, then `getRegisteredHandler()`.
+- **Ship app first.** With the row seeded and the old bot still running, `!ping` behaves exactly as it does today and the row is simply unread. Bot first would give every channel a dead `!ping` until the backfill landed, because the dispatcher drops a command missing from the map by design.
+- **The backfill skips users who claimed the name themselves.** `ping` was never in `DEFAULTS`, so it was never in the `reservedCommands` list `BotCommandsController` hands the UI, and a streamer was free to make their own `!ping` as a custom command, alias, recipe trigger, list appender or list meta-command. Builtins outrank all five, so seeding blindly would keep shadowing them - which the hardcoded map has been doing all along. They keep their own version and are named in the log line.
+- **`getBuiltin()` and the `BUILTINS` map are gone rather than emptied.** A second lookup that reaches a handler without a command map entry is the bug, not ping specifically; leaving it in place with no members is a loaded gun for the next builtin added to it.
+- Three tests in the bot repo pin it. Two were verified to fail against the old source: that ping resolves through the ordinary handler registry, and that no export bypasses the command map. The third - that no handler module declares its own tier - guards the field coming back, and passes trivially against the old source, so it is a guard rather than a reproduction.
+
 ## August 21st, 2026 - chore(https): drop two dead Railway checks from the HTTPS forcing
 
 `AppServiceProvider::boot()` had four separate `URL::forceScheme('https')` conditions. Two were Railway detection, from a platform this app has not run on since the Linode cutover in April: one keyed on `$_SERVER['RAILWAY_ENVIRONMENT']`, one on `$_SERVER['HTTP_X_FORWARDED_PROTO']`. Both are removed. The two that decide the outcome in production are unchanged.
