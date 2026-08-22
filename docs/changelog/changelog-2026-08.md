@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - docs(help): Styling with Tailwind - the save-time compiler gets a page
+
+Tailwind utility classes have worked in templates since April, and the public docs never said so once. An agent that learned the whole DSL exclusively from overlabels.com concluded, honestly and wrongly, that overlays are vanilla-CSS-only - the grep across llms.txt, the reference index and fifteen help pages genuinely came back empty. When your docs are good enough to teach a machine everything except a headline feature, the missing page writes its own ticket.
+
+- **New guide at `/help/tailwind`**, linked from the index under Building overlays. One file in `resources/help/pages/`, no other machinery, per the help system's rules. No `context:` declared - `templates.create?type=static` is full at 3 of 3, and this page earns its traffic from search and the index instead.
+- **It documents the mechanism, not just the vocabulary**: classes compile at save time in the editor (UnoCSS with the Tailwind v3 preset) into `compiled_css`, injected before the author's own stylesheet so hand-written CSS always wins. No runtime, no CDN, no config file; v3 syntax, not v4.
+- **The border gotcha gets its own section.** The compiler ships no preflight, so `border`/`border-2`/`border-b` set widths and colors on top of the browser default `border-style: none` and paint nothing. Both fixes are given copy-paste ready: `border-solid` next to the width utility, or Tailwind's own `* { border-style: solid; border-width: 0; }` pair in the css field. Found the honest way, by an adversarial verifier compiling a real template through the actual generator and noticing every border in it was invisible.
+- **Discovered during a two-agent exercise**: one agent authored a follower-panel overlay from the live docs alone, a second verified every claim against source. 11 of 12 claims confirmed; the one miss was this undocumented feature. The exercise also confirmed live that foreach caps above 20 yield 20 items, because the Helix followers fetch is `first=20` - already noted in the guide-adjacent reference material and now witnessed on a real overlay.
+
 ## August 22nd, 2026 - feat(eventsub): Reconnect shows live progress instead of a dead button
 
 Thirty seconds of frozen button and static prose is a long time to trust that something is happening. The setup loop always knew exactly where it was; it just never told anyone. Now it does: "Connecting Twitch events: 16 connected, 11 to go...", then "All 27 events requested. Twitch is verifying them now - about 15 more seconds...", then the final tally.

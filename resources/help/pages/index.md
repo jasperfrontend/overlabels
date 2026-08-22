@@ -51,6 +51,9 @@ Short, copy-and-paste tutorials. Each one ends with something on screen.
   scoping and snapshots keep everyone safe, and how controls travel with your block.
 - [**How an overlay renders**](/help/rendering) - the pipeline end to end: boot, tag replacement,
   conditionals, live updates, alert render flow, and why scripts are stripped.
+- [**Styling with Tailwind**](/help/tailwind) - utility classes compile at save time, not in the
+  browser: which Tailwind v3 syntax works, why borders need one extra line, and when to just write
+  CSS.
 - [**Testing your alerts**](/help/testing) - fire any of 28 real Twitch events at your own account from a
   terminal, instead of waiting for a real follower.
 
