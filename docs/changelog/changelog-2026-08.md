@@ -1,5 +1,12 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - fix(templates): A - Z tag sort counts to ten properly
+
+The alphabetical sort in the template tag list used plain `localeCompare`, which compares digit by digit, so `channel_followers.10.user_name` sorted before `channel_followers.2.user_name`. Indexed foreach tags are exactly where this sort gets used, and exactly where it was wrong.
+
+- One line: `localeCompare(b, undefined, { numeric: true })`, so numeric runs inside tag names compare as numbers. Follower 2 now comes before follower 10.
+- Pure-text tags sort exactly as before.
+
 ## August 23rd, 2026 - fix(templates): the tag list on a big template no longer swallows the page
 
 `TemplateMeta.vue` rendered every tag a template uses as one endless pill wall - fine at a dozen tags, dire on a big template. The list now shows the first 20 and collapses the rest.
