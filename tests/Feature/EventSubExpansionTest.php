@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchScopeService;
+use App\Services\UserEventSubManager;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 uses(DatabaseTransactions::class);
@@ -205,6 +206,23 @@ test('mapEventDataForTemplates formats charity amount as a currency string', fun
     expect($mapped['event.amount.value'])->toBe(1523);
     expect($mapped['event.amount.currency'])->toBe('USD');
     expect($mapped['event.amount.formatted'])->toBe('$15.23');
+});
+
+test('every SUPPORTED_EVENTS required scope is one the platform requests at login', function () {
+    // A required_scope outside REQUIRED_SCOPES can never be granted, so the
+    // event is silently skipped for every user on every connect. This is how
+    // channel.poll.end demanded channel:manage:polls for months while the
+    // OAuth flow only ever asked for channel:read:polls.
+    $unobtainable = [];
+
+    foreach (UserEventSubManager::SUPPORTED_EVENTS as $eventType => $config) {
+        $scope = $config['required_scope'] ?? null;
+        if ($scope !== null && ! in_array($scope, TwitchScopeService::REQUIRED_SCOPES, true)) {
+            $unobtainable[$eventType] = $scope;
+        }
+    }
+
+    expect($unobtainable)->toBe([]);
 });
 
 test('EVENT_TYPE_TO_SCOPE maps each expanded event type to its scope', function () {
