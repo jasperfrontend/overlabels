@@ -59,16 +59,15 @@ class SetupUserEventSubSubscriptions implements ShouldQueue
                 'existing' => count($results['existing']),
             ]);
 
-            // Surface the results payload to the frontend via the user's alerts
-            // channel so the settings page can update without polling.
-            EventSubSetupCompleted::dispatch(
-                (string) $this->user->twitch_id,
-                $results['created'] ?? [],
-                $results['failed'] ?? [],
-                $results['existing'] ?? [],
-                $results['skipped_missing_scope'] ?? [],
-                true,
-            );
+            // Do NOT broadcast completion here. Twitch's webhook challenges for
+            // the last-created subscriptions are still in flight at this point
+            // (the inline verify above has been observed stamping rows one
+            // second after their create), so statuses read now undercount and
+            // a challenge that raced its row insert stays stuck at pending
+            // forever. FinalizeEventSubSetup re-verifies once the challenges
+            // have settled, then broadcasts the results to the settings page.
+            FinalizeEventSubSetup::dispatch($this->user, $results)
+                ->delay(now()->addSeconds(15));
         } catch (Exception $e) {
             Log::error('Failed to setup EventSub subscriptions', [
                 'user_id' => $this->user->id,

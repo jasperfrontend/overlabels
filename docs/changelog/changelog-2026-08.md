@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 22nd, 2026 - fix(eventsub): the setup verify raced Twitch's challenges and froze random tail-end events at pending
+
+The earlier fix made Reconnect report back, and the report exposed the last bug in the chain: "Connected: 27 created, 0 failed" alongside "Listening to 22 events", climbing to 26 on a later F5, with one event - always poll or prediction flavoured - stuck inactive forever. Prod showed the mechanism directly: `channel.poll.progress` created at 20:57:07, stamped `webhook_callback_verification_pending` at 20:57:08, enabled on Twitch's side the whole time.
+
+- **The inline verify ran one second after the last create.** Twitch fires each webhook challenge within moments of the create call, and the loop takes ~6 seconds for 27 subscriptions, so the tail-end challenges are still in flight when `setupUserSubscriptions()` reconciles statuses. Rows whose challenge had not landed yet got stamped pending; rows whose challenge arrived *before* the row insert were worse off - the challenge handler's update matched nothing, silently, and the too-early verify then froze the lie in place. Nothing revisited it for 24 hours (the health monitor's stale threshold), and a habitual Reconnect resets that clock.
+- **Why always polls and predictions:** nothing poll-specific at all - they are simply last in `SUPPORTED_EVENTS`, so their challenges are the ones still airborne when the verify fires. Positional, not personal.
+- **The completion broadcast moved into `FinalizeEventSubSetup`, dispatched with a 15 second delay.** By the time it runs, the challenges have settled, so its re-verify writes truth for every row - including healing the challenge-beat-the-insert shape - and only then does the settings page get its `eventsub.setup-completed` and reload. One number, once, correct. The setup job's inline verify stays (harmless, and other callers rely on `setupUserSubscriptions()` being self-contained); it is only the broadcast that waits.
+- **A failed re-verify still broadcasts.** The created/failed/skipped results are already known before the finalize job runs, so reconciliation is best-effort inside a try/catch - the page must never be left hanging on "about 30 seconds" (the button copy now says 30, matching reality) because Twitch's list endpoint hiccuped.
+- Three tests pin it: the setup job dispatches a *delayed* finalize and broadcasts nothing itself (verified to fail against the old job), the finalize heals a pending-stuck row against a mocked Twitch response, and the broadcast survives a verify that throws.
+
 ## August 22nd, 2026 - fix(eventsub): "Poll ended" could never connect, and the Reconnect UI never heard back
 
 Two independent bugs on the Twitch Alerts card, both present since roughly day one. Clicking (Re)connect froze the button on "this takes about 15 seconds" forever, and the active-events dialog never showed 27/27 - always at least "Poll ended" missing, since forever.
