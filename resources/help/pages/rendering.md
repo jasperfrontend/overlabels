@@ -50,7 +50,8 @@ In detail:
 > [!IMPORTANT]
 > Tags are parsed **once**, and resolved values are never re-scanned for tags. This is deliberate: if a
 > control value containing `[[[something]]]` were reparsed, anyone who could set a control could inject
-> into your overlay. A value that looks like a tag renders as text.
+> into your overlay. A value that looks like a tag renders as text. The full reasoning lives in
+> [Why tags are parsed exactly once](/help/tags-parse-once).
 
 ## Staying live
 

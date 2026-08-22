@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - docs(help): the single-pass tag rule gets its own page
+
+Tags have been parsed exactly once per render since day one, and the reasoning lived almost entirely in code comments (`tagParser.ts`, `defuseBrackets()`). The only published trace was one callout buried in the rendering pipeline page. Asked why, an outside LLM confidently answered "performance and reactive data binding" - plausible, and not the reason. The rule is a security invariant: substituted values are never re-scanned for tags, so nobody can smuggle template code into an overlay through a donor name, chat message, or control value.
+
+- **New guide at `/help/tags-parse-once`**, linked from the index under The template language. One file in `resources/help/pages/`, no `context:` declared.
+- Covers: the rule itself, the injection it prevents (a chatter typing `[[[c:kofi:total_received]]]` into chat), the split-fragment adversarial case from the `tagParser.ts` comment, the foreach bracket-defusing boundary, and the author-facing consequences (no nested tags, `?? default` is authored text, expressions read `t.tag` not `[[[tag]]]`).
+- The performance framing is explicitly addressed and corrected in an IMPORTANT callout - speed is a side effect, not the reason.
+- The existing callout in `/help/rendering` now links here for the full reasoning.
+
 ## August 23rd, 2026 - feat(lists): !list <slug> #N reads one entry by position
 
 `!list quotes first` reads the head and `!list quotes last` the tail, but there was no way to ask for the one in the middle. Now `!list quotes #2` replies with the 2nd entry.
