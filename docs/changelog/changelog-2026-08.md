@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - feat(lists): !list <slug> #N reads one entry by position
+
+`!list quotes first` reads the head and `!list quotes last` the tail, but there was no way to ask for the one in the middle. Now `!list quotes #2` replies with the 2nd entry.
+
+- **Numbering starts at #1, on purpose.** Chatters count from 1, whatever the array thinks. `#0`, bare `#`, `#abc` and `#-1` all reply with a usage hint ("entries are numbered from #1") instead of failing silently.
+- **Out of bounds is a friendly reply, not silence**: `!list quotes #7` on a 3-entry list replies "'quotes' only has 3 entries, so there's no #7."
+- **`#N` shares its permission level with `first`** - it is the same read capability, so it gets no separate key in `chat_permissions` and no new dashboard checkbox. Opening `first` to everyone opens `#N` with it; the checkbox label now says `first / #N`.
+- Laravel-only change: the bot relays `!list` args verbatim (`list_meta` in the command map), so nothing in the bot repo moved.
+- Both help replies, the unknown-action list, the `/help/lists` action table and the quick reference card all mention it. Six new tests in `ListActionTest` cover the happy path, both fault classes, the empty list and the permission gate.
+
 ## August 23rd, 2026 - fix(templates): A - Z tag sort counts to ten properly
 
 The alphabetical sort in the template tag list used plain `localeCompare`, which compares digit by digit, so `channel_followers.10.user_name` sorted before `channel_followers.2.user_name`. Indexed foreach tags are exactly where this sort gets used, and exactly where it was wrong.

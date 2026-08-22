@@ -595,7 +595,7 @@ const PERMISSION_GROUPS: { title: string; actions: { key: string; label: string 
     title: 'Inspect',
     actions: [
       { key: 'count', label: 'count' },
-      { key: 'first', label: 'first' },
+      { key: 'first', label: 'first / #N' },
       { key: 'last', label: 'last' },
       { key: 'random', label: 'random' },
       { key: 'search', label: 'search' },
