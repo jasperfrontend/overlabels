@@ -36,6 +36,15 @@ const sortedTags = computed(() => {
   return props.templateTags;
 });
 
+const VISIBLE_TAG_LIMIT = 20;
+const showAllTags = ref(false);
+const hasMoreTags = computed(() => sortedTags.value.length > VISIBLE_TAG_LIMIT);
+const visibleTags = computed(() => {
+  if (showAllTags.value || !hasMoreTags.value) return sortedTags.value;
+  return sortedTags.value.slice(0, VISIBLE_TAG_LIMIT);
+});
+const hiddenTagCount = computed(() => sortedTags.value.length - VISIBLE_TAG_LIMIT);
+
 const copiedTag = ref<string | null>(null);
 let copiedTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -115,7 +124,7 @@ function copyTag(tag: string, event: MouseEvent) {
       </div>
       <div class="flex flex-wrap gap-1">
         <button
-          v-for="tag in sortedTags"
+          v-for="tag in visibleTags"
           :key="tag"
           type="button"
           class="btn btn-chill btn-xs cursor-pointer font-mono transition-colors"
@@ -124,6 +133,15 @@ function copyTag(tag: string, event: MouseEvent) {
           @click="copyTag(tag, $event)"
         >
           {{ copiedTag === tag ? 'Copied!' : tag }}
+        </button>
+        <button
+          v-if="hasMoreTags"
+          type="button"
+          class="cursor-pointer rounded border border-dashed border-violet-400/50 px-2 py-0.5 text-xs text-violet-400 transition-colors hover:border-violet-400 hover:bg-violet-500/10"
+          :title="showAllTags ? 'Collapse the tag list' : `Show all ${sortedTags.length} tags`"
+          @click="showAllTags = !showAllTags"
+        >
+          {{ showAllTags ? 'Show fewer' : `View all (${hiddenTagCount} more)` }}
         </button>
       </div>
     </div>
