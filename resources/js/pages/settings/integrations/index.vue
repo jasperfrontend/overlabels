@@ -174,7 +174,7 @@ const twitchId = computed<string | undefined>(() => {
 onMounted(() => {
   const echo = (window as any).Echo;
   if (!echo || !twitchId.value) return;
-  eventsubChannel = echo.channel(`alerts.${twitchId.value}`);
+  eventsubChannel = echo.private(`alerts.${twitchId.value}`);
   eventsubChannel?.listen('.eventsub.setup-completed', (payload: EventSubSetupPayload) => {
     const createdCount = payload.created?.length ?? 0;
     const existingCount = payload.existing?.length ?? 0;

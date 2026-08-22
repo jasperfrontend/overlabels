@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 22nd, 2026 - fix(eventsub): "Poll ended" could never connect, and the Reconnect UI never heard back
+
+Two independent bugs on the Twitch Alerts card, both present since roughly day one. Clicking (Re)connect froze the button on "this takes about 15 seconds" forever, and the active-events dialog never showed 27/27 - always at least "Poll ended" missing, since forever.
+
+- **`channel.poll.end` was skipped for every user on every connect.** `SUPPORTED_EVENTS` demanded `channel:manage:polls`, a scope the OAuth flow has never requested - Twitch accepts `channel:read:polls` for this event, which every user already has, and `TwitchScopeService::EVENT_TYPE_TO_SCOPE` already said so. The two maps simply disagreed, and the subscription loop read the wrong one. Prod confirmed it: 26 subscription rows, all enabled, and no `channel.poll.end` row at all. One word changed.
+- **That skip was invisible because the completion broadcast never arrived.** `EventSubSetupCompleted` goes out on the private `alerts.{twitch_id}` channel, but the integrations page was the only Echo consumer in the app subscribing with public `echo.channel()` instead of `Echo.private()`. Wire names differ (`alerts.X` vs `private-alerts.X`), so the page listened on a channel nothing broadcasts to: no "1 skipped (missing scope)" message, no `router.reload`, and `eventsubLoading` stayed true forever. One method name changed.
+- **A real poll ending on a channel currently reaches nothing - the twitch-cli "it works though" test was a false alarm.** `twitch event trigger` posts a signed payload straight at the webhook endpoint without touching real EventSub, so it succeeds whether or not a subscription exists. Alerts and the event log reacting to it proved the webhook handler works, not that Twitch would ever call it.
+- **A drift guard now pins the maps together:** every `required_scope` in `SUPPORTED_EVENTS` must be a scope the platform actually requests at login (`TwitchScopeService::REQUIRED_SCOPES`), because a scope nobody can grant means an event silently skipped for everybody. Verified to fail against the old code.
+- Not touched: the suspected verify-timing race that intermittently showed poll.begin/progress as inactive right after a reconnect. Today's data shows `verifyUserSubscriptions()` catching everything, it self-heals on reconnect, and with the broadcast actually arriving now the page at least reports what happened. Left for its own investigation if it resurfaces.
+
 ## August 22nd, 2026 - fix(bot): !ping answered everyone, whatever tier it was set to
 
 `!ping` had no `bot_builtins` row and never had one. It was the sole member of a hardcoded `BUILTINS` map in the bot's `registry.js`, and the dispatcher checked that map *before* `commandMap.lookup()`, so it dispatched on a cooldown check alone and never reached `canRun()`. Setting `permission: 'moderator'` on the bot's `ping.js` changed nothing, because nothing read that field: `canRun()` is only ever called with `permission_level` off a command map entry.

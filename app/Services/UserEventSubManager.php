@@ -134,7 +134,10 @@ class UserEventSubManager
         'channel.poll.end' => [
             'version' => '1',
             'condition_keys' => ['broadcaster_user_id'],
-            'required_scope' => 'channel:manage:polls',
+            // Twitch accepts channel:read:polls OR channel:manage:polls here;
+            // the platform only requests read, so requiring manage silently
+            // skipped this event for every user.
+            'required_scope' => 'channel:read:polls',
         ],
         // Predictions
         'channel.prediction.begin' => [
