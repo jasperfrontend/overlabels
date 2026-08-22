@@ -31,7 +31,7 @@ const sortMode = ref<SortMode>('appearance');
 const sortedTags = computed(() => {
   if (!props.templateTags) return [];
   if (sortMode.value === 'alphabetical') {
-    return [...props.templateTags].sort((a, b) => a.localeCompare(b));
+    return [...props.templateTags].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }
   return props.templateTags;
 });
