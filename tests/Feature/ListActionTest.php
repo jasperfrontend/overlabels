@@ -95,6 +95,72 @@ it('first / last take a numeric arg', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Service-level: #N positional read
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('#N returns the Nth entry, counting from 1', function () {
+    $user = actionUser();
+    actionList($user, 'quotes', ['first quote', 'second quote', 'third quote']);
+
+    $svc = app(ListActionService::class);
+    expect($svc->handleInvocation($user, 'quotes #1', 'Mod'))->toBe("#1 of 'quotes': first quote")
+        ->and($svc->handleInvocation($user, 'quotes #2', 'Mod'))->toBe("#2 of 'quotes': second quote")
+        ->and($svc->handleInvocation($user, 'quotes #3', 'Mod'))->toBe("#3 of 'quotes': third quote");
+});
+
+it('#N out of bounds replies with the list size', function () {
+    $user = actionUser();
+    actionList($user, 'quotes', ['a', 'b', 'c']);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'quotes #7', 'Mod');
+
+    expect($reply)->toBe("@Mod - 'quotes' only has 3 entries, so there's no #7.");
+});
+
+it('#N out of bounds uses singular for a one-entry list', function () {
+    $user = actionUser();
+    actionList($user, 'solo', ['only one']);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'solo #2', 'Mod');
+
+    expect($reply)->toBe("@Mod - 'solo' only has 1 entry, so there's no #2.");
+});
+
+it('#0, bare #, and #garbage all reply with usage instead of erroring', function () {
+    $user = actionUser();
+    actionList($user, 'quotes', ['a', 'b']);
+
+    $svc = app(ListActionService::class);
+    expect($svc->handleInvocation($user, 'quotes #0', 'Mod'))->toContain('entries are numbered from #1')
+        ->and($svc->handleInvocation($user, 'quotes #', 'Mod'))->toContain('entries are numbered from #1')
+        ->and($svc->handleInvocation($user, 'quotes #abc', 'Mod'))->toContain('entries are numbered from #1')
+        ->and($svc->handleInvocation($user, 'quotes #-1', 'Mod'))->toContain('entries are numbered from #1');
+});
+
+it('#N on an empty list is friendly', function () {
+    $user = actionUser();
+    actionList($user, 'quotes', []);
+
+    $reply = app(ListActionService::class)->handleInvocation($user, 'quotes #1', 'Mod');
+
+    expect($reply)->toBe("'quotes' is empty.");
+});
+
+it('#N is gated at the same level as first', function () {
+    $user = actionUser();
+    $list = actionList($user, 'quotes', ['a', 'b']);
+
+    // Default: mod+ only, like first.
+    $denied = app(ListActionService::class)->handleInvocation($user, 'quotes #2', 'Viewer', []);
+    expect($denied)->toBe("@Viewer - '#2' on 'quotes' is moderator+ only.");
+
+    // Opening `first` to everyone opens #N with it.
+    $list->update(['chat_permissions' => ['first' => 'everyone']]);
+    $allowed = app(ListActionService::class)->handleInvocation($user, 'quotes #2', 'Viewer', []);
+    expect($allowed)->toBe("#2 of 'quotes': b");
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Service-level: search / searchall
 // ──────────────────────────────────────────────────────────────────────────────
 

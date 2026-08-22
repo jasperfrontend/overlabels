@@ -313,7 +313,7 @@ replies with the per-list help. An unknown action lists the valid ones. Missing 
 
 ## The action vocabulary in detail
 
-The same ten verbs are available from both the chat `!list` command and the action buttons on
+The same verbs are available from both the chat `!list` command and the action buttons on
 [/dashboard/lists](/dashboard/lists). They split into three groups by semantics.
 
 ### Read actions (no mutation, no snapshot)
@@ -324,6 +324,7 @@ The same ten verbs are available from both the chat `!list` command and the acti
 | `first [N]` | Replies with the first `N` items (default 1, max = list size). |
 | `last [N]` | Replies with the last `N` items (default 1, max = list size). |
 | `random [N]` | Replies with `N` random items, without replacement (default 1). |
+| `#N` | Replies with the entry at position `N`, counting from 1. `!list quotes #2` reads the 2nd quote. Shares its permission level with `first`. |
 
 ### Destructive actions (auto-snapshot, broadcast)
 
@@ -541,6 +542,7 @@ Chat - !list meta-command (mod+)
   !list <slug> first [N]
   !list <slug> last [N]
   !list <slug> random [N]
+  !list <slug> #N
   !list <slug> draw
   !list <slug> clear
   !list <slug> pop first|last

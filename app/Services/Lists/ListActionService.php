@@ -35,9 +35,13 @@ class ListActionService
      */
     private const int MAX_REPLY_CHARS = 400;
 
+    /**
+     * Display-only list for help/error replies. '#N' is not a literal
+     * action token - it's matched by its '#' prefix in handleInvocation.
+     */
     private const array ACTIONS = [
         'draw', 'clear', 'disable', 'enable', 'pop', 'clone',
-        'count', 'first', 'last', 'random', 'search', 'searchall',
+        'count', 'first', 'last', 'random', '#N', 'search', 'searchall',
     ];
 
     /**
@@ -113,15 +117,24 @@ class ListActionService
 
         $action = strtolower(array_shift($tokens));
 
+        // `#N` (`!list quotes #2`) is a positional read, gated at the
+        // same level as `first` - same read capability, so it doesn't
+        // get its own permission key or dashboard checkbox.
+        $gateKey = str_starts_with($action, '#') ? 'first' : $action;
+
         // Per-action permission gate. Unknown actions fall through to
         // the help message below - we don't gate "did the chatter spell
         // the action right" behind a permission check, because that's
         // an informational reply and gating it would be confusing.
-        if ($badges !== null && array_key_exists($action, self::ACTION_DEFAULTS)) {
-            $required = $this->resolvePermission($list, $action);
+        if ($badges !== null && array_key_exists($gateKey, self::ACTION_DEFAULTS)) {
+            $required = $this->resolvePermission($list, $gateKey);
             if (! BotChatGate::hasPermission($required, $badges)) {
                 return $this->mention($invokerDisplayName)."'$action' on '$list->slug' is $required+ only.";
             }
+        }
+
+        if (str_starts_with($action, '#')) {
+            return $this->actionIndex($list, $action, $invokerDisplayName);
         }
 
         return match ($action) {
@@ -192,12 +205,12 @@ class ListActionService
 
     private function helpMessage(string $invokerName): string
     {
-        return $this->mention($invokerName).'List actions: draw, clear, disable, enable, pop first|last, clone <slug>, count, first [N], last [N], random [N], search <keyword>, searchall <keyword>. Usage: !list <slug> <action>';
+        return $this->mention($invokerName).'List actions: draw, clear, disable, enable, pop first|last, clone <slug>, count, first [N], last [N], random [N], #N, search <keyword>, searchall <keyword>. Usage: !list <slug> <action>';
     }
 
     private function listHelpMessage(string $invokerName, string $slug): string
     {
-        return $this->mention($invokerName)."Actions for '$slug': draw, clear, disable, enable, pop first|last, clone <slug>, count, first [N], last [N], random [N], search <keyword>, searchall <keyword>";
+        return $this->mention($invokerName)."Actions for '$slug': draw, clear, disable, enable, pop first|last, clone <slug>, count, first [N], last [N], random [N], #N, search <keyword>, searchall <keyword>";
     }
 
     private function unknownActionMessage(string $invokerName, string $action): string
@@ -283,6 +296,32 @@ class ListActionService
             : ucfirst($which)." $n of '$list->slug': ";
 
         return $this->truncate($label.implode(', ', $slice));
+    }
+
+    /**
+     * Positional read: `#2` replies with the 2nd entry. Numbering is
+     * 1-based on purpose - chatters count from 1, whatever the array
+     * thinks. $action arrives with the '#' still attached.
+     */
+    private function actionIndex(OptionSet $list, string $action, string $invokerName): string
+    {
+        $raw = substr($action, 1);
+        if ($raw === '' || ! ctype_digit($raw) || (int) $raw === 0) {
+            return $this->mention($invokerName)."entries are numbered from #1: !list $list->slug #2";
+        }
+
+        $items = ListItems::values($list->items ?? []);
+        if ($items === []) {
+            return "'$list->slug' is empty.";
+        }
+
+        $n = (int) $raw;
+        $count = count($items);
+        if ($n > $count) {
+            return $this->mention($invokerName)."'$list->slug' only has $count ".($count === 1 ? 'entry' : 'entries').", so there's no #$n.";
+        }
+
+        return $this->truncate("#$n of '$list->slug': ".$items[$n - 1]);
     }
 
     /**
