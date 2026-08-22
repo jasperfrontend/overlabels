@@ -78,8 +78,9 @@ class IntegrationController extends Controller
      * free web worker while the queue worker makes the outbound Helix calls.
      * Running this inline on the web worker starves the challenges and leaves
      * most subscriptions in webhook_callback_verification_failed state.
-     * The job fires EventSubSetupCompleted on alerts.{twitch_id} with the
-     * created/failed counts when it's done.
+     * FinalizeEventSubSetup fires EventSubSetupCompleted on alerts.{twitch_id}
+     * with the created/failed counts ~15s after the creates, once Twitch's
+     * challenges have settled and statuses have been re-verified.
      */
     public function connectEventSub(Request $request): JsonResponse
     {
@@ -89,7 +90,7 @@ class IntegrationController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Setting up Twitch subscriptions. This takes about 15 seconds; the page will update automatically when done.',
+            'message' => 'Setting up Twitch subscriptions. This takes about 30 seconds; the page will update automatically when done.',
         ], 202);
     }
 
