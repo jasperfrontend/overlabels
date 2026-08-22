@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\EventSubSetupProgress;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
 use DateMalformedStringException;
@@ -196,6 +197,8 @@ class UserEventSubManager
         // Determine webhook URL (production vs local)
         $webhookUrl = $this->getWebhookUrl();
 
+        $total = count(self::SUPPORTED_EVENTS);
+
         foreach (self::SUPPORTED_EVENTS as $eventType => $config) {
             // Check if subscription already exists
             $existing = UserEventsubSubscription::where('user_id', $user->id)
@@ -205,6 +208,7 @@ class UserEventSubManager
 
             if ($existing) {
                 $results['existing'][] = $eventType;
+                $this->broadcastSetupProgress($user, $results, $total);
 
                 continue;
             }
@@ -215,6 +219,7 @@ class UserEventSubManager
             $requiredScope = $config['required_scope'] ?? null;
             if ($requiredScope && ! $this->scopeService->hasScope($user, $requiredScope)) {
                 $results['skipped_missing_scope'][] = $eventType;
+                $this->broadcastSetupProgress($user, $results, $total);
 
                 continue;
             }
@@ -238,6 +243,7 @@ class UserEventSubManager
                 $response = $this->eventSubService->createSubscription($appToken, $payload);
             } catch (Exception $e) {
                 $results['failed'][$eventType] = $e->getMessage();
+                $this->broadcastSetupProgress($user, $results, $total);
 
                 Log::warning('Failed to create EventSub subscription', [
                     'user_id' => $user->id,
@@ -276,6 +282,8 @@ class UserEventSubManager
                     'error' => $response['message'] ?? 'Unknown error',
                 ]);
             }
+
+            $this->broadcastSetupProgress($user, $results, $total);
         }
 
         // Reconcile local subscription status with Twitch's actual status.
@@ -289,6 +297,25 @@ class UserEventSubManager
         ]);
 
         return $results;
+    }
+
+    /**
+     * Tell the settings page how far along the setup loop is. Processed is
+     * derived from the results buckets, so every disposition (created, failed,
+     * existing, skipped) moves the counter.
+     */
+    private function broadcastSetupProgress(User $user, array $results, int $total): void
+    {
+        $processed = count($results['created']) + count($results['failed'])
+            + count($results['existing']) + count($results['skipped_missing_scope']);
+
+        EventSubSetupProgress::dispatch(
+            (string) $user->twitch_id,
+            'connecting',
+            $processed,
+            $total,
+            count($results['created']) + count($results['existing']),
+        );
     }
 
     /**

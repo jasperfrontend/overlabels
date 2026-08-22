@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Events\EventSubSetupCompleted;
+use App\Events\EventSubSetupProgress;
 use App\Models\User;
 use App\Services\UserEventSubManager;
 use DateMalformedStringException;
@@ -58,6 +59,15 @@ class SetupUserEventSubSubscriptions implements ShouldQueue
                 'failed' => count($results['failed']),
                 'existing' => count($results['existing']),
             ]);
+
+            // Tell the page the creates are done and the verify wait has begun.
+            EventSubSetupProgress::dispatch(
+                (string) $this->user->twitch_id,
+                'verifying',
+                count(UserEventSubManager::SUPPORTED_EVENTS),
+                count(UserEventSubManager::SUPPORTED_EVENTS),
+                count($results['created'] ?? []) + count($results['existing'] ?? []),
+            );
 
             // Do NOT broadcast completion here. Twitch's webhook challenges for
             // the last-created subscriptions are still in flight at this point

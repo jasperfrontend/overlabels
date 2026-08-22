@@ -86,8 +86,15 @@ interface EventSubSetupPayload {
   success: boolean;
 }
 
+interface EventSubSetupProgressPayload {
+  phase: 'connecting' | 'verifying';
+  processed: number;
+  total: number;
+  connected: number;
+}
+
 type EchoChannel = {
-  listen: (event: string, cb: (payload: EventSubSetupPayload) => void) => EchoChannel;
+  listen: <T>(event: string, cb: (payload: T) => void) => EchoChannel;
   stopListening: (event: string) => EchoChannel;
 };
 
@@ -96,6 +103,7 @@ let eventsubChannel: EchoChannel | null = null;
 onBeforeUnmount(() => {
   if (testCheerInterval) clearInterval(testCheerInterval);
   eventsubChannel?.stopListening('.eventsub.setup-completed');
+  eventsubChannel?.stopListening('.eventsub.setup-progress');
   eventsubChannel = null;
 });
 
@@ -175,6 +183,16 @@ onMounted(() => {
   const echo = (window as any).Echo;
   if (!echo || !twitchId.value) return;
   eventsubChannel = echo.private(`alerts.${twitchId.value}`);
+  eventsubChannel?.listen('.eventsub.setup-progress', (payload: EventSubSetupProgressPayload) => {
+    // Also covers an F5 mid-sequence: a fresh page picks the progress back up
+    // and re-freezes the button until the completion event lands.
+    eventsubLoading.value = true;
+    if (payload.phase === 'verifying') {
+      eventsubMessage.value = `All ${payload.total} events requested. Twitch is verifying them now - about 15 more seconds...`;
+    } else {
+      eventsubMessage.value = `Connecting Twitch events: ${payload.connected} connected, ${payload.total - payload.processed} to go...`;
+    }
+  });
   eventsubChannel?.listen('.eventsub.setup-completed', (payload: EventSubSetupPayload) => {
     const createdCount = payload.created?.length ?? 0;
     const existingCount = payload.existing?.length ?? 0;
