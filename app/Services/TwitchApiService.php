@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
@@ -239,9 +240,13 @@ class TwitchApiService
     }
 
     /**
+     * The $first default here (and on getChannelFollowers / getChannelSubscribers)
+     * must stay >= User::FOREACH_CAP_MAX: the foreach cap can only slice what was
+     * fetched, so a smaller fetch silently pins every loop below the user's cap.
+     *
      * @throws Exception
      */
-    public function getFollowedChannels(string $accessToken, string $userId, int $first = 20): ?array
+    public function getFollowedChannels(string $accessToken, string $userId, int $first = User::FOREACH_CAP_MAX): ?array
     {
         $response = $this->makeApiRequest(
             $accessToken,
@@ -256,7 +261,7 @@ class TwitchApiService
     /**
      * @throws Exception
      */
-    public function getChannelFollowers(string $accessToken, string $userId, int $first = 20): ?array
+    public function getChannelFollowers(string $accessToken, string $userId, int $first = User::FOREACH_CAP_MAX): ?array
     {
         // Special case: needs channel info first to get broadcaster_id
         $channelInfo = $this->getChannelInfo($accessToken, $userId);
@@ -328,7 +333,7 @@ class TwitchApiService
     /**
      * @throws Exception
      */
-    public function getChannelSubscribers(string $accessToken, string $userId, int $first = 20): ?array
+    public function getChannelSubscribers(string $accessToken, string $userId, int $first = User::FOREACH_CAP_MAX): ?array
     {
         $response = $this->makeApiRequest(
             $accessToken,
