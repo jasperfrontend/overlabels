@@ -13,4 +13,41 @@
     @apply hover:border-l-violet-400 hover:bg-sidebar-accent dark:hover:bg-accent/50;
     @apply active:border-l-violet-500 active:bg-linear-to-r active:from-violet-400/20;
   }
+
+  /**
+   * Row states. Each variant recolors ONLY the accent bar (and its press wash)
+   * across all three stops - rest, hover, active - so the state stays readable
+   * mid-interaction. Everything else about the skin is inherited.
+   *
+   * Named by TONE, not by domain concept (matching the Badge variants): the
+   * caller's `rowClass` function is where "disabled" or "private" maps to
+   * destructive. Applied via CollectionList's `rowClass` prop by the page that
+   * knows the state; a new tone is one more class here, nothing else. Keep
+   * these below `.collection-row` - they win by source order, not specificity.
+   */
+  .collection-row-destructive {
+    @apply border-l-red-500/70;
+    @apply hover:border-l-red-400;
+    @apply active:border-l-red-500 active:from-red-400/20;
+  }
+
+  /**
+   * Text twin of the accent bar. Put this on any element inside a row (the
+   * "disabled" word in a meta line, say) and it tracks the row's state color
+   * through the same rest/hover/active stops as the border. Each state variant
+   * declares its text colors right here next to its border colors, so the two
+   * cannot drift apart.
+   */
+  .collection-row-state {
+    @apply transition-colors;
+  }
+  .collection-row-destructive .collection-row-state {
+    @apply text-red-500/70;
+  }
+  .collection-row-destructive:hover .collection-row-state {
+    @apply text-red-400;
+  }
+  .collection-row-destructive:active .collection-row-state {
+    @apply text-red-500;
+  }
 }

@@ -8,7 +8,6 @@ import { Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { Check, ChevronRight, ExternalLinkIcon, Eye, GitFork, LinkIcon, MoreVertical, PencilIcon, Trash2 } from '@lucide/vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import CollectionList from '@/components/CollectionList.vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
 import { useEventColors, eventLabel } from '@/composables/useEventColors';
@@ -70,6 +69,8 @@ function canDelete(t: OverlayTemplate) {
 }
 
 function rowClass(t: OverlayTemplate): string | undefined {
+  // Private wins over the event accent: the state must not disappear on hover.
+  if (!t.is_public) return 'collection-row-destructive';
   const ev = props.showEvent ? firstEvent(t) : null;
   return ev ? eventTypeHoverBorderClass(ev.eventType, ev.source) : undefined;
 }
@@ -124,7 +125,8 @@ async function handleDelete(t: OverlayTemplate) {
       <div class="flex flex-col gap-1">
         <div class="flex items-center gap-3">
           <span class="font-medium">{{ t.name }}</span>
-          <Badge v-if="!t.is_public" variant="destructive" class="text-xs">Private</Badge>
+          <!-- Text twin of the red accent bar, so private isn't color-only -->
+          <span v-if="!t.is_public" class="collection-row-state text-xs">private</span>
         </div>
 
         <span v-if="t.description" class="max-w-[90%] truncate text-xs text-muted-foreground">

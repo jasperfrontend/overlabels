@@ -13,7 +13,7 @@ import { useSearchFilters } from '@/composables/useSearchFilters';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { ListIcon, PlusIcon, LockIcon, ChefHat, List, PowerOffIcon, SearchIcon } from '@lucide/vue';
+import { ListIcon, PlusIcon, LockIcon, ChefHat, List, SearchIcon } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { listItemValues, type ListItem } from '@/utils/listItems';
 
@@ -123,6 +123,7 @@ const filteredLists = computed<ListSearchResult[]>(() => {
 const rowKey = ({ list }: ListSearchResult) => list.id;
 const rowHref = ({ list }: ListSearchResult) => route('lists.show', list.slug);
 const rowLabel = ({ list }: ListSearchResult) => list.label || list.slug;
+const rowClass = ({ list }: ListSearchResult) => (list.disabled_at !== null ? 'collection-row-destructive' : undefined);
 
 function lastUpdated(ts: number | null): string {
   if (!ts) return '';
@@ -355,22 +356,20 @@ onUnmounted(() => {
             message="Create one above to use it across your overlays."
           />
 
-          <CollectionList v-else :items="filteredLists" :item-key="rowKey" :href="rowHref" :label="rowLabel">
+          <CollectionList v-else :items="filteredLists" :item-key="rowKey" :href="rowHref" :label="rowLabel" :row-class="rowClass">
             <template #item="{ item: { list, hint } }">
               <div class="flex flex-wrap items-center gap-1.5">
                 <ListIcon class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span class="truncate font-medium text-foreground">{{ list.label || list.slug }}</span>
                 <LockIcon v-if="!list.user_editable && list.recipe_instance_id !== null" class="h-3 w-3 text-muted-foreground" />
-                <Badge v-if="list.disabled_at !== null" variant="destructive" class="text-[10px]">
-                  <PowerOffIcon class="mr-1 h-2.5 w-2.5" />
-                  Disabled
-                </Badge>
                 <Badge v-if="list.recipe" variant="secondary" class="text-[10px]">{{ list.recipe.name }}</Badge>
               </div>
               <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">{{ list.slug }}</div>
               <div class="mt-0.5 text-[11px] text-muted-foreground">
                 {{ list.items.length }} item{{ list.items.length === 1 ? '' : 's' }}
                 <span v-if="list.updated_at">• updated {{ lastUpdated(list.updated_at) }}</span>
+                <!-- Text twin of the red accent bar, so disabled isn't color-only -->
+                <span v-if="list.disabled_at !== null">• <span class="collection-row-state">disabled</span></span>
               </div>
               <div v-if="hint" class="mt-0.5 truncate text-[11px] text-muted-foreground">
                 matches: <span class="font-mono text-foreground">{{ hint }}</span>
