@@ -2,12 +2,13 @@
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { Blocks, Megaphone, LogOut, Settings } from '@lucide/vue';
+import { Blocks, Cable, Megaphone, LogOut, Settings } from '@lucide/vue';
 
 const settingsItems = [
   { label: 'Account Settings', href: route('settings.account'), icon: Settings },
   { label: 'Integrations', href: route('settings.integrations.index'), icon: Blocks },
   { label: 'Triggers', href: route('triggers.index'), icon: Megaphone },
+  { label: 'Wiring', href: route('wiring.index'), icon: Cable },
 ];
 
 interface Props {

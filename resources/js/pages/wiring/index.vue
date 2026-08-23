@@ -6,11 +6,11 @@ import EmptyState from '@/components/EmptyState.vue';
 import { Check, Circle, TriangleAlert } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 
-type SkillState = 'satisfied' | 'missing' | 'not_applicable';
+type WireState = 'satisfied' | 'missing' | 'not_applicable';
 
-interface Skill {
+interface Wire {
   key: string;
-  state: SkillState;
+  state: WireState;
   label: string;
   message: string;
   route: string;
@@ -21,13 +21,13 @@ interface Subject {
   key: string;
   label: string;
   context: string[];
-  skills: Skill[];
+  wires: Wire[];
   missing: number;
   applicable: boolean;
   needsAttention: boolean;
 }
 
-interface Skillset {
+interface Circuit {
   key: string;
   label: string;
   outcome: string;
@@ -39,40 +39,40 @@ interface Skillset {
 }
 
 const props = defineProps<{
-  skillsets: Skillset[];
+  circuits: Circuit[];
   looseEnds: number;
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Skills', href: '/skills' }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Wiring', href: '/wiring' }];
 
-function href(skill: Skill): string {
-  return route(skill.route);
+function href(wire: Wire): string {
+  return route(wire.route);
 }
 
 // not_applicable is rendered as plain context, never as a half-tick. It is not
 // progress and it is not a gap, so giving it a state icon would read as a soft
 // failure for something the streamer never chose to build.
-function isFinding(skill: Skill): boolean {
-  return skill.state === 'missing';
+function isFinding(wire: Wire): boolean {
+  return wire.state === 'missing';
 }
 
 // Shown as muted prose, never with an icon or a button: it explains why the
 // question does not arise, which is information, not a task.
-function isDormant(skill: Skill): boolean {
-  return skill.state === 'not_applicable' && skill.message !== '';
+function isDormant(wire: Wire): boolean {
+  return wire.state === 'not_applicable' && wire.message !== '';
 }
 </script>
 
 <template>
   <Head>
-    <title>Skills</title>
+    <title>Wiring</title>
     <meta name="description" content="What is wired up on your account, and what is built but cannot work." />
   </Head>
 
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-6 p-4">
       <PageHeader
-        title="Skills"
+        title="Wiring"
         description="What is wired up on your account, and what is built but cannot work."
         title-class="text-2xl font-bold"
       />
@@ -95,21 +95,21 @@ function isDormant(skill: Skill): boolean {
         <p class="text-foreground">Everything you have built can actually run.</p>
       </div>
 
-      <section v-for="set in props.skillsets" :key="set.key" class="flex flex-col gap-3">
+      <section v-for="circuit in props.circuits" :key="circuit.key" class="flex flex-col gap-3">
         <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 class="text-lg font-semibold text-foreground">{{ set.label }}</h2>
-          <span v-if="set.status === 'loose_end'" class="text-sm text-amber-600 tabular-nums dark:text-amber-400">
-            {{ set.attention }} of {{ set.total }} need attention
+          <h2 class="text-lg font-semibold text-foreground">{{ circuit.label }}</h2>
+          <span v-if="circuit.status === 'loose_end'" class="text-sm text-amber-600 tabular-nums dark:text-amber-400">
+            {{ circuit.attention }} of {{ circuit.total }} need attention
           </span>
         </div>
 
-        <p class="max-w-prose text-sm text-foreground">{{ set.outcome }}</p>
+        <p class="max-w-prose text-sm text-foreground">{{ circuit.outcome }}</p>
 
-        <EmptyState v-if="!set.subjects.length" :message="`No ${set.subject}s yet.`" />
+        <EmptyState v-if="!circuit.subjects.length" :message="`No ${circuit.subject}s yet.`" />
 
         <ul v-else class="flex flex-col gap-2">
           <li
-            v-for="subject in set.subjects"
+            v-for="subject in circuit.subjects"
             :key="subject.key"
             class="collection-row rounded border p-3"
             :class="subject.needsAttention ? 'border-amber-500/40' : 'border-border'"
@@ -128,18 +128,18 @@ function isDormant(skill: Skill): boolean {
               <li v-for="line in subject.context" :key="line" class="text-sm text-muted-foreground">{{ line }}</li>
             </ul>
 
-            <p v-for="skill in subject.skills.filter(isDormant)" :key="skill.key" class="mt-1 pl-6 text-sm text-muted-foreground">
-              {{ skill.message }}
+            <p v-for="wire in subject.wires.filter(isDormant)" :key="wire.key" class="mt-1 pl-6 text-sm text-muted-foreground">
+              {{ wire.message }}
             </p>
 
             <div
-              v-for="skill in subject.skills.filter(isFinding)"
-              :key="skill.key"
+              v-for="wire in subject.wires.filter(isFinding)"
+              :key="wire.key"
               class="mt-2 flex flex-col gap-2 pl-6 sm:flex-row sm:items-center sm:gap-3"
             >
-              <p class="min-w-0 flex-1 text-sm text-foreground">{{ skill.message }}</p>
-              <Link :href="href(skill)" class="btn btn-sm btn-secondary shrink-0 cursor-pointer">
-                {{ skill.cta }}
+              <p class="min-w-0 flex-1 text-sm text-foreground">{{ wire.message }}</p>
+              <Link :href="href(wire)" class="btn btn-sm btn-secondary shrink-0 cursor-pointer">
+                {{ wire.cta }}
               </Link>
             </div>
           </li>
