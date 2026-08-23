@@ -216,7 +216,10 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
                 Powered by
                 <a href="https://unocss.dev/" target="_blank" rel="noopener" class="cursor-pointer underline hover:text-foreground">UnoCSS</a> with
                 <code class="rounded bg-sidebar px-1">presetWind3</code>. Most Tailwind v3 utilities, arbitrary values, and gradient helpers compile
-                identically. Read the relevant <Link class="cursor-pointer underline hover:text-foreground" target="_blank" href="/help/tailwind">documentation about Tailwind in Overlabels</Link>.
+                identically. Read the relevant
+                <Link class="cursor-pointer underline hover:text-foreground" target="_blank" href="/help/tailwind"
+                  >documentation about Tailwind in Overlabels</Link
+                >.
               </p>
             </div>
           </div>

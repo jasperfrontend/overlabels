@@ -6,7 +6,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import Heading from '@/components/Heading.vue';
 import CollectionList from '@/components/CollectionList.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import FilterBar from '@/components/FilterBar.vue';
+import FilterSearchInput from '@/components/FilterSearchInput.vue';
 import RekaToast from '@/components/RekaToast.vue';
+import { useSearchFilters } from '@/composables/useSearchFilters';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +37,7 @@ interface ListRow {
 
 const props = defineProps<{
   lists: ListRow[];
+  filters?: { search?: string };
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -54,11 +58,41 @@ const toastMessage = ref<string | null>(null);
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Search - client-side filter over slug, label, AND item contents. Lists are
-// bounded per user and the index already loads full items, so no round-trip.
+// Search - the same URL-backed filter bar as /templates and /dashboard/recents.
+// The server matches slug, label, AND item contents; the query string is the
+// state, so a filtered view deep-links and survives back/forward.
 // ──────────────────────────────────────────────────────────────────────────────
 
-const search = ref('');
+function normalizeListFilters(input?: { search?: string }) {
+  // Only accept string values - a malformed query param could arrive as an
+  // array, and the server treats anything non-string as no search anyway.
+  return { search: typeof input?.search === 'string' ? input.search : '' };
+}
+
+function buildQuery(): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (filters.value.search) params.search = filters.value.search;
+  return params;
+}
+
+const { filters, debounceSearch } = useSearchFilters({
+  serverFilters: () => props.filters,
+  normalize: normalizeListFilters,
+  apply: () =>
+    router.get(route('lists.index'), buildQuery(), {
+      preserveState: true,
+      preserveScroll: true,
+      // Search-as-you-type would otherwise leave a history entry per keystroke
+      // batch, so going back walks you through `t`, `te`, `tes` before leaving.
+      replace: true,
+      only: ['lists', 'filters'],
+    }),
+});
+
+// The search the current rows were filtered by - the server's echo, not the
+// box's live value, so hints and empty states stay in step with the rows on
+// screen while a newer query is still in flight.
+const appliedSearch = computed(() => normalizeListFilters(props.filters).search.trim().toLowerCase());
 
 // Lowercased item that matched the query, if the match was on contents only
 // (not slug/label). Surfaced as a "matches: ..." hint so a content hit is
@@ -73,21 +107,17 @@ interface ListSearchResult {
   hint: string | null;
 }
 
+// Rows arrive already filtered; what's left to compute here is the hint.
 const filteredLists = computed<ListSearchResult[]>(() => {
-  const q = search.value.trim().toLowerCase();
+  const q = appliedSearch.value;
   if (!q) return lists.value.map((list) => ({ list, hint: null }));
 
-  const out: { list: ListRow; hint: string | null }[] = [];
-  for (const list of lists.value) {
+  return lists.value.map((list) => {
     const inSlug = list.slug.toLowerCase().includes(q);
     const inLabel = (list.label ?? '').toLowerCase().includes(q);
-    const item = contentMatch(list, q);
-    if (inSlug || inLabel || item) {
-      // Only show the content hint when the match is purely on contents.
-      out.push({ list, hint: inSlug || inLabel ? null : item });
-    }
-  }
-  return out;
+    // Only show the content hint when the match is purely on contents.
+    return { list, hint: inSlug || inLabel ? null : contentMatch(list, q) };
+  });
 });
 
 const rowKey = ({ list }: ListSearchResult) => list.id;
@@ -312,15 +342,21 @@ onUnmounted(() => {
         </CardContent>
       </Card>
 
-      <!-- Empty state: no lists at all -->
-      <EmptyState v-if="lists.length === 0" dashed :icon="ChefHat" title="No lists yet." message="Create one above to use it across your overlays." />
+      <!-- Empty state: no lists at all. With a search applied, an empty result
+           means "no match", which the collection's empty slot handles below. -->
+      <EmptyState
+        v-if="lists.length === 0 && !appliedSearch"
+        dashed
+        :icon="ChefHat"
+        title="No lists yet."
+        message="Create one above to use it across your overlays."
+      />
 
       <template v-else>
-        <!-- Search box: filters by slug, label, and item contents -->
-        <div class="relative">
-          <SearchIcon class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input v-model="search" type="text" placeholder="Search lists by name, slug, or contents..." class="input-border h-10 w-full pl-9" />
-        </div>
+        <!-- Filters Section -->
+        <FilterBar>
+          <FilterSearchInput v-model="filters.search" placeholder="Search lists by name, slug, or contents..." @search="debounceSearch" />
+        </FilterBar>
 
         <CollectionList :items="filteredLists" :item-key="rowKey" :href="rowHref" :label="rowLabel">
           <template #item="{ item: { list, hint } }">
@@ -347,7 +383,7 @@ onUnmounted(() => {
           <!-- Empty state: search matched nothing. The no-lists-at-all case is
                handled above, before the search box renders. -->
           <template #empty>
-            <EmptyState dashed :icon="SearchIcon" :message="`No lists match &quot;${search}&quot;. Try a different name, slug, or item.`" />
+            <EmptyState dashed :icon="SearchIcon" :message="`No lists match &quot;${filters.search}&quot;. Try a different name, slug, or item.`" />
           </template>
         </CollectionList>
       </template>

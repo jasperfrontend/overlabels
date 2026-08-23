@@ -52,6 +52,45 @@ it('does not leak lists owned by another user', function () {
         ->assertInertia(fn ($page) => $page->has('lists', 0));
 });
 
+it('index filters by search across slug, label, and item contents, echoing the term back', function () {
+    $user = User::factory()->create();
+    OptionSet::create(['user_id' => $user->id, 'slug' => 'pizza', 'label' => 'Toppings', 'items' => ['Pepperoni']]);
+    OptionSet::create(['user_id' => $user->id, 'slug' => 'films', 'label' => 'Movie night', 'items' => ['Alien', 'Heat']]);
+    OptionSet::create(['user_id' => $user->id, 'slug' => 'songs', 'label' => null, 'items' => ['Bohemian Rhapsody']]);
+
+    // Slug match, echoed back for the filter bar
+    $this->actingAs($user)->get('/dashboard/lists?search=piz')
+        ->assertInertia(fn ($page) => $page
+            ->has('lists', 1)
+            ->where('lists.0.slug', 'pizza')
+            ->where('filters.search', 'piz'));
+
+    // Label match, case-insensitive
+    $this->actingAs($user)->get('/dashboard/lists?search=MOVIE')
+        ->assertInertia(fn ($page) => $page->has('lists', 1)->where('lists.0.slug', 'films'));
+
+    // Item-contents match
+    $this->actingAs($user)->get('/dashboard/lists?search=rhapsody')
+        ->assertInertia(fn ($page) => $page->has('lists', 1)->where('lists.0.slug', 'songs'));
+
+    // No match
+    $this->actingAs($user)->get('/dashboard/lists?search=zzz')
+        ->assertInertia(fn ($page) => $page->has('lists', 0));
+});
+
+it('index treats a blank or non-string search as no search', function () {
+    $user = User::factory()->create();
+    OptionSet::create(['user_id' => $user->id, 'slug' => 'pizza', 'items' => ['Pepperoni']]);
+
+    $this->actingAs($user)->get('/dashboard/lists?search=')
+        ->assertInertia(fn ($page) => $page->has('lists', 1)->where('filters.search', ''));
+
+    // ?search[]=x arrives as an array - must not fatal, must not filter.
+    $this->actingAs($user)->get('/dashboard/lists?search[]=zzz')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->has('lists', 1)->where('filters.search', ''));
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Store
 // ──────────────────────────────────────────────────────────────────────────────

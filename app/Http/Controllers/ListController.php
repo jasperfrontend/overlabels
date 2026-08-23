@@ -44,6 +44,11 @@ class ListController extends Controller
      */
     public function index(Request $request): Response
     {
+        // A ?search[]=x array would fatal on the string ops below; treat
+        // anything that isn't a plain string as no search.
+        $search = $request->query('search');
+        $search = is_string($search) ? $search : '';
+
         $lists = OptionSet::with('recipeInstance.recipe')
             ->where('user_id', $request->user()->id)
             ->orderBy('label')
@@ -52,8 +57,28 @@ class ListController extends Controller
             ->map(fn (OptionSet $os) => $this->serialize($os))
             ->values();
 
+        // Same match the page's search box applied when it filtered
+        // client-side: case-insensitive substring over slug, label, and item
+        // contents. Filtered after serialize so it sees the same value strings
+        // the page's own content search saw. Lists are bounded per user, so
+        // filtering the full serialized set stays cheap.
+        $needle = mb_strtolower(trim($search));
+        if ($needle !== '') {
+            $lists = $lists
+                ->filter(function (array $list) use ($needle): bool {
+                    return str_contains(mb_strtolower($list['slug']), $needle)
+                        || str_contains(mb_strtolower($list['label'] ?? ''), $needle)
+                        || collect($list['items'])->contains(fn ($item) => str_contains(mb_strtolower((string) $item), $needle));
+                })
+                ->values();
+        }
+
         return Inertia::render('dashboard/lists/index', [
             'lists' => $lists,
+            // Echoed raw (untrimmed): the filter bar treats an exact echo of
+            // what it sent as "nothing new" - a trimmed echo would count as
+            // news and overwrite a search ending in a space mid-typing.
+            'filters' => ['search' => $search],
         ]);
     }
 

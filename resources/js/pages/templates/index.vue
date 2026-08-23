@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, watch, watchEffect } from 'vue';
+import { computed, watchEffect } from 'vue';
 import { router, Link, Head, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import TemplateCollection from '@/components/TemplateCollection.vue';
-import debounce from 'lodash/debounce';
+import FilterBar from '@/components/FilterBar.vue';
+import FilterSearchInput from '@/components/FilterSearchInput.vue';
+import FilterSelect from '@/components/FilterSelect.vue';
+import { useSearchFilters } from '@/composables/useSearchFilters';
 import { PlusIcon, Layers, Bell, Blocks } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import type { BreadcrumbItem } from '@/types/index.js';
@@ -39,19 +42,6 @@ function normalizeFilters(input?: FiltersShape) {
   };
 }
 
-const filters = ref(normalizeFilters(props.filters));
-
-// Re-sync local filter UI when Inertia restores props on browser back/forward.
-// Without this, going back to a filtered list URL keeps the previous filter
-// form values - the URL changes but the form doesn't reflect it.
-watch(
-  () => props.filters,
-  (newFilters) => {
-    filters.value = normalizeFilters(newFilters);
-  },
-  { deep: true },
-);
-
 // Build a query object that strips empty strings and default values, so the
 // URL stays canonical and doesn't bounce between equivalent forms (e.g.
 // `?search=` vs `?search` vs no search param at all). Bouncing creates
@@ -72,16 +62,38 @@ function buildQuery(): Record<string, string> {
   return params;
 }
 
-const applyFilter = () => {
-  router.get(route('templates.index'), buildQuery(), {
-    preserveState: true,
-    preserveScroll: true,
-  });
-};
+const { filters, applyFilter, debounceSearch } = useSearchFilters({
+  serverFilters: () => props.filters,
+  normalize: normalizeFilters,
+  apply: () =>
+    router.get(route('templates.index'), buildQuery(), {
+      preserveState: true,
+      preserveScroll: true,
+      // Search-as-you-type would otherwise leave a history entry per keystroke
+      // batch, so going back walks you through `t`, `te`, `tes` before leaving.
+      replace: true,
+    }),
+});
 
-const debounceSearch = debounce(() => {
-  applyFilter();
-}, 300);
+const typeOptions = [
+  { value: '', label: 'All Types' },
+  { value: 'static', label: 'Static overlay' },
+  { value: 'alert', label: 'Event alert' },
+  { value: 'block', label: 'Block' },
+];
+
+const ownerOptions = [
+  { value: 'all_templates', label: 'All overlays' },
+  { value: 'mine', label: 'My overlays' },
+  { value: 'public', label: 'Public overlays' },
+];
+
+const sortOptions = [
+  { value: 'created_at', label: 'Date created' },
+  { value: 'name', label: 'Name' },
+  { value: 'view_count', label: 'Views' },
+  { value: 'fork_count', label: 'Copies' },
+];
 
 const page = usePage<AppPageProps>();
 const currentUserId = computed(() => page.props.auth.user.id);
@@ -150,55 +162,12 @@ const breadcrumbs: BreadcrumbItem[] = [
       </div>
 
       <!-- Filters Section -->
-      <div class="mb-4 border border-sidebar-border bg-sidebar-accent p-4">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-4 lg:grid-cols-6">
-          <!-- Search -->
-
-          <div class="flex flex-col gap-1">
-            <label for="filter-search">Search title</label>
-            <input
-              v-model="filters.search"
-              @input="debounceSearch"
-              type="text"
-              placeholder="Search overlays and alerts..."
-              class="input-border h-10 w-full"
-              id="filter-search"
-            />
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <!-- Type Filter -->
-            <label for="filter-type">Type</label>
-            <select v-model="filters.type" @change="applyFilter" class="input-border h-10 w-full" id="filter-type">
-              <option value="">All Types</option>
-              <option value="static">Static overlay</option>
-              <option value="alert">Event alert</option>
-              <option value="block">Block</option>
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label for="filter-visibility">Ownership</label>
-            <!-- Visibility Filter -->
-            <select v-model="filters.filter" @change="applyFilter" class="input-border h-10 w-full" id="filter-visibility">
-              <option value="all_templates">All overlays</option>
-              <option value="mine">My overlays</option>
-              <option value="public">Public overlays</option>
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label for="filter-sort">Order</label>
-            <!-- Sort -->
-            <select v-model="filters.sort" @change="applyFilter" class="input-border h-10 w-full" id="filter-sort">
-              <option value="created_at">Date created</option>
-              <option value="name">Name</option>
-              <option value="view_count">Views</option>
-              <option value="fork_count">Copies</option>
-            </select>
-          </div>
-        </div>
-      </div>
+      <FilterBar class="mb-4">
+        <FilterSearchInput v-model="filters.search" label="Search title" placeholder="Search overlays and alerts..." @search="debounceSearch" />
+        <FilterSelect v-model="filters.type" label="Type" select-id="filter-type" :options="typeOptions" @change="applyFilter" />
+        <FilterSelect v-model="filters.filter" label="Ownership" select-id="filter-visibility" :options="ownerOptions" @change="applyFilter" />
+        <FilterSelect v-model="filters.sort" label="Order" select-id="filter-sort" :options="sortOptions" @change="applyFilter" />
+      </FilterBar>
 
       <TemplateCollection
         :templates="templates?.data ?? []"
