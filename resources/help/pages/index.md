@@ -65,6 +65,8 @@ Short, copy-and-paste tutorials. Each one ends with something on screen.
   syntax. Locale-aware, zero dependencies.
 - [**Math Engine**](/help/math) - waves, modulo wheels, pseudo-random one-liners, timestamp racing - the
   math behind live overlays.
+- [**Why tags are parsed exactly once**](/help/tags-parse-once) - substituted values are never
+  re-scanned for tags. The security rule behind it, and what it means while writing templates.
 
 ### Live data
 
