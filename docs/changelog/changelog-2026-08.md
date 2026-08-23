@@ -1,5 +1,13 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - style(collection): row state moves to the accent bar, not a Badge
+
+Disabled lists on `/dashboard/lists` and private templates on `/templates` were both flagged with a red destructive Badge sitting in the row content. The state now lives where the row's identity already does: the collection-row left accent bar, recolored red across all three stops (rest, hover, press).
+
+- `.collection-row-destructive` in `collection.css`, applied via `CollectionList`'s existing `rowClass` prop. Tone-named to match the Badge variants, so disabled and private share one class and a future state is one more class in the same file - no new props, no component logic.
+- `.collection-row-state` is the text twin: a word inside the row ("disabled", "private") tracks the bar's state color through the same rest/hover/press stops, so the state is never color-only.
+- On the dashboard, a private template's row stays red on hover instead of switching to its event color - the state must not disappear mid-hover. Public templates keep their event-colored hover.
+
 ## August 23rd, 2026 - refactor(wiring): /skills becomes /wiring and moves to the user menu
 
 "Skills" never described the page - it is a health check of what is wired up on your account and what is built but cannot work, not a skill assessment. "Health" was considered and reserved for a future uptime/performance idea, so the page is now **Wiring** at `/wiring`.
