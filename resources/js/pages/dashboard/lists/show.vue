@@ -3,6 +3,7 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
+import NudgeBar from '@/components/NudgeBar.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import AppendCommandsCard from '@/components/lists/AppendCommandsCard.vue';
 import SnapshotsCard from '@/components/lists/SnapshotsCard.vue';
@@ -609,19 +610,16 @@ async function loadMeta() {
       </div>
 
       <!-- Disabled nudge -->
-      <div v-if="list.disabled_at !== null" class="list-nudge mb-5 flex flex-wrap items-center gap-4 px-6 py-5">
-        <div class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-red-500/25 text-xl font-bold text-red-700 dark:text-white">!</div>
-        <div class="min-w-0 flex-1 text-sm leading-normal">
-          <div class="font-semibold text-foreground dark:text-white">This list is disabled</div>
-          <div class="text-foreground/70 dark:text-white/65">Chat appends and actions are paused. Existing items stay visible in overlays.</div>
-        </div>
-        <button
-          class="shrink-0 cursor-pointer rounded-full border border-black/30 bg-transparent px-4 py-1.5 text-xs font-medium text-foreground hover:bg-black/5 dark:border-white/55 dark:text-white dark:hover:border-white/80 dark:hover:bg-white/8"
-          @click="toggleDisabled"
-        >
-          Enable list
-        </button>
-      </div>
+      <NudgeBar
+        v-if="list.disabled_at !== null"
+        class="mb-5"
+        variant="warn"
+        icon="!"
+        title="This list is disabled"
+        body="Chat appends and actions are paused. Existing items stay visible in overlays."
+        button-text="Enable list"
+        @click="toggleDisabled"
+      />
 
       <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_356px]">
         <!-- Main column -->
@@ -810,24 +808,3 @@ async function loadMeta() {
     </div>
   </AppLayout>
 </template>
-
-<style scoped>
-/* Disabled-list nudge banner: soft red radial wash anchored on the left,
-   full-strength in dark mode (the design's signature look), a light tint in
-   light mode. */
-.list-nudge {
-  border-radius: 24px;
-  border: 1px solid rgb(239 68 68 / 0.25);
-  background: radial-gradient(ellipse 60% 140% at 0% 50%, rgb(220 38 38 / 0.14) 0%, rgb(220 38 38 / 0.06) 35%, transparent 70%);
-}
-.dark .list-nudge {
-  border: 0;
-  background: radial-gradient(
-    ellipse 60% 140% at 0% 50%,
-    rgb(220 38 38 / 0.55) 0%,
-    rgb(220 38 38 / 0.28) 35%,
-    rgb(30 18 22 / 0.9) 70%,
-    rgb(18 15 20 / 0.95) 100%
-  );
-}
-</style>
