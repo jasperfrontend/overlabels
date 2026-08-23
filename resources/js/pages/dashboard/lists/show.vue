@@ -4,24 +4,11 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import {
-  ArrowDownFromLineIcon,
-  ArrowLeftIcon,
-  ArrowUpFromLineIcon,
-  CheckIcon,
-  CornerDownRightIcon,
-  HistoryIcon,
-  LockIcon,
-  PencilIcon,
-  PinIcon,
-  PlayIcon,
-  PlusIcon,
-  RotateCcwIcon,
-  Trash2Icon,
-} from '@lucide/vue';
+import AppendCommandsCard from '@/components/lists/AppendCommandsCard.vue';
+import SnapshotsCard from '@/components/lists/SnapshotsCard.vue';
+import { ArrowDownFromLineIcon, ArrowLeftIcon, ArrowUpFromLineIcon, CheckIcon, LockIcon, PlayIcon } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
+import type { ToastType } from '@/types/lists';
 import { listItemValues, type ListItem } from '@/utils/listItems';
 import { useConfirm } from '@/composables/useConfirm';
 
@@ -90,7 +77,12 @@ watch([draftLabel, draftItemsText], () => {
 });
 
 const toastMessage = ref<string | null>(null);
-const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
+const toastType = ref<ToastType>('info');
+
+function showToast(message: string, type: ToastType) {
+  toastMessage.value = message;
+  toastType.value = type;
+}
 
 // The header "Save changes" chip covers both the items editor and the expiry
 // panel. The server treats expiry fields as a focused PATCH (items are ignored
@@ -319,156 +311,6 @@ const activeItemCount = computed(() => (draftItemsText.value === '' ? 0 : draftI
 const isActiveLocked = computed(() => !list.value.user_editable && list.value.recipe_instance_id !== null);
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Append commands per list
-// ──────────────────────────────────────────────────────────────────────────────
-
-interface AppenderRow {
-  id: number;
-  target_list_id: number;
-  command: string;
-  permission_level: string;
-  cooldown_seconds: number;
-  value_template: string;
-  args_empty_reply: string | null;
-  success_reply: string | null;
-  dedup_policy: 'none' | 'per_chatter' | 'per_chatter_per_stream';
-  max_size: number | null;
-  enabled: boolean;
-  last_fired_at: number | null;
-}
-
-const appenders = ref<AppenderRow[]>([]);
-const appendersLoading = ref(false);
-
-async function loadAppenders(listId: number) {
-  appendersLoading.value = true;
-  try {
-    const res = await axios.get(`/dashboard/lists/${listId}/appenders`);
-    appenders.value = res.data.appenders ?? [];
-  } catch {
-    appenders.value = [];
-  } finally {
-    appendersLoading.value = false;
-  }
-}
-
-// Modal state for adding/editing an appender.
-const appenderModalOpen = ref(false);
-const editingAppender = ref<AppenderRow | null>(null);
-const appenderForm = ref({
-  command: '',
-  permission_level: 'everyone',
-  cooldown_seconds: 0,
-  value_template: '[[[bot:from_user]]]',
-  args_empty_reply: '' as string,
-  success_reply: '' as string,
-  dedup_policy: 'per_chatter' as 'none' | 'per_chatter' | 'per_chatter_per_stream',
-  max_size: null as number | null,
-  enabled: true,
-});
-const appenderFormErrors = ref<Record<string, string>>({});
-const savingAppender = ref(false);
-
-function openAppenderAdd() {
-  editingAppender.value = null;
-  appenderForm.value = {
-    command: '',
-    permission_level: 'everyone',
-    cooldown_seconds: 0,
-    value_template: '[[[bot:from_user]]]',
-    args_empty_reply: '',
-    success_reply: '',
-    dedup_policy: 'per_chatter',
-    max_size: null,
-    enabled: true,
-  };
-  appenderFormErrors.value = {};
-  appenderModalOpen.value = true;
-}
-
-function openAppenderEdit(a: AppenderRow) {
-  editingAppender.value = a;
-  appenderForm.value = {
-    command: a.command,
-    permission_level: a.permission_level,
-    cooldown_seconds: a.cooldown_seconds,
-    value_template: a.value_template,
-    args_empty_reply: a.args_empty_reply ?? '',
-    success_reply: a.success_reply ?? '',
-    dedup_policy: a.dedup_policy,
-    max_size: a.max_size,
-    enabled: a.enabled,
-  };
-  appenderFormErrors.value = {};
-  appenderModalOpen.value = true;
-}
-
-async function saveAppender() {
-  savingAppender.value = true;
-  appenderFormErrors.value = {};
-
-  const body = {
-    command: appenderForm.value.command,
-    permission_level: appenderForm.value.permission_level,
-    cooldown_seconds: appenderForm.value.cooldown_seconds,
-    value_template: appenderForm.value.value_template,
-    args_empty_reply: appenderForm.value.args_empty_reply || null,
-    success_reply: appenderForm.value.success_reply || null,
-    dedup_policy: appenderForm.value.dedup_policy,
-    max_size: appenderForm.value.max_size || null,
-    enabled: appenderForm.value.enabled,
-  };
-
-  try {
-    if (editingAppender.value) {
-      const res = await axios.put(`/dashboard/lists/${list.value.id}/appenders/${editingAppender.value.id}`, body);
-      const updated = res.data.appender;
-      const idx = appenders.value.findIndex((a) => a.id === updated.id);
-      if (idx >= 0) appenders.value[idx] = updated;
-      toastMessage.value = `!${updated.command} saved.`;
-    } else {
-      const res = await axios.post(`/dashboard/lists/${list.value.id}/appenders`, body);
-      appenders.value.push(res.data.appender);
-      toastMessage.value = `!${res.data.appender.command} created.`;
-    }
-    toastType.value = 'success';
-    appenderModalOpen.value = false;
-  } catch (err: any) {
-    if (err?.response?.status === 422 && err.response?.data?.errors) {
-      const errors: Record<string, string> = {};
-      for (const [field, msgs] of Object.entries(err.response.data.errors as Record<string, string[]>)) {
-        errors[field] = msgs[0];
-      }
-      appenderFormErrors.value = errors;
-    } else {
-      toastMessage.value = 'Failed to save command.';
-      toastType.value = 'error';
-    }
-  } finally {
-    savingAppender.value = false;
-  }
-}
-
-async function deleteAppender(a: AppenderRow) {
-  if (!(await confirm({ message: `Delete command !${a.command}?`, confirmLabel: 'Delete' }))) return;
-  try {
-    await axios.delete(`/dashboard/lists/${list.value.id}/appenders/${a.id}`);
-    appenders.value = appenders.value.filter((x) => x.id !== a.id);
-    toastMessage.value = `!${a.command} deleted.`;
-    toastType.value = 'success';
-  } catch {
-    toastMessage.value = 'Failed to delete command.';
-    toastType.value = 'error';
-  }
-}
-
-const DEDUP_LABELS: Record<string, string> = {
-  none: 'no dedup',
-  per_chatter: 'once per chatter',
-  per_chatter_per_stream: 'once per chatter per stream',
-};
-
-// ──────────────────────────────────────────────────────────────────────────────
 // Live updates - subscribe to the user's broadcast channel so chat-appender
 // activity (or another browser tab) updates this page in place.
 // ──────────────────────────────────────────────────────────────────────────────
@@ -508,8 +350,6 @@ let echoChannel: any = null;
 let echoChannelName: string | null = null;
 
 onMounted(() => {
-  loadAppenders(list.value.id);
-  loadSnapshots(list.value.id);
   loadMeta();
 
   const twitchId = (page.props.auth as any)?.user?.twitch_id;
@@ -544,6 +384,7 @@ onUnmounted(() => {
 // ──────────────────────────────────────────────────────────────────────────────
 
 const runningAction = ref<string | null>(null);
+const snapshotsCard = ref<InstanceType<typeof SnapshotsCard> | null>(null);
 
 async function runAction(action: string, args: string = '', requiresConfirm = false, confirmText = '') {
   if (requiresConfirm && !(await confirm({ message: confirmText || `Run '${action}' on '${list.value.slug}'?`, confirmLabel: 'Run' }))) return;
@@ -554,7 +395,7 @@ async function runAction(action: string, args: string = '', requiresConfirm = fa
     toastMessage.value = res.data.reply || `'${action}' done.`;
     toastType.value = 'success';
     if (['clear', 'draw', 'pop'].includes(action)) {
-      await loadSnapshots(list.value.id);
+      snapshotsCard.value?.reload();
     }
   } catch (err: any) {
     toastMessage.value = err?.response?.data?.message || `'${action}' failed.`;
@@ -687,107 +528,6 @@ function toggleActionPermission(action: string) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Snapshots
-// ──────────────────────────────────────────────────────────────────────────────
-
-interface SnapshotRow {
-  id: number;
-  reason: string;
-  items: string[];
-  item_count: number;
-  pinned: boolean;
-  created_at: number;
-}
-
-const snapshots = ref<SnapshotRow[]>([]);
-const snapshotsLoading = ref(false);
-const showSnapshots = ref(false);
-
-async function loadSnapshots(listId: number) {
-  snapshotsLoading.value = true;
-  try {
-    const res = await axios.get(`/dashboard/lists/${listId}/snapshots`);
-    snapshots.value = res.data.snapshots ?? [];
-  } catch {
-    snapshots.value = [];
-  } finally {
-    snapshotsLoading.value = false;
-  }
-}
-
-async function takeManualSnapshot() {
-  try {
-    await axios.post(`/dashboard/lists/${list.value.id}/snapshots/manual`);
-    await loadSnapshots(list.value.id);
-    toastMessage.value = 'Snapshot taken.';
-    toastType.value = 'success';
-  } catch {
-    toastMessage.value = 'Failed to take snapshot.';
-    toastType.value = 'error';
-  }
-}
-
-async function restoreSnapshot(snap: SnapshotRow) {
-  if (
-    !(await confirm({
-      message: `Restore '${list.value.slug}' to this snapshot (${snap.item_count} items)? A safety snapshot of the current state is taken first.`,
-      confirmLabel: 'Restore',
-    }))
-  )
-    return;
-  try {
-    await axios.post(`/dashboard/lists/${list.value.id}/snapshots/${snap.id}/restore`);
-    await loadSnapshots(list.value.id);
-    toastMessage.value = `Restored to snapshot (${snap.item_count} items).`;
-    toastType.value = 'success';
-  } catch {
-    toastMessage.value = 'Restore failed.';
-    toastType.value = 'error';
-  }
-}
-
-async function togglePin(snap: SnapshotRow) {
-  try {
-    const res = await axios.patch(`/dashboard/lists/${list.value.id}/snapshots/${snap.id}/pin`);
-    snap.pinned = res.data.pinned;
-    toastMessage.value = snap.pinned ? 'Snapshot pinned (survives retention sweep).' : 'Snapshot unpinned.';
-    toastType.value = 'success';
-  } catch {
-    toastMessage.value = 'Toggle pin failed.';
-    toastType.value = 'error';
-  }
-}
-
-async function deleteSnapshot(snap: SnapshotRow) {
-  if (!(await confirm({ message: 'Delete this snapshot? Cannot be undone.', confirmLabel: 'Delete' }))) return;
-  try {
-    await axios.delete(`/dashboard/lists/${list.value.id}/snapshots/${snap.id}`);
-    snapshots.value = snapshots.value.filter((s) => s.id !== snap.id);
-    toastMessage.value = 'Snapshot deleted.';
-    toastType.value = 'success';
-  } catch {
-    toastMessage.value = 'Delete failed.';
-    toastType.value = 'error';
-  }
-}
-
-const REASON_LABELS: Record<string, string> = {
-  before_clear: 'before clear',
-  before_draw: 'before draw',
-  before_pop: 'before pop',
-  before_restore: 'before restore',
-  manual: 'manual',
-};
-
-function snapshotAge(ts: number): string {
-  const delta = Math.max(0, Math.floor(Date.now() / 1000) - ts);
-  if (delta < 60) return `${delta}s ago`;
-  if (delta < 3600) return `${Math.floor(delta / 60)}m ago`;
-  if (delta < 86400) return `${Math.floor(delta / 3600)}h ago`;
-  return `${Math.floor(delta / 86400)}d ago`;
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
 // Meta-command name (read-only here; edited on the index page). Used only to
 // label the Actions/permissions copy with the streamer's chosen command.
 // ──────────────────────────────────────────────────────────────────────────────
@@ -909,84 +649,7 @@ async function loadMeta() {
           </div>
 
           <!-- Append commands card -->
-          <div class="border border-sidebar-border bg-black/2 p-5 dark:bg-[#0a0512]/50">
-            <div class="flex flex-wrap items-start gap-3">
-              <div class="min-w-0 flex-1">
-                <h3 class="text-[15px] font-semibold text-foreground">Append commands</h3>
-                <p class="mt-0.5 max-w-105 text-xs text-muted-foreground">
-                  Chat commands that append to this list when fired. Bot Command syntax like <code>[[[bot:from_user]]]</code> works in the value
-                  template.
-                </p>
-              </div>
-              <button class="btn btn-primary btn-sm shrink-0 rounded-full" @click="openAppenderAdd">
-                <PlusIcon class="h-3 w-3" />
-                <span class="ml-1.5">Add command</span>
-              </button>
-            </div>
-
-            <div v-if="appendersLoading" class="mt-4 text-sm text-muted-foreground">Loading…</div>
-            <div
-              v-else-if="appenders.length === 0"
-              class="mt-4 border border-dashed border-sidebar-border py-6 text-center text-sm text-muted-foreground"
-            >
-              No append commands yet. Add one to let chatters grow this list.
-            </div>
-            <div v-else class="mt-4 space-y-3">
-              <div v-for="a in appenders" :key="a.id" class="border border-sidebar-border p-4 hover:border-foreground/25">
-                <div class="flex flex-wrap items-center gap-2">
-                  <code class="bg-green-500/10 px-2 py-0.5 text-[13px] font-bold text-green-700 dark:text-green-400">!{{ a.command }}</code>
-                  <span class="rounded-full border border-violet-500/45 px-2.5 py-0.5 text-[11px] font-medium text-violet-700 dark:text-violet-300">
-                    {{ a.permission_level }}
-                  </span>
-                  <span class="rounded-full border border-sidebar-border px-2.5 py-0.5 text-[11px] text-muted-foreground">
-                    {{ DEDUP_LABELS[a.dedup_policy] }}
-                  </span>
-                  <span v-if="a.max_size" class="rounded-full border border-sidebar-border px-2.5 py-0.5 text-[11px] text-muted-foreground">
-                    max {{ a.max_size }}
-                  </span>
-                  <span
-                    v-if="a.cooldown_seconds > 0"
-                    class="rounded-full border border-sidebar-border px-2.5 py-0.5 font-mono text-[11px] text-muted-foreground"
-                  >
-                    {{ a.cooldown_seconds }}s cd
-                  </span>
-                  <span v-if="!a.enabled" class="rounded-full border border-red-500/50 px-2.5 py-0.5 text-[11px] text-red-700 dark:text-red-400">
-                    disabled
-                  </span>
-                  <div class="flex-1"></div>
-                  <button
-                    title="Edit command"
-                    class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
-                    @click="openAppenderEdit(a)"
-                  >
-                    <PencilIcon class="h-3 w-3" />
-                  </button>
-                  <button
-                    title="Delete command"
-                    class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-red-500/50 hover:text-red-600 dark:border-white/10 dark:hover:text-red-400"
-                    @click="deleteAppender(a)"
-                  >
-                    <Trash2Icon class="h-3 w-3" />
-                  </button>
-                </div>
-                <p class="mt-2.5 truncate font-mono text-[11.5px] text-foreground/55" :title="a.value_template">
-                  appends&nbsp;&nbsp;{{ a.value_template }}
-                </p>
-                <div v-if="a.success_reply || a.args_empty_reply" class="mt-2 flex flex-col gap-1">
-                  <div v-if="a.success_reply" class="flex items-center gap-2 text-[11.5px] text-foreground/45">
-                    <CornerDownRightIcon class="h-3 w-3 shrink-0" />
-                    <span class="shrink-0 text-foreground/30">success</span>
-                    <span class="truncate font-mono" :title="a.success_reply">{{ a.success_reply }}</span>
-                  </div>
-                  <div v-if="a.args_empty_reply" class="flex items-center gap-2 text-[11.5px] text-foreground/45">
-                    <CornerDownRightIcon class="h-3 w-3 shrink-0" />
-                    <span class="shrink-0 text-foreground/30">no args</span>
-                    <span class="truncate font-mono" :title="a.args_empty_reply">{{ a.args_empty_reply }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <AppendCommandsCard :list-id="list.id" :list-slug="list.slug" @toast="showToast" />
         </div>
 
         <!-- Side column -->
@@ -1107,67 +770,7 @@ async function loadMeta() {
           </div>
 
           <!-- Snapshots card -->
-          <div class="border border-sidebar-border bg-black/2 p-5 dark:bg-[#0a0512]/50">
-            <div class="flex items-center gap-3">
-              <h3 class="flex min-w-0 flex-1 items-center gap-2 text-[15px] font-semibold text-foreground">
-                <HistoryIcon class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                Snapshots
-                <span class="rounded-full border border-sidebar-border px-2 py-px font-mono text-[11px] font-normal text-muted-foreground">
-                  {{ snapshots.length }}
-                </span>
-              </h3>
-              <button class="btn btn-chill btn-xs shrink-0 rounded-full" @click="takeManualSnapshot">Save snapshot</button>
-            </div>
-            <p class="mt-2 text-xs text-muted-foreground">
-              {{
-                snapshots.length === 0
-                  ? 'No snapshots yet. They are created automatically before clear, draw and pop.'
-                  : 'Restoring a snapshot replaces the current items.'
-              }}
-            </p>
-
-            <div v-if="snapshotsLoading" class="mt-3 text-xs text-muted-foreground">Loading…</div>
-            <template v-else-if="snapshots.length > 0">
-              <button
-                type="button"
-                class="mt-2 cursor-pointer text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-                @click="showSnapshots = !showSnapshots"
-              >
-                {{ showSnapshots ? 'Hide snapshots' : 'Show snapshots' }}
-              </button>
-              <div v-if="showSnapshots" class="mt-2 space-y-2">
-                <div v-for="snap in snapshots" :key="snap.id" class="flex flex-wrap items-center gap-2 border border-sidebar-border p-2">
-                  <span class="rounded-full border border-sidebar-border px-2 py-px text-[10px] text-muted-foreground">
-                    {{ REASON_LABELS[snap.reason] ?? snap.reason }}
-                  </span>
-                  <span class="text-xs text-foreground">{{ snap.item_count }} item{{ snap.item_count === 1 ? '' : 's' }}</span>
-                  <span class="text-[11px] text-muted-foreground">{{ snapshotAge(snap.created_at) }}</span>
-                  <div class="flex-1"></div>
-                  <button
-                    :title="snap.pinned ? 'Unpin' : 'Pin (survives retention)'"
-                    class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
-                    @click="togglePin(snap)"
-                  >
-                    <PinIcon class="h-3 w-3" :class="snap.pinned ? 'fill-current' : ''" />
-                  </button>
-                  <button
-                    title="Restore to this snapshot"
-                    class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
-                    @click="restoreSnapshot(snap)"
-                  >
-                    <RotateCcwIcon class="h-3 w-3" />
-                  </button>
-                  <button
-                    title="Delete this snapshot"
-                    class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-red-500/50 hover:text-red-600 dark:border-white/10 dark:hover:text-red-400"
-                    @click="deleteSnapshot(snap)"
-                  >
-                    <Trash2Icon class="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
-            </template>
-          </div>
+          <SnapshotsCard ref="snapshotsCard" :list-id="list.id" :list-slug="list.slug" @toast="showToast" />
 
           <!-- Danger zone -->
           <div class="border border-red-500/20 bg-black/2 p-5 dark:bg-[#0a0512]/50">
@@ -1204,105 +807,6 @@ async function loadMeta() {
           </div>
         </div>
       </div>
-
-      <!-- Append command edit modal -->
-      <Dialog v-model:open="appenderModalOpen">
-        <DialogContent class="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{{ editingAppender ? `Edit !${editingAppender.command}` : 'New append command' }}</DialogTitle>
-          </DialogHeader>
-          <div class="space-y-6">
-            <div>
-              <Label for="ap-command">Command (without <code>!</code>)</Label>
-              <input id="ap-command" v-model="appenderForm.command" placeholder="raffle" class="input-border font-mono" />
-              <p v-if="appenderFormErrors.command" class="mt-1 text-xs text-destructive">{{ appenderFormErrors.command }}</p>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <Label for="ap-perm">Permission</Label>
-                <select id="ap-perm" v-model="appenderForm.permission_level" class="input-border w-full">
-                  <option value="everyone">Everyone</option>
-                  <option value="subscriber">Subscriber</option>
-                  <option value="vip">VIP</option>
-                  <option value="moderator">Moderator</option>
-                  <option value="broadcaster">Broadcaster only</option>
-                </select>
-              </div>
-              <div>
-                <Label for="ap-cooldown">Cooldown (s)</Label>
-                <input id="ap-cooldown" class="input-border" v-model.number="appenderForm.cooldown_seconds" type="number" min="0" />
-              </div>
-            </div>
-            <div>
-              <Label for="ap-template">Value template</Label>
-              <textarea
-                id="ap-template"
-                v-model="appenderForm.value_template"
-                rows="2"
-                class="input-border w-full font-mono text-sm"
-                placeholder="[[[bot:from_user]]]"
-              ></textarea>
-              <p class="mt-1 text-xs text-muted-foreground">
-                Bot Command syntax. Pipe formatters work:
-                <span class="font-mono">[[[bot:fired_at|date:HH:mm]]]</span>.
-              </p>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <Label for="ap-dedup">Dedup policy</Label>
-                <select id="ap-dedup" v-model="appenderForm.dedup_policy" class="input-border w-full">
-                  <option value="none">None (allow duplicates)</option>
-                  <option value="per_chatter">Once per chatter</option>
-                  <option value="per_chatter_per_stream">Once per chatter per stream</option>
-                </select>
-              </div>
-              <div>
-                <Label for="ap-max">Max size (blank = unlimited)</Label>
-                <input id="ap-max" class="input-border" v-model.number="appenderForm.max_size" type="number" min="1" />
-              </div>
-            </div>
-            <div>
-              <Label for="ap-success">Success reply (optional)</Label>
-              <textarea
-                id="ap-success"
-                v-model="appenderForm.success_reply"
-                rows="2"
-                class="input-border w-full text-sm"
-                placeholder="@[[[bot:from_user]]], your entry has been added to the list."
-              ></textarea>
-              <p class="mt-1 text-xs text-muted-foreground">
-                Spoken in chat after a successful append. Same template syntax as the value template, plus this list's read tags like
-                <span class="font-mono">[[[c:list:{{ list.slug }}:count]]]</span> (resolved after the append, so the count includes it). Leave blank
-                for silent.
-              </p>
-            </div>
-            <div>
-              <Label for="ap-empty">Empty-args reply (optional)</Label>
-              <textarea
-                id="ap-empty"
-                v-model="appenderForm.args_empty_reply"
-                rows="2"
-                class="input-border w-full text-sm"
-                placeholder="@[[[bot:from_user]]] add something after !raffle"
-              ></textarea>
-              <p class="mt-1 text-xs text-muted-foreground">
-                Spoken in chat when the template uses <span class="font-mono">[[[bot:args]]]</span> but the chatter didn't supply any. Leave blank for
-                silent.
-              </p>
-            </div>
-            <div class="flex items-center gap-2">
-              <input id="ap-enabled" v-model="appenderForm.enabled" type="checkbox" />
-              <Label for="ap-enabled" class="cursor-pointer">Enabled</Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <button class="btn btn-secondary cursor-pointer" @click="appenderModalOpen = false">Cancel</button>
-            <button class="btn btn-primary cursor-pointer" :disabled="savingAppender" @click="saveAppender">
-              {{ savingAppender ? 'Saving…' : 'Save' }}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   </AppLayout>
 </template>
