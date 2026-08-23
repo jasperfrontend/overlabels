@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - feat(lists): the append command dialog gets its designed layout, and show.vue slims down
+
+The add/edit append command modal on `/dashboard/lists/{slug}` was a narrow single-column stack of nine fields. It now implements the "Edit Command Dialog" design canvas: a wide two-column dialog with behavior settings (command, permission, cooldown, max size, dedup) on the left and the three templates/replies on the right, so the whole form is visible without scrolling on desktop.
+
+- **Header**: title plus a live violet `!command` chip that updates as you type, and the Enabled toggle moved up from a checkbox at the bottom of the form to a switch in the header (same switch idiom as the chat actions panel). Footer keeps Cancel/Save as pills.
+- The mock's dedup options ("Skip/Replace duplicates") don't exist in the product; the shipped select keeps the real policies (none / once per chatter / once per chatter per stream). Its "Dedup runs on each append" hint was verified against `ListAppendService` and shipped.
+- Mapped onto real theme tokens (`input-border`, `btn-*`, `border-sidebar-border`), so light mode works; columns stack below `md` and the dialog scrolls on small screens.
+- **show.vue shrinks from 1330 to 754 lines.** The dialog, the append commands card, and the snapshots card are now components in `resources/js/components/lists/` (`AppenderCommandDialog`, `AppendCommandsCard`, `SnapshotsCard`), each owning its own state and API calls and emitting toasts up to the page. `AppenderRow` moved to `resources/js/types/lists.ts`. The chat-action -> snapshot refresh (after clear/draw/pop) goes through an exposed `reload()` on the snapshots card.
+- No backend changes, no behavior changes beyond the dialog layout.
+
 ## August 23rd, 2026 - feat(lists): the list detail page gets its designed layout
 
 `/dashboard/lists/{slug}` was a single stacked column of panels. It now implements the "List Edit" design canvas: a two-column layout (editor left, controls right) with the list's state readable at a glance from the title row.
