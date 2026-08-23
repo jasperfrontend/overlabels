@@ -302,10 +302,6 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <p class="text-sm text-foreground">
-        Reusable lists you can reference from any overlay via [[[c:list:&lt;slug&gt;]]] or loop with [[[foreach:c:list:&lt;slug&gt; as item]]]. Lists
-        are lists - we preserve exactly what you type, empties and duplicates included.
-      </p>
       <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
 
       <!-- Filters Section - page-wide above the two-column split, matching the other dashboard routes -->
