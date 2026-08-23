@@ -10,14 +10,14 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The query pass behind /skills. Produces one subject per thing that can be
- * evaluated, each carrying a state per skill plus human-readable context.
+ * The query pass behind /wiring. Produces one subject per thing that can be
+ * evaluated, each carrying a state per wire plus human-readable context.
  *
- * Deliberately NOT cached. The whole reason a skill is a query is that it
+ * Deliberately NOT cached. The whole reason a wire is a query is that it
  * cannot go stale; a TTL would reintroduce exactly the drift that storing
  * completion rows would have.
  */
-final class SkillFacts
+final class WiringFacts
 {
     /**
      * A list slug is snake_case, and a read tag always closes with at least
@@ -52,9 +52,9 @@ final class SkillFacts
         // an empty channel to add a bot is a suggestion, and this page does
         // not make suggestions.
         $state = match (true) {
-            $commandCount === 0 => SkillCatalog::NOT_APPLICABLE,
-            (bool) $user->bot_enabled => SkillCatalog::SATISFIED,
-            default => SkillCatalog::MISSING,
+            $commandCount === 0 => WiringCatalog::NOT_APPLICABLE,
+            (bool) $user->bot_enabled => WiringCatalog::SATISFIED,
+            default => WiringCatalog::MISSING,
         };
 
         return [
@@ -143,7 +143,7 @@ final class SkillFacts
                 'label' => filled($row->label) ? $row->label : $row->slug,
                 'context' => $context,
                 'states' => [
-                    'lists.readable' => $readable ? SkillCatalog::SATISFIED : SkillCatalog::MISSING,
+                    'lists.readable' => $readable ? WiringCatalog::SATISFIED : WiringCatalog::MISSING,
                 ],
             ];
         }

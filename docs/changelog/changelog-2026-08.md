@@ -1,6 +1,13 @@
 # CHANGELOG AUGUST 2026
 
-## August 23rd, 2026 - refactor(ui): the nudge banner becomes NudgeBar
+## August 23rd, 2026 - refactor(wiring): /skills becomes /wiring and moves to the user menu
+
+"Skills" never described the page - it is a health check of what is wired up on your account and what is built but cannot work, not a skill assessment. "Health" was considered and reserved for a future uptime/performance idea, so the page is now **Wiring** at `/wiring`.
+
+- Renamed all the way down, not just the label: route name `wiring.index`, page `pages/wiring/index.vue`, and the PHP layer (`WiringController`, `WiringCatalog`, `WiringFacts`, `WiringReport`, `WiringListsTest`). The internal vocabulary follows: a **circuit** is one working outcome made of **wires**, and a missing wire is a loose end - which is what the page already called it.
+- `/skills` 301-redirects to `/wiring`, so old bookmarks keep working.
+- The page left the main sidebar and now lives in the user dropdown next to Triggers, with a cable icon. Both are read-only status pages; the sidebar is for things you make and manage.
+- Ziggy is unaffected (the `user` group is wildcard-based) and the drift-guard tests came along under their new names - all 24 pass, plus the full suite.
 
 The disabled-list banner on `/dashboard/lists/{slug}` was inline markup plus a scoped `.list-nudge` style. It is now `resources/js/components/NudgeBar.vue`, a reusable component implementing both states from the "Nudge bar" design canvas.
 

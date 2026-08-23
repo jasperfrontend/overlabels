@@ -5,15 +5,18 @@ namespace App\Support;
 /**
  * The one and only declaration of what can be WRONG with a setup.
  *
+ * Vocabulary: a WIRE is one connection that can be live or dangling; a CIRCUIT
+ * is one working outcome made of wires. A missing wire is a loose end.
+ *
  * Two rules earn their keep here, both learned by getting the first cut of
  * this file wrong:
  *
- * 1. A skill is a QUERY, never a record. Nothing is stored per user, so there
+ * 1. A wire is a QUERY, never a record. Nothing is stored per user, so there
  *    is no table to seed, no backfill, no invalidation, and no way to claim
  *    someone still has something they deleted. Same shape as TAG_CATALOG
  *    feeding /tags.
  *
- * 2. A skill only describes something that can be BROKEN, never something you
+ * 2. A wire only describes something that can be BROKEN, never something you
  *    could have chosen to build. The first version made "chat can add to this
  *    list" a requirement; production had two lists with no append command, and
  *    both were correct - one is written by the recent-events feed, the other
@@ -21,11 +24,11 @@ namespace App\Support;
  *    wrong advice about a working setup. Anything optional is context, or it
  *    is NOT_APPLICABLE, and neither ever counts against you.
  *
- * Skills carry copy for all three states because a satisfied skill and an
+ * Wires carry copy for all three states because a satisfied wire and an
  * inapplicable one say different things, and "not applicable" must never read
  * as a soft failure.
  */
-final class SkillCatalog
+final class WiringCatalog
 {
     public const SATISFIED = 'satisfied';
 
@@ -38,7 +41,7 @@ final class SkillCatalog
     /**
      * @var array<string, array{label: string, satisfied: string, missing: string, not_applicable: string, route: string, cta: string}>
      */
-    public const SKILLS = [
+    public const WIRES = [
         'lists.readable' => [
             'label' => 'Something reads it back',
             'satisfied' => 'Chat or an overlay can show what is in this list.',
@@ -58,47 +61,47 @@ final class SkillCatalog
     ];
 
     /**
-     * A skillset is one working outcome. `subject` names what it is evaluated
+     * A circuit is one working outcome. `subject` names what it is evaluated
      * against: 'account' for a single implicit subject, anything else for one
      * entry per instance. Lists are per-list because "do you have an append
      * command" answered at account level is satisfied by any appender on any
      * list, which hid a half-wired list on two of the three accounts using
      * lists in production.
      *
-     * @var array<string, array{label: string, outcome: string, subject: string, skills: list<string>}>
+     * @var array<string, array{label: string, outcome: string, subject: string, wires: list<string>}>
      */
-    public const SKILLSETS = [
+    public const CIRCUITS = [
         'bot' => [
             'label' => 'Chat commands',
             'outcome' => 'Everything you type a command for runs through the Overlabels bot.',
             'subject' => 'account',
-            'skills' => ['bot.in_chat'],
+            'wires' => ['bot.in_chat'],
         ],
         'lists' => [
             'label' => 'Lists',
             'outcome' => 'Each list is filled by something and shown somewhere.',
             'subject' => 'list',
-            'skills' => ['lists.readable'],
+            'wires' => ['lists.readable'],
         ],
     ];
 
     /**
      * @return array{label: string, satisfied: string, missing: string, not_applicable: string, route: string, cta: string}
      */
-    public static function skill(string $key): array
+    public static function wire(string $key): array
     {
-        return self::SKILLS[$key];
+        return self::WIRES[$key];
     }
 
     /** @return list<string> */
-    public static function skillKeys(): array
+    public static function wireKeys(): array
     {
-        return array_keys(self::SKILLS);
+        return array_keys(self::WIRES);
     }
 
     /** @return list<string> */
-    public static function skillsetKeys(): array
+    public static function circuitKeys(): array
     {
-        return array_keys(self::SKILLSETS);
+        return array_keys(self::CIRCUITS);
     }
 }

@@ -31,7 +31,6 @@ use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Http\Controllers\SitemapController;
-use App\Http\Controllers\SkillController;
 use App\Http\Controllers\StreamSessionController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TestingController;
@@ -39,6 +38,7 @@ use App\Http\Controllers\TwitchDataController;
 use App\Http\Controllers\TwitchEventController;
 use App\Http\Controllers\TwitchEventSubController;
 use App\Http\Controllers\UpdateController;
+use App\Http\Controllers\WiringController;
 use App\Jobs\SetupUserEventSubSubscriptions;
 use App\Models\Game;
 use App\Models\User;
@@ -523,8 +523,10 @@ Route::get('/auth/redirect/fw', [FourthwallIntegrationController::class, 'callba
 
 Route::middleware('auth.redirect')->group(function () {
 
-    // Skills - what is wired up and what is one step short of working.
-    Route::get('/skills', [SkillController::class, 'index'])->name('skills.index');
+    // Wiring - what is wired up and what is one step short of working.
+    // Born /skills; old bookmarks keep working.
+    Route::redirect('/skills', '/wiring', 301);
+    Route::get('/wiring', [WiringController::class, 'index'])->name('wiring.index');
 
     // Testing Guide
     Route::get('/testing', [TestingController::class, 'index'])->name('testing.index');
