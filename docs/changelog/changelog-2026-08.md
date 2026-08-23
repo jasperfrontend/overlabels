@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - feat(lists): one filter bar to rule them all, and Lists gets a real one
+
+The filter-and-search bar that tops `/templates` and `/dashboard/recents` was the same design implemented twice, and `/dashboard/lists` had a third, different thing: a search box that only looped over already-loaded rows client-side, never touched the URL, and looked nothing like the other two. Browsing Overlays -> Alerts -> Blocks -> Lists now keeps one consistent, deep-linkable search UI.
+
+- **The panel is now three components**: `FilterBar.vue` (the bordered panel + responsive field grid), `FilterSearchInput.vue`, and `FilterSelect.vue`. Both pages that had the hand-rolled panel markup now compose these; a fourth page picking them up gets the identical skin for free.
+- **The state logic is one composable.** `useEventFilters` (recents + the embeddable events page) had the right machinery - the search-echo guard that stops a server response from stomping what you're mid-typing - but was hard-wired to the event-feed filter shape. The generic core moved to `useSearchFilters`, with `useEventFilters` now a thin flavour of it. `/templates` previously hand-rolled an older copy WITHOUT the echo guard, so it inherits that fix, plus `replace: true` so search-as-you-type stops minting a history entry per keystroke batch.
+- **Lists search went server-side and URL-backed.** `ListController::index` now takes `?search=` and filters over slug, label, and item contents - the exact match the client-side loop did, case-insensitive substring included - so `/dashboard/lists?search=pizza` deep-links like every other filtered view. The "matches: ..." content hint survives, computed client-side against the server's echo of the applied term.
+- The echoed filter is deliberately the RAW untrimmed string: the echo guard compares exact strings, and a server-trimmed echo of a search ending in a space would count as news and eat the space mid-typing. Filtering trims; the echo does not.
+- Pinned by new `ListControllerTest` cases: slug/label/contents matching, case-insensitivity, the empty result, blank search, and `?search[]=` array input neither fataling nor filtering.
+- Deliberately NOT converted: the compact collapsible filter panel on `/dashboard/events` (embed context, different density), `/updates`, and the admin tables. They still work as before; adopting the components there is separate work.
+
 ## August 23rd, 2026 - docs(help): the single-pass tag rule gets its own page
 
 Tags have been parsed exactly once per render since day one, and the reasoning lived almost entirely in code comments (`tagParser.ts`, `defuseBrackets()`). The only published trace was one callout buried in the rendering pipeline page. Asked why, an outside LLM confidently answered "performance and reactive data binding" - plausible, and not the reason. The rule is a security invariant: substituted values are never re-scanned for tags, so nobody can smuggle template code into an overlay through a donor name, chat message, or control value.

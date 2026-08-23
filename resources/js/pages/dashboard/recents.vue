@@ -7,6 +7,9 @@ import Pagination from '@/components/Pagination.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import EventsEmptyState from '@/components/EventsEmptyState.vue';
 import EventsFeedLinkButton from '@/components/EventsFeedLinkButton.vue';
+import FilterBar from '@/components/FilterBar.vue';
+import FilterSearchInput from '@/components/FilterSearchInput.vue';
+import FilterSelect from '@/components/FilterSelect.vue';
 import { Check, ChevronDown, ChevronRight, ListPlus, Radio, RefreshCw, Trash2 } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
@@ -92,6 +95,24 @@ const { filters, applyFilter, debounceSearch, clearSearch } = useEventFilters({
       only: ['recentEvents', 'filters'],
     }),
 });
+
+const sourceOptions = computed(() => [
+  { value: '', label: 'All sources' },
+  ...props.facets.sources.map((src) => ({ value: src, label: sourceLabel(src) })),
+]);
+
+const eventTypeOptions = computed(() => [
+  { value: '', label: 'All event types' },
+  ...props.facets.event_types.map((type) => ({ value: type, label: eventTypeLabel(type) })),
+]);
+
+const rangeOptions = [
+  { value: 'all', label: 'All time' },
+  { value: 'hour', label: 'Last hour' },
+  { value: '24h', label: 'Last 24 hours' },
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+];
 
 const page = usePage<AppPageProps>();
 const toastMessage = ref<string | null>(null);
@@ -353,56 +374,18 @@ const breadcrumbs = [
         </div>
 
         <!-- Filters Section -->
-        <div class="mb-4 border border-sidebar-border bg-sidebar-accent p-4">
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <!-- Search -->
-            <div class="flex flex-col gap-1">
-              <label for="filter-search">Search</label>
-              <input
-                v-model="filters.search"
-                @input="debounceSearch"
-                type="text"
-                placeholder="Search event payload..."
-                class="input-border h-10 w-full"
-                id="filter-search"
-              />
-            </div>
-
-            <!-- Source -->
-            <div class="flex flex-col gap-1">
-              <label for="filter-source">Source</label>
-              <select v-model="filters.source" @change="applyFilter" class="input-border h-10 w-full cursor-pointer" id="filter-source">
-                <option value="">All sources</option>
-                <option v-for="src in facets.sources" :key="src" :value="src">
-                  {{ sourceLabel(src) }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Event Type -->
-            <div class="flex flex-col gap-1">
-              <label for="filter-event-type">Event type</label>
-              <select v-model="filters.event_type" @change="applyFilter" class="input-border h-10 w-full cursor-pointer" id="filter-event-type">
-                <option value="">All event types</option>
-                <option v-for="type in facets.event_types" :key="type" :value="type">
-                  {{ eventTypeLabel(type) }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Time Range -->
-            <div class="flex flex-col gap-1">
-              <label for="filter-range">Time range</label>
-              <select v-model="filters.range" @change="applyFilter" class="input-border h-10 w-full cursor-pointer" id="filter-range">
-                <option value="all">All time</option>
-                <option value="hour">Last hour</option>
-                <option value="24h">Last 24 hours</option>
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-              </select>
-            </div>
-          </div>
-        </div>
+        <FilterBar class="mb-4">
+          <FilterSearchInput v-model="filters.search" placeholder="Search event payload..." @search="debounceSearch" />
+          <FilterSelect v-model="filters.source" label="Source" select-id="filter-source" :options="sourceOptions" @change="applyFilter" />
+          <FilterSelect
+            v-model="filters.event_type"
+            label="Event type"
+            select-id="filter-event-type"
+            :options="eventTypeOptions"
+            @change="applyFilter"
+          />
+          <FilterSelect v-model="filters.range" label="Time range" select-id="filter-range" :options="rangeOptions" @change="applyFilter" />
+        </FilterBar>
 
         <!-- Send these events to a list -->
         <div class="mb-4 border border-sidebar-border bg-sidebar-accent p-4">
