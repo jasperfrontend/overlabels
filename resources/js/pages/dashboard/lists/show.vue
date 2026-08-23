@@ -4,32 +4,22 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
-  PlusIcon,
-  CopyIcon,
-  Trash2Icon,
-  LockIcon,
-  MessageSquareIcon,
-  PencilIcon,
-  PowerIcon,
-  PowerOffIcon,
-  DicesIcon,
-  EraserIcon,
-  ArrowUpFromLineIcon,
   ArrowDownFromLineIcon,
-  CopyPlusIcon,
-  HashIcon,
-  ArrowDownToLineIcon,
-  ArrowUpToLineIcon,
-  ShuffleIcon,
-  HistoryIcon,
-  PinIcon,
-  RotateCcwIcon,
   ArrowLeftIcon,
+  ArrowUpFromLineIcon,
+  CheckIcon,
+  CornerDownRightIcon,
+  HistoryIcon,
+  LockIcon,
+  PencilIcon,
+  PinIcon,
+  PlayIcon,
+  PlusIcon,
+  RotateCcwIcon,
+  Trash2Icon,
 } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { listItemValues, type ListItem } from '@/utils/listItems';
@@ -102,30 +92,71 @@ watch([draftLabel, draftItemsText], () => {
 const toastMessage = ref<string | null>(null);
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 
-function saveActive() {
-  if (saving.value) return;
-  saving.value = true;
-  const items = draftItemsText.value === '' ? [] : draftItemsText.value.split('\n');
+// The header "Save changes" chip covers both the items editor and the expiry
+// panel. The server treats expiry fields as a focused PATCH (items are ignored
+// when they're present), so a save with both dirty is two chained PUTs.
+const anythingDirty = computed(() => isDirty.value || expiryIsDirty.value);
 
+function saveAll() {
+  if (saving.value) return;
+  const wantItems = isDirty.value && !isActiveLocked.value;
+  const wantExpiry = expiryIsDirty.value;
+  if (!wantItems && !wantExpiry) return;
+
+  // Capture the expiry payload up front: the items PUT re-syncs props, which
+  // resets the expiry draft fields before the chained request fires.
+  const expiryPayload = {
+    entry_ttl_seconds: ttlSecondsComposed.value,
+    expires_at: expiresAtUnix.value,
+  };
+
+  saving.value = true;
+
+  const onSaved = () => {
+    toastMessage.value = `'${list.value.slug}' saved.`;
+    toastType.value = 'success';
+  };
+  const onFailed = (errors: Record<string, string>) => {
+    toastMessage.value = (Object.values(errors)[0] as string) ?? 'Save failed.';
+    toastType.value = 'error';
+  };
+
+  const saveExpiry = () =>
+    router.put(route('lists.update', list.value.id), expiryPayload, {
+      preserveScroll: true,
+      onSuccess: onSaved,
+      onError: onFailed,
+      onFinish: () => {
+        saving.value = false;
+      },
+    });
+
+  if (!wantItems) {
+    saveExpiry();
+    return;
+  }
+
+  let chained = false;
   router.put(
     route('lists.update', list.value.id),
     {
       label: draftLabel.value || null,
-      items,
+      items: draftItemsText.value === '' ? [] : draftItemsText.value.split('\n'),
     },
     {
       preserveScroll: true,
       onSuccess: () => {
         isDirty.value = false;
-        toastMessage.value = `'${list.value.slug}' saved.`;
-        toastType.value = 'success';
+        if (wantExpiry) {
+          chained = true;
+          saveExpiry();
+        } else {
+          onSaved();
+        }
       },
-      onError: (errors) => {
-        toastMessage.value = (Object.values(errors)[0] as string) ?? 'Save failed.';
-        toastType.value = 'error';
-      },
+      onError: onFailed,
       onFinish: () => {
-        saving.value = false;
+        if (!chained) saving.value = false;
       },
     },
   );
@@ -169,11 +200,17 @@ function toggleDisabled() {
   );
 }
 
+const tagCopied = ref(false);
+let tagCopiedTimer: number | undefined;
+
 async function copyTag(tag: string) {
   try {
     await navigator.clipboard.writeText(tag);
-    toastMessage.value = `Copied ${tag}`;
-    toastType.value = 'success';
+    tagCopied.value = true;
+    clearTimeout(tagCopiedTimer);
+    tagCopiedTimer = window.setTimeout(() => {
+      tagCopied.value = false;
+    }, 1400);
   } catch {
     toastMessage.value = 'Clipboard write failed.';
     toastType.value = 'error';
@@ -187,7 +224,6 @@ async function copyTag(tag: string) {
 const ttlValue = ref<number | null>(null);
 const ttlUnit = ref<'seconds' | 'minutes' | 'hours'>('minutes');
 const expiresAtLocal = ref<string>('');
-const expirySaving = ref(false);
 
 watch(
   list,
@@ -253,6 +289,7 @@ onMounted(() => {
 });
 onUnmounted(() => {
   if (nowTickInterval) clearInterval(nowTickInterval);
+  clearTimeout(tagCopiedTimer);
 });
 
 const expiryCountdown = computed<string>(() => {
@@ -274,42 +311,11 @@ function formatDuration(seconds: number): string {
   return `${secs}s`;
 }
 
-function saveExpiry() {
-  if (expirySaving.value) return;
-  expirySaving.value = true;
-
-  router.put(
-    route('lists.update', list.value.id),
-    {
-      entry_ttl_seconds: ttlSecondsComposed.value,
-      expires_at: expiresAtUnix.value,
-    },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        toastMessage.value = `Expiry updated for '${list.value.slug}'.`;
-        toastType.value = 'success';
-      },
-      onError: (errors) => {
-        toastMessage.value = (Object.values(errors)[0] as string) ?? 'Save failed.';
-        toastType.value = 'error';
-      },
-      onFinish: () => {
-        expirySaving.value = false;
-      },
-    },
-  );
-}
-
-function clearTtl() {
-  ttlValue.value = null;
-}
-
 function clearExpiresAt() {
   expiresAtLocal.value = '';
 }
 
-const activeItemCount = computed(() => draftItemsText.value.split('\n').length);
+const activeItemCount = computed(() => (draftItemsText.value === '' ? 0 : draftItemsText.value.split('\n').length));
 const isActiveLocked = computed(() => !list.value.user_editable && list.value.recipe_instance_id !== null);
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -576,6 +582,16 @@ function runRandom() {
   if (n === null) return;
   runAction('random', n.trim());
 }
+function runSearch() {
+  const q = prompt('Search for what? Replies with the first match.', '');
+  if (q === null || q.trim() === '') return;
+  runAction('search', q.trim());
+}
+function runSearchAll() {
+  const q = prompt('Search for what? Replies with all matches.', '');
+  if (q === null || q.trim() === '') return;
+  runAction('searchall', q.trim());
+}
 function runDraw() {
   runAction('draw', '', true, `Draw a winner from '${list.value.slug}'? The winner is removed from the list.`);
 }
@@ -585,42 +601,54 @@ function runClear() {
 function runPop(which: 'first' | 'last') {
   runAction('pop', which, true, `Remove the ${which} item from '${list.value.slug}'?`);
 }
+function runClone() {
+  const slug = prompt(`New slug for the clone of '${list.value.slug}':`, '');
+  if (!slug || !slug.trim()) return;
+  runAction('clone', slug.trim());
+}
+async function runState(which: 'disable' | 'enable') {
+  await runAction(which);
+  // The action flips disabled_at server-side; pull fresh props so the
+  // status pill and danger zone reflect it even without an Echo update.
+  router.reload({ only: ['list'] });
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Per-action chat permissions (right column of Actions panel)
+// Chat actions panel: one row per action, a run button plus a viewer-access
+// toggle (on = everyone can run it in chat, off = moderator+ only).
 // ──────────────────────────────────────────────────────────────────────────────
 
-const PERMISSION_GROUPS: { title: string; actions: { key: string; label: string }[] }[] = [
+const ACTION_GROUPS: { title: string; items: { key: string; label: string; run?: () => void; pop?: boolean }[] }[] = [
   {
     title: 'Inspect',
-    actions: [
-      { key: 'count', label: 'count' },
-      { key: 'first', label: 'first / #N' },
-      { key: 'last', label: 'last' },
-      { key: 'random', label: 'random' },
-      { key: 'search', label: 'search' },
-      { key: 'searchall', label: 'searchall' },
+    items: [
+      { key: 'count', label: 'count', run: runCount },
+      { key: 'first', label: 'first / #N', run: runFirst },
+      { key: 'last', label: 'last', run: runLast },
+      { key: 'random', label: 'random', run: runRandom },
+      { key: 'search', label: 'search', run: runSearch },
+      { key: 'searchall', label: 'searchall', run: runSearchAll },
     ],
   },
   {
-    title: 'Pop/draw',
-    actions: [
-      { key: 'pop', label: 'pop first|last' },
-      { key: 'draw', label: 'draw' },
+    title: 'Pop and draw',
+    items: [
+      { key: 'pop', label: 'pop first|last', pop: true },
+      { key: 'draw', label: 'draw winner', run: runDraw },
     ],
   },
   {
     title: 'Whole list',
-    actions: [
-      { key: 'clone', label: 'clone' },
-      { key: 'clear', label: 'clear' },
+    items: [
+      { key: 'clone', label: 'clone', run: runClone },
+      { key: 'clear', label: 'clear', run: runClear },
     ],
   },
   {
     title: 'State',
-    actions: [
-      { key: 'disable', label: 'disable' },
-      { key: 'enable', label: 'enable' },
+    items: [
+      { key: 'disable', label: 'disable', run: () => runState('disable') },
+      { key: 'enable', label: 'enable', run: () => runState('enable') },
     ],
   },
 ];
@@ -631,8 +659,9 @@ function isActionOpen(action: string): boolean {
 
 const permissionSaving = ref(false);
 
-function toggleActionPermission(action: string, checked: boolean) {
-  // Optimistic update so the checkbox feels responsive; revert on error.
+function toggleActionPermission(action: string) {
+  // Optimistic update so the toggle feels responsive; revert on error.
+  const checked = !isActionOpen(action);
   const previous = { ...(list.value.chat_permissions || {}) };
   const next = { ...previous, [action]: checked ? 'everyone' : 'moderator' };
   list.value.chat_permissions = next;
@@ -655,12 +684,6 @@ function toggleActionPermission(action: string, checked: boolean) {
       },
     },
   );
-}
-
-function runClone() {
-  const slug = prompt(`New slug for the clone of '${list.value.slug}':`, '');
-  if (!slug || !slug.trim()) return;
-  runAction('clone', slug.trim());
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -784,346 +807,382 @@ async function loadMeta() {
 <template>
   <Head :title="list.label || list.slug" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="mx-auto w-full max-w-4xl space-y-6 p-4">
-      <a :href="route('lists.index')" class="inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+    <div class="mx-auto w-full max-w-6xl p-4 pb-16">
+      <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
+
+      <a :href="route('lists.index')" class="mb-4 inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
         <ArrowLeftIcon class="h-3.5 w-3.5" />
         All lists
       </a>
 
-      <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
-
-      <!-- Header: tag + state badges -->
-      <div class="flex flex-wrap items-center justify-between gap-2 border border-sidebar-border p-3">
-        <div class="flex items-center gap-2">
-          <span class="font-mono text-sm text-foreground">{{ list.tag }}</span>
-          <Button variant="ghost" size="sm" class="cursor-pointer" @click="copyTag(list.tag)">
-            <CopyIcon class="h-3.5 w-3.5" />
-            <span class="ml-1.5">Copy</span>
-          </Button>
-        </div>
-        <div class="flex items-center gap-2">
-          <Badge v-if="list.disabled_at !== null" variant="destructive">
-            <PowerOffIcon class="mr-1 h-3 w-3" />
-            Disabled
-          </Badge>
-          <Badge v-if="list.recipe" variant="secondary"> from {{ list.recipe.name }} </Badge>
-          <Badge v-if="!list.user_editable && list.recipe_instance_id !== null" variant="outline">
-            <LockIcon class="mr-1 h-3 w-3" />
-            Locked
-          </Badge>
-        </div>
+      <!-- Title row: name, state pill, save chip -->
+      <div class="mb-2 flex flex-wrap items-center gap-3">
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">{{ list.label || list.slug }}</h1>
+        <span
+          class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium"
+          :class="
+            list.disabled_at === null
+              ? 'border-green-500/50 text-green-700 dark:text-green-400'
+              : 'border-muted-foreground/40 text-muted-foreground'
+          "
+        >
+          <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+          {{ list.disabled_at === null ? 'Active' : 'Disabled' }}
+        </span>
+        <span v-if="list.recipe" class="rounded-full border border-violet-500/40 px-2.5 py-0.5 text-[11px] text-violet-700 dark:text-violet-300">
+          from {{ list.recipe.name }}
+        </span>
+        <span
+          v-if="isActiveLocked"
+          class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/40 px-2.5 py-0.5 text-[11px] text-muted-foreground"
+        >
+          <LockIcon class="h-2.5 w-2.5" />
+          Locked
+        </span>
+        <div class="flex-1"></div>
+        <button v-if="anythingDirty || saving" class="btn btn-primary btn-sm rounded-full" :disabled="saving" @click="saveAll">
+          {{ saving ? 'Saving…' : 'Save changes' }}
+        </button>
+        <span v-else class="inline-flex items-center gap-1.5 text-xs text-green-700/80 dark:text-green-400/80">
+          <CheckIcon class="h-3.5 w-3.5" />
+          Saved
+        </span>
       </div>
 
-      <div class="w-full">
-        <Label for="active-label">Label</Label>
-        <input id="active-label" v-model="draftLabel" :disabled="!!isActiveLocked" placeholder="(optional)" class="input-border w-full" />
-      </div>
-
-      <div>
-        <div class="flex items-center justify-between">
-          <Label for="active-items">Items (one per line)</Label>
-          <span class="text-xs text-muted-foreground">{{ activeItemCount }} line{{ activeItemCount === 1 ? '' : 's' }}</span>
-        </div>
-        <textarea
-          id="active-items"
-          v-model="draftItemsText"
-          :disabled="!!isActiveLocked"
-          rows="16"
-          class="input-border w-full font-mono text-sm"
-        ></textarea>
-        <p class="mt-1 text-xs text-muted-foreground">Empty lines and duplicates are preserved exactly.</p>
-      </div>
-
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
-          <button
-            class="btn btn-danger cursor-pointer text-destructive hover:text-destructive"
-            :disabled="!!isActiveLocked || list.recipe_instance_id !== null"
-            :title="list.recipe_instance_id !== null ? 'Delete the recipe instance to remove this list.' : 'Delete this list permanently.'"
-            @click="deleteActive"
-          >
-            <Trash2Icon class="h-4 w-4" />
-            <span class="ml-1.5">Delete list</span>
-          </button>
-          <button
-            class="btn btn-warning text-warning hover:text-warning cursor-pointer"
-            :title="
-              list.disabled_at !== null
-                ? 'Re-enable: chat appenders can write again.'
-                : 'Disable: chat appenders silently no-op; existing items stay visible.'
-            "
-            @click="toggleDisabled"
-          >
-            <component :is="list.disabled_at !== null ? PowerIcon : PowerOffIcon" class="h-4 w-4" />
-            <span class="ml-1.5">{{ list.disabled_at !== null ? 'Enable list' : 'Disable list' }}</span>
-          </button>
-        </div>
-        <button class="btn btn-primary cursor-pointer" :disabled="!isDirty || saving || !!isActiveLocked" @click="saveActive">
-          {{ saving ? 'Saving…' : isDirty ? 'Save changes' : 'Saved' }}
+      <!-- Template tag row -->
+      <div class="mb-6 flex flex-wrap items-center gap-2">
+        <span class="text-xs text-muted-foreground">Template tag</span>
+        <code class="px-2.5 py-0.5 text-xs">{{ list.tag }}</code>
+        <button
+          class="cursor-pointer rounded-full border bg-transparent px-3 py-1 text-[11px] font-medium"
+          :class="
+            tagCopied
+              ? 'border-green-500/60 text-green-700 dark:text-green-400'
+              : 'border-black/20 text-foreground hover:border-black/50 dark:border-white/20 dark:hover:border-white/60'
+          "
+          title="Copy template tag"
+          @click="copyTag(list.tag)"
+        >
+          {{ tagCopied ? 'Copied' : 'Copy' }}
         </button>
       </div>
 
-      <!-- Expiry panel: per-item age-out + whole-list deadline. -->
-      <div class="border border-sidebar-border p-4">
-        <div class="mb-3">
-          <h3 class="text-sm font-semibold text-foreground">Expiry</h3>
-          <p class="mt-0.5 text-xs text-muted-foreground">
-            Optional. Per-item age-out drops individual entries after their age exceeds the TTL. Whole-list expiry snapshots the list, clears items,
-            and disables further appends at the chosen moment. Both run every minute.
-          </p>
+      <!-- Disabled nudge -->
+      <div v-if="list.disabled_at !== null" class="list-nudge mb-5 flex flex-wrap items-center gap-4 px-6 py-5">
+        <div class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-red-500/25 text-xl font-bold text-red-700 dark:text-white">!</div>
+        <div class="min-w-0 flex-1 text-sm leading-normal">
+          <div class="font-semibold text-foreground dark:text-white">This list is disabled</div>
+          <div class="text-foreground/70 dark:text-white/65">Chat appends and actions are paused. Existing items stay visible in overlays.</div>
+        </div>
+        <button
+          class="shrink-0 cursor-pointer rounded-full border border-black/30 bg-transparent px-4 py-1.5 text-xs font-medium text-foreground hover:bg-black/5 dark:border-white/55 dark:text-white dark:hover:border-white/80 dark:hover:bg-white/8"
+          @click="toggleDisabled"
+        >
+          Enable list
+        </button>
+      </div>
+
+      <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_356px]">
+        <!-- Main column -->
+        <div class="flex min-w-0 flex-col gap-6">
+          <!-- Editor card -->
+          <div class="border border-sidebar-border bg-black/2 p-5 dark:bg-[#0a0512]/50">
+            <label for="active-label" class="mb-1.5 block text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Label</label>
+            <input id="active-label" v-model="draftLabel" :disabled="!!isActiveLocked" placeholder="(optional)" class="input-border w-full" />
+
+            <div class="mt-5 mb-1.5 flex items-baseline gap-2">
+              <label for="active-items" class="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Items</label>
+              <span class="text-[11px] text-muted-foreground/70">one per line</span>
+              <div class="flex-1"></div>
+              <span class="font-mono text-[11px] text-muted-foreground">{{ activeItemCount }} line{{ activeItemCount === 1 ? '' : 's' }}</span>
+            </div>
+            <textarea
+              id="active-items"
+              v-model="draftItemsText"
+              :disabled="!!isActiveLocked"
+              spellcheck="false"
+              placeholder="Nothing here yet. Items appear when a chat command fires, or type them in - one per line."
+              class="input-border block min-h-[300px] w-full resize-y font-mono text-xs leading-relaxed"
+            ></textarea>
+            <p class="mt-2 text-[11.5px] text-muted-foreground/70">Empty lines and duplicates are preserved exactly.</p>
+          </div>
+
+          <!-- Append commands card -->
+          <div class="border border-sidebar-border bg-black/2 p-5 dark:bg-[#0a0512]/50">
+            <div class="flex flex-wrap items-start gap-3">
+              <div class="min-w-0 flex-1">
+                <h3 class="text-[15px] font-semibold text-foreground">Append commands</h3>
+                <p class="mt-0.5 max-w-105 text-xs text-muted-foreground">
+                  Chat commands that append to this list when fired. Bot Command syntax like <code>[[[bot:from_user]]]</code> works in the value
+                  template.
+                </p>
+              </div>
+              <button class="btn btn-primary btn-sm shrink-0 rounded-full" @click="openAppenderAdd">
+                <PlusIcon class="h-3 w-3" />
+                <span class="ml-1.5">Add command</span>
+              </button>
+            </div>
+
+            <div v-if="appendersLoading" class="mt-4 text-sm text-muted-foreground">Loading…</div>
+            <div v-else-if="appenders.length === 0" class="mt-4 border border-dashed border-sidebar-border py-6 text-center text-sm text-muted-foreground">
+              No append commands yet. Add one to let chatters grow this list.
+            </div>
+            <div v-else class="mt-4 space-y-3">
+              <div v-for="a in appenders" :key="a.id" class="border border-sidebar-border p-4 hover:border-foreground/25">
+                <div class="flex flex-wrap items-center gap-2">
+                  <code class="bg-green-500/10 px-2 py-0.5 text-[13px] font-bold text-green-700 dark:text-green-400">!{{ a.command }}</code>
+                  <span class="rounded-full border border-violet-500/45 px-2.5 py-0.5 text-[11px] font-medium text-violet-700 dark:text-violet-300">
+                    {{ a.permission_level }}
+                  </span>
+                  <span class="rounded-full border border-sidebar-border px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                    {{ DEDUP_LABELS[a.dedup_policy] }}
+                  </span>
+                  <span v-if="a.max_size" class="rounded-full border border-sidebar-border px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                    max {{ a.max_size }}
+                  </span>
+                  <span
+                    v-if="a.cooldown_seconds > 0"
+                    class="rounded-full border border-sidebar-border px-2.5 py-0.5 font-mono text-[11px] text-muted-foreground"
+                  >
+                    {{ a.cooldown_seconds }}s cd
+                  </span>
+                  <span v-if="!a.enabled" class="rounded-full border border-red-500/50 px-2.5 py-0.5 text-[11px] text-red-700 dark:text-red-400">
+                    disabled
+                  </span>
+                  <div class="flex-1"></div>
+                  <button
+                    title="Edit command"
+                    class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
+                    @click="openAppenderEdit(a)"
+                  >
+                    <PencilIcon class="h-3 w-3" />
+                  </button>
+                  <button
+                    title="Delete command"
+                    class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-red-500/50 hover:text-red-600 dark:border-white/10 dark:hover:text-red-400"
+                    @click="deleteAppender(a)"
+                  >
+                    <Trash2Icon class="h-3 w-3" />
+                  </button>
+                </div>
+                <p class="mt-2.5 truncate font-mono text-[11.5px] text-foreground/55" :title="a.value_template">appends&nbsp;&nbsp;{{ a.value_template }}</p>
+                <div v-if="a.success_reply || a.args_empty_reply" class="mt-2 flex flex-col gap-1">
+                  <div v-if="a.success_reply" class="flex items-center gap-2 text-[11.5px] text-foreground/45">
+                    <CornerDownRightIcon class="h-3 w-3 shrink-0" />
+                    <span class="shrink-0 text-foreground/30">success</span>
+                    <span class="truncate font-mono" :title="a.success_reply">{{ a.success_reply }}</span>
+                  </div>
+                  <div v-if="a.args_empty_reply" class="flex items-center gap-2 text-[11.5px] text-foreground/45">
+                    <CornerDownRightIcon class="h-3 w-3 shrink-0" />
+                    <span class="shrink-0 text-foreground/30">no args</span>
+                    <span class="truncate font-mono" :title="a.args_empty_reply">{{ a.args_empty_reply }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2">
-          <!-- Entry TTL -->
-          <div>
-            <Label for="entry-ttl">Per-item age-out</Label>
-            <div class="mt-1 flex items-center gap-2">
-              <input
-                id="entry-ttl"
-                v-model.number="ttlValue"
-                type="number"
-                min="1"
-                placeholder="off"
-                class="input-border cursor-pointer px-2 py-1.5 text-sm"
-              />
-              <select v-model="ttlUnit" class="input-border cursor-pointer px-2 py-2 text-sm">
+        <!-- Side column -->
+        <div class="flex min-w-0 flex-col gap-6">
+          <!-- Chat actions card -->
+          <div class="border border-sidebar-border bg-black/2 p-5 dark:bg-[#0a0512]/50">
+            <h3 class="text-[15px] font-semibold text-foreground">Chat actions</h3>
+            <p class="mt-0.5 text-xs leading-normal text-muted-foreground">
+              Run here, or in chat as <code>!{{ metaCommand?.command || 'list' }} {{ list.slug }} &lt;action&gt;</code
+              >. Destructive actions snapshot first.
+            </p>
+
+            <div v-for="group in ACTION_GROUPS" :key="group.title" class="mt-3.5">
+              <div class="mb-1 font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase">{{ group.title }}</div>
+              <div v-for="item in group.items" :key="item.key" class="flex items-center gap-2.5 rounded px-0.5 py-1 hover:bg-black/3 dark:hover:bg-white/3">
+                <template v-if="item.pop">
+                  <button
+                    title="Pop first item"
+                    class="grid h-6 w-6 shrink-0 cursor-pointer place-items-center rounded-full border border-black/20 text-foreground/60 hover:border-green-600 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20 dark:hover:border-green-500 dark:hover:text-green-400"
+                    :disabled="runningAction !== null"
+                    @click="() => runPop('first')"
+                  >
+                    <ArrowUpFromLineIcon class="h-3 w-3" />
+                  </button>
+                  <button
+                    title="Pop last item"
+                    class="grid h-6 w-6 shrink-0 cursor-pointer place-items-center rounded-full border border-black/20 text-foreground/60 hover:border-green-600 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20 dark:hover:border-green-500 dark:hover:text-green-400"
+                    :disabled="runningAction !== null"
+                    @click="() => runPop('last')"
+                  >
+                    <ArrowDownFromLineIcon class="h-3 w-3" />
+                  </button>
+                </template>
+                <button
+                  v-else
+                  title="Run now"
+                  class="grid h-6 w-6 shrink-0 cursor-pointer place-items-center rounded-full border border-black/20 text-foreground/60 hover:border-green-600 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20 dark:hover:border-green-500 dark:hover:text-green-400"
+                  :disabled="runningAction !== null"
+                  @click="item.run?.()"
+                >
+                  <PlayIcon class="h-2.5 w-2.5" />
+                </button>
+                <span class="flex-1 font-mono text-xs text-foreground/80">{{ item.label }}</span>
+                <button
+                  role="switch"
+                  :aria-checked="isActionOpen(item.key)"
+                  :title="isActionOpen(item.key) ? 'Everyone can run this in chat. Click for moderators only.' : 'Moderators only. Click to open to everyone.'"
+                  class="relative h-[17px] w-[30px] shrink-0 cursor-pointer rounded-full border"
+                  :class="
+                    isActionOpen(item.key)
+                      ? 'border-green-500/60 bg-green-500/25'
+                      : 'border-black/15 bg-black/5 dark:border-white/15 dark:bg-white/6'
+                  "
+                  @click="toggleActionPermission(item.key)"
+                >
+                  <span
+                    class="absolute top-[2px] h-[11px] w-[11px] rounded-full transition-all"
+                    :class="isActionOpen(item.key) ? 'left-[16px] bg-green-600 dark:bg-green-400' : 'left-[2px] bg-black/40 dark:bg-white/40'"
+                  ></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-3.5 border-t border-sidebar-border pt-3 text-[11px] text-muted-foreground/80">
+              Toggle on = everyone can run it in chat. Off = moderators only.
+              <span v-if="permissionSaving" class="ml-1 italic">Saving…</span>
+            </div>
+          </div>
+
+          <!-- Expiry card -->
+          <div class="border border-sidebar-border bg-black/2 p-5 dark:bg-[#0a0512]/50">
+            <h3 class="text-[15px] font-semibold text-foreground">Expiry</h3>
+            <p class="mt-0.5 text-xs text-muted-foreground">Both checks run every minute.</p>
+
+            <label for="entry-ttl" class="mt-3.5 mb-1.5 block text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+              Per-item age-out
+            </label>
+            <div class="flex gap-2">
+              <input id="entry-ttl" v-model.number="ttlValue" type="number" min="1" placeholder="off" class="input-border min-w-0 flex-1 font-mono" />
+              <select v-model="ttlUnit" class="input-border flex-none cursor-pointer">
                 <option value="seconds">seconds</option>
                 <option value="minutes">minutes</option>
                 <option value="hours">hours</option>
               </select>
-              <button v-if="ttlValue !== null" size="sm" class="btn btn-chill cursor-pointer px-2 py-1.5 text-sm" @click="clearTtl">Clear</button>
             </div>
-            <p class="mt-1 text-xs text-muted-foreground">Items older than this are removed on the next sweep. Max 30 days.</p>
-          </div>
+            <p class="mt-1.5 text-[11px] text-muted-foreground/70">Older items are removed on the next sweep. Max 30 days.</p>
 
-          <!-- Whole-list expires_at -->
-          <div>
-            <Label for="expires-at">Whole-list deadline</Label>
-            <div class="mt-1 flex items-center gap-2">
-              <input id="expires-at" v-model="expiresAtLocal" type="datetime-local" class="input-border cursor-pointer px-2 py-1.5 text-sm" />
-              <button v-if="expiresAtLocal" size="sm" class="btn btn-chill cursor-pointer px-2 py-1.5 text-sm" @click="clearExpiresAt">Clear</button>
+            <label for="expires-at" class="mt-3.5 mb-1.5 block text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+              Whole-list deadline
+            </label>
+            <div class="flex gap-2">
+              <input id="expires-at" v-model="expiresAtLocal" type="datetime-local" class="input-border min-w-0 flex-1 cursor-pointer font-mono text-xs" />
+              <button v-if="expiresAtLocal" class="btn btn-chill btn-xs shrink-0 rounded-full" @click="clearExpiresAt">Clear</button>
             </div>
-            <p class="mt-1 text-xs text-foreground">
-              <span v-if="expiryCountdown"
-                >In <span class="font-mono">{{ expiryCountdown }}</span></span
+            <p class="mt-1.5 text-[11px]">
+              <span v-if="expiryCountdown" class="text-foreground">
+                At the deadline the list is snapshotted, cleared, and further appends are disabled. In
+                <span class="font-mono">{{ expiryCountdown }}</span></span
               >
-              <span v-else class="text-muted-foreground">No deadline set.</span>
+              <span v-else class="text-muted-foreground/70">No deadline set.</span>
             </p>
+
+            <div class="mt-3 border-t border-sidebar-border pt-3 text-[11px] leading-[1.9] text-muted-foreground/80">
+              Tags <code class="text-[10.5px]">{{ list.tag.replace(']]]', ':expires_at]]]') }}</code>
+              <code class="text-[10.5px]">{{ list.tag.replace(']]]', ':countdown]]]') }}</code>
+            </div>
           </div>
-        </div>
 
-        <div class="mt-3 flex items-center justify-between gap-2">
-          <p class="text-xs text-muted-foreground">
-            Template tags:
-            <span class="font-mono">{{ list.tag.replace(']]]', ':expires_at]]]') }}</span
-            >,
-            <span class="font-mono">{{ list.tag.replace(']]]', ':countdown]]]') }}</span>
-          </p>
-          <button size="sm" class="btn btn-primary cursor-pointer px-2 py-1.5 text-sm" :disabled="!expiryIsDirty || expirySaving" @click="saveExpiry">
-            {{ expirySaving ? 'Saving…' : expiryIsDirty ? 'Save expiry' : 'Saved' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Action buttons section: same vocabulary as the chat !list -->
-      <div class="border border-sidebar-border p-4">
-        <div class="mb-3">
-          <h3 class="text-sm font-semibold text-foreground">Actions</h3>
-          <p class="mt-0.5 text-xs text-muted-foreground">
-            Same vocabulary as <span class="font-mono">!{{ metaCommand?.command || 'list' }} {{ list.slug }} &lt;action&gt;</span> in chat.
-            Destructive actions snapshot first.
-          </p>
-        </div>
-        <div class="grid gap-6 md:grid-cols-2">
-          <!-- Left column: existing action buttons -->
-          <div class="flex flex-col items-start gap-x-6 gap-y-3">
-            <!-- Inspect: read-only peeks -->
-            <div class="flex flex-wrap items-center gap-2">
-              <div class="w-full text-xs font-medium tracking-wide text-foreground">Inspect</div>
-              <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runCount">
-                <HashIcon class="h-3.5 w-3.5" /><span class="ml-1">Count</span>
-              </button>
-              <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runFirst">
-                <ArrowUpToLineIcon class="h-3.5 w-3.5" /><span class="ml-1">First</span>
-              </button>
-              <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runLast">
-                <ArrowDownToLineIcon class="h-3.5 w-3.5" /><span class="ml-1">Last</span>
-              </button>
-              <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runRandom">
-                <ShuffleIcon class="h-3.5 w-3.5" /><span class="ml-1">Random</span>
-              </button>
+          <!-- Snapshots card -->
+          <div class="border border-sidebar-border bg-black/2 p-5 dark:bg-[#0a0512]/50">
+            <div class="flex items-center gap-3">
+              <h3 class="flex min-w-0 flex-1 items-center gap-2 text-[15px] font-semibold text-foreground">
+                <HistoryIcon class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                Snapshots
+                <span class="rounded-full border border-sidebar-border px-2 py-px font-mono text-[11px] font-normal text-muted-foreground">
+                  {{ snapshots.length }}
+                </span>
+              </h3>
+              <button class="btn btn-chill btn-xs shrink-0 rounded-full" @click="takeManualSnapshot">Save snapshot</button>
             </div>
+            <p class="mt-2 text-xs text-muted-foreground">
+              {{
+                snapshots.length === 0
+                  ? 'No snapshots yet. They are created automatically before clear, draw and pop.'
+                  : 'Restoring a snapshot replaces the current items.'
+              }}
+            </p>
 
-            <!-- Pop: remove one item -->
-            <div class="flex flex-wrap items-center gap-2">
-              <div class="w-full text-xs font-medium tracking-wide text-foreground">Pop/draw</div>
-              <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="() => runPop('first')">
-                <ArrowUpFromLineIcon class="h-3.5 w-3.5" /><span class="ml-1">Pop first</span>
-              </button>
-              <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="() => runPop('last')">
-                <ArrowDownFromLineIcon class="h-3.5 w-3.5" /><span class="ml-1">Pop last</span>
-              </button>
-              <button class="btn btn-primary cursor-pointer" :disabled="runningAction !== null" @click="runDraw">
-                <DicesIcon class="h-3.5 w-3.5" /><span class="ml-1">Draw winner</span>
-              </button>
-            </div>
-
-            <!-- Whole list -->
-            <div class="flex flex-wrap items-center gap-2">
-              <div class="w-full text-xs font-medium tracking-wide text-foreground">List</div>
-              <button class="btn btn-chill cursor-pointer" :disabled="runningAction !== null" @click="runClone">
-                <CopyPlusIcon class="h-3.5 w-3.5" /><span class="ml-1">Clone</span>
-              </button>
+            <div v-if="snapshotsLoading" class="mt-3 text-xs text-muted-foreground">Loading…</div>
+            <template v-else-if="snapshots.length > 0">
               <button
-                class="btn btn-chill cursor-pointer text-destructive hover:text-destructive"
-                :disabled="runningAction !== null"
-                @click="runClear"
+                type="button"
+                class="mt-2 cursor-pointer text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                @click="showSnapshots = !showSnapshots"
               >
-                <EraserIcon class="h-3.5 w-3.5" /><span class="ml-1">Clear</span>
+                {{ showSnapshots ? 'Hide snapshots' : 'Show snapshots' }}
               </button>
-            </div>
-          </div>
-
-          <!-- Right column: per-action chat permissions for THIS list -->
-          <div class="space-y-3">
-            <div>
-              <div class="text-xs font-medium tracking-wide text-foreground">Allow viewers in chat</div>
-              <p class="mt-0.5 text-xs text-muted-foreground">
-                Unchecked = moderator+ only (default). Checked = everyone can run this action via
-                <span class="font-mono">!{{ metaCommand?.command || 'list' }} {{ list.slug }} &lt;action&gt;</span>. Settings apply only to this list.
-                <span v-if="permissionSaving" class="ml-1 italic">Saving…</span>
-              </p>
-            </div>
-            <div v-for="group in PERMISSION_GROUPS" :key="group.title" class="space-y-1">
-              <div class="text-xs font-medium tracking-wide text-muted-foreground">{{ group.title }}</div>
-              <div class="grid grid-cols-2 gap-x-3 gap-y-1">
-                <label v-for="action in group.actions" :key="action.key" class="flex cursor-pointer items-center gap-2 text-xs text-foreground">
-                  <input
-                    type="checkbox"
-                    class="cursor-pointer"
-                    :checked="isActionOpen(action.key)"
-                    @change="(e) => toggleActionPermission(action.key, (e.target as HTMLInputElement).checked)"
-                  />
-                  <span class="font-mono">{{ action.label }}</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Snapshots panel: history of destructive actions, restorable -->
-      <div class="border border-sidebar-border p-4">
-        <div class="mb-3 flex items-center justify-between gap-2">
-          <button type="button" class="flex cursor-pointer items-center gap-2 text-left" @click="showSnapshots = !showSnapshots">
-            <HistoryIcon class="h-4 w-4 text-muted-foreground" />
-            <h3 class="text-sm font-semibold text-foreground">Snapshots</h3>
-            <span class="text-xs text-muted-foreground">({{ snapshots.length }})</span>
-            <span class="text-xs text-muted-foreground">{{ showSnapshots ? '▾' : '▸' }}</span>
-          </button>
-          <Button size="sm" variant="ghost" class="cursor-pointer" @click="takeManualSnapshot">
-            <PlusIcon class="h-3.5 w-3.5" />
-            <span class="ml-1">Save snapshot</span>
-          </Button>
-        </div>
-        <div v-if="showSnapshots">
-          <div v-if="snapshotsLoading" class="text-sm text-muted-foreground">Loading…</div>
-          <div v-else-if="snapshots.length === 0" class="rounded border border-dashed py-4 text-center text-sm text-muted-foreground">
-            No snapshots yet. They're created automatically before clear/draw/pop.
-          </div>
-          <div v-else class="space-y-2">
-            <div
-              v-for="snap in snapshots"
-              :key="snap.id"
-              class="flex flex-wrap items-center justify-between gap-2 rounded border border-sidebar-border p-1"
-            >
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <Badge variant="outline" class="text-[10px]">{{ REASON_LABELS[snap.reason] ?? snap.reason }}</Badge>
+              <div v-if="showSnapshots" class="mt-2 space-y-2">
+                <div v-for="snap in snapshots" :key="snap.id" class="flex flex-wrap items-center gap-2 border border-sidebar-border p-2">
+                  <span class="rounded-full border border-sidebar-border px-2 py-px text-[10px] text-muted-foreground">
+                    {{ REASON_LABELS[snap.reason] ?? snap.reason }}
+                  </span>
                   <span class="text-xs text-foreground">{{ snap.item_count }} item{{ snap.item_count === 1 ? '' : 's' }}</span>
-                  <span class="text-xs text-muted-foreground">• {{ snapshotAge(snap.created_at) }}</span>
-                  <Badge v-if="snap.pinned" variant="secondary" class="text-[10px]">
-                    <PinIcon class="mr-1 h-2.5 w-2.5" />
-                    Pinned
-                  </Badge>
+                  <span class="text-[11px] text-muted-foreground">{{ snapshotAge(snap.created_at) }}</span>
+                  <div class="flex-1"></div>
+                  <button
+                    :title="snap.pinned ? 'Unpin' : 'Pin (survives retention)'"
+                    class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
+                    @click="togglePin(snap)"
+                  >
+                    <PinIcon class="h-3 w-3" :class="snap.pinned ? 'fill-current' : ''" />
+                  </button>
+                  <button
+                    title="Restore to this snapshot"
+                    class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
+                    @click="restoreSnapshot(snap)"
+                  >
+                    <RotateCcwIcon class="h-3 w-3" />
+                  </button>
+                  <button
+                    title="Delete this snapshot"
+                    class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-red-500/50 hover:text-red-600 dark:border-white/10 dark:hover:text-red-400"
+                    @click="deleteSnapshot(snap)"
+                  >
+                    <Trash2Icon class="h-3 w-3" />
+                  </button>
                 </div>
               </div>
-              <div class="flex items-center gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  class="cursor-pointer"
-                  :title="snap.pinned ? 'Unpin' : 'Pin (survives retention)'"
-                  @click="togglePin(snap)"
-                >
-                  <PinIcon class="h-3.5 w-3.5" :class="snap.pinned ? 'fill-current' : ''" />
-                </Button>
-                <Button size="sm" variant="ghost" class="cursor-pointer" title="Restore to this snapshot" @click="restoreSnapshot(snap)">
-                  <RotateCcwIcon class="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  class="cursor-pointer text-destructive hover:text-destructive"
-                  title="Delete this snapshot"
-                  @click="deleteSnapshot(snap)"
-                >
-                  <Trash2Icon class="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
+            </template>
           </div>
-        </div>
-      </div>
 
-      <!-- Append commands section -->
-      <div class="border border-sidebar-border p-4">
-        <div class="mb-3 flex items-center justify-between">
-          <div>
-            <h3 class="text-sm font-semibold text-foreground">Append commands</h3>
-            <p class="mt-0.5 text-xs text-muted-foreground">
-              Chat commands that append to this list when fired. Use Bot Command syntax like
-              <span class="font-mono">[[[bot:from_user]]]</span> in the value template.
-            </p>
-          </div>
-          <button class="btn btn-primary shrink-0 cursor-pointer" @click="openAppenderAdd">
-            <PlusIcon class="h-3.5 w-3.5" />
-            <span class="ml-1">Add command</span>
-          </button>
-        </div>
-
-        <div v-if="appendersLoading" class="text-sm text-muted-foreground">Loading…</div>
-        <div v-else-if="appenders.length === 0" class="rounded border border-dashed py-6 text-center text-sm text-muted-foreground">
-          No append commands yet. Add one to let chatters grow this list.
-        </div>
-        <div v-else class="space-y-6">
-          <div v-for="a in appenders" :key="a.id" class="flex flex-wrap items-start justify-between gap-2 rounded border border-sidebar-border p-2.5">
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-mono text-sm font-medium text-foreground">!{{ a.command }}</span>
-                <Badge variant="outline" class="text-[10px]">{{ a.permission_level }}</Badge>
-                <Badge variant="secondary" class="text-[10px]">{{ DEDUP_LABELS[a.dedup_policy] }}</Badge>
-                <Badge v-if="a.max_size" variant="outline" class="text-[10px]">max {{ a.max_size }}</Badge>
-                <Badge v-if="a.cooldown_seconds > 0" variant="outline" class="text-[10px]">{{ a.cooldown_seconds }}s cd</Badge>
-                <Badge v-if="!a.enabled" variant="destructive" class="text-[10px]">disabled</Badge>
-              </div>
-              <p class="mt-1 truncate font-mono text-xs text-muted-foreground" :title="a.value_template">appends: {{ a.value_template }}</p>
-              <p v-if="a.success_reply" class="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground">
-                <MessageSquareIcon class="mt-0.5 h-3 w-3 shrink-0" />
-                <span class="truncate" :title="a.success_reply">success reply: {{ a.success_reply }}</span>
+          <!-- Danger zone -->
+          <div class="border border-red-500/20 bg-black/2 p-5 dark:bg-[#0a0512]/50">
+            <h3 class="mb-3 text-[15px] font-semibold text-foreground">Danger zone</h3>
+            <div class="flex items-center gap-3 border-b border-sidebar-border pb-3">
+              <p class="min-w-0 flex-1 text-xs leading-normal text-muted-foreground">
+                {{
+                  list.disabled_at !== null
+                    ? 'The list keeps its items but appends and chat actions are paused.'
+                    : 'Pause appends and chat actions. Items are kept.'
+                }}
               </p>
-              <p v-if="a.args_empty_reply" class="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground">
-                <MessageSquareIcon class="mt-0.5 h-3 w-3 shrink-0" />
-                <span class="truncate" :title="a.args_empty_reply">empty-args reply: {{ a.args_empty_reply }}</span>
-              </p>
+              <button
+                class="btn btn-sm shrink-0 rounded-full"
+                :class="list.disabled_at !== null ? 'btn-cancel' : 'btn-warning'"
+                @click="toggleDisabled"
+              >
+                {{ list.disabled_at !== null ? 'Enable list' : 'Disable list' }}
+              </button>
             </div>
-            <div class="flex items-center gap-1">
-              <Button size="sm" variant="ghost" class="cursor-pointer" @click="openAppenderEdit(a)">
-                <PencilIcon class="h-3.5 w-3.5" />
-              </Button>
-              <Button size="sm" variant="ghost" class="cursor-pointer text-destructive hover:text-destructive" @click="deleteAppender(a)">
-                <Trash2Icon class="h-3.5 w-3.5" />
-              </Button>
+            <div class="flex items-center gap-3 pt-3">
+              <p class="min-w-0 flex-1 text-xs leading-normal text-muted-foreground">
+                Delete the list, its items and its snapshots. There is no undo.
+              </p>
+              <button
+                class="btn btn-danger btn-sm shrink-0 rounded-full"
+                :disabled="!!isActiveLocked || list.recipe_instance_id !== null"
+                :title="list.recipe_instance_id !== null ? 'Delete the recipe instance to remove this list.' : 'Delete this list permanently.'"
+                @click="deleteActive"
+              >
+                Delete list
+              </button>
             </div>
           </div>
         </div>
@@ -1220,7 +1279,7 @@ async function loadMeta() {
             </div>
           </div>
           <DialogFooter>
-            <button variant="outline" class="btn btn-secondary cursor-pointer" @click="appenderModalOpen = false">Cancel</button>
+            <button class="btn btn-secondary cursor-pointer" @click="appenderModalOpen = false">Cancel</button>
             <button class="btn btn-primary cursor-pointer" :disabled="savingAppender" @click="saveAppender">
               {{ savingAppender ? 'Saving…' : 'Save' }}
             </button>
@@ -1230,3 +1289,24 @@ async function loadMeta() {
     </div>
   </AppLayout>
 </template>
+
+<style scoped>
+/* Disabled-list nudge banner: soft red radial wash anchored on the left,
+   full-strength in dark mode (the design's signature look), a light tint in
+   light mode. */
+.list-nudge {
+  border-radius: 24px;
+  border: 1px solid rgb(239 68 68 / 0.25);
+  background: radial-gradient(ellipse 60% 140% at 0% 50%, rgb(220 38 38 / 0.14) 0%, rgb(220 38 38 / 0.06) 35%, transparent 70%);
+}
+.dark .list-nudge {
+  border: 0;
+  background: radial-gradient(
+    ellipse 60% 140% at 0% 50%,
+    rgb(220 38 38 / 0.55) 0%,
+    rgb(220 38 38 / 0.28) 35%,
+    rgb(30 18 22 / 0.9) 70%,
+    rgb(18 15 20 / 0.95) 100%
+  );
+}
+</style>

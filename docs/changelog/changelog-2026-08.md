@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - feat(lists): the list detail page gets its designed layout
+
+`/dashboard/lists/{slug}` was a single stacked column of panels. It now implements the "List Edit" design canvas: a two-column layout (editor left, controls right) with the list's state readable at a glance from the title row.
+
+- **Title row**: list name as a proper heading, an Active/Disabled status pill, the recipe/locked badges, and one save chip on the right. The chip reads "Saved" when clean and becomes a "Save changes" button when the editor OR the expiry panel is dirty - it chains the two focused PUTs the server expects, so the separate "Save expiry" button is gone.
+- **Chat actions panel** replaces the old buttons-left/checkboxes-right split: one row per action with a run button and a viewer-access toggle side by side. Every action is now runnable from the dashboard, including search, searchall, disable and enable, which previously had checkboxes but no buttons. The pop row keeps two run buttons (first/last).
+- **Disabled state is loud**: a red nudge banner under the header with an "Enable list" CTA. The design's banner copy claimed the tag renders nothing while disabled - that is wrong (items stay visible; only appends/actions pause), so the shipped copy says what actually happens.
+- **Danger zone card** collects disable/enable and delete, replacing the buttons that sat under the textarea. Append commands render as richer cards with pill badges and their success/no-args replies inline.
+- Snapshots keep their full restore/pin/delete list (not in the mock, still real functionality) behind a show/hide link inside the redesigned card.
+- No backend changes, no route changes, no new components. Line count now reads "0 lines" for an empty list instead of 1.
+
 ## August 23rd, 2026 - chore(nav): Triggers moves to the user menu
 
 Triggers sat in the main sidebar next to Overlays, Alerts, Blocks and Lists, which are the things you make. Triggers is where you wire an already-made alert to an event - closer to Integrations than to a content type - so it now lives in the user dropdown alongside Account Settings and Integrations, and the sidebar is one item shorter.
