@@ -11,7 +11,6 @@ import {
   BookOpen,
   Blocks,
   Brackets,
-  CircleCheck,
   FileText,
   Flag,
   HashIcon,
@@ -57,7 +56,6 @@ const mainNavItems = computed<NavItem[]>(() =>
         { title: 'Blocks', href: '/templates?filter=mine&type=block', icon: Blocks },
         { title: 'Lists', href: route('lists.index'), icon: ListIcon },
         { title: 'Kits', href: route('kits.index'), icon: LayoutGrid },
-        { title: 'Skills', href: route('skills.index'), icon: CircleCheck },
       ]
     : [],
 );
@@ -180,10 +178,18 @@ const adminNavItems = computed<NavItem[]>(() => {
           :href="`https://github.com/jasperfrontend/overlabels/commit/${commitHash}`"
           target="_blank"
           rel="noopener noreferrer"
-          class="transition-colors hover:text-muted-foreground"
+          class="transition-colors hover:text-muted-foreground hover:underline"
         >
           {{ commitHash }}
         </a>
+        |
+        <a
+          href="https://uptime.overlabels.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="transition-colors hover:text-muted-foreground hover:underline"
+          >Uptime</a
+        >
       </div>
     </SidebarFooter>
   </Sidebar>
