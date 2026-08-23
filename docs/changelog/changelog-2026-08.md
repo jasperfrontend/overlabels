@@ -1,5 +1,11 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - chore(nav): Triggers moves to the user menu
+
+Triggers sat in the main sidebar next to Overlays, Alerts, Blocks and Lists, which are the things you make. Triggers is where you wire an already-made alert to an event - closer to Integrations than to a content type - so it now lives in the user dropdown alongside Account Settings and Integrations, and the sidebar is one item shorter.
+
+- Same route, same page, same icon. Only the entry point moved.
+
 ## August 23rd, 2026 - feat(lists): one filter bar to rule them all, and Lists gets a real one
 
 The filter-and-search bar that tops `/templates` and `/dashboard/recents` was the same design implemented twice, and `/dashboard/lists` had a third, different thing: a search box that only looped over already-loaded rows client-side, never touched the URL, and looked nothing like the other two. Browsing Overlays -> Alerts -> Blocks -> Lists now keeps one consistent, deep-linkable search UI.

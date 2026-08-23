@@ -21,7 +21,6 @@ import {
   LayoutGrid,
   LogIn,
   MapPin,
-  Megaphone,
   MessageSquare,
   MessageSquareCode,
   Newspaper,
@@ -47,7 +46,7 @@ const isAdmin = computed(() => page.props.isAdmin);
 const commitHash = __COMMIT_HASH__;
 
 // These arrays call route() for routes that only exist in the authenticated
-// Ziggy group, so they must be computed and gated by `user` - building them
+// Ziggy group, so they must be computed and gated by `user`. Building them
 // eagerly would call route() for a logged-out visitor (whose `guest` group
 // lacks these names) and Ziggy would throw.
 const mainNavItems = computed<NavItem[]>(() =>
@@ -56,7 +55,6 @@ const mainNavItems = computed<NavItem[]>(() =>
         { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers },
         { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell },
         { title: 'Blocks', href: '/templates?filter=mine&type=block', icon: Blocks },
-        { title: 'Triggers', href: route('triggers.index'), icon: Megaphone },
         { title: 'Lists', href: route('lists.index'), icon: ListIcon },
         { title: 'Kits', href: route('kits.index'), icon: LayoutGrid },
         { title: 'Skills', href: route('skills.index'), icon: CircleCheck },
