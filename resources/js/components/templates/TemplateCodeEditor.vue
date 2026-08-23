@@ -7,6 +7,7 @@ import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { ChevronDown, ChevronUp, FileCode2, Code, Maximize, Minimize, Palette, Wind } from '@lucide/vue';
+import { Link } from '@inertiajs/vue3';
 
 const headValue = defineModel<string>('head', { required: true });
 const htmlValue = defineModel<string>('body', { required: true });
@@ -201,20 +202,8 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
                 <em>before</em> your own CSS tab - so anything you write by hand in CSS wins on conflicts.
               </p>
 
-              <div class="my-6 rounded border-l-4 border-yellow-500 bg-yellow-500/10 p-3">
-                <p class="font-semibold text-yellow-700 dark:text-yellow-300">Preview caveat</p>
-                <p class="mt-1 text-yellow-800 dark:text-yellow-200">
-                  Tailwind classes do <strong>not</strong> render in the Ctrl+P preview modal or at
-                  <code class="rounded bg-sidebar px-1">/preview/{slug}</code>. Those previews only inline the CSS tab and sample-substituted HTML -
-                  the compile step runs on save, so you only see the utility classes paint on an authenticated overlay URL (<code
-                    class="rounded bg-sidebar px-1"
-                    >/overlay/{slug}#token</code
-                  >).
-                </p>
-              </div>
-
               <div class="my-4">
-                <h3 class="text-lg font-semibold">Dynamic class names</h3>
+                <h3 class="text-lg font-semibold">Dynamic class names / partials</h3>
                 <p class="mt-1">
                   Classes computed at render time via tags (e.g. <code class="rounded bg-sidebar px-1">class="text-[[[c:color]]]"</code>) won't get
                   CSS generated, because the compiler only sees the pre-substitution template source. For those, hand-write the rules in the CSS tab.
@@ -227,8 +216,7 @@ const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneD
                 Powered by
                 <a href="https://unocss.dev/" target="_blank" rel="noopener" class="cursor-pointer underline hover:text-foreground">UnoCSS</a> with
                 <code class="rounded bg-sidebar px-1">presetWind3</code>. Most Tailwind v3 utilities, arbitrary values, and gradient helpers compile
-                identically. Found a Tailwind v3 class that doesn't parse? Let me know! Drop an email to
-                <a href="mailto:jasper@emailjasper.com" class="cursor-pointer underline hover:text-foreground">jasper@emailjasper.com</a>. Thanks!
+                identically. Read the relevant <Link class="cursor-pointer underline hover:text-foreground" target="_blank" href="/help/tailwind">documentation about Tailwind in Overlabels</Link>.
               </p>
             </div>
           </div>
