@@ -810,7 +810,10 @@ async function loadMeta() {
     <div class="mx-auto w-full max-w-6xl p-4 pb-16">
       <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
 
-      <a :href="route('lists.index')" class="mb-4 inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+      <a
+        :href="route('lists.index')"
+        class="mb-4 inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeftIcon class="h-3.5 w-3.5" />
         All lists
       </a>
@@ -821,9 +824,7 @@ async function loadMeta() {
         <span
           class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium"
           :class="
-            list.disabled_at === null
-              ? 'border-green-500/50 text-green-700 dark:text-green-400'
-              : 'border-muted-foreground/40 text-muted-foreground'
+            list.disabled_at === null ? 'border-green-500/50 text-green-700 dark:text-green-400' : 'border-muted-foreground/40 text-muted-foreground'
           "
         >
           <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
@@ -924,7 +925,10 @@ async function loadMeta() {
             </div>
 
             <div v-if="appendersLoading" class="mt-4 text-sm text-muted-foreground">Loading…</div>
-            <div v-else-if="appenders.length === 0" class="mt-4 border border-dashed border-sidebar-border py-6 text-center text-sm text-muted-foreground">
+            <div
+              v-else-if="appenders.length === 0"
+              class="mt-4 border border-dashed border-sidebar-border py-6 text-center text-sm text-muted-foreground"
+            >
               No append commands yet. Add one to let chatters grow this list.
             </div>
             <div v-else class="mt-4 space-y-3">
@@ -965,7 +969,9 @@ async function loadMeta() {
                     <Trash2Icon class="h-3 w-3" />
                   </button>
                 </div>
-                <p class="mt-2.5 truncate font-mono text-[11.5px] text-foreground/55" :title="a.value_template">appends&nbsp;&nbsp;{{ a.value_template }}</p>
+                <p class="mt-2.5 truncate font-mono text-[11.5px] text-foreground/55" :title="a.value_template">
+                  appends&nbsp;&nbsp;{{ a.value_template }}
+                </p>
                 <div v-if="a.success_reply || a.args_empty_reply" class="mt-2 flex flex-col gap-1">
                   <div v-if="a.success_reply" class="flex items-center gap-2 text-[11.5px] text-foreground/45">
                     <CornerDownRightIcon class="h-3 w-3 shrink-0" />
@@ -989,13 +995,17 @@ async function loadMeta() {
           <div class="border border-sidebar-border bg-black/2 p-5 dark:bg-[#0a0512]/50">
             <h3 class="text-[15px] font-semibold text-foreground">Chat actions</h3>
             <p class="mt-0.5 text-xs leading-normal text-muted-foreground">
-              Run here, or in chat as <code>!{{ metaCommand?.command || 'list' }} {{ list.slug }} &lt;action&gt;</code
-              >. Destructive actions snapshot first.
+              Run here, or in chat as <code>!{{ metaCommand?.command || 'list' }} {{ list.slug }} &lt;action&gt;</code>. Destructive actions snapshot
+              first.
             </p>
 
             <div v-for="group in ACTION_GROUPS" :key="group.title" class="mt-3.5">
               <div class="mb-1 font-mono text-[10px] tracking-wider text-muted-foreground/80 uppercase">{{ group.title }}</div>
-              <div v-for="item in group.items" :key="item.key" class="flex items-center gap-2.5 rounded px-0.5 py-1 hover:bg-black/3 dark:hover:bg-white/3">
+              <div
+                v-for="item in group.items"
+                :key="item.key"
+                class="flex items-center gap-2.5 rounded px-0.5 py-1 hover:bg-black/3 dark:hover:bg-white/3"
+              >
                 <template v-if="item.pop">
                   <button
                     title="Pop first item"
@@ -1027,12 +1037,14 @@ async function loadMeta() {
                 <button
                   role="switch"
                   :aria-checked="isActionOpen(item.key)"
-                  :title="isActionOpen(item.key) ? 'Everyone can run this in chat. Click for moderators only.' : 'Moderators only. Click to open to everyone.'"
+                  :title="
+                    isActionOpen(item.key)
+                      ? 'Everyone can run this in chat. Click for moderators only.'
+                      : 'Moderators only. Click to open to everyone.'
+                  "
                   class="relative h-[17px] w-[30px] shrink-0 cursor-pointer rounded-full border"
                   :class="
-                    isActionOpen(item.key)
-                      ? 'border-green-500/60 bg-green-500/25'
-                      : 'border-black/15 bg-black/5 dark:border-white/15 dark:bg-white/6'
+                    isActionOpen(item.key) ? 'border-green-500/60 bg-green-500/25' : 'border-black/15 bg-black/5 dark:border-white/15 dark:bg-white/6'
                   "
                   @click="toggleActionPermission(item.key)"
                 >
@@ -1072,7 +1084,12 @@ async function loadMeta() {
               Whole-list deadline
             </label>
             <div class="flex gap-2">
-              <input id="expires-at" v-model="expiresAtLocal" type="datetime-local" class="input-border min-w-0 flex-1 cursor-pointer font-mono text-xs" />
+              <input
+                id="expires-at"
+                v-model="expiresAtLocal"
+                type="datetime-local"
+                class="input-border min-w-0 flex-1 cursor-pointer font-mono text-xs"
+              />
               <button v-if="expiresAtLocal" class="btn btn-chill btn-xs shrink-0 rounded-full" @click="clearExpiresAt">Clear</button>
             </div>
             <p class="mt-1.5 text-[11px]">
