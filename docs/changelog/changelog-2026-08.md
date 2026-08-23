@@ -1,5 +1,13 @@
 # CHANGELOG AUGUST 2026
 
+## August 23rd, 2026 - fix(overlays): foreach loops can now actually reach the 50-item cap
+
+Setting a foreach loop limit above 20 on `/settings/account` did nothing: the three Helix fetchers behind the iterables (`getChannelFollowers`, `getFollowedChannels`, `getChannelSubscribers` in `TwitchApiService`) all defaulted to `first = 20`, and the render path never passed anything else. The per-user cap slices whatever was fetched, so `min(20 rows, cap 50)` = 20 - and caps below 20 worked, which is why it never looked broken.
+
+- All three defaults now use `User::FOREACH_CAP_MAX` (50), so the fetch always covers the highest cap a user can set. A docblock note pins the constraint: the fetch default must stay >= the max cap or every loop silently pins below it.
+- Deliberate trade-off: `enrichWithProfileImages` now runs over up to 50 rows per cache refresh instead of 20. Accepted over threading each user's actual cap into the fetch, which would have fragmented the shared cache.
+- The `goals` iterable is unaffected (Twitch returns all goals, no `first` param), and `chat` is client-side by design.
+
 ## August 23rd, 2026 - style(collection): row state moves to the accent bar, not a Badge
 
 Disabled lists on `/dashboard/lists` and private templates on `/templates` were both flagged with a red destructive Badge sitting in the row content. The state now lives where the row's identity already does: the collection-row left accent bar, recolored red across all three stops (rest, hover, press).
