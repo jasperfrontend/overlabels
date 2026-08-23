@@ -2,8 +2,9 @@
 
 ## August 23rd, 2026 - style(lists): two-column layout on the lists index
 
-The `!list` meta-command card on `/dashboard/lists` sat below the collection, so with more than a few lists it was buried off-screen. On `lg` and up the page is now two columns - lists (create card, search, collection) on the left, the meta-command card in a 356px rail on the right - using the same `lg:grid-cols-[minmax(0,1fr)_356px]` grid as the list detail page. Below `lg` everything stacks as before.
+The `!list` meta-command card on `/dashboard/lists` sat below the collection, so with more than a few lists it was buried off-screen. On `lg` and up the page is now two columns - lists (create card, collection) on the left, the meta-command card in a 356px rail on the right - using the same `lg:grid-cols-[minmax(0,1fr)_356px]` grid as the list detail page. Below `lg` everything stacks as before.
 
+- The search bar stays page-wide above the split, matching the filter bar placement on the other dashboard routes.
 - Layout only: no markup inside the cards changed, no script changes.
 
 ## August 23rd, 2026 - feat(lists): the append command dialog gets its designed layout, and show.vue slims down
