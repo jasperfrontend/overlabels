@@ -180,10 +180,18 @@ const adminNavItems = computed<NavItem[]>(() => {
           :href="`https://github.com/jasperfrontend/overlabels/commit/${commitHash}`"
           target="_blank"
           rel="noopener noreferrer"
-          class="transition-colors hover:text-muted-foreground"
+          class="transition-colors hover:text-muted-foreground hover:underline"
         >
           {{ commitHash }}
         </a>
+        |
+        <a
+          href="https://uptime.overlabels.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="transition-colors hover:text-muted-foreground hover:underline"
+          >Uptime</a
+        >
       </div>
     </SidebarFooter>
   </Sidebar>
