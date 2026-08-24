@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import Heading from '@/components/Heading.vue';
 import { Head } from '@inertiajs/vue3';
 import { Copy, Check, Terminal, ExternalLink, Search, AlertTriangle } from '@lucide/vue';
 import { ref, computed } from 'vue';
@@ -141,10 +142,11 @@ const filteredGrouped = computed<{ family: EventFamily; label: string; events: E
   <AppLayout :breadcrumbs="breadcrumbs">
     <SettingsLayout>
       <div class="flex flex-col gap-4">
-        <div class="flex items-center gap-3">
-          <Terminal class="h-6 w-6 text-violet-400 dark:text-violet-300" />
-          <h1 class="text-2xl font-semibold">Testing Guide</h1>
-        </div>
+        <Heading title="Testing Guide">
+          <template #icon>
+            <Terminal class="h-6 w-6 text-violet-400 dark:text-violet-300" />
+          </template>
+        </Heading>
 
         <p class="max-w-4xl text-sm text-foreground">
           Click any event to copy its
