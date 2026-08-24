@@ -20,8 +20,6 @@ import {
   LayoutGrid,
   LogIn,
   MapPin,
-  MessageSquare,
-  MessageSquareCode,
   Newspaper,
   Pipette,
   Radio,
@@ -59,15 +57,6 @@ const mainNavItems = computed<NavItem[]>(() =>
       ]
     : [],
 );
-const botNavItems = computed<NavItem[]>(() =>
-  user.value
-    ? [
-        { title: 'Commands', href: route('settings.bot.commands.index'), icon: MessageSquare },
-        { title: 'Aliases', href: route('settings.bot.aliases.index'), icon: MessageSquareCode },
-      ]
-    : [],
-);
-
 const alertsNavItems = computed<NavItem[]>(() =>
   user.value
     ? [
@@ -151,7 +140,6 @@ const adminNavItems = computed<NavItem[]>(() => {
     <SidebarContent>
       <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" />
       <NavMain v-if="user && alertsNavItems.length > 0" label="My events" :items="alertsNavItems" />
-      <NavMain v-if="user && botNavItems.length > 0" label="Chat bot" :items="botNavItems" />
       <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
       <NavMain v-if="!user" label="Learn" :items="helpNavItems" />

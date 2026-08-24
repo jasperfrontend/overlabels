@@ -1,5 +1,18 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - fix(settings): the settings menu stops linking out of itself
+
+A full route/page/layout/link map of the app (five agents, 296 routes, 70 pages, 633 links) turned up exactly four critical hits, and all four were the same thing: the settings sidebar's "Developer tools" group linked `/tokens`, `/tags`, `/twitchdata` and `/testing`, and every one of those pages wrapped itself in plain `AppLayout`. Click any of them from a settings page and the menu you just used disappears. The four pages now nest `SettingsLayout` inside `AppLayout` like the other fifteen settings pages, and carry the same `Dashboard > ...` breadcrumbs.
+
+- **Bot commands and Bot aliases are back in the settings menu.** Both pages already rendered inside the settings layout, but the menu had no entry for them, so the page showed a menu that did not contain the page you were on. Chat stays where it is: those settings configure the chat overlay, not the bot, and they are unrelated.
+- **The "Chat bot" group is gone from the main sidebar.** Its two items (Commands, Aliases) were the clearest case of a top-level menu entry landing in a different layout with a second sidebar. Both live in the settings menu now, stay in the command palette, and the Integrations page still has its Commands / Aliases buttons. No "moved to settings" placeholder: a menu item whose only job is to say "not here" is the kind of thing this cleanup removes.
+- **Triggers and Wiring move into settings too, and out of the user menu.** Neither is a setting - both are read-only views of what is wired up - but they were reachable from the avatar dropdown and nowhere else. Settings is now the one home for every page that is not content, and the user menu is back to Account Settings, Integrations and Log out.
+- **`/tokens` renders its tokens through `CollectionList`**, the same row as `/triggers`: name plus a mono prefix chip, one muted meta line (views, created, expires, last viewed), hover-revealed Revoke / Delete. A revoked token gets the amber accent bar and a one-line note instead of a red REVOKED shout. It was the last hand-rolled card list among the tool pages; five lucide icons and a `bg-sidebar-accent` card went with it.
+- **Menu items highlight by path prefix, not exact match.** `/settings/integrations/kofi` now lights up Integrations and `/settings/bot/commands/create` lights up Bot commands. Before, every sub-page highlighted nothing.
+- **The settings body was capped at 576px** (`md:max-w-2xl` around a `max-w-xl` section), which is why the whole layout measured ~816px edge to edge. The column is now `min-w-0 flex-1` with the section at `max-w-4xl` - one number to tune if that is still too tight or too wide.
+- There is still no central place that decides a route's layout: each page imports its own, and `SettingsLayout` does not wrap `AppLayout`. That is unchanged and deliberate for this PR - the map exists to make the next steps small, not to justify a restructure.
+- Most of the line count in the four page files is Prettier re-indenting the templates one level deeper. The real change per page is one import, one breadcrumb and two tags.
+
 ## August 24th, 2026 - style(inputs): `input-border` is violet in light mode too
 
 `.input-border` used `border-border` at rest in the light theme but `border-violet-400/50` in dark, so a form looked like part of the design in dark mode and like a default browser form in light. Light now gets `border-violet-400/80`, and both themes deepen to solid violet on focus.

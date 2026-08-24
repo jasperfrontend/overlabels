@@ -18,6 +18,10 @@ const sidebarNavGroups: NavGroup[] = [
       { title: 'Account', href: '/settings/account' },
       { title: 'Chat', href: '/settings/chat' },
       { title: 'Integrations', href: '/settings/integrations' },
+      { title: 'Bot commands', href: '/settings/bot/commands' },
+      { title: 'Bot aliases', href: '/settings/bot/aliases' },
+      { title: 'Triggers', href: '/triggers' },
+      { title: 'Wiring', href: '/wiring' },
       { title: 'Usage', href: '/settings/usage' },
       { title: 'Controls', href: '/settings/controls' },
     ],
@@ -37,6 +41,10 @@ const sidebarNavGroups: NavGroup[] = [
 const page = usePage();
 
 const currentPath = page.url.split('?')[0];
+
+// Prefix match, so /settings/integrations/kofi and /settings/bot/commands/create
+// still light up their menu item. Exact match left every sub-page unhighlighted.
+const isActive = (href: string) => currentPath === href || currentPath.startsWith(href + '/');
 </script>
 
 <template>
@@ -57,7 +65,7 @@ const currentPath = page.url.split('?')[0];
               v-for="item in group.items"
               :key="item.href"
               variant="ghost"
-              :class="['w-full cursor-pointer justify-start', { 'bg-muted': currentPath === item.href }]"
+              :class="['w-full cursor-pointer justify-start', { 'bg-muted': isActive(item.href) }]"
               as-child
             >
               <Link :href="item.href">
@@ -70,8 +78,8 @@ const currentPath = page.url.split('?')[0];
 
       <Separator class="my-6 md:hidden" />
 
-      <div class="flex-1 md:max-w-2xl">
-        <section class="max-w-xl space-y-12">
+      <div class="min-w-0 flex-1">
+        <section class="max-w-4xl space-y-12">
           <slot />
         </section>
       </div>
