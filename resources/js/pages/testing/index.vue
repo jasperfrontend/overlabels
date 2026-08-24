@@ -2,9 +2,11 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import Heading from '@/components/Heading.vue';
+import GroupedCollection from '@/components/GroupedCollection.vue';
+import type { CollectionGroup } from '@/types/collection';
 import { Head } from '@inertiajs/vue3';
-import { Copy, Check, Terminal, ExternalLink, Search, AlertTriangle } from '@lucide/vue';
-import { ref, computed } from 'vue';
+import { Copy, Check, Terminal, ExternalLink, AlertTriangle } from '@lucide/vue';
+import { ref } from 'vue';
 
 const props = defineProps<{
   twitchId: string;
@@ -98,7 +100,6 @@ const eventCommands: EventCommand[] = [
   { type: 'channel.prediction.end', label: 'Prediction Ended', description: 'Winning outcome + payouts', family: 'predictions' },
 ];
 
-const searchQuery = ref('');
 const showCommand = ref(false);
 const copiedCommand = ref<string | null>(null);
 
@@ -114,25 +115,15 @@ async function copyCommand(eventType: string) {
   }, 2000);
 }
 
-const filteredEvents = computed(() => {
-  const query = searchQuery.value.toLowerCase().trim();
-  if (!query) return eventCommands;
-  return eventCommands.filter(
-    (e) =>
-      e.label.toLowerCase().includes(query) ||
-      e.type.toLowerCase().includes(query) ||
-      e.description.toLowerCase().includes(query) ||
-      FAMILY_LABELS[e.family].toLowerCase().includes(query),
-  );
-});
+const families: CollectionGroup<EventCommand>[] = FAMILY_ORDER.map((family) => ({
+  key: family,
+  label: FAMILY_LABELS[family],
+  items: eventCommands.filter((e) => e.family === family),
+}));
 
-const filteredGrouped = computed<{ family: EventFamily; label: string; events: EventCommand[] }[]>(() => {
-  return FAMILY_ORDER.map((family) => ({
-    family,
-    label: FAMILY_LABELS[family],
-    events: filteredEvents.value.filter((e) => e.family === family),
-  })).filter((g) => g.events.length > 0);
-});
+function eventMatches(e: EventCommand, query: string): boolean {
+  return e.label.toLowerCase().includes(query) || e.type.toLowerCase().includes(query) || e.description.toLowerCase().includes(query);
+}
 </script>
 
 <template>
@@ -175,58 +166,47 @@ const filteredGrouped = computed<{ family: EventFamily; label: string; events: E
           and back in to get a personal one.
         </div>
 
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div class="relative flex-1">
-            <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-            <input v-model="searchQuery" placeholder="Filter events..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
-          </div>
-          <label class="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-            <input type="checkbox" v-model="showCommand" class="cursor-pointer" />
-            Show command
-          </label>
-        </div>
+        <GroupedCollection :groups="families" :item-key="(e) => e.type" :matches="eventMatches" storage-key="testing_guide_expanded" noun="event">
+          <template #toolbar>
+            <label class="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+              <input type="checkbox" v-model="showCommand" class="cursor-pointer" />
+              Show command
+            </label>
+          </template>
 
-        <div class="text-xs text-muted-foreground">{{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }}</div>
+          <template #item="{ item: event }">
+            <div
+              class="group/row collection-row flex cursor-pointer items-center gap-3 p-3"
+              role="button"
+              tabindex="0"
+              :title="`Click to copy the trigger command for ${event.type}`"
+              @click="copyCommand(event.type)"
+              @keydown.enter.prevent="copyCommand(event.type)"
+            >
+              <div class="shrink-0 text-xs text-muted-foreground">
+                <Check v-if="copiedCommand === event.type" class="h-4 w-4 text-green-400" />
+                <Copy v-else class="h-4 w-4 opacity-60 group-hover/row:opacity-100" />
+              </div>
 
-        <div v-if="filteredEvents.length === 0" class="py-8 text-center text-sm text-muted-foreground">No events match "{{ searchQuery }}"</div>
-
-        <div v-else class="space-y-5">
-          <section v-for="group in filteredGrouped" :key="group.family" class="space-y-1.5">
-            <h2 class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              {{ group.label }} <span class="font-normal">({{ group.events.length }})</span>
-            </h2>
-            <ul class="divide-y divide-sidebar overflow-hidden rounded-md border border-sidebar bg-sidebar-accent/30">
-              <li
-                v-for="event in group.events"
-                :key="event.type"
-                class="group flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-sidebar-accent/60"
-                @click="copyCommand(event.type)"
-              >
-                <div class="shrink-0 text-xs text-muted-foreground">
-                  <Check v-if="copiedCommand === event.type" class="h-4 w-4 text-green-400" />
-                  <Copy v-else class="h-4 w-4 opacity-60 group-hover:opacity-100" />
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span class="text-sm font-medium" :class="copiedCommand === event.type ? 'text-green-400' : 'text-foreground'">{{
+                    event.label
+                  }}</span>
+                  <code class="rounded bg-sidebar-accent px-1.5 py-0.5 text-[10px] text-violet-400 dark:text-violet-300">{{ event.type }}</code>
                 </div>
-
-                <div class="min-w-0 flex-1">
-                  <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <span class="text-sm font-medium" :class="copiedCommand === event.type ? 'text-green-400' : 'text-foreground'">{{
-                      event.label
-                    }}</span>
-                    <code class="rounded bg-sidebar-accent px-1.5 py-0.5 text-[10px] text-violet-400 dark:text-violet-300">{{ event.type }}</code>
-                  </div>
-                  <p class="text-xs text-muted-foreground">{{ event.description }}</p>
-                  <input
-                    v-if="showCommand"
-                    :value="commandFor(event.type)"
-                    readonly
-                    class="input-border mt-1.5 w-full cursor-pointer px-2 py-1 font-mono text-[11px] text-green-500 dark:text-green-300"
-                    @click.stop="copyCommand(event.type)"
-                  />
-                </div>
-              </li>
-            </ul>
-          </section>
-        </div>
+                <p class="text-xs text-muted-foreground">{{ event.description }}</p>
+                <input
+                  v-if="showCommand"
+                  :value="commandFor(event.type)"
+                  readonly
+                  class="input-border mt-1.5 w-full cursor-pointer px-2 py-1 font-mono text-[11px] text-green-500 dark:text-green-300"
+                  @click.stop="copyCommand(event.type)"
+                />
+              </div>
+            </div>
+          </template>
+        </GroupedCollection>
 
         <div class="pb-8 text-sm text-muted-foreground">
           <p>
