@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - style(buttons): the settings pages join the `btn` system
+
+Second pass on the button unification. The settings pages were the last big holdout still importing the Shadcn `<Button>` component and hand-rolling `rounded` pill classes next to it, so the same page could show three different button shapes. 38 `<Button>` usages across the bot and integration pages become plain `<button>` / `<Link>` carrying `btn` plus a variant and a size, and the `Label` / `Input` / `Textarea` wrappers on the bot command form become native elements with `input-border`.
+
+- **This is a call-site sweep, not another restyle.** The only shape change is `.btn-danger` moving to the same 500/400 light-dark pairing every other variant uses, and `.btn-plain` becoming a genuine text link (underlined, no fill) rather than a black-or-white block, which is what every place using it actually wanted.
+- `collection-row-destructive` moves from red to amber. Red was reading as "this row is broken" on rows that are merely deletable, and red is now spoken for by `.btn-danger`.
+- The sidebar menu button and a scattering of panels, chips and callouts drop `rounded-md` / `rounded` to match the square buttons. 14 in total.
+- `WelcomeCard`'s four dashboard tiles were each a different variant - secondary, warning, cancel - which implied a difference in kind that does not exist. All four are now `btn-primary`.
+- **Known: `.btn-white` is unreadable in light mode.** It pairs `bg-white` with `text-accent`, and `--accent` is `hsl(0 0% 96.1%)` in the light theme, so the selected event-type chips on the Ko-fi and Buy Me a Coffee settings pages are white on white. Dark mode is fine. Not fixed here because picking the replacement token is a design call, not a typo.
+
 ## August 24th, 2026 - style(buttons): one button system, `overlabels-buttons-v2.css`
 
 `app.css` now imports `overlabels-buttons-v2.css` instead of `overlabels-buttons.css`. Buttons are square (`rounded-none`), have a solid fill instead of a 10%-alpha tint, and pick up a subtle top-to-bottom gradient on hover, so a primary action reads as a button at a glance rather than as a tinted label.

@@ -5,7 +5,6 @@ import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -117,7 +116,7 @@ function formatDate(iso: string | null): string {
 
     <SettingsLayout>
       <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <HeadingSmall title="StreamLabs" description="Receive donation alerts and update overlay controls from StreamLabs." />
           <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
@@ -139,9 +138,7 @@ function formatDate(iso: string | null): string {
             <p class="text-sm text-muted-foreground">
               Connect your StreamLabs account to receive donation alerts and live-updating controls in your overlays.
             </p>
-            <Button as-child>
-              <a href="/settings/integrations/streamlabs/redirect">Authenticate with StreamLabs</a>
-            </Button>
+            <a href="/settings/integrations/streamlabs/redirect" class="btn btn-primary">Authenticate with StreamLabs</a>
           </div>
         </template>
 
@@ -245,9 +242,9 @@ function formatDate(iso: string | null): string {
                   <p v-else-if="seedPreview" class="text-xs text-muted-foreground">Saving as {{ seedPreview }}</p>
                   <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
                 </div>
-                <Button type="button" variant="outline" class="cursor-pointer" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
+                <button type="button" class="btn btn-primary" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
                   {{ seedLoading ? 'Saving...' : 'Set starting total' }}
-                </Button>
+                </button>
               </div>
             </template>
 
@@ -273,9 +270,9 @@ function formatDate(iso: string | null): string {
                   <p v-else-if="seedPreview" class="text-xs text-muted-foreground">Saving as {{ seedPreview }}</p>
                   <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
                 </div>
-                <Button type="button" variant="outline" class="cursor-pointer" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
+                <button type="button" class="btn btn-primary" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
                   {{ seedLoading ? 'Saving...' : 'Set starting total' }}
-                </Button>
+                </button>
               </div>
             </template>
           </div>
@@ -289,7 +286,7 @@ function formatDate(iso: string | null): string {
             <p class="text-sm text-muted-foreground">
               Disconnecting StreamLabs will remove all StreamLabs-managed controls (donation counts, latest donor, etc.) from your overlays.
             </p>
-            <Button variant="destructive" size="sm" type="button" @click="disconnect"> Disconnect StreamLabs </Button>
+            <button type="button" @click="disconnect" class="btn btn-danger">Disconnect StreamLabs</button>
           </div>
         </template>
       </div>

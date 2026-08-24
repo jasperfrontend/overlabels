@@ -5,7 +5,6 @@ import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -87,7 +86,7 @@ function copyWebhookUrl() {
   if (!props.integration.webhook_url) return;
   navigator.clipboard.writeText(props.integration.webhook_url).then(() => {
     copied.value = true;
-    setTimeout(() => (copied.value = false), 2000);
+    setTimeout(() => (copied.value = false), 5000);
   });
 }
 
@@ -130,7 +129,7 @@ function formatDate(iso: string | null): string {
 
     <SettingsLayout>
       <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <HeadingSmall title="Throne" description="Receive gift and contribution alerts and update overlay controls from Throne." />
           <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
@@ -145,9 +144,9 @@ function formatDate(iso: string | null): string {
               settings.
             </p>
           </div>
-          <Button :disabled="connectForm.processing" @click="connect">
+          <button :disabled="connectForm.processing" @click="connect" class="btn btn-primary">
             {{ connectForm.processing ? 'Connecting...' : 'Connect Throne' }}
-          </Button>
+          </button>
         </div>
 
         <template v-else>
@@ -184,7 +183,7 @@ function formatDate(iso: string | null): string {
 
             <!-- Manual step: send them straight to Throne's webhook settings page -->
             <div class="mt-2 flex flex-wrap items-center gap-3">
-              <a href="https://throne.com/profile/integrations/webhook" target="_blank" rel="noopener" class="btn btn-primary cursor-pointer">
+              <a href="https://throne.com/profile/integrations/webhook" target="_blank" rel="noopener" class="btn btn-sm btn-primary">
                 Open Throne webhook settings -&gt;
               </a>
               <p class="text-xs" :class="copied ? 'font-medium text-violet-400' : 'text-muted-foreground'">
@@ -269,9 +268,9 @@ function formatDate(iso: string | null): string {
                 <p v-else-if="seedPreview" class="text-xs text-muted-foreground">Saving as {{ seedPreview }}</p>
                 <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
               </div>
-              <Button type="button" variant="outline" class="cursor-pointer" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
+              <button class="btn btn-primary" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
                 {{ seedLoading ? 'Saving...' : 'Set starting total' }}
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -282,14 +281,12 @@ function formatDate(iso: string | null): string {
             <p class="text-sm text-muted-foreground">
               Disconnecting Throne will remove all Throne-managed controls (gift counts, latest gifter, etc.) from your overlays.
             </p>
-            <Button variant="destructive" size="sm" type="button" @click="disconnect"> Disconnect Throne </Button>
+            <button type="button" @click="disconnect" class="btn btn-danger">Disconnect Throne</button>
           </div>
         </template>
 
         <div v-if="!integration.connected" class="pt-2">
-          <Button variant="outline" as-child>
-            <Link href="/settings/integrations">Cancel</Link>
-          </Button>
+          <Link href="/settings/integrations" class="btn btn-sm btn-chill">Cancel</Link>
         </div>
       </div>
     </SettingsLayout>

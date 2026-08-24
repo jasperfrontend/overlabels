@@ -52,19 +52,19 @@ const tiles = [
     label: 'My static overlays',
     icon: Layers,
     href: route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'static' }),
-    class: 'btn-secondary',
+    class: 'btn-primary',
   },
   {
     label: 'My alerts',
     icon: Bell,
     href: route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'alert' }),
-    class: 'btn-warning',
+    class: 'btn-primary',
   },
   {
     label: 'Recent events',
     icon: Activity,
     href: route('dashboard.recents'),
-    class: 'btn-cancel',
+    class: 'btn-primary',
   },
   {
     label: 'Recent updates',

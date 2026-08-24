@@ -3,7 +3,6 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Button } from '@/components/ui/button';
 import { type BreadcrumbItem } from '@/types';
 import { Plus, Pencil, Trash2, MessageSquare, Clock } from '@lucide/vue';
 import { useConfirm } from '@/composables/useConfirm';
@@ -72,11 +71,9 @@ function expiresIn(iso: string): string {
       <div class="space-y-6">
         <HeadingSmall
           title="Bot commands"
-          description="Custom chat commands that read from your controls, Twitch data, and the chatter who fired them. The bot speaks the resolved string."
+          description="Custom chat commands that read from your controls, Twitch data, and the chatter who fired them. The bot speaks the resolved string. Click the question mark bottom of the page to read related help documentation about the Overlabels bot."
         />
-        <div>
-          <a class="btn btn-primary" href="/help/bot/commands" target="_blank">Learn how Bot Commands work</a>
-        </div>
+
         <div v-if="!botEnabled" class="rounded border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
           <p class="text-foreground">The Overlabels bot isn't enabled yet. Bot commands are saved here, but nothing fires until the bot is on.</p>
           <Link href="/settings/integrations" class="mt-2 inline-block cursor-pointer underline hover:text-amber-400">
@@ -85,12 +82,10 @@ function expiresIn(iso: string): string {
         </div>
 
         <div class="flex justify-end">
-          <Button as-child class="cursor-pointer">
-            <Link href="/settings/bot/commands/create">
-              <Plus class="mr-2 size-4" />
-              New command
-            </Link>
-          </Button>
+          <Link href="/settings/bot/commands/create" class="btn btn-sm btn-primary flex items-center">
+            <Plus class="mr-2 size-4" />
+            New command
+          </Link>
         </div>
 
         <div v-if="props.commands.length === 0" class="rounded border border-sidebar-border p-8 text-center">
@@ -134,20 +129,13 @@ function expiresIn(iso: string): string {
             </div>
 
             <div class="flex shrink-0 gap-2">
-              <Button as-child variant="secondary" size="sm" class="cursor-pointer">
-                <Link :href="`/settings/bot/commands/${command.id}/edit`">
-                  <Pencil class="mr-1 size-3.5" />
-                  Edit
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                class="cursor-pointer text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
-                @click="deleteCommand(command)"
-              >
+              <Link :href="`/settings/bot/commands/${command.id}/edit`" class="btn btn-sm btn-primary">
+                <Pencil class="mr-1 size-3.5" />
+                Edit
+              </Link>
+              <button class="btn btn-danger" @click="deleteCommand(command)">
                 <Trash2 class="size-3.5" />
-              </Button>
+              </button>
             </div>
           </div>
         </div>

@@ -19,7 +19,7 @@ defineExpose({ generateFeedUrl });
 </script>
 
 <template>
-  <button @click="generateFeedUrl()" class="btn btn-primary cursor-pointer" title="Open your events feed on your phone">
+  <button @click="generateFeedUrl()" class="btn btn-sm btn-primary cursor-pointer" title="Open your events feed on your phone">
     <Smartphone class="mr-2 h-4 w-4" />
     Events feed
   </button>

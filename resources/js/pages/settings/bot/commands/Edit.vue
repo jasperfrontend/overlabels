@@ -5,10 +5,6 @@ import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { type BreadcrumbItem } from '@/types';
 import { ChevronLeft, Sparkles, AlertTriangle, Clock } from '@lucide/vue';
 
@@ -210,10 +206,10 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
         <form class="space-y-6" @submit.prevent="submit">
           <!-- Command -->
           <div class="space-y-2">
-            <Label for="command">Command</Label>
+            <label for="command" class="mb-1 block w-full text-sm">Command</label>
             <div class="flex items-center gap-1">
               <span class="text-foreground/60">!</span>
-              <Input id="command" v-model="form.command" placeholder="distance" maxlength="30" class="font-mono" />
+              <input id="command" v-model="form.command" placeholder="distance" maxlength="30" class="input-border font-mono" />
             </div>
             <p v-if="form.errors.command" class="text-sm text-rose-400">{{ form.errors.command }}</p>
             <p v-else class="text-xs text-foreground/60">
@@ -225,18 +221,20 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
           <!-- Reply -->
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <Label for="reply">Reply</Label>
-              <span class="text-xs" :class="charsLeft < 0 ? 'text-rose-400' : 'text-foreground/60'"> {{ previewLength }} / 500 chars </span>
+              <label for="reply" class="mb-1 block w-full text-sm">Reply</label>
+              <span class="text-xs whitespace-nowrap" :class="charsLeft < 0 ? 'text-rose-400' : 'text-foreground/60'">
+                {{ previewLength }} / 500 chars
+              </span>
             </div>
-            <Textarea
+            <textarea
               id="reply"
               v-model="form.reply"
               :rows="4"
-              class="font-mono text-sm"
+              class="input-border w-full font-mono text-sm"
               placeholder="Hi [[[bot:from_user]]], the count is [[[c:my_counter]]]"
             />
             <p v-if="form.errors.reply" class="text-sm text-rose-400">{{ form.errors.reply }}</p>
-            <div v-if="startsWithSlash" class="flex items-start gap-2 rounded border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+            <div v-if="startsWithSlash" class="flex items-start gap-2 border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
               <AlertTriangle class="mt-0.5 size-4 shrink-0" />
               <span>
                 Slash commands like <code class="text-amber-100">/timeout</code>, <code class="text-amber-100">/ban</code> or
@@ -248,7 +246,7 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
           </div>
 
           <!-- Preview -->
-          <div class="rounded border border-sidebar-border bg-sidebar-accent/30 p-4">
+          <div class="border border-sidebar-border bg-sidebar-accent/30 p-4">
             <div class="mb-2 flex items-center justify-between gap-2">
               <div class="flex items-center gap-2 text-xs tracking-wide text-foreground/60 uppercase">
                 <Sparkles class="size-3.5" />
@@ -286,7 +284,7 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
                 <span v-if="previewStale" class="text-xs text-amber-400">edited</span>
                 <button
                   type="button"
-                  class="inline-flex cursor-pointer items-center gap-1 rounded bg-foreground/10 px-2 py-1 text-xs hover:bg-foreground/15"
+                  class="inline-flex cursor-pointer items-center gap-1 bg-foreground/10 px-2 py-1 text-xs hover:bg-foreground/15"
                   @click="refreshPreview"
                 >
                   <Sparkles class="size-3" />
@@ -297,8 +295,8 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
           </div>
 
           <!-- Available tags helper -->
-          <details class="rounded border border-sidebar-border p-4 text-sm">
-            <summary class="cursor-pointer font-medium">Available tags</summary>
+          <details class="border border-green-500 p-4 text-sm">
+            <summary class="cursor-pointer font-medium text-green-500">Click to show all available tags you can use in your bot command</summary>
             <div class="mt-3 space-y-3 text-xs text-foreground/80">
               <div>
                 <p class="mb-1 font-semibold text-foreground">Bot context</p>
@@ -316,7 +314,7 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
                     ]"
                     :key="tag"
                     type="button"
-                    class="cursor-pointer rounded bg-muted px-1.5 py-0.5 font-mono hover:bg-foreground/10"
+                    class="cursor-pointer bg-muted px-1.5 py-0.5 font-mono hover:bg-foreground/10"
                     @click="insertSnippet(`[[[${tag}]]]`)"
                   >
                     [[[{{ tag }}]]]
@@ -330,7 +328,7 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
                     v-for="key in props.availableControlKeys"
                     :key="key"
                     type="button"
-                    class="cursor-pointer rounded bg-muted px-1.5 py-0.5 font-mono hover:bg-foreground/10"
+                    class="cursor-pointer bg-muted px-1.5 py-0.5 font-mono hover:bg-foreground/10"
                     @click="insertSnippet(`[[[c:${key}]]]`)"
                   >
                     [[[c:{{ key }}]]]
@@ -363,12 +361,8 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
           <!-- Permission + cooldown row -->
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="space-y-2">
-              <Label for="permission_level">Who can fire it</Label>
-              <select
-                id="permission_level"
-                v-model="form.permission_level"
-                class="w-full cursor-pointer rounded border border-input bg-background px-3 py-2 text-sm"
-              >
+              <label for="permission_level" class="mb-1 block w-full text-sm">Who can fire it</label>
+              <select id="permission_level" v-model="form.permission_level" class="input-border h-9 w-full">
                 <option v-for="lvl in props.permissionLevels" :key="lvl" :value="lvl">
                   {{ lvl }}
                 </option>
@@ -377,22 +371,23 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
             </div>
 
             <div class="space-y-2">
-              <Label for="cooldown_seconds">Cooldown (seconds)</Label>
-              <Input id="cooldown_seconds" v-model.number="form.cooldown_seconds" type="number" min="0" max="86400" />
+              <label for="cooldown_seconds" class="mb-1 block w-full text-sm">Cooldown (seconds)</label>
+              <input id="cooldown_seconds" v-model.number="form.cooldown_seconds" type="number" min="0" max="86400" class="input-border h-9 w-full" />
               <p class="text-xs text-foreground/60">Per channel. Broadcaster bypasses cooldown.</p>
             </div>
           </div>
 
           <!-- Self-destruct timer -->
           <div class="space-y-2">
-            <Label for="destroy_hours">Self-destruct timer (hours)</Label>
-            <Input
+            <label for="destroy_hours" class="mb-1 block w-full text-sm">Self-destruct timer (hours)</label>
+            <input
               id="destroy_hours"
               v-model.number="form.destroy_hours"
               type="number"
               min="0"
               max="8760"
               placeholder="Leave empty to keep it forever"
+              class="input-border w-full"
             />
             <p v-if="form.errors.destroy_hours" class="text-sm text-rose-400">{{ form.errors.destroy_hours }}</p>
             <p v-else class="text-xs text-foreground/60">
@@ -427,12 +422,10 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
 
           <!-- Actions -->
           <div class="flex items-center justify-end gap-2 pt-2">
-            <Button as-child variant="ghost" class="cursor-pointer">
-              <Link href="/settings/bot/commands">Cancel</Link>
-            </Button>
-            <Button type="submit" :disabled="form.processing" class="cursor-pointer">
+            <Link href="/settings/bot/commands" class="btn btn-chill">Cancel</Link>
+            <button type="submit" :disabled="form.processing" class="btn btn-primary">
               {{ isEdit ? 'Save changes' : 'Create command' }}
-            </Button>
+            </button>
           </div>
         </form>
       </div>

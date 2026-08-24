@@ -297,7 +297,7 @@ onUnmounted(() => {
           <Heading title="Lists" />
         </div>
 
-        <button class="btn btn-primary shrink-0 cursor-pointer" @click="showCreate = !showCreate">
+        <button class="btn btn-sm btn-primary shrink-0 cursor-pointer" @click="showCreate = !showCreate">
           <PlusIcon class="h-4 w-4" />
           <span class="ml-1.5">New list</span>
         </button>
@@ -340,8 +340,8 @@ onUnmounted(() => {
                 ></textarea>
               </div>
               <div class="flex justify-between gap-2">
-                <button class="btn btn-tertiary cursor-pointer" @click="showCreate = false">Cancel</button>
-                <button class="btn btn-primary cursor-pointer" @click="createList">Create</button>
+                <button class="btn btn-sm btn-tertiary cursor-pointer" @click="showCreate = false">Cancel</button>
+                <button class="btn btn-sm btn-primary cursor-pointer" @click="createList">Create</button>
               </div>
             </CardContent>
           </Card>
@@ -405,7 +405,7 @@ onUnmounted(() => {
                     </div>
                   </div>
 
-                  <button class="btn btn-primary h-8 cursor-pointer" :disabled="savingMeta" @click="saveMeta">
+                  <button class="btn btn-sm btn-primary h-8 cursor-pointer" :disabled="savingMeta" @click="saveMeta">
                     {{ savingMeta ? 'Saving…' : metaCommand ? 'Update' : 'Enable !list' }}
                   </button>
                 </div>

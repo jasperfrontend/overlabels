@@ -8,7 +8,6 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -180,7 +179,7 @@ function formatDate(iso: string | null): string {
 
     <SettingsLayout>
       <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <HeadingSmall
             title="Overlabels GPS"
             description="Stream your live GPS location from the Overlabels GPS Android app. Display speed, coordinates, and distance in your overlays."
@@ -219,18 +218,18 @@ function formatDate(iso: string | null): string {
                 <Label>Endpoint URL</Label>
                 <div class="flex gap-2">
                   <Input :model-value="integration.webhook_url ?? ''" readonly class="font-mono text-sm" />
-                  <Button type="button" variant="outline" size="sm" @click="copyWebhookUrl">
+                  <button type="button" class="btn btn-primary" @click="copyWebhookUrl">
                     {{ copiedUrl ? 'Copied!' : 'Copy' }}
-                  </Button>
+                  </button>
                 </div>
               </div>
               <div class="space-y-1">
                 <Label>Deep link</Label>
                 <div class="flex gap-2">
                   <Input :model-value="integration.deep_link ?? ''" readonly class="font-mono text-sm" />
-                  <Button type="button" variant="outline" size="sm" @click="copyDeepLink">
+                  <button type="button" class="btn btn-primary" @click="copyDeepLink">
                     {{ copied ? 'Copied!' : 'Copy' }}
-                  </Button>
+                  </button>
                 </div>
                 <p class="text-xs text-muted-foreground">Open this link on your phone to configure the app automatically.</p>
               </div>
@@ -310,9 +309,9 @@ function formatDate(iso: string | null): string {
                 <Label>Your public map URL</Label>
                 <div class="flex gap-2">
                   <Input :model-value="integration.map_url" readonly class="font-mono text-sm" />
-                  <Button type="button" variant="outline" size="sm" @click="copyMapUrl">
+                  <button type="button" class="btn btn-primary" @click="copyMapUrl">
                     {{ copiedMap ? 'Copied!' : 'Copy' }}
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>
@@ -344,9 +343,7 @@ function formatDate(iso: string | null): string {
             <button type="submit" class="btn btn-primary" :disabled="form.processing">
               {{ integration.connected ? 'Save changes' : 'Connect Overlabels GPS' }}
             </button>
-            <button class="btn btn-cancel" as-child>
-              <Link href="/settings/integrations">Cancel</Link>
-            </button>
+            <Link href="/settings/integrations" class="btn btn-chill">Cancel</Link>
           </div>
         </form>
 
@@ -361,9 +358,9 @@ function formatDate(iso: string | null): string {
               Zero out the current session's distance, speed and duration stats. Your lifetime total is untouched. Note: a new session already resets
               these automatically - this is for fixing a session mid-stream.
             </p>
-            <Button variant="outline" size="sm" type="button" class="cursor-pointer" :disabled="resetting" @click="resetSession">
+            <button type="button" class="btn btn-primary" :disabled="resetting" @click="resetSession">
               {{ resetting ? 'Resetting...' : 'Reset session distance' }}
-            </Button>
+            </button>
           </div>
 
           <!-- Lifetime reset: destructive -->
@@ -373,9 +370,7 @@ function formatDate(iso: string | null): string {
               This wipes your all-time cumulative distance back to 0 km. It is permanent and cannot be undone - every kilometre you have ever logged
               is gone. This is not the same as starting a new trip or stream (use the session reset above, or just start a new session).
             </p>
-            <Button variant="destructive" size="sm" type="button" class="cursor-pointer" @click="lifetimeDialogOpen = true">
-              Reset lifetime distance
-            </Button>
+            <button type="button" class="btn btn-danger" @click="lifetimeDialogOpen = true">Reset lifetime distance</button>
           </div>
         </template>
 
@@ -385,9 +380,14 @@ function formatDate(iso: string | null): string {
           <div class="space-y-2">
             <p class="text-sm font-medium">Regenerate token</p>
             <p class="text-sm text-muted-foreground">Generate a new authentication token. You will need to scan the QR code in the app again.</p>
-            <Button variant="outline" size="sm" type="button" :disabled="regenerating" @click="regenerateToken">
+            <button
+              type="button"
+              class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="regenerating"
+              @click="regenerateToken"
+            >
               {{ regenerating ? 'Regenerating...' : 'Regenerate token' }}
-            </Button>
+            </button>
           </div>
         </template>
 
@@ -399,7 +399,7 @@ function formatDate(iso: string | null): string {
             <p class="text-sm text-muted-foreground">
               Disconnecting Overlabels GPS will remove all GPS controls (speed, coordinates, distance) from your overlays.
             </p>
-            <Button variant="destructive" size="sm" type="button" @click="disconnect"> Disconnect Overlabels GPS </Button>
+            <button type="button" @click="disconnect" class="btn btn-danger">Disconnect Overlabels GPS</button>
           </div>
         </template>
       </div>
@@ -423,16 +423,10 @@ function formatDate(iso: string | null): string {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" type="button" class="cursor-pointer" @click="lifetimeDialogOpen = false"> Cancel </Button>
-          <Button
-            variant="destructive"
-            type="button"
-            class="cursor-pointer"
-            :disabled="!lifetimeConfirmed || resettingLifetime"
-            @click="resetLifetime"
-          >
+          <button type="button" class="btn btn-chill" @click="lifetimeDialogOpen = false">Cancel</button>
+          <button type="button" :disabled="!lifetimeConfirmed || resettingLifetime" @click="resetLifetime" class="btn btn-danger">
             {{ resettingLifetime ? 'Resetting...' : 'Reset lifetime distance' }}
-          </Button>
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

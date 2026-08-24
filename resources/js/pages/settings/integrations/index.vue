@@ -299,13 +299,13 @@ function formatDate(iso: string | null): string {
                   v-if="eventsub.active_count > 0"
                   :disabled="testCheerLoading || testCheerCooldown > 0"
                   @click="sendTestCheer"
-                  class="btn btn-sm btn-primary"
+                  class="btn btn-sm btn-chill"
                 >
                   <template v-if="testCheerLoading">Firing...</template>
                   <template v-else-if="testCheerCooldown > 0">Wait {{ testCheerCooldown }}s</template>
                   <template v-else>Send test cheer</template>
                 </button>
-                <button class="btn btn-sm btn-tertiary" :disabled="eventsubLoading" @click="connectEventSub">
+                <button class="btn btn-sm btn-primary" :disabled="eventsubLoading" @click="connectEventSub">
                   {{ eventsub.active_count > 0 ? 'Reconnect' : 'Connect' }}
                 </button>
               </div>
@@ -360,14 +360,14 @@ function formatDate(iso: string | null): string {
                   Bot commands: custom <code class="rounded bg-muted px-1 py-0.5 text-xs">!command</code> chat replies templated against your controls
                   and Twitch data.
                 </p>
-                <Link href="/settings/bot/commands" class="btn btn-sm btn-tertiary shrink-0 cursor-pointer"> Manage commands </Link>
+                <Link href="/settings/bot/commands" class="btn btn-sm btn-secondary shrink-0 cursor-pointer"> Commands </Link>
               </div>
               <div class="flex items-center justify-between gap-4">
                 <p class="text-sm text-foreground">
                   Bot aliases: short names that rewrite to longer commands. <code class="rounded bg-muted px-1 py-0.5 text-xs">!w 2</code> -&gt;
                   <code class="rounded bg-muted px-1 py-0.5 text-xs">!increment wins 2</code>.
                 </p>
-                <Link href="/settings/bot/aliases" class="btn btn-sm btn-tertiary shrink-0 cursor-pointer"> Manage aliases </Link>
+                <Link href="/settings/bot/aliases" class="btn btn-sm btn-secondary shrink-0 cursor-pointer"> Aliases </Link>
               </div>
             </div>
           </div>
@@ -393,7 +393,7 @@ function formatDate(iso: string | null): string {
 
               <Link
                 class="btn btn-sm"
-                :class="service.connected ? 'btn-secondary' : 'btn-primary'"
+                :class="service.connected ? 'btn-plain' : 'btn-primary'"
                 :href="`/settings/integrations/${service.url_slug ?? service.key}`"
               >
                 {{ service.connected ? 'Manage' : 'Connect' }}
