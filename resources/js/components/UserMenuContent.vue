@@ -5,7 +5,7 @@ import { Link, router } from '@inertiajs/vue3';
 import { Blocks, LogOut, Settings } from '@lucide/vue';
 
 const settingsItems = [
-  { label: 'Account Settings', href: route('settings.account'), icon: Settings },
+  { label: 'Settings', href: route('settings.account'), icon: Settings },
   { label: 'Integrations', href: route('settings.integrations.index'), icon: Blocks },
 ];
 
