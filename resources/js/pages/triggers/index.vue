@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import SettingsLayout from '@/layouts/settings/Layout.vue';
 import Heading from '@/components/Heading.vue';
 import CollectionList from '@/components/CollectionList.vue';
 import { AlertTriangle, Megaphone } from '@lucide/vue';
@@ -49,7 +50,10 @@ const props = defineProps<{
   unassignedEventTypes: UnassignedEventType[];
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Triggers', href: '/triggers' }];
+const breadcrumbs: BreadcrumbItem[] = [
+  { title: 'Dashboard', href: '/dashboard' },
+  { title: 'Triggers', href: '/triggers' },
+];
 
 const totalAssigned = computed(() => props.twitchMappings.length + props.externalMappings.length);
 
@@ -131,73 +135,75 @@ function conditionLabel(row: ConditionFields): string | null {
 <template>
   <Head title="Triggers" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="p-4">
-      <div class="mt-1 mb-4 flex items-center gap-2">
-        <Megaphone class="mr-2 size-6" />
-        <Heading
-          title="Triggers"
-          description="Read-only view of every event currently bound to an alert template. Edit assignments from each alert template's Triggers tab."
-        />
-      </div>
-
-      <p class="mb-6 text-sm text-foreground">{{ totalAssigned }} event{{ totalAssigned !== 1 ? 's' : '' }} are firing alerts right now.</p>
-
-      <section v-for="section in sections" :key="section.key" class="mb-8">
-        <h3 class="mb-2 flex items-center gap-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">
-          {{ section.label }}
-          <span v-if="section.external" class="rounded-full border border-orange-400/40 px-2 py-0.5 text-[10px] text-orange-400"> external </span>
-        </h3>
-
-        <CollectionList
-          :items="section.rows"
-          :item-key="rowKey"
-          :href="rowHref"
-          :label="rowLabel"
-          :row-class="rowClass"
-          :empty-message="`No ${section.noun} are currently bound to an alert template.`"
-          empty-dashed
-        >
-          <template #item="{ item: row }">
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span class="font-medium text-foreground">{{ row.event_label }}</span>
-              <span
-                class="hidden rounded-full border border-dashed border-violet-300/30 px-2 py-0.5 font-mono text-xs text-slate-500 sm:inline dark:text-slate-400"
-              >
-                {{ rowTag(row) }}
-              </span>
-            </div>
-
-            <div v-if="row.template" class="mt-1 text-sm text-foreground">
-              {{ row.template.name }}
-              <span v-if="conditionLabel(row)" class="text-muted-foreground"> · {{ conditionLabel(row) }}</span>
-              <span class="text-muted-foreground"> · {{ row.duration_ms / 1000 }}s</span>
-            </div>
-
-            <div v-if="row.shadowed_by" class="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
-              <AlertTriangle class="mt-px h-3.5 w-3.5 shrink-0" />
-              <span>Never fires - "{{ row.shadowed_by }}" wins this exact trigger. Change or remove this condition.</span>
-            </div>
-          </template>
-        </CollectionList>
-      </section>
-
-      <!-- Unassigned twitch events (informational) -->
-      <section v-if="unassignedEventTypes.length > 0">
-        <h3 class="mb-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">Unassigned Twitch events</h3>
-        <p class="mb-3 text-xs text-muted-foreground">
-          These events are not currently bound to any alert template. Bind them from an alert template's Triggers tab.
-        </p>
-        <div class="flex flex-wrap gap-2">
-          <span
-            v-for="row in unassignedEventTypes"
-            :key="row.event_type"
-            class="rounded-full border border-sidebar-border bg-sidebar px-3 py-1 text-xs text-muted-foreground"
-            :title="row.event_type"
-          >
-            {{ row.event_label }}
-          </span>
+    <SettingsLayout>
+      <div>
+        <div class="mt-1 mb-4 flex items-center gap-2">
+          <Megaphone class="mr-2 size-6" />
+          <Heading
+            title="Triggers"
+            description="Read-only view of every event currently bound to an alert template. Edit assignments from each alert template's Triggers tab."
+          />
         </div>
-      </section>
-    </div>
+
+        <p class="mb-6 text-sm text-foreground">{{ totalAssigned }} event{{ totalAssigned !== 1 ? 's' : '' }} are firing alerts right now.</p>
+
+        <section v-for="section in sections" :key="section.key" class="mb-8">
+          <h3 class="mb-2 flex items-center gap-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">
+            {{ section.label }}
+            <span v-if="section.external" class="rounded-full border border-orange-400/40 px-2 py-0.5 text-[10px] text-orange-400"> external </span>
+          </h3>
+
+          <CollectionList
+            :items="section.rows"
+            :item-key="rowKey"
+            :href="rowHref"
+            :label="rowLabel"
+            :row-class="rowClass"
+            :empty-message="`No ${section.noun} are currently bound to an alert template.`"
+            empty-dashed
+          >
+            <template #item="{ item: row }">
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span class="font-medium text-foreground">{{ row.event_label }}</span>
+                <span
+                  class="hidden rounded-full border border-dashed border-violet-300/30 px-2 py-0.5 font-mono text-xs text-slate-500 sm:inline dark:text-slate-400"
+                >
+                  {{ rowTag(row) }}
+                </span>
+              </div>
+
+              <div v-if="row.template" class="mt-1 text-sm text-foreground">
+                {{ row.template.name }}
+                <span v-if="conditionLabel(row)" class="text-muted-foreground"> · {{ conditionLabel(row) }}</span>
+                <span class="text-muted-foreground"> · {{ row.duration_ms / 1000 }}s</span>
+              </div>
+
+              <div v-if="row.shadowed_by" class="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                <AlertTriangle class="mt-px h-3.5 w-3.5 shrink-0" />
+                <span>Never fires - "{{ row.shadowed_by }}" wins this exact trigger. Change or remove this condition.</span>
+              </div>
+            </template>
+          </CollectionList>
+        </section>
+
+        <!-- Unassigned twitch events (informational) -->
+        <section v-if="unassignedEventTypes.length > 0">
+          <h3 class="mb-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">Unassigned Twitch events</h3>
+          <p class="mb-3 text-xs text-muted-foreground">
+            These events are not currently bound to any alert template. Bind them from an alert template's Triggers tab.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <span
+              v-for="row in unassignedEventTypes"
+              :key="row.event_type"
+              class="rounded-full border border-sidebar-border bg-sidebar px-3 py-1 text-xs text-muted-foreground"
+              :title="row.event_type"
+            >
+              {{ row.event_label }}
+            </span>
+          </div>
+        </section>
+      </div>
+    </SettingsLayout>
   </AppLayout>
 </template>
