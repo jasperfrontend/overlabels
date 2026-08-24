@@ -102,7 +102,42 @@ class OverlayTemplateController extends Controller
     {
         return Inertia::render('templates/create', [
             'sampleData' => $templateDataMapper->getSampleTemplateData(),
+            // A brand new template can already read the user-scoped integration
+            // controls and the account's Lists, so the editor's autocomplete
+            // gets the same set edit() hands it.
+            'userScopedControls' => $this->userScopedControlsFor(auth()->id()),
+            'userLists' => $this->userListsFor(auth()->id()),
         ]);
+    }
+
+    /**
+     * The user-scoped, source-managed controls every one of this user's
+     * overlays can read (the render query's second branch).
+     */
+    private function userScopedControlsFor(int $userId)
+    {
+        return OverlayControl::where('user_id', $userId)
+            ->whereNull('overlay_template_id')
+            ->where('source_managed', true)
+            ->orderBy('sort_order')
+            ->get();
+    }
+
+    /**
+     * The user's Lists in the shape the controls modal and the editor share.
+     */
+    private function userListsFor(int $userId)
+    {
+        return OptionSet::where('user_id', $userId)
+            ->orderBy('slug')
+            ->get(['id', 'slug', 'label', 'items', 'disabled_at'])
+            ->map(fn ($l) => [
+                'id' => $l->id,
+                'slug' => $l->slug,
+                'label' => $l->label,
+                'items_count' => count($l->items ?? []),
+                'disabled' => $l->disabled_at !== null,
+            ]);
     }
 
     /**
@@ -308,24 +343,11 @@ class OverlayTemplateController extends Controller
 
         $isLive = StreamSessionService::isLive(auth()->user());
 
-        $userScopedControls = OverlayControl::where('user_id', auth()->id())
-            ->whereNull('overlay_template_id')
-            ->where('source_managed', true)
-            ->orderBy('sort_order')
-            ->get();
+        $userScopedControls = $this->userScopedControlsFor(auth()->id());
 
         // Same shape as in show() - the modal's list_writer picker needs
         // these to populate the target dropdown.
-        $userLists = OptionSet::where('user_id', auth()->id())
-            ->orderBy('slug')
-            ->get(['id', 'slug', 'label', 'items', 'disabled_at'])
-            ->map(fn ($l) => [
-                'id' => $l->id,
-                'slug' => $l->slug,
-                'label' => $l->label,
-                'items_count' => count($l->items ?? []),
-                'disabled' => $l->disabled_at !== null,
-            ]);
+        $userLists = $this->userListsFor(auth()->id());
 
         $triggers = $template->type === 'alert'
             ? $this->buildTriggerData($template)
