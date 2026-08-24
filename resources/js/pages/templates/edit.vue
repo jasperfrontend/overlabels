@@ -599,7 +599,7 @@ onMounted(() => {
           </template>
         </Heading>
         <div class="flex shrink-0 items-center gap-2">
-          <button @click="submitForm" :disabled="form.processing || (!form.isDirty && !builderDirty)" class="btn btn-primary">
+          <button @click="submitForm" :disabled="form.processing || (!form.isDirty && !builderDirty)" class="btn btn-sm btn-primary">
             <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
             <Save v-else class="mr-2 h-4 w-4" />
             Save
@@ -1023,14 +1023,18 @@ onMounted(() => {
           <Link
             v-if="!form.isDirty"
             :href="route('templates.show', template)"
-            class="btn btn-cancel"
+            class="btn btn-sm btn-cancel"
             title="Go back to overlay (keyboard shortcut: 's')"
             >← Back to Overlay</Link
           >
-          <button v-else type="button" disabled class="btn btn-cancel cursor-not-allowed opacity-50" title="Save your changes before leaving">
+          <button v-else type="button" disabled class="btn btn-sm btn-cancel cursor-not-allowed opacity-50" title="Save your changes before leaving">
             ← Back to Overlay (unsaved changes)
           </button>
-          <button type="submit" :disabled="form.processing || !form.isDirty" class="btn btn-primary">Save</button>
+          <button type="button" @click="submitForm" :disabled="form.processing || (!form.isDirty && !builderDirty)" class="btn btn-sm btn-primary">
+            <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
+            <Save v-else class="mr-2 h-4 w-4" />
+            Save
+          </button>
         </div>
       </form>
     </div>

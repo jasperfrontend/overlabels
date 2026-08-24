@@ -299,13 +299,13 @@ function formatDate(iso: string | null): string {
                   v-if="eventsub.active_count > 0"
                   :disabled="testCheerLoading || testCheerCooldown > 0"
                   @click="sendTestCheer"
-                  class="btn btn-primary"
+                  class="btn btn-sm btn-primary"
                 >
                   <template v-if="testCheerLoading">Firing...</template>
                   <template v-else-if="testCheerCooldown > 0">Wait {{ testCheerCooldown }}s</template>
                   <template v-else>Send test cheer</template>
                 </button>
-                <button class="btn btn-tertiary" :disabled="eventsubLoading" @click="connectEventSub">
+                <button class="btn btn-sm btn-tertiary" :disabled="eventsubLoading" @click="connectEventSub">
                   {{ eventsub.active_count > 0 ? 'Reconnect' : 'Connect' }}
                 </button>
               </div>
@@ -349,8 +349,10 @@ function formatDate(iso: string | null): string {
                 </p>
               </div>
 
-              <button v-if="props.bot.enabled" class="btn btn-secondary cursor-pointer" :disabled="botLoading" @click="toggleBot">Disable</button>
-              <button v-else class="btn btn-primary cursor-pointer" :disabled="botLoading" @click="toggleBot">Enable</button>
+              <button v-if="props.bot.enabled" class="btn btn-sm btn-secondary cursor-pointer" :disabled="botLoading" @click="toggleBot">
+                Disable
+              </button>
+              <button v-else class="btn btn-sm btn-primary cursor-pointer" :disabled="botLoading" @click="toggleBot">Enable</button>
             </div>
             <div v-if="props.bot.enabled" class="mt-4 space-y-3 border-t border-sidebar-border pt-4">
               <div class="flex items-center justify-between gap-4">
@@ -358,14 +360,14 @@ function formatDate(iso: string | null): string {
                   Bot commands: custom <code class="rounded bg-muted px-1 py-0.5 text-xs">!command</code> chat replies templated against your controls
                   and Twitch data.
                 </p>
-                <Link href="/settings/bot/commands" class="btn btn-tertiary shrink-0 cursor-pointer"> Manage commands </Link>
+                <Link href="/settings/bot/commands" class="btn btn-sm btn-tertiary shrink-0 cursor-pointer"> Manage commands </Link>
               </div>
               <div class="flex items-center justify-between gap-4">
                 <p class="text-sm text-foreground">
                   Bot aliases: short names that rewrite to longer commands. <code class="rounded bg-muted px-1 py-0.5 text-xs">!w 2</code> -&gt;
                   <code class="rounded bg-muted px-1 py-0.5 text-xs">!increment wins 2</code>.
                 </p>
-                <Link href="/settings/bot/aliases" class="btn btn-tertiary shrink-0 cursor-pointer"> Manage aliases </Link>
+                <Link href="/settings/bot/aliases" class="btn btn-sm btn-tertiary shrink-0 cursor-pointer"> Manage aliases </Link>
               </div>
             </div>
           </div>
@@ -390,7 +392,7 @@ function formatDate(iso: string | null): string {
               </div>
 
               <Link
-                class="btn"
+                class="btn btn-sm"
                 :class="service.connected ? 'btn-secondary' : 'btn-primary'"
                 :href="`/settings/integrations/${service.url_slug ?? service.key}`"
               >

@@ -106,7 +106,7 @@ function copyTag(tag: string, event: MouseEvent) {
         <div class="flex gap-1">
           <button
             type="button"
-            class="cursor-pointer rounded px-2 py-0.5 text-xs transition-colors"
+            class="cursor-pointer px-2 py-0.5 text-xs transition-colors"
             :class="sortMode === 'appearance' ? 'bg-violet-500/20 text-violet-400' : 'text-muted-foreground hover:text-foreground'"
             @click="sortMode = 'appearance'"
           >
@@ -114,7 +114,7 @@ function copyTag(tag: string, event: MouseEvent) {
           </button>
           <button
             type="button"
-            class="cursor-pointer rounded px-2 py-0.5 text-xs transition-colors"
+            class="cursor-pointer px-2 py-0.5 text-xs transition-colors"
             :class="sortMode === 'alphabetical' ? 'bg-violet-500/20 text-violet-400' : 'text-muted-foreground hover:text-foreground'"
             @click="sortMode = 'alphabetical'"
           >

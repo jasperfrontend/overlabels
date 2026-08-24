@@ -35,7 +35,7 @@
 
   /* Primary — Save / confirm */
   .btn-primary {
-    @apply border border-green-500/40 bg-green-500/10 dark:border-green-400/40 dark:bg-green-500/15;
+    @apply border border-green-500/40 bg-green-600 dark:border-green-400 dark:bg-green-500;
     @apply text-green-800 dark:text-green-300;
     @apply hover:border-green-500/60 hover:bg-green-500/18 dark:hover:border-green-400/60 dark:hover:bg-green-500/22;
     @apply active:border-green-600/70;

@@ -150,12 +150,12 @@ const breadcrumbs: BreadcrumbItem[] = [
           <Heading :title="pageTitle" />
         </div>
         <div class="flex items-center gap-2 self-start sm:self-auto">
-          <Link :href="route('builder.create')" class="btn btn-cancel">
+          <Link :href="route('builder.create')" class="btn btn-sm btn-secondary">
             Builder
             <Blocks class="ml-2 h-4 w-4" />
           </Link>
-          <Link :href="route('templates.create')" class="btn btn-primary">
-            Create Overlay
+          <Link :href="route('templates.create')" class="btn btn-sm btn-primary">
+            Create overlay
             <PlusIcon class="ml-2 h-4 w-4" />
           </Link>
         </div>

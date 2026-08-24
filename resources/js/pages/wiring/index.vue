@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import { Check, Circle, TriangleAlert } from '@lucide/vue';
+import { Bot, Check, Circle, TriangleAlert } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 
 type WireState = 'satisfied' | 'missing' | 'not_applicable';
@@ -80,7 +80,7 @@ function isDormant(wire: Wire): boolean {
       <!-- The headline counts subjects, not areas. This page only ever speaks
            about things that exist, so it can never nag about something the
            streamer chose not to build. -->
-      <div v-if="props.looseEnds" class="flex gap-3 rounded border border-amber-500/40 bg-amber-500/10 p-4" role="alert">
+      <div v-if="props.looseEnds" class="flex gap-3 border border-amber-500/40 bg-amber-500/10 p-4" role="alert">
         <TriangleAlert class="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
         <div>
           <p class="font-medium text-amber-700 dark:text-amber-300">
@@ -90,7 +90,7 @@ function isDormant(wire: Wire): boolean {
         </div>
       </div>
 
-      <div v-else class="flex gap-3 rounded border border-border p-4">
+      <div v-else class="flex gap-3 border border-border p-4">
         <Check class="mt-0.5 size-5 shrink-0 text-green-600 dark:text-green-400" />
         <p class="text-foreground">Everything you have built can actually run.</p>
       </div>
@@ -111,7 +111,7 @@ function isDormant(wire: Wire): boolean {
           <li
             v-for="subject in circuit.subjects"
             :key="subject.key"
-            class="collection-row rounded border p-3"
+            class="collection-row border p-3"
             :class="subject.needsAttention ? 'border-amber-500/40' : 'border-border'"
           >
             <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -138,7 +138,8 @@ function isDormant(wire: Wire): boolean {
               class="mt-2 flex flex-col gap-2 pl-6 sm:flex-row sm:items-center sm:gap-3"
             >
               <p class="min-w-0 flex-1 text-sm text-foreground">{{ wire.message }}</p>
-              <Link :href="href(wire)" class="btn btn-sm btn-secondary shrink-0 cursor-pointer">
+              <Link :href="href(wire)" class="btn btn-sm btn-primary shrink-0 cursor-pointer">
+                <Bot class="mr-2 size-4 shrink-0 self-center" />
                 {{ wire.cta }}
               </Link>
             </div>

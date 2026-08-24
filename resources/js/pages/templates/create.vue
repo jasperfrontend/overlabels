@@ -123,7 +123,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Head title="Create Overlay" />
+  <Head title="Create overlay" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
       <!-- Header -->
@@ -134,7 +134,7 @@ onMounted(() => {
             type="button"
             @click="previewTemplate"
             :disabled="!typeChosen"
-            class="btn btn-cancel disabled:cursor-not-allowed disabled:opacity-50"
+            class="btn btn-sm btn-cancel disabled:cursor-not-allowed disabled:opacity-50"
           >
             Preview
             <ExternalLink class="ml-2 h-4 w-4" />
@@ -142,10 +142,10 @@ onMounted(() => {
           <button
             @click="submitForm"
             :disabled="form.processing || !typeChosen"
-            class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+            class="btn btn-sm btn-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save class="mr-2 h-4 w-4" />
-            Create Overlay
+            Create overlay
           </button>
         </div>
       </div>
@@ -373,10 +373,16 @@ onMounted(() => {
 
         <!-- Form Actions -->
         <div class="mt-6 flex items-center justify-between gap-3">
-          <Link :href="route('dashboard.index')" class="btn btn-cancel">← Back to Dashboard</Link>
+          <Link :href="route('dashboard.index')" class="btn btn-sm btn-cancel">← Back to dashboard</Link>
           <div class="flex items-center gap-3">
-            <button type="submit" :disabled="form.processing || !typeChosen" class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50">
-              Create Overlay
+            <button
+              type="button"
+              @click="submitForm"
+              :disabled="form.processing || !typeChosen"
+              class="btn btn-sm btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Save class="mr-2 h-4 w-4" />
+              Create overlay
             </button>
           </div>
         </div>

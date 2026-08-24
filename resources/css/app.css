@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import './overlabels-buttons.css';
+@import './overlabels-buttons-v2.css'; /* -v2 is new */
 @import './collection.css';
 @import './tooltips.css';
 @import './help-prose.css';

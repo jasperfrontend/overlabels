@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - style(buttons): one button system, `overlabels-buttons-v2.css`
+
+`app.css` now imports `overlabels-buttons-v2.css` instead of `overlabels-buttons.css`. Buttons are square (`rounded-none`), have a solid fill instead of a 10%-alpha tint, and pick up a subtle top-to-bottom gradient on hover, so a primary action reads as a button at a glance rather than as a tinted label.
+
+- **The overlap between `.btn-primary` / `.btn-secondary` and between `.btn-plain` / `.btn-white` is deliberate.** There are far more button classes in this codebase than there are distinct button meanings, and declaring two of them identically is cheaper and safer than hunting down every call site to collapse them. Treat the duplication as a staging post, not a mistake to tidy.
+- New size scale, `btn-xs` through `btn-xl`, applied at the call sites that were rendering a default-size button in a dense row.
+- **`overlabels-buttons.css` stays in the repo, unimported.** It is the fallback if v2 turns out wrong on a screen nobody checked; swapping one `@import` line in `app.css` reverts the whole thing.
+- `ConfirmDialog.vue` drops its hand-rolled pill classes for `btn btn-l btn-cancel` / `btn-danger` / `btn-warning` - it was the last dialog still styling its own buttons inline.
+- Two "Create overlay" / "Save" buttons at the bottom of `templates/create.vue` and `templates/edit.vue` gained `type="button"`. They had been `type="submit"` with no click handler; the restyle gave them `@click="submitForm"` and dropped the `type`, and a button with no `type` inside a `<form>` defaults to submit - so each click ran `submitForm` twice, once from the handler and once through `@submit.prevent`. On the create page that is two `POST /templates` for one click.
+
 ## August 24th, 2026 - docs(help): the money words now find the page that answers them
 
 `tips`, `tipping`, `tipping service`, `money`, `income`, `revenue` and `get paid` all returned "Nothing matched", while the tutorial that answers every one of them - one donor name across all five donation services - was reachable only by naming a service or typing "donator". It now declares them:
