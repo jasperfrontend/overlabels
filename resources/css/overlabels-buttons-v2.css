@@ -121,7 +121,7 @@
   }
 
   .input-border {
-    @apply flex-1 rounded-none border border-border bg-background p-2 text-sm text-muted-foreground transition-[border-color] outline-none dark:border-violet-400/50;
+    @apply flex-1 rounded-none border border-violet-400/80 bg-background p-2 text-sm text-muted-foreground transition-[border-color] outline-none dark:border-violet-400/50;
     @apply focus:border focus:border-violet-400 focus:text-accent-foreground focus:ring-2 focus:ring-violet-400 focus-visible:border-violet-400 focus-visible:ring-2 focus-visible:ring-violet-400;
     @apply aria-invalid:border-destructive aria-invalid:ring-destructive dark:aria-invalid:ring-destructive;
   }

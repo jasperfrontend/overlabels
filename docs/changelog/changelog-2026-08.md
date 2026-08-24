@@ -1,5 +1,9 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - style(inputs): `input-border` is violet in light mode too
+
+`.input-border` used `border-border` at rest in the light theme but `border-violet-400/50` in dark, so a form looked like part of the design in dark mode and like a default browser form in light. Light now gets `border-violet-400/80`, and both themes deepen to solid violet on focus.
+
 ## August 24th, 2026 - feat(integrations): the whole "Alert on" row toggles
 
 Following the switch list below: the row itself now carries `role="switch"` and the click handler, and the track and thumb are inert spans. One hit target the width of the list, one tab stop, no nested buttons.
