@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - style(controls): `/settings/controls` joins the grouped list
+
+First adopter of `GroupedCollection` outside the three it was extracted from. The page used to print one flat run of bordered boxes with no filter; on an account with a few dozen controls that was a scroll. It now groups the way an overlay's Controls tab does - your own controls by type (Counter, Timer, Number, ...), then one section per service - with the same filter input, count line and Expand / Collapse all.
+
+- **The row content is untouched.** Identity, value and scope are the three zones the page got on August 24th; only the box around them became `.collection-row`, and the grouping went around that.
+- **The type headings come from one place now.** `CONTROL_TYPE_LABELS` / `CONTROL_TYPE_ORDER` moved out of `ControlsManager` into `utils/controls.ts`, so the overlay tab and this page cannot drift into two spellings of "Date/Time".
+- The filter matches the control key, its type and the names of the overlays it lives on, so typing an overlay's name lists everything bound to it.
+- Empty state goes through `EmptyState`, like every other one.
+
 ## August 25th, 2026 - refactor(lists): the grouped list becomes one component
 
 The layout everyone liked on `/tags` - a filter input, a "64 tags across 7 groups" line with Expand / Collapse all, one collapsible section per group with a count pill - was not a component. It was hand-written three times: the `/tags` page itself, `TemplateTagsList` (the editor's Tags tab) and `ControlsManager` (an overlay's Controls tab), each with its own search, its own expand-all and its own localStorage key. So when `/wiring`, `/settings/controls`, `/tokens` and `/testing` were built there was nothing to reach for, and each invented a list. Same story `CollectionList` fixed for flat rows in PR #193, one level up.
