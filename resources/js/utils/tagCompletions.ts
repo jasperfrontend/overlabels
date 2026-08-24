@@ -26,7 +26,7 @@
 
 import { DSL, blockTokenPattern } from '@/utils/dsl';
 import { serviceLabel } from '@/utils/services';
-import type { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
+import { snippetCompletion, type Completion, type CompletionContext, type CompletionResult, type CompletionSource } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 
@@ -366,6 +366,108 @@ export function suggest(docBefore: string, data: CompletionData): Suggestions | 
 }
 
 /**
+ * Bang snippets: `!chat` expands to a whole working block rather than one tag.
+ *
+ * Templates use CodeMirror's snippet syntax - `${name}` is a field the cursor
+ * lands in, Tab moves to the next one, and two fields with the same name are
+ * linked so typing in one updates the other. Everything else is inserted
+ * verbatim, indented to the current line.
+ */
+export interface BangSnippet {
+  label: string;
+  template: string;
+  info: string;
+}
+
+const BASE_BANGS: BangSnippet[] = [
+  {
+    label: '!chat',
+    info: "A live chat feed: one line per message, name in the chatter's colour, emotes rendered.",
+    template: [
+      '[[[foreach:chat as msg]]]',
+      '  <div class="chat-line"><span style="color: [[[msg.color]]]">[[[msg.author]]]</span>: [[[msg.html]]]</div>',
+      '[[[endforeach]]]',
+    ].join('\n'),
+  },
+  {
+    label: '!subs',
+    info: 'Your most recent subscribers, one row each.',
+    template: ['[[[foreach:subscribers as sub]]]', '  <div class="sub-row">[[[sub.user_name]]]</div>', '[[[endforeach]]]'].join('\n'),
+  },
+  {
+    label: '!followers',
+    info: 'Your most recent followers, one row each.',
+    template: ['[[[foreach:channel_followers as follower]]]', '  <div class="follower-row">[[[follower.user_name]]]</div>', '[[[endforeach]]]'].join(
+      '\n',
+    ),
+  },
+  {
+    label: '!goals',
+    info: 'Your active channel goals with their progress.',
+    template: [
+      '[[[foreach:goals as goal]]]',
+      '  <div class="goal-row">[[[goal.description]]]: [[[goal.current_amount]]] / [[[goal.target_amount]]]</div>',
+      '[[[endforeach]]]',
+    ].join('\n'),
+  },
+  {
+    label: '!if',
+    info: 'A conditional block. Fill in the condition, Tab to the body.',
+    template: ['[[[if:${condition}]]]', '  ${}', '[[[endif]]]'].join('\n'),
+  },
+  {
+    label: '!ifelse',
+    info: 'A conditional block with a fallback branch.',
+    template: ['[[[if:${condition}]]]', '  ${}', '[[[else]]]', '  ${}', '[[[endif]]]'].join('\n'),
+  },
+  {
+    label: '!foreach',
+    info: 'An empty loop. The alias is linked: rename it once and both places follow.',
+    template: ['[[[foreach:${subscribers} as ${item}]]]', '  [[[${item}.${user_name}]]]', '[[[endforeach]]]'].join('\n'),
+  },
+];
+
+/**
+ * The donation services whose provisioned controls share the same six keys.
+ * A bang exists for a service only once its controls are present, which is
+ * what connecting it does - so `!kofi` shows up exactly when it would work.
+ */
+const DONATION_SOURCES = ['kofi', 'streamlabs', 'fourthwall', 'bmac', 'throne'];
+
+export function bangSnippets(data: CompletionData): BangSnippet[] {
+  const sources = new Set(data.controls.map((c) => c.source).filter((s): s is string => !!s));
+  const donation = DONATION_SOURCES.filter((s) => sources.has(s)).map((source) => ({
+    label: `!${source}`,
+    info: `Latest ${serviceLabel(source)} donation: who, how much, and their message.`,
+    template: [
+      `<div class="donation ${source}">`,
+      `  <strong>[[[c:${source}:latest_donor_name]]]</strong> - [[[c:${source}:latest_donation_amount]]] [[[c:${source}:latest_donation_currency]]]`,
+      `  <p>[[[c:${source}:latest_donation_message]]]</p>`,
+      '</div>',
+    ].join('\n'),
+  }));
+
+  return [...BASE_BANGS, ...donation];
+}
+
+const BANG_CONTEXT = /![a-z]*$/;
+
+/**
+ * Where a bang is being typed on the line before the cursor, or null.
+ *
+ * Needs at least one letter after the `!` unless the user asked (Ctrl+Space):
+ * a bare `!` ends plenty of ordinary sentences, and popping a list on every
+ * exclamation mark would make the snippets feel like a bug.
+ */
+export function bangPrefix(lineBefore: string, explicit = false): { from: number; text: string } | null {
+  const match = BANG_CONTEXT.exec(lineBefore);
+  if (!match) return null;
+  if (!explicit && match[0].length < 2) return null;
+
+  return { from: match.index, text: match[0] };
+}
+
+/**
  * Accepting a completion inserts its text and, when it completes a tag, either
  * steps over a `]]]` that closeBrackets() already inserted or adds one. The
  * cursor ends up after the closer either way, ready for what follows the tag.
@@ -426,5 +528,19 @@ export function overlabelsCompletion(getData: () => CompletionData) {
     };
   };
 
-  return EditorState.languageData.of(() => [{ autocomplete: source }]);
+  const bangSource: CompletionSource = (context: CompletionContext): CompletionResult | null => {
+    const line = context.state.doc.lineAt(context.pos);
+    const bang = bangPrefix(context.state.sliceDoc(line.from, context.pos), context.explicit);
+    if (!bang) return null;
+
+    return {
+      from: line.from + bang.from,
+      options: bangSnippets(getData()).map((snippet) =>
+        snippetCompletion(snippet.template, { label: snippet.label, detail: 'snippet', info: snippet.info, type: 'snippet' }),
+      ),
+      validFor: /^![a-z]*$/,
+    };
+  };
+
+  return EditorState.languageData.of(() => [{ autocomplete: source }, { autocomplete: bangSource }]);
 }
