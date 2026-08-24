@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
+import SettingsLayout from '@/layouts/settings/Layout.vue';
 import Modal from '@/components/Modal.vue';
 import Heading from '@/components/Heading.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -29,7 +30,10 @@ interface Token {
 const { tokens } = defineProps<{ tokens: Token[] }>();
 
 /** UI */
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Overlay Access Tokens', href: '/tokens' }];
+const breadcrumbs: BreadcrumbItem[] = [
+  { title: 'Dashboard', href: '/dashboard' },
+  { title: 'Overlay Access Tokens', href: '/tokens' },
+];
 
 /** Create flow */
 const showCreateModal = ref(false);
@@ -133,152 +137,154 @@ const formatDate = (date: string | null | undefined) => (date ? new Date(date).t
 <template>
   <Head title="Overlay Access Tokens" />
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="p-4">
-      <div class="mb-6 flex items-center justify-between">
-        <Heading title="Overlay Access Tokens" description="Manage your access tokens for your overlays." />
-        <button @click="showCreateModal = true" class="btn btn-primary">Create Token</button>
-      </div>
+    <SettingsLayout>
+      <div>
+        <div class="mb-6 flex items-center justify-between">
+          <Heading title="Overlay Access Tokens" description="Manage your access tokens for your overlays." />
+          <button @click="showCreateModal = true" class="btn btn-primary">Create Token</button>
+        </div>
 
-      <!-- Token List -->
-      <div class="space-y-4 overflow-hidden">
-        <div v-for="token in tokens" :key="token.id" class="rounded-sm border border-sidebar bg-sidebar-accent p-4">
-          <div class="flex items-start gap-4 justify-self-start">
-            <div>
-              <h3 class="-mt-0.5 mr-1 text-lg font-semibold">{{ token.name }}</h3>
-            </div>
-            <div class="mt-0.5">
-              <p class="rounded-full bg-sidebar p-0.5 px-2 text-sm text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200">
-                <CodeSquareIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                Prefix:
-                <code class="rounded-full bg-sidebar p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
-                  >{{ token.prefix }}...</code
+        <!-- Token List -->
+        <div class="space-y-4 overflow-hidden">
+          <div v-for="token in tokens" :key="token.id" class="rounded-sm border border-sidebar bg-sidebar-accent p-4">
+            <div class="flex items-start gap-4 justify-self-start">
+              <div>
+                <h3 class="-mt-0.5 mr-1 text-lg font-semibold">{{ token.name }}</h3>
+              </div>
+              <div class="mt-0.5">
+                <p class="rounded-full bg-sidebar p-0.5 px-2 text-sm text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200">
+                  <CodeSquareIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
+                  Prefix:
+                  <code class="rounded-full bg-sidebar p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+                    >{{ token.prefix }}...</code
+                  >
+                </p>
+              </div>
+              <div class="mt-0.5">
+                <p
+                  class="rounded-full bg-sidebar p-0.5 px-2 text-sm text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
+                  title="Access Count"
                 >
-              </p>
-            </div>
-            <div class="mt-0.5">
-              <p
-                class="rounded-full bg-sidebar p-0.5 px-2 text-sm text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
-                title="Access Count"
-              >
-                <EyeIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                {{ token.access_count }} view{{ token.access_count === 1 ? '' : 's' }}
-              </p>
+                  <EyeIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
+                  {{ token.access_count }} view{{ token.access_count === 1 ? '' : 's' }}
+                </p>
+              </div>
+
+              <div class="ml-auto flex space-x-2">
+                <button v-if="token.is_active" @click="revokeToken(token)" class="btn btn-sm btn-warning">Revoke</button>
+                <button @click="deleteToken(token)" class="btn btn-sm btn-danger">Delete</button>
+              </div>
             </div>
 
-            <div class="ml-auto flex space-x-2">
-              <button v-if="token.is_active" @click="revokeToken(token)" class="btn btn-sm btn-warning">Revoke</button>
-              <button @click="deleteToken(token)" class="btn btn-sm btn-danger">Delete</button>
+            <div class="mt-2 flex items-start gap-4 justify-self-start">
+              <div class="mt-0.5">
+                <p class="text-sm text-sidebar-foreground/80">
+                  <CalendarIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
+                  Created: {{ formatDate(token.created_at) }}
+                </p>
+              </div>
+              <div class="mt-0.5">
+                <p v-if="token.expires_at" class="text-sm text-sidebar-foreground/80">
+                  <AlarmClockOffIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
+                  Expires: {{ formatDate(token.expires_at) }}
+                </p>
+              </div>
+              <div class="mt-0.5">
+                <p v-if="token.last_used_at" class="text-sm text-sidebar-foreground/80">
+                  <ClockArrowUpIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
+                  Last viewed: {{ formatDate(token.last_used_at) }}
+                </p>
+              </div>
             </div>
+
+            <div v-if="!token.is_active" class="mt-2 text-sm font-semibold text-red-600">REVOKED</div>
           </div>
-
-          <div class="mt-2 flex items-start gap-4 justify-self-start">
-            <div class="mt-0.5">
-              <p class="text-sm text-sidebar-foreground/80">
-                <CalendarIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                Created: {{ formatDate(token.created_at) }}
-              </p>
-            </div>
-            <div class="mt-0.5">
-              <p v-if="token.expires_at" class="text-sm text-sidebar-foreground/80">
-                <AlarmClockOffIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                Expires: {{ formatDate(token.expires_at) }}
-              </p>
-            </div>
-            <div class="mt-0.5">
-              <p v-if="token.last_used_at" class="text-sm text-sidebar-foreground/80">
-                <ClockArrowUpIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                Last viewed: {{ formatDate(token.last_used_at) }}
-              </p>
-            </div>
-          </div>
-
-          <div v-if="!token.is_active" class="mt-2 text-sm font-semibold text-red-600">REVOKED</div>
         </div>
-      </div>
-      <div class="my-4 bg-background text-sm">
-        <Heading
-          title="Important!"
-          description="Your Overlay Tokens are only shown once during creation. The Prefix you see here is just for reference. Create a new Overlay Token if you lost
+        <div class="my-4 bg-background text-sm">
+          <Heading
+            title="Important!"
+            description="Your Overlay Tokens are only shown once during creation. The Prefix you see here is just for reference. Create a new Overlay Token if you lost
         access to it, or if you think it may have leaked on stream."
-          description-class="text-orange-300"
-        />
+            description-class="text-orange-300"
+          />
+        </div>
+        <div class="my-4 bg-background text-sm">
+          <Heading
+            title="Treat your Overlay Token like a password."
+            description="Don't show Overlay Tokens on stream, don't share your Overlay Tokens with anyone."
+            description-class="text-orange-300"
+          />
+        </div>
       </div>
-      <div class="my-4 bg-background text-sm">
-        <Heading
-          title="Treat your Overlay Token like a password."
-          description="Don't show Overlay Tokens on stream, don't share your Overlay Tokens with anyone."
-          description-class="text-orange-300"
-        />
-      </div>
-    </div>
 
-    <!-- Create Token Modal -->
-    <Modal :show="showCreateModal" @close="showCreateModal = false" closeable class="margin-auto z-50">
-      <div class="p-6">
-        <h2 class="mb-4 text-lg font-semibold">Create New Access Token</h2>
+      <!-- Create Token Modal -->
+      <Modal :show="showCreateModal" @close="showCreateModal = false" closeable class="margin-auto z-50">
+        <div class="p-6">
+          <h2 class="mb-4 text-lg font-semibold">Create New Access Token</h2>
 
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium" for="token-name">Token Name</label>
-            <input v-model="form.name" type="text" id="token-name" class="mt-1 block w-full rounded-md border p-2" placeholder="My OBS Stream" />
-          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium" for="token-name">Token Name</label>
+              <input v-model="form.name" type="text" id="token-name" class="mt-1 block w-full rounded-md border p-2" placeholder="My OBS Stream" />
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium">Expires At (Optional)</label>
-            <input v-model="form.expires_at" type="datetime-local" class="mt-1 block w-full rounded-md border p-2" />
-          </div>
+            <div>
+              <label class="block text-sm font-medium">Expires At (Optional)</label>
+              <input v-model="form.expires_at" type="datetime-local" class="mt-1 block w-full rounded-md border p-2" />
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium">Allowed IPs (Optional)</label>
-            <input v-model="ipInput" type="text" class="mt-1 block w-full rounded-md border p-2" placeholder="192.168.1.1, 10.0.0.1" />
-            <p class="mt-1 text-xs text-gray-500">
-              Comma-separated IP addresses. Exact addresses only - ranges like <code>192.168.1.0/24</code> are not supported. Leave this empty unless
-              your connection has a fixed IP.
-            </p>
-          </div>
+            <div>
+              <label class="block text-sm font-medium">Allowed IPs (Optional)</label>
+              <input v-model="ipInput" type="text" class="mt-1 block w-full rounded-md border p-2" placeholder="192.168.1.1, 10.0.0.1" />
+              <p class="mt-1 text-xs text-gray-500">
+                Comma-separated IP addresses. Exact addresses only - ranges like <code>192.168.1.0/24</code> are not supported. Leave this empty
+                unless your connection has a fixed IP.
+              </p>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium">Abilities</label>
-            <div class="mt-2 space-y-2">
-              <label class="flex items-center">
-                <input type="checkbox" value="read" v-model="form.abilities" class="rounded" />
-                <span class="ml-2">Read</span>
-              </label>
-              <label class="flex items-center">
-                <input type="checkbox" value="write" v-model="form.abilities" class="rounded" />
-                <span class="ml-2">Write</span>
-              </label>
+            <div>
+              <label class="block text-sm font-medium">Abilities</label>
+              <div class="mt-2 space-y-2">
+                <label class="flex items-center">
+                  <input type="checkbox" value="read" v-model="form.abilities" class="rounded" />
+                  <span class="ml-2">Read</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" value="write" v-model="form.abilities" class="rounded" />
+                  <span class="ml-2">Write</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="flex justify-end space-x-2">
+              <button @click="showCreateModal = false" class="btn btn-cancel">Cancel</button>
+              <button @click="createToken" :disabled="!form.name" class="btn btn-primary">Create Token</button>
             </div>
           </div>
+        </div>
+      </Modal>
 
-          <div class="flex justify-end space-x-2">
-            <button @click="showCreateModal = false" class="btn btn-cancel">Cancel</button>
-            <button @click="createToken" :disabled="!form.name" class="btn btn-primary">Create Token</button>
+      <!-- Token Created Modal -->
+      <Modal :show="showTokenModal" @close="showTokenModal = false">
+        <div class="p-6">
+          <h2 class="mb-4 text-lg font-semibold">Token Created Successfully!</h2>
+          <div class="mb-4 rounded-md border border-yellow-200 bg-yellow-50 p-4">
+            <p class="text-lg text-yellow-800">Copy this token now. It won't be shown again!</p>
           </div>
+          <div class="mb-4 rounded-md bg-accent p-4">
+            <code class="text-sm break-all">{{ newToken }}</code>
+          </div>
+          <button
+            @click="
+              copyToken();
+              showTokenModal = false;
+            "
+            class="w-full cursor-pointer rounded-md bg-blue-500 py-2 text-white"
+          >
+            Copy Token
+          </button>
         </div>
-      </div>
-    </Modal>
-
-    <!-- Token Created Modal -->
-    <Modal :show="showTokenModal" @close="showTokenModal = false">
-      <div class="p-6">
-        <h2 class="mb-4 text-lg font-semibold">Token Created Successfully!</h2>
-        <div class="mb-4 rounded-md border border-yellow-200 bg-yellow-50 p-4">
-          <p class="text-lg text-yellow-800">Copy this token now. It won't be shown again!</p>
-        </div>
-        <div class="mb-4 rounded-md bg-accent p-4">
-          <code class="text-sm break-all">{{ newToken }}</code>
-        </div>
-        <button
-          @click="
-            copyToken();
-            showTokenModal = false;
-          "
-          class="w-full cursor-pointer rounded-md bg-blue-500 py-2 text-white"
-        >
-          Copy Token
-        </button>
-      </div>
-    </Modal>
+      </Modal>
+    </SettingsLayout>
   </AppLayout>
 </template>

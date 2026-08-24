@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import { Search, ChevronRight, ChevronsUpDown, ChevronsDownUp, Copy, AlertCircle } from '@lucide/vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AppLayout from '@/layouts/AppLayout.vue';
+import SettingsLayout from '@/layouts/settings/Layout.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -44,7 +45,10 @@ const props = defineProps<{
   liveValues: boolean;
 }>();
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Template Tags', href: '/tags' }];
+const breadcrumbs: BreadcrumbItem[] = [
+  { title: 'Dashboard', href: '/dashboard' },
+  { title: 'Template Tags', href: '/tags' },
+];
 
 const toastMessage = ref('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
@@ -158,100 +162,102 @@ async function copyTag(tag: TemplateTag) {
   <Head title="Template Tags" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
+    <SettingsLayout>
+      <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
 
-    <div class="flex flex-col gap-4 p-4">
-      <Heading title="Template Tags" description="Drop any of these into an overlay. The values are your own, right now." />
+      <div class="flex flex-col gap-4">
+        <Heading title="Template Tags" description="Drop any of these into an overlay. The values are your own, right now." />
 
-      <div
-        v-if="!liveValues"
-        class="flex items-start gap-2 rounded-sm border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
-      >
-        <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-        <p class="text-sm text-foreground">
-          Could not reach Twitch just now, so the values below are examples rather than your own data. The tags themselves are always available.
-        </p>
-      </div>
-
-      <!-- Search -->
-      <div class="flex items-center gap-3">
-        <div class="relative flex-1">
-          <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-          <input v-model="searchQuery" placeholder="Filter tags..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
+        <div
+          v-if="!liveValues"
+          class="flex items-start gap-2 rounded-sm border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+        >
+          <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p class="text-sm text-foreground">
+            Could not reach Twitch just now, so the values below are examples rather than your own data. The tags themselves are always available.
+          </p>
         </div>
-      </div>
 
-      <!-- Count + collapse/expand-all -->
-      <div class="mb-3 flex items-center text-xs text-muted-foreground">
-        <span v-if="searchQuery">
-          {{ totalVisibleTags }} tag{{ totalVisibleTags !== 1 ? 's' : '' }} in {{ filteredGroupedTags.length }} group{{
-            filteredGroupedTags.length !== 1 ? 's' : ''
-          }}
-        </span>
-        <span v-else>
-          {{ totalTags }} tag{{ totalTags !== 1 ? 's' : '' }} across {{ groupedTags.length }} group{{ groupedTags.length !== 1 ? 's' : '' }}
-        </span>
-        <button
-          v-if="filteredGroupedTags.length > 0"
-          class="ml-auto flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          @click.prevent="toggleAll"
-        >
-          <ChevronsDownUp v-if="allExpanded" :size="13" />
-          <ChevronsUpDown v-else :size="13" />
-          {{ allExpanded ? 'Collapse all' : 'Expand all' }}
-        </button>
-      </div>
+        <!-- Search -->
+        <div class="flex items-center gap-3">
+          <div class="relative flex-1">
+            <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
+            <input v-model="searchQuery" placeholder="Filter tags..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
+          </div>
+        </div>
 
-      <!-- No search results -->
-      <div v-if="searchQuery && filteredGroupedTags.length === 0" class="py-8 text-center">
-        <p class="text-sm text-muted-foreground">No tags match "{{ searchQuery }}"</p>
-      </div>
-
-      <!-- Collapsible groups -->
-      <div class="space-y-1.5">
-        <Collapsible
-          v-for="group in filteredGroupedTags"
-          :key="group.label"
-          :open="isGroupExpanded(group.label)"
-          @update:open="toggleGroup(group.label)"
-        >
-          <CollapsibleTrigger
-            class="group collection-row flex w-full cursor-pointer items-center gap-2 px-2 py-4 text-left"
-            :class="{ 'bg-sidebar-accent': isGroupExpanded(group.label) }"
+        <!-- Count + collapse/expand-all -->
+        <div class="mb-3 flex items-center text-xs text-muted-foreground">
+          <span v-if="searchQuery">
+            {{ totalVisibleTags }} tag{{ totalVisibleTags !== 1 ? 's' : '' }} in {{ filteredGroupedTags.length }} group{{
+              filteredGroupedTags.length !== 1 ? 's' : ''
+            }}
+          </span>
+          <span v-else>
+            {{ totalTags }} tag{{ totalTags !== 1 ? 's' : '' }} across {{ groupedTags.length }} group{{ groupedTags.length !== 1 ? 's' : '' }}
+          </span>
+          <button
+            v-if="filteredGroupedTags.length > 0"
+            class="ml-auto flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            @click.prevent="toggleAll"
           >
-            <ChevronRight :size="14" class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
-            <span class="text-sm font-medium">{{ group.label }}</span>
-            <span class="ml-auto bg-card px-2.5 py-1.5 text-xs">{{ group.tags.length }}</span>
-          </CollapsibleTrigger>
+            <ChevronsDownUp v-if="allExpanded" :size="13" />
+            <ChevronsUpDown v-else :size="13" />
+            {{ allExpanded ? 'Collapse all' : 'Expand all' }}
+          </button>
+        </div>
 
-          <CollapsibleContent>
-            <div class="flex flex-col gap-2 bg-sidebar/50 p-4">
-              <div
-                v-for="tag in group.tags"
-                :key="tag.tag_name"
-                class="row group/row collection-row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all"
-                role="button"
-                tabindex="0"
-                :title="`Click to copy ${tag.display_tag}`"
-                @click="copyTag(tag)"
-                @keydown.enter.prevent="copyTag(tag)"
-              >
-                <div class="min-w-0 flex-1">
-                  <span class="font-mono text-sm text-violet-700 dark:text-violet-300">{{ tag.display_tag }}</span>
-                  <p class="mt-1 text-sm text-foreground">{{ tag.description }}</p>
-                </div>
+        <!-- No search results -->
+        <div v-if="searchQuery && filteredGroupedTags.length === 0" class="py-8 text-center">
+          <p class="text-sm text-muted-foreground">No tags match "{{ searchQuery }}"</p>
+        </div>
 
-                <div class="flex shrink-0 items-center gap-3">
-                  <span v-if="displayValue(tag)" class="max-w-[16rem] truncate font-mono text-sm text-foreground" :title="displayValue(tag)">
-                    {{ displayValue(tag) }}
-                  </span>
-                  <Copy :size="15" class="shrink-0 text-muted-foreground group-hover/row:text-foreground" />
+        <!-- Collapsible groups -->
+        <div class="space-y-1.5">
+          <Collapsible
+            v-for="group in filteredGroupedTags"
+            :key="group.label"
+            :open="isGroupExpanded(group.label)"
+            @update:open="toggleGroup(group.label)"
+          >
+            <CollapsibleTrigger
+              class="group collection-row flex w-full cursor-pointer items-center gap-2 px-2 py-4 text-left"
+              :class="{ 'bg-sidebar-accent': isGroupExpanded(group.label) }"
+            >
+              <ChevronRight :size="14" class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
+              <span class="text-sm font-medium">{{ group.label }}</span>
+              <span class="ml-auto bg-card px-2.5 py-1.5 text-xs">{{ group.tags.length }}</span>
+            </CollapsibleTrigger>
+
+            <CollapsibleContent>
+              <div class="flex flex-col gap-2 bg-sidebar/50 p-4">
+                <div
+                  v-for="tag in group.tags"
+                  :key="tag.tag_name"
+                  class="row group/row collection-row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all"
+                  role="button"
+                  tabindex="0"
+                  :title="`Click to copy ${tag.display_tag}`"
+                  @click="copyTag(tag)"
+                  @keydown.enter.prevent="copyTag(tag)"
+                >
+                  <div class="min-w-0 flex-1">
+                    <span class="font-mono text-sm text-violet-700 dark:text-violet-300">{{ tag.display_tag }}</span>
+                    <p class="mt-1 text-sm text-foreground">{{ tag.description }}</p>
+                  </div>
+
+                  <div class="flex shrink-0 items-center gap-3">
+                    <span v-if="displayValue(tag)" class="max-w-[16rem] truncate font-mono text-sm text-foreground" :title="displayValue(tag)">
+                      {{ displayValue(tag) }}
+                    </span>
+                    <Copy :size="15" class="shrink-0 text-muted-foreground group-hover/row:text-foreground" />
+                  </div>
                 </div>
               </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
       </div>
-    </div>
+    </SettingsLayout>
   </AppLayout>
 </template>

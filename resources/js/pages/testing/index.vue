@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { Head } from '@inertiajs/vue3';
 import { Copy, Check, Terminal, ExternalLink, Search, AlertTriangle } from '@lucide/vue';
 import { ref, computed } from 'vue';
@@ -138,106 +139,108 @@ const filteredGrouped = computed<{ family: EventFamily; label: string; events: E
     <title>Testing Guide</title>
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex h-full flex-1 flex-col gap-4 p-4">
-      <div class="flex items-center gap-3">
-        <Terminal class="h-6 w-6 text-violet-400 dark:text-violet-300" />
-        <h1 class="text-2xl font-semibold">Testing Guide</h1>
-      </div>
-
-      <p class="max-w-4xl text-sm text-foreground">
-        Click any event to copy its
-        <a
-          href="https://dev.twitch.tv/docs/cli/"
-          target="_blank"
-          rel="noopener"
-          class="inline-flex cursor-pointer items-center gap-1 text-violet-400 hover:underline dark:text-violet-300"
-        >
-          Twitch CLI
-          <ExternalLink class="h-3 w-3" />
-        </a>
-        trigger command to your clipboard, then paste it into a terminal to fire a test webhook at your account. You'll need the CLI installed and
-        <code class="rounded bg-slate-300 px-1.5 py-0.5 text-xs dark:bg-slate-800">twitch configure</code> run once first.
-      </p>
-
-      <div
-        class="flex items-start gap-2 border border-amber-300 bg-amber-400/10 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-300"
-      >
-        <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
-        <span>Never show these commands on stream or paste them into your chat!</span>
-      </div>
-
-      <div v-if="!hasWebhookSecret" class="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-sm text-amber-300">
-        You don't have a per-user webhook secret yet. These commands use the global secret, which works but isn't unique to your account. Log out and
-        back in to get a personal one.
-      </div>
-
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div class="relative flex-1">
-          <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-          <input v-model="searchQuery" placeholder="Filter events..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
+    <SettingsLayout>
+      <div class="flex flex-col gap-4">
+        <div class="flex items-center gap-3">
+          <Terminal class="h-6 w-6 text-violet-400 dark:text-violet-300" />
+          <h1 class="text-2xl font-semibold">Testing Guide</h1>
         </div>
-        <label class="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-          <input type="checkbox" v-model="showCommand" class="cursor-pointer" />
-          Show command
-        </label>
-      </div>
 
-      <div class="text-xs text-muted-foreground">{{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }}</div>
-
-      <div v-if="filteredEvents.length === 0" class="py-8 text-center text-sm text-muted-foreground">No events match "{{ searchQuery }}"</div>
-
-      <div v-else class="space-y-5">
-        <section v-for="group in filteredGrouped" :key="group.family" class="space-y-1.5">
-          <h2 class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            {{ group.label }} <span class="font-normal">({{ group.events.length }})</span>
-          </h2>
-          <ul class="divide-y divide-sidebar overflow-hidden rounded-md border border-sidebar bg-sidebar-accent/30">
-            <li
-              v-for="event in group.events"
-              :key="event.type"
-              class="group flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-sidebar-accent/60"
-              @click="copyCommand(event.type)"
-            >
-              <div class="shrink-0 text-xs text-muted-foreground">
-                <Check v-if="copiedCommand === event.type" class="h-4 w-4 text-green-400" />
-                <Copy v-else class="h-4 w-4 opacity-60 group-hover:opacity-100" />
-              </div>
-
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <span class="text-sm font-medium" :class="copiedCommand === event.type ? 'text-green-400' : 'text-foreground'">{{
-                    event.label
-                  }}</span>
-                  <code class="rounded bg-sidebar-accent px-1.5 py-0.5 text-[10px] text-violet-400 dark:text-violet-300">{{ event.type }}</code>
-                </div>
-                <p class="text-xs text-muted-foreground">{{ event.description }}</p>
-                <input
-                  v-if="showCommand"
-                  :value="commandFor(event.type)"
-                  readonly
-                  class="input-border mt-1.5 w-full cursor-pointer px-2 py-1 font-mono text-[11px] text-green-500 dark:text-green-300"
-                  @click.stop="copyCommand(event.type)"
-                />
-              </div>
-            </li>
-          </ul>
-        </section>
-      </div>
-
-      <div class="pb-8 text-sm text-muted-foreground">
-        <p>
-          Full event reference:
+        <p class="max-w-4xl text-sm text-foreground">
+          Click any event to copy its
           <a
-            href="https://dev.twitch.tv/docs/eventsub/eventsub-reference/"
+            href="https://dev.twitch.tv/docs/cli/"
             target="_blank"
             rel="noopener"
             class="inline-flex cursor-pointer items-center gap-1 text-violet-400 hover:underline dark:text-violet-300"
           >
-            Twitch EventSub Reference
+            Twitch CLI
             <ExternalLink class="h-3 w-3" />
           </a>
+          trigger command to your clipboard, then paste it into a terminal to fire a test webhook at your account. You'll need the CLI installed and
+          <code class="rounded bg-slate-300 px-1.5 py-0.5 text-xs dark:bg-slate-800">twitch configure</code> run once first.
         </p>
+
+        <div
+          class="flex items-start gap-2 border border-amber-300 bg-amber-400/10 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-300"
+        >
+          <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
+          <span>Never show these commands on stream or paste them into your chat!</span>
+        </div>
+
+        <div v-if="!hasWebhookSecret" class="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-sm text-amber-300">
+          You don't have a per-user webhook secret yet. These commands use the global secret, which works but isn't unique to your account. Log out
+          and back in to get a personal one.
+        </div>
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div class="relative flex-1">
+            <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
+            <input v-model="searchQuery" placeholder="Filter events..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
+          </div>
+          <label class="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+            <input type="checkbox" v-model="showCommand" class="cursor-pointer" />
+            Show command
+          </label>
+        </div>
+
+        <div class="text-xs text-muted-foreground">{{ filteredEvents.length }} event{{ filteredEvents.length !== 1 ? 's' : '' }}</div>
+
+        <div v-if="filteredEvents.length === 0" class="py-8 text-center text-sm text-muted-foreground">No events match "{{ searchQuery }}"</div>
+
+        <div v-else class="space-y-5">
+          <section v-for="group in filteredGrouped" :key="group.family" class="space-y-1.5">
+            <h2 class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              {{ group.label }} <span class="font-normal">({{ group.events.length }})</span>
+            </h2>
+            <ul class="divide-y divide-sidebar overflow-hidden rounded-md border border-sidebar bg-sidebar-accent/30">
+              <li
+                v-for="event in group.events"
+                :key="event.type"
+                class="group flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-sidebar-accent/60"
+                @click="copyCommand(event.type)"
+              >
+                <div class="shrink-0 text-xs text-muted-foreground">
+                  <Check v-if="copiedCommand === event.type" class="h-4 w-4 text-green-400" />
+                  <Copy v-else class="h-4 w-4 opacity-60 group-hover:opacity-100" />
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <span class="text-sm font-medium" :class="copiedCommand === event.type ? 'text-green-400' : 'text-foreground'">{{
+                      event.label
+                    }}</span>
+                    <code class="rounded bg-sidebar-accent px-1.5 py-0.5 text-[10px] text-violet-400 dark:text-violet-300">{{ event.type }}</code>
+                  </div>
+                  <p class="text-xs text-muted-foreground">{{ event.description }}</p>
+                  <input
+                    v-if="showCommand"
+                    :value="commandFor(event.type)"
+                    readonly
+                    class="input-border mt-1.5 w-full cursor-pointer px-2 py-1 font-mono text-[11px] text-green-500 dark:text-green-300"
+                    @click.stop="copyCommand(event.type)"
+                  />
+                </div>
+              </li>
+            </ul>
+          </section>
+        </div>
+
+        <div class="pb-8 text-sm text-muted-foreground">
+          <p>
+            Full event reference:
+            <a
+              href="https://dev.twitch.tv/docs/eventsub/eventsub-reference/"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex cursor-pointer items-center gap-1 text-violet-400 hover:underline dark:text-violet-300"
+            >
+              Twitch EventSub Reference
+              <ExternalLink class="h-3 w-3" />
+            </a>
+          </p>
+        </div>
       </div>
-    </div>
+    </SettingsLayout>
   </AppLayout>
 </template>
