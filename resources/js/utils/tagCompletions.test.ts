@@ -156,7 +156,30 @@ describe('foreach scope', () => {
 describe('bang snippets', () => {
   it('always offers the block and loop snippets', () => {
     const labels = bangSnippets({ ...data, controls: [] }).map((s) => s.label);
-    expect(labels).toEqual(['!chat', '!subs', '!followers', '!goals', '!if', '!ifelse', '!foreach']);
+    expect(labels).toEqual(['!chat', '!subs', '!followers', '!goals', '!followed', '!if', '!ifelse', '!foreach']);
+  });
+
+  it('covers every iterable a static overlay can loop over', () => {
+    const templates = bangSnippets({ ...data, controls: [] }).map((s) => s.template);
+    for (const iterable of ['chat', 'subscribers', 'channel_followers', 'followed_channels', 'goals']) {
+      expect(
+        templates.some((t) => t.includes(`[[[foreach:${iterable} as `)),
+        iterable,
+      ).toBe(true);
+    }
+  });
+
+  it('offers the event loops on alert templates only', () => {
+    const onStatic = bangSnippets(data).map((s) => s.label);
+    expect(onStatic).not.toContain('!poll');
+    expect(onStatic).not.toContain('!prediction');
+    expect(onStatic).not.toContain('!hypetrain');
+
+    const onAlert = bangSnippets({ ...data, templateType: 'alert' });
+    expect(onAlert.map((s) => s.label)).toEqual(expect.arrayContaining(['!poll', '!prediction', '!hypetrain']));
+    expect(onAlert.find((s) => s.label === '!poll')?.template).toContain('[[[foreach:event.choices as choice]]]');
+    expect(onAlert.find((s) => s.label === '!prediction')?.template).toContain('[[[foreach:event.outcomes as outcome]]]');
+    expect(onAlert.find((s) => s.label === '!hypetrain')?.template).toContain('[[[foreach:event.top_contributions as contribution]]]');
   });
 
   it('adds a donation bang only for a service whose controls are present', () => {
@@ -182,7 +205,7 @@ describe('bang snippets', () => {
   });
 
   it('keeps every template balanced', () => {
-    for (const snippet of bangSnippets({ ...data, controls: DONATION_SOURCES_AS_CONTROLS })) {
+    for (const snippet of bangSnippets({ ...data, controls: DONATION_SOURCES_AS_CONTROLS, templateType: 'alert' })) {
       const opens = snippet.template.split('[[[').length - 1;
       const closes = snippet.template.split(']]]').length - 1;
       expect(opens, snippet.label).toBe(closes);

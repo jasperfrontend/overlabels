@@ -75,9 +75,18 @@ The snippets that are always there:
 | `!subs` | Your most recent subscribers, one row each |
 | `!followers` | Your most recent followers, one row each |
 | `!goals` | Your active goals with their progress |
+| `!followed` | The channels you follow, one row each |
 | `!if` | An `if` block. The cursor lands in the condition; Tab moves it to the body |
 | `!ifelse` | An `if` block with an `else` branch |
 | `!foreach` | An empty loop. The alias appears twice and the two are linked, so renaming it once renames both |
+
+Three more when you are editing an alert, because only an alert receives an event payload:
+
+| Bang | What it writes |
+|---|---|
+| `!poll` | The choices of a poll with their vote counts |
+| `!prediction` | The outcomes of a prediction with predictors and points wagered |
+| `!hypetrain` | The top hype train contributors |
 
 And one per donation service you have connected: `!kofi`, `!streamlabs`, `!fourthwall`, `!bmac`
 and `!throne` each write a block showing the latest donor, the amount and their message from that
