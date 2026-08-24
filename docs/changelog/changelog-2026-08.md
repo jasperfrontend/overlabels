@@ -1,5 +1,22 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - feat(help): pages can declare `keywords:` for the words search could not reach
+
+Searching the help docs for "autocomplete" returned "Nothing matched", while `/help/editor` said the word five times and carried it as a heading. Same for "codemirror", "snippets" and "bang". A page can now declare the words people would actually type:
+
+```markdown
+keywords: autocomplete, completion, bang, snippets, codemirror, intellisense
+```
+
+Comma-separated, optional, and multi-word terms stay whole - `bang snippets` is one keyword, not two. Nothing else to wire: the frontmatter is already flat `key: value`, so the parser needed no change, and `HelpPage::splitKeywords()` is the whole of the new parsing.
+
+- **Search genuinely cannot see into a body, and no amount of weighting fixes it.** Fuse applies a field norm that scales a match by field length. Measured on an identical exact match: 0.0000 in a short field, 0.8892 in a 20KB one. The cutoff that drops coincidence sits at 0.5, so `editor` scored 0.9805 for "autocomplete" and was correctly thrown away as noise. `body` at weight 0.5 was not the problem - the norm scales with length whatever the weight is, so `body` has always been near-dead weight for any term not also in the title, slug or lead.
+- **Keywords are a separate pass, NOT a sixth Fuse key** - the same call already made for `category`, and for the same measured reason. Fuse normalises a document's score across all its keys, so an extra key moves every score in the corpus: adding one at weight 1.5 dropped `all-ko-fi-events` from "kofi" and `bot/random-and-counters` from "raid", the exact regressions the tuned weights exist to produce. At weight 5 it broke 8 of 15 sample queries. Running alongside keeps fuzzy ranking bit-for-bit, and a page with no keywords behaves identically to before.
+- **Two tiers, because they are different claims.** An exact match leads the results - the author saying this page IS about that word, which should beat a fuzzy match on a lookalike, so "bang" opens the editor guide instead of `user_offline_banner`. A prefix appends after the fuzzy hits: it is a hint, and a hint must never displace something that matched outright.
+- **Prefixes, not substrings, on word boundaries.** `snip` finds `bang snippets` and `autocom` finds `autocomplete`, while `ang` and `ode` find nothing. Mid-word matching turns every short query into noise. Exact matches are exempt from the three-character floor, since `if` as a declared keyword is unambiguous.
+- **`help-reference-index.json` is untouched**, field for field. It is a documented public contract ("BYOF"), so the new field goes to the unified `help-index.json` only, and a test asserts its exact key list. Reference entries have no frontmatter at all - their title is read from the first heading - so they can never declare keywords.
+- Both search surfaces get this for free: the Alt+R palette and the on-page box already share `buildHelpSearch`. 17 new tests; the field-norm behaviour and the corpus perturbation were both measured against the real index rather than reasoned about.
+
 ## August 24th, 2026 - feat(editor): a bang for every foreach loop
 
 The bang snippets covered four of the eight iterables. Now every one has a bang that writes a working loop: `!followed` (followed channels) joins the static set; `!poll`, `!prediction` and `!hypetrain` write the `event.choices`, `event.outcomes` and `event.top_contributions` loops and are offered on alert templates only, the same gate as the `event.*` tags. `raw` is not a loop but a tag for inside one, so it gets no bang - it already completes as `raw` inside any foreach body.

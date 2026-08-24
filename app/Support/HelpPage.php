@@ -146,6 +146,36 @@ final class HelpPage
     }
 
     /**
+     * Split a `keywords:` frontmatter line into its terms.
+     *
+     * Comma-separated, because frontmatter here is flat `key: value` with no
+     * YAML parser and therefore no lists. A term may contain spaces, so
+     * `bang snippets` is one keyword rather than two.
+     *
+     * These exist because of how the search scores a long field. Fuse applies a
+     * field norm, so the same exact match scores 0.0 in a short field and 0.89
+     * in a 20KB body - well above the cutoff that throws coincidence away. The
+     * word `autocomplete` appears five times in the editor guide and searching
+     * for it returned nothing at all. A keyword is the author saying what a
+     * page is about, in a field short enough for that to survive scoring.
+     *
+     * @return array<int,string>
+     */
+    public static function splitKeywords(?string $raw): array
+    {
+        if ($raw === null || trim($raw) === '') {
+            return [];
+        }
+
+        $terms = array_filter(
+            array_map(trim(...), explode(',', $raw)),
+            fn (string $term): bool => $term !== '',
+        );
+
+        return array_values(array_unique($terms));
+    }
+
+    /**
      * Render a page.
      *
      * @return array{

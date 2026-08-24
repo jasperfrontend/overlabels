@@ -448,11 +448,18 @@ heading: Show a donation goal bar
 lead: The paragraph under the H1, and the HelpBeacon card body.
 context: templates.create?type=static
 canonical: https://overlabels.com/help/tutorials/donation-goal-bar
+keywords: donation goal, progress bar, goal bar, fundraiser
 ---
 ```
 
 - `title` / `description` are for the browser tab and Google, and may run long.
 - `heading` / `lead` are the on-page H1 and intro AND the beacon card copy.
+- **`keywords:` is how a page becomes findable by a word that is only in its body.** Comma-separated,
+  optional, and multi-word terms stay whole (`bang snippets` is one keyword). **Search cannot see into
+  a body** - Fuse applies a field norm, so the same exact match scores 0.0 in a short field and 0.89 in
+  a 20KB one, above the cutoff that throws coincidence away. `/help/editor` says "autocomplete" five
+  times, has it as a heading, and searching for it returned NOTHING. Raising the `body` weight cannot
+  fix that; the norm scales with length whatever the weight is.
 - **If the page declares a `context:`, `heading` is capped at 40 chars and `lead` at 320** (the panel is 375px). No context, no cap. `HelpContextTest` names the offending slug.
 - `context:` is optional and often should be omitted. **Max 3 pages may resolve to one context.** As of Aug 2026 `templates.create?type=static` is FULL at 3 of 3 (bare `templates.create` from `conditionals`/`formatting` matches any bag, plus one tutorial), so claiming it means displacing something. Check before adding one: `HelpContext::for('some.route', ['type' => 'static'])` in tinker returns everything that would resolve.
 
@@ -472,6 +479,7 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 - **The sitemap is derived from `HelpCorpus`, never hand-listed.** The old array had rotted by fourteen pages.
 - `/help/integration-presets` and `/help/gamejam` stay Inertia deliberately (live data from `controlPresets.ts`, and a Vue app). `HelpLayout.vue` exists only for them. Do not "finish the job" by converting them.
 - **`public/help-reference-index.json` is a documented public contract** ("BYOF" on the reference page, plus `/help/reference/for-machines/help-reference-index-json`). It is still emitted byte-identically alongside the newer unified `help-index.json`. Do not merge or reshape it.
+- **`keywords:` is a separate deterministic pass (`keywordMatch`), NOT a sixth Fuse key** - the same call already made for `category`. Fuse normalises a document's score across all its keys, so an extra key moves EVERY score in the corpus: measured against the real index, adding one at weight 1.5 dropped `all-ko-fi-events` from "kofi" and `bot/random-and-counters` from "raid". Running alongside keeps ranking bit-for-bit and makes a page without keywords behave identically. Two tiers, because they are different claims: an exact match leads the results (the author saying the page IS about that word - "bang" must beat `user_offline_banner`), a prefix appends after the fuzzy hits (a hint never displaces a real match). Prefixes match the whole term or a word inside it, so `snip` finds `bang snippets` but `ang` finds nothing. Reference entries have no frontmatter, so they never carry keywords.
 - Search ranking lives in `resources/js/utils/helpSearch.ts` and is shared by the Alt+R palette and the on-page search box, so "search the docs" cannot mean two things. `body` is weighted 0.5 on purpose (a ~20KB guide otherwise weakly matches everything) and results scoring above 0.5 are dropped - measured scores are bimodal, real matches under 0.15 and coincidence above 0.78. A dotted query falls back to its root, so `chat.0.text` finds the `chat` entry.
 - **Do not restore `cache: 'force-cache'` on the index fetch.** It served a corpus predating the last deploy.
 - The `chat` reference slug deliberately shadows the `/help/chat` page slug in the wikilink map, declared in `HelpCorpus::SHADOWED_PAGE_SLUGS` and pinned in both directions. Any other collision is a bug.

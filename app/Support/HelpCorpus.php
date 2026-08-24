@@ -76,7 +76,7 @@ final class HelpCorpus
      * this, and the only caller that does not want it (the nav) is already
      * paying for the file reads anyway.
      *
-     * @return array<int,array{kind:string,kindLabel:string,slug:string,title:string,lead:string,url:string,path:string,body:string,category:?string,categoryLabel:?string}>
+     * @return array<int,array{kind:string,kindLabel:string,slug:string,title:string,lead:string,url:string,path:string,body:string,keywords:array<int,string>,category:?string,categoryLabel:?string}>
      */
     public static function all(): array
     {
@@ -101,6 +101,10 @@ final class HelpCorpus
                 'url' => HelpPage::url($slug),
                 'path' => (string) $path,
                 'body' => $path !== null ? (string) file_get_contents($path) : '',
+                // Search terms the author declared for this page. Separate from
+                // `body` because Fuse's field norm makes a match in a 20KB body
+                // score like coincidence - see HelpPage::splitKeywords().
+                'keywords' => HelpPage::splitKeywords($meta['keywords'] ?? null),
                 'category' => null,
                 'categoryLabel' => null,
             ];
@@ -125,6 +129,11 @@ final class HelpCorpus
                 'url' => "/help/reference/{$entry['category']}/{$entry['slug']}",
                 'path' => $entry['path'],
                 'body' => $entry['body'],
+                // Reference entries have no frontmatter at all - their title is
+                // read from the first heading - so there is nowhere to declare
+                // one. They are named after the thing they document, which is
+                // the query anyway.
+                'keywords' => [],
                 'category' => $entry['category'],
                 'categoryLabel' => $entry['categoryLabel'],
             ];

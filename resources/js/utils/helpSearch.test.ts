@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildHelpSearch, docLabel, sectionMatch, type HelpDoc } from './helpSearch';
+import { FUSE_OPTIONS, buildHelpSearch, docLabel, keywordMatch, sectionMatch, type HelpDoc } from './helpSearch';
 
 /**
  * A stand-in for the real corpus, shaped like it: a handful of reference
@@ -24,7 +24,7 @@ function ref(slug: string, category: string, categoryLabel: string, body = ''): 
   };
 }
 
-function page(slug: string, kind: 'guide' | 'tutorial', title: string, lead = ''): HelpDoc {
+function page(slug: string, kind: 'guide' | 'tutorial', title: string, lead = '', keywords: string[] = []): HelpDoc {
   return {
     kind,
     kindLabel: kind === 'guide' ? 'Guide' : 'Tutorial',
@@ -35,11 +35,19 @@ function page(slug: string, kind: 'guide' | 'tutorial', title: string, lead = ''
     body: '',
     category: null,
     categoryLabel: null,
+    keywords,
   };
 }
 
 const DOCS: HelpDoc[] = [
   page('chat', 'guide', 'Chat', 'Show live Twitch chat in an overlay.'),
+  // Shaped like the real editor guide: the words people search for are in the
+  // body, which fuzzy search cannot see into, and nowhere in the title or lead.
+  page('editor', 'guide', 'The code editor', 'Type [[[ and the editor offers every tag you can use.', [
+    'autocomplete',
+    'bang snippets',
+    'codemirror',
+  ]),
   page('controls', 'guide', 'Controls', 'Values you can change without editing the template.'),
   ref('chat', 'foreach-loops', 'Foreach Loops'),
   ref('goals', 'foreach-loops', 'Foreach Loops'),
@@ -89,6 +97,53 @@ describe('sectionMatch', () => {
   });
 });
 
+describe('keywordMatch', () => {
+  it('finds a page by a word that only its keywords declare', () => {
+    // The motivating bug. "autocomplete" appears five times in the editor guide
+    // and as one of its headings, and searching for it returned nothing at all:
+    // Fuse's field norm scores an exact match in a 20KB body at 0.98, which the
+    // cutoff correctly throws away as coincidence.
+    expect(keywordMatch(DOCS, 'autocomplete').exact.map((d) => d.slug)).toEqual(['editor']);
+  });
+
+  it('matches a partial of a keyword, and separately from an exact one', () => {
+    expect(keywordMatch(DOCS, 'autocom').partial.map((d) => d.slug)).toEqual(['editor']);
+    expect(keywordMatch(DOCS, 'autocom').exact).toEqual([]);
+  });
+
+  it('matches a word inside a multi-word keyword', () => {
+    // `bang snippets` is one keyword, not two, but someone typing either half
+    // of it is asking for the same page.
+    expect(keywordMatch(DOCS, 'snip').partial.map((d) => d.slug)).toEqual(['editor']);
+    expect(keywordMatch(DOCS, 'bang').partial.map((d) => d.slug)).toEqual(['editor']);
+  });
+
+  it('prefixes only, so a fragment from the middle of a keyword matches nothing', () => {
+    // Substring matching would make every short query noise: `ang` would pull
+    // in `bang`, `ode` would pull in `codemirror`.
+    expect(keywordMatch(DOCS, 'ang').partial).toEqual([]);
+    expect(keywordMatch(DOCS, 'ode').partial).toEqual([]);
+  });
+
+  it('ignores a partial too short to be asking for anything', () => {
+    expect(keywordMatch(DOCS, 'co').partial).toEqual([]);
+  });
+
+  it('still honours an exact match at any length, since exact is unambiguous', () => {
+    expect(keywordMatch([page('x', 'guide', 'X', '', ['if'])], 'if').exact).toHaveLength(1);
+  });
+
+  it('ignores punctuation and case, like the section pass', () => {
+    expect(keywordMatch(DOCS, 'AutoComplete').exact.map((d) => d.slug)).toEqual(['editor']);
+    expect(keywordMatch(DOCS, 'bang-snippets').exact.map((d) => d.slug)).toEqual(['editor']);
+  });
+
+  it('never matches a document with no keywords declared', () => {
+    expect(keywordMatch(DOCS, 'chat').exact).toEqual([]);
+    expect(keywordMatch(DOCS, 'chat').partial).toEqual([]);
+  });
+});
+
 describe('buildHelpSearch', () => {
   const search = buildHelpSearch(DOCS);
 
@@ -120,6 +175,47 @@ describe('buildHelpSearch', () => {
   it('lists the corpus for an empty query', () => {
     expect(search.search('', 3)).toHaveLength(3);
     expect(search.search('   ', 3)).toHaveLength(3);
+  });
+
+  it('answers a keyword query that fuzzy search alone returns nothing for', () => {
+    expect(search.search('autocomplete', 50).map((d) => d.slug)).toContain('editor');
+    expect(search.search('codemirror', 50).map((d) => d.slug)).toContain('editor');
+  });
+
+  it('puts an exact keyword ahead of a fuzzy match on a word that merely looks like it', () => {
+    // `bang` is a declared keyword of the editor guide. Nothing else in the
+    // corpus is about it, so a lookalike must not come first.
+    expect(search.search('bang snippets', 50)[0].slug).toBe('editor');
+  });
+
+  it('keeps a partial keyword behind anything that matched outright', () => {
+    // `chat` is a page and a reference entry by name. `chat` is not a keyword
+    // of the editor guide, but this pins the ordering rule the other way round:
+    // a hint never displaces a real match.
+    const hits = search.search('controls', 50);
+    expect(hits[0].slug).toBe('controls');
+  });
+
+  it('keeps keywords out of the fuzzy index entirely', () => {
+    // This is the actual invariant. Fuse normalises a document's score across
+    // all its keys, so a sixth key moves every score in the corpus - measured
+    // against the real index it dropped `all-ko-fi-events` from "kofi" and
+    // `bot/random-and-counters` from "raid", the tuned behaviour the weights
+    // exist to produce. Keywords have to stay a pass alongside, not a key.
+    const keys = (FUSE_OPTIONS.keys ?? []).map((k) => (typeof k === 'string' ? k : (k as { name: string }).name));
+    expect(keys).not.toContain('keywords');
+  });
+
+  it('leaves ranking untouched for a corpus with no keywords at all', () => {
+    // The whole reason keywords are a separate pass: adding a sixth Fuse key
+    // renormalises every score in the corpus. Measured against the real index
+    // that dropped `all-ko-fi-events` from "kofi" and `bot/random-and-counters`
+    // from "raid". Strip the keywords and every result must be identical.
+    const stripped = buildHelpSearch(DOCS.map((d) => ({ ...d, keywords: [] })));
+
+    for (const q of ['foreach', 'chat', 'channel_name', 'template tags', 'controls', 'kofi']) {
+      expect(stripped.search(q, 50).map((d) => d.url)).toEqual(search.search(q, 50).map((d) => d.url));
+    }
   });
 });
 
