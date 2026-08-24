@@ -1,5 +1,12 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - feat(integrations): the whole "Alert on" row toggles
+
+Following the switch list below: the row itself now carries `role="switch"` and the click handler, and the track and thumb are inert spans. One hit target the width of the list, one tab stop, no nested buttons.
+
+- **The row has no hover or active styling on purpose.** The switch flipping is the only feedback - nothing else moves when you click, so the thing you are meant to read is the thing that changes. `cursor-pointer` across the row is the affordance that it is clickable at all.
+- `type="button"` is not optional here: the list sits inside the settings `<form>`, and a typeless button inside a form defaults to submit, so every toggle would have saved the page.
+
 ## August 24th, 2026 - feat(integrations): "Alert on" becomes a list of switches
 
 The Ko-fi and Buy Me a Coffee settings pages picked their event types with a wrapped row of `.btn-*` chips: selected chips were filled, unselected ones outlined. A chip that is OFF still looks like a button you are meant to press, so both states read as "button", and six of them wrapped across two lines with no reading order. They are now one labelled row per event type with a switch on the right.
