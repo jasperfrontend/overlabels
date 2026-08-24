@@ -3,8 +3,9 @@ title: Show your latest donator from every source - Overlabels Tutorial
 description: One name on screen, whichever of your five donation services it came from, using the latest() function and the automatic _at timestamps.
 heading: Latest donator from any source
 lead: You have Ko-fi and Streamlabs connected. Both track a latest donor. Which one is actually the most recent? This is what latest() is for, and it is the piece of Overlabels nobody finds on their own.
-context: settings.integrations.index
 canonical: https://overlabels.com/help/tutorials/latest-donator
+context: settings.integrations.index
+keywords: tips, tipping service, money, income, revenue, get paid, dono
 ---
 
 ## The problem

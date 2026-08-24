@@ -1,5 +1,18 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - docs(help): the money words now find the page that answers them
+
+`tips`, `tipping`, `tipping service`, `money`, `income`, `revenue` and `get paid` all returned "Nothing matched", while the tutorial that answers every one of them - one donor name across all five donation services - was reachable only by naming a service or typing "donator". It now declares them:
+
+```markdown
+keywords: tips, tipping service, money, income, revenue, get paid, dono
+```
+
+- **Brand names are deliberately NOT declared here.** `kofi`, `streamlabs`, `bmac`, `fourthwall` and `throne` already sit in page titles and slugs, so the fuzzy pass finds them perfectly well. Declaring one on this page would make it an exact keyword hit and prepend this tutorial above the page that is actually about that service - measured, and it hijacked the top spot for all three tested. The test for whether a word belongs in `keywords:` is "would this already find the page?"
+- **One owner per broad word.** Putting the same money vocabulary on all eight money-ish pages was measured first and rejected: every one of the seven terms then returned the identical eight pages in corpus order, and `dono` got worse than doing nothing, because exact keyword hits lead the results and an eight-page unranked block displaced the six genuine donation reference entries that fuzzy had ranked. A keyword that is true of eight pages identifies none of them.
+- Verified against the rebuilt index: all seven terms resolve here, and 14 sampled queries - every brand name, plus `donation`, `controls`, `raid`, `foreach`, `chat`, `follower` and `autocomplete` - are unchanged.
+- Short forms still work through the prefix tier, so `tip`, `paid`, `mone` and `incom` all find it, ranked behind anything that matched outright. Left as is: promoting them would mean declaring each singular separately, which is noise for the gain.
+
 ## August 24th, 2026 - feat(help): pages can declare `keywords:` for the words search could not reach
 
 Searching the help docs for "autocomplete" returned "Nothing matched", while `/help/editor` said the word five times and carried it as a heading. Same for "codemirror", "snippets" and "bang". A page can now declare the words people would actually type:
