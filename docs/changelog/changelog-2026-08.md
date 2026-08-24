@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - style(testing): the Testing Guide joins the grouped list
+
+Last of the "made-up list" pages. `/testing` already had families, a filter and a count, all hand-rolled; they map one-to-one onto `GroupedCollection`, so the page lost its own search box, its own count line and its uppercase section headings and gained the collapsible sections, count pills and Expand / Collapse all every other grouped list has.
+
+- "Show command" sits in the component's `toolbar` slot, next to the filter, where it was.
+- Rows keep click-to-copy (with the green tick), and now sit on `.collection-row` like every other row, with `role="button"` and Enter to copy.
+- Nothing about the commands themselves changed. Still never show them on stream.
+
+With this, the grouped list is used on `/tags`, the editor's Tags tab, an overlay's Controls tab, `/settings/controls` and `/testing`. `/twitchdata` stays as it is on purpose.
+
 ## August 25th, 2026 - style(controls): `/settings/controls` joins the grouped list
 
 First adopter of `GroupedCollection` outside the three it was extracted from. The page used to print one flat run of bordered boxes with no filter; on an account with a few dozen controls that was a scroll. It now groups the way an overlay's Controls tab does - your own controls by type (Counter, Timer, Number, ...), then one section per service - with the same filter input, count line and Expand / Collapse all.
