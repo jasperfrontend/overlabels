@@ -5,6 +5,7 @@ import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import EventTypeToggleList from '@/components/EventTypeToggleList.vue';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -97,15 +98,6 @@ function copyWebhookUrl() {
     copied.value = true;
     setTimeout(() => (copied.value = false), 2000);
   });
-}
-
-function toggleEvent(eventType: string) {
-  const idx = form.enabled_events.indexOf(eventType);
-  if (idx >= 0) {
-    form.enabled_events.splice(idx, 1);
-  } else {
-    form.enabled_events.push(eventType);
-  }
 }
 
 function save() {
@@ -271,19 +263,7 @@ function formatDate(iso: string | null): string {
               Which BMAC event types should trigger alerts and update controls. Match this with the events you selected when creating the webhook on
               BMAC.
             </p>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="et in EVENT_TYPES"
-                :key="et.value"
-                type="button"
-                size="sm"
-                class="btn btn-sm"
-                :class="form.enabled_events.includes(et.value) ? 'btn-white' : 'btn-chill'"
-                @click="toggleEvent(et.value)"
-              >
-                {{ et.label }}
-              </button>
-            </div>
+            <EventTypeToggleList v-model="form.enabled_events" :event-types="EVENT_TYPES" />
           </div>
 
           <p v-if="integration.connected" class="text-sm text-muted-foreground">

@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - feat(integrations): "Alert on" becomes a list of switches
+
+The Ko-fi and Buy Me a Coffee settings pages picked their event types with a wrapped row of `.btn-*` chips: selected chips were filled, unselected ones outlined. A chip that is OFF still looks like a button you are meant to press, so both states read as "button", and six of them wrapped across two lines with no reading order. They are now one labelled row per event type with a switch on the right.
+
+- `EventTypeToggleList.vue` is used by both pages, so the switch exists once rather than being pasted twice. It takes `eventTypes` and `v-model`s the enabled array, which deleted the identical `toggleEvent()` helper from each page.
+- **The switch markup is copied from the Lists edit page's chat action permissions on purpose.** The app should have one switch, not two that almost match. The Lists page is untouched.
+- Green here is an on/off affordance, not a quality judgment - the opposite of the green "All overlays" badge removed from `/settings/controls` in the same pass, where green implied one scope was healthier than another.
+- `.btn-white` no longer has a call site. It stays in the stylesheet with the readable `text-neutral-900` it just gained; an unused variant costs nothing and the white/high-contrast slot is worth keeping.
+
 ## August 24th, 2026 - style(controls): the controls usage page stops being a wall of text
 
 `/settings/controls` printed everything about a control on one wrapping line: the key, the type, the value, every overlay it lives on, and an amber "duplicated across N controls" sentence. On an account with a few dozen controls that is a page you cannot read. Each row is now three stacked zones - identity, value, scope - so the eye scans one column instead of re-parsing every line.
