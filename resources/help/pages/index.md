@@ -49,6 +49,8 @@ Short, copy-and-paste tutorials. Each one ends with something on screen.
   cell, pick a block, save. Compiles to a plain static overlay that works with everything else.
 - [**Blocks**](/help/blocks) - reusable building pieces for the Builder: how to author one, how CSS
   scoping and snapshots keep everyone safe, and how controls travel with your block.
+- [**The code editor**](/help/editor) - autocomplete for every tag, your controls and your Lists, and
+  bang snippets like `!chat` that write a whole block for you.
 - [**How an overlay renders**](/help/rendering) - the pipeline end to end: boot, tag replacement,
   conditionals, live updates, alert render flow, and why scripts are stripped.
 - [**Styling with Tailwind**](/help/tailwind) - utility classes compile at save time, not in the

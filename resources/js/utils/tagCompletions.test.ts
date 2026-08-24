@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controlTagKey, foreachScopes, suggest, type CompletionData } from './tagCompletions';
+import { bangPrefix, bangSnippets, controlTagKey, foreachScopes, suggest, type CompletionData } from './tagCompletions';
 
 /**
  * The completion source is context-sensitive: which options appear depends on
@@ -150,6 +150,72 @@ describe('foreach scope', () => {
     const found = labels('[[[foreach:subscribers as sub]]][[[sub.user_name]]][[[endforeach]]]\n[[[su');
     expect(found).not.toContain('sub.user_name');
     expect(found).not.toContain('loop.index');
+  });
+});
+
+describe('bang snippets', () => {
+  it('always offers the block and loop snippets', () => {
+    const labels = bangSnippets({ ...data, controls: [] }).map((s) => s.label);
+    expect(labels).toEqual(['!chat', '!subs', '!followers', '!goals', '!if', '!ifelse', '!foreach']);
+  });
+
+  it('adds a donation bang only for a service whose controls are present', () => {
+    expect(bangSnippets(data).map((s) => s.label)).toContain('!kofi');
+    expect(bangSnippets(data).map((s) => s.label)).not.toContain('!streamlabs');
+
+    const withStreamlabs = { ...data, controls: [...data.controls, { key: 'donations_received', source: 'streamlabs' }] };
+    expect(bangSnippets(withStreamlabs).map((s) => s.label)).toContain('!streamlabs');
+  });
+
+  it('expands !chat to a complete chat loop', () => {
+    const chat = bangSnippets(data).find((s) => s.label === '!chat')!;
+    expect(chat.template).toContain('[[[foreach:chat as msg]]]');
+    expect(chat.template).toContain('[[[msg.html]]]');
+    expect(chat.template.trim().endsWith('[[[endforeach]]]')).toBe(true);
+  });
+
+  it("expands a donation bang using that service's control keys", () => {
+    const kofi = bangSnippets(data).find((s) => s.label === '!kofi')!;
+    expect(kofi.template).toContain('[[[c:kofi:latest_donor_name]]]');
+    expect(kofi.template).toContain('[[[c:kofi:latest_donation_message]]]');
+    expect(kofi.template).not.toContain('streamlabs');
+  });
+
+  it('keeps every template balanced', () => {
+    for (const snippet of bangSnippets({ ...data, controls: DONATION_SOURCES_AS_CONTROLS })) {
+      const opens = snippet.template.split('[[[').length - 1;
+      const closes = snippet.template.split(']]]').length - 1;
+      expect(opens, snippet.label).toBe(closes);
+      const foreachOpens = (snippet.template.match(/\[\[\[foreach:/g) ?? []).length;
+      const foreachCloses = (snippet.template.match(/\[\[\[endforeach]]]/g) ?? []).length;
+      expect(foreachOpens, snippet.label).toBe(foreachCloses);
+      const ifOpens = (snippet.template.match(/\[\[\[if:/g) ?? []).length;
+      const ifCloses = (snippet.template.match(/\[\[\[endif]]]/g) ?? []).length;
+      expect(ifOpens, snippet.label).toBe(ifCloses);
+    }
+  });
+});
+
+const DONATION_SOURCES_AS_CONTROLS = ['kofi', 'streamlabs', 'fourthwall', 'bmac', 'throne'].map((source) => ({
+  key: 'donations_received',
+  source,
+}));
+
+describe('bangPrefix', () => {
+  it('matches a bang with at least one letter, replacing from the !', () => {
+    expect(bangPrefix('<div>!ch')).toEqual({ from: 5, text: '!ch' });
+    expect(bangPrefix('!chat')).toEqual({ from: 0, text: '!chat' });
+  });
+
+  it('stays quiet on a bare exclamation mark unless asked explicitly', () => {
+    expect(bangPrefix('Thanks for the follow!')).toBeNull();
+    expect(bangPrefix('Thanks for the follow!', true)).toEqual({ from: 21, text: '!' });
+  });
+
+  it('ignores exclamation marks that are not the start of a word', () => {
+    expect(bangPrefix('[[[if:c:score != 1')).toBeNull();
+    expect(bangPrefix('<!-- note')).toBeNull();
+    expect(bangPrefix('!chat ')).toBeNull();
   });
 });
 

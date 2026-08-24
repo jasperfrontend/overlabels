@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - feat(editor): bang snippets - `!chat` writes the whole loop (#88, part 2)
+
+Typing `!` plus a letter in the code editor now offers snippets that expand to a complete block. `!chat` writes the three-line chat loop (name in the chatter's colour, `msg.html` for emotes), `!subs`, `!followers` and `!goals` write the matching foreach, `!if` / `!ifelse` / `!foreach` write the block scaffolding with Tab-able fields, and each connected donation service gets its own `!kofi`-style bang showing the latest donor, amount and message from that service's controls.
+
+- Same completion source as the tag autocomplete, second entry in the language data; `snippetCompletion()` from `@codemirror/autocomplete` does the field handling (Tab / Shift+Tab / Escape). The `!foreach` alias is a linked field, so renaming it once renames both places.
+- A bare `!` does not open the list - it needs at least one letter after it, or Ctrl+Space. An exclamation mark at the end of a sentence in overlay copy must stay out of the way. Pinned by `bangPrefix()` tests, along with `!=` in a condition and `<!--` never matching.
+- A donation bang exists only once that service's controls are present, which is what connecting it provisions - so `!kofi` shows up exactly when it would work, and never suggests a service you have not connected.
+- New help guide at `/help/editor` covering autocomplete and the bang list, linked from the index. No `context:` declared: `templates.create` is at capacity and the page is one search away.
+
 ## August 24th, 2026 - feat(editor): tags autocomplete in the template editor (#88, part 1)
 
 Typing `[[[` in the code editor now opens a completion list of everything that can go inside the brackets, personalised to the account: the static catalogue, this template's controls plus the user-scoped integration controls under their `c:service:key` names, every projection of each of your Lists (`c:list:slug`, `:count`, `:first` ...), the block keywords, and `event.*` when the template is an alert. `|` offers the formatters with their argument hints, `foreach:` offers the iterables and fills in `subscribers as sub`, and inside an open loop the alias completes to its item fields (`sub.user_name`, `msg.html`).
