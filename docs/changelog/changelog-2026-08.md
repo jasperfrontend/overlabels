@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - style(controls): the controls usage page stops being a wall of text
+
+`/settings/controls` printed everything about a control on one wrapping line: the key, the type, the value, every overlay it lives on, and an amber "duplicated across N controls" sentence. On an account with a few dozen controls that is a page you cannot read. Each row is now three stacked zones - identity, value, scope - so the eye scans one column instead of re-parsing every line.
+
+- **Overlay chips cap at three**, with a `+N more` / `Show less` toggle per row. A control on eight overlays printed eight chips and pushed everything else off the row.
+- **The amber duplicate sentence is gone.** It was near-redundant: `instances` equals the overlay count for a template-scoped control, so the chip count already said it. The fan-out warning survives as a tooltip on the overlay count, and only when there is actually more than one copy.
+- **"All overlays" is no longer a green success badge.** Green against the amber sentence implied user-scoped was the healthy state and duplication the unhealthy one. They are just two different scopes, so both are now a muted icon plus label at the same weight - `Globe` for user-scoped, `Layers` for the per-overlay count.
+- Long values truncate to one line with the full string on hover; they had no overflow handling at all before. An empty value renders nothing rather than "(empty)".
+- The source now shows as its `ProviderIcon` plus label, with a padlock when `source_managed` - same chip vocabulary as `ControlsManager`.
+- `.btn-white` pairs `bg-white` with `text-neutral-900` instead of `text-accent`. `--accent` is `hsl(0 0% 96.1%)` in the light theme, so the selected event-type chips on the Ko-fi and Buy Me a Coffee settings pages were white on white. `.btn-warning` picks up the same 500/400 light-dark pairing as every other variant.
+
 ## August 24th, 2026 - style(buttons): the settings pages join the `btn` system
 
 Second pass on the button unification. The settings pages were the last big holdout still importing the Shadcn `<Button>` component and hand-rolling `rounded` pill classes next to it, so the same page could show three different button shapes. 38 `<Button>` usages across the bot and integration pages become plain `<button>` / `<Link>` carrying `btn` plus a variant and a size, and the `Label` / `Input` / `Textarea` wrappers on the bot command form become native elements with `input-border`.

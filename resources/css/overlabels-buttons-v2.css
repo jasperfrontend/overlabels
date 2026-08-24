@@ -26,7 +26,7 @@
   /* White — inverted/high-contrast contexts */
   .btn-white {
     @apply bg-white;
-    @apply text-accent;
+    @apply text-neutral-900;
     @apply hover:bg-white;
     @apply active:bg-gray-50;
     @apply focus:ring-white focus-visible:ring-white dark:focus-visible:ring-white;
@@ -71,8 +71,8 @@
   /* Warning — orange */
   .btn-warning {
     @apply bg-orange-500 dark:bg-orange-400;
-    @apply text-white;
-    @apply hover:bg-linear-to-b hover:from-orange-600 hover:to-orange-700;
+    @apply text-sidebar;
+    @apply hover:bg-linear-to-b hover:from-orange-500 hover:to-orange-600 dark:hover:from-orange-400 dark:hover:to-orange-500;
     @apply active:border-orange-600;
     @apply focus:ring-orange-400 focus-visible:ring-orange-500 dark:focus-visible:ring-orange-400;
   }

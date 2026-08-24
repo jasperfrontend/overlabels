@@ -9,7 +9,7 @@ import { getDefaultCurrency } from '@/utils/formatters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { useConfirm } from '@/composables/useConfirm';
-import { Save, Smartphone } from '@lucide/vue';
+import { Save } from '@lucide/vue';
 
 const { confirm } = useConfirm();
 const breadcrumbItems: BreadcrumbItem[] = [
