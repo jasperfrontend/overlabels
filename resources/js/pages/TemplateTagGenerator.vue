@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
-import { Search, ChevronRight, ChevronsUpDown, ChevronsDownUp, Copy, AlertCircle } from '@lucide/vue';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Copy, AlertCircle } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import Heading from '@/components/Heading.vue';
+import GroupedCollection from '@/components/GroupedCollection.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
+import type { CollectionGroup } from '@/types/collection';
 
 interface TemplateTag {
   tag_name: string;
@@ -31,12 +32,6 @@ interface CategoryData {
   tags: TemplateTag[];
 }
 
-interface TagGroup {
-  label: string;
-  description: string;
-  tags: TemplateTag[];
-}
-
 // Every account gets the same catalogue, so there is nothing to generate and
 // nothing to poll - the server builds this from a constant on each request and
 // fills in this account's own current values.
@@ -54,82 +49,20 @@ const toastMessage = ref('');
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
 const showToast = ref(false);
 
-const groupedTags = computed<TagGroup[]>(() =>
+// Keyed by display name on purpose: that is what the pre-component page
+// persisted its expanded state under, so nobody's collapsed groups reset.
+const groupedTags = computed<CollectionGroup<TemplateTag>[]>(() =>
   Object.values(props.tags)
     .filter((c) => c.tags.length > 0)
     .map((c) => ({
+      key: c.category.display_name,
       label: c.category.display_name,
-      description: c.category.description,
-      tags: c.tags,
+      items: c.tags,
     })),
 );
 
-const totalTags = computed(() => groupedTags.value.reduce((s, g) => s + g.tags.length, 0));
-
-const searchQuery = ref('');
-
-const filteredGroupedTags = computed<TagGroup[]>(() => {
-  const query = searchQuery.value.toLowerCase().trim();
-  if (!query) return groupedTags.value;
-
-  return groupedTags.value
-    .map((group) => ({
-      label: group.label,
-      description: group.description,
-      tags: group.tags.filter(
-        (tag) =>
-          tag.display_tag.toLowerCase().includes(query) ||
-          tag.tag_name.toLowerCase().includes(query) ||
-          tag.description.toLowerCase().includes(query) ||
-          group.label.toLowerCase().includes(query),
-      ),
-    }))
-    .filter((g) => g.tags.length > 0);
-});
-
-const totalVisibleTags = computed(() => filteredGroupedTags.value.reduce((s, g) => s + g.tags.length, 0));
-
-const EXPANDED_KEY = 'template_tags_page_expanded';
-
-function loadExpandedState(): Record<string, boolean> {
-  try {
-    const stored = localStorage.getItem(EXPANDED_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {
-    // ignore
-  }
-  return {};
-}
-
-function saveExpandedState(): void {
-  try {
-    localStorage.setItem(EXPANDED_KEY, JSON.stringify(expandedGroups.value));
-  } catch {
-    // ignore
-  }
-}
-
-const expandedGroups = ref<Record<string, boolean>>(loadExpandedState());
-
-function isGroupExpanded(label: string): boolean {
-  return expandedGroups.value[label] ?? true;
-}
-
-function toggleGroup(label: string): void {
-  expandedGroups.value[label] = !isGroupExpanded(label);
-  saveExpandedState();
-}
-
-const allExpanded = computed(() => {
-  return filteredGroupedTags.value.every((g) => isGroupExpanded(g.label));
-});
-
-function toggleAll(): void {
-  const next = !allExpanded.value;
-  filteredGroupedTags.value.forEach((g) => {
-    expandedGroups.value[g.label] = next;
-  });
-  saveExpandedState();
+function tagMatches(tag: TemplateTag, query: string): boolean {
+  return tag.display_tag.toLowerCase().includes(query) || tag.tag_name.toLowerCase().includes(query) || tag.description.toLowerCase().includes(query);
 }
 
 // Only ever show a value this account actually has. The catalogue carries a
@@ -178,85 +111,36 @@ async function copyTag(tag: TemplateTag) {
           </p>
         </div>
 
-        <!-- Search -->
-        <div class="flex items-center gap-3">
-          <div class="relative flex-1">
-            <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-            <input v-model="searchQuery" placeholder="Filter tags..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
-          </div>
-        </div>
-
-        <!-- Count + collapse/expand-all -->
-        <div class="mb-3 flex items-center text-xs text-muted-foreground">
-          <span v-if="searchQuery">
-            {{ totalVisibleTags }} tag{{ totalVisibleTags !== 1 ? 's' : '' }} in {{ filteredGroupedTags.length }} group{{
-              filteredGroupedTags.length !== 1 ? 's' : ''
-            }}
-          </span>
-          <span v-else>
-            {{ totalTags }} tag{{ totalTags !== 1 ? 's' : '' }} across {{ groupedTags.length }} group{{ groupedTags.length !== 1 ? 's' : '' }}
-          </span>
-          <button
-            v-if="filteredGroupedTags.length > 0"
-            class="ml-auto flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-            @click.prevent="toggleAll"
-          >
-            <ChevronsDownUp v-if="allExpanded" :size="13" />
-            <ChevronsUpDown v-else :size="13" />
-            {{ allExpanded ? 'Collapse all' : 'Expand all' }}
-          </button>
-        </div>
-
-        <!-- No search results -->
-        <div v-if="searchQuery && filteredGroupedTags.length === 0" class="py-8 text-center">
-          <p class="text-sm text-muted-foreground">No tags match "{{ searchQuery }}"</p>
-        </div>
-
-        <!-- Collapsible groups -->
-        <div class="space-y-1.5">
-          <Collapsible
-            v-for="group in filteredGroupedTags"
-            :key="group.label"
-            :open="isGroupExpanded(group.label)"
-            @update:open="toggleGroup(group.label)"
-          >
-            <CollapsibleTrigger
-              class="group collection-row flex w-full cursor-pointer items-center gap-2 px-2 py-4 text-left"
-              :class="{ 'bg-sidebar-accent': isGroupExpanded(group.label) }"
+        <GroupedCollection
+          :groups="groupedTags"
+          :item-key="(tag) => tag.tag_name"
+          :matches="tagMatches"
+          storage-key="template_tags_page_expanded"
+          noun="tag"
+        >
+          <template #item="{ item: tag }">
+            <div
+              class="row group/row collection-row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all"
+              role="button"
+              tabindex="0"
+              :title="`Click to copy ${tag.display_tag}`"
+              @click="copyTag(tag)"
+              @keydown.enter.prevent="copyTag(tag)"
             >
-              <ChevronRight :size="14" class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
-              <span class="text-sm font-medium">{{ group.label }}</span>
-              <span class="ml-auto bg-card px-2.5 py-1.5 text-xs">{{ group.tags.length }}</span>
-            </CollapsibleTrigger>
-
-            <CollapsibleContent>
-              <div class="flex flex-col gap-2 bg-sidebar/50 p-4">
-                <div
-                  v-for="tag in group.tags"
-                  :key="tag.tag_name"
-                  class="row group/row collection-row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all"
-                  role="button"
-                  tabindex="0"
-                  :title="`Click to copy ${tag.display_tag}`"
-                  @click="copyTag(tag)"
-                  @keydown.enter.prevent="copyTag(tag)"
-                >
-                  <div class="min-w-0 flex-1">
-                    <span class="font-mono text-sm text-violet-700 dark:text-violet-300">{{ tag.display_tag }}</span>
-                    <p class="mt-1 text-sm text-foreground">{{ tag.description }}</p>
-                  </div>
-
-                  <div class="flex shrink-0 items-center gap-3">
-                    <span v-if="displayValue(tag)" class="max-w-[16rem] truncate font-mono text-sm text-foreground" :title="displayValue(tag)">
-                      {{ displayValue(tag) }}
-                    </span>
-                    <Copy :size="15" class="shrink-0 text-muted-foreground group-hover/row:text-foreground" />
-                  </div>
-                </div>
+              <div class="min-w-0 flex-1">
+                <span class="font-mono text-sm text-violet-700 dark:text-violet-300">{{ tag.display_tag }}</span>
+                <p class="mt-1 text-sm text-foreground">{{ tag.description }}</p>
               </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
+
+              <div class="flex shrink-0 items-center gap-3">
+                <span v-if="displayValue(tag)" class="max-w-[16rem] truncate font-mono text-sm text-foreground" :title="displayValue(tag)">
+                  {{ displayValue(tag) }}
+                </span>
+                <Copy :size="15" class="shrink-0 text-muted-foreground group-hover/row:text-foreground" />
+              </div>
+            </div>
+          </template>
+        </GroupedCollection>
       </div>
     </SettingsLayout>
   </AppLayout>

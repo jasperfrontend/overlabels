@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { onMounted, ref, computed, watch } from 'vue';
-import { Search, Copy, Info, ChevronRight, ChevronsUpDown, ChevronsDownUp } from '@lucide/vue';
+import { Copy, Info } from '@lucide/vue';
 import { useTemplateTagCatalogue, type TagCatalogue } from '@/composables/useTemplateTagCatalogue';
 import RekaToast from '@/components/RekaToast.vue';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import GroupedCollection from '@/components/GroupedCollection.vue';
+import type { CollectionGroup } from '@/types/collection';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -21,7 +22,6 @@ const toastType = ref<'info' | 'success' | 'warning' | 'error'>('success');
 const showToast = ref(false);
 
 const showUserTagInfo = ref(false);
-const searchQuery = ref('');
 
 interface TemplateTag {
   display_tag: string;
@@ -71,84 +71,18 @@ function processTags(tags: TagCatalogue): void {
 
 watch(catalogue, processTags, { immediate: true });
 
-// Group tags by category, filtered by search
-const filteredGroupedTags = computed(() => {
+// Group tags by category. Keyed by the category name, which is what the
+// pre-component list persisted its expanded state under.
+const groupedTags = computed<CollectionGroup<TemplateTag>[]>(() => {
   const groups: Record<string, TemplateTag[]> = {};
-  const query = searchQuery.value.toLowerCase().trim();
-
   tagList.value.forEach((tag) => {
-    if (tag.category) {
-      // Apply search filter
-      if (query) {
-        const matchesTag = tag.display_tag.toLowerCase().includes(query);
-        const matchesDescription = tag.description.toLowerCase().includes(query);
-        const matchesCategory = tag.category.toLowerCase().includes(query);
-        if (!matchesTag && !matchesDescription && !matchesCategory) {
-          return;
-        }
-      }
-
-      if (!groups[tag.category]) {
-        groups[tag.category] = [];
-      }
-      groups[tag.category].push(tag);
-    }
+    if (tag.category) (groups[tag.category] ??= []).push(tag);
   });
-
-  return groups;
+  return Object.entries(groups).map(([category, tags]) => ({ key: category, label: category, items: tags }));
 });
 
-const totalVisibleTags = computed(() => {
-  return Object.values(filteredGroupedTags.value).reduce((sum, tags) => sum + tags.length, 0);
-});
-
-const categoryCount = computed(() => {
-  return Object.keys(filteredGroupedTags.value).length;
-});
-
-// Track which categories are expanded, persisted to localStorage
-const EXPANDED_KEY = 'template_tags_expanded';
-
-function loadExpandedState(): Record<string, boolean> {
-  try {
-    const stored = localStorage.getItem(EXPANDED_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {
-    // ignore
-  }
-  return {};
-}
-
-function saveExpandedState(): void {
-  try {
-    localStorage.setItem(EXPANDED_KEY, JSON.stringify(expandedCategories.value));
-  } catch {
-    // ignore
-  }
-}
-
-const expandedCategories = ref<Record<string, boolean>>(loadExpandedState());
-
-function isCategoryExpanded(category: string): boolean {
-  // Default to open if never toggled
-  return expandedCategories.value[category] ?? true;
-}
-
-function toggleCategory(category: string): void {
-  expandedCategories.value[category] = !isCategoryExpanded(category);
-  saveExpandedState();
-}
-
-const allExpanded = computed(() => {
-  return Object.keys(filteredGroupedTags.value).every((cat) => isCategoryExpanded(cat));
-});
-
-function toggleAll(): void {
-  const newState = !allExpanded.value;
-  Object.keys(filteredGroupedTags.value).forEach((cat) => {
-    expandedCategories.value[cat] = newState;
-  });
-  saveExpandedState();
+function tagMatches(tag: TemplateTag, query: string): boolean {
+  return tag.display_tag.toLowerCase().includes(query) || tag.description.toLowerCase().includes(query);
 }
 
 const copyTag = async (tagName: string) => {
@@ -165,9 +99,8 @@ const copyTag = async (tagName: string) => {
   }
 };
 
-const copyAllTags = async () => {
+const copyAllTags = async (visibleTags: TemplateTag[]) => {
   try {
-    const visibleTags = Object.values(filteredGroupedTags.value).flat();
     const allTags = visibleTags.map((tag) => tag.display_tag).join(' ');
     await navigator.clipboard.writeText(allTags);
     toastMessage.value = `Copied ${visibleTags.length} tags to clipboard`;
@@ -216,85 +149,46 @@ onMounted(() => {
     </button>
   </div>
 
-  <!-- Search and actions bar -->
-  <div class="mb-4 flex items-center gap-3">
-    <div class="relative flex-1">
-      <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-      <input v-model="searchQuery" placeholder="Filter tags..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
-    </div>
-    <button
-      @click.prevent="copyAllTags"
-      class="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-violet-500/30 bg-violet-500/10 px-3 text-xs font-medium text-violet-400 transition-colors hover:border-violet-500/50 hover:bg-violet-500/20"
-    >
-      <Copy :size="13" />
-      Copy all
-    </button>
-  </div>
-
-  <!-- Tag count and collapse/expand toggle -->
-  <div v-if="tagList.length > 0" class="mb-3 flex items-center text-xs text-muted-foreground">
-    <span v-if="searchQuery">
-      {{ totalVisibleTags }} tag{{ totalVisibleTags !== 1 ? 's' : '' }} in {{ categoryCount }} categor{{ categoryCount !== 1 ? 'ies' : 'y' }}
-    </span>
-    <span v-else> {{ tagList.length }} tags across {{ Object.keys(filteredGroupedTags).length }} categories </span>
-    <button
-      v-if="categoryCount > 0"
-      class="ml-auto flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      @click.prevent="toggleAll"
-    >
-      <ChevronsDownUp v-if="allExpanded" :size="13" />
-      <ChevronsUpDown v-else :size="13" />
-      {{ allExpanded ? 'Collapse all' : 'Expand all' }}
-    </button>
-  </div>
-
-  <!-- Categories with tags -->
   <TooltipProvider :delay-duration="150">
-    <div v-if="Object.keys(filteredGroupedTags).length > 0" class="space-y-1.5">
-      <Collapsible
-        v-for="(tags, category) in filteredGroupedTags"
-        :key="category"
-        :open="isCategoryExpanded(String(category))"
-        @update:open="toggleCategory(String(category))"
-      >
-        <CollapsibleTrigger
-          class="group flex w-full cursor-pointer items-center gap-2 rounded-md bg-sidebar px-2 py-4 text-left transition-colors hover:bg-sidebar-accent/50"
-          :class="{ 'rounded-b-none bg-sidebar-accent/50 pb-0': isCategoryExpanded(String(category)) }"
+    <GroupedCollection
+      :groups="groupedTags"
+      :item-key="(tag) => tag.display_tag"
+      :matches="tagMatches"
+      storage-key="template_tags_expanded"
+      noun="tag"
+      group-noun="category"
+      group-noun-plural="categories"
+      items-class="flex flex-wrap gap-2"
+      empty-message="No tags available"
+    >
+      <template #toolbar="{ items }">
+        <button
+          @click.prevent="copyAllTags(items)"
+          class="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-violet-500/30 bg-violet-500/10 px-3 text-xs font-medium text-violet-400 transition-colors hover:border-violet-500/50 hover:bg-violet-500/20"
         >
-          <ChevronRight :size="14" class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
-          <span class="text-sm font-medium">{{ category }}</span>
-          <span class="ml-auto bg-card px-2.5 py-1.5 text-xs">{{ tags.length }}</span>
-        </CollapsibleTrigger>
+          <Copy :size="13" />
+          Copy all
+        </button>
+      </template>
 
-        <CollapsibleContent>
-          <div class="flex flex-wrap gap-2 bg-sidebar/50 p-4">
-            <Tooltip v-for="tag in tags" :key="tag.display_tag">
-              <TooltipTrigger as-child>
-                <button
-                  @click.prevent="copyTag(tag.display_tag)"
-                  class="cursor-pointer rounded border border-sidebar-accent bg-card px-2 py-1 font-mono text-xs text-muted-foreground transition-all hover:border-violet-400/50 hover:bg-violet-500/10 hover:text-violet-300"
-                  :title="`Click to copy ${tag.display_tag}`"
-                >
-                  {{ tag.display_tag }}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" :side-offset="6" class="max-w-64">
-                <p>{{ tag.description }}</p>
-                <p class="mt-0.5 text-xs text-muted-foreground">Click to copy</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
-
-    <div v-else-if="searchQuery" class="py-8 text-center">
-      <p class="text-sm text-muted-foreground">No tags match "{{ searchQuery }}"</p>
-    </div>
-
-    <div v-else>
-      <p class="text-sm text-muted-foreground">No tags available</p>
-    </div>
+      <template #item="{ item: tag }">
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <button
+              @click.prevent="copyTag(tag.display_tag)"
+              class="cursor-pointer rounded border border-sidebar-accent bg-card px-2 py-1 font-mono text-xs text-muted-foreground transition-all hover:border-violet-400/50 hover:bg-violet-500/10 hover:text-violet-300"
+              :title="`Click to copy ${tag.display_tag}`"
+            >
+              {{ tag.display_tag }}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" :side-offset="6" class="max-w-64">
+            <p>{{ tag.description }}</p>
+            <p class="mt-0.5 text-xs text-muted-foreground">Click to copy</p>
+          </TooltipContent>
+        </Tooltip>
+      </template>
+    </GroupedCollection>
   </TooltipProvider>
 
   <!-- user_* info dialog -->

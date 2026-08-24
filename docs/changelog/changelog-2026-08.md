@@ -1,5 +1,20 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - refactor(lists): the grouped list becomes one component
+
+The layout everyone liked on `/tags` - a filter input, a "64 tags across 7 groups" line with Expand / Collapse all, one collapsible section per group with a count pill - was not a component. It was hand-written three times: the `/tags` page itself, `TemplateTagsList` (the editor's Tags tab) and `ControlsManager` (an overlay's Controls tab), each with its own search, its own expand-all and its own localStorage key. So when `/wiring`, `/settings/controls`, `/tokens` and `/testing` were built there was nothing to reach for, and each invented a list. Same story `CollectionList` fixed for flat rows in PR #193, one level up.
+
+`GroupedCollection.vue` is that recipe, once. It takes `groups` (`{ key, label, items }`), an `itemKey`, a `matches(item, query)` predicate and a `storageKey`; everything above the item is the component's, the item itself is the caller's `item` slot. Three copies became one and 553 lines came out.
+
+- **`/tags` is the reference and is pixel-identical.** It was extracted, not redesigned.
+- **Nobody's collapsed groups reset.** Each adopter keeps the localStorage key it already had (`template_tags_page_expanded`, `template_tags_expanded`, `controls_manager_expanded`) and keys its groups the way it already did.
+- **The group label is matched by the component**, so a caller's `matches` only has to look at the item. Typing a group's name shows the whole group.
+- The `toolbar` slot receives the items the filter currently shows, which is how the editor's "Copy all" keeps copying only the visible tags.
+- `itemsClass` decides how items lay out inside an open group: rows by default, `flex flex-wrap gap-2` for the editor's chips. `noun` / `groupNoun` drive the count line and the placeholder, so the editor still says "categories".
+- The editor's Tags tab picks up the `/tags` header style (the `.collection-row` trigger) in place of its own rounded variant. That is the one visible change, and it is the point.
+- `ControlsManager`'s "No controls yet" box goes through `EmptyState` now, like every other empty state.
+- `/settings/controls` and `/testing` are NOT converted here. One page per PR.
+
 ## August 25th, 2026 - fix(settings): the settings menu stops linking out of itself
 
 A full route/page/layout/link map of the app (five agents, 296 routes, 70 pages, 633 links) turned up exactly four critical hits, and all four were the same thing: the settings sidebar's "Developer tools" group linked `/tokens`, `/tags`, `/twitchdata` and `/testing`, and every one of those pages wrapped itself in plain `AppLayout`. Click any of them from a settings page and the menu you just used disappears. The four pages now nest `SettingsLayout` inside `AppLayout` like the other fifteen settings pages, and carry the same `Dashboard > ...` breadcrumbs.

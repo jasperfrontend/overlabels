@@ -2,21 +2,10 @@
 import { computed, ref } from 'vue';
 import axios from 'axios';
 import { usePage } from '@inertiajs/vue3';
-import {
-  PlusIcon,
-  PencilIcon,
-  Trash2Icon,
-  CopyIcon,
-  CopyPlusIcon,
-  Search,
-  ChevronRight,
-  ChevronsUpDown,
-  ChevronsDownUp,
-  LockIcon,
-  Blocks,
-} from '@lucide/vue';
+import { PlusIcon, PencilIcon, Trash2Icon, CopyIcon, CopyPlusIcon, LockIcon, Blocks } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import GroupedCollection from '@/components/GroupedCollection.vue';
+import type { CollectionGroup } from '@/types/collection';
 import ControlFormModal from '@/components/ControlFormModal.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import type { OverlayControl, OverlayTemplate } from '@/types';
@@ -218,12 +207,7 @@ function configSummary(ctrl: OverlayControl): string[] {
   return parts;
 }
 
-// ---- Grouping + filtering ----
-interface ControlGroup {
-  label: string;
-  controls: OverlayControl[];
-}
-
+// ---- Grouping ----
 const TYPE_LABELS: Record<string, string> = {
   text: 'Text',
   number: 'Number',
@@ -237,7 +221,9 @@ const TYPE_LABELS: Record<string, string> = {
 
 const TYPE_ORDER = ['counter', 'timer', 'number', 'text', 'boolean', 'expression', 'list_writer', 'datetime'];
 
-const groupedControls = computed<ControlGroup[]>(() => {
+// Keyed by label, which is what the pre-component manager persisted its
+// expanded state under.
+const groupedControls = computed<CollectionGroup<OverlayControl>[]>(() => {
   const serviceGroups: Record<string, OverlayControl[]> = {};
   const userControls: Record<string, OverlayControl[]> = {};
 
@@ -249,92 +235,25 @@ const groupedControls = computed<ControlGroup[]>(() => {
     }
   }
 
-  const groups: ControlGroup[] = [];
+  const groups: CollectionGroup<OverlayControl>[] = [];
 
   for (const type of TYPE_ORDER) {
     if (userControls[type]?.length) {
-      groups.push({
-        label: TYPE_LABELS[type] ?? type,
-        controls: [...userControls[type]].sort((a, b) => a.sort_order - b.sort_order),
-      });
+      const label = TYPE_LABELS[type] ?? type;
+      groups.push({ key: label, label, items: [...userControls[type]].sort((a, b) => a.sort_order - b.sort_order) });
     }
   }
 
   for (const [source, ctrls] of Object.entries(serviceGroups)) {
-    groups.push({
-      label: SERVICE_LABELS[source] ?? source,
-      controls: [...ctrls].sort((a, b) => a.sort_order - b.sort_order),
-    });
+    const label = SERVICE_LABELS[source] ?? source;
+    groups.push({ key: label, label, items: [...ctrls].sort((a, b) => a.sort_order - b.sort_order) });
   }
 
   return groups;
 });
 
-const searchQuery = ref('');
-
-const filteredGroupedControls = computed<ControlGroup[]>(() => {
-  const query = searchQuery.value.toLowerCase().trim();
-  if (!query) return groupedControls.value;
-
-  return groupedControls.value
-    .map((group) => ({
-      label: group.label,
-      controls: group.controls.filter((ctrl) => {
-        const snippet = snippetKey(ctrl).toLowerCase();
-        return (
-          (ctrl.label || '').toLowerCase().includes(query) ||
-          ctrl.key.toLowerCase().includes(query) ||
-          snippet.includes(query) ||
-          group.label.toLowerCase().includes(query)
-        );
-      }),
-    }))
-    .filter((g) => g.controls.length > 0);
-});
-
-const totalVisibleControls = computed(() => filteredGroupedControls.value.reduce((s, g) => s + g.controls.length, 0));
-
-const EXPANDED_KEY = 'controls_manager_expanded';
-
-function loadExpandedState(): Record<string, boolean> {
-  try {
-    const stored = localStorage.getItem(EXPANDED_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {
-    // ignore
-  }
-  return {};
-}
-
-function saveExpandedState(): void {
-  try {
-    localStorage.setItem(EXPANDED_KEY, JSON.stringify(expandedGroups.value));
-  } catch {
-    // ignore
-  }
-}
-
-const expandedGroups = ref<Record<string, boolean>>(loadExpandedState());
-
-function isGroupExpanded(label: string): boolean {
-  return expandedGroups.value[label] ?? true;
-}
-
-function toggleGroup(label: string): void {
-  expandedGroups.value[label] = !isGroupExpanded(label);
-  saveExpandedState();
-}
-
-const allExpanded = computed(() => {
-  return filteredGroupedControls.value.every((g) => isGroupExpanded(g.label));
-});
-
-function toggleAll(): void {
-  const next = !allExpanded.value;
-  filteredGroupedControls.value.forEach((g) => {
-    expandedGroups.value[g.label] = next;
-  });
-  saveExpandedState();
+function controlMatches(ctrl: OverlayControl, query: string): boolean {
+  return (ctrl.label || '').toLowerCase().includes(query) || ctrl.key.toLowerCase().includes(query) || snippetKey(ctrl).toLowerCase().includes(query);
 }
 
 const controlsCounter = computed(() => controls.value.length);
@@ -374,159 +293,98 @@ const controlsCounter = computed(() => controls.value.length);
       </button>
     </div>
 
-    <div v-if="controls.length === 0" class="rounded-sm border border-sidebar bg-sidebar-accent p-8 text-center text-muted-foreground">
-      No controls yet. Add one to get started.
-    </div>
-
-    <template v-else>
-      <!-- Search -->
-      <div class="flex items-center gap-3">
-        <div class="relative flex-1">
-          <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-          <input v-model="searchQuery" placeholder="Filter controls..." class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
-        </div>
-      </div>
-
-      <!-- Count + collapse/expand-all -->
-      <div class="mb-3 flex items-center text-xs text-muted-foreground">
-        <span v-if="searchQuery">
-          {{ totalVisibleControls }} control{{ totalVisibleControls !== 1 ? 's' : '' }} in {{ filteredGroupedControls.length }} group{{
-            filteredGroupedControls.length !== 1 ? 's' : ''
-          }}
-        </span>
-        <span v-else>
-          {{ controls.length }} control{{ controls.length !== 1 ? 's' : '' }} across {{ groupedControls.length }} group{{
-            groupedControls.length !== 1 ? 's' : ''
-          }}
-        </span>
-        <button
-          v-if="filteredGroupedControls.length > 0"
-          class="ml-auto flex cursor-pointer items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          @click.prevent="toggleAll"
+    <GroupedCollection
+      :groups="groupedControls"
+      :item-key="(ctrl) => ctrl.id"
+      :matches="controlMatches"
+      storage-key="controls_manager_expanded"
+      noun="control"
+      empty-message="No controls yet. Add one to get started."
+    >
+      <template #item="{ item: ctrl }">
+        <div
+          class="row group/row collection-row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all"
+          role="button"
+          tabindex="0"
+          :title="`Click to edit ${ctrl.label || ctrl.key}`"
+          @click="openEdit(ctrl)"
+          @keydown.enter.prevent="openEdit(ctrl)"
+          @keydown.space.prevent="openEdit(ctrl)"
         >
-          <ChevronsDownUp v-if="allExpanded" :size="13" />
-          <ChevronsUpDown v-else :size="13" />
-          {{ allExpanded ? 'Collapse all' : 'Expand all' }}
-        </button>
-      </div>
-
-      <!-- No search results -->
-      <div v-if="searchQuery && filteredGroupedControls.length === 0" class="py-8 text-center">
-        <p class="text-sm text-muted-foreground">No controls match "{{ searchQuery }}"</p>
-      </div>
-
-      <!-- Collapsible groups -->
-      <div class="space-y-1.5">
-        <Collapsible
-          v-for="group in filteredGroupedControls"
-          :key="group.label"
-          :open="isGroupExpanded(group.label)"
-          @update:open="toggleGroup(group.label)"
-        >
-          <CollapsibleTrigger
-            class="group collection-row flex w-full cursor-pointer items-center gap-2 px-2 py-4 text-left"
-            :class="{ 'bg-sidebar-accent': isGroupExpanded(group.label) }"
-          >
-            <ChevronRight :size="14" class="shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
-            <span class="text-sm font-medium">{{ group.label }}</span>
-            <span class="ml-auto bg-card px-2.5 py-1.5 text-xs">{{ group.controls.length }}</span>
-          </CollapsibleTrigger>
-
-          <CollapsibleContent>
-            <div class="flex flex-col gap-2 bg-sidebar/50 p-4">
-              <div
-                v-for="ctrl in group.controls"
-                :key="ctrl.id"
-                class="row group/row collection-row flex cursor-pointer items-start justify-between gap-3 p-3 transition-all"
-                role="button"
-                tabindex="0"
-                :title="`Click to edit ${ctrl.label || ctrl.key}`"
-                @click="openEdit(ctrl)"
-                @keydown.enter.prevent="openEdit(ctrl)"
-                @keydown.space.prevent="openEdit(ctrl)"
+          <!-- Left: label + key + config summary -->
+          <div class="flex min-w-0 flex-1 flex-col gap-1">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span>
+              <Badge variant="outline" class="text-[10px] capitalize">{{ ctrl.type }}</Badge>
+              <span
+                v-if="ctrl.source_managed && ctrl.source"
+                class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-mauve-300/50 px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-mauve-700/50"
+                :title="`Managed by ${SERVICE_LABELS[ctrl.source] ?? ctrl.source} - cannot be manually changed`"
               >
-                <!-- Left: label + key + config summary -->
-                <div class="flex min-w-0 flex-1 flex-col gap-1">
-                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span>
-                    <Badge variant="outline" class="text-[10px] capitalize">{{ ctrl.type }}</Badge>
-                    <span
-                      v-if="ctrl.source_managed && ctrl.source"
-                      class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-mauve-300/50 px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-mauve-700/50"
-                      :title="`Managed by ${SERVICE_LABELS[ctrl.source] ?? ctrl.source} - cannot be manually changed`"
-                    >
-                      <LockIcon class="h-2.5 w-2.5" />
-                      {{ SERVICE_LABELS[ctrl.source] ?? ctrl.source }}
-                    </span>
-                    <span
-                      v-if="usedByBlocks(ctrl).length"
-                      class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-mauve-300/50 px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-mauve-700/50"
-                      :title="usedByBlocksTitle(ctrl)"
-                    >
-                      <Blocks class="h-2.5 w-2.5" />
-                      {{ usedByBlocksLabel(ctrl) }}
-                    </span>
-                    <span
-                      v-if="isBlockOrphan(ctrl)"
-                      class="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-600 dark:text-amber-400"
-                      title="No block on the canvas references this control. Its value is preserved - re-adding a block with the same key picks it back up, or delete it here if you no longer need it."
-                    >
-                      Not used by any block
-                    </span>
-                  </div>
-                  <p v-if="ctrl.description" class="text-xs whitespace-pre-line text-foreground">{{ ctrl.description }}</p>
-                  <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                    <span class="font-mono">{{ snippetKey(ctrl) }}</span>
-                    <span v-for="(part, i) in configSummary(ctrl)" :key="i" class="max-w-64 truncate" :title="part">{{ part }}</span>
-                  </div>
-                </div>
-
-                <!-- Right: snippet pill + actions -->
-                <div class="flex shrink-0 items-center gap-2" @click.stop @keydown.stop>
-                  <button
-                    v-if="ctrl.type !== 'list_writer'"
-                    type="button"
-                    class="cursor-pointer items-center gap-1.5 rounded-sm border border-dashed border-sidebar-accent bg-background/60 px-2 py-1 font-mono text-xs text-muted-foreground opacity-60 transition hover:opacity-100 md:flex"
-                    :title="`Click to copy [[[c:${snippetKey(ctrl)}]]] to clipboard`"
-                    @click="copySnippet(ctrl)"
-                  >
-                    <CopyIcon class="h-3 w-3 shrink-0" />
-                    [[[c:{{ snippetKey(ctrl) }}]]]
-                  </button>
-                  <div class="flex items-center gap-1 opacity-30 transition group-hover/row:opacity-100 focus-within:opacity-100">
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-primary px-2"
-                      :title="`Edit Control: ${ctrl.label || ctrl.key}`"
-                      @click="openEdit(ctrl)"
-                    >
-                      <PencilIcon class="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      v-if="!ctrl.source_managed"
-                      type="button"
-                      class="btn btn-sm btn-primary px-2"
-                      :title="`Duplicate Control: ${ctrl.label || ctrl.key}`"
-                      @click="openCopy(ctrl)"
-                    >
-                      <CopyPlusIcon class="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-danger px-2"
-                      :title="`Delete Control: ${ctrl.label || ctrl.key}`"
-                      @click="deleteControl(ctrl)"
-                    >
-                      <Trash2Icon class="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+                <LockIcon class="h-2.5 w-2.5" />
+                {{ SERVICE_LABELS[ctrl.source] ?? ctrl.source }}
+              </span>
+              <span
+                v-if="usedByBlocks(ctrl).length"
+                class="inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-mauve-300/50 px-2 py-0.5 text-[10px] text-muted-foreground dark:bg-mauve-700/50"
+                :title="usedByBlocksTitle(ctrl)"
+              >
+                <Blocks class="h-2.5 w-2.5" />
+                {{ usedByBlocksLabel(ctrl) }}
+              </span>
+              <span
+                v-if="isBlockOrphan(ctrl)"
+                class="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-600 dark:text-amber-400"
+                title="No block on the canvas references this control. Its value is preserved - re-adding a block with the same key picks it back up, or delete it here if you no longer need it."
+              >
+                Not used by any block
+              </span>
             </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
-    </template>
+            <p v-if="ctrl.description" class="text-xs whitespace-pre-line text-foreground">{{ ctrl.description }}</p>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+              <span class="font-mono">{{ snippetKey(ctrl) }}</span>
+              <span v-for="(part, i) in configSummary(ctrl)" :key="i" class="max-w-64 truncate" :title="part">{{ part }}</span>
+            </div>
+          </div>
+
+          <!-- Right: snippet pill + actions -->
+          <div class="flex shrink-0 items-center gap-2" @click.stop @keydown.stop>
+            <button
+              v-if="ctrl.type !== 'list_writer'"
+              type="button"
+              class="cursor-pointer items-center gap-1.5 rounded-sm border border-dashed border-sidebar-accent bg-background/60 px-2 py-1 font-mono text-xs text-muted-foreground opacity-60 transition hover:opacity-100 md:flex"
+              :title="`Click to copy [[[c:${snippetKey(ctrl)}]]] to clipboard`"
+              @click="copySnippet(ctrl)"
+            >
+              <CopyIcon class="h-3 w-3 shrink-0" />
+              [[[c:{{ snippetKey(ctrl) }}]]]
+            </button>
+            <div class="flex items-center gap-1 opacity-30 transition group-hover/row:opacity-100 focus-within:opacity-100">
+              <button type="button" class="btn btn-sm btn-primary px-2" :title="`Edit Control: ${ctrl.label || ctrl.key}`" @click="openEdit(ctrl)">
+                <PencilIcon class="h-3.5 w-3.5" />
+              </button>
+              <button
+                v-if="!ctrl.source_managed"
+                type="button"
+                class="btn btn-sm btn-primary px-2"
+                :title="`Duplicate Control: ${ctrl.label || ctrl.key}`"
+                @click="openCopy(ctrl)"
+              >
+                <CopyPlusIcon class="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger px-2"
+                :title="`Delete Control: ${ctrl.label || ctrl.key}`"
+                @click="deleteControl(ctrl)"
+              >
+                <Trash2Icon class="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </GroupedCollection>
 
     <div class="flex items-center justify-between gap-3 text-xs">
       <span class="text-foreground">Controls with a lock icon are managed by their source and cannot be manually changed.</span>
