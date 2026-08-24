@@ -5,7 +5,7 @@ import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Button } from '@/components/ui/button';
+import EventTypeToggleList from '@/components/EventTypeToggleList.vue';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -100,15 +100,6 @@ function copyWebhookUrl() {
   });
 }
 
-function toggleEvent(eventType: string) {
-  const idx = form.enabled_events.indexOf(eventType);
-  if (idx >= 0) {
-    form.enabled_events.splice(idx, 1);
-  } else {
-    form.enabled_events.push(eventType);
-  }
-}
-
 function save() {
   form.post('/settings/integrations/bmac', {
     preserveScroll: true,
@@ -163,7 +154,7 @@ function formatDate(iso: string | null): string {
 
     <SettingsLayout>
       <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <HeadingSmall
             title="Buy Me a Coffee"
             description="Receive support, commission, extras, membership, and wishlist alerts from Buy Me a Coffee."
@@ -272,19 +263,7 @@ function formatDate(iso: string | null): string {
               Which BMAC event types should trigger alerts and update controls. Match this with the events you selected when creating the webhook on
               BMAC.
             </p>
-            <div class="flex flex-wrap gap-2">
-              <Button
-                v-for="et in EVENT_TYPES"
-                :key="et.value"
-                type="button"
-                :variant="form.enabled_events.includes(et.value) ? 'default' : 'outline'"
-                size="sm"
-                class="cursor-pointer"
-                @click="toggleEvent(et.value)"
-              >
-                {{ et.label }}
-              </Button>
-            </div>
+            <EventTypeToggleList v-model="form.enabled_events" :event-types="EVENT_TYPES" />
           </div>
 
           <p v-if="integration.connected" class="text-sm text-muted-foreground">
@@ -292,12 +271,10 @@ function formatDate(iso: string | null): string {
           </p>
 
           <div class="flex gap-2">
-            <Button type="submit" :disabled="form.processing" class="cursor-pointer">
+            <button type="submit" :disabled="form.processing" class="btn btn-sm btn-primary">
               {{ submitLabel }}
-            </Button>
-            <Button variant="outline" as-child>
-              <Link href="/settings/integrations">Cancel</Link>
-            </Button>
+            </button>
+            <Link href="/settings/integrations" class="btn btn-sm btn-chill">Cancel</Link>
           </div>
         </form>
 
@@ -383,9 +360,9 @@ function formatDate(iso: string | null): string {
                   <p v-else-if="seedPreview" class="text-xs text-muted-foreground">Saving as {{ seedPreview }}</p>
                   <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
                 </div>
-                <Button type="button" variant="outline" class="cursor-pointer" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
+                <button type="button" variant="outline" class="btn btn-primary" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
                   {{ seedLoading ? 'Saving...' : 'Set starting total' }}
-                </Button>
+                </button>
               </div>
             </template>
           </div>
@@ -398,7 +375,7 @@ function formatDate(iso: string | null): string {
             <p class="text-sm text-muted-foreground">
               Disconnecting Buy Me a Coffee will remove all BMAC-managed controls (donation counts, latest donor, etc.) from your overlays.
             </p>
-            <Button variant="destructive" size="sm" type="button" class="cursor-pointer" @click="disconnect"> Disconnect Buy Me a Coffee </Button>
+            <button type="button" class="btn btn-danger" @click="disconnect">Disconnect Buy Me a Coffee</button>
           </div>
         </template>
       </div>

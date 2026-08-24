@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { type BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { Save } from '@lucide/vue';
 
 interface ChatFilterProps {
   hide_commands: boolean;
@@ -122,6 +123,7 @@ function save() {
             class="btn btn-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
             @click="save"
           >
+            <Save class="mr-2 size-4" />
             {{ saving ? 'Saving...' : 'Save chat settings' }}
           </button>
           <p v-if="confirmation" class="text-sm text-muted-foreground">{{ confirmation }}</p>

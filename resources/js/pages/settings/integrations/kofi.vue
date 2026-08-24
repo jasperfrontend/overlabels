@@ -5,7 +5,7 @@ import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Button } from '@/components/ui/button';
+import EventTypeToggleList from '@/components/EventTypeToggleList.vue';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -98,15 +98,6 @@ function copyWebhookUrl() {
   });
 }
 
-function toggleEvent(eventType: string) {
-  const idx = form.enabled_events.indexOf(eventType);
-  if (idx >= 0) {
-    form.enabled_events.splice(idx, 1);
-  } else {
-    form.enabled_events.push(eventType);
-  }
-}
-
 function save() {
   form.post('/settings/integrations/kofi', {
     preserveScroll: true,
@@ -152,7 +143,7 @@ function formatDate(iso: string | null): string {
 
     <SettingsLayout>
       <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <HeadingSmall title="Ko-fi" description="Receive donation alerts and update overlay controls from Ko-fi." />
           <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
@@ -163,9 +154,7 @@ function formatDate(iso: string | null): string {
             title="Why Ko-fi?"
             description="Learn why Ko-fi is the best way to receive donations as a streamer - and why Overlabels chose it as our first integration."
           />
-          <Button variant="outline" size="sm" as-child>
-            <Link href="/help/why-kofi">Read more</Link>
-          </Button>
+          <Link href="/help/why-kofi" class="btn btn-plain">Read more</Link>
         </div>
 
         <div v-if="integration.connected" class="mb-6 space-y-2 border border-sidebar-border bg-sidebar-accent p-4 text-sm text-muted-foreground">
@@ -220,18 +209,7 @@ function formatDate(iso: string | null): string {
           <div class="space-y-2">
             <Label>Alert on</Label>
             <p class="text-sm text-muted-foreground">Which Ko-fi event types should trigger alerts and update controls.</p>
-            <div class="flex flex-wrap gap-2">
-              <Button
-                v-for="et in EVENT_TYPES"
-                :key="et.value"
-                type="button"
-                :variant="form.enabled_events.includes(et.value) ? 'default' : 'outline'"
-                size="sm"
-                @click="toggleEvent(et.value)"
-              >
-                {{ et.label }}
-              </Button>
-            </div>
+            <EventTypeToggleList v-model="form.enabled_events" :event-types="EVENT_TYPES" />
           </div>
 
           <!-- Last received -->
@@ -240,12 +218,10 @@ function formatDate(iso: string | null): string {
           </p>
 
           <div class="flex gap-2">
-            <Button type="submit" :disabled="form.processing">
+            <button type="submit" class="btn btn-sm btn-primary" :disabled="form.processing">
               {{ integration.connected ? 'Save changes' : 'Connect Ko-fi' }}
-            </Button>
-            <Button variant="outline" as-child>
-              <Link href="/settings/integrations">Cancel</Link>
-            </Button>
+            </button>
+            <Link href="/settings/integrations" class="btn btn-sm btn-chill">Cancel</Link>
           </div>
         </form>
 
@@ -322,9 +298,9 @@ function formatDate(iso: string | null): string {
                   <p v-else-if="seedPreview" class="text-xs text-muted-foreground">Saving as {{ seedPreview }}</p>
                   <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
                 </div>
-                <Button type="button" variant="outline" class="cursor-pointer" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
+                <button type="button" class="btn btn-primary" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
                   {{ seedLoading ? 'Saving…' : 'Set starting total' }}
-                </Button>
+                </button>
               </div>
             </template>
 
@@ -350,9 +326,9 @@ function formatDate(iso: string | null): string {
                   <p v-else-if="seedPreview" class="text-xs text-muted-foreground">Saving as {{ seedPreview }}</p>
                   <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
                 </div>
-                <Button type="button" variant="outline" class="cursor-pointer" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
+                <button type="button" class="btn btn-primary" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
                   {{ seedLoading ? 'Saving…' : 'Set starting total' }}
-                </Button>
+                </button>
               </div>
             </template>
           </div>
@@ -366,7 +342,7 @@ function formatDate(iso: string | null): string {
             <p class="text-sm text-muted-foreground">
               Disconnecting Ko-fi will remove all Ko-fi-managed controls (donation counts, latest donor, etc.) from your overlays.
             </p>
-            <Button variant="destructive" size="sm" type="button" @click="disconnect"> Disconnect Ko-fi </Button>
+            <button type="button" @click="disconnect" class="btn btn-danger">Disconnect Ko-fi</button>
           </div>
         </template>
       </div>

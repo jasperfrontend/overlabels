@@ -9,6 +9,7 @@ import { getDefaultCurrency } from '@/utils/formatters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { useConfirm } from '@/composables/useConfirm';
+import { Save } from '@lucide/vue';
 
 const { confirm } = useConfirm();
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -199,11 +200,7 @@ function saveForeachCaps() {
         <HeadingSmall title="Formatting locale" description="Controls how numbers, currencies, and dates are formatted in your overlays." />
 
         <div class="space-y-3">
-          <select
-            :value="locale"
-            @change="updateLocale(($event.target as HTMLSelectElement).value)"
-            class="input-border h-10 w-full max-w-xs rounded-sm"
-          >
+          <select :value="locale" @change="updateLocale(($event.target as HTMLSelectElement).value)" class="input-border h-10 w-full max-w-xs">
             <option v-for="loc in LOCALES" :key="loc.value" :value="loc.value">
               {{ loc.label }}
             </option>
@@ -220,7 +217,7 @@ function saveForeachCaps() {
             >
           </div>
         </div>
-        <div v-if="showConfirmation" class="inline-flex w-auto items-center gap-2 rounded-sm p-1">
+        <div v-if="showConfirmation" class="inline-flex w-auto items-center gap-2 p-1">
           <p class="text-sm text-green-600 dark:text-green-300">{{ confirmationTitle }}</p>
         </div>
       </div>
@@ -243,7 +240,7 @@ function saveForeachCaps() {
               min="1"
               :max="FOREACH_CAP_MAX"
               :placeholder="String(FOREACH_CAP_DEFAULTS[field.key])"
-              class="input-border h-10 w-full rounded-sm px-3"
+              class="input-border h-10 w-full px-3"
             />
             <p class="text-xs text-muted-foreground">{{ field.hint }}</p>
           </div>
@@ -253,9 +250,10 @@ function saveForeachCaps() {
           <button
             type="button"
             :disabled="foreachSaving"
-            class="h-10 cursor-pointer rounded-sm border border-border bg-primary px-4 text-sm text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+            class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50"
             @click="saveForeachCaps"
           >
+            <Save class="mr-2 size-4" />
             {{ foreachSaving ? 'Saving...' : 'Save loop limits' }}
           </button>
           <p v-if="foreachConfirmation" class="text-sm text-green-600 dark:text-green-300">
@@ -264,7 +262,7 @@ function saveForeachCaps() {
         </div>
       </div>
 
-      <div class="space-y-6 rounded-md border border-destructive/40 bg-destructive/5 p-6">
+      <div class="space-y-6 border border-destructive/40 bg-destructive/5 p-6">
         <HeadingSmall
           title="Delete your account"
           description="Permanently erases your account, every overlay you own, all access tokens, every integration, your tags, your bot commands, and your event history. This cannot be undone and your data cannot be restored."
@@ -289,7 +287,7 @@ function saveForeachCaps() {
             autocomplete="off"
             spellcheck="false"
             placeholder="DELETE ACCOUNT"
-            class="input-border h-10 w-full max-w-sm rounded-sm px-3"
+            class="input-border h-10 w-full max-w-sm px-3"
           />
         </div>
 
@@ -297,7 +295,7 @@ function saveForeachCaps() {
           <button
             type="button"
             :disabled="deleteInput !== DELETE_PHRASE || deleteSubmitting"
-            class="h-10 cursor-pointer rounded-sm border border-destructive bg-destructive px-4 text-sm text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+            class="h-10 cursor-pointer border border-destructive bg-destructive px-4 text-sm text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
             @click="submitDeleteAccount"
           >
             {{ deleteSubmitting ? 'Deleting...' : 'I am sure, delete my account and all my data' }}

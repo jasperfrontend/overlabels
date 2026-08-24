@@ -1,5 +1,46 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - style(inputs): `input-border` is violet in light mode too
+
+`.input-border` used `border-border` at rest in the light theme but `border-violet-400/50` in dark, so a form looked like part of the design in dark mode and like a default browser form in light. Light now gets `border-violet-400/80`, and both themes deepen to solid violet on focus.
+
+## August 24th, 2026 - feat(integrations): the whole "Alert on" row toggles
+
+Following the switch list below: the row itself now carries `role="switch"` and the click handler, and the track and thumb are inert spans. One hit target the width of the list, one tab stop, no nested buttons.
+
+- **The row has no hover or active styling on purpose.** The switch flipping is the only feedback - nothing else moves when you click, so the thing you are meant to read is the thing that changes. `cursor-pointer` across the row is the affordance that it is clickable at all.
+- `type="button"` is not optional here: the list sits inside the settings `<form>`, and a typeless button inside a form defaults to submit, so every toggle would have saved the page.
+
+## August 24th, 2026 - feat(integrations): "Alert on" becomes a list of switches
+
+The Ko-fi and Buy Me a Coffee settings pages picked their event types with a wrapped row of `.btn-*` chips: selected chips were filled, unselected ones outlined. A chip that is OFF still looks like a button you are meant to press, so both states read as "button", and six of them wrapped across two lines with no reading order. They are now one labelled row per event type with a switch on the right.
+
+- `EventTypeToggleList.vue` is used by both pages, so the switch exists once rather than being pasted twice. It takes `eventTypes` and `v-model`s the enabled array, which deleted the identical `toggleEvent()` helper from each page.
+- **The switch markup is copied from the Lists edit page's chat action permissions on purpose.** The app should have one switch, not two that almost match. The Lists page is untouched.
+- Green here is an on/off affordance, not a quality judgment - the opposite of the green "All overlays" badge removed from `/settings/controls` in the same pass, where green implied one scope was healthier than another.
+- `.btn-white` no longer has a call site. It stays in the stylesheet with the readable `text-neutral-900` it just gained; an unused variant costs nothing and the white/high-contrast slot is worth keeping.
+
+## August 24th, 2026 - style(controls): the controls usage page stops being a wall of text
+
+`/settings/controls` printed everything about a control on one wrapping line: the key, the type, the value, every overlay it lives on, and an amber "duplicated across N controls" sentence. On an account with a few dozen controls that is a page you cannot read. Each row is now three stacked zones - identity, value, scope - so the eye scans one column instead of re-parsing every line.
+
+- **Overlay chips cap at three**, with a `+N more` / `Show less` toggle per row. A control on eight overlays printed eight chips and pushed everything else off the row.
+- **The amber duplicate sentence is gone.** It was near-redundant: `instances` equals the overlay count for a template-scoped control, so the chip count already said it. The fan-out warning survives as a tooltip on the overlay count, and only when there is actually more than one copy.
+- **"All overlays" is no longer a green success badge.** Green against the amber sentence implied user-scoped was the healthy state and duplication the unhealthy one. They are just two different scopes, so both are now a muted icon plus label at the same weight - `Globe` for user-scoped, `Layers` for the per-overlay count.
+- Long values truncate to one line with the full string on hover; they had no overflow handling at all before. An empty value renders nothing rather than "(empty)".
+- The source now shows as its `ProviderIcon` plus label, with a padlock when `source_managed` - same chip vocabulary as `ControlsManager`.
+- `.btn-white` pairs `bg-white` with `text-neutral-900` instead of `text-accent`. `--accent` is `hsl(0 0% 96.1%)` in the light theme, so the selected event-type chips on the Ko-fi and Buy Me a Coffee settings pages were white on white. `.btn-warning` picks up the same 500/400 light-dark pairing as every other variant.
+
+## August 24th, 2026 - style(buttons): the settings pages join the `btn` system
+
+Second pass on the button unification. The settings pages were the last big holdout still importing the Shadcn `<Button>` component and hand-rolling `rounded` pill classes next to it, so the same page could show three different button shapes. 38 `<Button>` usages across the bot and integration pages become plain `<button>` / `<Link>` carrying `btn` plus a variant and a size, and the `Label` / `Input` / `Textarea` wrappers on the bot command form become native elements with `input-border`.
+
+- **This is a call-site sweep, not another restyle.** The only shape change is `.btn-danger` moving to the same 500/400 light-dark pairing every other variant uses, and `.btn-plain` becoming a genuine text link (underlined, no fill) rather than a black-or-white block, which is what every place using it actually wanted.
+- `collection-row-destructive` moves from red to amber. Red was reading as "this row is broken" on rows that are merely deletable, and red is now spoken for by `.btn-danger`.
+- The sidebar menu button and a scattering of panels, chips and callouts drop `rounded-md` / `rounded` to match the square buttons. 14 in total.
+- `WelcomeCard`'s four dashboard tiles were each a different variant - secondary, warning, cancel - which implied a difference in kind that does not exist. All four are now `btn-primary`.
+- **Known: `.btn-white` is unreadable in light mode.** It pairs `bg-white` with `text-accent`, and `--accent` is `hsl(0 0% 96.1%)` in the light theme, so the selected event-type chips on the Ko-fi and Buy Me a Coffee settings pages are white on white. Dark mode is fine. Not fixed here because picking the replacement token is a design call, not a typo.
+
 ## August 24th, 2026 - style(buttons): one button system, `overlabels-buttons-v2.css`
 
 `app.css` now imports `overlabels-buttons-v2.css` instead of `overlabels-buttons.css`. Buttons are square (`rounded-none`), have a solid fill instead of a 10%-alpha tint, and pick up a subtle top-to-bottom gradient on hover, so a primary action reads as a button at a glance rather than as a tinted label.

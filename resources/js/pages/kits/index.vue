@@ -65,8 +65,8 @@ defineProps<Props>();
           <LayoutGrid class="mr-2 h-6 w-6" />
           <Heading title="Overlay Kits" />
         </div>
-        <Link :href="route('kits.create')" class="btn btn-primary self-start sm:self-auto">
-          Create Kit
+        <Link :href="route('kits.create')" class="btn btn-sm btn-primary self-start sm:self-auto">
+          Create kit
           <PlusIcon class="ml-2 h-4 w-4" />
         </Link>
       </div>

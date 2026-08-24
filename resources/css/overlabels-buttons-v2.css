@@ -8,9 +8,9 @@
 
   /* Plain — no border, ghost-style */
   .btn-plain {
-    @apply border-0 bg-transparent text-accent-foreground dark:text-gray-300;
-    @apply hover:bg-black dark:hover:bg-white;
-    @apply active:bg-black dark:active:bg-white;
+    @apply border-0 bg-transparent text-accent-foreground underline underline-offset-2;
+    @apply hover:bg-none hover:underline hover:underline-offset-2;
+    @apply active:bg-none;
     @apply focus-visible:ring-black dark:focus-visible:ring-white;
   }
 
@@ -25,9 +25,9 @@
 
   /* White — inverted/high-contrast contexts */
   .btn-white {
-    @apply bg-white dark:bg-white;
-    @apply text-accent-foreground dark:text-gray-200;
-    @apply hover:bg-white dark:hover:bg-white;
+    @apply bg-white;
+    @apply text-neutral-900;
+    @apply hover:bg-white;
     @apply active:bg-gray-50;
     @apply focus:ring-white focus-visible:ring-white dark:focus-visible:ring-white;
   }
@@ -52,9 +52,9 @@
 
   /* Danger — Delete */
   .btn-danger {
-    @apply bg-red-600;
-    @apply text-white;
-    @apply hover:bg-linear-to-b hover:from-red-600 hover:to-red-700;
+    @apply bg-red-500 dark:bg-red-400;
+    @apply text-sidebar;
+    @apply hover:bg-linear-to-b hover:from-red-500 hover:to-red-600 dark:hover:from-red-400 dark:hover:to-red-500;
     @apply active:border-red-600;
     @apply focus:ring-red-400 focus-visible:ring-red-500 dark:focus-visible:ring-red-400;
   }
@@ -71,8 +71,8 @@
   /* Warning — orange */
   .btn-warning {
     @apply bg-orange-500 dark:bg-orange-400;
-    @apply text-white;
-    @apply hover:bg-linear-to-b hover:from-orange-600 hover:to-orange-700;
+    @apply text-sidebar;
+    @apply hover:bg-linear-to-b hover:from-orange-500 hover:to-orange-600 dark:hover:from-orange-400 dark:hover:to-orange-500;
     @apply active:border-orange-600;
     @apply focus:ring-orange-400 focus-visible:ring-orange-500 dark:focus-visible:ring-orange-400;
   }
@@ -121,7 +121,7 @@
   }
 
   .input-border {
-    @apply flex-1 rounded-none border border-border bg-background p-2 text-sm text-muted-foreground transition-[border-color] outline-none dark:border-violet-400/50;
+    @apply flex-1 rounded-none border border-violet-400/80 bg-background p-2 text-sm text-muted-foreground transition-[border-color] outline-none dark:border-violet-400/50;
     @apply focus:border focus:border-violet-400 focus:text-accent-foreground focus:ring-2 focus:ring-violet-400 focus-visible:border-violet-400 focus-visible:ring-2 focus-visible:ring-violet-400;
     @apply aria-invalid:border-destructive aria-invalid:ring-destructive dark:aria-invalid:ring-destructive;
   }

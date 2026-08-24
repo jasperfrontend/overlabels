@@ -5,7 +5,6 @@ import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -122,7 +121,7 @@ function formatDate(iso: string | null): string {
 
     <SettingsLayout>
       <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <HeadingSmall title="Fourthwall" description="Receive donation alerts and update overlay controls from your Fourthwall shop." />
           <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
@@ -142,9 +141,7 @@ function formatDate(iso: string | null): string {
               Connect your Fourthwall shop to receive donation alerts and live-updating controls in your overlays. Overlabels will register a webhook
               on your shop automatically - no manual setup needed.
             </p>
-            <Button as-child class="cursor-pointer">
-              <a href="/settings/integrations/fourthwall/redirect">Authenticate with Fourthwall</a>
-            </Button>
+            <a href="/settings/integrations/fourthwall/redirect" class="btn btn-primary">Authenticate with Fourthwall</a>
           </div>
         </template>
 
@@ -240,9 +237,9 @@ function formatDate(iso: string | null): string {
                   <p v-else-if="seedPreview" class="text-xs text-muted-foreground">Saving as {{ seedPreview }}</p>
                   <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
                 </div>
-                <Button type="button" variant="outline" class="cursor-pointer" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
+                <button type="button" class="btn btn-primary" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
                   {{ seedLoading ? 'Saving...' : 'Set starting total' }}
-                </Button>
+                </button>
               </div>
             </template>
 
@@ -268,9 +265,9 @@ function formatDate(iso: string | null): string {
                   <p v-else-if="seedPreview" class="text-xs text-muted-foreground">Saving as {{ seedPreview }}</p>
                   <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
                 </div>
-                <Button type="button" variant="outline" class="cursor-pointer" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
+                <button type="button" class="btn btn-primary" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
                   {{ seedLoading ? 'Saving...' : 'Set starting total' }}
-                </Button>
+                </button>
               </div>
             </template>
           </div>
@@ -285,7 +282,7 @@ function formatDate(iso: string | null): string {
               Disconnecting Fourthwall will remove the webhook from your Fourthwall shop and delete all Fourthwall-managed controls (donation counts,
               latest donor, etc.) from your overlays.
             </p>
-            <Button variant="destructive" size="sm" type="button" class="cursor-pointer" @click="disconnect"> Disconnect Fourthwall </Button>
+            <button type="button" class="btn btn-danger" @click="disconnect">Disconnect Fourthwall</button>
           </div>
         </template>
       </div>
