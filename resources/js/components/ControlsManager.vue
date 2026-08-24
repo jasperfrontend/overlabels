@@ -10,6 +10,7 @@ import ControlFormModal from '@/components/ControlFormModal.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 import { SERVICE_LABELS } from '@/utils/services';
+import { CONTROL_TYPE_LABELS as TYPE_LABELS, CONTROL_TYPE_ORDER as TYPE_ORDER } from '@/utils/controls';
 import { useConfirm } from '@/composables/useConfirm';
 
 const { confirm } = useConfirm();
@@ -208,19 +209,6 @@ function configSummary(ctrl: OverlayControl): string[] {
 }
 
 // ---- Grouping ----
-const TYPE_LABELS: Record<string, string> = {
-  text: 'Text',
-  number: 'Number',
-  counter: 'Counter',
-  timer: 'Timer',
-  boolean: 'Toggle',
-  expression: 'Expression',
-  datetime: 'Date/Time',
-  list_writer: 'List writer',
-};
-
-const TYPE_ORDER = ['counter', 'timer', 'number', 'text', 'boolean', 'expression', 'list_writer', 'datetime'];
-
 // Keyed by label, which is what the pre-component manager persisted its
 // expanded state under.
 const groupedControls = computed<CollectionGroup<OverlayControl>[]>(() => {
