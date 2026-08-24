@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useForm, Head, Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { AppPageProps, BreadcrumbItem } from '@/types';
+import type { AppPageProps, BreadcrumbItem, OverlayControl } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
@@ -18,6 +18,8 @@ import { renderTemplateSource } from '@/utils/renderTemplate';
 
 const props = defineProps<{
   sampleData: Record<string, string>;
+  userScopedControls?: OverlayControl[];
+  userLists?: Array<{ id: number; slug: string; label?: string | null }>;
 }>();
 
 const page = usePage<AppPageProps>();
@@ -329,7 +331,15 @@ onMounted(() => {
           </div>
 
           <!-- Code Tab -->
-          <TemplateCodeEditor v-if="mainTab === 'code'" v-model:head="form.head" v-model:body="form.html" v-model:css="form.css" />
+          <TemplateCodeEditor
+            v-if="mainTab === 'code'"
+            v-model:head="form.head"
+            v-model:body="form.html"
+            v-model:css="form.css"
+            :controls="props.userScopedControls ?? []"
+            :lists="props.userLists ?? []"
+            :template-type="form.type"
+          />
 
           <!-- Tags Tab -->
           <div v-if="mainTab === 'tags'">

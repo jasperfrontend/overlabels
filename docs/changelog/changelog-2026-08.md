@@ -1,5 +1,18 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - feat(editor): tags autocomplete in the template editor (#88, part 1)
+
+Typing `[[[` in the code editor now opens a completion list of everything that can go inside the brackets, personalised to the account: the static catalogue, this template's controls plus the user-scoped integration controls under their `c:service:key` names, every projection of each of your Lists (`c:list:slug`, `:count`, `:first` ...), the block keywords, and `event.*` when the template is an alert. `|` offers the formatters with their argument hints, `foreach:` offers the iterables and fills in `subscribers as sub`, and inside an open loop the alias completes to its item fields (`sub.user_name`, `msg.html`).
+
+- The completion machinery was already running: vue-codemirror injects `basicSetup` under our extensions, which includes `autocompletion()` (HTML tag completion has worked in BODY all along) and `closeBrackets()`. The latter is why `[[[` already yields `[[[|]]]`, and why accepting a completion steps over an existing `]]]` instead of appending one - the issue's `apply: token + ']]]'` would have produced six closing brackets.
+- Registered as language data, not `autocompletion({ override })`, so HTML/CSS completion keeps working and one registration covers HEAD, BODY, CSS and `<style>` inside BODY. The source reads page state through a getter, so a control added on the Controls tab shows up without remounting the editor.
+- `resources/js/utils/tagCompletions.ts` is the pure part (context detection, foreach scope tracking, option building) and is Vitest-covered; the CodeMirror wrapper is a dozen lines at the bottom. Tag shape comes from `dsl.json` via `dsl.ts`, no hand-rolled regex.
+- The catalogue fetch and its localStorage cache moved out of `TemplateTagsList.vue` into `useTemplateTagCatalogue()`, shared with the editor so the Tags tab and autocomplete issue one request. Cache version bumped to v5 because the payload gained `event_tags`.
+- `create()` now passes `userScopedControls` and `userLists` like `edit()` does (two private helpers, both callers use them). `GET /api/template-tags` gained `event_tags` - `EVENT_TAGS` had no client-reachable surface before this.
+- Foreach item fields are a static list in the completer: nothing server-side enumerates them (they are the Helix row shapes flattened at render time), and the catalogue's sample data has zero indexed keys to derive them from.
+- `@codemirror/autocomplete` becomes a direct dependency; it was already installed transitively via `@codemirror/lang-html`.
+- Not in this PR: `!bang` snippets (part 2), and the Builder's style panel editor, which has no control data to feed it yet.
+
 ## August 23rd, 2026 - fix(overlays): foreach loops can now actually reach the 50-item cap
 
 Setting a foreach loop limit above 20 on `/settings/account` did nothing: the three Helix fetchers behind the iterables (`getChannelFollowers`, `getFollowedChannels`, `getChannelSubscribers` in `TwitchApiService`) all defaulted to `first = 20`, and the render path never passed anything else. The per-user cap slices whatever was fetched, so `min(20 rows, cap 50)` = 20 - and caps below 20 worked, which is why it never looked broken.

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import axios from 'axios';
-import { onMounted, ref, computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { onMounted, ref, computed, watch } from 'vue';
 import { Search, Copy, Info, ChevronRight, ChevronsUpDown, ChevronsDownUp } from '@lucide/vue';
+import { useTemplateTagCatalogue, type TagCatalogue } from '@/composables/useTemplateTagCatalogue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -30,92 +30,17 @@ interface TemplateTag {
   data_type?: string;
 }
 
-interface CategoryTag {
-  category?: {
-    display_name: string;
-    description?: string;
-  };
-  tags?: Array<{
-    display_tag: string;
-    description: string;
-    sample_data?: string;
-    data_type?: string;
-  }>;
-  active_template_tags?: Array<{
-    display_tag: string;
-    description: string;
-    sample_data: string;
-    data_type?: string;
-  }>;
-}
-
-interface TagsResponse {
-  tags: Record<string, CategoryTag>;
-}
-
 // Tag selection modal state
 const tagList = ref<TemplateTag[]>([]);
-const categoryTags = ref<Record<string, CategoryTag>>({});
+const categoryTags = ref<TagCatalogue>({});
 
 // Categories to exclude - array data that doesn't render in templates
 const HIDDEN_CATEGORIES = ['Other'];
 
-// Cache configuration - user-scoped so switching accounts doesn't inherit stale views
-const page = usePage();
-const userId = (page.props.auth as { user?: { id?: number | string } } | undefined)?.user?.id;
-const CACHE_KEY = userId ? `template_tags_cache_user_${userId}` : 'template_tags_cache_anon';
-const CACHE_VERSION_KEY = `${CACHE_KEY}_version`;
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
-// v4: tags are no longer per-user rows. The payload lost `id` and gained
-// `is_live`, and the list itself changed, so any cached v3 copy is stale.
-const CURRENT_CACHE_VERSION = 'v4';
+// Fetch + cache live in the composable, shared with the editor's autocomplete.
+const { catalogue, load: loadCatalogue } = useTemplateTagCatalogue();
 
-interface CachedData {
-  tags: Record<string, CategoryTag>;
-  timestamp: number;
-  version: string;
-}
-
-function getCachedTags(): CachedData | null {
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    const version = localStorage.getItem(CACHE_VERSION_KEY);
-
-    if (!cached || version !== CURRENT_CACHE_VERSION) {
-      return null;
-    }
-
-    const data: CachedData = JSON.parse(cached);
-    const now = Date.now();
-
-    if (now - data.timestamp > CACHE_DURATION) {
-      localStorage.removeItem(CACHE_KEY);
-      return null;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error reading cache:', error);
-    localStorage.removeItem(CACHE_KEY);
-    return null;
-  }
-}
-
-function setCachedTags(tags: Record<string, CategoryTag>): void {
-  try {
-    const cacheData: CachedData = {
-      tags,
-      timestamp: Date.now(),
-      version: CURRENT_CACHE_VERSION,
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    localStorage.setItem(CACHE_VERSION_KEY, CURRENT_CACHE_VERSION);
-  } catch (error) {
-    console.error('Error setting cache:', error);
-  }
-}
-
-function processTags(tags: Record<string, CategoryTag>): void {
+function processTags(tags: TagCatalogue): void {
   categoryTags.value = tags;
 
   const flattenedTags: TemplateTag[] = [];
@@ -144,34 +69,7 @@ function processTags(tags: Record<string, CategoryTag>): void {
   tagList.value = flattenedTags;
 }
 
-function useGetTemplateTags(): void {
-  const cached = getCachedTags();
-
-  // Show cached data immediately, then revalidate in the background.
-  if (cached) {
-    processTags(cached.tags);
-  }
-
-  axios
-    .get<TagsResponse>(route('tags.api.all'))
-    .then((response) => {
-      const tags = response.data.tags;
-      const isEmpty = !tags || Object.keys(tags).length === 0;
-
-      // Don't cache empty responses. The catalogue is a constant so an empty
-      // list means the request failed, and caching that would hide working
-      // tags for an hour.
-      if (!isEmpty) {
-        setCachedTags(tags);
-        processTags(tags);
-      } else if (!cached) {
-        processTags(tags ?? {});
-      }
-    })
-    .catch(() => {
-      console.error('Error retrieving tags from api');
-    });
-}
+watch(catalogue, processTags, { immediate: true });
 
 // Group tags by category, filtered by search
 const filteredGroupedTags = computed(() => {
@@ -284,7 +182,7 @@ const copyAllTags = async () => {
 };
 
 onMounted(() => {
-  useGetTemplateTags();
+  loadCatalogue();
 });
 </script>
 

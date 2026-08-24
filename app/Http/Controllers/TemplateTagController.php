@@ -64,6 +64,9 @@ class TemplateTagController extends Controller
         return response()->json([
             'success' => true,
             'tags' => $this->mapper->tagBrowser($this->twitchDataFor($request)),
+            // event.* has no catalogue entry (it comes from the EventSub payload
+            // at render time), so the editor's autocomplete gets it separately.
+            'event_tags' => $this->mapper->getTagCategories()['event']['tags'] ?? [],
             'cached_at' => now()->toIso8601String(),
         ]);
     }

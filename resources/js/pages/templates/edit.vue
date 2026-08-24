@@ -681,7 +681,16 @@ onMounted(() => {
             @dirty="builderDirty = true"
             @error="(msg) => pushToast(msg, 'warning')"
           />
-          <TemplateCodeEditor v-else v-show="mainTab === 'code'" v-model:head="form.head" v-model:body="form.html" v-model:css="form.css" />
+          <TemplateCodeEditor
+            v-else
+            v-show="mainTab === 'code'"
+            v-model:head="form.head"
+            v-model:body="form.html"
+            v-model:css="form.css"
+            :controls="[...(props.userScopedControls ?? []), ...localControls]"
+            :lists="props.userLists ?? []"
+            :template-type="template.type"
+          />
 
           <!-- Meta Tab -->
           <div v-if="mainTab === 'meta'" class="max-w-5xl space-y-5 p-4 pt-5">

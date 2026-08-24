@@ -6,12 +6,39 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { Codemirror } from 'vue-codemirror';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import { flattenCatalogue, useTemplateTagCatalogue } from '@/composables/useTemplateTagCatalogue';
+import { overlabelsCompletion, type CompletionControl, type CompletionList } from '@/utils/tagCompletions';
 import { ChevronDown, ChevronUp, FileCode2, Code, Maximize, Minimize, Palette, Wind } from '@lucide/vue';
 import { Link } from '@inertiajs/vue3';
 
 const headValue = defineModel<string>('head', { required: true });
 const htmlValue = defineModel<string>('body', { required: true });
 const cssValue = defineModel<string>('css', { required: true });
+
+// Per-account data for tag autocomplete: the controls this template can read
+// (its own plus the user-scoped integration ones), the account's Lists, and
+// the template type (event.* tags only make sense on an alert).
+const props = withDefaults(
+  defineProps<{
+    controls?: CompletionControl[];
+    lists?: CompletionList[];
+    templateType?: string | null;
+  }>(),
+  { controls: () => [], lists: () => [], templateType: null },
+);
+
+const { catalogue, eventTags, load: loadCatalogue } = useTemplateTagCatalogue();
+const catalogueTags = computed(() => flattenCatalogue(catalogue.value));
+
+// The getter runs per completion request, so the source sees controls added
+// on the Controls tab and the catalogue arriving without remounting the editor.
+const tagCompletion = overlabelsCompletion(() => ({
+  tags: catalogueTags.value,
+  eventTags: eventTags.value,
+  controls: props.controls,
+  lists: props.lists,
+  templateType: props.templateType,
+}));
 
 // Detect dark mode reactively via MutationObserver on <html> class
 const isDark = ref(document.documentElement.classList.contains('dark'));
@@ -23,6 +50,7 @@ onMounted(() => {
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   window.addEventListener('keydown', onEscape);
+  loadCatalogue();
 });
 
 onUnmounted(() => {
@@ -71,9 +99,9 @@ const baseTheme = EditorView.theme({
 
 // Key changes when dark mode toggles, forcing CodeMirror instances to remount with new extensions
 const editorKey = computed(() => (isDark.value ? 'dark' : 'light'));
-const headExtensions = computed(() => [html(), baseTheme, ...(isDark.value ? [oneDark] : [])]);
-const htmlExtensions = computed(() => [html(), baseTheme, ...(isDark.value ? [oneDark] : [])]);
-const cssExtensions = computed(() => [css(), baseTheme, ...(isDark.value ? [oneDark] : [])]);
+const headExtensions = computed(() => [html(), tagCompletion, baseTheme, ...(isDark.value ? [oneDark] : [])]);
+const htmlExtensions = computed(() => [html(), tagCompletion, baseTheme, ...(isDark.value ? [oneDark] : [])]);
+const cssExtensions = computed(() => [css(), tagCompletion, baseTheme, ...(isDark.value ? [oneDark] : [])]);
 </script>
 
 <template>
