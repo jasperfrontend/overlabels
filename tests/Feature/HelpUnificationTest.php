@@ -135,3 +135,57 @@ it('derives a tutorial from its directory rather than new machinery', function (
         ->and(HelpCorpus::kindOf('conditionals'))->toBe(HelpCorpus::KIND_GUIDE)
         ->and(HelpPage::url('tutorials/show-chat-on-screen'))->toBe('/help/tutorials/show-chat-on-screen');
 })->group('help');
+
+it('carries declared keywords from frontmatter into the search corpus', function () {
+    // The editor guide is the case this exists for: it says "autocomplete" five
+    // times and has it as a heading, and the search returned nothing for that
+    // word. Fuse applies a field norm, so an identical exact match scores 0.0
+    // in a short field and 0.89 in a 20KB body - above the cutoff that throws
+    // coincidence away. Weighting `body` higher cannot fix it, because the norm
+    // scales with length whatever the weight is.
+    $editor = collect(HelpCorpus::all())->firstWhere('slug', 'editor');
+
+    expect($editor)->not->toBeNull()
+        ->and($editor['keywords'])->toContain('autocomplete')
+        ->and($editor['keywords'])->toContain('codemirror');
+})->group('help');
+
+it('splits a keywords line on commas and keeps multi-word terms whole', function () {
+    // Frontmatter is flat `key: value` with no YAML parser, so a list has to be
+    // one line. `bang snippets` is one keyword, not two.
+    expect(HelpPage::splitKeywords('autocomplete, bang snippets ,codemirror'))
+        ->toBe(['autocomplete', 'bang snippets', 'codemirror'])
+        ->and(HelpPage::splitKeywords('one, , one,'))->toBe(['one'])
+        ->and(HelpPage::splitKeywords(null))->toBe([])
+        ->and(HelpPage::splitKeywords('   '))->toBe([]);
+})->group('help');
+
+it('gives every document a keywords list, defaulting to empty', function () {
+    // A page without the frontmatter key, and every reference entry, must still
+    // carry the field - the client reads it unconditionally. Reference entries
+    // have no frontmatter at all, so they can never declare one.
+    foreach (HelpCorpus::all() as $doc) {
+        expect($doc['keywords'])->toBeArray();
+
+        if ($doc['kind'] === HelpCorpus::KIND_REFERENCE) {
+            expect($doc['keywords'])->toBe([], "reference entry '{$doc['slug']}' should have no keywords");
+        }
+    }
+})->group('help');
+
+it('publishes keywords to the search index but not to the frozen reference contract', function () {
+    // help-reference-index.json is a documented public contract - linked from
+    // the reference page as "BYOF" and explained at
+    // /help/reference/for-machines/help-reference-index-json. Anything built
+    // against its shape has to keep working, so the new field goes to the
+    // unified index only.
+    $this->artisan('help:build-index')->assertSuccessful();
+
+    $unified = json_decode((string) file_get_contents(public_path('help-index.json')), true);
+    $reference = json_decode((string) file_get_contents(public_path('help-reference-index.json')), true);
+
+    $editor = collect($unified)->firstWhere('slug', 'editor');
+
+    expect($editor['keywords'])->toContain('autocomplete')
+        ->and(array_keys($reference[0]))->toBe(['category', 'categoryLabel', 'slug', 'title', 'body']);
+})->group('help');

@@ -19,6 +19,11 @@ export interface HelpDoc {
   /** Reference entries only - the folder under resources/help/reference. Null for pages. */
   category?: string | null;
   categoryLabel?: string | null;
+  /**
+   * Search terms declared in a page's `keywords:` frontmatter. Reference
+   * entries have no frontmatter, so they never carry any.
+   */
+  keywords?: string[];
 }
 
 export const FUSE_OPTIONS: IFuseOptions<HelpDoc> = {
@@ -149,6 +154,76 @@ export function sectionMatch(docs: HelpDoc[], query: string): HelpDoc[] {
 }
 
 /**
+ * The shortest query that may be a partial keyword. Two characters prefixes far
+ * too much to be a request for anything - `co` opens both `controls` and
+ * `codemirror`. An exact match is exempt: if someone declared `if` as a
+ * keyword, typing `if` is unambiguous.
+ */
+const MIN_KEYWORD_PREFIX = 3;
+
+export interface KeywordMatches {
+  /** The query IS one of the declared keywords. */
+  exact: HelpDoc[];
+  /** The query prefixes a declared keyword, or a word inside one. */
+  partial: HelpDoc[];
+}
+
+/**
+ * Pages whose author declared this query as a keyword.
+ *
+ * This exists because fuzzy search cannot see into a long body. Fuse applies a
+ * field norm, so an identical exact match scores 0.0 in a short field and 0.89
+ * in a 20KB one - above the cutoff that exists to throw coincidence away. The
+ * editor guide says `autocomplete` five times, has it as a heading, and scored
+ * 0.98 for that word: the search answered "Nothing matched" about a page that
+ * is largely about it. Weighting `body` higher cannot fix that, because the
+ * norm scales with length no matter what the weight is.
+ *
+ * Deliberately NOT a sixth key in FUSE_OPTIONS, for the same reason `category`
+ * is not one. Fuse normalises a document's score across all its keys, so an
+ * extra key moves every score in the corpus: measured against the real index,
+ * adding one at weight 1.5 dropped `all-ko-fi-events` from "kofi" and
+ * `bot/random-and-counters` from "raid" - the exact regressions the weights
+ * above were tuned to avoid. This runs alongside the fuzzy pass, so ranking is
+ * bit-for-bit what it was and a page without keywords behaves identically.
+ *
+ * Split into two tiers because they are different claims. An exact match is the
+ * author saying this page IS about that word, which beats a fuzzy match on a
+ * word that merely looks similar - "bang" should open the editor guide, not
+ * `user_offline_banner`. A prefix is a hint, so it appends instead.
+ *
+ * Prefix, not substring, and on word boundaries: `autocom` finds `autocomplete`
+ * and `snip` finds `bang snippets`, while `ang` matches neither. Mid-word
+ * matching turns every short query into noise.
+ */
+export function keywordMatch(docs: HelpDoc[], query: string): KeywordMatches {
+  const q = normalize(query);
+  const exact: HelpDoc[] = [];
+  const partial: HelpDoc[] = [];
+
+  if (!q) return { exact, partial };
+
+  for (const doc of docs) {
+    const terms = (doc.keywords ?? []).map(normalize).filter(Boolean);
+
+    if (terms.length === 0) continue;
+
+    if (terms.includes(q)) {
+      exact.push(doc);
+      continue;
+    }
+
+    if (q.length < MIN_KEYWORD_PREFIX) continue;
+
+    if (terms.some((t) => t.startsWith(q) || t.split(' ').some((w) => w.startsWith(q)))) {
+      partial.push(doc);
+    }
+  }
+
+  return { exact, partial };
+}
+
+/**
  * The pile a result belongs to, as shown beside its title.
  *
  * A reference entry names its folder - "Foreach Loops", not the word
@@ -167,12 +242,30 @@ export interface HelpSearch {
   search(query: string, limit: number): HelpDoc[];
 }
 
+/** First occurrence of each url wins, so earlier passes keep their position. */
+function dedupe(docs: HelpDoc[]): HelpDoc[] {
+  const seen = new Set<string>();
+
+  return docs.filter((d) => {
+    if (seen.has(d.url)) return false;
+    seen.add(d.url);
+
+    return true;
+  });
+}
+
 /**
- * Ranked matches first, then the rest of any section the query named.
+ * Declared keywords, then ranked matches, then partial keywords, then the rest
+ * of any section the query named.
  *
- * That order matters: "template tags" has one genuine hit - the page listing
- * all of them - and it must stay on top of the 64 individual entries that
- * follow it.
+ * That order matters at both ends. A page whose author declared the query as a
+ * keyword leads, because that is a deliberate statement about what the page is
+ * and it beats a fuzzy match on a word that merely looks similar. At the other
+ * end, "template tags" has one genuine hit - the page listing all of them - and
+ * it must stay on top of the 64 individual entries that follow it.
+ *
+ * A partial keyword sits behind the fuzzy hits rather than in front: it is a
+ * hint, not a claim, and it must never displace something that matched outright.
  */
 export function buildHelpSearch(docs: HelpDoc[]): HelpSearch {
   const fuse = new Fuse(docs, FUSE_OPTIONS);
@@ -184,11 +277,9 @@ export function buildHelpSearch(docs: HelpDoc[]): HelpSearch {
 
       if (!q) return docs.slice(0, limit);
 
-      const hits = rankedSearch(fuse, q, limit);
-      const seen = new Set(hits.map((h) => h.url));
-      const section = sectionMatch(docs, q).filter((d) => !seen.has(d.url));
+      const keywords = keywordMatch(docs, q);
 
-      return [...hits, ...section].slice(0, limit);
+      return dedupe([...keywords.exact, ...rankedSearch(fuse, q, limit), ...keywords.partial, ...sectionMatch(docs, q)]).slice(0, limit);
     },
   };
 }

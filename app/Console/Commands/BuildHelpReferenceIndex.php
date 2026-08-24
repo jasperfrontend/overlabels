@@ -49,6 +49,12 @@ class BuildHelpReferenceIndex extends Command
                 'lead' => $d['lead'],
                 'url' => $d['url'],
                 'body' => $d['body'],
+                // Declared in the page's `keywords:` frontmatter. Searched by a
+                // separate exact/prefix pass rather than a sixth Fuse key,
+                // because adding a key renormalises every score in the corpus.
+                // Deliberately absent from help-reference-index.json below:
+                // that shape is a documented public contract.
+                'keywords' => $d['keywords'],
                 // The folder a document lives in is a thing people search for:
                 // "foreach" is expected to return the nine foreach loop fields,
                 // not just whichever ones happen to say the word. Reference

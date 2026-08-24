@@ -4,6 +4,7 @@ description: How the template editor completes your tags as you type, knows your
 heading: The code editor
 lead: Type [[[ and the editor offers every tag you can use, including your own controls and Lists. Type !chat and it writes the whole loop for you.
 canonical: https://overlabels.com/help/editor
+keywords: autocomplete, completion, bang, bangs, snippets, codemirror, code editor, intellisense, suggestions, tab, shortcuts
 ---
 
 The editor on the Code tab is CodeMirror, the same editor behind a lot of browser-based tools. It
