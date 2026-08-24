@@ -1,5 +1,12 @@
 # CHANGELOG AUGUST 2026
 
+## August 24th, 2026 - feat(editor): a bang for every foreach loop
+
+The bang snippets covered four of the eight iterables. Now every one has a bang that writes a working loop: `!followed` (followed channels) joins the static set; `!poll`, `!prediction` and `!hypetrain` write the `event.choices`, `event.outcomes` and `event.top_contributions` loops and are offered on alert templates only, the same gate as the `event.*` tags. `raw` is not a loop but a tag for inside one, so it gets no bang - it already completes as `raw` inside any foreach body.
+
+- One entry each in `BASE_BANGS` / `ALERT_BANGS` in `tagCompletions.ts` plus a help table row - no other machinery, which is the point of the design.
+- A test now asserts that every iterable a static overlay can loop over has a bang whose template opens that loop, so a tenth iterable without a bang fails the suite.
+
 ## August 24th, 2026 - feat(editor): bang snippets - `!chat` writes the whole loop (#88, part 2)
 
 Typing `!` plus a letter in the code editor now offers snippets that expand to a complete block. `!chat` writes the three-line chat loop (name in the chatter's colour, `msg.html` for emotes), `!subs`, `!followers` and `!goals` write the matching foreach, `!if` / `!ifelse` / `!foreach` write the block scaffolding with Tab-able fields, and each connected donation service gets its own `!kofi`-style bang showing the latest donor, amount and message from that service's controls.

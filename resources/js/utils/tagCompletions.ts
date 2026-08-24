@@ -411,6 +411,15 @@ const BASE_BANGS: BangSnippet[] = [
     ].join('\n'),
   },
   {
+    label: '!followed',
+    info: 'The channels you follow, one row each.',
+    template: [
+      '[[[foreach:followed_channels as channel]]]',
+      '  <div class="channel-row">[[[channel.broadcaster_name]]]</div>',
+      '[[[endforeach]]]',
+    ].join('\n'),
+  },
+  {
     label: '!if',
     info: 'A conditional block. Fill in the condition, Tab to the body.',
     template: ['[[[if:${condition}]]]', '  ${}', '[[[endif]]]'].join('\n'),
@@ -424,6 +433,40 @@ const BASE_BANGS: BangSnippet[] = [
     label: '!foreach',
     info: 'An empty loop. The alias is linked: rename it once and both places follow.',
     template: ['[[[foreach:${subscribers} as ${item}]]]', '  [[[${item}.${user_name}]]]', '[[[endforeach]]]'].join('\n'),
+  },
+];
+
+/**
+ * Loops over an EventSub payload. Only an alert ever receives one, so these
+ * are offered on alert templates alone - same gate as the `event.*` tags.
+ */
+const ALERT_BANGS: BangSnippet[] = [
+  {
+    label: '!poll',
+    info: 'Poll choices with their vote counts, from a poll event.',
+    template: [
+      '[[[foreach:event.choices as choice]]]',
+      '  <div class="poll-choice">[[[choice.title]]]: [[[choice.votes]]] votes</div>',
+      '[[[endforeach]]]',
+    ].join('\n'),
+  },
+  {
+    label: '!prediction',
+    info: 'Prediction outcomes with predictors and points wagered, from a prediction event.',
+    template: [
+      '[[[foreach:event.outcomes as outcome]]]',
+      '  <div class="prediction-outcome [[[outcome.color]]]">[[[outcome.title]]]: [[[outcome.users]]] predictors, [[[outcome.channel_points]]] points</div>',
+      '[[[endforeach]]]',
+    ].join('\n'),
+  },
+  {
+    label: '!hypetrain',
+    info: 'The top hype train contributors, from a hype train event.',
+    template: [
+      '[[[foreach:event.top_contributions as contribution]]]',
+      '  <div class="hype-contributor">[[[contribution.user_name]]]: [[[contribution.total]]] [[[contribution.type]]]</div>',
+      '[[[endforeach]]]',
+    ].join('\n'),
   },
 ];
 
@@ -447,7 +490,7 @@ export function bangSnippets(data: CompletionData): BangSnippet[] {
     ].join('\n'),
   }));
 
-  return [...BASE_BANGS, ...donation];
+  return [...BASE_BANGS, ...(isAlert(data) ? ALERT_BANGS : []), ...donation];
 }
 
 const BANG_CONTEXT = /![a-z]*$/;
