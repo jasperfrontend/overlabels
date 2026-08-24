@@ -454,7 +454,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
       <!-- Actions -->
       <div class="mt-6 flex justify-between">
-        <a href="/templates?filter=mine&type=static" class="btn btn-cancel"> ← My Overlays </a>
+        <a href="/templates?filter=mine&type=static" class="btn btn-sm btn-cancel"> ← My overlays </a>
       </div>
     </div>
   </AppLayout>
