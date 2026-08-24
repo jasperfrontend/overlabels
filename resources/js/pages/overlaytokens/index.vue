@@ -6,8 +6,9 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import Modal from '@/components/Modal.vue';
 import Heading from '@/components/Heading.vue';
+import CollectionList from '@/components/CollectionList.vue';
 import { type BreadcrumbItem } from '@/types';
-import { EyeIcon, CodeSquareIcon, CalendarIcon, ClockArrowUpIcon, AlarmClockOffIcon } from '@lucide/vue';
+import { AlertTriangle } from '@lucide/vue';
 import { useConfirm } from '@/composables/useConfirm';
 
 const { confirm, alert } = useConfirm();
@@ -144,62 +145,42 @@ const formatDate = (date: string | null | undefined) => (date ? new Date(date).t
           <button @click="showCreateModal = true" class="btn btn-primary">Create Token</button>
         </div>
 
-        <!-- Token List -->
-        <div class="space-y-4 overflow-hidden">
-          <div v-for="token in tokens" :key="token.id" class="rounded-sm border border-sidebar bg-sidebar-accent p-4">
-            <div class="flex items-start gap-4 justify-self-start">
-              <div>
-                <h3 class="-mt-0.5 mr-1 text-lg font-semibold">{{ token.name }}</h3>
-              </div>
-              <div class="mt-0.5">
-                <p class="rounded-full bg-sidebar p-0.5 px-2 text-sm text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200">
-                  <CodeSquareIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                  Prefix:
-                  <code class="rounded-full bg-sidebar p-0.5 px-2 text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
-                    >{{ token.prefix }}...</code
-                  >
-                </p>
-              </div>
-              <div class="mt-0.5">
-                <p
-                  class="rounded-full bg-sidebar p-0.5 px-2 text-sm text-slate-500 transition dark:text-slate-400 dark:hover:text-slate-200"
-                  title="Access Count"
-                >
-                  <EyeIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                  {{ token.access_count }} view{{ token.access_count === 1 ? '' : 's' }}
-                </p>
-              </div>
-
-              <div class="ml-auto flex space-x-2">
-                <button v-if="token.is_active" @click="revokeToken(token)" class="btn btn-sm btn-warning">Revoke</button>
-                <button @click="deleteToken(token)" class="btn btn-sm btn-danger">Delete</button>
-              </div>
+        <!-- Token list: same row as /triggers. Rows are not navigable - a token has no page of its own. -->
+        <CollectionList
+          :items="tokens"
+          :item-key="(t) => t.id"
+          :row-class="(t) => (t.is_active ? undefined : 'border-l-amber-400')"
+          empty-message="No tokens yet. Create one to put an overlay in OBS."
+          empty-dashed
+        >
+          <template #item="{ item: token }">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span class="font-medium text-foreground">{{ token.name }}</span>
+              <span
+                class="hidden rounded-full border border-dashed border-violet-300/30 px-2 py-0.5 font-mono text-xs text-slate-500 sm:inline dark:text-slate-400"
+              >
+                {{ token.prefix }}...
+              </span>
             </div>
 
-            <div class="mt-2 flex items-start gap-4 justify-self-start">
-              <div class="mt-0.5">
-                <p class="text-sm text-sidebar-foreground/80">
-                  <CalendarIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                  Created: {{ formatDate(token.created_at) }}
-                </p>
-              </div>
-              <div class="mt-0.5">
-                <p v-if="token.expires_at" class="text-sm text-sidebar-foreground/80">
-                  <AlarmClockOffIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                  Expires: {{ formatDate(token.expires_at) }}
-                </p>
-              </div>
-              <div class="mt-0.5">
-                <p v-if="token.last_used_at" class="text-sm text-sidebar-foreground/80">
-                  <ClockArrowUpIcon class="-mt-0.5 mr-1 inline-block h-4 w-4" />
-                  Last viewed: {{ formatDate(token.last_used_at) }}
-                </p>
-              </div>
+            <div class="mt-1 text-sm text-foreground">
+              {{ token.access_count }} view{{ token.access_count === 1 ? '' : 's' }}
+              <span class="text-muted-foreground"> · Created {{ formatDate(token.created_at) }}</span>
+              <span v-if="token.expires_at" class="text-muted-foreground"> · Expires {{ formatDate(token.expires_at) }}</span>
+              <span v-if="token.last_used_at" class="text-muted-foreground"> · Last viewed {{ formatDate(token.last_used_at) }}</span>
             </div>
 
-            <div v-if="!token.is_active" class="mt-2 text-sm font-semibold text-red-600">REVOKED</div>
-          </div>
-        </div>
+            <div v-if="!token.is_active" class="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+              <AlertTriangle class="mt-px h-3.5 w-3.5 shrink-0" />
+              <span>Revoked - this token no longer opens any overlay.</span>
+            </div>
+          </template>
+
+          <template #actions="{ item: token }">
+            <button v-if="token.is_active" @click="revokeToken(token)" class="btn btn-sm btn-warning">Revoke</button>
+            <button @click="deleteToken(token)" class="btn btn-sm btn-danger">Delete</button>
+          </template>
+        </CollectionList>
         <div class="my-4 bg-background text-sm">
           <Heading
             title="Important!"
