@@ -162,11 +162,8 @@ onMounted(() => {
       empty-message="No tags available"
     >
       <template #toolbar="{ items }">
-        <button
-          @click.prevent="copyAllTags(items)"
-          class="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-violet-500/30 bg-violet-500/10 px-3 text-xs font-medium text-violet-400 transition-colors hover:border-violet-500/50 hover:bg-violet-500/20"
-        >
-          <Copy :size="13" />
+        <button @click.prevent="copyAllTags(items)" class="btn btn-chill">
+          <Copy :size="13" class="mr-2" />
           Copy all
         </button>
       </template>
