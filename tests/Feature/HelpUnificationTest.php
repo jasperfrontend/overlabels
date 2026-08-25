@@ -176,7 +176,7 @@ it('gives every document a keywords list, defaulting to empty', function () {
 it('publishes keywords to the search index but not to the frozen reference contract', function () {
     // help-reference-index.json is a documented public contract - linked from
     // the reference page as "BYOF" and explained at
-    // /help/reference/for-machines/help-reference-index-json. Anything built
+    // /help/help-reference-index-json. Anything built
     // against its shape has to keep working, so the new field goes to the
     // unified index only.
     $this->artisan('help:build-index')->assertSuccessful();

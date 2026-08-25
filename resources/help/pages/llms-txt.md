@@ -1,6 +1,11 @@
-# llms.txt
-
-Overlabels publishes its complete overlay-authoring guide as one plain text file:
+---
+title: llms.txt - Overlabels Help
+description: Overlabels publishes its complete overlay-authoring guide as one plain text file at /llms.txt, written for language models. What is in it, and how to hand it to an assistant.
+heading: llms.txt
+lead: Overlabels publishes its complete overlay-authoring guide as one plain text file, written for language models. This page explains what is in it and how to hand it to an assistant.
+canonical: https://overlabels.com/help/llms-txt
+keywords: llms.txt, llms, ai assistant, language model, chatgpt, claude, gemini, copilot
+---
 
 **<https://overlabels.com/llms.txt>**
 
@@ -54,8 +59,9 @@ A `<link rel="llms-txt">` tag in the document head is a declaration, not a link 
 and `llms.txt` itself is a convention rather than a ratified standard, so nothing indexes it
 automatically. This page is the human-readable, crawlable page that points at it.
 
-The other machine-readable surfaces are documented in [[markdown-endpoints]] and
-[[help-reference-index-json]].
+The other machine-readable surfaces are documented in
+[Markdown endpoints](/help/markdown-endpoints) and
+[help-reference-index.json](/help/help-reference-index-json).
 
 ## Related
 

@@ -168,7 +168,7 @@
         <div class="mx-auto max-w-6xl px-4 py-4 text-xs text-foreground">
             Building an overlay with an AI assistant? The complete authoring guide is one plain text file:
             <a href="/llms.txt" class="font-mono underline cursor-pointer">https://overlabels.com/llms.txt</a>
-            (<a href="/help/reference/for-machines/llms-txt" class="underline cursor-pointer">what is this?</a>).
+            (<a href="/help/llms-txt" class="underline cursor-pointer">what is this?</a>).
         </div>
     </footer>
 

@@ -35,7 +35,7 @@
         allowance. The complete overlay-authoring guide is one plain text file at
         <a href="/llms.txt" class="text-sky-500 hover:underline cursor-pointer">overlabels.com/llms.txt</a> - no login,
         no API key, nothing to sign up for. What it contains, and how to hand it to an assistant, is explained at
-        <a href="/help/reference/for-machines/llms-txt" class="text-sky-500 hover:underline cursor-pointer">llms.txt</a>.
+        <a href="/help/llms-txt" class="text-sky-500 hover:underline cursor-pointer">llms.txt</a>.
         Every help page is also fetchable as markdown by appending <code>.md</code>, starting from
         <a href="/help.md" class="text-sky-500 hover:underline cursor-pointer">/help.md</a>, and the full tag catalogue
         is JSON at

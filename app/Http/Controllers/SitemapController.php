@@ -24,7 +24,7 @@ class SitemapController extends Controller
         // is the one file we most want a crawler to find on its own. Ranked just
         // under the homepage: a sitemap priority is relative within the site, and
         // nothing here matters more to a machine reader. Its explainer page at
-        // /help/reference/for-machines/llms-txt is what actually links to it.
+        // /help/llms-txt is what actually links to it.
         ['path' => '/llms.txt', 'priority' => '0.9', 'changefreq' => 'monthly'],
         ['path' => '/privacy', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/terms', 'priority' => '0.3', 'changefreq' => 'yearly'],

@@ -1,5 +1,28 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - refactor(help): the three "for machines" explainers are guides, not reference entries
+
+The page that tells a language model it can append `.md` to any help URL had no `.md` of its own.
+`/help/reference/for-machines/markdown-endpoints` returned HTML and its `.md` twin 404ed, because the
+twin route only ever covered `resources/help/pages/`. The three pages under `for-machines` - llms.txt,
+markdown endpoints, help-reference-index.json - were the only prose in the reference; every other
+entry there is one or two lines of definition. They were filed in the wrong place, and the fix is to
+move them rather than to teach the reference about markdown twins.
+
+- **`/help/llms-txt`, `/help/markdown-endpoints` and `/help/help-reference-index-json`** are ordinary
+  guides now, listed under a "For machines" heading on the help index, each with a working `.md`.
+  Their `[[wikilinks]]` became plain markdown links, since that is the convention for prose pages.
+- **The old URLs 301 to the new ones.** All three were indexed for a year; a test pins each redirect,
+  the sitemap entries, and that `llms.txt` and the sitemap no longer mention the old path.
+- **`/help/reference` stays JSON-first and untouched.** The `for-machines` category is gone from
+  `HelpReferenceService` (the reference index dropped from 146 to 143 entries), and the explainer for
+  the JSON no longer lists it as a category. Nothing else about the reference changed - no `.md`
+  route was added there, on purpose: a two-line entry has nothing to gain from one and the whole
+  reference is already one JSON fetch.
+- Every link into the old location moved with it: the homepage footer, the help layout footer, the
+  reference index's "Using an AI assistant?" block and its JSON-LD `usageInfo`, `public/llms.txt`,
+  the help index, and three code comments.
+
 ## August 25th, 2026 - chore(deps): dependency sweep, both trees
 
 Routine sweep. Zero security advisories on either tree before or after, so nothing here closes a

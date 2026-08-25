@@ -548,16 +548,17 @@ is the source itself with no navigation around it.
 | Why Overlabels | `/help/why-overlabels.md` |
 | Why Ko-fi | `/help/why-kofi.md` |
 | Free resources | `/help/resources.md` |
+| This file: what is in it, and how to hand it to an assistant | `/help/llms-txt.md` |
+| The "append `.md`" convention | `/help/markdown-endpoints.md` |
+| The full tag catalogue as JSON | `/help/help-reference-index-json.md` |
 
 **The reference vault is plain server-rendered HTML** and needs no `.md` suffix. Every entry lives at
-`/help/reference/{category}/{slug}` and each one is listed individually in `sitemap.xml`. Three of them
-describe the machine-readable surfaces themselves:
+`/help/reference/{category}/{slug}` and each one is listed individually in `sitemap.xml`. Each entry is
+one or two lines of definition, so fetch the whole reference as JSON at `/help-reference-index.json`
+instead of crawling it. One entry worth reading on its own:
 
 | Page | What it covers |
 |---|---|
-| `/help/reference/for-machines/llms-txt` | This file: what is in it, and how to hand it to an assistant |
-| `/help/reference/for-machines/markdown-endpoints` | The "append `.md`" convention |
-| `/help/reference/for-machines/help-reference-index-json` | The full tag catalogue as JSON |
 | `/help/reference/integration-controls/all-integration-controls` | Every control each integration provisions, generated from the drivers |
 
 **Two help URLs have no `.md` twin** and will return an app shell if you fetch them:
@@ -568,5 +569,5 @@ describe the machine-readable surfaces themselves:
 
 - Overlabels: https://overlabels.com
 - Help index (human): https://overlabels.com/help
-- This file, explained: https://overlabels.com/help/reference/for-machines/llms-txt
+- This file, explained: https://overlabels.com/help/llms-txt
 - Full tag catalogue as JSON: https://overlabels.com/help-reference-index.json

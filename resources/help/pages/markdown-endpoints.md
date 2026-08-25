@@ -1,6 +1,11 @@
-# Markdown endpoints (.md)
-
-Every prose help page on Overlabels is fetchable as plain markdown by appending `.md` to its URL.
+---
+title: Markdown endpoints (.md) - Overlabels Help
+description: Every prose help page, every public overlay and every public kit on Overlabels is fetchable as plain markdown by appending .md to its URL. What that covers, and the few pages it does not.
+heading: Markdown endpoints (.md)
+lead: Every prose help page on Overlabels is fetchable as plain markdown by appending `.md` to its URL - including this one. Public overlays and kits have a `.md` too.
+canonical: https://overlabels.com/help/markdown-endpoints
+keywords: markdown, .md, text/markdown, crawl, machine readable, llms
+---
 
 ```
 https://overlabels.com/help/conditionals      -> HTML, server-rendered, carries the full prose
@@ -70,7 +75,7 @@ https://overlabels.com/help.md
 That is the help index as markdown, and it links to every other page. One URL is enough to crawl the
 whole documentation set.
 
-For a single self-contained primer instead of a crawl, use [[llms-txt]].
+For a single self-contained primer instead of a crawl, use [llms.txt](/help/llms-txt).
 
 ## Pages without a .md twin
 
@@ -78,6 +83,7 @@ Three help URLs render live data or an interactive UI rather than prose, so they
 version:
 
 - `/help/integration-presets` - the searchable preset catalogue, rendered from source data.
-- `/help/reference` - this reference. Machine-readable as JSON instead, see
-  [[help-reference-index-json]].
+- `/help/reference` - the tag, event and loop reference. Each entry there is one or two lines of
+  definition, not prose, and the whole reference is machine-readable as one JSON file instead - see
+  [help-reference-index.json](/help/help-reference-index-json).
 - `/help/gamejam` - Chat Castle documentation.

@@ -162,6 +162,16 @@ foreach ([
     );
 }
 
+// The three "for machines" explainers (llms.txt, the .md convention, the JSON
+// index) were filed as reference entries for a year. They are prose, so they
+// were the only reference pages anyone would want as markdown - and the one
+// reference URL WITHOUT a .md twin was the page explaining the .md twin. They
+// are guides now, which gives them the twin for free and leaves the reference
+// JSON-first. Same reasoning as above for the 301s: these are indexed.
+foreach (['llms-txt', 'markdown-endpoints', 'help-reference-index-json'] as $machineSlug) {
+    Route::redirect("/help/reference/for-machines/{$machineSlug}", "/help/{$machineSlug}", 301);
+}
+
 Route::get('/help/reference/{category?}/{slug?}', [HelpReferenceController::class, 'show'])
     ->where(['category' => '[a-z0-9\-]+', 'slug' => '[a-zA-Z0-9_\-\.]+'])
     ->name('help.reference');

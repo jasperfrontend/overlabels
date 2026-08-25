@@ -55,7 +55,7 @@ const DOCS: HelpDoc[] = [
   ref('channel_name', 'template-tags', 'Template Tags'),
   ref('channel_game', 'template-tags', 'Template Tags'),
   ref('kofi', 'integration-controls', 'Integration Controls'),
-  ref('llms-txt', 'for-machines', 'For Machines'),
+  ref('stream-goes-offline', 'eventsub-events', 'EventSub Events'),
 ];
 
 describe('sectionMatch', () => {
@@ -69,7 +69,7 @@ describe('sectionMatch', () => {
     expect(sectionMatch(DOCS, 'Foreach Loops')).toHaveLength(3);
     expect(sectionMatch(DOCS, 'Template Tags')).toHaveLength(2);
     expect(sectionMatch(DOCS, 'Integration Controls')).toHaveLength(1);
-    expect(sectionMatch(DOCS, 'For Machines')).toHaveLength(1);
+    expect(sectionMatch(DOCS, 'EventSub Events')).toHaveLength(1);
   });
 
   it('ignores punctuation, so the slug and the label are the same query', () => {
