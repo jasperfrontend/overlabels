@@ -1,38 +1,41 @@
 <template>
-  <Transition name="toast" @after-leave="emit('dismiss')">
-    <div
-      v-if="visible"
-      class="pointer-events-auto fixed top-0 left-0 z-50 flex w-full items-start gap-4 px-4 py-3 shadow-lg"
-      :class="[color.bg, color.border]"
-      :role="toastRole"
-      :aria-live="ariaLive"
-      @mouseenter="pauseTimeout"
-      @mouseleave="resumeTimeout"
-    >
-      <component :is="icon" class="mt-0.5 h-5 w-5 shrink-0" :class="color.icon" aria-hidden="true" />
-
-      <div class="min-w-0 flex-1">
-        <p class="mb-1 text-sm leading-none font-semibold" :class="color.title">
-          {{ color.label }}
-        </p>
-        <p class="text-sm leading-snug" :class="color.body">
-          <span class="sr-only">{{ color.label }}: </span>
-          {{ message }}
-          <slot />
-        </p>
-      </div>
-
-      <button
-        type="button"
-        @click="dismiss"
-        class="shrink-0 cursor-pointer rounded text-2xl leading-none opacity-40 transition-opacity hover:opacity-80 focus:ring-2 focus:ring-black/20 focus:outline-none"
-        :class="color.title"
-        aria-label="Dismiss notification"
+  <Teleport to="body">
+    <Transition name="toast" @after-leave="emit('dismiss')">
+      <div
+        v-if="visible"
+        class="pointer-events-auto fixed right-4 bottom-20 left-4 z-50 flex items-start gap-3 overflow-hidden rounded-lg border border-l-4 border-border bg-background py-3 pr-2 pl-4 shadow-lg sm:right-6 sm:bottom-24 sm:left-auto sm:w-96"
+        :class="color.edge"
+        :role="toastRole"
+        :aria-live="ariaLive"
+        @mouseenter="pauseTimeout"
+        @mouseleave="resumeTimeout"
       >
-        &times;
-      </button>
-    </div>
-  </Transition>
+        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full" :class="color.iconBg" aria-hidden="true">
+          <component :is="icon" class="h-3.5 w-3.5" :class="color.icon" stroke-width="2.5" />
+        </span>
+
+        <div class="min-w-0 flex-1 pt-0.5">
+          <p class="text-xs font-semibold tracking-wide uppercase" :class="color.label">
+            {{ color.text }}
+          </p>
+          <p class="mt-1 text-sm leading-snug break-words text-foreground">
+            <span class="sr-only">{{ color.text }}: </span>
+            {{ message }}
+          </p>
+          <slot />
+        </div>
+
+        <button
+          type="button"
+          @click="dismiss"
+          class="-mt-1 shrink-0 cursor-pointer rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
+          aria-label="Dismiss notification"
+        >
+          <X class="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script lang="ts" setup>
@@ -95,60 +98,65 @@ const icon = computed(() => {
 const ariaLive = computed(() => (props.type === 'error' ? 'assertive' : 'polite'));
 const toastRole = computed(() => (props.type === 'error' ? 'alert' : 'status'));
 
+// Surface is the theme's own background + border, so the toast reads as part of the app in every
+// theme. Identity comes from the left edge, the icon disc and the label - never a tinted fill.
 const color = computed(() => {
   switch (props.type) {
     case 'success':
       return {
-        bg: 'bg-violet-100',
-        border: 'border-violet-200',
-        icon: 'text-violet-600',
-        title: 'text-violet-800',
-        body: 'text-violet-700',
-        label: 'Success',
+        edge: 'border-l-violet-500',
+        iconBg: 'bg-violet-500/15',
+        icon: 'text-violet-600 dark:text-violet-400',
+        label: 'text-violet-600 dark:text-violet-400',
+        text: 'Success',
       };
     case 'error':
       return {
-        bg: 'bg-red-100',
-        border: 'border-red-200',
-        icon: 'text-red-600',
-        title: 'text-red-800',
-        body: 'text-red-700',
-        label: 'Error',
+        edge: 'border-l-red-500',
+        iconBg: 'bg-red-500/15',
+        icon: 'text-red-600 dark:text-red-400',
+        label: 'text-red-600 dark:text-red-400',
+        text: 'Error',
       };
     case 'warning':
       return {
-        bg: 'bg-amber-100',
-        border: 'border-amber-200',
-        icon: 'text-amber-600',
-        title: 'text-amber-800',
-        body: 'text-amber-700',
-        label: 'Warning',
+        edge: 'border-l-amber-500',
+        iconBg: 'bg-amber-500/15',
+        icon: 'text-amber-600 dark:text-amber-400',
+        label: 'text-amber-600 dark:text-amber-400',
+        text: 'Warning',
       };
     default:
       return {
-        bg: 'bg-blue-100',
-        border: 'border-blue-200',
-        icon: 'text-blue-600',
-        title: 'text-blue-800',
-        body: 'text-blue-700',
-        label: 'Info',
+        edge: 'border-l-sky-500',
+        iconBg: 'bg-sky-500/15',
+        icon: 'text-sky-600 dark:text-sky-400',
+        label: 'text-sky-600 dark:text-sky-400',
+        text: 'Info',
       };
   }
 });
 </script>
 
 <style scoped>
-.toast-enter-active,
-.toast-leave-active {
+/* Slide in from the right edge so the motion pulls the eye to the corner; leave by fading only. */
+.toast-enter-active {
   transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
+    opacity 0.3s ease-out,
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.toast-enter-from,
+.toast-leave-active {
+  transition: opacity 0.35s ease-in;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(calc(100% + 1.5rem));
+}
+
 .toast-leave-to {
   opacity: 0;
-  transform: translateY(-0.75rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -157,8 +165,7 @@ const color = computed(() => {
     transition: opacity 1ms linear;
   }
 
-  .toast-enter-from,
-  .toast-leave-to {
+  .toast-enter-from {
     transform: none;
   }
 }

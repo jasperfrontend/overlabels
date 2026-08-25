@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - style(toast): notifications float bottom-right instead of spanning the top
+
+`RekaToast` was a full-width banner pinned to the top of the page. Your eyes are on the button you just clicked, not the top edge, so it was easy to miss, and a pastel strip across the whole viewport looked like nothing else in the app.
+
+- **Bottom-right, above the help beacon.** A 24rem card at the same right inset as the beacon, sitting just above it so the two never overlap. Below `sm` it spans the width minus the page gutters.
+- **Slides in from the right, fades out.** Enter is a 300ms ease-out slide; leave is opacity only. Reduced-motion users get a 1ms fade with no transform, as before.
+- **Looks like the app.** Surface is `bg-background` + `border-border` + `shadow-lg`, the same recipe as the beacon panel and dialogs, so it works in every theme. Type identity comes from a 4px left edge, a tinted icon disc and a small uppercase label - no tinted fill. Success stays violet; info moved from blue to sky so it reads distinct from the brand colour.
+- Teleported to `body` so a caller mounting it inside a positioned ancestor cannot trap it in that stacking context.
+- Behaviour is unchanged: hover pauses the timer, `duration <= 0` is sticky, the slot still renders below the message, `dismiss` still fires after the exit animation.
+
 ## August 25th, 2026 - fix(chat): Twitch emote positions are code points, not UTF-16 units
 
 An emoji in front of a Twitch emote shifted every emote after it by one character on the chat overlay: `[[[msg.html]]]` rendered `alt=" Kapp"` with a stray `a` leaking out as text. The bot's channel-point reply opens with a pinata, so every redeem confirmation with emotes in it came out mangled.
