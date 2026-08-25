@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\HelpReferenceService;
+use App\Support\HelpPage;
 
 /**
  * llms.txt is only useful if something can find it. A `<link rel="llms-txt">`
@@ -8,34 +9,62 @@ use App\Services\HelpReferenceService;
  * llms.txt is a convention rather than a ratified standard - so nothing indexes
  * the file on its own. The chain that makes it discoverable is:
  *
- *   sitemap.xml -> /help/reference (server-rendered HTML, the only crawlable
- *   docs surface on the site) -> body copy + /help/reference/for-machines/llms-txt
- *   -> /llms.txt -> back to the explainer page.
+ *   sitemap.xml -> /help/reference (server-rendered HTML) -> body copy +
+ *   /help/llms-txt -> /llms.txt -> back to the explainer page.
  *
  * Every link in that chain is asserted below. Breaking one silently undoes the
  * whole thing, which is exactly what happened before these pages existed.
+ *
+ * The three explainers (llms.txt, markdown endpoints, the JSON index) are
+ * guides under /help. They spent a year filed as reference entries in a
+ * `for-machines` category, which made them the only prose in the reference and
+ * left the page explaining the `.md` twin as the one help URL without one.
  */
 it('ships llms.txt and its explainer page', function () {
     expect(file_exists(public_path('llms.txt')))->toBeTrue();
 
-    $entry = app(HelpReferenceService::class)->get('for-machines', 'llms-txt');
+    expect(HelpPage::exists('llms-txt'))->toBeTrue();
 
-    expect($entry)->not->toBeNull()
-        ->and($entry['title'])->toBe('llms.txt')
-        ->and($entry['body'])->toContain('https://overlabels.com/llms.txt');
+    $page = HelpPage::render('llms-txt');
+
+    expect($page['heading'])->toBe('llms.txt')
+        ->and($page['html'])->toContain('https://overlabels.com/llms.txt');
 });
 
 it('serves the explainer as crawlable html at its own url', function () {
-    // Not an Inertia shell: this route renders Blade so the prose is in the
-    // response body, which is the entire reason the page lives here and not
-    // under /help.
-    $response = $this->get('/help/reference/for-machines/llms-txt');
+    $response = $this->get('/help/llms-txt');
 
     $response->assertOk();
 
     expect($response->getContent())
         ->toContain('https://overlabels.com/llms.txt')
-        ->toContain('llms.txt - Reference - Overlabels');
+        ->toContain('llms.txt - Overlabels Help');
+});
+
+it('serves each explainer as markdown too', function () {
+    // The page that explains "append .md to any help URL" had no .md of its
+    // own for as long as it lived in the reference. That is the whole reason
+    // these three are guides.
+    foreach (['llms-txt', 'markdown-endpoints', 'help-reference-index-json'] as $slug) {
+        $this->get("/help/{$slug}.md")
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/markdown; charset=utf-8');
+    }
+});
+
+it('redirects the old reference urls permanently', function () {
+    // These were indexed for a year. A 404 here throws that away.
+    foreach (['llms-txt', 'markdown-endpoints', 'help-reference-index-json'] as $slug) {
+        $this->get("/help/reference/for-machines/{$slug}")
+            ->assertStatus(301)
+            ->assertRedirect("/help/{$slug}");
+    }
+});
+
+it('no longer carries a for-machines category in the reference', function () {
+    expect(HelpReferenceService::CATEGORY_LABELS)->not->toHaveKey('for-machines')
+        ->and(HelpReferenceService::CATEGORY_ORDER)->not->toContain('for-machines')
+        ->and(app(HelpReferenceService::class)->get('for-machines', 'llms-txt'))->toBeNull();
 });
 
 it('puts body copy about llms.txt on the reference index', function () {
@@ -45,7 +74,7 @@ it('puts body copy about llms.txt on the reference index', function () {
 
     expect($html)
         ->toContain('href="/llms.txt"')
-        ->toContain('/help/reference/for-machines/llms-txt')
+        ->toContain('href="/help/llms-txt"')
         ->toContain('application/ld+json')
         ->toContain('"contentUrl": "https://overlabels.com/llms.txt"');
 });
@@ -58,7 +87,7 @@ it('anchors llms.txt from the homepage', function () {
 
     expect($html)
         ->toContain('href="/llms.txt"')
-        ->toContain('href="/help/reference/for-machines/llms-txt"')
+        ->toContain('href="/help/llms-txt"')
         ->toContain('Reading this as a machine?');
 });
 
@@ -77,17 +106,19 @@ it('links back from llms.txt to the page that explains it', function () {
     // Reciprocal: a crawler that reaches the file should be able to walk back to
     // an HTML page about it.
     expect(file_get_contents(public_path('llms.txt')))
-        ->toContain('/help/reference/for-machines/llms-txt');
+        ->toContain('https://overlabels.com/help/llms-txt')
+        ->not->toContain('/help/reference/for-machines/');
 });
 
-it('lists llms.txt and the for-machines entries in the sitemap', function () {
+it('lists llms.txt and the explainer pages in the sitemap', function () {
     $xml = $this->get('/sitemap.xml')->assertOk()->getContent();
 
     expect($xml)
         ->toContain('<loc>https://overlabels.com/llms.txt</loc>')
-        ->toContain('<loc>https://overlabels.com/help/reference/for-machines/llms-txt</loc>')
-        ->toContain('<loc>https://overlabels.com/help/reference/for-machines/markdown-endpoints</loc>')
-        ->toContain('<loc>https://overlabels.com/help/reference/for-machines/help-reference-index-json</loc>');
+        ->toContain('<loc>https://overlabels.com/help/llms-txt</loc>')
+        ->toContain('<loc>https://overlabels.com/help/markdown-endpoints</loc>')
+        ->toContain('<loc>https://overlabels.com/help/help-reference-index-json</loc>')
+        ->not->toContain('/help/reference/for-machines/');
 });
 
 it('keeps the prebuilt json index in step with the markdown sources', function () {
@@ -102,19 +133,6 @@ it('keeps the prebuilt json index in step with the markdown sources', function (
     );
 
     $json = json_decode((string) file_get_contents($path), true);
-    $slugs = array_column($json, 'slug');
 
-    expect($slugs)->toContain('llms-txt', 'markdown-endpoints', 'help-reference-index-json')
-        ->and(count($json))->toBe(count(app(HelpReferenceService::class)->all()));
-});
-
-it('labels the for-machines category everywhere it is shown', function () {
-    // This used to assert that useHelpReference.ts carried a hand-kept copy of
-    // CATEGORY_LABELS for the Alt+R palette. That copy is gone: the palette
-    // reads the server-built index, so PHP and the client can no longer
-    // disagree about a label. What is still worth pinning is that the category
-    // is registered and that the label actually reaches the page.
-    expect(HelpReferenceService::CATEGORY_LABELS['for-machines'])->toBe('For Machines')
-        ->and(HelpReferenceService::CATEGORY_ORDER)->toContain('for-machines')
-        ->and($this->get('/help/reference')->getContent())->toContain('For Machines');
+    expect(count($json))->toBe(count(app(HelpReferenceService::class)->all()));
 });

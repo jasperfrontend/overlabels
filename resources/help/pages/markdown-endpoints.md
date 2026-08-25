@@ -1,6 +1,11 @@
-# Markdown endpoints (.md)
-
-Every prose help page on Overlabels is fetchable as plain markdown by appending `.md` to its URL.
+---
+title: Markdown endpoints (.md) - Overlabels Help
+description: Every prose help page, every public overlay and every public kit on Overlabels is fetchable as plain markdown by appending .md to its URL. What that covers, and the few pages it does not.
+heading: Markdown endpoints (.md)
+lead: Every prose help page on Overlabels is fetchable as plain markdown by appending `.md` to its URL - including this one. Public overlays and kits have a `.md` too.
+canonical: https://overlabels.com/help/markdown-endpoints
+keywords: markdown, .md, text/markdown, crawl, machine readable, llms
+---
 
 ```
 https://overlabels.com/help/conditionals      -> HTML, server-rendered, carries the full prose
@@ -70,14 +75,28 @@ https://overlabels.com/help.md
 That is the help index as markdown, and it links to every other page. One URL is enough to crawl the
 whole documentation set.
 
-For a single self-contained primer instead of a crawl, use [[llms-txt]].
+For a single self-contained primer instead of a crawl, use [llms.txt](/help/llms-txt).
+
+## Reference entries too
+
+Every entry in the reference has the same twin:
+
+```
+https://overlabels.com/help/reference/template-tags/channel_id      -> HTML
+https://overlabels.com/help/reference/template-tags/channel_id.md   -> text/markdown, the source
+```
+
+That includes the generated `integration-controls` pages, which list every control a connected
+service provisions. Most entries are one or two lines, so if you want the whole reference, fetch it
+as one JSON file instead of crawling it - see
+[help-reference-index.json](/help/help-reference-index-json).
 
 ## Pages without a .md twin
 
-Three help URLs render live data or an interactive UI rather than prose, so they have no markdown
+Three help URLs render live data or an interactive UI rather than a file, so they have no markdown
 version:
 
 - `/help/integration-presets` - the searchable preset catalogue, rendered from source data.
-- `/help/reference` - this reference. Machine-readable as JSON instead, see
-  [[help-reference-index-json]].
+- `/help/reference` - the reference index itself. The entries under it each have one; the index is a
+  listing, and the JSON above is its machine form.
 - `/help/gamejam` - Chat Castle documentation.

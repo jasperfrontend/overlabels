@@ -22,7 +22,7 @@ class BuildHelpReferenceIndex extends Command
      * `help-reference-index.json` is the reference alone, and it stays exactly
      * as it was. It is a documented public contract - linked from the reference
      * page as "BYOF" and explained at
-     * /help/reference/for-machines/help-reference-index-json - so anything
+     * /help/help-reference-index-json - so anything
      * built against its shape keeps working.
      */
     public function handle(HelpReferenceService $service): int

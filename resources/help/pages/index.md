@@ -12,7 +12,7 @@ canonical: https://overlabels.com/help
 > HTML and carry the full prose, so either form works; the `.md` is just the same content without the
 > navigation around it. For a single self-contained primer on writing overlays, start with
 > [`/llms.txt`](https://overlabels.com/llms.txt) - what it contains and how to hand it to an assistant
-> is explained at [llms.txt](/help/reference/for-machines/llms-txt).
+> is explained at [llms.txt](/help/llms-txt).
 
 ## I want to...
 
@@ -104,3 +104,12 @@ Short, copy-and-paste tutorials. Each one ends with something on screen.
   Stripe, or built-in payments.
 - [**Free Resources**](/help/resources) - colors, fonts, animations, images, and other tools for building
   overlays.
+
+### For machines
+
+- [**llms.txt**](/help/llms-txt) - the complete overlay-authoring guide as one plain text file, written
+  for language models. What is in it, and how to hand it to an assistant.
+- [**Markdown endpoints**](/help/markdown-endpoints) - append `.md` to any help page, public overlay or
+  public kit URL and get plain markdown back.
+- [**help-reference-index.json**](/help/help-reference-index-json) - the entire reference as one JSON
+  array. Build your own frontend over it or feed it to an autocomplete.

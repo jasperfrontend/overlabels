@@ -15,19 +15,14 @@ class HelpReferenceService
         'eventsub-events' => 'EventSub Events',
         'foreach-loops' => 'Foreach Loops',
         'integration-controls' => 'Integration Controls',
-        'for-machines' => 'For Machines',
     ];
 
-    // `for-machines` sits last on purpose: humans open this page for tags, and
-    // the crawl signal it exists for does not care about sidebar position. The
-    // index page's article column carries the prominent link instead.
     public const CATEGORY_ORDER = [
         'template-tags',
         'eventsub-tags',
         'eventsub-events',
         'foreach-loops',
         'integration-controls',
-        'for-machines',
     ];
 
     private string $rootPath;

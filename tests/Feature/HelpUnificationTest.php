@@ -33,6 +33,28 @@ it('serves reference entries as crawlable html carrying their whole body', funct
     expect($response->getContent())->toContain($service->render($entry['body']));
 })->group('help');
 
+it('serves every reference entry as a markdown twin, byte-identical to its file', function () {
+    // The .md convention was prose-only for a year, which left the reference -
+    // the best-indexed part of the site - as the one place a machine could not
+    // ask for the source. Two entries on purpose: a hand-written tag and a
+    // generated integration-controls page, so the twin is proven for both
+    // ways a reference file comes to exist.
+    $service = app(HelpReferenceService::class);
+
+    foreach ([['template-tags', 'channel_id'], ['integration-controls', 'kofi']] as [$category, $slug]) {
+        $entry = $service->get($category, $slug);
+
+        $response = $this->get("/help/reference/{$category}/{$slug}.md");
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/markdown; charset=utf-8');
+        expect($response->getContent())->toBe(file_get_contents($entry['path']));
+    }
+
+    $this->get('/help/reference/template-tags/no_such_tag.md')->assertNotFound();
+    $this->get('/help/reference/template-tags/channel_id')->assertOk();
+})->group('help');
+
 it('gives both corpora the same layout and the same stylesheet', function () {
     // One template for anything help-related was the whole point. Both halves
     // must come through layouts/help.blade.php - same script entry, same
@@ -176,7 +198,7 @@ it('gives every document a keywords list, defaulting to empty', function () {
 it('publishes keywords to the search index but not to the frozen reference contract', function () {
     // help-reference-index.json is a documented public contract - linked from
     // the reference page as "BYOF" and explained at
-    // /help/reference/for-machines/help-reference-index-json. Anything built
+    // /help/help-reference-index-json. Anything built
     // against its shape has to keep working, so the new field goes to the
     // unified index only.
     $this->artisan('help:build-index')->assertSuccessful();

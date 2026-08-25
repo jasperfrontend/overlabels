@@ -16,7 +16,7 @@
             page in this section. A <link rel="llms-txt"> in the head is a
             declaration, not a link a crawler follows, and llms.txt is a convention
             rather than a ratified standard - so nothing indexes the file on its own.
-            This block, plus /help/reference/for-machines/llms-txt, is what makes it
+            This block, plus /help/llms-txt, is what makes it
             discoverable. Do not reduce it to a badge or an icon link.
         --}}
         <div class="mb-6 border border-sidebar-border p-6">
@@ -36,9 +36,9 @@
             </p>
             <p class="mt-3 text-sm text-foreground">
                 More on what machines can read here:
-                <a href="/help/reference/for-machines/llms-txt" class="underline cursor-pointer">llms.txt</a>,
-                <a href="/help/reference/for-machines/markdown-endpoints" class="underline cursor-pointer">markdown endpoints</a>,
-                and <a href="/help/reference/for-machines/help-reference-index-json" class="underline cursor-pointer">help-reference-index.json</a>.
+                <a href="/help/llms-txt" class="underline cursor-pointer">llms.txt</a>,
+                <a href="/help/markdown-endpoints" class="underline cursor-pointer">markdown endpoints</a>,
+                and <a href="/help/help-reference-index-json" class="underline cursor-pointer">help-reference-index.json</a>.
             </p>
         </div>
 
@@ -123,7 +123,7 @@
                         'description' => 'The complete Overlabels overlay-authoring guide as one plain text file, written for large language models. Covers template syntax, formatter pipes, conditionals, foreach loops, controls, lists, and event data.',
                         'contentUrl' => 'https://overlabels.com/llms.txt',
                         'encodingFormat' => 'text/plain',
-                        'usageInfo' => 'https://overlabels.com/help/reference/for-machines/llms-txt',
+                        'usageInfo' => 'https://overlabels.com/help/llms-txt',
                         'isAccessibleForFree' => true,
                     ],
                     [
@@ -132,7 +132,7 @@
                         'description' => 'This entire reference as one JSON array: every template tag, EventSub event, EventSub tag, and foreach loop field.',
                         'contentUrl' => 'https://overlabels.com/help-reference-index.json',
                         'encodingFormat' => 'application/json',
-                        'usageInfo' => 'https://overlabels.com/help/reference/for-machines/help-reference-index-json',
+                        'usageInfo' => 'https://overlabels.com/help/help-reference-index-json',
                         'isAccessibleForFree' => true,
                     ],
                 ],
