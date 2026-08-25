@@ -1,5 +1,51 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - feat(bot): if / elseif / else work in a bot command reply
+
+The Random Rolls and Counters help page had this as its worked example:
+
+> **overlabels:** So far, Jasper has won 1 times
+
+and there was no way to write it better, because a bot reply had no conditionals. That turned out to
+be an accident, not a decision. The May 2026 bot resolver was a PHP port of the tag substitution pass
+only - the whole `[[[if]]]` engine lives in TypeScript and had never had a server-side counterpart. The
+one written-down reason (June 7th, the alert chat message: "no `[[[if]]]` logic, matching the
+tags-never-reparse rule") does not hold: the reparse rule bans rescanning substituted *output*, and a
+block is evaluated on the template *source* before any substitution, which is exactly what overlays
+already do. Then the August 15th validator hardened the gap by refusing block syntax at save time.
+
+```
+!ol cmd add wins So far, Jasper has won [[[counter:wins]]] time[[[if:c:wins != 1]]]s[[[endif]]]
+```
+
+- **`App\Support\Conditionals` is the if-family half of the overlay's block engine, in PHP.** Same
+  depth-aware token scan so nested ifs pair correctly, first true branch wins, `else` always wins, the
+  chosen branch renders recursively, and the same evaluation rules: a bare key is truthy unless empty,
+  `false` or `0`; a comparison is numeric when both sides read as numbers (an empty value reads as 0,
+  as `Number('')` does in the overlay) and a string comparison otherwise; quotes around the right-hand
+  side are optional; `=` means `==`. Tokens and the condition grammar come from the shared spec via two
+  new `Dsl` methods, `blockTokenPattern()` and `conditionBodyPattern()`, byte-identical to their
+  `dsl.ts` counterparts.
+- **Blocks run first, on the source, and the tag pass then runs once over what survived.** Nothing a
+  condition produces is ever rescanned. A control whose value is `[[[if:c:secret]]]leak[[[endif]]]`
+  prints exactly that, and a test says so.
+- **A condition reads through the same `lookup()` as a tag**, so `c:`, `c:list:`, `bot:`, `rand:` and
+  bare Twitch tags all compare. `[[[if:rand:0-1 = 1]]]` is a coin flip. `counter:` inside a condition
+  only reads - the increment is declared by the tag in the text, never by a comparison - and the help
+  page tells you to write `c:` there.
+- **`foreach` is refused with a reason, not supported.** A chat reply is one line; there is nothing to
+  repeat into. The validator also refuses an `if` with no `endif`, a stray `else` / `elseif` / `endif`,
+  and a branch after `else`, each with a one-sentence message naming the token as written. A
+  misspelled namespace inside a condition (`[[[if:cc:wins > 3]]]`) still gets its "did you mean".
+- `BotTags::keys()` now skips block tokens, so `[[[if:c:flag]]]` is no longer mistaken for an unknown
+  `if:` namespace and `[[[else]]]` is no longer an empty bare tag. `malformedTags()` strips them too,
+  which is why the structural check has to exist and runs first.
+- List appender templates and replies go through the same resolver, so they get conditionals for free.
+  Alert TTS and chat messages (`AlertMessageRenderer`) are a separate renderer and are unchanged.
+- **29 tests in `BotCommandConditionalsTest`**, plus three pattern tests in `DslTest`. The help pages
+  for counters, bot commands and conditionals now say where blocks work and where they do not, and the
+  "1 times" example is gone.
+
 ## August 26th, 2026 - fix(routes): /manifesto redirects to /help/manifesto
 
 Search Console listed twelve URLs as 404 or soft 404. Eleven were Google correctly reporting things

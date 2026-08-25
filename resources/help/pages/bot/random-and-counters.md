@@ -66,6 +66,8 @@ positive range and say what it means in the text.
 > **someone_else:** !wins
 > **overlabels:** So far, Jasper has won 2 times
 
+"1 times" is sloppy. An `[[[if:...]]]` fixes it - see [Singular and plural](#singular-and-plural) below.
+
 **You don't create the counter first.** Saving the command creates it for you, starting at 0, and the
 bot tells you it did. This works from the dashboard too, but the point is that you can add a counter
 mid-stream, in chat, in one line, without alt-tabbing anywhere.
@@ -100,6 +102,33 @@ So when you want a command that reports the total without moving it, use `c:`:
 ```
 
 Now `!wins` scores a win and `!wincount` reports the score. Chatters can ask as often as they like.
+
+### Singular and plural
+
+A counter is a number, and numbers have this habit of being 1 sometimes. `[[[if:...]]]` works in a
+command exactly like it does in an overlay, so put the `s` behind a condition:
+
+```
+!ol cmd add wins So far, Jasper has won [[[counter:wins]]] time[[[if:c:wins != 1]]]s[[[endif]]]
+```
+
+> **someone_else:** !wins
+> **overlabels:** So far, Jasper has won 1 time
+>
+> **someone_else:** !wins
+> **overlabels:** So far, Jasper has won 2 times
+
+Use `c:` inside the condition, not `counter:`. A condition only looks at the number; the
+`[[[counter:wins]]]` in the text is what does the counting, and it has already counted by the time the
+condition is checked.
+
+`elseif` and `else` work too, and every comparison from the [Conditionals](/help/conditionals) page
+(`=`, `!=`, `>`, `>=`, `<`, `<=`, or a bare tag for "is it set") means the same thing here. What
+doesn't work in chat is `[[[foreach]]]` - a reply is one line, so there's nothing to repeat into.
+
+```
+!ol cmd add streak [[[if:c:wins >= 10]]]Jasper is ON FIRE[[[elseif:c:wins >= 3]]]Jasper is warming up[[[else]]]Jasper is just getting started[[[endif]]] - [[[c:wins]]] wins so far
+```
 
 ### Counting once, twice, and several things
 
@@ -179,6 +208,7 @@ a command runs and part of the sentence is missing, a misspelled tag name is the
 | `[[[rand:0-1000000\|number]]]` | A roll, formatted with separators |
 | `[[[counter:wins]]]` | Add one to `wins`, show the new total |
 | `[[[c:wins]]]` | Show `wins` without changing it |
+| `time[[[if:c:wins != 1]]]s[[[endif]]]` | "1 time", "2 times" |
 | `!set wins 40` | Correct the total |
 | `!increment wins 5` | Add five |
 | `!reset wins` | Back to zero |

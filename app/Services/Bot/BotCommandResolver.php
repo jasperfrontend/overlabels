@@ -10,6 +10,7 @@ use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchTokenService;
 use App\Support\BotTags;
+use App\Support\Conditionals;
 use App\Support\Dsl;
 use App\Support\ListItems;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +23,13 @@ use Throwable;
  * values are never re-scanned for tags. Mirrors the day-one rule from the
  * frontend overlay parser - prevents template injection if a control value
  * happens to contain something tag-shaped.
+ *
+ * Conditionals run FIRST, on the source: `[[[if:c:wins != 1]]]s[[[endif]]]`
+ * decides which text survives (App\Support\Conditionals, same rules as the
+ * overlay engine), and the tag pass then runs exactly once over what is left.
+ * A condition's value comes from the same lookup() as a tag, so anything you
+ * can write in a tag you can compare in a condition. `foreach` is not a chat
+ * construct and is refused at save time.
  *
  * Tag families inside [[[...]]]:
  *   c:list:<slug>:<field> -> own List (OptionSet) read tag, snapshot at fire time
@@ -92,6 +100,11 @@ class BotCommandResolver
         $lists = $this->loadLists($user);
         $twitchTags = $dryRun ? [] : $this->loadTwitchTags($user);
         $locale = (string) ($user->preference('locale', 'en-US'));
+
+        $reply = Conditionals::render(
+            $reply,
+            fn (string $key): string => $this->lookup($key, $controls, $lists, $twitchTags, $botContext),
+        );
 
         $resolved = preg_replace_callback(
             self::tagRegex(),

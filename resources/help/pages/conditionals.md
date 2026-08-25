@@ -15,6 +15,9 @@ currencies? See [Formatting Pipes](/help/formatting).
 Use conditional logic to dynamically show or hide content in your overlays based on real-time data. All
 conditionals are processed client-side for security.
 
+`if`, `elseif`, `else` and `endif` also work in a [bot command](/help/bot/commands#conditions) reply,
+with the same comparisons. `foreach` is overlay-only.
+
 ### Boolean Conditions
 
 Test if a value exists and is truthy. Values considered false: `null`, `undefined`, `""`, `"false"`,

@@ -35,15 +35,30 @@ final class BotTags
     private const string RANGE_PATTERN = '/^(\d{1,15})-(\d{1,15})$/';
 
     /**
-     * Every tag key in $text, pipe and `?? default` stripped.
+     * Every tag key in $text, pipe and `?? default` stripped. Block tokens are
+     * skipped: `[[[if:c:flag]]]` and `[[[else]]]` both parse as tags under the
+     * shared pattern, but they are structure, not reads.
      *
      * @return array<int,string>
      */
     public static function keys(string $text): array
     {
-        preg_match_all(Dsl::tagKeyPattern(), $text, $matches);
+        preg_match_all(Dsl::tagKeyPattern(), Conditionals::strip($text), $matches);
 
         return $matches[1] ?? [];
+    }
+
+    /**
+     * Every key the text reads - the tags in the body plus the left-hand side
+     * of every condition. Conditions only look, so `counterKeys()` does not
+     * use this: `[[[if:counter:wins > 3]]]` reads the counter, it does not
+     * count.
+     *
+     * @return array<int,string>
+     */
+    private static function allKeys(string $text): array
+    {
+        return array_merge(self::keys($text), Conditionals::keys($text));
     }
 
     /**
@@ -79,7 +94,7 @@ final class BotTags
     {
         $args = [];
 
-        foreach (self::keys($text) as $key) {
+        foreach (self::allKeys($text) as $key) {
             if (str_starts_with($key, self::RAND_PREFIX)) {
                 $args[] = substr($key, strlen(self::RAND_PREFIX));
             }
@@ -157,9 +172,9 @@ final class BotTags
      * Namespaces that resolve in a bot command. `c` covers `c:list` too,
      * since only the first segment is checked.
      *
-     * `event` and `loop` are deliberately absent: the bot resolver does no
-     * block processing and has no alert payload, so both resolve empty there.
-     * They are declared in the shared spec for the overlay and alert runtimes.
+     * `event` and `loop` are deliberately absent: the bot resolver has no
+     * alert payload and no foreach, so both resolve empty there. They are
+     * declared in the shared spec for the overlay and alert runtimes.
      */
     private const array BOT_NAMESPACES = ['c', 'bot', 'rand', 'counter'];
 
@@ -168,7 +183,9 @@ final class BotTags
 
     /**
      * Tag keys whose namespace this resolver has never heard of, mapped to the
-     * closest real namespace when there is an obvious one.
+     * closest real namespace when there is an obvious one. Condition keys are
+     * checked too: `[[[if:cc:wins > 3]]]` would otherwise be a branch that
+     * silently never fires.
      *
      * Safe to key off the colon: of the 68 bare Twitch tags, none contains one,
      * so a colon means the author was reaching for a namespace.
@@ -179,7 +196,7 @@ final class BotTags
     {
         $unknown = [];
 
-        foreach (self::keys($text) as $key) {
+        foreach (self::allKeys($text) as $key) {
             if (! str_contains($key, ':')) {
                 continue;
             }
@@ -218,9 +235,9 @@ final class BotTags
      *
      * These are the loudest failure of the lot: an unparsed `[[[...]]]` is not
      * substituted, so it reaches Twitch chat character for character. Catches
-     * a space where a colon belongs (`[[[counter wins]]]`) and the block
-     * syntax, which the overlay renderer supports and the bot resolver does
-     * not.
+     * a space where a colon belongs (`[[[counter wins]]]`). Block tokens are
+     * stripped first - they are the resolver's to handle, and their structure
+     * is checked separately by Conditionals::structuralProblem().
      *
      * @return array<int,string> The offending snippets, as written.
      */
@@ -228,7 +245,7 @@ final class BotTags
     {
         // Strip everything that parses, then anything still holding brackets
         // is by definition something the resolver would leave alone.
-        $leftovers = preg_replace(Dsl::tagPattern(), '', $text) ?? '';
+        $leftovers = preg_replace(Dsl::tagPattern(), '', Conditionals::strip($text)) ?? '';
 
         $open = Dsl::spec()['lexical']['open'] ?? '\[\[\[';
         $close = Dsl::spec()['lexical']['close'] ?? '\]\]\]';

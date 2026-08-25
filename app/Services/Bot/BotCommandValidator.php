@@ -6,6 +6,7 @@ use App\Models\BotBuiltin;
 use App\Models\BotCommand;
 use App\Models\User;
 use App\Support\BotTags;
+use App\Support\Conditionals;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -67,6 +68,7 @@ class BotCommandValidator
         // is a typo the streamer can't see (it just goes blank mid-stream), and
         // a bad counter key would have us silently not counting. Both are
         // cheaper to refuse at the point of writing than to debug live.
+        $this->assertBlocksAreWellFormed($data['reply']);
         $this->assertTagsAreReadable($data['reply']);
         $this->assertRandRangesAreValid($data['reply']);
         $this->assertCounterKeysAreValid($userId, $data['reply']);
@@ -93,6 +95,37 @@ class BotCommandValidator
         $data['command'] = $command;
 
         return $data;
+    }
+
+    /**
+     * Every `if` needs its `endif`, every `else` needs an `if`, and there is
+     * no `foreach` in chat.
+     *
+     * Checked before the tag rules because the block tokens are stripped out
+     * of the malformed-tag scan (they are the resolver's to handle), so a lone
+     * `[[[if:...]]]` would otherwise save cleanly and then swallow the rest of
+     * the reply at fire time.
+     *
+     * @throws ValidationException
+     */
+    private function assertBlocksAreWellFormed(string $reply): void
+    {
+        $problem = Conditionals::structuralProblem($reply);
+
+        if ($problem === null) {
+            return;
+        }
+
+        $snippet = $problem['snippet'];
+
+        $message = match ($problem['problem']) {
+            'unclosed_if' => "'$snippet' has no [[[endif]]] to close it, so I can't tell where the condition ends. Put [[[endif]]] after the text it controls.",
+            'stray' => "'$snippet' has no [[[if:...]]] in front of it. Every else, elseif and endif belongs to an if that comes before it.",
+            'after_else' => "'$snippet' comes after [[[else]]], and else is always the last branch before [[[endif]]].",
+            default => "'$snippet' is for overlays. A chat reply is one line, so loops don't work in a command - conditions like [[[if:c:wins > 3]]] do.",
+        };
+
+        throw ValidationException::withMessages(['reply' => $message]);
     }
 
     /**
