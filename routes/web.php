@@ -136,6 +136,10 @@ Route::get('/help/integration-presets', function () {
 Route::redirect('/help/bot/expressions', '/help/bot/commands', 301);
 Route::redirect('/help/bot/expressions.md', '/help/bot/commands.md', 301);
 
+// The manifesto was a top-level route before the help pages became markdown.
+// Google still has the old URL and reported it as a 404.
+Route::redirect('/manifesto', '/help/manifesto', 301);
+
 Route::get('/help/gamejam', function () {
     return Inertia::render('help/gamejam/Index');
 })->name('help.gamejam');
