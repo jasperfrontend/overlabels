@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - chore(ui): buttons and icons on the overlay screens
+
+Another pass over the button vocabulary, this time the overlay screens: `/templates`, the create and edit pages, the builder, and the tag list inside them.
+
+- **Icons sit before the label, everywhere.** Preview, Save, Builder and Create overlay each had their icon trailing the text while the rest of the app leads with it. Leading is the majority already, so the odd ones out moved rather than the other way around.
+- **"Copy all" on the tag list is a real button variant now.** It was a hand-rolled stack of violet utility classes that approximated `btn-chill` without being it, so it drifted from every other neutral button in the app. One class does what the eleven did.
+- **The builder's toolbar buttons use `btn-sm`** like every other page header. They were rendering a size larger than the same pair on the create page.
+- **Sentence case on the labels.** "Save Overlay" and "Back to Overlay" became "Save overlay" and "Back to overlay". The disabled back button lost its explanation and just says "(Unsaved changes)" now, since the full sentence was wider than the button next to it.
+- **Create overlay is "Publish overlay" on the create page.** The list page already has a Create overlay button that takes you there, so having the same words on the button that finishes the job made the two read as the same action.
+- **The overlay type cards show their unselected border.** All three used `border-sidebar`, which is the sidebar colour and effectively invisible against the card, so the three options read as one block until you clicked one. They carry a faint violet edge now, and Static picks up the `Layers` icon and Event Alert the `Bell` icon in place of `Layout` and `Zap`.
+
 ## August 25th, 2026 - feat(toast): toasts stack instead of overwriting each other
 
 Disable a list and re-enable it while the first toast was still up and you got one toast whose text changed mid-flight. Every page owns a single `toastMessage` string and mounts one `RekaToast` on it, so a second message replaced the first and restarted its timer.

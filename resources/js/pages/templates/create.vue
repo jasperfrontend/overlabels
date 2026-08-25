@@ -9,7 +9,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import ImageDropZone from '@/components/ImageDropZone.vue';
-import { Blocks, Brackets, Code, ImageIcon, InfoIcon, Save, ExternalLink, Zap, Layout } from '@lucide/vue';
+import { Bell, Blocks, Brackets, Code, ImageIcon, InfoIcon, Layers, Save, ExternalLink } from '@lucide/vue';
 import PublicToggle from '@/components/PublicToggle.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
@@ -136,8 +136,8 @@ onMounted(() => {
             :disabled="!typeChosen"
             class="btn btn-sm btn-cancel disabled:cursor-not-allowed disabled:opacity-50"
           >
+            <ExternalLink class="mr-2 h-4 w-4" />
             Preview
-            <ExternalLink class="ml-2 h-4 w-4" />
           </button>
           <button
             @click="submitForm"
@@ -145,7 +145,7 @@ onMounted(() => {
             class="btn btn-sm btn-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save class="mr-2 h-4 w-4" />
-            Create overlay
+            Publish overlay
           </button>
         </div>
       </div>
@@ -183,7 +183,7 @@ onMounted(() => {
               <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
-                  :class="form.type === 'static' ? 'border-violet-400 dark:bg-violet-400/5' : 'border-sidebar'"
+                  :class="form.type === 'static' ? 'border-violet-400 dark:bg-violet-400/5' : 'border-violet-400/20'"
                 >
                   <input v-model="form.type" type="radio" value="static" class="sr-only" required />
                   <span class="flex w-full items-start">
@@ -195,7 +195,7 @@ onMounted(() => {
                     </span>
                     <span>
                       <span class="flex items-center gap-2">
-                        <Layout class="h-4 w-4" />
+                        <Layers class="h-4 w-4" />
                         <span class="text-sm font-medium">Static Overlay</span>
                       </span>
                       <span class="mt-1 text-sm text-muted-foreground"
@@ -207,7 +207,7 @@ onMounted(() => {
 
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
-                  :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500/10' : 'border-sidebar'"
+                  :class="form.type === 'alert' ? 'border-violet-500 bg-violet-500/10' : 'border-violet-400/20'"
                 >
                   <input v-model="form.type" type="radio" value="alert" class="sr-only" required />
                   <span class="flex w-full items-start">
@@ -219,7 +219,7 @@ onMounted(() => {
                     </span>
                     <span>
                       <span class="flex items-center gap-2">
-                        <Zap class="h-4 w-4" />
+                        <Bell class="h-4 w-4" />
                         <span class="text-sm font-medium">Event Alert</span>
                       </span>
                       <span class="mt-1 text-sm text-muted-foreground"
@@ -231,7 +231,7 @@ onMounted(() => {
 
                 <label
                   class="relative flex cursor-pointer items-start rounded-sm border p-4 transition-all hover:bg-background"
-                  :class="form.type === 'block' ? 'border-violet-500 bg-violet-500/10' : 'border-sidebar'"
+                  :class="form.type === 'block' ? 'border-violet-500 bg-violet-500/10' : 'border-violet-400/20'"
                 >
                   <input v-model="form.type" type="radio" value="block" class="sr-only" required />
                   <span class="flex w-full items-start">
@@ -382,7 +382,7 @@ onMounted(() => {
               class="btn btn-sm btn-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save class="mr-2 h-4 w-4" />
-              Create overlay
+              Publish overlay
             </button>
           </div>
         </div>

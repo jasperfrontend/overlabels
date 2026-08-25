@@ -244,13 +244,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
           description-class="text-sm text-muted-foreground"
         />
         <div class="flex shrink-0 items-center gap-2">
-          <button type="button" class="btn btn-cancel" :disabled="!state.placements.value.length" @click="previewOverlay">
+          <button type="button" class="btn btn-sm btn-cancel" :disabled="!state.placements.value.length" @click="previewOverlay">
+            <ExternalLink class="mr-2 h-4 w-4" />
             Preview
-            <ExternalLink class="ml-2 h-4 w-4" />
           </button>
-          <button type="button" class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50" :disabled="saving" @click="save">
+          <button type="button" class="btn btn-sm btn-primary disabled:cursor-not-allowed disabled:opacity-50" :disabled="saving" @click="save">
             <Save class="mr-2 h-4 w-4" />
-            {{ saving ? 'Saving...' : 'Save Overlay' }}
+            {{ saving ? 'Saving...' : 'Save overlay' }}
           </button>
         </div>
       </div>

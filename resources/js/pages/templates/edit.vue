@@ -1025,10 +1025,10 @@ onMounted(() => {
             :href="route('templates.show', template)"
             class="btn btn-sm btn-cancel"
             title="Go back to overlay (keyboard shortcut: 's')"
-            >← Back to Overlay</Link
+            >← Back to overlay</Link
           >
           <button v-else type="button" disabled class="btn btn-sm btn-cancel cursor-not-allowed opacity-50" title="Save your changes before leaving">
-            ← Back to Overlay (unsaved changes)
+            ← (Unsaved changes)
           </button>
           <button type="button" @click="submitForm" :disabled="form.processing || (!form.isDirty && !builderDirty)" class="btn btn-sm btn-primary">
             <RefreshCcwDot v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
