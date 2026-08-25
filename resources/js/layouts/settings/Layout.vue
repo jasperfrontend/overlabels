@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Heading from '@/components/Heading.vue';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
@@ -28,7 +27,7 @@ const sidebarNavGroups: NavGroup[] = [
   },
   {
     label: 'Developer tools',
-    hint: 'Contains sensitive data - avoid opening these on stream.',
+    hint: 'Sensitive data. Do not open on stream.',
     items: [
       { title: 'Token Generator', href: '/tokens' },
       { title: 'Tags Generator', href: '/tags' },
@@ -61,17 +60,16 @@ const isActive = (href: string) => currentPath === href || currentPath.startsWit
             <p v-if="group.hint" class="px-4 pb-1 text-xs text-muted-foreground">
               {{ group.hint }}
             </p>
-            <Button
+
+            <Link
               v-for="item in group.items"
               :key="item.href"
-              variant="ghost"
-              :class="['w-full cursor-pointer justify-start', { 'bg-muted': isActive(item.href) }]"
-              as-child
+              :href="item.href"
+              class="btn btn-sm btn-square btn-ghost justify-start border-l-2 border-transparent px-4 py-2 text-sm font-medium hover:border-sidebar-accent hover:bg-sidebar-accent/5"
+              :class="{ 'bg-sidebar-accent text-violet-500 dark:text-violet-400': isActive(item.href) }"
             >
-              <Link :href="item.href">
-                {{ item.title }}
-              </Link>
-            </Button>
+              {{ item.title }}
+            </Link>
           </template>
         </nav>
       </aside>
