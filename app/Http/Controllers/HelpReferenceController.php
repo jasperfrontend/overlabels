@@ -68,6 +68,26 @@ class HelpReferenceController extends Controller
     }
 
     /**
+     * The entry's source file, verbatim, as text/markdown. Served from the
+     * path rather than the cached body so it is byte-identical to the file on
+     * disk, the same guarantee HelpController::markdown() makes for prose.
+     */
+    public function markdown(string $category, string $slug): Response
+    {
+        $entry = $this->service->get($category, $slug);
+
+        if ($entry === null) {
+            abort(404);
+        }
+
+        return response(
+            (string) file_get_contents($entry['path']),
+            200,
+            ['Content-Type' => 'text/markdown; charset=utf-8']
+        );
+    }
+
+    /**
      * Match the JS-side tagSnippet logic from Reference.vue: skip aggregate
      * `all-*` slugs and only emit a snippet for categories where slug-to-tag
      * is 1:1.

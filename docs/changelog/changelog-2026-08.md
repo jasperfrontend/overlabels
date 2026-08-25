@@ -14,11 +14,15 @@ move them rather than to teach the reference about markdown twins.
   Their `[[wikilinks]]` became plain markdown links, since that is the convention for prose pages.
 - **The old URLs 301 to the new ones.** All three were indexed for a year; a test pins each redirect,
   the sitemap entries, and that `llms.txt` and the sitemap no longer mention the old path.
-- **`/help/reference` stays JSON-first and untouched.** The `for-machines` category is gone from
-  `HelpReferenceService` (the reference index dropped from 146 to 143 entries), and the explainer for
-  the JSON no longer lists it as a category. Nothing else about the reference changed - no `.md`
-  route was added there, on purpose: a two-line entry has nothing to gain from one and the whole
-  reference is already one JSON fetch.
+- **The `for-machines` category is gone** from `HelpReferenceService` (the reference index dropped
+  from 146 to 143 entries), and the explainer for the JSON no longer lists it as a category.
+- **Every reference entry has a `.md` twin now too.** `/help/reference/{category}/{slug}.md` serves
+  the source file verbatim as `text/markdown`, declared before the catch-all because that route's
+  slug pattern admits a dot. The first cut of this PR left the reference alone on the grounds that a
+  two-line entry gains nothing from a twin; the `integration-controls` pages are the counter-example -
+  generated tables of every control a connected service provisions, and exactly what a machine wants
+  to fetch by URL. The index page `/help/reference` still has no twin: there is no file behind it, and
+  the JSON is its machine form. Test pins a hand-written entry and a generated one, byte-identical.
 - Every link into the old location moved with it: the homepage footer, the help layout footer, the
   reference index's "Using an AI assistant?" block and its JSON-LD `usageInfo`, `public/llms.txt`,
   the help index, and three code comments.

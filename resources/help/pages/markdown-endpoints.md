@@ -77,13 +77,26 @@ whole documentation set.
 
 For a single self-contained primer instead of a crawl, use [llms.txt](/help/llms-txt).
 
+## Reference entries too
+
+Every entry in the reference has the same twin:
+
+```
+https://overlabels.com/help/reference/template-tags/channel_id      -> HTML
+https://overlabels.com/help/reference/template-tags/channel_id.md   -> text/markdown, the source
+```
+
+That includes the generated `integration-controls` pages, which list every control a connected
+service provisions. Most entries are one or two lines, so if you want the whole reference, fetch it
+as one JSON file instead of crawling it - see
+[help-reference-index.json](/help/help-reference-index-json).
+
 ## Pages without a .md twin
 
-Three help URLs render live data or an interactive UI rather than prose, so they have no markdown
+Three help URLs render live data or an interactive UI rather than a file, so they have no markdown
 version:
 
 - `/help/integration-presets` - the searchable preset catalogue, rendered from source data.
-- `/help/reference` - the tag, event and loop reference. Each entry there is one or two lines of
-  definition, not prose, and the whole reference is machine-readable as one JSON file instead - see
-  [help-reference-index.json](/help/help-reference-index-json).
+- `/help/reference` - the reference index itself. The entries under it each have one; the index is a
+  listing, and the JSON above is its machine form.
 - `/help/gamejam` - Chat Castle documentation.
