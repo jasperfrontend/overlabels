@@ -327,7 +327,7 @@ test('a finding carries the consequence and a way to fix it', function () {
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('the wiring page requires a login', function () {
-    $this->get('/wiring')->assertRedirect();
+    $this->get('/settings/wiring')->assertRedirect();
 });
 
 test('the page counts loose ends in subjects, not areas', function () {
@@ -336,7 +336,7 @@ test('the page counts loose ends in subjects, not areas', function () {
     wiringList($user, 'orphan_two');
 
     $this->actingAs($user)
-        ->get('/wiring')
+        ->get('/settings/wiring')
         ->assertOk()
         ->assertInertia(
             fn ($page) => $page
@@ -354,7 +354,7 @@ test('a fully wired account reports nothing to do', function () {
     ListMetaCommand::create(['user_id' => $user->id, 'command' => 'list', 'enabled' => true]);
 
     $this->actingAs($user)
-        ->get('/wiring')
+        ->get('/settings/wiring')
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('looseEnds', 0));
 });

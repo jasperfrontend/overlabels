@@ -70,8 +70,8 @@ const historyPeak = computed(() => Math.max(1, ...props.history.map((m) => m.bro
     <SettingsLayout>
       <div class="space-y-6">
         <HeadingSmall
-          title="Events"
-          description="Every inbound event you generate - a GPS ping, a donation, a Twitch follow/sub/cheer - counts as one. It is the single usage limit in Overlabels, and it is the same whether you run 1 overlay or 50. Everything else is free."
+          title="Usage"
+          description="Every inbound event you generate - a GPS ping, a donation, a Twitch follow/sub/cheer - counts as one 'credit'. It is the single usage limit in Overlabels, and it is the same whether you run 1 overlay or 50. Everything else is free."
         />
 
         <div class="rounded-md border border-sidebar p-6">

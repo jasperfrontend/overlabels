@@ -526,7 +526,8 @@ Route::middleware('auth.redirect')->group(function () {
     // Wiring - what is wired up and what is one step short of working.
     // Born /skills; old bookmarks keep working.
     Route::redirect('/skills', '/wiring', 301);
-    Route::get('/wiring', [WiringController::class, 'index'])->name('wiring.index');
+    Route::redirect('/wiring', '/settings/wiring', 301);
+    Route::get('/settings/wiring', [WiringController::class, 'index'])->name('wiring.index');
 
     // Testing Guide
     Route::get('/testing', [TestingController::class, 'index'])->name('testing.index');
@@ -659,7 +660,8 @@ Route::middleware('auth.redirect')->group(function () {
 
     // Trigger overview - read-only matrix; per-template editing lives on
     // the template edit page (Triggers tab).
-    Route::get('/triggers', [EventTemplateMappingController::class, 'index'])->name('triggers.index');
+    Route::redirect('/triggers', '/settings/triggers', 301);
+    Route::get('/settings/triggers', [EventTemplateMappingController::class, 'index'])->name('triggers.index');
 
     // Old URL, kept so existing bookmarks and open tabs don't 404. Unnamed on
     // purpose: nothing should link here, and Ziggy skips unnamed routes.

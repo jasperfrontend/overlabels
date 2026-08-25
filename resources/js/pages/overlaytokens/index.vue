@@ -8,8 +8,9 @@ import Modal from '@/components/Modal.vue';
 import Heading from '@/components/Heading.vue';
 import CollectionList from '@/components/CollectionList.vue';
 import { type BreadcrumbItem } from '@/types';
-import { AlertTriangle } from '@lucide/vue';
+import { AlertTriangle, KeyRound } from '@lucide/vue';
 import { useConfirm } from '@/composables/useConfirm';
+import HeadingSmall from '@/components/HeadingSmall.vue';
 
 const { confirm, alert } = useConfirm();
 /** Types */
@@ -141,8 +142,8 @@ const formatDate = (date: string | null | undefined) => (date ? new Date(date).t
     <SettingsLayout>
       <div>
         <div class="mb-6 flex items-center justify-between">
-          <Heading title="Overlay Access Tokens" description="Manage your access tokens for your overlays." />
-          <button @click="showCreateModal = true" class="btn btn-primary">Create Token</button>
+          <HeadingSmall title="Overlay Access Tokens" description="Manage your access tokens for your overlays." />
+          <button @click="showCreateModal = true" class="btn btn-sm btn-primary"><KeyRound class="mr-2 size-3.5 shrink-0" /> Create token</button>
         </div>
 
         <!-- Token list: same row as /triggers. Rows are not navigable - a token has no page of its own. -->
@@ -171,7 +172,7 @@ const formatDate = (date: string | null | undefined) => (date ? new Date(date).t
             </div>
 
             <div v-if="!token.is_active" class="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
-              <AlertTriangle class="mt-px h-3.5 w-3.5 shrink-0" />
+              <AlertTriangle class="mt-px size-3.5 shrink-0" />
               <span>Revoked - this token no longer opens any overlay.</span>
             </div>
           </template>
@@ -201,45 +202,47 @@ const formatDate = (date: string | null | undefined) => (date ? new Date(date).t
       <!-- Create Token Modal -->
       <Modal :show="showCreateModal" @close="showCreateModal = false" closeable class="margin-auto z-50">
         <div class="p-6">
-          <h2 class="mb-4 text-lg font-semibold">Create New Access Token</h2>
-
+          <h2 class="text-lg font-semibold">Create a fresh access token</h2>
+          <p class="mb-4 text-sm text-amber-500">Keep it safe, don't leak it on your stream.</p>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium" for="token-name">Token Name</label>
-              <input v-model="form.name" type="text" id="token-name" class="mt-1 block w-full rounded-md border p-2" placeholder="My OBS Stream" />
+              <label class="mb-1 block text-sm font-medium" for="token-name">Give your token a name</label>
+              <input v-model="form.name" type="text" id="token-name" class="input-border w-full" placeholder="My OBS Stream" />
             </div>
 
             <div>
-              <label class="block text-sm font-medium">Expires At (Optional)</label>
-              <input v-model="form.expires_at" type="datetime-local" class="mt-1 block w-full rounded-md border p-2" />
+              <label class="mb-1 block text-sm font-medium">When will this token expire (Optional)</label>
+              <input v-model="form.expires_at" type="datetime-local" class="input-border w-full" />
             </div>
 
             <div>
-              <label class="block text-sm font-medium">Allowed IPs (Optional)</label>
-              <input v-model="ipInput" type="text" class="mt-1 block w-full rounded-md border p-2" placeholder="192.168.1.1, 10.0.0.1" />
-              <p class="mt-1 text-xs text-gray-500">
+              <label class="mb-1 block text-sm font-medium">Lock it down behind your own IP (Optional)</label>
+              <input v-model="ipInput" type="text" class="input-border w-full" placeholder="192.168.1.1, 10.0.0.1" />
+              <p class="mt-2 text-xs text-muted-foreground">
                 Comma-separated IP addresses. Exact addresses only - ranges like <code>192.168.1.0/24</code> are not supported. Leave this empty
                 unless your connection has a fixed IP.
               </p>
             </div>
 
-            <div>
+            <div class="mb-8">
               <label class="block text-sm font-medium">Abilities</label>
               <div class="mt-2 space-y-2">
                 <label class="flex items-center">
                   <input type="checkbox" value="read" v-model="form.abilities" class="rounded" />
-                  <span class="ml-2">Read</span>
+                  <span class="ml-2 text-sm">Read (Can only read your data)</span>
                 </label>
                 <label class="flex items-center">
                   <input type="checkbox" value="write" v-model="form.abilities" class="rounded" />
-                  <span class="ml-2">Write</span>
+                  <span class="ml-2 text-sm">Write (Can read, but also write data, eg. settings)</span>
                 </label>
               </div>
             </div>
 
             <div class="flex justify-end space-x-2">
-              <button @click="showCreateModal = false" class="btn btn-cancel">Cancel</button>
-              <button @click="createToken" :disabled="!form.name" class="btn btn-primary">Create Token</button>
+              <button @click="showCreateModal = false" class="btn btn-sm btn-chill">Cancel</button>
+              <button @click="createToken" :disabled="!form.name" class="btn btn-sm btn-primary">
+                <KeyRound class="mr-2 size-3.5 shrink-0" /> Create token
+              </button>
             </div>
           </div>
         </div>
