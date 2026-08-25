@@ -11,6 +11,54 @@ interface TwitchEmotePosition {
   id: string;
 }
 
+export type EmoteSegment = { kind: 'text'; text: string } | { kind: 'emote'; text: string; id: string };
+
+/**
+ * Split a message into text runs and Twitch emotes using the positions from the
+ * IRC `emotes` tag.
+ *
+ * Twitch counts those positions in CODE POINTS. JavaScript strings index UTF-16
+ * units, and an astral-plane character (any emoji outside the BMP, e.g. U+1FA85)
+ * is one code point but two units. Slicing the string directly therefore lands
+ * one unit early for every such character before the emote - `" Kapp"` plus a
+ * stray `a`. The one-time walk here builds the code point -> UTF-16 offset map
+ * so the ranges are applied where Twitch meant them.
+ *
+ * Ranges past the end of the text are dropped rather than sliced to nonsense.
+ */
+export function splitByEmotePositions(text: string, positions: TwitchEmotePosition[]): EmoteSegment[] {
+  // offsets[i] = UTF-16 index of code point i; the trailing entry is text.length.
+  const offsets: number[] = [];
+  for (let i = 0; i < text.length; i++) {
+    offsets.push(i);
+    const cp = text.codePointAt(i) ?? 0;
+    if (cp > 0xffff) i++;
+  }
+  offsets.push(text.length);
+  const codePoints = offsets.length - 1;
+
+  const sorted = [...positions].sort((a, b) => a.begin - b.begin);
+  const segments: EmoteSegment[] = [];
+  let lastIndex = 0;
+
+  for (const emote of sorted) {
+    if (emote.begin < lastIndex || emote.end >= codePoints) continue;
+    const begin = offsets[emote.begin];
+    const end = offsets[emote.end + 1];
+    if (begin > lastIndex) {
+      segments.push({ kind: 'text', text: text.slice(lastIndex, begin) });
+    }
+    segments.push({ kind: 'emote', text: text.slice(begin, end), id: emote.id });
+    lastIndex = end;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ kind: 'text', text: text.slice(lastIndex) });
+  }
+
+  return segments;
+}
+
 interface TwitchEmoteEntry {
   code: string;
   url: string;
@@ -162,25 +210,13 @@ export function useEmoteParser() {
 
     // Position-based splitting for resub messages: more accurate than code-matching,
     // prevents false positives on partial word matches.
-    const sorted = [...twitchEmotes].sort((a, b) => a.begin - b.begin);
-    const parts: string[] = [];
-    let lastIndex = 0;
-
-    for (const emote of sorted) {
-      if (emote.begin > lastIndex) {
-        parts.push(parseByTokens(text.slice(lastIndex, emote.begin)));
-      }
-      const emoteName = text.slice(emote.begin, emote.end + 1);
-      const url = `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/default/dark/1.0`;
-      parts.push(`<img class="overlay-emote twitch-emote" alt="${encodeHtml(emoteName)}" src="${url}">`);
-      lastIndex = emote.end + 1;
-    }
-
-    if (lastIndex < text.length) {
-      parts.push(parseByTokens(text.slice(lastIndex)));
-    }
-
-    return parts.join('');
+    return splitByEmotePositions(text, twitchEmotes)
+      .map((segment) => {
+        if (segment.kind === 'text') return parseByTokens(segment.text);
+        const url = `https://static-cdn.jtvnw.net/emoticons/v2/${segment.id}/default/dark/1.0`;
+        return `<img class="overlay-emote twitch-emote" alt="${encodeHtml(segment.text)}" src="${url}">`;
+      })
+      .join('');
   }
 
   return { initialize, parseEmotes, isReady };
