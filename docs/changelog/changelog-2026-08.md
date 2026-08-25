@@ -1,5 +1,13 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - feat(slugs): shuffle the four words, 5.5 million slugs become 131 million
+
+`FunSlugGenerationService` picked one peak, one water, one city and one isle and always joined them in that order. It still picks one of each, but the four are shuffled before joining, so `aoraki-weser-seville-ithaca` and `weser-seville-aoraki-ithaca` are now different slugs. That is a 4! = 24x multiplier for free: 38 x 40 x 60 x 60 = 5,472,000 combinations become 131,328,000.
+
+- `getTotalPossibleCombinations()` multiplies by 24 too, so the collision-risk figure is honest about the new space.
+- The pools, the curation rules and the place-name guarantee are untouched. Order was never load-bearing: nothing parses a slug back into parts, and the route constraint only sees hyphenated lowercase words.
+- Existing slugs are unchanged; they are simply one of the 24 orderings.
+
 ## August 25th, 2026 - chore(frontend): delete twelve components nothing mounts
 
 The layout map found nine layouts and components that no page, layout or component imports. Pulling on them found three more that only the orphans imported. All twelve are deleted; every one was verified against a full grep of `resources/` and `tests/` before it went, not just against the map.

@@ -64,8 +64,8 @@ class FunSlugGenerationService
     ];
 
     /**
-     * Generate a unique slug with this pattern: peak-water-city-isle
-     * Example: eiger-danube-lisbon-crete
+     * Generate a unique slug of one peak, one water, one city and one isle, in
+     * random order. Example: eiger-danube-lisbon-crete, or danube-crete-eiger-lisbon
      */
     public function generateUniqueSlug(int $maxAttempts = 10): string
     {
@@ -95,16 +95,21 @@ class FunSlugGenerationService
     }
 
     /**
-     * Generate a random slug following our pattern
+     * Generate a random slug: one word from each pool, then the four shuffled.
+     * The shuffle multiplies the space by 4! = 24, from ~5.5 million to ~131 million.
      */
     private function generateRandomSlug(): string
     {
-        $peak = $this->peaks[array_rand($this->peaks)];
-        $water = $this->waters[array_rand($this->waters)];
-        $city = $this->cities[array_rand($this->cities)];
-        $isle = $this->isles[array_rand($this->isles)];
+        $parts = [
+            $this->peaks[array_rand($this->peaks)],
+            $this->waters[array_rand($this->waters)],
+            $this->cities[array_rand($this->cities)],
+            $this->isles[array_rand($this->isles)],
+        ];
 
-        return "$peak-$water-$city-$isle";
+        shuffle($parts);
+
+        return implode('-', $parts);
     }
 
     /**
@@ -136,14 +141,16 @@ class FunSlugGenerationService
     }
 
     /**
-     * Get total possible combinations (for monitoring collision risk)
+     * Get total possible combinations (for monitoring collision risk).
+     * One pick per pool, times the 4! orderings the shuffle can produce.
      */
     public function getTotalPossibleCombinations(): int
     {
         return count($this->peaks) *
                count($this->waters) *
                count($this->cities) *
-               count($this->isles);
+               count($this->isles) *
+               24;
     }
 
     /**
