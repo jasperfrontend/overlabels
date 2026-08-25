@@ -171,6 +171,12 @@ it('still redirects the bot expressions url this page briefly lived at', functio
     $this->get('/help/bot/expressions.md')->assertRedirect('/help/bot/commands.md');
 });
 
+it('redirects the old top-level manifesto url to the help page', function () {
+    // /manifesto was a route of its own before the help pages became markdown.
+    // Google still held the old URL and reported it as a 404.
+    $this->get('/manifesto')->assertRedirect('/help/manifesto');
+});
+
 it('leaves the interactive preset page as a vue component', function () {
     // It renders live from controlPresets.ts with a search box, so it is
     // deliberately not markdown - freezing it would drift from its source.

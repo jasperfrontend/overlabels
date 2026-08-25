@@ -1,5 +1,17 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - fix(routes): /manifesto redirects to /help/manifesto
+
+Search Console listed twelve URLs as 404 or soft 404. Eleven were Google correctly reporting things
+that are not pages: auth-gated settings pages bouncing to `/login`, POST-only API endpoints, the
+bucket root of `images.overlabels.com`, a deleted StreamElements reference entry, Cloudflare's
+email-obfuscation link, and an example `canonical:` lifted out of `CLAUDE.md` on GitHub. The twelfth
+was real: `/manifesto` was a route of its own until the help pages became markdown, and the move
+left nothing behind at the old URL.
+
+- **`/manifesto` 301s to `/help/manifesto`**, next to the other help redirects in `routes/web.php`,
+  pinned by a test alongside the `/help/bot/expressions` one.
+
 ## August 26th, 2026 - fix(sitemap): stop emitting a `lastmod` that was never true
 
 Every one of the 185 URLs in `/sitemap.xml` on prod carried `<lastmod>2026-08-25</lastmod>`, the
