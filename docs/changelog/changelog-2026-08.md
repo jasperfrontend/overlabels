@@ -1,5 +1,28 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - chore(deps): dependency sweep, both trees
+
+Routine sweep. Zero security advisories on either tree before or after, so nothing here closes a
+CVE. In-range updates only: `package.json` and `composer.json` are untouched, only the two
+lockfiles moved.
+
+- **Composer:** `laravel/framework` 13.26.1 to 13.29.0, `intervention/image` 4.2.1 to 4.3.1,
+  `pestphp/pest` 5.1.1 to 5.1.3, `aws/aws-sdk-php` 3.393.1 to 3.394.0, plus socialite,
+  flysystem-s3, mockery and the symfony components to 8.1.5.
+- **npm:** 33 packages, all patch or minor. eslint 10.8.1 to 10.9.1, vite 8.2.1 to 8.2.2, plus
+  reka-ui, vue-tsc, typescript-eslint, unocss, marked, @lucide/vue and @types/node.
+- **No majors taken.** TypeScript 7 is the only one available and stays held at `^6.x`, since
+  `vue-tsc` cannot embed a compiler with no public API. The trigger to revisit is
+  typescript-eslint's peer range, not a version number.
+- **The aws-sdk bump is unverified against real object storage.** Nothing in the suite writes to
+  a bucket, so R2 and Scaleway are only proven by the next nightly backup at 16:00 UTC.
+  `config/filesystems.php` was re-checked and is unchanged: `r2` and `scaleway` both keep
+  `throw => true` with `request_checksum_calculation` and `response_checksum_validation` at
+  `when_required`.
+- Full gate green: pint, prettier, eslint, 217 vitest tests, vue-tsc, a production build and
+  1553 pest tests over 6418 assertions. The assertion count is identical to the pre-sweep run,
+  so nothing quietly stopped asserting.
+
 ## August 25th, 2026 - chore(ui): buttons and icons on the overlay screens
 
 Another pass over the button vocabulary, this time the overlay screens: `/templates`, the create and edit pages, the builder, and the tag list inside them.
