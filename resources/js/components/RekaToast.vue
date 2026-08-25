@@ -1,46 +1,54 @@
 <template>
   <Teleport to="body">
-    <Transition name="toast" @after-leave="emit('dismiss')">
+    <!-- Sits just above the help beacon (h-11 at bottom-4 / sm:bottom-6) on the same right inset. -->
+    <TransitionGroup
+      tag="div"
+      name="toast"
+      class="pointer-events-none fixed right-4 bottom-20 left-4 z-50 flex flex-col gap-2 sm:right-6 sm:bottom-24 sm:left-auto sm:w-96"
+      @after-leave="onAfterLeave"
+    >
       <div
-        v-if="visible"
-        class="pointer-events-auto fixed right-4 bottom-20 left-4 z-50 flex items-start gap-3 overflow-hidden rounded-lg border border-l-4 border-border bg-background py-3 pr-2 pl-4 shadow-lg sm:right-6 sm:bottom-24 sm:left-auto sm:w-96"
-        :class="color.edge"
-        :role="toastRole"
-        :aria-live="ariaLive"
-        @mouseenter="pauseTimeout"
-        @mouseleave="resumeTimeout"
+        v-for="(item, index) in items"
+        :key="item.id"
+        class="pointer-events-auto flex w-full items-start gap-3 overflow-hidden rounded-lg border border-l-4 border-border bg-background py-3 pr-2 pl-4 shadow-lg"
+        :class="palette(item.type).edge"
+        :role="item.type === 'error' ? 'alert' : 'status'"
+        :aria-live="item.type === 'error' ? 'assertive' : 'polite'"
+        @mouseenter="pause(item)"
+        @mouseleave="resume(item)"
       >
-        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full" :class="color.iconBg" aria-hidden="true">
-          <component :is="icon" class="h-3.5 w-3.5" :class="color.icon" stroke-width="2.5" />
+        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full" :class="palette(item.type).iconBg" aria-hidden="true">
+          <component :is="iconFor(item.type)" class="h-3.5 w-3.5" :class="palette(item.type).icon" stroke-width="2.5" />
         </span>
 
         <div class="min-w-0 flex-1 pt-0.5">
-          <p class="text-xs font-semibold tracking-wide uppercase" :class="color.label">
-            {{ color.text }}
+          <p class="text-xs font-semibold tracking-wide uppercase" :class="palette(item.type).label">
+            {{ palette(item.type).text }}
           </p>
           <p class="mt-1 text-sm leading-snug break-words text-foreground">
-            <span class="sr-only">{{ color.text }}: </span>
-            {{ message }}
+            <span class="sr-only">{{ palette(item.type).text }}: </span>
+            {{ item.message }}
           </p>
-          <slot />
+          <!-- The slot reflects the caller's current state, so it belongs to the newest toast only. -->
+          <slot v-if="index === items.length - 1" />
         </div>
 
         <button
           type="button"
-          @click="dismiss"
+          @click="remove(item)"
           class="-mt-1 shrink-0 cursor-pointer rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:outline-none"
           aria-label="Dismiss notification"
         >
           <X class="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
-    </Transition>
+    </TransitionGroup>
   </Teleport>
 </template>
 
 <script lang="ts" setup>
 import { AlertTriangle, Check, Info, X } from '@lucide/vue';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 
 const props = defineProps({
   message: { type: String, required: true },
@@ -50,40 +58,54 @@ const props = defineProps({
 
 const emit = defineEmits<{ dismiss: [] }>();
 
-const visible = ref(true);
-let timeout: ReturnType<typeof setTimeout> | null = null;
-
-const dismiss = () => {
-  visible.value = false;
-  // emit('dismiss') fires via @after-leave once the exit animation finishes
+type Item = {
+  id: number;
+  message: string;
+  type: string;
+  timer: ReturnType<typeof setTimeout> | null;
 };
 
-const pauseTimeout = () => {
-  if (timeout) clearTimeout(timeout);
-  timeout = null;
+// Callers own a single `message` string. Every change to it becomes its own toast here, with its
+// own timer, so a second message while the first is still up stacks instead of overwriting it.
+// `dismiss` fires once the LAST toast has left, so `v-if="toastMessage"` on the caller keeps working.
+const items = ref<Item[]>([]);
+let nextId = 0;
+
+const remove = (item: Item) => {
+  pause(item);
+  items.value = items.value.filter((i) => i.id !== item.id);
 };
 
-const resumeTimeout = () => {
-  pauseTimeout();
-  if (props.duration <= 0) return; // allow sticky toasts when duration is 0 or negative
-  timeout = setTimeout(dismiss, props.duration);
+const pause = (item: Item) => {
+  if (item.timer) clearTimeout(item.timer);
+  item.timer = null;
 };
 
-onBeforeUnmount(() => pauseTimeout());
+const resume = (item: Item) => {
+  pause(item);
+  if (props.duration <= 0) return; // sticky when duration is 0 or negative
+  item.timer = setTimeout(() => remove(item), props.duration);
+};
+
+const onAfterLeave = () => {
+  if (items.value.length === 0) emit('dismiss');
+};
+
+onBeforeUnmount(() => items.value.forEach(pause));
 
 watch(
   () => props.message,
-  (newVal) => {
-    if (newVal) {
-      visible.value = true;
-      resumeTimeout();
-    }
+  (message) => {
+    if (!message) return;
+    const item: Item = { id: nextId++, message, type: props.type, timer: null };
+    items.value.push(item);
+    resume(item);
   },
   { immediate: true },
 );
 
-const icon = computed(() => {
-  switch (props.type) {
+const iconFor = (type: string) => {
+  switch (type) {
     case 'success':
       return Check;
     case 'warning':
@@ -93,15 +115,12 @@ const icon = computed(() => {
     default:
       return Info;
   }
-});
-
-const ariaLive = computed(() => (props.type === 'error' ? 'assertive' : 'polite'));
-const toastRole = computed(() => (props.type === 'error' ? 'alert' : 'status'));
+};
 
 // Surface is the theme's own background + border, so the toast reads as part of the app in every
 // theme. Identity comes from the left edge, the icon disc and the label - never a tinted fill.
-const color = computed(() => {
-  switch (props.type) {
+const palette = (type: string) => {
+  switch (type) {
     case 'success':
       return {
         edge: 'border-l-violet-500',
@@ -135,18 +154,22 @@ const color = computed(() => {
         text: 'Info',
       };
   }
-});
+};
 </script>
 
 <style scoped>
-/* Slide in from the right edge so the motion pulls the eye to the corner; leave by fading only. */
-.toast-enter-active {
+/* Slide in from the right edge so the motion pulls the eye to the corner; leave by fading only.
+   A leaving toast goes absolute so the ones still stacked slide into its place (toast-move). */
+.toast-enter-active,
+.toast-move {
   transition:
     opacity 0.3s ease-out,
     transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .toast-leave-active {
+  position: absolute;
+  right: 0;
   transition: opacity 0.35s ease-in;
 }
 
@@ -161,7 +184,8 @@ const color = computed(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .toast-enter-active,
-  .toast-leave-active {
+  .toast-leave-active,
+  .toast-move {
     transition: opacity 1ms linear;
   }
 

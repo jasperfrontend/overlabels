@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - feat(toast): toasts stack instead of overwriting each other
+
+Disable a list and re-enable it while the first toast was still up and you got one toast whose text changed mid-flight. Every page owns a single `toastMessage` string and mounts one `RekaToast` on it, so a second message replaced the first and restarted its timer.
+
+- `RekaToast` now keeps an internal list. Every change to `message` becomes its own toast with its own timer and its own hover-pause; they render as a column above the help beacon, newest at the bottom, each sliding in and fading out on its own. When one leaves, the ones above slide down into its place.
+- `dismiss` is emitted once the LAST toast has left, so the callers' `v-if="toastMessage"` keeps working unchanged. Zero caller edits.
+- The slot (the suggestion button on the template editor) renders on the newest toast only, since it reflects the caller's current state.
+- Known limit, left as is: the same text fired twice inside the window still shows once, because callers pass a string and an identical string is not a change. Fixing that means every caller hands over a key too.
+
 ## August 25th, 2026 - fix(toast): Lists and Recipes toasts fire again after the first one
 
 On `/dashboard/lists`, a list's detail page and `/dashboard/recipes`, the second toast with the same message never showed. Copy a list's slug twice and you got one confirmation.
