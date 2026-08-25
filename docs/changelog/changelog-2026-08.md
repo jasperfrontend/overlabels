@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - fix(chat): Twitch emote positions are code points, not UTF-16 units
+
+An emoji in front of a Twitch emote shifted every emote after it by one character on the chat overlay: `[[[msg.html]]]` rendered `alt=" Kapp"` with a stray `a` leaking out as text. The bot's channel-point reply opens with a pinata, so every redeem confirmation with emotes in it came out mangled.
+
+- The IRC `emotes` tag counts positions in Unicode code points. JavaScript strings index UTF-16 units, and any emoji outside the BMP is one code point but two units. `useEmoteParser.parseEmotes()` sliced the message by string index, so it landed one unit early per emoji. `ircParser.parseEmoteTag()` documented this exact mismatch and said it was handled where the ranges are applied - it never was.
+- The splitting is now `splitByEmotePositions()`, a pure function that walks the text once to map code point offsets to UTF-16 ones before slicing. Ranges past the end of the text and overlapping ranges are dropped instead of producing nonsense; the tag is wire data from a stranger.
+- Why the redeem message itself always looked fine: Twitch sends no position tag for channel-point `user_input`, so that path matches emotes by name and never touched the offsets.
+- Pinned by `useEmoteParser.test.ts` (7 tests). The two astral-character cases were verified to fail against the old slicing.
+
 ## August 25th, 2026 - chore(settings): second settings sweep - one heading, two routes moved, tokens modal tidied
 
 Another pass over the pages that live under the Settings rail so they all look like they belong to it.
