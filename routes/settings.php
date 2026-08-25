@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 // Old appearance URL kept as a permanent redirect so existing bookmarks
 // and in-app deep links still land somewhere useful after the rename.
 Route::redirect('/settings/appearance', '/settings/account', 301);
+Route::redirect('/settings', '/settings/account', 301);
 
 Route::middleware('auth.redirect')->group(function () {
     Route::get('/settings/account', function () {
