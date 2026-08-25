@@ -68,7 +68,7 @@ const maxWidthClass = computed(() => {
     <transition leave-active-class="duration-200">
       <div
         v-show="props.show"
-        class="fixed inset-0 z-50 m-auto flex max-w-[600px] items-center justify-center overflow-y-auto px-4 py-6 sm:px-0"
+        class="fixed inset-0 z-50 m-auto flex max-w-150 items-center justify-center overflow-y-auto px-4 py-6 sm:px-0"
         @click.self="close"
       >
         <transition
@@ -81,7 +81,7 @@ const maxWidthClass = computed(() => {
         >
           <div
             v-show="props.show"
-            class="mb-6 transform overflow-hidden rounded-lg border border-border bg-background shadow-xl transition-all sm:mx-auto sm:w-full dark:border-border dark:bg-background"
+            class="mb-6 transform overflow-hidden border border-sidebar-border bg-background shadow-xl transition-all sm:mx-auto sm:w-full"
             :class="maxWidthClass"
           >
             <div v-show="props.show" class="relative">

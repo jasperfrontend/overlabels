@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - chore(settings): second settings sweep - one heading, two routes moved, tokens modal tidied
+
+Another pass over the pages that live under the Settings rail so they all look like they belong to it.
+
+- **Triggers and Wiring now live at `/settings/triggers` and `/settings/wiring`.** They have rendered inside `SettingsLayout` since the layout map audit; the URL just had not followed. The old `/triggers` and `/wiring` URLs 301 to the new ones, so bookmarks keep working (`/skills` still hops via `/wiring`). Route names are unchanged, so nothing that calls `route()` moved. The two test files that hit the old URLs by string, and the breadcrumbs on both pages, now use the new ones.
+- **Every settings page uses `HeadingSmall`.** Template Tags, Testing Guide, Triggers, Wiring and Overlay Access Tokens were each on their own heading (`Heading`, `PageHeader`, an icon-plus-`Heading` combo). Now they match Usage, Appearance and the rest. Usage's heading reads "Usage" instead of "Events".
+- **Toasts moved out of `SettingsLayout`** on Template Tags and Twitch Data so they overlay the page instead of sitting in the content column.
+- **Create-token modal** uses `input-border` and the `btn-sm` buttons like the other forms, and the two ability checkboxes say what they grant.
+- `AppearanceTabs` and `Modal` drop their hand-rolled neutral palette for the theme tokens and `btn` classes everyone else uses.
+
 ## August 25th, 2026 - feat(slugs): shuffle the four words, 5.5 million slugs become 131 million
 
 `FunSlugGenerationService` picked one peak, one water, one city and one isle and always joined them in that order. It still picks one of each, but the four are shuffled before joining, so `aoraki-weser-seville-ithaca` and `weser-seville-aoraki-ithaca` are now different slugs. That is a 4! = 24x multiplier for free: 38 x 40 x 60 x 60 = 5,472,000 combinations become 131,328,000.

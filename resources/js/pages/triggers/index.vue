@@ -3,11 +3,11 @@ import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import Heading from '@/components/Heading.vue';
 import CollectionList from '@/components/CollectionList.vue';
-import { AlertTriangle, Megaphone } from '@lucide/vue';
+import { AlertTriangle } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { SERVICE_LABELS } from '@/utils/services';
+import HeadingSmall from '@/components/HeadingSmall.vue';
 
 interface AssignedTemplate {
   id: number;
@@ -52,7 +52,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Triggers', href: '/triggers' },
+  { title: 'Triggers', href: '/settings/triggers' },
 ];
 
 const totalAssigned = computed(() => props.twitchMappings.length + props.externalMappings.length);
@@ -136,16 +136,15 @@ function conditionLabel(row: ConditionFields): string | null {
   <Head title="Triggers" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <SettingsLayout>
-      <div>
-        <div class="mt-1 mb-4 flex items-center gap-2">
-          <Megaphone class="mr-2 size-6" />
-          <Heading
-            title="Triggers"
-            description="Read-only view of every event currently bound to an alert template. Edit assignments from each alert template's Triggers tab."
-          />
-        </div>
+      <div class="space-y-6">
+        <HeadingSmall
+          title="Triggers"
+          description="Read-only view of every event currently bound to an alert template. Edit assignments from each alert template's Triggers tab."
+        />
 
-        <p class="mb-6 text-sm text-foreground">{{ totalAssigned }} event{{ totalAssigned !== 1 ? 's' : '' }} are firing alerts right now.</p>
+        <p class="mb-6 text-sm font-bold text-violet-500 dark:text-violet-400">
+          {{ totalAssigned }} event{{ totalAssigned !== 1 ? 's' : '' }} are firing alerts right now.
+        </p>
 
         <section v-for="section in sections" :key="section.key" class="mb-8">
           <h3 class="mb-2 flex items-center gap-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">

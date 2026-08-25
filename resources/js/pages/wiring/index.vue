@@ -2,10 +2,10 @@
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import PageHeader from '@/components/PageHeader.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import { Bot, Check, Circle, TriangleAlert } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
+import HeadingSmall from '@/components/HeadingSmall.vue';
 
 type WireState = 'satisfied' | 'missing' | 'not_applicable';
 
@@ -46,7 +46,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Wiring', href: '/wiring' },
+  { title: 'Wiring', href: '/settings/wiring' },
 ];
 
 function href(wire: Wire): string {
@@ -76,11 +76,7 @@ function isDormant(wire: Wire): boolean {
   <AppLayout :breadcrumbs="breadcrumbs">
     <SettingsLayout>
       <div class="flex flex-col gap-6">
-        <PageHeader
-          title="Wiring"
-          description="What is wired up on your account, and what is built but cannot work."
-          title-class="text-2xl font-bold"
-        />
+        <HeadingSmall title="Wiring" description="What is wired up on your account, and what is built but cannot work." />
 
         <!-- The headline counts subjects, not areas. This page only ever speaks
            about things that exist, so it can never nag about something the

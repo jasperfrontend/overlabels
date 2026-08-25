@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import Heading from '@/components/Heading.vue';
 import GroupedCollection from '@/components/GroupedCollection.vue';
 import type { CollectionGroup } from '@/types/collection';
 import { Head } from '@inertiajs/vue3';
-import { Copy, Check, Terminal, ExternalLink, AlertTriangle } from '@lucide/vue';
+import { Copy, Check, ExternalLink, AlertTriangle } from '@lucide/vue';
 import { ref } from 'vue';
+import HeadingSmall from '@/components/HeadingSmall.vue';
 
 const props = defineProps<{
   twitchId: string;
@@ -133,11 +133,7 @@ function eventMatches(e: EventCommand, query: string): boolean {
   <AppLayout :breadcrumbs="breadcrumbs">
     <SettingsLayout>
       <div class="flex flex-col gap-4">
-        <Heading title="Testing Guide">
-          <template #icon>
-            <Terminal class="h-6 w-6 text-violet-400 dark:text-violet-300" />
-          </template>
-        </Heading>
+        <HeadingSmall title="Testing Guide" description="Use Twitch-CLI commands to test your alerts." />
 
         <p class="max-w-4xl text-sm text-foreground">
           Click any event to copy its

@@ -4,11 +4,11 @@ import { Head } from '@inertiajs/vue3';
 import { Copy, AlertCircle } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import Heading from '@/components/Heading.vue';
 import GroupedCollection from '@/components/GroupedCollection.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { type BreadcrumbItem } from '@/types';
 import type { CollectionGroup } from '@/types/collection';
+import HeadingSmall from '@/components/HeadingSmall.vue';
 
 interface TemplateTag {
   tag_name: string;
@@ -96,11 +96,8 @@ async function copyTag(tag: TemplateTag) {
 
   <AppLayout :breadcrumbs="breadcrumbs">
     <SettingsLayout>
-      <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
-
       <div class="flex flex-col gap-4">
-        <Heading title="Template Tags" description="Drop any of these into an overlay. The values are your own, right now." />
-
+        <HeadingSmall title="Template Tags" description="Drop any of these into an overlay. The values are your own, right now." />
         <div
           v-if="!liveValues"
           class="flex items-start gap-2 rounded-sm border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
@@ -143,5 +140,6 @@ async function copyTag(tag: TemplateTag) {
         </GroupedCollection>
       </div>
     </SettingsLayout>
+    <RekaToast v-if="showToast" :message="toastMessage" :type="toastType" @dismiss="showToast = false" />
   </AppLayout>
 </template>
