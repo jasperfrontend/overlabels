@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - chore(frontend): delete twelve components nothing mounts
+
+The layout map found nine layouts and components that no page, layout or component imports. Pulling on them found three more that only the orphans imported. All twelve are deleted; every one was verified against a full grep of `resources/` and `tests/` before it went, not just against the map.
+
+- **Layouts:** `AppHeaderLayout` (a starter-kit alternative to the sidebar layout, never wired in; it still linked to `laravel/vue-starter-kit` and `laravel.com/docs`), `AuthCardLayout`, `AuthSplitLayout` (two of the three starter-kit auth variants; only `AuthSimpleLayout` is used).
+- **Components:** `AppHeader` (only `AppHeaderLayout` mounted it), `NavFooter`, `NavUser`, `TemplateCard` (superseded by `TemplateCollection` in PR #193), `TextLink`, `LinkWarning`, `DeleteUser` (starter kit, still pointing at a `profile.destroy` route that does not exist), `AppLogoIcon` and `InputError` (imported by orphans only).
+- **What stays:** `useLinkWarning` and `useInitials` are live (`TokenUrlDialog`, `templates/edit`, `UserInfo`, `WelcomeCard`). Of the Shadcn primitives the orphans imported, only `components/ui/navigation-menu` is now importer-less; it is left alone - it is the kit, not the app, and a future page may reach for it.
+- Nothing rendered changes. Typecheck, lint, build and both test suites are the proof that nothing referenced them.
+
 ## August 25th, 2026 - style(testing): the Testing Guide joins the grouped list
 
 Last of the "made-up list" pages. `/testing` already had families, a filter and a count, all hand-rolled; they map one-to-one onto `GroupedCollection`, so the page lost its own search box, its own count line and its uppercase section headings and gained the collapsible sections, count pills and Expand / Collapse all every other grouped list has.
