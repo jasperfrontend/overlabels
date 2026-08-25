@@ -115,7 +115,7 @@ function formatRelativeTime(unixSeconds: number | null): string | null {
         description="Installed recipes that produce values into your controls layer. Click a button to fire its picker; the result lands in your overlays via the matching control tag."
       />
 
-      <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
+      <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
 
       <div v-if="instances.length === 0" class="rounded-lg border border-dashed p-10 text-center">
         <ChefHat class="mx-auto h-10 w-10 text-muted-foreground" />

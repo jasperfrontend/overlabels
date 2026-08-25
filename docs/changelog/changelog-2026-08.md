@@ -1,5 +1,12 @@
 # CHANGELOG AUGUST 2026
 
+## August 25th, 2026 - fix(toast): Lists and Recipes toasts fire again after the first one
+
+On `/dashboard/lists`, a list's detail page and `/dashboard/recipes`, the second toast with the same message never showed. Copy a list's slug twice and you got one confirmation.
+
+- Those three pages listened for `@close` on `RekaToast`, but the component only ever emits `dismiss`. The toast hid itself on its timer, but the page's `toastMessage` was never cleared, so the next identical message was not a change and the watcher that re-shows the toast never fired. Every other caller was already on `@dismiss`.
+- Three one-word edits. No component change.
+
 ## August 25th, 2026 - style(toast): notifications float bottom-right instead of spanning the top
 
 `RekaToast` was a full-width banner pinned to the top of the page. Your eyes are on the button you just clicked, not the top edge, so it was easy to miss, and a pastel strip across the whole viewport looked like nothing else in the app.

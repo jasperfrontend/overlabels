@@ -549,7 +549,7 @@ async function loadMeta() {
   <Head :title="list.label || list.slug" />
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="mx-auto w-full max-w-6xl p-4 pb-16">
-      <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
+      <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
 
       <a
         :href="route('lists.index')"

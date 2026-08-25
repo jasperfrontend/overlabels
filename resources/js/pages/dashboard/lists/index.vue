@@ -303,7 +303,7 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @close="toastMessage = null" />
+      <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
 
       <!-- Filters Section - page-wide above the two-column split, matching the other dashboard routes -->
       <FilterBar v-if="lists.length > 0 || appliedSearch">
