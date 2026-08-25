@@ -12,14 +12,10 @@
       </h2>
       <p id="confirm-dialog-message" class="mb-4 text-sm whitespace-pre-line text-gray-800 dark:text-gray-200">{{ options.message }}</p>
       <div class="flex justify-end space-x-3">
-        <button v-if="options.variant === 'confirm'" ref="cancelButton" @click="cancel" class="btn btn-l btn-cancel">
+        <button v-if="options.variant === 'confirm'" ref="cancelButton" @click="cancel" class="btn btn-sm btn-chill">
           {{ options.cancelLabel }}
         </button>
-        <button
-          ref="acceptButton"
-          @click="accept"
-          :class="['cursor-pointer', options.tone === 'danger' ? 'btn btn-l btn-danger' : 'btn btn-l btn-warning']"
-        >
+        <button ref="acceptButton" @click="accept" :class="['btn', options.tone === 'danger' ? 'btn-sm btn-danger' : 'btn-sm btn-primary']">
           {{ options.confirmLabel }}
         </button>
       </div>

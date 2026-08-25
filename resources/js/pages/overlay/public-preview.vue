@@ -326,9 +326,9 @@ function submitReport() {
         <div class="flex flex-wrap items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
-              <button type="button" class="ovl-btn cursor-pointer">
+              <button type="button" class="btn btn-sm btn-chill">
                 <Check v-if="copyFeedback" class="h-3.5 w-3.5 text-violet-400" />
-                <span>{{ copyFeedback || 'Copy...' }}</span>
+                <span>{{ copyFeedback || 'What to copy?' }}</span>
                 <ChevronDown v-if="!copyFeedback" class="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
@@ -360,13 +360,13 @@ function submitReport() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <button v-if="template.screenshot_url" type="button" class="ovl-btn cursor-pointer" @click="openScreenshot">Screenshot</button>
+          <button v-if="template.screenshot_url" type="button" class="btn btn-sm btn-secondary" @click="openScreenshot">View screenshot</button>
 
           <form v-if="isAuthed" :action="route('templates.fork', template.id)" method="POST" class="inline" @submit="confirmCopy">
             <input type="hidden" name="_token" :value="csrf" />
-            <button type="submit" class="ovl-btn-copy cursor-pointer">Copy</button>
+            <button type="submit" class="btn btn-sm btn-secondary">Copy to account</button>
           </form>
-          <a v-else :href="loginUrl" class="ovl-btn-copy cursor-pointer">Log in to copy</a>
+          <a v-else :href="loginUrl" class="btn btn-sm btn-secondary">Log in to copy</a>
         </div>
       </div>
 
