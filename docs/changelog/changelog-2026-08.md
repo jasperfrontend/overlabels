@@ -1,5 +1,19 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - fix(sitemap): stop emitting a `lastmod` that was never true
+
+Every one of the 185 URLs in `/sitemap.xml` on prod carried `<lastmod>2026-08-25</lastmod>`, the
+date of the last deploy, including reference entries untouched since April. Two causes: the static
+paths used `now()`, so `/privacy` claimed "modified today" every day forever, and the help documents
+used `filemtime()`, which inside the image is the moment `actions/checkout` wrote the file - git does
+not store mtimes, so every page inherits the build date. Google only honours `lastmod` when it is
+consistently accurate and ignores it site-wide once it is not, so the field was worth nothing.
+
+- **`<lastmod>` is dropped from every entry.** It is optional in the spec, and a sitemap that says
+  nothing beats one that lies. The URL list itself is still derived from `HelpCorpus` per request,
+  so it stays current; that part was always right.
+- Real dates would mean baking `git log` output into the image at build time. Not done; not asked.
+
 ## August 25th, 2026 - refactor(help): the three "for machines" explainers are guides, not reference entries
 
 The page that tells a language model it can append `.md` to any help URL had no `.md` of its own.

@@ -48,13 +48,11 @@ class SitemapController extends Controller
 
     public function __invoke(): Response
     {
-        $today = now()->toDateString();
         $urls = [];
 
         foreach (self::STATIC_PATHS as $row) {
             $urls[] = [
                 'loc' => self::BASE_URL.$row['path'],
-                'lastmod' => $today,
                 'changefreq' => $row['changefreq'],
                 'priority' => $row['priority'],
             ];
@@ -72,11 +70,8 @@ class SitemapController extends Controller
          * the whole job of getting it indexed.
          */
         foreach (HelpCorpus::all() as $doc) {
-            $mtime = $doc['path'] !== '' ? @filemtime($doc['path']) : false;
-
             $urls[] = [
                 'loc' => self::BASE_URL.$doc['url'],
-                'lastmod' => $mtime ? date('Y-m-d', $mtime) : $today,
                 'changefreq' => 'monthly',
                 'priority' => self::KIND_PRIORITY[$doc['kind']] ?? '0.6',
             ];
@@ -87,7 +82,6 @@ class SitemapController extends Controller
         foreach ($urls as $u) {
             $xml .= "  <url>\n";
             $xml .= '    <loc>'.htmlspecialchars($u['loc'], ENT_XML1).'</loc>'."\n";
-            $xml .= '    <lastmod>'.$u['lastmod'].'</lastmod>'."\n";
             $xml .= '    <changefreq>'.$u['changefreq'].'</changefreq>'."\n";
             $xml .= '    <priority>'.$u['priority'].'</priority>'."\n";
             $xml .= "  </url>\n";
