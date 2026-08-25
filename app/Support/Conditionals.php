@@ -168,6 +168,25 @@ final class Conditionals
     }
 
     /**
+     * A structural problem as one sentence for the author, naming the token as
+     * written. Shared by every save gate (bot commands, alert TTS and chat
+     * messages) so the same mistake reads the same everywhere.
+     *
+     * @param  array{problem:string,snippet:string}  $problem
+     */
+    public static function describeProblem(array $problem): string
+    {
+        $snippet = $problem['snippet'];
+
+        return match ($problem['problem']) {
+            'unclosed_if' => "'$snippet' has no [[[endif]]] to close it, so I can't tell where the condition ends. Put [[[endif]]] after the text it controls.",
+            'stray' => "'$snippet' has no [[[if:...]]] in front of it. Every else, elseif and endif belongs to an if that comes before it.",
+            'after_else' => "'$snippet' comes after [[[else]]], and else is always the last branch before [[[endif]]].",
+            default => "'$snippet' is for overlays. A message is one line, so loops don't work here - conditions like [[[if:c:wins > 3]]] do.",
+        };
+    }
+
+    /**
      * Strip every block token, leaving the text between them. What remains is
      * what the tag pass would see if every branch were taken.
      */

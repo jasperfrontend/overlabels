@@ -19,6 +19,7 @@ use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
 use App\Services\TwitchTokenService;
+use App\Support\Conditionals;
 use App\Support\HelpContext;
 use App\Support\ListItems;
 use Exception;
@@ -944,6 +945,27 @@ class OverlayTemplateController extends Controller
      * Validation rules for the client-writable slice of the metadata json.
      * Only namespaced keys we understand survive normalizeMetadata() below.
      */
+    /**
+     * Save gate for the alert TTS and chat messages: every `[[[if]]]` closed,
+     * no stray `else` / `endif`, no `foreach`. Same check and same wording as a
+     * bot command reply, because AlertMessageRenderer runs the same block
+     * engine before its tag pass.
+     */
+    private static function messageBlocksRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (! is_string($value)) {
+                return;
+            }
+
+            $problem = Conditionals::structuralProblem($value);
+
+            if ($problem !== null) {
+                $fail(Conditionals::describeProblem($problem));
+            }
+        };
+    }
+
     private static function metadataRules(): array
     {
         return [
@@ -1043,8 +1065,8 @@ class OverlayTemplateController extends Controller
             'type' => 'required|in:static,alert,block',
             'is_public' => 'boolean',
             'screenshot_url' => 'nullable|url|max:2048',
-            'tts_message' => 'nullable|string|max:2000',
-            'chat_message' => 'nullable|string|max:500',
+            'tts_message' => ['nullable', 'string', 'max:2000', self::messageBlocksRule()],
+            'chat_message' => ['nullable', 'string', 'max:500', self::messageBlocksRule()],
             'tts_delay_ms' => 'nullable|integer|min:0|max:60000',
             'alert_sound_url' => 'nullable|url|max:2048',
             ...self::metadataRules(),
@@ -1094,8 +1116,8 @@ class OverlayTemplateController extends Controller
             'compiled_css' => 'nullable|string',
             'type' => 'sometimes|in:static,alert,block',
             'is_public' => 'sometimes|boolean',
-            'tts_message' => 'sometimes|nullable|string|max:2000',
-            'chat_message' => 'sometimes|nullable|string|max:500',
+            'tts_message' => ['sometimes', 'nullable', 'string', 'max:2000', self::messageBlocksRule()],
+            'chat_message' => ['sometimes', 'nullable', 'string', 'max:500', self::messageBlocksRule()],
             'tts_delay_ms' => 'sometimes|nullable|integer|min:0|max:60000',
             'alert_sound_url' => 'sometimes|nullable|url|max:2048',
             ...self::metadataRules(),

@@ -279,13 +279,14 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   would have taken real user rows with them (swept Aug 17th 2026 - that changelog entry is the worked
   example). Freeze any seeded list as a literal in the file too, or a migration dated in April will
   seed whatever the constant grew into by August.
-- **`[[[if]]]` / `elseif` / `else` / `endif` work in bot command replies (Aug 26th 2026).**
-  `App\Support\Conditionals` is the PHP if-family half of the overlay block engine, same evaluation
-  rules, run on the source BEFORE the single tag pass in `BotCommandResolver`. `foreach` is refused at
-  save time - a reply is one line. The earlier "no if in chat, per the tags-never-reparse rule" claim
-  was a mis-citation: that rule bans rescanning substituted output, and blocks never touch output.
-  `counter:` inside a condition only reads. `AlertMessageRenderer` (TTS / alert chat) still has no
-  blocks - separate renderer, deliberately untouched.
+- **`[[[if]]]` / `elseif` / `else` / `endif` work in bot command replies AND alert TTS / chat
+  messages (Aug 26th 2026).** `App\Support\Conditionals` is the PHP if-family half of the overlay
+  block engine, same evaluation rules, run on the source BEFORE the single tag pass in both
+  `BotCommandResolver` and `AlertMessageRenderer`. `foreach` is refused at save time - a message is
+  one line. `Conditionals::describeProblem()` is the ONE place the save-gate sentences live (bot
+  validator and `OverlayTemplateController::messageBlocksRule()` both call it). The earlier "no if in
+  chat, per the tags-never-reparse rule" claim was a mis-citation: that rule bans rescanning
+  substituted output, and blocks never touch output. `counter:` inside a condition only reads.
 - **A new builtin bot command is two edits, always.** `BotBuiltin::DEFAULTS` for everyone who opts in
   from now on, and a backfill migration for everyone who already has. Ship one without the other and
   the command works for exactly one of those two groups and is silent for the other - no error

@@ -41,10 +41,16 @@ already do. Then the August 15th validator hardened the gap by refusing block sy
   `if:` namespace and `[[[else]]]` is no longer an empty bare tag. `malformedTags()` strips them too,
   which is why the structural check has to exist and runs first.
 - List appender templates and replies go through the same resolver, so they get conditionals for free.
-  Alert TTS and chat messages (`AlertMessageRenderer`) are a separate renderer and are unchanged.
-- **29 tests in `BotCommandConditionalsTest`**, plus three pattern tests in `DslTest`. The help pages
-  for counters, bot commands and conditionals now say where blocks work and where they do not, and the
-  "1 times" example is gone.
+- **Alert TTS and chat messages get the same treatment.** "Resubscribed for 1 months" is the identical
+  bug one renderer over, and it had pushed the TTS on the project's own channel down to a generic
+  "just followed. Thank you!". `AlertMessageRenderer` now runs the same `Conditionals::render()` before
+  its tag pass, for both `tts_message` and `chat_message`, and the template editor's save gate refuses
+  the same malformed shapes with the same sentences (`Conditionals::describeProblem()` is the one place
+  they are written). The editor placeholders show the `month[[[if:...]]]s[[[endif]]]` trick, and the
+  "No `[[[if]]]` logic" line under the chat message is gone - it was the mis-citation above, in the UI.
+- **29 tests in `BotCommandConditionalsTest`, 8 in `AlertMessageConditionalsTest`**, plus three pattern
+  tests in `DslTest`. The help pages for counters, bot commands and conditionals now say where blocks
+  work and where they do not, and the "1 times" example is gone.
 
 ## August 26th, 2026 - fix(routes): /manifesto redirects to /help/manifesto
 

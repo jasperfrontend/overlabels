@@ -116,16 +116,7 @@ class BotCommandValidator
             return;
         }
 
-        $snippet = $problem['snippet'];
-
-        $message = match ($problem['problem']) {
-            'unclosed_if' => "'$snippet' has no [[[endif]]] to close it, so I can't tell where the condition ends. Put [[[endif]]] after the text it controls.",
-            'stray' => "'$snippet' has no [[[if:...]]] in front of it. Every else, elseif and endif belongs to an if that comes before it.",
-            'after_else' => "'$snippet' comes after [[[else]]], and else is always the last branch before [[[endif]]].",
-            default => "'$snippet' is for overlays. A chat reply is one line, so loops don't work in a command - conditions like [[[if:c:wins > 3]]] do.",
-        };
-
-        throw ValidationException::withMessages(['reply' => $message]);
+        throw ValidationException::withMessages(['reply' => Conditionals::describeProblem($problem)]);
     }
 
     /**

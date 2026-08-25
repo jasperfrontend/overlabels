@@ -232,7 +232,7 @@ it('refuses a branch after else', function () {
 it('refuses foreach with a reason, not a generic error', function () {
     expect(condSave(condUser(), '[[[foreach:subscribers as s]]][[[s.user_name]]] [[[endforeach]]]'))
         ->toStartWith('REFUSED')
-        ->toContain("loops don't work in a command");
+        ->toContain("loops don't work here");
 });
 
 it('still catches a misspelled namespace when it is inside a condition', function () {
