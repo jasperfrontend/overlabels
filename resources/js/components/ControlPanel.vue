@@ -292,7 +292,10 @@ const controlsCounter = computed(() => props.controls.length);
 onMounted(() => {
   const echo = (window as any).Echo;
   if (!echo || !twitchId.value) return;
-  echoChannel = echo.channel(`alerts.${twitchId.value}`);
+  // ControlValueUpdated broadcasts on PrivateChannel('alerts.{id}'), i.e. the
+  // wire channel is private-alerts.{id}. echo.channel() would subscribe to the
+  // public alerts.{id}, which nothing ever publishes on.
+  echoChannel = echo.private(`alerts.${twitchId.value}`);
   echoChannel.listen('.control.updated', handleControlUpdated);
 });
 

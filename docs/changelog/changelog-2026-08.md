@@ -1,5 +1,20 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - fix(controls): the control panel listens on the channel controls are sent on
+
+`ControlPanel.vue` subscribed with `echo.channel('alerts.{id}')` - the public channel. Every
+`ControlValueUpdated` goes out on `PrivateChannel('alerts.{id}')`, which is `private-alerts.{id}`
+on the wire. The panel was listening on a channel nothing publishes on, so a control changed by
+the bot, a webhook or another tab never moved in the panel until a reload. Same subscription
+shape `useStreamState.ts` has used all along.
+
+- **`echo.private(...)`**, one word. Cleanup is unchanged: `stopListening` only, never `leave`,
+  because the app header shares this subscription for the stream-status dot.
+- No unit harness reaches a component (no jsdom, by decision). Verified by reading:
+  `app/Events/ControlValueUpdated.php` returns a `PrivateChannel`, and Laravel Echo's `private()`
+  is what prefixes `private-`. Not verified in a browser.
+- A6 of `docs/design/event-delivery-heal-2026-08.md`.
+
 ## August 26th, 2026 - fix(reverb): client events are off
 
 `config/reverb.php` never set `accept_client_events_from`, and Reverb defaults that to `'all'`. So
