@@ -1,5 +1,24 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - fix(reverb): client events are off
+
+`config/reverb.php` never set `accept_client_events_from`, and Reverb defaults that to `'all'`. So
+any connected overlay could send a `client-*` whisper on `private-alerts.{id}` and every other
+subscriber - every other open browser source on that account - would receive it. Nothing in the
+app sends whispers, so nothing was broken, but "overlays never send anything back" was a rule the
+transport did not enforce, and the uptime discussion leaned on "client events stay disabled" as a
+premise. It was not one.
+
+- **`accept_client_events_from => 'none'`.** Reverb rejects anything outside `'all'` / `'members'`
+  with `pusher:error` 4301. Prod picks it up when the deploy restarts the Reverb container.
+- Pinned by `ReverbClientEventsTest`, which resolves the app through Reverb's own
+  `ConfigApplicationProvider` so the default that would re-enable them is what is under test.
+  Verified to fail before.
+- A5 of `docs/design/event-delivery-heal-2026-08.md`. The same PR rewrites that document's A4
+  from the prod check it asked for (Docker already restarts a dead worker; the real hole is 36
+  `failed_jobs` rows nobody can see) and adds A8: 20 of those are one tag-less alert whose
+  broadcast is the whole dataset and trips Reverb's 10 KB limit on every stream since June 30.
+
 ## August 26th, 2026 - fix(eventsub): a redelivered Twitch notification is one row and one alert
 
 Twitch retries a notification on any non-2xx or timeout, and every retry carries the same

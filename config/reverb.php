@@ -83,6 +83,12 @@ return [
                     'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
                 ],
                 'allowed_origins' => ['*'],
+                // Overlays never send anything back. Reverb defaults this to
+                // 'all', which lets any connected overlay whisper to every other
+                // subscriber on its channel. Anything but 'all' or 'members' is
+                // rejected with pusher:error 4301 (ClientEvent.php). Pinned by
+                // ReverbClientEventsTest.
+                'accept_client_events_from' => 'none',
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 'max_message_size' => env('REVERB_APP_MAX_MESSAGE_SIZE', 10_000),
