@@ -465,13 +465,17 @@ class TemplateDataMapperService
             $all = array_merge($all, $this->mapEventDataForTemplates($eventData));
         }
 
-        // If a tag allowlist is provided, prune to only those keys.
+        // If a tag allowlist is provided, prune to only those keys. An EMPTY
+        // allowlist is still an allowlist: extractTemplateTags() stores [] for
+        // a template that references no tag, and such a template needs nothing.
+        // Treating [] like null shipped the whole catalogue for tag-less alerts
+        // and tripped Reverb's 10 KB ceiling. Only null means "no allowlist".
         // Exception: foreach iterables - extractForeachTags always emits
         // `<iterable>.count`, so its presence is a reliable signal that the
         // template loops over `<iterable>`. Keep all `<iterable>.*` keys in
         // that case so [[[raw]]] inside the loop has the full item shape,
         // not just the subkeys the body happened to reference by name.
-        if (is_array($templateTags) && count($templateTags)) {
+        if (is_array($templateTags)) {
             $allowedKeys = array_flip($templateTags);
             $iterablePrefixes = [];
             foreach ($templateTags as $tag) {

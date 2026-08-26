@@ -1,5 +1,26 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - fix(alerts): a template with no tags gets no data, not all of it
+
+`TemplateDataMapperService::mapForTemplate()` pruned the mapped payload to the template's tag
+allowlist only when that list was non-empty. `null` and `[]` were treated alike: no allowlist,
+ship everything. But `[]` is what `extractTemplateTags()` stores for a template that references no
+tag at all, so those templates got the entire catalogue - every static tag, every foreach array,
+the event - on every fire. For an alert that is ~18 KB serialised; Reverb's ceiling is 10 KB, so
+the broadcast job died in the worker with `Payload too large` after the webhook had already
+returned 200. Twenty of those in prod since June 30, all one chat-only "Stream Online" alert whose
+overlay half was empty anyway, so nobody saw a thing.
+
+- **An array allowlist prunes, empty included.** `null` still means "no allowlist" - that is the
+  preview and playground path, which wants everything.
+- The one prod template that used a tag while carrying `[]` (its chat message was written before
+  #309 made messages a tag source) was re-saved by hand before this shipped, so its allowlist is
+  real now and nothing regresses. Verified by a prod read.
+- Pinned by `TemplateDataMapperEmptyAllowlistTest`: `[]` yields `[]`, with or without event data,
+  and `null` still yields the full set. Verified to fail before.
+- A8 of `docs/design/event-delivery-heal-2026-08.md`. Twitch redelivers nothing here - the job
+  fails after the 200 - so these were never duplicates, just losses.
+
 ## August 26th, 2026 - chore(eventsub): the unauthenticated health-check route is gone
 
 `GET /api/eventsub-health-check` returned global EventSub stats and, on the same request,
