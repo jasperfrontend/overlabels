@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 27th, 2026 - docs(delivery): the B4 debrief sketch
+
+`docs/design/event-delivery-debrief-2026-08.md`. A sixth `Delivery` tab on
+`/dashboard/stream-sessions`, not a new page: the selector rail and the anchored per-session
+windows already exist there. One aggregate over both event tables joined to the windows CTE;
+success rate is `delivered / scored` with `no_target` rows as context, never denominator; a
+session with no scored rows shows nothing rather than a number. The panel is sentences first -
+"Your Twitch login expired on 14 June. 12 alerts could not be built." - and a capped failures
+list. Three decisions listed for Jasper before code. Nothing built.
+
 ## August 27th, 2026 - fix(alerts): an expired Twitch token is refreshed before an alert is built
 
 The webhook path built every alert with the account's access token as stored, and nothing on

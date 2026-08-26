@@ -256,6 +256,9 @@ are **not** one storage: wiring refuses records by design, the debrief is nothin
 
 ### B4. The debrief itself
 
+**Sketched 2026-08-27: `event-delivery-debrief-2026-08.md`.** A `Delivery` tab on
+`/dashboard/stream-sessions`, sentences first, three decisions listed before code.
+
 Per stream session, aggregated by time window over `created_at` (never the
 `stream_session_id` FK - see CLAUDE.md). Failure reason is the product; the percentage is a
 footnote. Not started until B1-B3 exist. Data tool, not dashboard.
