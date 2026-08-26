@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DeliveryOutcome;
+use App\Models\User;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,6 +25,9 @@ class StreamSessionController extends Controller
 
     /** Max sessions returned per request (most recent first). */
     private const int SESSION_LIMIT = 50;
+
+    /** Newest non-delivered alerts listed per session on the Delivery tab. */
+    private const int FAILURES_LIMIT = 20;
 
     /** Max resub messages to surface per session (most recent first). */
     private const int RESUB_MESSAGE_LIMIT = 25;
@@ -49,8 +55,9 @@ class StreamSessionController extends Controller
         $boundedLists = $this->loadBoundedListEvents($userId);
         $resubMessages = $this->loadResubMessages($userId);
         $income = $this->loadExternalIncome($userId);
+        $delivery = $this->loadDelivery($userId, $request->user());
 
-        $payload = array_map(function (array $s) use ($headlines, $subTiers, $rewards, $goals, $boundedLists, $resubMessages, $income) {
+        $payload = array_map(function (array $s) use ($headlines, $subTiers, $rewards, $goals, $boundedLists, $resubMessages, $income, $delivery) {
             $sid = $s['session_id'];
             $h = $headlines[$sid] ?? $this->emptyHeadline();
 
@@ -115,6 +122,10 @@ class StreamSessionController extends Controller
                         'donations' => $income[$sid]['donations'] ?? [],
                     ],
                 ],
+                // Null when no alert in this window was scored: a stream from
+                // before the ledger, or one where nothing should have reached the
+                // overlay. The page shows nothing for it - never a number.
+                'delivery' => $delivery[$sid] ?? null,
             ];
         }, array_values($this->sessionsCache));
 
@@ -242,6 +253,148 @@ class StreamSessionController extends Controller
         $sql = 'windows(session_id, window_start, window_end) AS (VALUES '.implode(',', $placeholders).')';
 
         return [$sql, $bindings];
+    }
+
+    /**
+     * The delivery debrief per session: what became of the alerts that should
+     * have reached the overlay, from the ledger (App\Enums\DeliveryOutcome).
+     *
+     * Scored outcomes (delivered, no_listener, failed, token_invalid,
+     * render_failed) are the denominator. no_target outcomes are counted for
+     * context and never against the rate. A session with no scored row is
+     * absent from the result, so the page shows nothing for it rather than
+     * 0% or 100% - every stream before the ledger looks like that.
+     *
+     * Latency is delivered_at - created_at over delivered rows. The failures
+     * list is the newest FAILURES_LIMIT non-delivered scored rows.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function loadDelivery(int $userId, User $user): array
+    {
+        $sessions = $this->sessionsCache;
+        if (empty($sessions)) {
+            return [];
+        }
+
+        $scored = DeliveryOutcome::scoredValues();
+        $scoredList = implode(',', array_map(fn ($v) => "'$v'", $scored));
+
+        [$cte, $bindings] = $this->buildWindowsCte($sessions);
+        $bindings[] = $userId;
+        $bindings[] = $userId;
+
+        $rows = "
+            rows AS (
+                SELECT w.session_id, e.outcome, e.connections, e.created_at, e.delivered_at, e.event_type, 'twitch' AS source
+                FROM windows w
+                JOIN twitch_events e
+                    ON e.user_id = ?
+                    AND e.created_at >= w.window_start
+                    AND e.created_at <= w.window_end
+                    AND e.outcome IS NOT NULL
+                UNION ALL
+                SELECT w.session_id, e.outcome, e.connections, e.created_at, e.delivered_at, e.event_type, e.service AS source
+                FROM windows w
+                JOIN external_events e
+                    ON e.user_id = ?
+                    AND e.created_at >= w.window_start
+                    AND e.created_at <= w.window_end
+                    AND e.outcome IS NOT NULL
+            )
+        ";
+
+        $countsSql = "
+            WITH $cte, $rows
+            SELECT
+                session_id,
+                COUNT(*) FILTER (WHERE outcome IN ($scoredList)) AS scored,
+                COUNT(*) FILTER (WHERE outcome = 'delivered') AS delivered,
+                COUNT(*) FILTER (WHERE outcome = 'no_listener') AS no_listener,
+                COUNT(*) FILTER (WHERE outcome = 'failed') AS failed,
+                COUNT(*) FILTER (WHERE outcome = 'token_invalid') AS token_invalid,
+                COUNT(*) FILTER (WHERE outcome = 'render_failed') AS render_failed,
+                COUNT(*) FILTER (WHERE outcome = 'no_mapping') AS no_mapping,
+                COUNT(*) FILTER (WHERE outcome = 'muted') AS muted,
+                COUNT(*) FILTER (WHERE outcome = 'chat_only') AS chat_only,
+                COUNT(*) FILTER (WHERE outcome = 'unknown_user') AS unknown_user,
+                MIN(created_at) FILTER (WHERE outcome = 'no_listener') AS first_no_listener_at,
+                percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (delivered_at - created_at)) * 1000)
+                    FILTER (WHERE outcome = 'delivered' AND delivered_at IS NOT NULL) AS latency_p50_ms,
+                percentile_cont(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (delivered_at - created_at)) * 1000)
+                    FILTER (WHERE outcome = 'delivered' AND delivered_at IS NOT NULL) AS latency_p95_ms
+            FROM rows
+            GROUP BY session_id
+        ";
+
+        $out = [];
+        foreach (DB::select($countsSql, $bindings) as $r) {
+            if ((int) $r->scored === 0) {
+                continue;
+            }
+
+            $out[(int) $r->session_id] = [
+                'scored' => (int) $r->scored,
+                'delivered' => (int) $r->delivered,
+                'no_listener' => (int) $r->no_listener,
+                'failed' => (int) $r->failed,
+                'token_invalid' => (int) $r->token_invalid,
+                'render_failed' => (int) $r->render_failed,
+                'no_target' => [
+                    'no_mapping' => (int) $r->no_mapping,
+                    'muted' => (int) $r->muted,
+                    'chat_only' => (int) $r->chat_only,
+                    'unknown_user' => (int) $r->unknown_user,
+                    'total' => (int) $r->no_mapping + (int) $r->muted + (int) $r->chat_only + (int) $r->unknown_user,
+                ],
+                'first_no_listener_at' => $r->first_no_listener_at ? Carbon::parse($r->first_no_listener_at)->toIso8601String() : null,
+                'latency_p50_ms' => $r->latency_p50_ms !== null ? (int) round((float) $r->latency_p50_ms) : null,
+                'latency_p95_ms' => $r->latency_p95_ms !== null ? (int) round((float) $r->latency_p95_ms) : null,
+                // The one failure a streamer can fix, dated so the sentence can say when.
+                'token_expired_at' => (int) $r->token_invalid > 0 && $user->token_expires_at?->isPast()
+                    ? $user->token_expires_at->toIso8601String()
+                    : null,
+                'failures' => [],
+            ];
+        }
+
+        if ($out === []) {
+            return [];
+        }
+
+        [$cte2, $failureBindings] = $this->buildWindowsCte($sessions);
+        $failureBindings[] = $userId;
+        $failureBindings[] = $userId;
+        $failureBindings[] = self::FAILURES_LIMIT;
+
+        $failuresSql = "
+            WITH $cte2, $rows,
+            ranked AS (
+                SELECT session_id, outcome, event_type, source, created_at,
+                       ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY created_at DESC) AS rn
+                FROM rows
+                WHERE outcome IN ($scoredList) AND outcome <> 'delivered'
+            )
+            SELECT session_id, outcome, event_type, source, created_at
+            FROM ranked
+            WHERE rn <= ?
+            ORDER BY session_id, created_at DESC
+        ";
+
+        foreach (DB::select($failuresSql, $failureBindings) as $r) {
+            $sid = (int) $r->session_id;
+            if (! isset($out[$sid])) {
+                continue;
+            }
+            $out[$sid]['failures'][] = [
+                'at' => Carbon::parse($r->created_at)->toIso8601String(),
+                'source' => $r->source,
+                'event_type' => $r->event_type,
+                'outcome' => $r->outcome,
+            ];
+        }
+
+        return $out;
     }
 
     /**

@@ -57,12 +57,12 @@ class UnifiedEventFeedService
     {
         $twitch = DB::table('twitch_events')
             ->where('user_id', $userId)
-            ->selectRaw("id, 'twitch' AS source, event_type, created_at, event_data::text AS event_data_json, NULL::text AS normalized_payload_json");
+            ->selectRaw("id, 'twitch' AS source, event_type, created_at, outcome, event_data::text AS event_data_json, NULL::text AS normalized_payload_json");
 
         $external = DB::table('external_events')
             ->where('user_id', $userId)
             ->where('service', '!=', 'gps')
-            ->selectRaw('id, service AS source, event_type, created_at, NULL::text AS event_data_json, normalized_payload::text AS normalized_payload_json');
+            ->selectRaw('id, service AS source, event_type, created_at, outcome, NULL::text AS event_data_json, normalized_payload::text AS normalized_payload_json');
 
         $this->applyFilters($twitch, $external, $filters);
 
@@ -82,6 +82,9 @@ class UnifiedEventFeedService
                     ? (EventTemplateMapping::EVENT_TYPES[$row->event_type] ?? $row->event_type)
                     : $row->event_type,
                 'created_at' => Carbon::parse($row->created_at)->toIso8601String(),
+                // What became of this event's alert (App\Enums\DeliveryOutcome).
+                // Null for rows from before the ledger; the feed shows nothing.
+                'outcome' => $row->outcome,
                 'event_data' => $row->event_data_json ? json_decode($row->event_data_json, true) : null,
                 'normalized_payload' => $row->normalized_payload_json ? json_decode($row->normalized_payload_json, true) : null,
             ];

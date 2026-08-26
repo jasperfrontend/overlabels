@@ -256,8 +256,9 @@ are **not** one storage: wiring refuses records by design, the debrief is nothin
 
 ### B4. The debrief itself
 
-**Sketched 2026-08-27: `event-delivery-debrief-2026-08.md`.** A `Delivery` tab on
-`/dashboard/stream-sessions`, sentences first, three decisions listed before code.
+**Built 2026-08-27** to the sketch (`event-delivery-debrief-2026-08.md`): `Delivery` tab,
+20 newest failures, outcome word on `/dashboard/events` rows. Decisions: Delivery, 20, yes now.
+**With this the audit's list is complete.**
 
 Per stream session, aggregated by time window over `created_at` (never the
 `stream_session_id` FK - see CLAUDE.md). Failure reason is the product; the percentage is a

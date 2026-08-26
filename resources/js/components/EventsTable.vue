@@ -6,6 +6,7 @@ import { RefreshCw, ChevronDown, ChevronRight, Gift } from '@lucide/vue';
 import { useEventColors } from '@/composables/useEventColors';
 import type { UnifiedEvent } from '@/composables/useEventColors';
 import ProviderIcon from '@/components/ProviderIcon.vue';
+import { outcomeLabel } from '@/utils/deliveryOutcome';
 
 const { eventHoverBorderClass, eventDotClass } = useEventColors();
 
@@ -470,7 +471,13 @@ function relativeTime(iso: string): string {
                     </button>
                   </div>
                   <div class="flex w-full items-center gap-2 pl-4 text-xs">
-                    <div class="ml-2 text-ellipsis whitespace-nowrap md:ml-auto">{{ relativeTime(event.created_at) }}</div>
+                    <!-- What became of this event's alert. Nothing for rows from before the ledger. -->
+                    <span v-if="outcomeLabel(event.outcome)" class="ml-2 whitespace-nowrap text-foreground/60 md:ml-auto">{{
+                      outcomeLabel(event.outcome)
+                    }}</span>
+                    <div class="ml-2 text-ellipsis whitespace-nowrap" :class="outcomeLabel(event.outcome) ? '' : 'md:ml-auto'">
+                      {{ relativeTime(event.created_at) }}
+                    </div>
                     <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
                   </div>
                 </div>

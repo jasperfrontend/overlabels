@@ -7,6 +7,7 @@ import { TvMinimalPlay, Clock, Swords, PencilLine, Trophy, AlertTriangle, Messag
 import type { BreadcrumbItem } from '@/types';
 import { computed, ref } from 'vue';
 import { useSessionDataFormatter } from '@/composables/useSessionDataFormatter';
+import { outcomeLabel } from '@/utils/deliveryOutcome';
 
 interface PollChoice {
   id: string;
@@ -137,6 +138,31 @@ interface StreamSession {
     title_history: TitleHistoryEntry[];
     income: { totals: IncomeTotal[]; count: number; donations: Donation[] };
   };
+  // Null when no alert in this stream was scored - before the ledger, or nothing
+  // should have reached the overlay. The tab shows nothing for it, never a number.
+  delivery: Delivery | null;
+}
+
+interface DeliveryFailure {
+  at: string;
+  source: string;
+  event_type: string;
+  outcome: string;
+}
+
+interface Delivery {
+  scored: number;
+  delivered: number;
+  no_listener: number;
+  failed: number;
+  token_invalid: number;
+  render_failed: number;
+  no_target: { no_mapping: number; muted: number; chat_only: number; unknown_user: number; total: number };
+  first_no_listener_at: string | null;
+  latency_p50_ms: number | null;
+  latency_p95_ms: number | null;
+  token_expired_at: string | null;
+  failures: DeliveryFailure[];
 }
 
 const props = defineProps<{ sessions: StreamSession[] }>();
@@ -153,6 +179,7 @@ const TABS = [
   { key: 'twitch', label: 'Twitch' },
   { key: 'income', label: 'Income' },
   { key: 'engagement', label: 'Engagement' },
+  { key: 'delivery', label: 'Delivery' },
   { key: 'raw', label: 'Raw' },
 ] as const;
 
@@ -330,6 +357,70 @@ function hasTwitchDetail(s: StreamSession): boolean {
 
 function hasEngagement(s: StreamSession): boolean {
   return s.stats.goals.length > 0 || s.stats.polls.length > 0 || s.stats.hype_trains.length > 0;
+}
+
+/** Ledger timestamps are whole seconds, so latency is stated in whole seconds too. */
+function fmtLatency(ms: number): string {
+  const s = Math.round(ms / 1000);
+  return `${fmtNum(s)} s`;
+}
+
+function alertsWord(n: number): string {
+  return n === 1 ? 'alert' : 'alerts';
+}
+
+/**
+ * The debrief, one sentence per fact and only when true. The percentage is a
+ * footnote; the failure reason is the product. Order: headline, then the
+ * reasons a streamer can act on, then what nothing could be done about.
+ */
+function deliverySentences(d: Delivery): string[] {
+  const out: string[] = [];
+
+  out.push(
+    d.delivered === d.scored
+      ? `All ${fmtNum(d.scored)} ${alertsWord(d.scored)} reached your overlay.`
+      : `${fmtNum(d.delivered)} of ${fmtNum(d.scored)} ${alertsWord(d.scored)} reached your overlay.`,
+  );
+
+  if (d.token_invalid > 0) {
+    const when = d.token_expired_at ? ` on ${formatDate(d.token_expired_at)}` : '';
+    out.push(`Your Twitch login expired${when}. ${fmtNum(d.token_invalid)} ${alertsWord(d.token_invalid)} could not be built.`);
+  }
+  if (d.no_listener > 0) {
+    const at = d.first_no_listener_at ? ` (${formatTime(d.first_no_listener_at)})` : '';
+    out.push(
+      d.no_listener === 1
+        ? `1 was sent while no overlay was open${at}.`
+        : `${fmtNum(d.no_listener)} were sent while no overlay was open, the first${at}.`,
+    );
+  }
+  if (d.failed > 0) {
+    out.push(`${fmtNum(d.failed)} failed on the way to your overlay.`);
+  }
+  if (d.render_failed > 0) {
+    out.push(`${fmtNum(d.render_failed)} could not be built.`);
+  }
+  if (d.latency_p50_ms !== null && d.latency_p95_ms !== null) {
+    out.push(
+      d.latency_p95_ms <= 1000
+        ? 'Alerts reached the overlay within a second.'
+        : `Alerts reached the overlay in ${fmtLatency(d.latency_p50_ms)} (typical), ${fmtLatency(d.latency_p95_ms)} (slowest).`,
+    );
+  }
+
+  return out;
+}
+
+/** The no_target context line: never scored, said once, only the non-zero parts. */
+function noTargetSentence(d: Delivery): string | null {
+  if (d.no_target.total === 0) return null;
+  const parts: string[] = [];
+  if (d.no_target.muted) parts.push(`muted: ${fmtNum(d.no_target.muted)}`);
+  if (d.no_target.chat_only) parts.push(`chat only: ${fmtNum(d.no_target.chat_only)}`);
+  if (d.no_target.unknown_user) parts.push(`unknown user: ${fmtNum(d.no_target.unknown_user)}`);
+  const detail = parts.length ? ` (${parts.join(', ')})` : '';
+  return `${fmtNum(d.no_target.total)} ${d.no_target.total === 1 ? 'event' : 'events'} had no alert set up${detail}.`;
 }
 
 const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-foreground/60';
@@ -702,6 +793,55 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Delivery -->
+            <div v-else-if="activeTab === 'delivery'" class="space-y-6">
+              <p v-if="!selected.delivery" class="text-sm text-foreground/60">
+                No delivery data for this stream. Overlabels started recording what became of each alert on 27 August 2026; streams before that, and
+                streams where no alert should have reached an overlay, have nothing to report.
+              </p>
+
+              <template v-else>
+                <div class="space-y-2">
+                  <h3 :class="sectionHeading">What happened</h3>
+                  <ul class="space-y-1.5 text-sm text-foreground">
+                    <li v-for="(sentence, i) in deliverySentences(selected.delivery)" :key="i" :class="i === 0 ? 'font-medium' : ''">
+                      {{ sentence }}
+                    </li>
+                  </ul>
+                  <p v-if="noTargetSentence(selected.delivery)" class="text-xs text-foreground/60">{{ noTargetSentence(selected.delivery) }}</p>
+                  <p class="text-xs text-foreground/60">
+                    "Reached your overlay" means the update was delivered to at least one connected overlay. Whether it was seen is not something
+                    Overlabels can know.
+                  </p>
+                </div>
+
+                <div v-if="selected.delivery.failures.length > 0" class="space-y-2">
+                  <h3 :class="sectionHeading">Failures ({{ selected.delivery.failures.length }})</h3>
+                  <div class="overflow-x-auto border border-sidebar-border">
+                    <table class="w-full text-sm">
+                      <thead>
+                        <tr class="border-b border-sidebar-border bg-background/40">
+                          <th class="p-2 text-left font-medium text-foreground/80">Time</th>
+                          <th class="p-2 text-left font-medium text-foreground/80">Event</th>
+                          <th class="p-2 text-left font-medium text-foreground/80">Outcome</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(f, i) in selected.delivery.failures" :key="i" class="border-b border-sidebar-border last:border-0">
+                          <td class="p-2 text-foreground tabular-nums">{{ formatTime(f.at) }}</td>
+                          <td class="p-2 text-foreground">
+                            <span v-if="f.source !== 'twitch'" class="text-foreground/60">{{ serviceLabel(f.source) }} </span>{{ f.event_type }}
+                          </td>
+                          <td class="p-2 text-foreground">{{ outcomeLabel(f.outcome) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p v-if="selected.delivery.failures.length === 20" class="text-xs text-foreground/60">The 20 most recent are listed.</p>
+                </div>
+              </template>
             </div>
 
             <!-- Raw -->
