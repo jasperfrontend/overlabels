@@ -579,7 +579,7 @@ class TwitchEventSubController extends Controller
                         // Render the user's custom alert template
                         $this->renderEventAlert($user, $mapping, $data, $twitchEvent);
                     } else {
-                        app(DeliveryLedger::class)->noTarget($twitchEvent, DeliveryOutcome::NoMapping);
+                        app(DeliveryLedger::class)->record($twitchEvent, DeliveryOutcome::NoMapping);
                         Log::warning('No enabled template mapping found', [
                             'event_type' => $eventType,
                             'user_id' => $user->id,
@@ -588,11 +588,11 @@ class TwitchEventSubController extends Controller
                         ]);
                     }
                 } else {
-                    app(DeliveryLedger::class)->noTarget($twitchEvent, DeliveryOutcome::UnknownUser);
+                    app(DeliveryLedger::class)->record($twitchEvent, DeliveryOutcome::UnknownUser);
                     Log::warning("User not found for Twitch ID: $broadcasterId");
                 }
             } else {
-                app(DeliveryLedger::class)->noTarget($twitchEvent, DeliveryOutcome::UnknownUser);
+                app(DeliveryLedger::class)->record($twitchEvent, DeliveryOutcome::UnknownUser);
                 Log::warning('No broadcaster ID found in event', [
                     'event_type' => $eventType,
                     'event_keys' => array_keys($event),
@@ -641,7 +641,7 @@ class TwitchEventSubController extends Controller
         // bot message. Guarded here so the live webhook path, replay, and
         // test cheer are all covered by one check.
         if (app(AlertMuteService::class)->isMuted($user)) {
-            app(DeliveryLedger::class)->noTarget($row, DeliveryOutcome::Muted);
+            app(DeliveryLedger::class)->record($row, DeliveryOutcome::Muted);
 
             return;
         }
@@ -695,7 +695,7 @@ class TwitchEventSubController extends Controller
                 app(DeliveryLedger::class)->stamp($row, $alertId);
                 broadcast($alert);
             } else {
-                app(DeliveryLedger::class)->noTarget($row, DeliveryOutcome::ChatOnly);
+                app(DeliveryLedger::class)->record($row, DeliveryOutcome::ChatOnly);
             }
 
             // Synthesis is queued (best-effort, never blocks the alert). The
@@ -723,6 +723,11 @@ class TwitchEventSubController extends Controller
             }
 
         } catch (Exception $e) {
+            // The alert should have reached the overlay and could not even be
+            // built. Scored, and a refused token gets its own name: it is the
+            // one failure the streamer can fix (TenzinNiznet, token expired
+            // June 14th, every follow alert since - invisible until this).
+            app(DeliveryLedger::class)->record($row, DeliveryOutcome::forRenderException($e));
             Log::error("Failed to render event alert: {$e->getMessage()}", [
                 'user_id' => $user->id,
                 'template_id' => $mapping->template_id,

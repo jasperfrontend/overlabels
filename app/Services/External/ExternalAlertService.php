@@ -28,7 +28,7 @@ class ExternalAlertService
         // Global mute: muted is muted - no broadcast, no TTS synthesis, no
         // bot message. Control updates still flow; only alert output stops.
         if (app(AlertMuteService::class)->isMuted($user)) {
-            $ledger->noTarget($storedEvent, DeliveryOutcome::Muted);
+            $ledger->record($storedEvent, DeliveryOutcome::Muted);
 
             return false;
         }
@@ -43,7 +43,7 @@ class ExternalAlertService
         );
 
         if (! $mapping || ! $mapping->template) {
-            $ledger->noTarget($storedEvent, DeliveryOutcome::NoMapping);
+            $ledger->record($storedEvent, DeliveryOutcome::NoMapping);
 
             return false;
         }
@@ -88,7 +88,7 @@ class ExternalAlertService
                 $ledger->stamp($storedEvent, $alertId);
                 broadcast($alert);
             } else {
-                $ledger->noTarget($storedEvent, DeliveryOutcome::ChatOnly);
+                $ledger->record($storedEvent, DeliveryOutcome::ChatOnly);
             }
 
             if ($ttsText !== null) {
@@ -119,6 +119,7 @@ class ExternalAlertService
 
             return true;
         } catch (\Exception $e) {
+            $ledger->record($storedEvent, DeliveryOutcome::forRenderException($e));
             Log::error("Failed to dispatch external alert: {$e->getMessage()}", [
                 'user_id' => $user->id,
                 'service' => $event->getService(),
