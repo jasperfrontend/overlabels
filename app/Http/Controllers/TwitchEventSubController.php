@@ -23,6 +23,7 @@ use App\Services\StreamStateMachineService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
+use App\Services\TwitchTokenService;
 use Exception;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
@@ -504,6 +505,15 @@ class TwitchEventSubController extends Controller
 
             $user = $broadcasterId ? User::where('twitch_id', $broadcasterId)->first() : null;
 
+            // Everything below builds with the stored access token and nothing
+            // else on this path refreshes it. An expired one is refreshed once,
+            // here, before enrichment and the alert. Never ensureValidToken():
+            // it calls Twitch's validate endpoint whenever the stored expiry is
+            // not past, which on this path is one HTTP call per event.
+            if ($user && $user->token_expires_at?->isPast()) {
+                $this->refreshExpiredToken($user);
+            }
+
             // Twitch poll payloads ship per-choice votes but no winner. Compute it
             // server-side once so the same value flows through DB persist, alert
             // render, and broadcast - and templates can iterate it via foreach.
@@ -629,6 +639,26 @@ class TwitchEventSubController extends Controller
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
+        }
+    }
+
+    /**
+     * Refresh a stored token whose expiry has passed, updating $user in place.
+     * A failed refresh (no refresh token, revoked) backs off ten minutes so an
+     * account that cannot be refreshed pays one outbound call per ten minutes,
+     * not one per event; its alerts then fail as before and the ledger says
+     * token_invalid, which the /wiring token wire turns into "log in again".
+     */
+    private function refreshExpiredToken(User $user): void
+    {
+        $backoffKey = "twitch:refresh_failed:{$user->id}";
+
+        if (Cache::has($backoffKey)) {
+            return;
+        }
+
+        if (! app(TwitchTokenService::class)->refreshUserToken($user)) {
+            Cache::put($backoffKey, true, now()->addMinutes(10));
         }
     }
 

@@ -1,5 +1,28 @@
 # CHANGELOG AUGUST 2026
 
+## August 27th, 2026 - fix(alerts): an expired Twitch token is refreshed before an alert is built
+
+The webhook path built every alert with the account's access token as stored, and nothing on
+that path refreshed it. Twitch user tokens last about four hours; the dashboard middleware and
+an open overlay's five-minute health check keep them fresh, so a streamer with an overlay open
+never noticed. A streamer who went live without opening either got failed alerts - `token_invalid`
+in the ledger since yesterday, nothing at all before - even with a perfectly good refresh token,
+until something unrelated refreshed it.
+
+- **When the stored expiry is past, the token is refreshed once, in-request, before enrichment
+  and the alert.** `refreshUserToken()` updates the model in place, so the enrichment and Helix
+  calls that follow use the new token.
+- **Not `ensureValidToken()`.** When the stored expiry is not past it calls Twitch's validate
+  endpoint, which on this path is one outbound HTTP call per event. This fix costs nothing while
+  the token is valid and one call per expiry.
+- **A failed refresh backs off ten minutes** (cache key per user). An account whose refresh
+  token is dead pays one call per ten minutes rather than one per event; its alerts fail as
+  before and the ledger says `token_invalid`, which the `/wiring` token wire turns into "log in
+  again".
+- Pinned by `WebhookAlertTokenRefreshTest` (3 tests). The first was verified to fail before the
+  fix: the token stayed stale through the webhook.
+- A10 of `docs/design/event-delivery-heal-2026-08.md`, surfaced by B3's token wire.
+
 ## August 27th, 2026 - feat(wiring): the alerts circuit - four present-tense wires for the delivery path
 
 `/wiring` had two wires, neither on the event path. It now has an `Alerts` circuit with four,
