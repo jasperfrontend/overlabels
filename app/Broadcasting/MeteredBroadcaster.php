@@ -88,8 +88,12 @@ class MeteredBroadcaster implements Broadcaster
 
     /**
      * Pull `channel => subscription_count` out of Reverb's trigger response,
-     * which is `{channels: {"<name>": {subscription_count: N}}}`. Anything
-     * else (no info requested, an older server, an odd shape) yields [].
+     * which is `{channels: {"<name>": {subscription_count: N}}}`. A channel
+     * nobody is subscribed to comes back as `{}` - Reverb only reports
+     * `subscription_count` for an occupied channel and filters the null out -
+     * and that is the one answer this exists to record, so a channel that is
+     * present without a count is 0. No `channels` at all (info not requested,
+     * an odd shape) yields [].
      *
      * @return array<string, int>
      */
@@ -102,10 +106,7 @@ class MeteredBroadcaster implements Broadcaster
 
         $counts = [];
         foreach ((array) $channels as $name => $info) {
-            $info = (array) $info;
-            if (isset($info['subscription_count'])) {
-                $counts[(string) $name] = (int) $info['subscription_count'];
-            }
+            $counts[(string) $name] = (int) (((array) $info)['subscription_count'] ?? 0);
         }
 
         return $counts;

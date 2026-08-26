@@ -1,5 +1,22 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - fix(broadcast): "nobody was listening" is recorded as zero, not skipped
+
+Follow-up to the entry below, found within the hour on prod: one stream live, 74 events in 25
+minutes, the usage meter ticking, and not a single delivery key written. Reverb reports
+`subscription_count` only for an occupied channel and filters the null out, so a channel with no
+subscriber comes back as `{}`. The parser required the key and skipped the channel - which
+silently dropped the single most important answer the feature exists to give: we sent, and nobody
+was there.
+
+- **A channel present in Reverb's response without a count is 0.** No `channels` at all (info
+  not requested) still yields nothing.
+- Verified against a real local Reverb rather than the mocked client: unoccupied is
+  `{"channels":{"private-alerts.424242":{}}}`, `info=subscription_count,occupied` adds
+  `occupied:false`, no info is `{}`. The unit test now carries that exact shape.
+- Which also answers why prod wrote nothing: the live channel had no overlay or dashboard
+  connected. That is now a recorded fact rather than an absence.
+
 ## August 26th, 2026 - feat(broadcast): every broadcast reads back how many connections it reached
 
 Until today the app's knowledge of a broadcast ended at "handed to the Reverb driver". The return

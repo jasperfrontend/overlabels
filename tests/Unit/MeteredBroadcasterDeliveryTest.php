@@ -120,8 +120,25 @@ test('subscriptionCounts reads the reverb response shape and ignores anything el
     expect(MeteredBroadcaster::subscriptionCounts(reverbTriggerResponse(['private-alerts.1' => 4])))
         ->toBe(['private-alerts.1' => 4])
         ->and(MeteredBroadcaster::subscriptionCounts((object) []))->toBe([])
-        ->and(MeteredBroadcaster::subscriptionCounts(null))->toBe([])
-        ->and(MeteredBroadcaster::subscriptionCounts(['channels' => ['a' => ['occupied' => true]]]))->toBe([]);
+        ->and(MeteredBroadcaster::subscriptionCounts(null))->toBe([]);
+});
+
+test('a channel nobody is subscribed to comes back as {} and counts as zero', function () {
+    // Reverb reports subscription_count only for an occupied channel and
+    // filters the null out, so an unoccupied channel is present but empty.
+    // Verified against a real local Reverb 2026-08-26. This is the single
+    // most important answer: we sent, nobody was listening.
+    $response = (object) ['channels' => (object) ['private-alerts.123' => (object) []]];
+
+    expect(MeteredBroadcaster::subscriptionCounts($response))->toBe(['private-alerts.123' => 0]);
+
+    $pusher = Mockery::mock(Pusher::class);
+    $pusher->shouldReceive('trigger')->once()->andReturn($response);
+    $meter = new BroadcastMeter;
+    (new MeteredBroadcaster(new PusherBroadcaster($pusher), $meter))
+        ->broadcast(['private-alerts.123'], 'alert.triggered', []);
+
+    expect($meter->lastDeliveryFor('123')['connections'])->toBe(0);
 });
 
 test('lastDeliveryFor is null for an account that has never been broadcast to', function () {
