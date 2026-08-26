@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DeliveryOutcome;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -54,6 +55,10 @@ class ExternalEvent extends Model
         'private_metadata',
         'controls_updated',
         'alert_dispatched',
+        'alert_id',
+        'outcome',
+        'delivered_at',
+        'connections',
         'stream_session_id',
     ];
 
@@ -63,6 +68,9 @@ class ExternalEvent extends Model
         'private_metadata' => 'encrypted:array',
         'controls_updated' => 'boolean',
         'alert_dispatched' => 'boolean',
+        'outcome' => DeliveryOutcome::class,
+        'delivered_at' => 'datetime',
+        'connections' => 'integer',
     ];
 
     public function user(): BelongsTo

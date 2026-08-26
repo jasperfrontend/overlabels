@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DeliveryOutcome;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -51,6 +52,10 @@ class TwitchEvent extends Model
         'twitch_timestamp',
         'processed',
         'stream_session_id',
+        'alert_id',
+        'outcome',
+        'delivered_at',
+        'connections',
     ];
 
     /**
@@ -62,6 +67,9 @@ class TwitchEvent extends Model
         'event_data' => 'array',
         'twitch_timestamp' => 'datetime',
         'processed' => 'boolean',
+        'outcome' => DeliveryOutcome::class,
+        'delivered_at' => 'datetime',
+        'connections' => 'integer',
     ];
 
     /**

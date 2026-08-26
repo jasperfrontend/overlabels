@@ -187,6 +187,9 @@ the overlay sending nothing.
 
 ### B2. Close the ledger row from the worker
 
+**Built 2026-08-27 to the note.** `DeliveryOutcome`, `DeliveryLedger`, `MarkAlertDeliveryFailed`,
+four columns per event table, `DeliveryLedgerTest`.
+
 **Design note written 2026-08-26: `event-delivery-ledger-2026-08.md`.** The three questions below
 are settled there (unit = the alert; zero connections = `no_listener`, not `failed`; 90 days), and
 the "how does the worker learn the row" question turned out to be already answered: `alert_id`

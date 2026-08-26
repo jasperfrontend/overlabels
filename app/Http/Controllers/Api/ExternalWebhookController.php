@@ -199,7 +199,7 @@ class ExternalWebhookController extends Controller
         }
 
         // 10. Dispatch alert
-        $alertDispatched = $this->alertService->dispatch($normalizedEvent, $user);
+        $alertDispatched = $this->alertService->dispatch($normalizedEvent, $user, $storedEvent);
         if ($alertDispatched) {
             $storedEvent->update(['alert_dispatched' => true]);
         }
