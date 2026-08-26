@@ -1,5 +1,37 @@
 # CHANGELOG AUGUST 2026
 
+## August 27th, 2026 - feat(delivery): the ledger - every event row says what became of its alert
+
+Built to the note below. Until now an inbound event's row said it arrived and nothing more; what
+happened to its alert - queued, delivered to three overlays, delivered to nobody, died in the
+worker, never had one - was scattered across `failed_jobs`, a warning log and a Redis counter, or
+nowhere. Now the row carries it.
+
+- **Four nullable columns on `twitch_events` and `external_events`:** `alert_id`, `outcome`,
+  `delivered_at`, `connections`. Additive; every existing row keeps null and simply predates the
+  ledger. `processed`, `alert_dispatched` and `controls_updated` are untouched.
+- **`App\Enums\DeliveryOutcome`, two families.** Scored: `delivered`, `no_listener`, `failed`.
+  `no_target`, reported but never counted against a rate: `no_mapping`, `muted`, `chat_only`,
+  `unknown_user`. An account with no alerts has no scored rows at all - its zero is nothing, by
+  construction.
+- **Three writes.** The request records a `no_target` reason at the exit it already takes, or
+  stamps the row with the `alert_id` it just minted for the broadcast. The worker, in
+  `MeteredBroadcaster` where B1 already reads Reverb's `subscription_count`, closes the row by
+  that id: `delivered` at one connection or more, `no_listener` at zero. `MarkAlertDeliveryFailed`
+  listens for `JobFailed` and closes `failed` - once, after the last retry, because the
+  broadcaster cannot see the attempt number and a `failed` written on attempt one would be
+  overwritten by a retry that succeeds.
+- The correlation key was already there: `alert_id` rides the payload at
+  `payload['alert']['alert_id']`. Nothing added to the wire. Replays and test cheers mint ids
+  with no row behind them; the close is a no-op. Every ledger write is best-effort and reported,
+  never allowed to break the path it observes.
+- Pinned by `DeliveryLedgerTest` (13 tests): each `no_target` reason on the Twitch path, stamp
+  on overlay work, the external path both ways, worker close at 2 and at 0, no-op on an unknown
+  id, no touch without an alert id, `failed` via a real `JobFailed` with a serialised
+  `BroadcastEvent(AlertTriggered)`, other jobs ignored, and the vocabulary itself.
+- B2 of `docs/design/event-delivery-heal-2026-08.md`. Proof of paint, TTS/sound playback, raw
+  `TwitchEventReceived` and any backfill are out, as the note says.
+
 ## August 26th, 2026 - docs(delivery): the B2 ledger note
 
 `docs/design/event-delivery-ledger-2026-08.md`. The three definitional questions are settled: the

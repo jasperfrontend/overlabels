@@ -3,6 +3,7 @@
 namespace App\Broadcasting;
 
 use App\Services\BroadcastMeter;
+use App\Services\DeliveryLedger;
 use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Contracts\Broadcasting\Broadcaster;
@@ -77,7 +78,17 @@ class MeteredBroadcaster implements Broadcaster
         try {
             foreach (array_chunk($names, 100) as $chunk) {
                 $result = $pusher->trigger($chunk, $event, $payload, $parameters);
-                $this->meter->recordDelivery(self::subscriptionCounts($result), $event);
+                $counts = self::subscriptionCounts($result);
+                $this->meter->recordDelivery($counts, $event);
+
+                // An AlertTriggered carries the id its ledger row was stamped
+                // with; close that row with what Reverb just told us. Failure
+                // is closed elsewhere (MarkAlertDeliveryFailed), after the
+                // last retry, not here on the first exception.
+                $alertId = $payload['alert']['alert_id'] ?? null;
+                if (is_string($alertId) && $alertId !== '') {
+                    app(DeliveryLedger::class)->close($alertId, $counts === [] ? 0 : max($counts));
+                }
             }
         } catch (ApiErrorException $e) {
             throw new BroadcastException(

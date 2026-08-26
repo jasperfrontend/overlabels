@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DeliveryOutcome;
 use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
 use App\Jobs\DeleteTestTwitchEvent;
@@ -13,6 +14,7 @@ use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
 use App\Services\AlertMuteService;
+use App\Services\DeliveryLedger;
 use App\Services\EventMeter;
 use App\Services\LockdownService;
 use App\Services\Messages\AlertMessageRenderer;
@@ -529,7 +531,7 @@ class TwitchEventSubController extends Controller
             // a savepoint rather than poisoning any enclosing transaction (Postgres
             // refuses every statement after an error until rollback).
             try {
-                DB::transaction(fn () => TwitchEvent::create([
+                $twitchEvent = DB::transaction(fn () => TwitchEvent::create([
                     'user_id' => $user?->id,
                     'event_type' => $eventType,
                     'message_id' => $messageId,
@@ -575,8 +577,9 @@ class TwitchEventSubController extends Controller
                     if ($mapping && $mapping->template) {
 
                         // Render the user's custom alert template
-                        $this->renderEventAlert($user, $mapping, $data);
+                        $this->renderEventAlert($user, $mapping, $data, $twitchEvent);
                     } else {
+                        app(DeliveryLedger::class)->noTarget($twitchEvent, DeliveryOutcome::NoMapping);
                         Log::warning('No enabled template mapping found', [
                             'event_type' => $eventType,
                             'user_id' => $user->id,
@@ -585,9 +588,11 @@ class TwitchEventSubController extends Controller
                         ]);
                     }
                 } else {
+                    app(DeliveryLedger::class)->noTarget($twitchEvent, DeliveryOutcome::UnknownUser);
                     Log::warning("User not found for Twitch ID: $broadcasterId");
                 }
             } else {
+                app(DeliveryLedger::class)->noTarget($twitchEvent, DeliveryOutcome::UnknownUser);
                 Log::warning('No broadcaster ID found in event', [
                     'event_type' => $eventType,
                     'event_keys' => array_keys($event),
@@ -630,12 +635,14 @@ class TwitchEventSubController extends Controller
     /**
      * Render user's custom alert template for an event
      */
-    private function renderEventAlert(User $user, EventTemplateMapping $mapping, array $eventData): void
+    private function renderEventAlert(User $user, EventTemplateMapping $mapping, array $eventData, ?TwitchEvent $row = null): void
     {
         // Global mute: muted is muted - no broadcast, no TTS synthesis, no
         // bot message. Guarded here so the live webhook path, replay, and
         // test cheer are all covered by one check.
         if (app(AlertMuteService::class)->isMuted($user)) {
+            app(DeliveryLedger::class)->noTarget($row, DeliveryOutcome::Muted);
+
             return;
         }
 
@@ -684,7 +691,11 @@ class TwitchEventSubController extends Controller
                 $mapping->template->alert_sound_url,
             );
             if ($alert->hasOverlayWork()) {
+                // The worker closes the ledger row by this id once Reverb answers.
+                app(DeliveryLedger::class)->stamp($row, $alertId);
                 broadcast($alert);
+            } else {
+                app(DeliveryLedger::class)->noTarget($row, DeliveryOutcome::ChatOnly);
             }
 
             // Synthesis is queued (best-effort, never blocks the alert). The
@@ -831,7 +842,7 @@ class TwitchEventSubController extends Controller
 
         $alertFired = false;
         if (! $muted && $mapping && $mapping->template) {
-            $this->renderEventAlert($user, $mapping, $data);
+            $this->renderEventAlert($user, $mapping, $data, $testEvent);
             $alertFired = true;
         }
 
