@@ -1,6 +1,29 @@
 # CHANGELOG AUGUST 2026
 
-## August 26th, 2026 - fix(eventsub): a PHP Error on the webhook path is logged instead of swallowed
+## August 26th, 2026 - fix(eventsub): a redelivered Twitch notification is one row and one alert
+
+Twitch retries a notification on any non-2xx or timeout, and every retry carries the same
+`Twitch-Eventsub-Message-Id`. The header was read for the signature and for a warning log and then
+thrown away; `twitch_events` had no column for it. So a redelivery was a second row, a second
+alert on stream, and - for anything counting events - a second success. `external_events` has
+dedup'd on `(service, message_id)` since March; the Twitch side never did.
+
+- **`twitch_events.message_id`, nullable, unique.** Postgres allows any number of NULLs in a
+  unique index, so the 23k existing rows and the synthetic `testCheer` events are untouched; only
+  a real redelivery collides.
+- The webhook passes the header into `handleTwitchEvent()`, which stores it. A
+  `UniqueConstraintViolationException` on the insert is logged at info and returns before any
+  alert, broadcast or control update - the same shape `ExternalWebhookController` has used all
+  along. The insert runs inside `DB::transaction()`: Postgres refuses every statement after an
+  error until rollback, so without a savepoint the caught violation would poison any enclosing
+  transaction. In prod that is a one-statement transaction; under `RefreshDatabase` it is what
+  lets the test count rows after the duplicate.
+- The duplicate still pays the Helix avatar-enrichment call, because that runs before the insert.
+  Not worth an existence pre-check for a path that should almost never fire.
+- Pinned by `TwitchEventRedeliveryTest`: same id twice is one row and one `TwitchEventReceived`
+  (verified to fail before: two rows), different ids are two rows, and id-less rows never collide.
+- A3 of `docs/design/event-delivery-heal-2026-08.md`. With this in, a 5xx from the webhook is
+  safe to return - a retry is no longer a duplicate - which reopens the A2 decision to swallow.
 
 `handleTwitchEvent()` ended in `catch (Exception)` that logged, followed by an empty
 `catch (Throwable) {}`. A PHP `Error` - a `TypeError`, a `ShouldBroadcastNow` event throwing inside

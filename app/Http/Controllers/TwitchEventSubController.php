@@ -22,8 +22,10 @@ use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
 use Exception;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Random\RandomException;
@@ -305,7 +307,7 @@ class TwitchEventSubController extends Controller
 
             // Handle actual events (notifications)
             if ($messageType === 'notification' && isset($data['event'])) {
-                $this->handleTwitchEvent($data);
+                $this->handleTwitchEvent($data, $request->header('Twitch-Eventsub-Message-Id'));
 
                 // Update webhook log
                 $webhookLog['status'] = 'event_processed';
@@ -486,7 +488,7 @@ class TwitchEventSubController extends Controller
     /**
      * Process incoming Twitch events
      */
-    private function handleTwitchEvent(array $data): void
+    private function handleTwitchEvent(array $data, ?string $messageId = null): void
     {
         $eventType = $data['subscription']['type'] ?? 'unknown';
         $event = $data['event'] ?? [];
@@ -520,14 +522,29 @@ class TwitchEventSubController extends Controller
                 $data['event'] = $event;
             }
 
-            // Store the event in the database
-            TwitchEvent::create([
-                'user_id' => $user?->id,
-                'event_type' => $eventType,
-                'event_data' => $event,
-                'twitch_timestamp' => now(),
-                'processed' => false,
-            ]);
+            // Store the event in the database. Twitch retries on any non-2xx or
+            // timeout with the same message id; the unique index turns a
+            // redelivery into a no-op instead of a second row and a second alert.
+            // The insert runs in its own transaction so a violation rolls back to
+            // a savepoint rather than poisoning any enclosing transaction (Postgres
+            // refuses every statement after an error until rollback).
+            try {
+                DB::transaction(fn () => TwitchEvent::create([
+                    'user_id' => $user?->id,
+                    'event_type' => $eventType,
+                    'message_id' => $messageId,
+                    'event_data' => $event,
+                    'twitch_timestamp' => now(),
+                    'processed' => false,
+                ]));
+            } catch (UniqueConstraintViolationException) {
+                Log::info('Duplicate Twitch event ignored', [
+                    'event_type' => $eventType,
+                    'message_id' => $messageId,
+                ]);
+
+                return;
+            }
 
             // Meter the inbound event (the usage unit pricing is set against).
             // testCheer() synthetic events use a different path and are not counted.
