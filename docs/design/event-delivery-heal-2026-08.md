@@ -177,10 +177,13 @@ already owns the Pusher client and is the one chokepoint all 55 broadcast sites 
 "How many connections was this delivered to" is answerable there with no presence channel and
 the overlay sending nothing.
 
-- Open: where the number lands. It arrives in the queue worker, which does not know which
-  `twitch_events` / `external_events` row it belongs to. See B2.
-- Caveat to write down now: it is connections, not overlays, at the instant Reverb accepted the
-  event. Proof of delivery, never proof of paint. That gap stays open on purpose.
+- **Shipped 2026-08-26.** The number lands, for now, as the owner's last delivery in the cache
+  (`BroadcastMeter::recordDelivery()` / `lastDeliveryFor()`: `at`, `connections`, `event`, seven
+  days). Enough for a `/wiring` wire (B3). A per-event record is B2: the worker still does not
+  know which `twitch_events` / `external_events` row a broadcast belongs to.
+- Caveat, written down: it is connections, not overlays, at the instant Reverb accepted the
+  event - an open dashboard tab on `private-alerts.{id}` counts one. Proof of delivery, never
+  proof of paint. That gap stays open on purpose.
 
 ### B2. Close the ledger row from the worker
 

@@ -1,5 +1,29 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - feat(broadcast): every broadcast reads back how many connections it reached
+
+Until today the app's knowledge of a broadcast ended at "handed to the Reverb driver". The return
+value went uninspected, nothing asked Reverb anything, and the only failure signal was a queued job
+exhausting its retries into `failed_jobs`. Whether one overlay, five, or none was listening was
+unknowable. The uptime question needs exactly that number.
+
+- **`MeteredBroadcaster` now triggers Pusher-style with `info=subscription_count`**, which Reverb
+  honours: the trigger response carries the number of connections subscribed to each channel at
+  the moment it accepted the event. Read back at the one chokepoint every broadcast passes, at zero
+  cost - no presence channel, no client message, the overlay still sends nothing.
+- **`BroadcastMeter::recordDelivery()` keeps the account's last delivery** (`at`, `connections`,
+  `event`) in the cache for seven days, highest count across the channels of one broadcast;
+  `lastDeliveryFor()` reads it. This is the seed for a `/wiring` wire ("was anything listening the
+  last time we sent?") - a per-event record is B2, not this.
+- It is proof of delivery to N sockets, never proof of paint. And a socket is a connection, not
+  an overlay: the dashboard subscribes to `private-alerts.{id}` too, so an open dashboard tab
+  counts one. Deliberately not corrected for - that is exactly what Reverb knows.
+- The Pusher path is a mirror of `PusherBroadcaster::broadcast()` (socket exclusion, 100-channel
+  chunks, `BroadcastException` on an API error, so a failed delivery still reaches
+  `failed_jobs`). A non-Pusher inner driver is delegated to unchanged. Pinned by
+  `MeteredBroadcasterDeliveryTest` (8 tests).
+- B1 of `docs/design/event-delivery-heal-2026-08.md`.
+
 ## August 26th, 2026 - feat(alerts): a chat-only alert never reaches the overlay
 
 An alert is a cocktail: overlay HTML, a sound, TTS, a chat message, in any mix. TicanUK's
