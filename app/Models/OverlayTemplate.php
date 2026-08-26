@@ -191,12 +191,20 @@ class OverlayTemplate extends Model
         preg_match_all($pattern, $this->css ?? '', $cssMatches);
         $tags = array_merge($tags, $cssMatches[1] ?? []);
 
-        // Extract tags from conditional statements
-        $conditionalTags = $this->extractConditionalTags($this->html ?? '');
-        $tags = array_merge($tags, $conditionalTags);
+        // The alert's spoken and chat messages are sources too. This list is
+        // the allowlist mapForTemplate() prunes the fire-time payload with, and
+        // AlertMessageRenderer reads that pruned payload - so a tag used only
+        // in the TTS line (`[[[event.reward.cost]]]` when the HTML shows just
+        // the title) was silently empty, and a condition on it compared 0.
+        foreach ([$this->tts_message ?? '', $this->chat_message ?? ''] as $message) {
+            preg_match_all($pattern, $message, $messageMatches);
+            $tags = array_merge($tags, $messageMatches[1] ?? []);
+        }
 
-        $conditionalTags = $this->extractConditionalTags($this->css ?? '');
-        $tags = array_merge($tags, $conditionalTags);
+        // Extract tags from conditional statements
+        foreach ([$this->html ?? '', $this->css ?? '', $this->tts_message ?? '', $this->chat_message ?? ''] as $source) {
+            $tags = array_merge($tags, $this->extractConditionalTags($source));
+        }
 
         // Foreach loops reference scoped aliases inside the body
         // (e.g. `[[[choice.title]]]`) rather than the real flat keys
