@@ -595,7 +595,18 @@ class TwitchEventSubController extends Controller
             if (! empty($broadcasterId)) {
                 broadcast(new TwitchEventReceived($eventType, $event, (string) $broadcasterId));
             }
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // A PHP Error (TypeError, a ShouldBroadcastNow handler throwing, ...) is
+            // not an Exception and used to land here silently: no log, no row, and a
+            // 200 to Twitch so it never retried. Still swallow it - a 5xx makes Twitch
+            // redeliver, and twitch_events has no message_id to dedup the redelivery
+            // against - but say so.
+            Log::error("Unhandled error while handling Twitch event: {$e->getMessage()}", [
+                'event_type' => $eventType,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
         }
     }
 
