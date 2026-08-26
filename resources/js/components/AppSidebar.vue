@@ -70,8 +70,8 @@ const alertsNavItems = computed<NavItem[]>(() =>
 const learnNavItems = computed<NavItem[]>(() =>
   user.value
     ? [
-        { title: 'Help', href: route('help'), icon: BookOpen },
-        { title: 'Reference', href: route('help.reference'), icon: Brackets },
+        { title: 'Help', href: route('help'), target: '_blank', icon: BookOpen },
+        { title: 'Reference', href: route('help.reference'), target: '_blank', icon: Brackets },
         { title: 'Updates', href: route('updates.index'), icon: Newspaper },
       ]
     : [],
