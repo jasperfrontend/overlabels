@@ -152,3 +152,28 @@ it('still refuses to swallow the closing bracket', function () {
 
     expect($m[1])->toBe(['a', 'b']);
 });
+
+it('tokenises every block keyword with the same groups as the TypeScript engine', function () {
+    $text = '[[[if:a > 1]]]x[[[elseif:b]]]y[[[else]]]z[[[endif]]][[[foreach:subs as s]]]q[[[endforeach]]]';
+    preg_match_all(Dsl::blockTokenPattern(), $text, $m, PREG_SET_ORDER);
+
+    expect(array_column($m, 1))->toBe(['if:a > 1', 'elseif:b', 'else', 'endif', 'foreach:subs as s', 'endforeach']);
+    expect($m[0][2])->toBe('a > 1');
+    expect($m[1][3])->toBe('b');
+    expect($m[4][4])->toBe('subs as s');
+});
+
+it('splits a condition body into key, operator and value, longest operator first', function (string $body, array $expected) {
+    preg_match(Dsl::conditionBodyPattern(), $body, $m);
+
+    expect(array_slice($m, 1))->toBe($expected);
+})->with([
+    'gte' => ['c:wins >= 10', ['c:wins', '>=', '10']],
+    'neq no spaces' => ['c:wins!=1', ['c:wins', '!=', '1']],
+    'eq string' => ['bot:args.0 = hello there', ['bot:args.0', '=', 'hello there']],
+    'hyphen key' => ['my-tag < 3', ['my-tag', '<', '3']],
+]);
+
+it('leaves a bare condition unmatched so it is evaluated for truthiness', function () {
+    expect(preg_match(Dsl::conditionBodyPattern(), 'c:flag'))->toBe(0);
+});

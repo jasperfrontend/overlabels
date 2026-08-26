@@ -177,6 +177,20 @@ The counter is created for you on save, and it's an ordinary Control - so `!set`
 **[Random Rolls and Counters](/help/bot/random-and-counters)** covers both tags properly. `!ol help tags`
 prints a short reminder in chat.
 
+### Conditions
+
+`[[[if:...]]]`, `[[[elseif:...]]]`, `[[[else]]]` and `[[[endif]]]` work in a reply the same way they do
+in an overlay, so a command can change what it says based on a Control, the chatter's arguments, or any
+other tag:
+
+```
+!ol cmd add wins Jasper has won [[[counter:wins]]] time[[[if:c:wins != 1]]]s[[[endif]]]
+```
+
+The [Conditionals](/help/conditionals) page lists every comparison. `[[[foreach]]]` is the one block
+that doesn't work in chat - a reply is one line, so there's nothing to repeat into - and saving a
+command that uses it is refused with a reason.
+
 ## Miscellaneous
 
 | Command | Tier | What it does |

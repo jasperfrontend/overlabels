@@ -6,6 +6,7 @@ use App\Models\BotBuiltin;
 use App\Models\BotCommand;
 use App\Models\User;
 use App\Support\BotTags;
+use App\Support\Conditionals;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -67,6 +68,7 @@ class BotCommandValidator
         // is a typo the streamer can't see (it just goes blank mid-stream), and
         // a bad counter key would have us silently not counting. Both are
         // cheaper to refuse at the point of writing than to debug live.
+        $this->assertBlocksAreWellFormed($data['reply']);
         $this->assertTagsAreReadable($data['reply']);
         $this->assertRandRangesAreValid($data['reply']);
         $this->assertCounterKeysAreValid($userId, $data['reply']);
@@ -93,6 +95,28 @@ class BotCommandValidator
         $data['command'] = $command;
 
         return $data;
+    }
+
+    /**
+     * Every `if` needs its `endif`, every `else` needs an `if`, and there is
+     * no `foreach` in chat.
+     *
+     * Checked before the tag rules because the block tokens are stripped out
+     * of the malformed-tag scan (they are the resolver's to handle), so a lone
+     * `[[[if:...]]]` would otherwise save cleanly and then swallow the rest of
+     * the reply at fire time.
+     *
+     * @throws ValidationException
+     */
+    private function assertBlocksAreWellFormed(string $reply): void
+    {
+        $problem = Conditionals::structuralProblem($reply);
+
+        if ($problem === null) {
+            return;
+        }
+
+        throw ValidationException::withMessages(['reply' => Conditionals::describeProblem($problem)]);
     }
 
     /**

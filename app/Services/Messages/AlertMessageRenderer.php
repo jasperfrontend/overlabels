@@ -4,6 +4,7 @@ namespace App\Services\Messages;
 
 use App\Models\OverlayControl;
 use App\Models\User;
+use App\Support\Conditionals;
 use App\Support\Dsl;
 
 /**
@@ -13,6 +14,11 @@ use App\Support\Dsl;
  * SINGLE-PASS BY DESIGN: matches the day-one "tags never reparse" rule and
  * mirrors BotCommandResolver. Substituted values are never re-scanned for
  * tags.
+ *
+ * Conditionals run FIRST, on the source, exactly as in BotCommandResolver:
+ * `[[[event.streak_months]]] month[[[if:event.streak_months != 1]]]s[[[endif]]]`
+ * decides which text survives (App\Support\Conditionals), and the tag pass
+ * then runs once over what is left. `foreach` is refused at save time.
  *
  * Tag families inside [[[...]]]:
  *   c:<key>            -> own OverlayControl by key
@@ -88,6 +94,11 @@ class AlertMessageRenderer
 
         $controls = $this->loadControls($user);
         $locale = (string) ($user->preference('locale', 'en-US'));
+
+        $message = Conditionals::render(
+            $message,
+            fn (string $key): string => $this->lookup($key, $controls, $templateData),
+        );
 
         $resolved = preg_replace_callback(
             self::tagRegex(),

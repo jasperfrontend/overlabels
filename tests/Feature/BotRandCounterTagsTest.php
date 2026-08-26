@@ -410,9 +410,6 @@ it('refuses a bracket run it cannot read, which chat would print verbatim', func
 })->with([
     'space instead of colon' => 'won [[[counter wins]]] times',
     'space in rand' => 'level [[[rand 0-69]]]',
-    // Block syntax works in overlays; the bot resolver does no block
-    // processing, so it would have gone out as literal text.
-    'conditional' => 'you have [[[if:c:wins > 3]]]lots[[[endif]]]',
     'unterminated' => 'won [[[counter:wins times',
 ]);
 
