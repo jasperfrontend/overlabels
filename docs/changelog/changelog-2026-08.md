@@ -1,5 +1,24 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - fix(eventsub): a revocation now updates the local subscription status
+
+When Twitch stops delivering a subscription it sends a `revocation` message carrying the new
+status - `authorization_revoked`, `user_removed`, `notification_failures_exceeded`. The webhook
+handler logged a warning, wrote a five-minute cache key, and left `user_eventsub_subscriptions`
+untouched. So the integrations page kept showing the subscription as active and `eventsub:monitor`
+kept scoring it healthy until its 24-hour re-verify happened to reach that user. Twitch told us and
+we dropped it.
+
+- **The revocation branch now writes the status Twitch sent onto the row and stamps
+  `last_verified_at`.** Same two columns the challenge branch already writes, opposite direction.
+- No status or no subscription id in the payload leaves the row alone; an id we do not hold is
+  absorbed with a 200 as before.
+- Pinned by `EventSubRevocationTest`, whose first case was verified to fail against the old
+  handler (row still `enabled`). It is also the first test that signs a Twitch webhook, so the
+  signing helper in it is the one to copy.
+- First entry of the delivery-path heal list in `docs/design/event-delivery-heal-2026-08.md`
+  (A1). That document is where the rest of that audit lives.
+
 ## August 26th, 2026 - fix(alerts): tags used only in the TTS or chat message reach the renderer
 
 First live use of conditionals in an alert, on a channel point redemption:
