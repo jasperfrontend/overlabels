@@ -61,23 +61,27 @@ falsify a success rate; A5-A7 are real but smaller.
 - **Proof:** post the same notification twice; assert one row and one broadcast. Fails today.
 - **Decision:** none. Migration is additive.
 
-### A4. Queue-worker liveness is unobservable and the existing guard is dead
+### A4. Failed broadcasts are recorded and nobody looks
 
-- **Symptom:** every user-facing broadcast (`AlertTriggered`, `ControlValueUpdated`, ...) is
-  `ShouldBroadcast`, i.e. it only leaves the box when the single `queue:work` container runs the
-  job. The webhook returns 200 the instant the job is enqueued. `routes/console.php:170-178`
-  guards a `queue:restart` on `cache('last_job_processed_at')`, and **nothing in the repo ever
-  writes that key**, so the guard has never fired.
-- **Evidence:** `routes/console.php:174`; grep for the key finds only that read.
-- **Fix:** a `Queue::after` / `JobProcessed` listener writing the key. One line in a provider.
-  That makes the existing guard live and gives pile B its `worker.alive` wire for free.
-- **Before starting:** check the prod container restart policy (`docker inspect` on the queue
-  container, read-only). If Kamal already restarts a crashed worker, the remaining failure mode is
-  a *backed-up* queue, not a dead one, and the wire should read oldest-job age from `jobs`, not
-  a heartbeat. Report which it is before writing the fix.
-- **Proof:** test that processing a job writes the key. Fails today.
-- **Decision:** none for the stamp. The `queue:restart` remedy itself is Jasper's call once the
-  restart-policy check is in.
+Rewritten 2026-08-26 after the prod check the original entry asked for.
+
+- **The dead-worker case is already handled.** The queue container runs with Docker
+  `restart=unless-stopped` (0 restarts since deploy), and `--max-time=3600` means it exits and is
+  restarted hourly anyway. A crashed worker comes back on its own. The `queue:restart` guard at
+  `routes/console.php:170-178` still reads a cache key nothing writes, so it has never fired -
+  but if it did, it would restart a worker on every quiet night with no events. It is dead AND
+  wrong.
+- **The real silent zero is `failed_jobs`.** Prod holds 36 rows. 20 of them are `AlertTriggered`
+  broadcasts rejected by Reverb with `Payload too large`, one roughly every stream since June 30,
+  latest 17:21 UTC today. Every one is an alert that never reached an overlay, and the app has
+  no surface that shows a single one of them. See A8 for the cause of those 20.
+- **Fix:** delete the dead `queue:restart` schedule entry, and make `failed_jobs` visible - a
+  `broadcasts.delivering` wire on `/wiring` (failed broadcast jobs for this user in the last N
+  hours) is the smallest surface, and pile B wants it anyway. Attribution is by `broadcasterId`
+  inside the serialised payload; a regex is enough.
+- **Proof:** a failed `AlertTriggered` job for the user shows on the page. Fails today.
+- **Decision (Jasper):** delete the guard, or keep a liveness stamp anyway? My recommendation is
+  delete - Docker owns liveness, the queue owns failures, and a stamp measures neither.
 
 ### A5. Reverb client events are on
 
@@ -113,6 +117,34 @@ falsify a success rate; A5-A7 are real but smaller.
 - **Decision (Jasper):** is anything external hitting it - a cron, a monitor? The scheduler
   already runs `eventsub:monitor --fix` hourly, which does the same work. If nothing calls it,
   delete the route. If something does, it needs a secret and a POST.
+
+### A8. An alert with no tags broadcasts the entire dataset and hits Reverb's 10 KB limit
+
+Found 2026-08-26 while checking A4's `failed_jobs`.
+
+- **Symptom:** `TemplateDataMapperService::mapForTemplate()` prunes the mapped payload to the
+  template's tag allowlist only when that list is **non-empty** (`:474`). A template with
+  `template_tags = []` gets everything: every catalogue tag, every foreach array, the event. For
+  an alert that is ~18 KB serialised, Reverb rejects it at 10 KB, and the job dies in the worker
+  after the webhook already returned 200.
+- **In prod:** exactly one template has this shape - TicanUK's "Alert - Stream Online" (id 532):
+  no HTML, no CSS, no sound, no TTS, a 35-char chat message. All 20 `Payload too large` rows are
+  that one alert. Its chat message still goes out (the outbox row is written in-request, before
+  the queued broadcast fails), so nothing user-visible is lost today. Four other templates have
+  an empty list (3 static, 1 block); none references a tag, so they render nothing dynamic and
+  merely over-fetch.
+- **Fix, two parts:** (1) prune whenever the allowlist is an array, empty included - `null`
+  keeps meaning "no allowlist". (2) Template 532's chat message uses `[[[channel_title]]]`,
+  which is not in its allowlist because it was saved before #309 made messages a tag source.
+  Today it resolves by accident (empty list = everything); after (1) it would render empty
+  until the template is re-saved. `templates:refresh-tags --id=532` exists, but artisan on prod
+  is not how things ship, so the honest options are: a migration that re-extracts (must not use
+  models - it would need the regex inline), the entrypoint running `templates:refresh-tags` on
+  every deploy (idempotent, but a permanent step for a one-off), or asking TicanUK to open and
+  save the alert.
+- **Proof:** unit test that `mapForTemplate($data, $name, [])` returns `[]`. Fails today.
+- **Decision (Jasper):** which of the three for part (2). Part (1) is safe on its own for the
+  other four templates but regresses 532's chat message until (2) lands, so they ship together.
 
 ---
 
