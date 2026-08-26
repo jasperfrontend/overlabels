@@ -668,8 +668,9 @@ class TwitchEventSubController extends Controller
 
             $alertId = (string) Str::uuid();
 
-            // Broadcast alert data to overlay
-            broadcast(new AlertTriggered(
+            // Broadcast alert data to overlay - only when the overlay has
+            // something to do. A chat-only alert is the bot's alone.
+            $alert = new AlertTriggered(
                 $alertId,
                 $mapping->template->html,
                 $mapping->template->css,
@@ -681,7 +682,10 @@ class TwitchEventSubController extends Controller
                 $ttsText,
                 (int) ($mapping->template->tts_delay_ms ?? 0),
                 $mapping->template->alert_sound_url,
-            ));
+            );
+            if ($alert->hasOverlayWork()) {
+                broadcast($alert);
+            }
 
             // Synthesis is queued (best-effort, never blocks the alert). The
             // overlay correlates the resulting TtsAudioReady by alert_id and

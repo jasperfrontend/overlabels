@@ -1,5 +1,28 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - feat(alerts): a chat-only alert never reaches the overlay
+
+An alert is a cocktail: overlay HTML, a sound, TTS, a chat message, in any mix. TicanUK's
+"Stream Online" alert is chat message only - no HTML, no sound, no TTS - and that is a legitimate
+shape: the bot says he is live, nothing needs to show. But every alert fired an `AlertTriggered`
+broadcast regardless, so the overlay received an empty alert, held its alert slot for
+`duration_ms` showing nothing, and - until the empty-allowlist fix - carried the entire dataset in
+the payload and died in the worker. The chat message went out fine the whole time; the overlay
+half was pure noise.
+
+- **`AlertTriggered::hasOverlayWork()`** - true when there is HTML to show, a sound to play, or
+  TTS to schedule. All three fire sites (Twitch webhook, external webhook, external replay)
+  build the event and only broadcast it when that is true. The chat message goes through the
+  outbox exactly as before; that is the bot's job, not the overlay's.
+- TTS counts as overlay work on purpose: the overlay schedules the audio relative to the alert it
+  saw (`rememberPendingTts`), so TTS without the alert would never play.
+- Pinned by `ChatOnlyAlertTest`: chat-only is bot-only on both the external and the Twitch path,
+  and HTML, sound or TTS each still reach the overlay. Verified to fail before (broadcast fired
+  for the chat-only case).
+- Not on the heal list as found; added as A9 after the TicanUK investigation. The rule the
+  product wanted all along: the system detects that no overlay UI was authored and delivers only
+  what was.
+
 ## August 26th, 2026 - fix(alerts): a template with no tags gets no data, not all of it
 
 `TemplateDataMapperService::mapForTemplate()` pruned the mapped payload to the template's tag

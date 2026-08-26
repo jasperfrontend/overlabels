@@ -146,6 +146,20 @@ Found 2026-08-26 while checking A4's `failed_jobs`.
 - **Decision (Jasper):** which of the three for part (2). Part (1) is safe on its own for the
   other four templates but regresses 532's chat message until (2) lands, so they ship together.
 
+### A9. A chat-only alert must not reach the overlay
+
+Added 2026-08-26 after the TicanUK investigation; Jasper's call, not a bug found by the audit.
+
+- **Symptom:** an alert with no HTML, no sound and no TTS - a chat-only announcement, which is a
+  legitimate cocktail - still broadcast `AlertTriggered`. The overlay held its alert slot for
+  `duration_ms` showing an empty box, and the payload was pure waste.
+- **Fix:** `AlertTriggered::hasOverlayWork()` (HTML, sound or TTS present); the three fire sites
+  broadcast only when true. Chat message unchanged. TTS counts as overlay work because the
+  overlay schedules the audio against the alert it saw.
+- **Proof:** `ChatOnlyAlertTest`, both paths. Fails today.
+- **Decision:** made - "the system should detect no generated template UI and just render the
+  chat message, TTS assignments or whatever cocktail a user chooses."
+
 ---
 
 ## Pile B: measure (build, only after pile A)

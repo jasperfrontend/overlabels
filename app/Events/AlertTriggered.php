@@ -68,6 +68,20 @@ class AlertTriggered implements ShouldBroadcast
     }
 
     /**
+     * Whether an overlay has anything to do with this alert. An alert is a
+     * cocktail - HTML, a sound, TTS, a chat message, any mix - and only the
+     * first three are the overlay's. A chat-only alert (the bot announces,
+     * nothing shows) must not be broadcast: it would occupy the overlay's
+     * alert slot for duration_ms showing an empty box.
+     */
+    public function hasOverlayWork(): bool
+    {
+        return trim($this->html) !== ''
+            || $this->alertSoundUrl !== null
+            || $this->ttsText !== null;
+    }
+
+    /**
      * Get the channels the event should broadcast on.
      *
      * @return array<int, PrivateChannel>
