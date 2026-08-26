@@ -1,5 +1,22 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - fix(eventsub): a PHP Error on the webhook path is logged instead of swallowed
+
+`handleTwitchEvent()` ended in `catch (Exception)` that logged, followed by an empty
+`catch (Throwable) {}`. A PHP `Error` - a `TypeError`, a `ShouldBroadcastNow` event throwing inside
+its handler, anything that is not an `Exception` - fell into the empty branch: no log line, no
+`twitch_events` row, no broadcast, and a 200 to Twitch so it never retried. The one failure class
+that leaves no trace at all.
+
+- **The `Throwable` branch now logs at error level** with the event type, message, file and line.
+  It still swallows: a 5xx would make Twitch redeliver, and `twitch_events` has no `message_id` to
+  dedup a redelivery against (that is A3 on the heal list), so a retry today would be a duplicate
+  row and a duplicate alert.
+- Pinned by `EventSubWebhookErrorLoggingTest`, which throws a `TypeError` from the avatar
+  enrichment step and asserts the log line. Verified to fail against the empty catch (`error`
+  called 0 times).
+- A2 of `docs/design/event-delivery-heal-2026-08.md`.
+
 ## August 26th, 2026 - fix(eventsub): a revocation now updates the local subscription status
 
 When Twitch stops delivering a subscription it sends a `revocation` message carrying the new
