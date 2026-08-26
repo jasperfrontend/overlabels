@@ -1,5 +1,15 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - docs(delivery): the B2 ledger note
+
+`docs/design/event-delivery-ledger-2026-08.md`. The three definitional questions are settled: the
+unit is the alert (events without one get a `no_target` outcome and are reported, never scored);
+delivered to nobody is `no_listener`, not `failed`; retention rides the existing 90-day prune. The
+"how does the worker learn the row" question dissolved on inspection - `alert_id` is minted
+in-request and travels in the payload the broadcaster already receives, and one row is at most
+one alert. Four nullable columns per event table, three writes, a `JobFailed` listener for the
+final-failure close. Nothing built yet.
+
 ## August 26th, 2026 - fix(broadcast): "nobody was listening" is recorded as zero, not skipped
 
 Follow-up to the entry below, found within the hour on prod: one stream live, 74 events in 25

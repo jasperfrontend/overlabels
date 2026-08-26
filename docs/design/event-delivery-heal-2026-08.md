@@ -187,6 +187,11 @@ the overlay sending nothing.
 
 ### B2. Close the ledger row from the worker
 
+**Design note written 2026-08-26: `event-delivery-ledger-2026-08.md`.** The three questions below
+are settled there (unit = the alert; zero connections = `no_listener`, not `failed`; 90 days), and
+the "how does the worker learn the row" question turned out to be already answered: `alert_id`
+is minted in-request and rides the payload the broadcaster receives.
+
 `external_events` already has `controls_updated` / `alert_dispatched`. `twitch_events.processed`
 exists and nothing sets it. The debrief needs an outcome per row written by the process that
 actually broadcast it.
