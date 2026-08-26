@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\TwitchTokenInvalidException;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
@@ -80,7 +81,7 @@ class TwitchApiService
                 // Handle specific error codes
                 if ($response->status() === 401) {
                     // Token is invalid, throw exception to trigger re-auth
-                    throw new Exception('Invalid OAuth token - requires re-authentication');
+                    throw new TwitchTokenInvalidException('Invalid OAuth token - requires re-authentication');
                 }
 
                 if ($response->status() === 429) {

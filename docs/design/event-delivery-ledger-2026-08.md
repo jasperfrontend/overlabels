@@ -51,6 +51,12 @@ One enum, `App\Enums\DeliveryOutcome` (string-backed), two families:
 - `delivered` - Reverb accepted it, `connections >= 1`
 - `no_listener` - Reverb accepted it, `connections == 0`
 - `failed` - the job exhausted its retries (`Payload too large`, Reverb down, ...)
+- `token_invalid` - the alert could not be built because Helix refused the streamer's token.
+  Added 2026-08-27, the ledger's first hour in prod: TenzinNiznet's token expired June 14th and
+  every follow alert since died in `renderEventAlert`'s catch with nothing on the row. The one
+  failure a streamer can fix, so it has its own name (`TwitchTokenInvalidException`).
+- `render_failed` - the alert could not be built for any other reason; the log line has the
+  message. Same catch, same hour.
 
 **`no_target`** - never an alert, or one the overlay had nothing to do with. Reported, not scored:
 

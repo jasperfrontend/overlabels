@@ -1,5 +1,28 @@
 # CHANGELOG AUGUST 2026
 
+## August 27th, 2026 - fix(delivery): an alert that cannot be built is a scored failure, not a blank
+
+The ledger's first ten minutes in prod. Two `channel.follow` rows for one streamer came through
+with no outcome and no alert id, after the container swap, so not "before the ledger". The web log
+had the answer: `Failed to render event alert: Invalid OAuth token - requires re-authentication`.
+That streamer's Twitch token expired on June 14th. Every follow alert since - HTML, sound and TTS
+authored, mapping enabled - died inside `renderEventAlert` before the broadcast, and the catch
+logged and returned before any ledger write. The exact line the uptime conversation started from
+("your token expired at 21:04") was the one the ledger could not say.
+
+- **Two scored outcomes.** `token_invalid`: Helix refused the streamer's token, the one failure a
+  streamer can fix. `render_failed`: the alert could not be built for any other reason; the log
+  has the message. Both written from the request-side catch on the Twitch and external paths.
+- **`App\Exceptions\TwitchTokenInvalidException`** is what `TwitchApiService` now throws on a 401,
+  same message as before. The existing `str_contains('Invalid OAuth token')` rethrow keeps working;
+  everything catching `Exception` is unchanged. It exists so the ledger can name the cause
+  without matching a string.
+- `DeliveryLedger::noTarget()` is `record()` - it writes scored outcomes now too.
+- Two tests added to `DeliveryLedgerTest` (token refused, any other throw), vocabulary pinned at
+  nine.
+- Note to self, written into the ledger note: the enum was designed from the code paths and
+  missed the one the first real user hit. Prod data found it in ten minutes.
+
 ## August 27th, 2026 - feat(delivery): the ledger - every event row says what became of its alert
 
 Built to the note below. Until now an inbound event's row said it arrived and nothing more; what

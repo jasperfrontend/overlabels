@@ -3,6 +3,7 @@
 use App\Broadcasting\MeteredBroadcaster;
 use App\Enums\DeliveryOutcome;
 use App\Events\AlertTriggered;
+use App\Exceptions\TwitchTokenInvalidException;
 use App\Jobs\DeleteTestTwitchEvent;
 use App\Listeners\MarkAlertDeliveryFailed;
 use App\Models\EventTemplateMapping;
@@ -137,6 +138,35 @@ test('an alert with overlay work stamps the row with the broadcast alert id and 
     Event::assertDispatched(AlertTriggered::class, fn (AlertTriggered $e) => $e->alertId === $row->alert_id);
 });
 
+test('an alert that cannot be built because Helix refused the token is token_invalid', function () {
+    // TenzinNiznet, prod, 2026-08-26: token expired June 14th, every follow
+    // alert since died in renderEventAlert with no trace on the row.
+    $user = ledgerUser();
+    ledgerMapping($user, ledgerAlert($user));
+    $this->mock(TwitchApiService::class, function ($mock) {
+        $mock->shouldReceive('enrichEventWithUserAvatars')->andReturnUsing(fn ($token, $event) => $event);
+        $mock->shouldReceive('getExtendedUserData')->andThrow(new TwitchTokenInvalidException('Invalid OAuth token - requires re-authentication'));
+    });
+
+    $row = ledgerFollow($user);
+
+    expect($row->outcome)->toBe(DeliveryOutcome::TokenInvalid)->and($row->alert_id)->toBeNull();
+    Event::assertNotDispatched(AlertTriggered::class);
+});
+
+test('an alert that cannot be built for any other reason is render_failed', function () {
+    $user = ledgerUser();
+    ledgerMapping($user, ledgerAlert($user));
+    $this->mock(TwitchApiService::class, function ($mock) {
+        $mock->shouldReceive('enrichEventWithUserAvatars')->andReturnUsing(fn ($token, $event) => $event);
+        $mock->shouldReceive('getExtendedUserData')->andThrow(new RuntimeException('Helix is on fire'));
+    });
+
+    $row = ledgerFollow($user);
+
+    expect($row->outcome)->toBe(DeliveryOutcome::RenderFailed)->and($row->alert_id)->toBeNull();
+});
+
 // ── request side, external path ──────────────────────────────────────────────
 
 test('an external event with an alert is stamped, one without is no_mapping', function () {
@@ -252,8 +282,8 @@ test('a failed job of any other kind is ignored', function () {
 
 test('the outcome vocabulary is pinned and only the delivery family is scored', function () {
     expect(array_map(fn ($c) => $c->value, DeliveryOutcome::cases()))
-        ->toBe(['delivered', 'no_listener', 'failed', 'no_mapping', 'muted', 'chat_only', 'unknown_user']);
+        ->toBe(['delivered', 'no_listener', 'failed', 'token_invalid', 'render_failed', 'no_mapping', 'muted', 'chat_only', 'unknown_user']);
 
     expect(array_map(fn ($c) => $c->isScored(), DeliveryOutcome::cases()))
-        ->toBe([true, true, true, false, false, false, false]);
+        ->toBe([true, true, true, true, true, false, false, false, false]);
 });

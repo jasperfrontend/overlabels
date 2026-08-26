@@ -22,9 +22,11 @@ use Illuminate\Database\Eloquent\Model;
 class DeliveryLedger
 {
     /**
-     * The request decided there is nothing for the overlay: record why.
+     * The request already knows the outcome: nothing for the overlay
+     * (a no_target reason), or the alert could not be built (token_invalid,
+     * render_failed). Record it.
      */
-    public function noTarget(?Model $row, DeliveryOutcome $outcome): void
+    public function record(?Model $row, DeliveryOutcome $outcome): void
     {
         if ($row === null) {
             return;
