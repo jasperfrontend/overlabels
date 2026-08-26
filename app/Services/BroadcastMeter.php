@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Redis\Connections\Connection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 
 /**
@@ -188,6 +189,69 @@ class BroadcastMeter
             'limit' => $this->freeLimit(),
             'period' => now()->format('Y-m'),
         ];
+    }
+
+    /**
+     * Keep each owner's most recent delivery: when, how many connections were
+     * subscribed at the moment Reverb accepted it, and which event. One
+     * broadcast can span several of an owner's channels (ListUpdated fires on
+     * alerts.{id} and lists.{id}.{slug}); the alerts channel is the one every
+     * overlay holds, so the highest count is the honest number of listeners.
+     *
+     * Not gated on metering.enabled - this is delivery observation, not usage
+     * billing. Best-effort like everything else here: a cache failure is
+     * reported and the broadcast is unaffected.
+     *
+     * @param  array<string, int>  $subscriptionCounts  channel => connections
+     */
+    public function recordDelivery(array $subscriptionCounts, string $event): void
+    {
+        $prefixes = config('metering.channels', ['alerts', 'twitch-events', 'lists']);
+
+        $perOwner = [];
+        foreach ($subscriptionCounts as $channel => $count) {
+            $owner = self::ownerFromChannel((string) $channel, $prefixes);
+            if ($owner === null) {
+                continue;
+            }
+            $perOwner[$owner] = max($perOwner[$owner] ?? 0, (int) $count);
+        }
+
+        foreach ($perOwner as $twitchId => $connections) {
+            try {
+                Cache::put($this->deliveryKey((string) $twitchId), [
+                    'at' => now()->timestamp,
+                    'connections' => $connections,
+                    'event' => $event,
+                ], now()->addDays(7));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+    }
+
+    /**
+     * The owner's most recent delivery, or null if nothing has been broadcast
+     * to them in the last seven days (or the cache has forgotten).
+     *
+     * @return array{at: int, connections: int, event: string}|null
+     */
+    public function lastDeliveryFor(string $twitchId): ?array
+    {
+        try {
+            $value = Cache::get($this->deliveryKey($twitchId));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+
+        return is_array($value) ? $value : null;
+    }
+
+    public function deliveryKey(string $twitchId): string
+    {
+        return "metering:delivery:{$twitchId}";
     }
 
     public function key(string $twitchId, ?string $period = null): string
