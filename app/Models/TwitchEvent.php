@@ -46,6 +46,7 @@ class TwitchEvent extends Model
     protected $fillable = [
         'user_id',
         'event_type',
+        'message_id',
         'event_data',
         'twitch_timestamp',
         'processed',
