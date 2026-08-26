@@ -317,6 +317,18 @@ class TwitchEventSubController extends Controller
             if ($messageType === 'revocation') {
                 Log::warning('Twitch subscription revoked', ['data' => $data]);
 
+                // Twitch has stopped delivering this subscription. Record the status it
+                // sent (authorization_revoked, user_removed, notification_failures_exceeded)
+                // so the integrations page and eventsub:monitor see it now, not at the
+                // next 24-hour verify.
+                $revokedId = $data['subscription']['id'] ?? null;
+                $revokedStatus = $data['subscription']['status'] ?? null;
+
+                if ($revokedId && $revokedStatus) {
+                    UserEventsubSubscription::where('twitch_subscription_id', $revokedId)
+                        ->update(['status' => $revokedStatus, 'last_verified_at' => now()]);
+                }
+
                 // Update webhook log
                 $webhookLog['status'] = 'subscription_revoked';
                 Cache::put('last_webhook_activity', $webhookLog, 300);
