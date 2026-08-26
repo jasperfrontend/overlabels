@@ -1,5 +1,23 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - chore(queue): the dead queue:restart guard is gone
+
+`routes/console.php` scheduled `queue:restart` every five minutes, gated on
+`cache('last_job_processed_at')` being more than ten minutes old. Nothing in the codebase has ever
+written that key, so the guard never fired once. Had it worked it would have been wrong anyway: a
+quiet night with no events looks identical to a dead worker, and it would have bounced the
+worker every five minutes until morning.
+
+- **Deleted.** Prod runs the queue container with Docker `restart=unless-stopped` and
+  `--max-time=3600`, so a crashed worker comes back on its own and a healthy one is recycled
+  hourly. Liveness is Docker's; the app has no business restarting its own worker on a heuristic.
+- The failure that actually goes unseen is not a dead worker but a failed job: prod holds 36
+  `failed_jobs` rows and no surface shows one. That is the `broadcasts.delivering` wire in pile B
+  of `docs/design/event-delivery-heal-2026-08.md`, not this entry.
+- Pinned by `QueueRestartGuardTest`, which asserts no `queue:restart` is scheduled. Verified to
+  fail before.
+- A4 of the heal list, decided 2026-08-26: delete.
+
 ## August 26th, 2026 - fix(controls): the control panel listens on the channel controls are sent on
 
 `ControlPanel.vue` subscribed with `echo.channel('alerts.{id}')` - the public channel. Every
