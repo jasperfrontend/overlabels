@@ -160,6 +160,29 @@ Added 2026-08-26 after the TicanUK investigation; Jasper's call, not a bug found
 - **Decision:** made - "the system should detect no generated template UI and just render the
   chat message, TTS assignments or whatever cocktail a user chooses."
 
+### A10. The webhook alert path never refreshes the token
+
+Surfaced by B3's `alerts.token_valid` wire, 2026-08-27.
+
+- **Symptom:** `handleTwitchEvent()` enriches with `$user->access_token` and `renderEventAlert()`
+  calls Helix with it, as stored. Nothing on that path refreshes it. Twitch user tokens last
+  ~4h; the dashboard middleware and the overlay's 5-minute health check refresh it, so a
+  streamer with an overlay open is fine - but one who goes live without opening either gets
+  failed alerts (`token_invalid`) until something else refreshes, even with a perfectly good
+  refresh token.
+- **Not the fix:** `TwitchTokenService::ensureValidToken()`. When the stored expiry is not past
+  it calls Twitch's validate endpoint - one outbound HTTP call per event, on a path that saw
+  448 events a minute on August 15th.
+- **Fix:** when `token_expires_at` is past, call `refreshUserToken()` once before enrichment.
+  Zero cost while the token is valid; one call per ~4h expiry. A failed refresh (no refresh
+  token, revoked) backs off ten minutes in the cache so a dead account like TenzinNiznet's pays
+  one call per ten minutes, not one per event. The alert then fails as before and the ledger
+  says `token_invalid`.
+- **Proof:** `WebhookAlertTokenRefreshTest` - expired token is refreshed and the alert stamped
+  (fails today: token stays stale); valid token sends nothing; failed refresh sends once per
+  ten minutes.
+- **Decision:** none.
+
 ---
 
 ## Pile B: measure (build, only after pile A)
