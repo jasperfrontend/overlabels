@@ -1,5 +1,21 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - chore(eventsub): the unauthenticated health-check route is gone
+
+`GET /api/eventsub-health-check` returned global EventSub stats and, on the same request,
+dispatched `SetupUserEventSubSubscriptions` for every subscription in a failed status and every
+auto-connect user who was not connected yet. A mutation behind a bare GET, no secret, and exempted
+from the ban middleware by name. The comment said "for external cron services"; a week of
+kamal-proxy logs shows zero requests to it, and nothing in the repo calls it.
+
+- **Route deleted**, along with its exemption in `CheckBanned` and the four imports in
+  `routes/api.php` it alone used.
+- The work it did is the scheduler's: `eventsub:monitor --fix` runs hourly and re-dispatches
+  setup for the same two groups (`MonitorEventSubHealth`). Nothing is lost.
+- Pinned by `EventSubHealthCheckRouteTest`: the URL is a 404 and no setup job is dispatched for a
+  user who would have qualified. Verified to fail before.
+- A7 of `docs/design/event-delivery-heal-2026-08.md`, decided 2026-08-26: remove if unused.
+
 ## August 26th, 2026 - chore(queue): the dead queue:restart guard is gone
 
 `routes/console.php` scheduled `queue:restart` every five minutes, gated on

@@ -18,7 +18,7 @@ class CheckBanned
         // `banned` used to be exempt here so the redirect target stayed
         // reachable. There is no redirect any more - a banned requester gets a
         // hard 404 on everything, that page included.
-        if ($request->is('api/twitch/webhook', 'api/webhooks/*', 'api/eventsub-health-check')) {
+        if ($request->is('api/twitch/webhook', 'api/webhooks/*')) {
             return $next($request);
         }
 

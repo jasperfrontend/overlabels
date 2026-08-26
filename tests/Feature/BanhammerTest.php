@@ -256,10 +256,6 @@ test('webhook routes bypass ban check', function () {
     // External webhook path exclusion
     $request2 = Request::create('/api/webhooks/kofi/abc123', 'POST');
     expect($request2->is('api/webhooks/*'))->toBeTrue();
-
-    // Health check path exclusion
-    $request3 = Request::create('/api/eventsub-health-check');
-    expect($request3->is('api/eventsub-health-check'))->toBeTrue();
 });
 
 // User show page includes ban status

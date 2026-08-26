@@ -26,13 +26,9 @@ use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TwitchEventSubController;
 use App\Http\Middleware\CheckBanned;
-use App\Jobs\SetupUserEventSubSubscriptions;
 use App\Models\ExternalIntegration;
-use App\Models\User;
-use App\Models\UserEventsubSubscription;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
-use App\Services\UserEventSubManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
@@ -270,61 +266,6 @@ Route::post('/webhooks/{service}/{webhookToken}', [ExternalWebhookController::cl
     ->middleware(['throttle:60,1'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
     ->name('webhooks.external');
-// EventSub health check endpoint for external cron services
-Route::get('/eventsub-health-check', function () {
-    try {
-        $manager = app(UserEventSubManager::class);
-        $stats = $manager->getGlobalStats();
-
-        // Get failed subscriptions
-        $failedSubs = UserEventsubSubscription::whereIn('status', [
-            'webhook_callback_verification_failed',
-            'notification_failures_exceeded',
-            'authorization_revoked',
-            'user_removed',
-        ])->with('user')->get();
-
-        // Auto-fix if there are failed subscriptions
-        if ($failedSubs->count() > 0) {
-            foreach ($failedSubs->groupBy('user_id') as $userId => $userFailedSubs) {
-                $user = $userFailedSubs->first()->user;
-                SetupUserEventSubSubscriptions::dispatch($user, true);
-            }
-        }
-
-        // Check for users who should be connected but aren't
-        $usersNeedingSetup = User::where('eventsub_auto_connect', true)
-            ->whereNull('eventsub_connected_at')
-            ->get();
-
-        foreach ($usersNeedingSetup as $user) {
-            SetupUserEventSubSubscriptions::dispatch($user);
-        }
-
-        return response()->json([
-            'status' => 'ok',
-            'timestamp' => now()->toISOString(),
-            'stats' => $stats,
-            'actions_taken' => [
-                'failed_subscriptions_renewed' => $failedSubs->count(),
-                'users_auto_setup' => $usersNeedingSetup->count(),
-            ],
-        ]);
-
-    } catch (Exception $e) {
-        Log::error('EventSub health check failed', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-
-        return response()->json([
-            'status' => 'error',
-            'timestamp' => now()->toISOString(),
-            'error' => $e->getMessage(),
-        ], 500);
-    }
-})->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
-
 // Unmatched /api/* would otherwise fall through to the `Route::fallback` in
 // web.php and come back as the HTML 404 page. A client doing `if (response.ok)`
 // saw 200, then choked parsing `<!doctype html>` - "route does not exist" turned
