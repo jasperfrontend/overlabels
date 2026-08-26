@@ -71,7 +71,9 @@ class ExternalEventController extends Controller
 
         $alertId = (string) Str::uuid();
 
-        broadcast(new AlertTriggered(
+        // Only when the overlay has something to do (HTML, sound or TTS).
+        // A chat-only alert is the bot's alone - see the outbox below.
+        $alert = new AlertTriggered(
             alertId: $alertId,
             html: $template->html ?? '',
             css: $template->css ?? '',
@@ -83,7 +85,10 @@ class ExternalEventController extends Controller
             ttsText: $ttsText,
             ttsDelayMs: (int) ($template->tts_delay_ms ?? 0),
             alertSoundUrl: $template->alert_sound_url,
-        ));
+        );
+        if ($alert->hasOverlayWork()) {
+            broadcast($alert);
+        }
 
         if ($ttsText !== null) {
             SynthesizeAlertTts::dispatch($alertId, (string) $user->twitch_id, $ttsText, $targetSlugs);
