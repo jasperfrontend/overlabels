@@ -212,6 +212,10 @@ actually broadcast it.
 
 ### B3. Present-tense wires on `/wiring`
 
+**Built 2026-08-27** as the `alerts` circuit: `alerts.token_valid`, `alerts.subscribed`,
+`alerts.delivering` (newest scored ledger row), `alerts.overlay_listening` (B1's count, live
+only). `bot.present` deferred - it needs the chat-stats arrival timestamp first.
+
 `/wiring` is already present-tense by design ("a wire is a QUERY, never a record",
 `app/Support/WiringCatalog.php:13-17`) and today has exactly two wires, neither on the event
 path. Candidates, each reading state we already hold after pile A:

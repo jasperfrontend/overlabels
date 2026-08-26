@@ -1,5 +1,30 @@
 # CHANGELOG AUGUST 2026
 
+## August 27th, 2026 - feat(wiring): the alerts circuit - four present-tense wires for the delivery path
+
+`/wiring` had two wires, neither on the event path. It now has an `Alerts` circuit with four,
+each a query against state the app already held for another reason. No table, no cache, no
+record - the page's own rule. With no alert set up, none of the four applies.
+
+- **The Twitch login is valid** (`alerts.token_valid`). The webhook path builds an alert with the
+  account's access token as stored and nothing refreshes it there, so an expired token is the
+  next alert failing, not a stale timestamp. The streamer whose alerts had failed since June
+  14th would have seen this on day one. CTA: log in with Twitch again.
+- **Twitch is sending events** (`alerts.subscribed`). EventSub connected and every subscription
+  `enabled`, from the status that A1 made honest on revocation. Says how many need repair.
+- **Alerts are getting through** (`alerts.delivering`). The newest scored ledger row in seven
+  days: `failed` or `render_failed` is a finding; nothing fired is no question. A refused token
+  is deliberately the token wire's finding and not this one's, so one cause never lights two.
+- **An overlay is listening** (`alerts.overlay_listening`). Only while confidently live, from
+  B1's last connection count. Offline, or live with nothing sent yet, is no question - an overlay
+  closed between streams is not a loose end.
+- Context lines state facts: alerts set up, subscriptions active, what the last alert did and
+  when. The page itself is untouched; it renders circuits generically. Pinned by
+  `WiringAlertsTest` (9 tests) and the existing drift guards, which cover the new circuit
+  automatically.
+- B3 of `docs/design/event-delivery-heal-2026-08.md`. `bot.present` is not here: it needs a
+  timestamp the bot's chat-stats call does not yet leave behind.
+
 ## August 27th, 2026 - fix(delivery): an alert that cannot be built is a scored failure, not a blank
 
 The ledger's first ten minutes in prod. Two `channel.follow` rows for one streamer came through
