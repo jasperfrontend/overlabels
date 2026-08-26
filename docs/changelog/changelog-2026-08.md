@@ -1,5 +1,30 @@
 # CHANGELOG AUGUST 2026
 
+## August 26th, 2026 - fix(alerts): tags used only in the TTS or chat message reach the renderer
+
+First live use of conditionals in an alert, on a channel point redemption:
+
+```
+[[[event.user_name]]] redeemed [[[event.reward.title]]] for [[[event.reward.cost]]] point[[[if:event.reward.cost != 1]]]s[[[endif]]]
+```
+
+spoke "redeemed one for test for  points" - the cost missing, and therefore the plural wrong, for
+both a 1-point and a 2-point reward. Not a conditionals bug. `OverlayTemplate::extractTemplateTags()`
+builds the allowlist that `mapForTemplate()` prunes the fire-time payload with, and it only ever
+scanned the HTML and CSS. `event.reward.title` survived because the alert's HTML showed it;
+`event.reward.cost` was only in the spoken line, so it was dropped before `AlertMessageRenderer` saw
+the payload, resolved to empty, and `'' != 1` (empty reads as 0) chose "points" every time.
+
+- **The TTS and chat messages are now sources for the allowlist**, for bare tags and for condition
+  keys. Same extraction pattern, two more strings in the loop.
+- This was always true of the messages and only surfaced now because a condition is the first
+  realistic reason to read a tag the HTML does not display. Reproduced from the report before the fix
+  (identical output, double space included) and pinned by `AlertMessageTagsInAllowlistTest`, which
+  also asserts a tag nothing references is still left out.
+- Existing alerts pick this up the next time they are saved - `template_tags` is computed on store
+  and update, not at fire time. Until then, the workaround of referencing the tag in the HTML still
+  works.
+
 ## August 26th, 2026 - feat(bot): if / elseif / else work in a bot command reply
 
 The Random Rolls and Counters help page had this as its worked example:
