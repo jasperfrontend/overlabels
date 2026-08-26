@@ -42,6 +42,38 @@ final class WiringCatalog
      * @var array<string, array{label: string, satisfied: string, missing: string, not_applicable: string, route: string, cta: string}>
      */
     public const WIRES = [
+        'alerts.token_valid' => [
+            'label' => 'Your Twitch login is valid',
+            'satisfied' => 'Alerts can be built with the Twitch login on this account.',
+            'missing' => 'The Twitch login on this account has expired, so every alert fails before it reaches your overlay. Opening the dashboard renews it, or sends you through Twitch again if it cannot.',
+            'not_applicable' => 'You have no alerts set up, so nothing needs the login.',
+            'route' => 'dashboard.index',
+            'cta' => 'Renew the login',
+        ],
+        'alerts.subscribed' => [
+            'label' => 'Twitch is sending you events',
+            'satisfied' => 'Every event your alerts listen for is subscribed and enabled.',
+            'missing' => 'You have alerts set up, but Twitch is not sending you the events they listen for, so they never fire.',
+            'not_applicable' => 'You have no alerts set up, so there is nothing to subscribe to.',
+            'route' => 'settings.integrations.index',
+            'cta' => 'Check your Twitch connection',
+        ],
+        'alerts.delivering' => [
+            'label' => 'Alerts are getting through',
+            'satisfied' => 'The most recent alert that should have reached your overlay was sent.',
+            'missing' => 'The most recent alert that should have reached your overlay failed on the way. The events page has the details.',
+            'not_applicable' => 'No alert has fired in the last 7 days, so there is nothing to check yet.',
+            'route' => 'dashboard.events',
+            'cta' => 'See recent events',
+        ],
+        'alerts.overlay_listening' => [
+            'label' => 'An overlay is listening',
+            'satisfied' => 'You are live and at least one overlay is connected to receive alerts.',
+            'missing' => 'You are live, but no overlay is connected, so alerts are being sent to nobody. Add an overlay to OBS or reload the one you have.',
+            'not_applicable' => 'Only checked while you are live.',
+            'route' => 'templates.index',
+            'cta' => 'Open your overlays',
+        ],
         'lists.readable' => [
             'label' => 'Something reads it back',
             'satisfied' => 'Chat or an overlay can show what is in this list.',
@@ -71,6 +103,12 @@ final class WiringCatalog
      * @var array<string, array{label: string, outcome: string, subject: string, wires: list<string>}>
      */
     public const CIRCUITS = [
+        'alerts' => [
+            'label' => 'Alerts',
+            'outcome' => 'Every alert you set up reaches your overlay.',
+            'subject' => 'account',
+            'wires' => ['alerts.token_valid', 'alerts.subscribed', 'alerts.delivering', 'alerts.overlay_listening'],
+        ],
         'bot' => [
             'label' => 'Chat commands',
             'outcome' => 'Everything you type a command for runs through the Overlabels bot.',

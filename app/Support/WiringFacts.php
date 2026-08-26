@@ -2,11 +2,18 @@
 
 namespace App\Support;
 
+use App\Enums\DeliveryOutcome;
 use App\Models\BotAlias;
 use App\Models\BotCommand;
+use App\Models\EventTemplateMapping;
+use App\Models\ExternalEventTemplateMapping;
 use App\Models\ListAppender;
 use App\Models\ListMetaCommand;
+use App\Models\StreamState;
 use App\Models\User;
+use App\Models\UserEventsubSubscription;
+use App\Services\BroadcastMeter;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -33,9 +40,152 @@ final class WiringFacts
     public static function for(User $user): array
     {
         return [
+            'alerts' => [self::alertsSubject($user)],
             'bot' => [self::botSubject($user)],
             'lists' => self::listSubjects($user),
         ];
+    }
+
+    /**
+     * The delivery path for alerts, read in the present tense from state the
+     * app already holds: the Twitch login on the account, the EventSub
+     * subscriptions Twitch reports, the delivery ledger's most recent scored
+     * row, and the last connection count Reverb answered with. None of it is
+     * stored for this page; all of it exists because something else needed it.
+     *
+     * With no alert set up, none of these questions arise.
+     *
+     * @return array<string, mixed>
+     */
+    private static function alertsSubject(User $user): array
+    {
+        $mappingCount = EventTemplateMapping::where('user_id', $user->id)
+            ->where('enabled', true)
+            ->whereNotNull('template_id')
+            ->count()
+            + ExternalEventTemplateMapping::where('user_id', $user->id)
+                ->where('enabled', true)
+                ->whereNotNull('overlay_template_id')
+                ->count();
+
+        if ($mappingCount === 0) {
+            return [
+                'key' => 'account',
+                'label' => 'Your alerts',
+                'context' => [],
+                'states' => [
+                    'alerts.token_valid' => WiringCatalog::NOT_APPLICABLE,
+                    'alerts.subscribed' => WiringCatalog::NOT_APPLICABLE,
+                    'alerts.delivering' => WiringCatalog::NOT_APPLICABLE,
+                    'alerts.overlay_listening' => WiringCatalog::NOT_APPLICABLE,
+                ],
+            ];
+        }
+
+        $context = [$mappingCount.' '.($mappingCount === 1 ? 'alert' : 'alerts').' set up'];
+
+        // The Twitch login we hold. The webhook path builds an alert with the
+        // account's access token as stored - nothing refreshes it there - so
+        // an expired token is not a stale timestamp, it is the next alert
+        // failing. Opening the dashboard refreshes it; a refresh that fails
+        // sends the streamer back through Twitch, which is the fix.
+        $tokenValid = $user->token_expires_at !== null && $user->token_expires_at->isFuture();
+        if (! $tokenValid) {
+            $context[] = $user->token_expires_at === null
+                ? 'No Twitch login stored'
+                : 'Twitch login expired '.$user->token_expires_at->diffForHumans();
+        }
+
+        // What Twitch says about our subscriptions, as of the last challenge,
+        // revocation or hourly verify.
+        $subscriptions = UserEventsubSubscription::where('user_id', $user->id)
+            ->selectRaw("count(*) filter (where status = 'enabled') as active")
+            ->selectRaw("count(*) filter (where status <> 'enabled') as failed")
+            ->first();
+        $active = (int) ($subscriptions->active ?? 0);
+        $failed = (int) ($subscriptions->failed ?? 0);
+        $subscribed = $user->eventsub_connected_at !== null && $active > 0 && $failed === 0;
+        $context[] = match (true) {
+            $user->eventsub_connected_at === null => 'Not connected to Twitch events',
+            $failed > 0 => $failed.' of '.($active + $failed).' Twitch subscriptions need repair',
+            default => $active.' Twitch subscriptions active',
+        };
+
+        // The most recent alert that should have reached the overlay, from
+        // the ledger. A refused token is the token wire's finding, not this
+        // one's, so one cause never lights two wires.
+        $latest = self::latestScoredAlert($user);
+        $delivering = match (true) {
+            $latest === null => WiringCatalog::NOT_APPLICABLE,
+            in_array($latest->outcome, [DeliveryOutcome::Failed->value, DeliveryOutcome::RenderFailed->value], true) => WiringCatalog::MISSING,
+            default => WiringCatalog::SATISFIED,
+        };
+        if ($latest !== null) {
+            $when = Carbon::parse($latest->created_at)->diffForHumans();
+            $context[] = match ($latest->outcome) {
+                DeliveryOutcome::Delivered->value => 'Last alert reached '.$latest->connections.' '.($latest->connections === 1 ? 'connection' : 'connections').' '.$when,
+                DeliveryOutcome::NoListener->value => 'Last alert was sent '.$when.' with no overlay open',
+                DeliveryOutcome::TokenInvalid->value => 'Last alert failed '.$when.': Twitch refused the login',
+                DeliveryOutcome::Failed->value => 'Last alert failed '.$when.' on the way to your overlay',
+                default => 'Last alert could not be built '.$when,
+            };
+        } else {
+            $context[] = 'No alert has fired in the last 7 days';
+        }
+
+        // Only a question while live: an overlay that is closed between
+        // streams is not a loose end. While live, the last connection count
+        // Reverb reported is the answer.
+        $live = StreamState::forUser($user)->isConfidentlyLive();
+        $lastDelivery = $live ? app(BroadcastMeter::class)->lastDeliveryFor((string) $user->twitch_id) : null;
+        $listening = match (true) {
+            ! $live, $lastDelivery === null => WiringCatalog::NOT_APPLICABLE,
+            $lastDelivery['connections'] >= 1 => WiringCatalog::SATISFIED,
+            default => WiringCatalog::MISSING,
+        };
+        if ($live && $lastDelivery !== null) {
+            $context[] = 'Live now: the last update reached '.$lastDelivery['connections'].' '.($lastDelivery['connections'] === 1 ? 'connection' : 'connections');
+        }
+
+        return [
+            'key' => 'account',
+            'label' => 'Your alerts',
+            'context' => $context,
+            'states' => [
+                'alerts.token_valid' => $tokenValid ? WiringCatalog::SATISFIED : WiringCatalog::MISSING,
+                'alerts.subscribed' => $subscribed ? WiringCatalog::SATISFIED : WiringCatalog::MISSING,
+                'alerts.delivering' => $delivering,
+                'alerts.overlay_listening' => $listening,
+            ],
+        ];
+    }
+
+    /**
+     * The newest scored ledger row across both event tables in the last seven
+     * days, or null. Scored means the row had an alert that should have
+     * reached the overlay; no_target rows are context, never evidence.
+     */
+    private static function latestScoredAlert(User $user): ?object
+    {
+        $scored = array_map(
+            fn (DeliveryOutcome $o) => $o->value,
+            array_filter(DeliveryOutcome::cases(), fn (DeliveryOutcome $o) => $o->isScored()),
+        );
+        $since = now()->subDays(7);
+
+        $twitch = DB::table('twitch_events')
+            ->where('user_id', $user->id)
+            ->whereIn('outcome', $scored)
+            ->where('created_at', '>=', $since)
+            ->select('outcome', 'connections', 'created_at');
+
+        $external = DB::table('external_events')
+            ->where('user_id', $user->id)
+            ->whereIn('outcome', $scored)
+            ->where('created_at', '>=', $since)
+            ->select('outcome', 'connections', 'created_at');
+
+        return $twitch->unionAll($external)->orderByDesc('created_at')->limit(1)->first();
     }
 
     /**
