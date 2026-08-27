@@ -23,3 +23,14 @@ Broadcast::channel('alerts.{twitchId}', function ($user, $twitchId) {
 Broadcast::channel('twitch-events.{twitchId}', function ($user, $twitchId) {
     return (string) $user->twitch_id === (string) $twitchId;
 });
+
+/**
+ * Per-list live updates (`ListUpdated` fires here as well as on alerts.*).
+ * Same owner rule as the channels above; the slug is not checked because a
+ * list is scoped to its owner and the owner may subscribe to any of theirs.
+ * Overlays reach this channel through the token-signed auth endpoint; this
+ * entry is for the logged-in dashboard, which had no way in before.
+ */
+Broadcast::channel('lists.{twitchId}.{slug}', function ($user, $twitchId) {
+    return (string) $user->twitch_id === (string) $twitchId;
+});
