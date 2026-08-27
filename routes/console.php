@@ -159,13 +159,6 @@ Schedule::command('eventsub:monitor --fix')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/eventsub-monitor.log'));
 
-// Deep health check - runs every 6 hours
-Schedule::command('eventsub:monitor --fix')
-    ->everySixHours()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/eventsub-deep-check.log'));
-
 // Prune Telescope entries older than 48 hours - keeps the DB from ballooning
 Schedule::command('telescope:prune --hours=48')
     ->daily();

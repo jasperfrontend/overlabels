@@ -1,5 +1,28 @@
 # CHANGELOG AUGUST 2026
 
+## August 27th, 2026 - chore: pile C of the delivery audit, swept
+
+Four things noticed on the way through the delivery audit, real but off the path, bundled now that
+the path itself is done. The fifth item on that list, `allowed_origins => ['*']` on the Reverb
+app, is deliberately not here: restricting it needs every origin that opens a socket (overlay
+pages, local dev, the bot's Node client, which may send none), and getting one wrong disconnects
+OBS. That is a decision, not a sweep.
+
+- **`gps_pings` dropped.** Created March 2026, never written or read; GPS goes through
+  `external_events`. `down()` restores the exact shape.
+- **`eventsub:monitor --fix` scheduled once**, not twice. The six-hourly "deep check" was the
+  hourly command with a different log file - in an unmounted container filesystem, at that.
+- **`ControlPanel.vue` listens for `.control.batch`.** Service-fed controls (GPS) arrive batched,
+  one event per tick; the panel only listened for single `.control.updated` events, so a running
+  GPS session never moved in the panel. Same handler shape as `OverlayRenderer`.
+- **`lists.{twitchId}.{slug}` has a `routes/channels.php` entry.** `ListUpdated` broadcasts there
+  as well as on `alerts.*`, but only the overlay token path could authorise it; a logged-in
+  dashboard had no way in. Same owner rule as the other per-user channels.
+- Pinned by `PileCSweepTest`: schedule count, table gone, and the lists channel rule exercised
+  through the registered callback (the suite broadcasts with the `null` driver, which authorises
+  everyone at `/broadcasting/auth`). The panel change has no unit harness; verified by reading
+  against `OverlayRenderer.handleControlBatch`.
+
 ## August 27th, 2026 - feat(wiring): the bot reports which chats it is in - app side
 
 `bot.in_chat` on `/wiring` has always read the toggle: "you asked for the bot". Whether the bot

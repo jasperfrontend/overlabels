@@ -297,14 +297,25 @@ onMounted(() => {
   // public alerts.{id}, which nothing ever publishes on.
   echoChannel = echo.private(`alerts.${twitchId.value}`);
   echoChannel.listen('.control.updated', handleControlUpdated);
+  // Service-fed controls (GPS) arrive batched, one event per tick carrying
+  // every changed key. Without this the panel only moved for single updates.
+  echoChannel.listen('.control.batch', handleControlBatch);
 });
 
 onBeforeUnmount(() => {
   if (echoChannel) {
     echoChannel.stopListening('.control.updated', handleControlUpdated);
+    echoChannel.stopListening('.control.batch', handleControlBatch);
     echoChannel = null;
   }
 });
+
+function handleControlBatch(event: any) {
+  if (!event || !Array.isArray(event.updates)) return;
+  for (const u of event.updates) {
+    handleControlUpdated({ ...u, updated_at: u.updated_at ?? event.updated_at });
+  }
+}
 
 async function postValue(ctrl: OverlayControl, payload: Record<string, any>) {
   saving.value[ctrl.id] = true;
