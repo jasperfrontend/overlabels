@@ -14,7 +14,7 @@ class UserEventsubSubscriptionFactory extends Factory
     public function definition(): array
     {
         return [
-            'twitch_subscription_id' => $this->faker->word(),
+            'twitch_subscription_id' => (string) $this->faker->uuid(),
             'event_type' => $this->faker->word(),
             'version' => $this->faker->word(),
             'status' => $this->faker->word(),

@@ -1,5 +1,16 @@
 # CHANGELOG AUGUST 2026
 
+## August 27th, 2026 - fix(tests): eventsub subscription factory no longer collides on its unique id
+
+`UserEventsubSubscriptionFactory` filled `twitch_subscription_id`, a unique column, with
+`faker->word()`: a draw from a lorem list of about 180 Latin words. Any test that creates two or
+more subscriptions in one transaction had a real chance of drawing the same word twice, and CI
+run 33081950336 did exactly that - `WiringAlertsTest` inserted `enim` twice and fell over on the
+unique index. Nothing in the app changed; the test was a coin toss that finally landed wrong.
+
+The factory now uses a UUID, which is also what Twitch actually issues. `WiringAlertsTest` run
+five times in a row and the full suite once, all green.
+
 ## August 27th, 2026 - docs(delivery): allowed_origins stays at `*`, and why
 
 The one pile C item the sweep below left out is now a recorded decision rather than an open
