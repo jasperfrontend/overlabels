@@ -90,6 +90,14 @@ final class WiringCatalog
             'route' => 'settings.bot.commands.index',
             'cta' => 'Add the bot',
         ],
+        'bot.present' => [
+            'label' => 'The bot can hear your chat',
+            'satisfied' => 'The bot reported your chat among the ones it is listening to.',
+            'missing' => 'The bot is running and has you switched on, but it is not listening to your chat. Most often the bot account is banned or timed out in your channel.',
+            'not_applicable' => 'Checked once the bot is switched on and has reported in.',
+            'route' => 'settings.bot.commands.index',
+            'cta' => 'Check the bot',
+        ],
     ];
 
     /**
@@ -113,7 +121,7 @@ final class WiringCatalog
             'label' => 'Chat commands',
             'outcome' => 'Everything you type a command for runs through the Overlabels bot.',
             'subject' => 'account',
-            'wires' => ['bot.in_chat'],
+            'wires' => ['bot.in_chat', 'bot.present'],
         ],
         'lists' => [
             'label' => 'Lists',

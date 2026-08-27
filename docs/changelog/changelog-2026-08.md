@@ -1,5 +1,28 @@
 # CHANGELOG AUGUST 2026
 
+## August 27th, 2026 - feat(wiring): the bot reports which chats it is in - app side
+
+`bot.in_chat` on `/wiring` has always read the toggle: "you asked for the bot". Whether the bot
+is actually listening to your chat was not knowable from the app. The obvious signal was
+rejected on inspection: the bot's chat-stats summary is skipped for idle channels ("drop the
+bucket rather than log a zero"), so five minutes of silence there is a quiet chat far more often
+than an absent bot - a wire built on it would tell streamers with quiet chats that their bot is
+gone.
+
+- **`POST /internal/bot/presence`** takes the logins the bot is subscribed to right now. It is
+  a cross-repo contract, shipped app side first so the endpoint exists before anything calls it;
+  the bot side follows as its own PR and sends after every channel sync (every 60 s and on each
+  push). Until the bot deploys, the wire below reads "not applicable", never "missing".
+- **`App\Services\BotPresence`** keeps two cache facts: when the bot last reported at all, and
+  when each login was last in a report. Window is five minutes - five missed refreshes.
+- **`bot.present`, second wire on the Chat commands circuit.** Not applicable until the toggle
+  is on and the bot has reported in. Satisfied when your login is in a report within the window.
+  Missing when the bot keeps reporting and you are not in it - almost always the bot account
+  banned or timed out in the channel. A bot that has gone silent altogether is nobody's loose
+  end: that is the process being down, a platform matter, and the wire says so in words.
+- Pinned by `BotPresenceTest` (9): the secret, lowercasing, an empty report being valid,
+  validation, and every state of the wire including "silent bot is not applicable".
+
 ## August 27th, 2026 - feat(delivery): the Delivery tab - what became of each stream's alerts
 
 Built to the sketch below. This is the page the whole uptime question was for: not "99.9% this

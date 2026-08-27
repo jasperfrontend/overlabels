@@ -12,6 +12,7 @@ use App\Models\ListMetaCommand;
 use App\Models\StreamState;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
+use App\Services\BotPresence;
 use App\Services\BroadcastMeter;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -207,13 +208,36 @@ final class WiringFacts
             default => WiringCatalog::MISSING,
         };
 
+        $context = $commandCount > 0
+            ? [$commandCount.' chat '.($commandCount === 1 ? 'command' : 'commands').' set up']
+            : [];
+
+        // Whether the bot is actually listening, from its own reports. Only a
+        // question once the toggle is on (the toggle wire owns "off") and the
+        // bot has reported in at all (a silent bot is a platform matter, not
+        // this streamer's loose end). See BotPresence.
+        $presence = app(BotPresence::class);
+        $login = strtolower($user->twitch_data['login'] ?? '');
+        $present = match (true) {
+            $state !== WiringCatalog::SATISFIED, $login === '', ! $presence->reporting() => WiringCatalog::NOT_APPLICABLE,
+            $presence->present($login) => WiringCatalog::SATISFIED,
+            default => WiringCatalog::MISSING,
+        };
+        if ($state === WiringCatalog::SATISFIED && $login !== '') {
+            $seenAt = $presence->seenAt($login);
+            $context[] = match (true) {
+                ! $presence->reporting() => 'The bot has not reported in yet',
+                $present === WiringCatalog::SATISFIED => 'The bot last confirmed your chat '.Carbon::createFromTimestamp($seenAt)->diffForHumans(),
+                $seenAt !== null => 'The bot last confirmed your chat '.Carbon::createFromTimestamp($seenAt)->diffForHumans(),
+                default => 'The bot has never confirmed your chat',
+            };
+        }
+
         return [
             'key' => 'account',
             'label' => 'Your channel',
-            'context' => $commandCount > 0
-                ? [$commandCount.' chat '.($commandCount === 1 ? 'command' : 'commands').' set up']
-                : [],
-            'states' => ['bot.in_chat' => $state],
+            'context' => $context,
+            'states' => ['bot.in_chat' => $state, 'bot.present' => $present],
         ];
     }
 

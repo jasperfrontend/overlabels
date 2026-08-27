@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Internal\BotGamejamActionController;
 use App\Http\Controllers\Api\Internal\BotListActionController;
 use App\Http\Controllers\Api\Internal\BotListAppenderController;
 use App\Http\Controllers\Api\Internal\BotOutboxController;
+use App\Http\Controllers\Api\Internal\BotPresenceController;
 use App\Http\Controllers\Api\Internal\BotRecipeTriggerController;
 use App\Http\Controllers\Api\Internal\BotSettingsController;
 use App\Http\Controllers\Api\Internal\BotTokenController;
@@ -224,6 +225,7 @@ Route::prefix('/internal/bot')
     ->group(function () {
         Route::middleware('throttle:bot-internal')->group(function () {
             Route::get('/channels', [BotChannelController::class, 'index']);
+            Route::post('/presence', [BotPresenceController::class, 'store']);
             Route::get('/tokens', [BotTokenController::class, 'show']);
             Route::post('/tokens', [BotTokenController::class, 'store']);
             Route::get('/commands', [BotCommandMapController::class, 'index']);
