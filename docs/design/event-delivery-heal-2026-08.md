@@ -237,7 +237,11 @@ actually broadcast it.
 
 **Built 2026-08-27** as the `alerts` circuit: `alerts.token_valid`, `alerts.subscribed`,
 `alerts.delivering` (newest scored ledger row), `alerts.overlay_listening` (B1's count, live
-only). `bot.present` deferred - it needs the chat-stats arrival timestamp first.
+only). **`bot.present` built 2026-08-27** as a cross-repo pair: chat-stats turned out to be no
+signal at all (the bot skips idle channels), so the bot reports the logins it is subscribed to
+after every channel sync (`POST /internal/bot/presence`, `App\Services\BotPresence`), app side
+first, bot side second. A silent bot reads as not applicable - a platform matter, never a
+streamer's loose end.
 
 `/wiring` is already present-tense by design ("a wire is a QUERY, never a record",
 `app/Support/WiringCatalog.php:13-17`) and today has exactly two wires, neither on the event
