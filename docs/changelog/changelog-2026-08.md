@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 27th, 2026 - docs(delivery): allowed_origins stays at `*`, and why
+
+The one pile C item the sweep below left out is now a recorded decision rather than an open
+question. Reverb skips its origin check only for a literal `*`; with any list it rejects a
+connection whose `Origin` header is missing, and the bot's `pusher-js` in Node sends none and
+cannot be told to. Restricting the list would disconnect the bot on the next Reverb restart. The
+real gate is channel authorisation, which a foreign page cannot pass. The order for ever changing
+it is written next to the decision in `docs/design/event-delivery-heal-2026-08.md`.
+
 ## August 27th, 2026 - chore: pile C of the delivery audit, swept
 
 Four things noticed on the way through the delivery audit, real but off the path, bundled now that

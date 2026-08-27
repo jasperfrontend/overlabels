@@ -270,17 +270,26 @@ footnote. Not started until B1-B3 exist. Data tool, not dashboard.
 
 ---
 
-## Pile C: noticed, parked
+## Pile C: noticed, parked - swept 2026-08-27 (#329)
 
-Real, but not on the path and not worth a PR alone. Bundle when something nearby is touched.
+Real, but not on the path and not worth a PR alone. Swept as one PR once the path was done.
 
-- `gps_pings` table has zero references (`2026_03_17_000001_create_gps_pings_table.php`). GPS
-  flows through `external_events`.
-- `eventsub:monitor --fix` is scheduled twice (`routes/console.php:156`, `:163`) with identical
-  flags; the "deep check" differs only in log file, and that log file lives in an unmounted
-  container filesystem.
-- `private-lists.{id}.{slug}` has no `routes/channels.php` entry; only the overlay-token path
-  can authorise it. Matters only if the dashboard ever subscribes to it.
-- `config/reverb.php` `allowed_origins => ['*']`. Separate conversation.
+- `gps_pings` table had zero references (`2026_03_17_000001_create_gps_pings_table.php`). GPS
+  flows through `external_events`. **Dropped**; `down()` restores the exact shape.
+- `eventsub:monitor --fix` was scheduled twice with identical flags; the "deep check" differed
+  only in log file, in an unmounted container filesystem. **Scheduled once.**
+- `private-lists.{id}.{slug}` had no `routes/channels.php` entry; only the overlay-token path
+  could authorise it. **Added**, same owner rule as `alerts.*`.
+- `ControlPanel.vue` listened for `.control.updated` only, so batched GPS updates never moved in
+  the panel (found during A6). **Listens for `.control.batch`.**
+- **`config/reverb.php` `allowed_origins => ['*']` stays, decided 2026-08-27.** Reverb skips the
+  origin check only for a literal `*`; with any list it does `parse_url($connection->origin())`
+  and rejects a connection whose `Origin` header is missing (`Server::verifyOrigin`). The bot's
+  `pusher-js` runs in Node and sends no `Origin`, and exposes no option to set one, so any
+  restricted list disconnects the bot the moment Reverb restarts. The real gate is channel
+  authorisation - a session and CSRF at `/broadcasting/auth`, or an overlay token at the signed
+  endpoint - and a foreign page has neither. If this is ever restricted, the order is: the bot
+  learns to send an `Origin` (a small `ws` wrapper), deploys, then the list becomes
+  `overlabels.com`, `*.overlabels.com`, `overlabels.test`.
 - `overlay_access_logs` is 27k rows of "a browser source was open" that only an admin page reads.
-  Pile B may want it; do not delete it.
+  Untouched; do not delete it.
