@@ -17,6 +17,7 @@ interface UnifiedEvent {
   event_type: string;
   label?: string | null;
   created_at: string;
+  outcome?: string | null;
   event_data?: Record<string, unknown> | null;
   normalized_payload?: Record<string, unknown> | null;
 }

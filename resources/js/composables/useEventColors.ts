@@ -6,6 +6,8 @@ export interface UnifiedEvent {
   event_type: string;
   label?: string | null;
   created_at: string;
+  // What became of this event's alert (App\Enums\DeliveryOutcome); null before the ledger.
+  outcome?: string | null;
   event_data?: Record<string, unknown> | null;
   normalized_payload?: Record<string, unknown> | null;
 }

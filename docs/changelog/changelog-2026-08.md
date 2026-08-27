@@ -1,5 +1,34 @@
 # CHANGELOG AUGUST 2026
 
+## August 27th, 2026 - feat(delivery): the Delivery tab - what became of each stream's alerts
+
+Built to the sketch below. This is the page the whole uptime question was for: not "99.9% this
+month" but "here is what happened during Saturday's stream", with the reason first.
+
+- **A sixth tab on `/dashboard/stream-sessions`, `Delivery`.** Same selector rail, same
+  EventSub-anchored windows, one more loader joined to the same windows CTE
+  (`loadDelivery()`). Not a new page.
+- **Sentences first.** "23 of 24 alerts reached your overlay." Then only the lines that are
+  true: "Your Twitch login expired on 14 June. 12 alerts could not be built." / "1 was sent while
+  no overlay was open (21:04)." / "1 failed on the way to your overlay." / "Alerts reached the
+  overlay within a second." Latency is whole seconds - the ledger's timestamps are
+  `timestamp(0)`, and the first test fixture with an 800 ms latency was how that got noticed - so
+  the sentence only gets specific ("3 s (typical), 8 s (slowest)") when the slowest was over a
+  second. Then, muted, the `no_target` context: "87 events
+  had no alert set up (chat only: 12)." Then the 20 newest failures as a table.
+- **The rate is `delivered / scored`.** `no_target` rows are context, never denominator. A
+  stream with no scored row gets `delivery: null` and the tab says so in words - every stream
+  before the ledger reads as "before the ledger", never as 100% or 0%.
+- **"Reached your overlay" means delivered to at least one connected overlay.** The tab says so
+  under the sentences. Proof of paint stays nobody's.
+- **The events feed shows the outcome word on each row** - "login expired", "no overlay open",
+  "chat only" - next to the time. Rows from before the ledger show nothing. Same vocabulary in
+  `resources/js/utils/deliveryOutcome.ts`, pinned to the PHP enum by a vitest.
+- Pinned by `StreamSessionDeliveryTest` (6): the scored/no_target split and the latency
+  percentiles, null for a scored-less stream, the dated login, the 20-newest cap, window and
+  user isolation, and the feed's outcome word.
+- B4 of `docs/design/event-delivery-heal-2026-08.md`. With it the list from the audit is done.
+
 ## August 27th, 2026 - docs(delivery): the B4 debrief sketch
 
 `docs/design/event-delivery-debrief-2026-08.md`. A sixth `Delivery` tab on

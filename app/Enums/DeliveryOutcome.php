@@ -50,6 +50,15 @@ enum DeliveryOutcome: string
         };
     }
 
+    /** @return list<string> */
+    public static function scoredValues(): array
+    {
+        return array_values(array_map(
+            fn (self $o) => $o->value,
+            array_filter(self::cases(), fn (self $o) => $o->isScored()),
+        ));
+    }
+
     public static function forConnections(int $connections): self
     {
         return $connections >= 1 ? self::Delivered : self::NoListener;
