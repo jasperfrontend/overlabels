@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import TwitchIcon from '@/components/TwitchIcon.vue';
+import { Loader } from '@lucide/vue';
+import { ref } from 'vue';
+const loading = ref(false);
 </script>
 <template>
-  <a
-    class="mt-4 flex flex-col items-center rounded-lg bg-[#9146FF] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#7c3aed] active:scale-[0.98]"
-    href="/auth/redirect/twitch"
-  >
+  <a class="btn btn-xl btn-primary mt-4 w-full" href="/auth/redirect/twitch" @click="loading = true">
     <span class="flex items-center gap-2">
-      <TwitchIcon class="size-5" />
-      Connect
+      <Loader v-if="loading" class="size-4 animate-spin" />
+      <TwitchIcon v-else class="size-5" />
+      <span v-if="loading">Connecting&hellip;</span>
+      <span v-else>Connect</span>
     </span>
   </a>
 </template>
