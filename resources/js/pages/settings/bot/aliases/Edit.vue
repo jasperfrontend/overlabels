@@ -4,7 +4,6 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { type BreadcrumbItem } from '@/types';
@@ -268,12 +267,13 @@ const previewExample = computed(() => {
 
           <!-- Actions -->
           <div class="flex items-center justify-end gap-2 pt-2">
-            <Button as-child variant="ghost" class="cursor-pointer">
-              <Link href="/settings/bot/aliases">Cancel</Link>
-            </Button>
-            <Button type="submit" :disabled="form.processing" class="cursor-pointer">
+            <Link
+              href="/settings/bot/aliases"
+              class="btn btn-sm btn-chill"
+            >Cancel</Link>
+            <button type="submit" :disabled="form.processing" class="btn btn-sm btn-primary">
               {{ isEdit ? 'Save changes' : 'Create alias' }}
-            </Button>
+            </button>
           </div>
         </form>
       </div>

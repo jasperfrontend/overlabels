@@ -422,8 +422,8 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
 
           <!-- Actions -->
           <div class="flex items-center justify-end gap-2 pt-2">
-            <Link href="/settings/bot/commands" class="btn btn-chill">Cancel</Link>
-            <button type="submit" :disabled="form.processing" class="btn btn-primary">
+            <Link href="/settings/bot/commands" class="btn btn-sm btn-chill">Cancel</Link>
+            <button type="submit" :disabled="form.processing" class="btn btn-sm btn-primary">
               {{ isEdit ? 'Save changes' : 'Create command' }}
             </button>
           </div>

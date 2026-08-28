@@ -3,7 +3,6 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
-import { Button } from '@/components/ui/button';
 import { type BreadcrumbItem } from '@/types';
 import { Plus, Pencil, Trash2, CornerDownRight, ArrowRight } from '@lucide/vue';
 import { useConfirm } from '@/composables/useConfirm';
@@ -66,12 +65,13 @@ function formatDate(iso: string | null): string {
         </div>
 
         <div class="flex justify-end">
-          <Button as-child class="cursor-pointer">
-            <Link href="/settings/bot/aliases/create">
-              <Plus class="mr-2 size-4" />
-              New alias
-            </Link>
-          </Button>
+          <Link
+            href="/settings/bot/aliases/create"
+            class="btn btn-sm btn-primary flex items-center"
+          >
+            <Plus class="mr-2 size-4" />
+            New alias
+          </Link>
         </div>
 
         <div v-if="props.aliases.length === 0" class="rounded border border-sidebar-border p-8 text-center">
@@ -110,20 +110,19 @@ function formatDate(iso: string | null): string {
             </div>
 
             <div class="flex shrink-0 gap-2">
-              <Button as-child variant="secondary" size="sm" class="cursor-pointer">
-                <Link :href="`/settings/bot/aliases/${alias.id}/edit`">
-                  <Pencil class="mr-1 size-3.5" />
-                  Edit
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                class="cursor-pointer text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
+              <Link
+                :href="`/settings/bot/aliases/${alias.id}/edit`"
+                class="btn btn-sm btn-primary"
+              >
+                <Pencil class="mr-1 size-3.5" />
+                Edit
+              </Link>
+              <button
+                class="btn btn-sm btn-danger"
                 @click="deleteAlias(alias)"
               >
                 <Trash2 class="size-3.5" />
-              </Button>
+              </button>
             </div>
           </div>
         </div>
