@@ -1,5 +1,18 @@
 # CHANGELOG AUGUST 2026
 
+## August 28th, 2026 - fix(account): deleting your account lands on the homepage instead of an error modal
+
+Deleting an account ended on Inertia's raw-HTML error modal with the homepage inside it. The
+delete is an Inertia XHR, the controller answered `redirect('/')`, and `/` is a plain Blade view
+with no `X-Inertia` header - so the XHR followed the redirect itself and handed Inertia a full
+HTML document it cannot parse. Logout had the identical bug and was fixed with
+`Inertia::location()`; `AccountController::destroy` never got the same treatment. It does now:
+409 + `X-Inertia-Location`, a real navigation to `/`. The flash message that went with the old
+redirect is gone too - nothing on the homepage ever read it.
+
+Pinned by `AccountDeletionRedirectTest`, verified to fail (303 instead of 409) against the old
+controller.
+
 ## August 28th, 2026 - feat(dashboard): welcome card points at settings and wiring, and says what is new
 
 The welcome card's four tiles were one page out of date: "Recent updates" sent a fresh account to
@@ -2092,7 +2105,7 @@ There is now one `CollectionList`, and everything that renders a collection of r
 The nav said "Triggers". The URL said `/alerts`. The Inertia component said `events/index`. Three names for one page, and the only way to know they were the same page was to have written it.
 
 - **The URL is `/triggers` and the route is `triggers.index`.** `events.index` was the worst of the three names, because `admin.events.index` is a genuinely different page - the raw event feed - so grepping for "events.index" returned two unrelated things.
-- **The page folder is `resources/js/pages/triggers/`.** Moved with `git mv`, so the history follows it.
+- **The page folder is `../../resources/js/pages/settings/triggers/`.** Moved with `git mv`, so the history follows it.
 - **`/alerts` still resolves**, as an unnamed 301 to `/triggers`. Bookmarks and tabs left open in OBS keep working. It is unnamed on purpose: nothing should link there, and Ziggy skips unnamed routes, so it cannot be reached from the frontend by accident.
 - **Five integration settings pages linked to "Alerts Builder"**, hardcoded as `href="/alerts"` rather than through Ziggy - which is why the rename would have broken them silently. They now say "Triggers" and point at `/triggers`, matching what the nav item is actually called.
 

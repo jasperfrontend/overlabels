@@ -4,14 +4,21 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Services\UserDeletionService;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 class AccountController extends Controller
 {
-    public function destroy(Request $request, UserDeletionService $deletion): RedirectResponse
+    // Inertia::location, not redirect(). Same reason as logout in
+    // AuthenticatedSessionController::destroy: the target is '/', a plain Blade
+    // view with no X-Inertia header. A 302/303 gets followed by the XHR itself,
+    // which then holds a full HTML document Inertia cannot parse and shows it in
+    // the error modal. 409 + X-Inertia-Location makes the client do a real
+    // navigation instead, which is what a session teardown wants anyway.
+    public function destroy(Request $request, UserDeletionService $deletion): Response
     {
         $request->validate([
             'confirmation' => 'required|string',
@@ -37,6 +44,6 @@ class AccountController extends Controller
 
         $deletion->eraseAccount($user);
 
-        return redirect('/')->with('message', 'Your account and all data have been permanently deleted.');
+        return Inertia::location(route('home'));
     }
 }

@@ -91,7 +91,7 @@ class EventTemplateMappingController extends Controller
             ])
             ->values();
 
-        return Inertia::render('triggers/index', [
+        return Inertia::render('settings/triggers/index', [
             'twitchMappings' => $twitchMappings,
             'externalMappings' => $externalMappings,
             'connectedServices' => $connectedServices,
