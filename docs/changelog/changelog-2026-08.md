@@ -1,5 +1,21 @@
 # CHANGELOG AUGUST 2026
 
+## August 28th, 2026 - feat(dashboard): welcome card points at settings and wiring, and says what is new
+
+The welcome card's four tiles were one page out of date: "Recent updates" sent a fresh account to
+the changelog, while the two things that actually moved this month - settings gathered in one
+place, and `/wiring` - had no entry point on the dashboard at all.
+
+- **"Recent updates" is replaced by "My settings" and "Wiring status"**, five tiles now. The
+  grid stays two columns on a phone and four from `sm` up, so the fifth wraps.
+- **New tiles carry a `new` pill and a violet ring**, driven by an `isNew` flag per tile. Two
+  tiles carry it today; flipping it off later is one boolean, no markup.
+- **Every tile has a `title`** for a one-line hover description, since the labels are two words
+  each.
+- **All five share `btn-primary`.** The earlier per-tile colour palette read as four different
+  actions when they are four equally important destinations.
+- "My static overlays" is now "My overlays".
+
 ## August 27th, 2026 - fix(tests): eventsub subscription factory no longer collides on its unique id
 
 `UserEventsubSubscriptionFactory` filled `twitch_subscription_id`, a unique column, with

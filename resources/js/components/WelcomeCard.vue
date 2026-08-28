@@ -4,7 +4,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { useInitials } from '@/composables/useInitials';
-import { Activity, Bell, Layers, Newspaper, Undo2, X } from '@lucide/vue';
+import { Activity, Bell, Cable, Layers, Undo2, Wrench, X } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
 
 const page = usePage<AppPageProps>();
@@ -47,30 +47,48 @@ function setDismissed(value: boolean): void {
 // used here as a palette rather than for their action semantics: one per tile,
 // so the four are told apart pre-attentively rather than by reading all four
 // labels. Class strings stay full literals so Tailwind's scanner keeps them.
+// Update: all buttons now just have the same classes, it's much cleaner.
+// and since all buttons are equally "primary / important", this is fine.
 const tiles = [
   {
-    label: 'My static overlays',
+    label: 'My overlays',
     icon: Layers,
     href: route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'static' }),
     class: 'btn-primary',
+    isNew: false,
+    title: 'View, edit and create your static overlays',
   },
   {
     label: 'My alerts',
     icon: Bell,
     href: route('templates.index', { direction: 'desc', filter: 'mine', search: '', type: 'alert' }),
     class: 'btn-primary',
+    isNew: false,
+    title: 'View, edit and create your alerts',
   },
   {
     label: 'Recent events',
     icon: Activity,
     href: route('dashboard.recents'),
     class: 'btn-primary',
+    isNew: false,
+    title: 'View recent events like follows, donations, and more.',
   },
   {
-    label: 'Recent updates',
-    icon: Newspaper,
-    href: route('updates.index'),
+    label: 'My settings',
+    icon: Wrench,
+    href: route('settings.account'),
     class: 'btn-primary',
+    isNew: true,
+    title: 'NEW: all your settings are now centralised in one place.',
+  },
+  {
+    label: 'Wiring status',
+    icon: Cable,
+    href: route('wiring.index'),
+    class: 'btn-primary',
+    isNew: true,
+    title: 'NEW: check if everything you have created is wired up properly.',
   },
 ];
 </script>
@@ -106,9 +124,16 @@ const tiles = [
           v-for="tile in tiles"
           :key="tile.label"
           :href="tile.href"
-          class="btn flex-col gap-2 px-3 py-4 text-center leading-tight"
-          :class="tile.class"
+          class="btn group relative flex-col gap-2 px-3 py-4 text-center leading-tight"
+          :class="{ 'ring-2 ring-violet-400 ring-offset-2 ring-offset-background transition hover:ring-fuchsia-400': tile.isNew, [tile.class]: true }"
+          :title="tile.title || null"
         >
+          <span
+            v-if="tile.isNew"
+            class="absolute top-2 right-2 h-auto rounded-full bg-violet-700 px-2 pt-0.5 pb-1 text-sm leading-none text-white transition-colors duration-300 group-hover:bg-fuchsia-400 dark:bg-violet-600 dark:group-hover:bg-fuchsia-600"
+            aria-hidden="true"
+            >new</span
+          >
           <component :is="tile.icon" class="h-6 w-6" />
           <span>{{ tile.label }}</span>
         </Link>
