@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useInitials } from '@/composables/useInitials';
 import { Activity, Bell, Cable, Layers, Undo2, Wrench, X } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
@@ -120,23 +121,30 @@ const tiles = [
       <div class="mt-5 h-px w-full max-w-md bg-muted-foreground/10" />
 
       <div class="mt-5 grid w-full max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
-        <Link
-          v-for="tile in tiles"
-          :key="tile.label"
-          :href="tile.href"
-          class="btn group relative flex-col gap-2 px-3 py-4 text-center leading-tight"
-          :class="{ 'ring-2 ring-violet-400 ring-offset-2 ring-offset-background transition hover:ring-fuchsia-400': tile.isNew, [tile.class]: true }"
-          :title="tile.title || null"
-        >
-          <span
-            v-if="tile.isNew"
-            class="absolute top-2 right-2 h-auto rounded-full bg-violet-700 px-2 pt-0.5 pb-1 text-sm leading-none text-white transition-colors duration-300 group-hover:bg-fuchsia-400 dark:bg-violet-600 dark:group-hover:bg-fuchsia-600"
-            aria-hidden="true"
-            >new</span
-          >
-          <component :is="tile.icon" class="h-6 w-6" />
-          <span>{{ tile.label }}</span>
-        </Link>
+        <Tooltip v-for="tile in tiles" :key="tile.label">
+          <TooltipTrigger as-child>
+            <Link
+              :href="tile.href"
+              class="btn group relative flex-col gap-2 px-3 py-4 text-center leading-tight"
+              :class="{
+                'ring-2 ring-violet-400 ring-offset-2 ring-offset-background transition hover:ring-fuchsia-400': tile.isNew,
+                [tile.class]: true,
+              }"
+            >
+              <span
+                v-if="tile.isNew"
+                class="absolute top-2 right-2 h-auto rounded-full bg-violet-700 px-2 pt-0.5 pb-1 text-sm leading-none text-white transition-colors duration-300 group-hover:bg-fuchsia-400 dark:bg-violet-600 dark:group-hover:bg-fuchsia-600"
+                aria-hidden="true"
+                >new</span
+              >
+              <component :is="tile.icon" class="h-6 w-6" />
+              <span>{{ tile.label }}</span>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="top" :side-offset="6" class="max-w-56 text-center">
+            {{ tile.title }}
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   </Card>

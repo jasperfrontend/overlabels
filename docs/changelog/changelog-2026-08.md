@@ -1,5 +1,14 @@
 # CHANGELOG AUGUST 2026
 
+## August 28th, 2026 - feat(dashboard): welcome card tiles get real tooltips
+
+The five welcome card tiles described themselves through the native `title` attribute, which
+shows up after a second of hovering, in the browser's own styling, wherever the cursor happens
+to be. They now use the `Tooltip` component from `components/ui/tooltip`, the same one the tag
+browser uses: styled, positioned above the tile, and visible on keyboard focus too. The
+`TooltipProvider` already mounted in `AppLayout` covers it, so the card adds no provider of its
+own. Copy is unchanged.
+
 ## August 28th, 2026 - fix(account): deleting your account lands on the homepage instead of an error modal
 
 Deleting an account ended on Inertia's raw-HTML error modal with the homepage inside it. The
