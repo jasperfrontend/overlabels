@@ -127,7 +127,7 @@ const tiles = [
               :href="tile.href"
               class="btn group relative flex-col gap-2 px-3 py-4 text-center leading-tight"
               :class="{
-                'ring-2 ring-violet-400 ring-offset-2 ring-offset-background transition hover:ring-fuchsia-400': tile.isNew,
+                'ring-2 ring-violet-400 ring-offset-2 ring-offset-background transition hover:ring-fuchsia-400 focus:ring-fuchsia-400': tile.isNew,
                 [tile.class]: true,
               }"
             >
@@ -141,7 +141,7 @@ const tiles = [
               <span>{{ tile.label }}</span>
             </Link>
           </TooltipTrigger>
-          <TooltipContent side="top" :side-offset="6" class="max-w-56 text-center">
+          <TooltipContent side="top" :side-offset="6" class="max-w-56 text-center text-sm">
             {{ tile.title }}
           </TooltipContent>
         </Tooltip>
