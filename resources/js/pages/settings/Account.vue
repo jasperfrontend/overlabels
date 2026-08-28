@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
-import { Head, usePage, router, Link } from '@inertiajs/vue3';
+import { Head, usePage, router } from '@inertiajs/vue3';
 import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { type BreadcrumbItem, type ForeachCaps } from '@/types';
@@ -275,8 +275,16 @@ function saveForeachCaps() {
           <li>Your bot commands, custom controls, custom tags, and stream history are erased.</li>
           <li>If you re-authenticate with Twitch later, you will start from scratch as a brand-new account.</li>
           <li>We cannot restore your old data once you have deleted your account, everything will be gone.</li>
-          <li>You still have to manually disconnect Overlabels from your
-            <Link href="https://www.twitch.tv/settings/connections" target="_blank" class="underline hover:text-red-400 dark:hover-text-red-300">Twitch Connections</Link>. Look for Overlabels and Overlabels Bot Service.</li>
+          <li>
+            You still have to manually disconnect Overlabels from your
+            <a
+              href="https://www.twitch.tv/settings/connections"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline hover:text-red-400 dark:hover:text-red-300"
+              >Twitch Connections</a
+            >. Look for Overlabels and Overlabels Bot Service.
+          </li>
         </ul>
 
         <div class="space-y-2">

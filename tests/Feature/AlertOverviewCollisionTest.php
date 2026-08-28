@@ -42,7 +42,7 @@ test('two identical cheer conditions flag the later template as shadowed', funct
         ->get('/settings/triggers')
         ->assertStatus(200)
         ->assertInertia(fn (Assert $page) => $page
-            ->component('triggers/index')
+            ->component('settings/triggers/index')
             ->has('twitchMappings', 2)
             ->where('twitchMappings.0.condition_type', 'exactly')
             ->where('twitchMappings.0.condition_value', 100)
@@ -72,7 +72,7 @@ test('different cheer conditions never collide', function () {
         ->get('/settings/triggers')
         ->assertStatus(200)
         ->assertInertia(fn (Assert $page) => $page
-            ->component('triggers/index')
+            ->component('settings/triggers/index')
             ->has('twitchMappings', 2)
             ->where('twitchMappings.0.shadowed_by', null)
             ->where('twitchMappings.1.shadowed_by', null)

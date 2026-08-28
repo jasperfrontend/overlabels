@@ -1,5 +1,18 @@
 # CHANGELOG AUGUST 2026
 
+## August 28th, 2026 - fix(account): deleting your account lands on the homepage instead of an error modal
+
+Deleting an account ended on Inertia's raw-HTML error modal with the homepage inside it. The
+delete is an Inertia XHR, the controller answered `redirect('/')`, and `/` is a plain Blade view
+with no `X-Inertia` header - so the XHR followed the redirect itself and handed Inertia a full
+HTML document it cannot parse. Logout had the identical bug and was fixed with
+`Inertia::location()`; `AccountController::destroy` never got the same treatment. It does now:
+409 + `X-Inertia-Location`, a real navigation to `/`. The flash message that went with the old
+redirect is gone too - nothing on the homepage ever read it.
+
+Pinned by `AccountDeletionRedirectTest`, verified to fail (303 instead of 409) against the old
+controller.
+
 ## August 28th, 2026 - feat(dashboard): welcome card points at settings and wiring, and says what is new
 
 The welcome card's four tiles were one page out of date: "Recent updates" sent a fresh account to

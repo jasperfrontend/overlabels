@@ -340,7 +340,7 @@ test('the page counts loose ends in subjects, not areas', function () {
         ->assertOk()
         ->assertInertia(
             fn ($page) => $page
-                ->component('wiring/index')
+                ->component('settings/wiring/index')
                 ->where('looseEnds', 2)
                 ->where('circuits.0.key', 'lists')
                 ->where('circuits.0.status', WiringReport::LOOSE_END)
