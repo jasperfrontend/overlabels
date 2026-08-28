@@ -65,10 +65,7 @@ function formatDate(iso: string | null): string {
         </div>
 
         <div class="flex justify-end">
-          <Link
-            href="/settings/bot/aliases/create"
-            class="btn btn-sm btn-primary flex items-center"
-          >
+          <Link href="/settings/bot/aliases/create" class="btn btn-sm btn-primary flex items-center">
             <Plus class="mr-2 size-4" />
             New alias
           </Link>
@@ -110,17 +107,11 @@ function formatDate(iso: string | null): string {
             </div>
 
             <div class="flex shrink-0 gap-2">
-              <Link
-                :href="`/settings/bot/aliases/${alias.id}/edit`"
-                class="btn btn-sm btn-primary"
-              >
+              <Link :href="`/settings/bot/aliases/${alias.id}/edit`" class="btn btn-sm btn-primary">
                 <Pencil class="mr-1 size-3.5" />
                 Edit
               </Link>
-              <button
-                class="btn btn-sm btn-danger"
-                @click="deleteAlias(alias)"
-              >
+              <button class="btn btn-sm btn-danger" @click="deleteAlias(alias)">
                 <Trash2 class="size-3.5" />
               </button>
             </div>
