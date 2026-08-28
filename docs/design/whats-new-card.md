@@ -1,7 +1,9 @@
 # What's New card (parked)
 
-**Status:** parked 2026-08-28, pending the session-persistence fix (see "Why this is parked").
-**Replaces:** the tile row + avatar hero in `resources/js/components/WelcomeCard.vue`.
+**Status:** designed and agreed 2026-08-28, not built. **Unblocked** - the session fix it was
+waiting on shipped the same day in `13baef0c` (see "What this was parked behind").
+**Replaces:** the tile row + avatar hero in `resources/js/components/WelcomeCard.vue`, which is
+rendered near the top of the authenticated dashboard.
 
 ## The problem this exists to solve
 
@@ -30,6 +32,21 @@ new?". A correct answer inside one second, with no scanning, is the bar.
 
 Claude Design canvas: `claude.ai/design/p/d089c27b-bee8-493d-9e49-a9f0e999ed23`, artboard
 `WelcomeCard v2.dc.html`. Two states, and the tile row and avatar hero are both gone.
+
+**Reading the canvas from a fresh session:** use the `DesignSync` tool (`get_project`, `list_files`,
+`get_file`) with that project id. It needs design-system authorization first - run `/design-login`,
+or every call returns an authorization error. Worth reading: the artboard itself, and
+`uploads/overlabels-dashboard-new-badge-handoff.md`, which is the diagnosis brief and is where the
+"badge is a label, not a beacon" framing above comes from. `support.js` is the DC runtime and does
+not need reading; `sc-if`, `{{bindings}}`, `style-hover` and `DCLogic` are legible straight off the
+artboard.
+
+**The artboard's copy is placeholder and is not trustworthy as product truth.** Its three example
+rows are titled "Writing test" (a stand-in for Wiring status), "My settings" and "Loops in
+templates"; the dates are invented; and it renders `[[[foreach: poll_options]]]`, which is not the
+real syntax. Write the shipping copy from the code, not from the mock. Same for the dark-only inline
+styles: map them onto the app's real theme tokens and `.btn` classes rather than importing the
+design system CSS, which is a draft.
 
 **Unread state** - two columns. Left rail (300px): "What's new" heading, a summary sentence, and a
 link to `/updates` for the full history. Right column: one row per unseen change, each with a teal
@@ -77,11 +94,22 @@ Update::published()
   ->limit(5)
 ```
 
+`Update` has no `dismissals()` relationship yet - that HasMany is part of the build, not something
+already present.
+
 ## Decisions still open
 
+- **Where the mono kind label comes from** (`new page - Aug 26`). A second tag alongside `whatsnew`
+  is the zero-migration option, but nothing decides the vocabulary yet. Keep it a small closed set -
+  new page, new syntax, new integration - or drop the label entirely.
 - **The per-row CTA** ("Check your wiring"). Not in the schema, and the only part needing a real
   migration. An admin free-text URL rots silently on a route rename; storing a route name + params
   resolves server-side and fails loudly, which is testable.
+- **`excerpt` is nullable**, so a tagged post can reach the card with no body copy. Either require it
+  for `whatsnew` posts at save time or decide what an empty row renders as. Note the standing rule:
+  empty renders as nothing, never a placeholder or a dash.
+- **Date formatting goes through `users.locale`**, which already exists and is already appended to
+  the shared user prop. Do not hand-format.
 - **The cap and its overflow copy.** ~5 rows plus "and N more in Updates".
 - **The summary sentence.** Without a login clock, "3 changes shipped since your last visit on
   Aug 14" has to become something honest. "3 changes you haven't seen yet" needs no clock at all.
@@ -93,12 +121,18 @@ Update::published()
   seen" is self-clearing, so the dismiss X can go. That also moves the state from per-device to
   per-account, which is correct for "what changed while you were away".
 
-## Why this is parked
+## What this was parked behind (resolved)
 
-The first draft of this design anchored "new" to the user's last login, and the assumption behind
-that - that sessions here are long-lived, so a login is a rare event - **is false**. Prod runs on
-the default `SESSION_LIFETIME` of 120 minutes with no remember-me, so two hours away from the site
-logs you out. A login is not a meaningful "last visit" marker; it is a symptom of a session bug.
+The first draft anchored "new" to the user's last login. The assumption under that - that sessions
+here are long-lived, so a login is a rare event - was false: prod ran on the default
+`SESSION_LIFETIME` of 120 minutes with no remember-me, so two hours away logged you out and a login
+meant nothing about when you last visited.
 
-Fix the session persistence first. Then this card can be built on dismissal records, which do not
-depend on the login clock at all.
+Fixed and shipped 2026-08-28 in `13baef0c`: the `remember_token` column is restored, the Twitch
+callback logs in with remember, and sessions now survive idle expiry. Pinned by
+`tests/Feature/PersistentLoginTest.php`.
+
+**That does not revive the login clock.** Nothing records logins - there is no `last_login_at`, no
+listener and no login audit anywhere in the app, and `overlay_access_logs` is overlay-token traffic,
+not sign-ins. Adding one would be new plumbing for a marker the dismissal records already make
+redundant. Build this on `update_dismissals`, as agreed above.
