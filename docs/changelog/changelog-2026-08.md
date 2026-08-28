@@ -1,5 +1,52 @@
 # CHANGELOG AUGUST 2026
 
+## August 28th, 2026 - fix(auth): you no longer have to log in every day
+
+Overlabels logged you out roughly two hours after you stopped looking at it. Not on browser
+close, not on a schedule, not because of anything Twitch did - just idle expiry, every time,
+with nothing to catch you on the way back.
+
+Three facts stacked up into that. Prod never sets `SESSION_LIFETIME`, so it inherits the
+framework default of 120 minutes on a rolling idle window. `expire_on_close` is false, so both
+the cookie's max-age and the server-side `last_activity` check slide forward on each response
+and then lapse together once you stop. And the OAuth callback called `Auth::login($user)` with
+no remember flag, against a `users` table whose `remember_token` column had been dropped - so
+when the window lapsed there was no persistent credential to fall back on and the only way back
+in was a full round trip through Twitch.
+
+The prod `sessions` table showed it plainly: 544 live rows whose oldest `last_activity` was 129
+minutes old, and nothing older than that existing at all. That is the 120-minute expiry visible
+in the data rather than inferred from config.
+
+- **`remember_token` was collateral, not a decision.** It went in `f162220d`, "drop user email
+  storage end-to-end", alongside `email`, `password` and `password_reset_tokens` as "dead
+  starter-kit auth scaffolding". It is neither an email nor a password, and nothing read it only
+  because remember-me had never been switched on. Restoring it undoes none of that privacy work.
+- **The column is a hard prerequisite, not a nicety.** `Auth::login($user, true)` makes
+  `SessionGuard` cycle a remember token and save it, so passing `true` without the column is a
+  500 on every single login. Migration and callback change ship together or not at all. Prod runs
+  migrations in the entrypoint on the `web` role before the container takes traffic, so the
+  ordering holds on deploy.
+- **`remember_token` is in `User::$hidden`.** `HandleInertiaRequests` uses an explicit allowlist
+  so it could not have leaked there, but it is a persistent-login credential and anything else
+  that serialises a whole `User` would otherwise hand it out.
+- **A banned account got a friendlier answer than everyone else.** The callback's ban branch calls
+  `abort(404)`, but the whole body sits in `catch (Exception $e)` and an `HttpException` is an
+  `Exception` - so the 404 was swallowed and reissued as the generic "Authentication failed,
+  please try again" redirect. A banned requester gets a hard 404 everywhere else in the app;
+  telling them at the login door that it is worth retrying was the one place that leaked. Fixed by
+  re-throwing `HttpException` ahead of the catch-all, which covers any future deliberate abort in
+  that callback too.
+- **`SESSION_LIFETIME` was deliberately left alone.** Raising it was the other candidate fix, but
+  543 of those 544 live sessions are anonymous visitors - exactly one authenticated session
+  existed site-wide at the time of the reading - so a 30-day lifetime parks roughly 200k guest
+  rows in the table for no gain once a remember cookie exists. The session still expires at two
+  hours; the cookie just re-authenticates you through it.
+- **`tests/Feature/PersistentLoginTest.php` is the first coverage the Twitch callback has ever
+  had.** Four tests, each verified against the broken state: remove the `true` and two fail,
+  remove the migration and all four fail, and drop the `HttpException` re-throw and the banned
+  user goes back to a 302.
+
 ## August 28th, 2026 - feat(dashboard): welcome card tiles get real tooltips
 
 The five welcome card tiles described themselves through the native `title` attribute, which

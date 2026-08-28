@@ -53,6 +53,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 Route::get('/', function () {
     return view('welcome');
@@ -458,7 +459,13 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
             $user->update($updateData);
         }
 
-        Auth::login($user);
+        // Remember, always. Sessions expire after SESSION_LIFETIME (120 minutes
+        // of idle by default, and prod does not override it), so without a
+        // remember cookie two hours away from the site means re-authenticating
+        // through Twitch - which in practice meant logging in every day. The
+        // remember cookie is cycled on logout, and Auth::logout() below clears
+        // it for a banned user before the session is thrown away.
+        Auth::login($user, true);
 
         // Block banned users from logging in. 404 rather than a redirect to an
         // explanation page: a banned requester gets nothing anywhere else, and
@@ -519,6 +526,13 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
 
         return redirect('/dashboard');
 
+    } catch (HttpException $e) {
+        // A deliberate abort() is not an OAuth failure. Without this the
+        // catch-all below swallowed the banned-user 404 - HttpException is an
+        // Exception - and handed a banned account the friendly "Authentication
+        // failed, please try again" redirect instead of the hard 404 that every
+        // other route gives them.
+        throw $e;
     } catch (Exception $e) {
         Log::error('Twitch OAuth callback failed', [
             'error' => $e->getMessage(),

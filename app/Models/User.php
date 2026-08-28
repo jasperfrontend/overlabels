@@ -33,6 +33,7 @@ use Mchev\Banhammer\Traits\Bannable;
  * @property bool $eventsub_auto_connect
  * @property Carbon|null $onboarded_at
  * @property string|null $webhook_secret
+ * @property string|null $remember_token
  * @property string $role
  * @property array<string, mixed> $preferences
  * @property-read string $locale
@@ -170,6 +171,10 @@ class User extends Authenticatable
         'access_token',
         'refresh_token',
         'token_expires_at',
+        // A persistent-login credential. HandleInertiaRequests uses an explicit
+        // allowlist so it cannot leak there, but any other place that serialises
+        // a whole User would otherwise hand it out.
+        'remember_token',
     ];
 
     /**
