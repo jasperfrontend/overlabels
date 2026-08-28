@@ -607,7 +607,20 @@ clobbered by a checkout, a stash, or a branch switch that a later step needs to 
 
 ### Committing and pushing
 
-- At the end of every logical unit of work, prepare a commit: update CHANGELOG (docs/changelog/changelog-YYYY-MM.md - per-month files) first, then commit everything together - one commit. Do NOT push automatically. Ask the user for confirmation before pushing.
+- **Default since 2026-08-28: commit on `main` and push. No branch, no PR.** Branch + PR only
+  when asked for one in that moment. The old branch-per-change flow ran the gate twice and put
+  zero seconds between merge and prod, and the follow-up 3-line change always arrived seconds
+  after the PR landed.
+- **A push to `main` deploys immediately and ungated** - `deploy.yml` fires on every push and CI
+  runs alongside it, blocking nothing. So the full local gate is the ONLY gate and is never
+  skipped: `php artisan pint --test && npm run format:check && npm run lint:check && npm test &&
+  npm run typecheck && npm run build && php artisan test` (build before pest - two tests inspect
+  the built assets). Red gate = no push. `/ship` runs exactly this.
+- "Ship it" means gate, commit, push - one shot, no confirmation pause.
+- **Changelog only for a real feature, a big refactor or a substantial functionality change**
+  (removing StreamElements, adding `channel_avatar`, a settings-page revamp), or when asked.
+  Never for tiny or visual iterations: button borders, prose, colours, icons, unifying styles.
+  Entries go in `docs/changelog/changelog-YYYY-MM.md` (per-month), same commit as the change.
 - If unsure whether to commit first or apply changes first, commit first then apply
 - NEVER use em dashes in user-facing copy or code. Use hyphens with spaces instead.
 - NEVER call "Fork" in frontend-facing UI. Always use "Copy" instead.
