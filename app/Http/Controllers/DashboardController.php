@@ -57,6 +57,7 @@ class DashboardController extends Controller
             'communityTemplates' => $communityTemplates,
             'userRecentEvents' => $userRecentEvents,
             'recentUpdates' => $recentUpdates,
+            'whatsNew' => WhatsNewController::props($user),
             'usage' => config('metering.meter_mode', 'both') === 'broadcast'
                 ? ($user->twitch_id ? app(BroadcastMeter::class)->summaryFor((string) $user->twitch_id) : null)
                 : app(EventMeter::class)->summaryFor($user->id),

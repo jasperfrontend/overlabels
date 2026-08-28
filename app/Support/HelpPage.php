@@ -221,27 +221,15 @@ final class HelpPage
     /**
      * Split flat `key: value` frontmatter from the body.
      *
+     * The implementation lives in App\Support\Frontmatter, shared with update
+     * posts. Help pages pass no required keys, so the behaviour here is exactly
+     * what it was when this method owned the logic.
+     *
      * @return array{0:array<string,string>,1:string}
      */
     private static function splitFrontmatter(string $raw): array
     {
-        $raw = ltrim($raw, "\xEF\xBB\xBF");
-        $normalized = str_replace("\r\n", "\n", $raw);
-
-        if (! str_starts_with($normalized, "---\n")) {
-            return [[], $normalized];
-        }
-
-        $end = strpos($normalized, "\n---", 3);
-
-        if ($end === false) {
-            return [[], $normalized];
-        }
-
-        $block = substr($normalized, 4, $end - 3);
-        $body = ltrim(substr($normalized, $end + 4), "\n");
-
-        return [self::parseFrontmatter($block), $body];
+        return Frontmatter::split($raw);
     }
 
     /**
@@ -251,17 +239,6 @@ final class HelpPage
      */
     private static function parseFrontmatter(string $block): array
     {
-        $meta = [];
-
-        foreach (explode("\n", $block) as $line) {
-            $line = trim($line);
-            if ($line === '' || ! str_contains($line, ':')) {
-                continue;
-            }
-            [$key, $value] = explode(':', $line, 2);
-            $meta[trim($key)] = trim(trim(trim($value), '"\''));
-        }
-
-        return $meta;
+        return Frontmatter::parse($block);
     }
 }

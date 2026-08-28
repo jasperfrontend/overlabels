@@ -1,5 +1,109 @@
 # CHANGELOG AUGUST 2026
 
+## August 29th, 2026 - feat(dashboard): the welcome card became a What's New card
+
+A working developer was shown the dashboard cold and asked which two things were new. He could
+not answer. The two `new` badges sat in five large filled buttons in the visual centre of the
+page and he missed them completely.
+
+The assumption that broke is worth writing down, because it looks obvious only afterwards: a
+badge does not attract attention, it confirms attention that has already landed. It is a label,
+not a beacon. Five things made it worse - a dismiss X that framed the whole panel as skippable
+onboarding, a tile row duplicating the sidebar so the brain classified it as shortcuts it
+already had, a violet pill on a violet tile in a violet app with no preattentive contrast, five
+equal tiles so nothing had hierarchy, and an avatar hero that was the largest and least
+informative element on the page. Underneath all of it, "new" was anchored to the author's last
+change rather than to anything the reader had experienced, which made it ambiguous by
+construction.
+
+The tile row and the avatar hero are gone. In their place is a card that names what changed, in
+the reader's own terms, and disappears when there is nothing to say.
+
+- **The feed is the existing `updates` table, selected by a `whatsnew` tag.** No new table, no
+  second authoring surface, no migration for the content: `tags` was already a json array and
+  the admin form already takes free text, so putting a post on the card is typing one more tag
+  while writing it. The excerpt is the row copy and `published_at` is the date, which is what
+  makes the changelog come alive for people who were never going to read a changelog.
+- **"Seen" is a row per user per update in `update_dismissals`, not an `updates_seen_at`
+  stamp.** That is what makes Undo a real delete rather than page state that dies on reload, and
+  Undo is scoped to the most recent batch rather than to every dismissal the account ever made -
+  the button sits next to one press, so it reverses one press. Marking twice is idempotent at
+  the database, on the unique pair.
+- **A new account is caught up by definition**, via `published_at > users.created_at`. No
+  registration hook, no seeded rows, no backfill. Nothing carries the `whatsnew` tag today, so
+  the card is empty everywhere until the first post is tagged, and no existing user gets a wall
+  of history they never asked for. Old posts were deliberately not retro-tagged.
+- **It does not anchor to last login, and it never will.** Nothing in this app records logins -
+  there is no `last_login_at`, no listener, no audit row, and `overlay_access_logs` is
+  overlay-token traffic rather than sign-ins. Adding that plumbing would only reproduce what the
+  dismissal rows already say. Sessions did have to stop expiring after two hours first, which
+  shipped this morning in `13baef0c`.
+- **The per-row link is flat frontmatter at the top of the post body**, `route:` plus optional
+  `params:`, or a `url:`, plus a `label:`. A route name resolves server-side, so a typo is
+  caught the moment the post is saved rather than rotting silently the way a pasted URL does.
+  The asymmetry is deliberate: loud at save time, quiet at render time - a route deleted six
+  months later drops the link instead of taking the dashboard down with it.
+- **`App\Support\Frontmatter` is now the one flat-frontmatter parser**, lifted verbatim out of
+  `HelpPage`, which had carried the only copy since the help system was written. It came with
+  fourteen tests it never had: BOM handling, CRLF normalisation on every path including the one
+  with no frontmatter at all, the exact three-hyphens-then-newline prefix requirement, the
+  `strpos` offset of 3
+  that lets an empty block parse, the blank-line collapse after the closing delimiter, and the
+  `explode` limit of 2 that is the only reason a `url:` or `canonical:` value survives its own
+  colons. Every one of those was unpinned - the whole suite would have stayed green through a
+  rewrite that broke any of them, because every help test reads real files and every real file
+  is well-formed.
+- **An update body may not be treated as frontmatter unless it declares a key the card knows.**
+  This is the one real divergence from how help pages parse, and it exists because a help page
+  is a repo file written by someone who knows the convention while an update body is free-form
+  markdown typed into a textarea - where a leading `---` is an ordinary horizontal rule.
+  Unguarded, a post opening with a rule silently lost everything up to the next one, and any
+  line in that span containing a colon became a phantom metadata key. Verified to fail without
+  the guard before it was written.
+- **`excerpt` is now required when saving an update.** It was nullable, which meant a tagged
+  post could reach the card with no copy at all, and the house rule is that empty renders as
+  nothing rather than as a placeholder or a dash. The consequence is worth knowing before it
+  surprises you: editing any older post that has no excerpt will not save until one is written.
+- **Teal and yellow are fixed palette values, not theme tokens.** An accent from the app's own
+  violet family cannot signal exception, and a token would let each theme tint the signal back
+  into the family - which is exactly what Sepia did to the badge that started all this. The dot
+  pings twice on arrival and then stops, because motion is the one channel a static badge never
+  had, and `prefers-reduced-motion` turns it off entirely.
+- **An entry goes grey once you have been where it points.** Land on `/wiring` and the "Wiring
+  status" row drops to greys, loses its ping and picks up a quiet "visited" - it stays on the
+  card until you clear it, because "I have seen where this goes" is not the same claim as "stop
+  showing me this". Crucially this fires on *arrival*, not on clicking the card: reaching the
+  page from the sidebar, a bookmark or a typed URL counts exactly the same. A card that keeps
+  shouting about a page you already went to is the badge problem again, pointed the other way.
+- **That is why the CTA lives in columns as well as in frontmatter.** Answering "does any live
+  entry point at the page being requested" once per authenticated request cannot mean parsing
+  the markdown body of every post, so `cta_route` / `cta_params` / `cta_url` / `cta_label` are
+  projected onto `updates` on every save and indexed. Frontmatter stays the only thing anyone
+  writes; the columns are a derived copy that is rewritten, including to null, each time the
+  body changes, so the two cannot drift.
+- **The detector costs an ordinary page load nothing.** `Update::ctaTargets()` caches the
+  handful of routes and paths any live entry advertises, busted whenever an update is saved or
+  deleted. A request whose route is not in that array does no database work at all, which is
+  very nearly all of them, and a row that is already grey is excluded from the query so
+  revisiting the same page never writes again.
+- **Route names match without their parameters.** A CTA aimed at a filtered view is satisfied by
+  arriving at the page. Requiring the exact query string would leave rows stuck teal for readers
+  who did precisely what was asked.
+- **A link that leaves the app goes stale on click instead**, since no request of ours will ever
+  observe that visit. It is the one case the browser has to report, and the card only reports it
+  for genuinely external URLs.
+- **Every row can be dismissed on its own**, hover-revealed from `md` up and always visible on
+  touch, matching how `CollectionList` handles row actions. "Mark all as seen" stays for
+  clearing the lot.
+- **`update_interactions` carries two independent timestamps**, not a dismissed boolean.
+  `visited_at` greys a row, `dismissed_at` removes it, and a row can hold either or both. That
+  is what lets Undo null one column and leave the other, so an entry that was grey before you
+  cleared it comes back grey rather than shouting again.
+- **`/wiring` still has no sidebar entry.** It was reachable only from a tile in the row that
+  just died, so it is now reachable only from a card row - which, with per-row dismissal, is a
+  slightly sharper version of the same gap. Left deliberately rather than quietly widening this
+  change into a nav redesign.
+
 ## August 28th, 2026 - fix(auth): you no longer have to log in every day
 
 Overlabels logged you out roughly two hours after you stopped looking at it. Not on browser

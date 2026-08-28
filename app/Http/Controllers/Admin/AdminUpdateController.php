@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Update;
 use App\Services\AdminAuditService;
+use App\Support\Frontmatter;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -126,11 +129,58 @@ class AdminUpdateController extends Controller
             'slug' => 'nullable|string|max:255',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:64',
-            'excerpt' => 'nullable|string',
-            'body' => 'required|string',
+            // Required, not nullable: an excerpt is the row copy on the
+            // What's New card and the list page, and an empty one renders as
+            // nothing at all rather than as a placeholder.
+            'excerpt' => 'required|string',
+            'body' => ['required', 'string', $this->ctaFrontmatterRule()],
             'compiled_css' => 'nullable|string',
             'published_at' => 'nullable|date',
         ]);
+    }
+
+    /**
+     * Validate the optional CTA frontmatter at the top of a body.
+     *
+     * This is the loud half of the route-name bargain: storing `route:` rather
+     * than a pasted URL only pays off if a name that does not resolve is
+     * caught while the post is being written. At render time a vanished route
+     * quietly drops the link instead - see Update::cta().
+     */
+    private function ctaFrontmatterRule(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            [$meta] = Frontmatter::split((string) $value, Update::LINK_KEYS);
+
+            if ($meta === []) {
+                return;
+            }
+
+            $route = $meta['route'] ?? '';
+            $url = $meta['url'] ?? '';
+
+            if ($route !== '' && $url !== '') {
+                $fail('The frontmatter has both a route: and a url:. Use one or the other.');
+
+                return;
+            }
+
+            if ($route === '' && $url === '') {
+                $fail('The frontmatter needs a route: or a url: to link to.');
+
+                return;
+            }
+
+            if ($route !== '' && ! Route::has($route)) {
+                $fail("The frontmatter names a route that does not exist: {$route}");
+
+                return;
+            }
+
+            if (($meta['label'] ?? '') === '') {
+                $fail('The frontmatter needs a label: for the link text.');
+            }
+        };
     }
 
     /**

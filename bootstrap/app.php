@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureValidTwitchToken;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\MarkWhatsNewVisited;
 use App\Http\Middleware\RateLimitOverlayAccess;
 use App\Http\Middleware\RedirectIfUnauthenticated;
 use App\Http\Middleware\ValidateOverlayToken;
@@ -55,6 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
             HandleImpersonation::class,
             CheckBanned::class,
+            MarkWhatsNewVisited::class,
         ]);
 
         // Add Sanctum's stateful middleware to API routes

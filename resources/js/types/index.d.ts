@@ -203,6 +203,27 @@ export interface Update {
   updated_at: string;
 }
 
+/** One row on the What's New card. Built by WhatsNewController::props(). */
+export interface WhatsNewItem {
+  id: number;
+  title: string;
+  excerpt: string | null;
+  published_at: string;
+  href: string;
+  /** `external` means the link leaves the app, so the visit can only be recorded on click. */
+  cta: { label: string; href: string; external: boolean } | null;
+  /** The reader has already been where this points. Stays on the card, in greys. */
+  stale: boolean;
+}
+
+export interface WhatsNew {
+  items: WhatsNewItem[];
+  /** Every unseen post, including the ones past the card's row cap. */
+  total: number;
+  /** Whether this account has anything a press of Undo could bring back. */
+  canUndo: boolean;
+}
+
 export interface OverlayControl {
   id: number;
   overlay_template_id: number | null;

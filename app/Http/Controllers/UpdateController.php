@@ -48,6 +48,14 @@ class UpdateController extends Controller
             ->published()
             ->firstOrFail();
 
+        // The body is served without its CTA frontmatter, because show.vue
+        // hands it straight to marked and a leaked block renders as a large
+        // heading of `route: ...` lines. Stripped here rather than in the
+        // browser so there is one answer to "what is this post's body", and
+        // so the admin form - which loads the model directly - still edits
+        // the real thing.
+        $update->setAttribute('body', $update->content());
+
         return Inertia::render('updates/show', [
             'update' => $update,
         ]);

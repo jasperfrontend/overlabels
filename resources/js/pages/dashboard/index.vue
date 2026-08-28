@@ -3,14 +3,14 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { computed, ref, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import WelcomeCard from '@/components/WelcomeCard.vue';
+import WhatsNewCard from '@/components/WhatsNewCard.vue';
 import TemplateCollection from '@/components/TemplateCollection.vue';
 import UpdatesList from '@/components/UpdatesList.vue';
 import EventsTable from '@/components/EventsTable.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { Plus } from '@lucide/vue';
 import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
-import type { AppPageProps, OverlayTemplate, Update, UsageSummary } from '@/types';
+import type { AppPageProps, OverlayTemplate, Update, UsageSummary, WhatsNew } from '@/types';
 import EmptyState from '@/components/EmptyState.vue';
 
 const page = usePage<AppPageProps>();
@@ -43,6 +43,7 @@ const props = defineProps<{
   userStaticTemplates: OverlayTemplate[];
   userRecentEvents: UnifiedEvent[];
   recentUpdates: Update[];
+  whatsNew: WhatsNew;
   usage: UsageSummary | null;
 }>();
 
@@ -64,7 +65,7 @@ const breadcrumbs = [
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4">
       <div>
-        <WelcomeCard />
+        <WhatsNewCard :whats-new="props.whatsNew" />
 
         <div class="grid grid-cols-1 justify-between gap-6 space-y-6 lg:grid-cols-2">
           <section v-if="props.userStaticTemplates.length > 0" class="flex-1 p-4">

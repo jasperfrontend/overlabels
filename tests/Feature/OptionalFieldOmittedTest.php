@@ -98,6 +98,7 @@ test('an update can be created without sending a slug at all', function () {
     $this->actingAs(optUser(['role' => 'admin']))
         ->post(route('admin.updates.store'), [
             'title' => 'Shipped The Thing',
+            'excerpt' => 'A short line.',
             'body' => 'Body copy.',
         ])
         ->assertRedirect();
@@ -117,6 +118,7 @@ test('an update can be edited without sending a slug at all', function () {
     $this->actingAs(optUser(['role' => 'admin']))
         ->put(route('admin.updates.update', $update), [
             'title' => 'Retitled',
+            'excerpt' => 'A short line.',
             'body' => 'New body.',
         ])
         ->assertRedirect();
@@ -132,6 +134,7 @@ test('an explicit slug still wins when one is sent', function () {
         ->post(route('admin.updates.store'), [
             'title' => 'Ignore This Title',
             'slug' => 'chosen-by-hand',
+            'excerpt' => 'A short line.',
             'body' => 'Body copy.',
         ])
         ->assertRedirect();
