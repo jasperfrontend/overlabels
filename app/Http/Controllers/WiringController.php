@@ -18,7 +18,7 @@ class WiringController extends Controller
         // anywhere" is actionable, "one area needs attention" is not.
         $looseEnds = array_sum(array_column($circuits, 'attention'));
 
-        return Inertia::render('wiring/index', [
+        return Inertia::render('settings/wiring/index', [
             'circuits' => $circuits,
             'looseEnds' => $looseEnds,
         ]);

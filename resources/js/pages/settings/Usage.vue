@@ -74,10 +74,10 @@ const historyPeak = computed(() => Math.max(1, ...props.history.map((m) => m.bro
           description="Every inbound event you generate - a GPS ping, a donation, a Twitch follow/sub/cheer - counts as one 'credit'. It is the single usage limit in Overlabels, and it is the same whether you run 1 overlay or 50. Everything else is free."
         />
 
-        <div class="rounded-md border border-sidebar p-6">
+        <div class="border border-violet-400/20 p-6">
           <div class="flex items-baseline justify-between gap-4">
             <div>
-              <p class="text-3xl font-semibold text-foreground">{{ fmt(usage.broadcasts) }}</p>
+              <p class="text-3xl font-semibold text-violet-500 dark:text-violet-400">{{ fmt(usage.broadcasts) }}</p>
               <p class="text-sm text-muted-foreground">events this month ({{ monthLabel(usage.period) }})</p>
             </div>
             <div v-if="hasLimit" class="text-right">

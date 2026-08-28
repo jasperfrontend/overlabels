@@ -2092,7 +2092,7 @@ There is now one `CollectionList`, and everything that renders a collection of r
 The nav said "Triggers". The URL said `/alerts`. The Inertia component said `events/index`. Three names for one page, and the only way to know they were the same page was to have written it.
 
 - **The URL is `/triggers` and the route is `triggers.index`.** `events.index` was the worst of the three names, because `admin.events.index` is a genuinely different page - the raw event feed - so grepping for "events.index" returned two unrelated things.
-- **The page folder is `resources/js/pages/triggers/`.** Moved with `git mv`, so the history follows it.
+- **The page folder is `../../resources/js/pages/settings/triggers/`.** Moved with `git mv`, so the history follows it.
 - **`/alerts` still resolves**, as an unnamed 301 to `/triggers`. Bookmarks and tabs left open in OBS keep working. It is unnamed on purpose: nothing should link there, and Ziggy skips unnamed routes, so it cannot be reached from the frontend by accident.
 - **Five integration settings pages linked to "Alerts Builder"**, hardcoded as `href="/alerts"` rather than through Ziggy - which is why the rename would have broken them silently. They now say "Triggers" and point at `/triggers`, matching what the nav item is actually called.
 

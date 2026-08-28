@@ -57,7 +57,7 @@ function formatDate(iso: string | null): string {
           description="Short rewrites that expand to a longer command before the bot runs them. Type !w 2 and the bot fires !increment wins 2."
         />
 
-        <div v-if="!props.botEnabled" class="rounded border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+        <div v-if="!props.botEnabled" class="border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
           <p class="text-foreground">The Overlabels bot isn't enabled yet. Aliases are saved here, but nothing fires until the bot is on.</p>
           <Link href="/settings/integrations" class="mt-2 inline-block cursor-pointer underline hover:text-amber-400">
             Enable it on the Integrations page -&gt;
@@ -71,7 +71,7 @@ function formatDate(iso: string | null): string {
           </Link>
         </div>
 
-        <div v-if="props.aliases.length === 0" class="rounded border border-sidebar-border p-8 text-center">
+        <div v-if="props.aliases.length === 0" class="border border-sidebar-border p-8 text-center">
           <CornerDownRight class="mx-auto size-10 text-foreground/40" />
           <p class="mt-4 text-foreground">You haven't authored any bot aliases yet.</p>
           <p class="mt-1 text-sm text-foreground/70">Create one to give a long command a short nickname. Aliases default to moderator-only.</p>
@@ -81,18 +81,18 @@ function formatDate(iso: string | null): string {
           <div
             v-for="alias in props.aliases"
             :key="alias.id"
-            class="flex flex-col gap-3 rounded border border-sidebar-border p-4 sm:flex-row sm:items-start sm:justify-between"
+            class="flex flex-col gap-3 border border-sidebar-border p-4 sm:flex-row sm:items-start sm:justify-between"
           >
             <div class="min-w-0 flex-1 space-y-2">
               <div class="flex flex-wrap items-center gap-2">
-                <code class="rounded bg-muted px-2 py-0.5 font-mono text-sm">!{{ alias.command }}</code>
+                <code class="bg-muted px-2 py-0.5 font-mono text-sm">!{{ alias.command }}</code>
                 <ArrowRight class="size-3.5 text-foreground/50" />
-                <code class="rounded bg-muted px-2 py-0.5 font-mono text-sm">!{{ alias.target_template }}</code>
+                <code class="bg-muted px-2 py-0.5 font-mono text-sm">!{{ alias.target_template }}</code>
               </div>
 
               <div class="flex flex-wrap items-center gap-2">
                 <span
-                  class="rounded px-2 py-0.5 text-xs tracking-wide uppercase"
+                  class="px-2 py-0.5 text-xs tracking-wide uppercase"
                   :class="alias.enabled ? 'bg-emerald-500/15 text-emerald-400' : 'bg-foreground/10 text-foreground/60'"
                 >
                   {{ alias.enabled ? 'enabled' : 'disabled' }}

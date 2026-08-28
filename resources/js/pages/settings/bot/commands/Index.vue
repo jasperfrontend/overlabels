@@ -74,7 +74,7 @@ function expiresIn(iso: string): string {
           description="Custom chat commands that read from your controls, Twitch data, and the chatter who fired them. The bot speaks the resolved string. Click the question mark bottom of the page to read related help documentation about the Overlabels bot."
         />
 
-        <div v-if="!botEnabled" class="rounded border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+        <div v-if="!botEnabled" class="border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
           <p class="text-foreground">The Overlabels bot isn't enabled yet. Bot commands are saved here, but nothing fires until the bot is on.</p>
           <Link href="/settings/integrations" class="mt-2 inline-block cursor-pointer underline hover:text-amber-400">
             Enable it on the Integrations page →
@@ -88,7 +88,7 @@ function expiresIn(iso: string): string {
           </Link>
         </div>
 
-        <div v-if="props.commands.length === 0" class="rounded border border-sidebar-border p-8 text-center">
+        <div v-if="props.commands.length === 0" class="border border-sidebar-border p-8 text-center">
           <MessageSquare class="mx-auto size-10 text-foreground/40" />
           <p class="mt-4 text-foreground">You haven't authored any bot commands yet.</p>
           <p class="mt-1 text-sm text-foreground/70">Create one to let chatters fire a command and have the bot reply with a templated string.</p>
@@ -98,13 +98,13 @@ function expiresIn(iso: string): string {
           <div
             v-for="command in props.commands"
             :key="command.id"
-            class="flex flex-col gap-3 rounded border border-sidebar-border p-4 sm:flex-row sm:items-start sm:justify-between"
+            class="flex flex-col gap-3 border border-sidebar-border p-4 sm:flex-row sm:items-start sm:justify-between"
           >
             <div class="min-w-0 flex-1 space-y-2">
               <div class="flex flex-wrap items-center gap-2">
-                <code class="rounded bg-muted px-2 py-0.5 font-mono text-sm">!{{ command.command }}</code>
+                <code class="bg-muted px-2 py-0.5 font-mono text-sm">!{{ command.command }}</code>
                 <span
-                  class="rounded px-2 py-0.5 text-xs tracking-wide uppercase"
+                  class="px-2 py-0.5 text-xs tracking-wide uppercase"
                   :class="command.enabled ? 'bg-emerald-500/15 text-emerald-400' : 'bg-foreground/10 text-foreground/60'"
                 >
                   {{ command.enabled ? 'enabled' : 'disabled' }}
@@ -115,7 +115,7 @@ function expiresIn(iso: string): string {
                 <span v-if="command.cooldown_seconds > 0" class="text-xs text-foreground/70"> cooldown: {{ command.cooldown_seconds }}s </span>
                 <span
                   v-if="command.destroy_at"
-                  class="inline-flex items-center gap-1 rounded bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400"
+                  class="inline-flex items-center gap-1 bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400"
                   :title="`Self-destructs at ${formatDate(command.destroy_at)}`"
                 >
                   <Clock class="size-3" />

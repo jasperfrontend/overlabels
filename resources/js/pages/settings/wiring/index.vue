@@ -72,7 +72,6 @@ function isDormant(wire: Wire): boolean {
     <title>Wiring</title>
     <meta name="description" content="What is wired up on your account, and what is built but cannot work." />
   </Head>
-
   <AppLayout :breadcrumbs="breadcrumbs">
     <SettingsLayout>
       <div class="flex flex-col gap-6">
@@ -81,10 +80,10 @@ function isDormant(wire: Wire): boolean {
         <!-- The headline counts subjects, not areas. This page only ever speaks
            about things that exist, so it can never nag about something the
            streamer chose not to build. -->
-        <div v-if="props.looseEnds" class="flex gap-3 border border-amber-500/40 bg-amber-500/10 p-4" role="alert">
-          <TriangleAlert class="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+        <div v-if="props.looseEnds" class="flex gap-3 border border-fuchsia-500/40 bg-fuchsia-500/10 p-4" role="alert">
+          <TriangleAlert class="mt-0.5 size-5 shrink-0 text-fuchsia-600 dark:text-fuchsia-400" />
           <div>
-            <p class="font-medium text-amber-700 dark:text-amber-300">
+            <p class="font-medium text-fuchsia-700 dark:text-fuchsia-300">
               {{ props.looseEnds === 1 ? 'One thing is built but cannot work' : `${props.looseEnds} things are built but cannot work` }}
             </p>
             <p class="mt-1 text-sm text-foreground">These exist on your account and something is stopping them doing anything.</p>
@@ -99,7 +98,7 @@ function isDormant(wire: Wire): boolean {
         <section v-for="circuit in props.circuits" :key="circuit.key" class="flex flex-col gap-3">
           <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <h2 class="text-lg font-semibold text-foreground">{{ circuit.label }}</h2>
-            <span v-if="circuit.status === 'loose_end'" class="text-sm text-amber-600 tabular-nums dark:text-amber-400">
+            <span v-if="circuit.status === 'loose_end'" class="text-sm text-fuchsia-600 tabular-nums dark:text-fuchsia-400">
               {{ circuit.attention }} of {{ circuit.total }} need attention
             </span>
           </div>
@@ -113,10 +112,10 @@ function isDormant(wire: Wire): boolean {
               v-for="subject in circuit.subjects"
               :key="subject.key"
               class="collection-row border p-3"
-              :class="subject.needsAttention ? 'border-amber-500/40' : 'border-border'"
+              :class="subject.needsAttention ? 'border-fuchsia-500/40' : 'border-border'"
             >
               <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <TriangleAlert v-if="subject.needsAttention" class="size-4 shrink-0 self-center text-amber-600 dark:text-amber-400" />
+                <TriangleAlert v-if="subject.needsAttention" class="size-4 shrink-0 self-center text-fuchsia-600 dark:text-fuchsia-400" />
                 <Check v-else-if="subject.applicable" class="size-4 shrink-0 self-center text-green-600 dark:text-green-400" />
                 <!-- Nothing built yet is neither a tick nor a warning. A green
                    mark here would be an award for having done nothing. -->
