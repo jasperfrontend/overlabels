@@ -656,6 +656,8 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/create', [OverlayTemplateController::class, 'create'])->name('create');
         Route::post('/', [OverlayTemplateController::class, 'store'])
             ->middleware('throttle:template-write')->name('store');
+        Route::post('/import', [OverlayTemplateController::class, 'import'])
+            ->middleware('throttle:template-write')->name('import');
         // Block routes must precede the {template} wildcard.
         Route::get('/blocks/library', [OverlayTemplateController::class, 'blockLibrary'])->name('blocks.library');
         Route::get('/blocks/{template}/snapshot', [OverlayTemplateController::class, 'blockSnapshot'])->name('blocks.snapshot');

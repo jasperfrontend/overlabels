@@ -22,12 +22,18 @@ use App\Services\TwitchTokenService;
 use App\Support\Conditionals;
 use App\Support\HelpContext;
 use App\Support\ListItems;
+use App\Support\OverlayMarkdown;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use InvalidArgumentException;
 
 class OverlayTemplateController extends Controller
 {
@@ -528,7 +534,9 @@ class OverlayTemplateController extends Controller
             ->with('owner:id,name')
             ->firstOrFail();
 
-        if (! $template->is_public) {
+        // The owner can always fetch their own: the .md is also the export,
+        // and exporting should not require publishing first.
+        if (! $template->is_public && $template->owner_id !== auth()->id()) {
             abort(404, 'This overlay is private');
         }
 
@@ -1095,6 +1103,128 @@ class OverlayTemplateController extends Controller
 
         return redirect()->route('templates.show', $template)
             ->with('success', 'Template created successfully!');
+    }
+
+    /**
+     * Create a template from the markdown that `/overlay/{slug}/public.md`
+     * emits - the other half of that document's closing "you can also paste
+     * the source by hand".
+     *
+     * Same shape of result as the Copy button: source, the controls the
+     * document defines (with their defaults and formulas), and an alert's
+     * behaviour fields. Services, Lists and triggers are not in a copy and
+     * are not in an import. Everything is validated with the rules store()
+     * and the controls store apply, and a bad control anywhere in the file
+     * rolls the template back - a half-imported overlay is worse than none.
+     */
+    public function import(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:1024'],
+        ]);
+
+        try {
+            $doc = OverlayMarkdown::parse($request->file('file')->get());
+        } catch (InvalidArgumentException $e) {
+            throw ValidationException::withMessages(['file' => $e->getMessage()]);
+        }
+
+        $validator = Validator::make(Arr::except($doc, ['controls']), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'head' => 'nullable|string',
+            'html' => 'nullable|string',
+            'css' => 'nullable|string',
+            'type' => 'required|in:static,alert,block',
+            'tts_message' => ['nullable', 'string', 'max:2000', self::messageBlocksRule()],
+            'chat_message' => ['nullable', 'string', 'max:500', self::messageBlocksRule()],
+            'tts_delay_ms' => 'nullable|integer|min:0|max:60000',
+            'alert_sound_url' => 'nullable|url|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            throw ValidationException::withMessages(['file' => 'Could not import: '.$validator->errors()->first()]);
+        }
+
+        // Absent alert fields fall through to the column defaults
+        // (`tts_delay_ms` is NOT NULL) rather than being written as null.
+        $fields = array_filter(
+            HtmlSanitizationService::sanitizeTemplateFields($validator->validated()),
+            fn ($value) => $value !== null,
+        );
+        $fields['is_public'] = false;
+
+        $user = $request->user();
+
+        [$template, $imported] = DB::transaction(function () use ($user, $fields, $doc) {
+            $template = $user->overlayTemplates()->create($fields);
+            $template->template_tags = $template->extractTemplateTags($user->foreachCaps());
+            $template->save();
+
+            $imported = 0;
+
+            foreach ($doc['controls'] as $i => $item) {
+                $validator = Validator::make($item, [
+                    'key' => ['required', 'string', 'max:50', 'regex:'.OverlayControl::KEY_PATTERN, Rule::notIn(OverlayControl::RESERVED_KEYS)],
+                    'label' => 'nullable|string|max:100',
+                    'description' => 'nullable|string|max:1000',
+                    'type' => 'required|in:'.implode(',', OverlayControl::TYPES),
+                    'value' => 'nullable|string|max:1000',
+                    'config' => 'nullable|array',
+                    'config.expression' => 'nullable|string|max:500',
+                ]);
+
+                if ($validator->fails()) {
+                    $key = is_string($item['key'] ?? null) ? $item['key'] : '#'.($i + 1);
+                    throw ValidationException::withMessages([
+                        'file' => "Control `$key` could not be imported: ".$validator->errors()->first(),
+                    ]);
+                }
+
+                // A list_writer points at control and List IDs on the
+                // author's account. They mean nothing here, same as in a fork.
+                if ($item['type'] === 'list_writer') {
+                    continue;
+                }
+
+                $config = $item['config'];
+                $value = $item['value'];
+
+                if ($item['type'] === 'expression') {
+                    $expression = trim((string) ($config['expression'] ?? ''));
+
+                    if ($expression === '') {
+                        throw ValidationException::withMessages([
+                            'file' => "Control `{$item['key']}` is an expression control without an expression.",
+                        ]);
+                    }
+
+                    $config = [
+                        'expression' => $expression,
+                        'dependencies' => OverlayControl::extractExpressionDependencies($expression),
+                    ];
+                    $value = null;
+                }
+
+                OverlayControl::createForTemplate($template, $user, [
+                    'key' => $item['key'],
+                    'label' => $item['label'],
+                    'description' => $item['description'],
+                    'type' => $item['type'],
+                    'value' => $value,
+                    'config' => $config,
+                    'sort_order' => $i,
+                ]);
+
+                $imported++;
+            }
+
+            return [$template, $imported];
+        });
+
+        return redirect()->route('templates.show', $template)
+            ->with('message', "Imported \"{$template->name}\" with $imported control".($imported === 1 ? '' : 's').'.')
+            ->with('type', 'success');
     }
 
     /**

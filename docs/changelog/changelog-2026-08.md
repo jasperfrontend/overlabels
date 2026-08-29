@@ -1,5 +1,33 @@
 # CHANGELOG AUGUST 2026
 
+## August 30th, 2026 - feat(templates): import an overlay from its .md
+
+Every public overlay has had a `.md` twin since the share document shipped: source, controls with
+defaults, expression formulas, alert behaviour, in one file, ending with "you can also paste the
+source into a new overlay by hand". Building a 28-control overlay on a local install and then facing
+that sentence on prod was the trigger. The file was already the export; nothing read it back.
+
+- **`POST /templates/import` takes one `.md` file** and recreates the overlay on your account:
+  name, description, head/html/css, every control the document defines (type, label, default,
+  behaviour config, expression with dependencies re-derived), and for alerts the sound URL, TTS
+  message, delay and chat message. Private on arrival. The button is **Import .md** on `/templates`,
+  next to Create.
+- **`App\Support\OverlayMarkdown` is the parser** and reads only what the emitter writes
+  deterministically - front matter, fenced blocks, the controls table, the "Control detail" list,
+  the alert lines. Prose is never interpreted. Services, Lists and triggers are ignored on purpose,
+  exactly as Copy ignores them.
+- **The emitter was hardened where the round trip found gaps**: an alert's sound URL was described
+  but never printed; a control description with a newline would have ended its list item and
+  orphaned the expression under it; a default value or message containing a backtick would have
+  broken its code span. Inline code now uses the same outrun-the-content delimiter the fenced
+  blocks already used. Pipes were already escaped.
+- **The owner can fetch the `.md` of a private overlay.** Exporting no longer requires publishing
+  first. Everyone else still gets the 404.
+- **The contract is one round-trip test**: export, import, every field and every control identical
+  - including an expression containing `||`, a label containing `|`, a value containing a backtick.
+  A bad control anywhere in the file rolls the whole import back; a file that is not an overlay
+  document is refused with the reason.
+
 ## August 29th, 2026 - fix(twitch): cheers can actually reach the platform now
 
 Second finding from the same production read. The Bits Cheer alert has been offerable in the trigger

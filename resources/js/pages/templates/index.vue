@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import { router, Link, Head, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -8,7 +8,7 @@ import FilterBar from '@/components/FilterBar.vue';
 import FilterSearchInput from '@/components/FilterSearchInput.vue';
 import FilterSelect from '@/components/FilterSelect.vue';
 import { useSearchFilters } from '@/composables/useSearchFilters';
-import { PlusIcon, Layers, Bell, Blocks } from '@lucide/vue';
+import { PlusIcon, Layers, Bell, Blocks, Upload } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 import type { BreadcrumbItem } from '@/types/index.js';
 import type { AppPageProps } from '@/types';
@@ -96,6 +96,30 @@ const sortOptions = [
 ];
 
 const page = usePage<AppPageProps>();
+
+// Import: one .md file, the same document /overlay/{slug}/public.md serves.
+const importInput = ref<HTMLInputElement | null>(null);
+const importing = ref(false);
+const importError = computed(() => (page.props.errors as Record<string, string> | undefined)?.file ?? '');
+
+function importMarkdown(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  importing.value = true;
+  router.post(
+    route('templates.import'),
+    { file },
+    {
+      forceFormData: true,
+      onFinish: () => {
+        importing.value = false;
+        input.value = '';
+      },
+    },
+  );
+}
 const currentUserId = computed(() => page.props.auth.user.id);
 
 const pageTitle = computed(() => {
@@ -154,12 +178,18 @@ const breadcrumbs: BreadcrumbItem[] = [
             <Blocks class="mr-2 h-4 w-4" />
             Builder
           </Link>
+          <button type="button" class="btn btn-sm btn-secondary cursor-pointer" :disabled="importing" @click="importInput?.click()">
+            <Upload class="mr-2 h-4 w-4" />
+            {{ importing ? 'Importing...' : 'Import .md' }}
+          </button>
+          <input ref="importInput" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" class="hidden" @change="importMarkdown" />
           <Link :href="route('templates.create')" class="btn btn-sm btn-primary">
             <PlusIcon class="mr-2 h-4 w-4" />
             Create overlay
           </Link>
         </div>
       </div>
+      <p v-if="importError" class="mb-4 text-sm text-destructive">{{ importError }}</p>
 
       <!-- Filters Section -->
       <FilterBar class="mb-4">

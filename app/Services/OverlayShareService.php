@@ -573,14 +573,17 @@ class OverlayShareService
             foreach ($detailed as $control) {
                 $out .= '- `'.$control['tag'].'`';
 
+                // One list item per control, so a description stays on one
+                // line - a newline here would end the item and orphan the
+                // expression below it.
                 if (! empty($control['description'])) {
-                    $out .= ' - '.trim($control['description']);
+                    $out .= ' - '.preg_replace('/\s*\n\s*/', ' ', trim($control['description']));
                 }
 
                 $out .= "\n";
 
                 if (! empty($control['config']['expression'])) {
-                    $out .= '  - expression: `'.$control['config']['expression']."`\n";
+                    $out .= '  - expression: '.$this->inlineCode($control['config']['expression'])."\n";
                 }
 
                 $behaviour = $this->behaviourConfig($control);
@@ -683,19 +686,19 @@ class OverlayShareService
         $configured = false;
 
         if ($alert['sound_url']) {
-            $out .= '- Plays a sound on fire. Sound is a template field, not markup: `<audio>` in an overlay is '
-                ."stripped on save, because one element per alert stacks overlapping playback.\n";
+            $out .= '- Plays a sound on fire: <'.$alert['sound_url'].'>. Sound is a template field, not markup: '
+                ."`<audio>` in an overlay is stripped on save, because one element per alert stacks overlapping playback.\n";
             $configured = true;
         }
 
         if ($alert['tts_message']) {
             $delay = $alert['tts_delay_ms'] ? " after a {$alert['tts_delay_ms']}ms delay" : '';
-            $out .= "- Speaks via text to speech{$delay}: `".$alert['tts_message']."`\n";
+            $out .= "- Speaks via text to speech{$delay}: ".$this->inlineCode($alert['tts_message'])."\n";
             $configured = true;
         }
 
         if ($alert['chat_message']) {
-            $out .= '- Posts to Twitch chat via the @overlabels bot: `'.$alert['chat_message']."`\n";
+            $out .= '- Posts to Twitch chat via the @overlabels bot: '.$this->inlineCode($alert['chat_message'])."\n";
             $configured = true;
         }
 
@@ -774,6 +777,23 @@ class OverlayShareService
 
         $value = str_replace(['|', "\n"], ['\|', ' '], trim($value));
 
-        return $code ? '`'.$value.'`' : $value;
+        return $code ? $this->inlineCode($value) : $value;
+    }
+
+    /**
+     * An inline code span that survives backticks in the content: the
+     * delimiter is one backtick longer than any run inside, padded with a
+     * space when the content starts or ends with one (the CommonMark rule).
+     * The same shape the fence() helper uses for blocks, so the importer can
+     * unwrap both the same way.
+     */
+    private function inlineCode(string $value): string
+    {
+        preg_match_all('/`+/', $value, $runs);
+        $longest = max(array_map('strlen', $runs[0] ?: ['']));
+        $delimiter = str_repeat('`', $longest + 1);
+        $pad = str_starts_with($value, '`') || str_ends_with($value, '`') ? ' ' : '';
+
+        return $delimiter.$pad.$value.$pad.$delimiter;
     }
 }

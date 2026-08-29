@@ -49,7 +49,19 @@ live account data - a real donor's name, actual revenue), and anything belonging
 account beyond the overlay itself. Values for controls the overlay defines are included, because
 those are the author's design defaults and are exactly what copying the overlay gives you.
 
-A private overlay returns 404, the same as its preview page.
+A private overlay returns 404, the same as its preview page - unless you are its owner. You can
+always fetch your own, because the `.md` is also the export.
+
+## The .md is the export, and it imports
+
+An overlay is three text fields and a list of controls, so one markdown file is the whole thing.
+Save the `.md` of any overlay, yours or a public one, and on `/templates` press **Import .md** to
+recreate it on your account: source, controls with their default values, expression formulas, and
+an alert's sound, text to speech and chat message. The copy is private until you publish it.
+
+That is how an overlay moves between accounts, or between a local install and overlabels.com, and
+it is why the source in the `.md` is complete rather than a summary. Integrations, Lists and alert
+triggers do not travel - the same as pressing Copy.
 
 ## Public kits too
 
