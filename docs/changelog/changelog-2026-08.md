@@ -1,5 +1,46 @@
 # CHANGELOG AUGUST 2026
 
+## August 29th, 2026 - fix(stream): going live is confirmed in seconds again, not ten minutes
+
+Found by reading the production database after two real streams, not by a test. Both go-lives were
+confirmed roughly ten minutes late: Twitch said live at 12:16:40 and 18:45:30, and Overlabels didn't
+accept it until 12:26:08 and 18:55:31. The handshake is designed to take about 25 seconds.
+
+`VerifyStreamState` schedules its own successor from inside `handle()` - that chain, two Helix checks
+ten seconds apart, is the entire mechanism that moves a stream from `starting` to `live`. The job was
+marked `ShouldBeUnique`, and Laravel releases that lock only after `handle()` **returns**. So every
+link dispatched itself against a lock it was still holding, `PendingDispatch::shouldDispatch()`
+returned false, and the successor vanished - no exception, no log line, no `failed_jobs` row. The
+chain died on its first link every single time.
+
+- **The job is now `ShouldBeUniqueUntilProcessing`**, which releases the lock when the job is picked
+  up rather than when it finishes. Duplicate *queued* jobs are still collapsed, which is all the
+  uniqueness was ever protecting against. One-word change; everything else here is consequence.
+- **This was invisible for a reason worth writing down.** `uniqueFor` is 15 seconds and only the
+  10-second links were affected - the 60-second live heartbeat always ran after its own lock had
+  expired, so it re-armed perfectly and the queue log looked healthy. Meanwhile the 5-minute
+  safety-net scheduler, which additionally skips any state verified inside the last 5 minutes, had
+  quietly become the only thing advancing the machine. That is where the ~10 minute figure comes from:
+  it is the safety net's effective period, not a Twitch or Helix delay.
+- **Per-stream counters were the real casualty.** `handleEvent()` gates every `*_this_stream` key on
+  `isConfidentlyLive()`, so anything arriving before confirmation was dropped at the gate. On the
+  second stream three of four channel-point redemptions landed in that window and
+  `redemptions_this_stream` finished the night reading `1`. The alerts still fired and the bot still
+  announced all four - only the counters lost them, which is exactly why nobody noticed on stream.
+  Retroactive `started_at` repair also meant the Delivery tab's windows were correct throughout, so
+  the gap never showed up there either.
+- **Two tests, both verified to fail first**, running the job through a real database queue and
+  `CallQueuedHandler` rather than `Queue::fake()` - the release ordering being pinned lives in the
+  handler and a faked queue cannot see it. One asserts the successor is queued at all; one asserts the
+  machine reaches `live` on the next link, ~22 seconds in.
+- `VerifyStreamState` was the only `ShouldBeUnique` job in the codebase, so this pattern exists
+  nowhere else. Worth remembering before adding the next one: **a job that dispatches itself must not
+  be plain `ShouldBeUnique`.**
+
+Still true after this fix: there is a ~25 second window at the very start of a stream where
+`*_this_stream` counters are not yet counting. That is inherent to confidence-based verification
+rather than a bug, and it is a separate decision from this one.
+
 ## August 29th, 2026 - fix(controls): `_at` now means "last written", not "last changed"
 
 The third and last piece of today's thread. Every control exposes an automatic `_at` companion, and
