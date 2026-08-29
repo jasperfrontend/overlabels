@@ -83,7 +83,7 @@ router.on('httpException', (event) => {
 });
 
 const pinia = createPinia();
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'Overlabels';
 
 createInertiaApp({
   title: (title) => (title ? `${title} &bull; ${appName}` : appName),

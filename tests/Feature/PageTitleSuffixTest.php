@@ -71,3 +71,14 @@ test('the global title template still supplies the app name', function () {
     expect($appTs)->toMatch('/title:\s*\(title\)\s*=>/')
         ->and($appTs)->toContain('appName');
 });
+
+test('the app name falls back to this project rather than the framework', function () {
+    // VITE_APP_NAME is set in every real environment, so this fallback only
+    // shows up when it is not - a fresh clone, or a build where the variable
+    // did not make it through. Inheriting the starter kit's default put
+    // "Laravel" in the browser tab of every page in that case.
+    $appTs = (string) file_get_contents(resource_path('js/app.ts'));
+
+    expect($appTs)->toContain("VITE_APP_NAME || 'Overlabels'")
+        ->and($appTs)->not->toContain("'Laravel'");
+});
