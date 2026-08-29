@@ -120,7 +120,7 @@ function copyTag(tag: string) {
 
 <template>
   <Head>
-    <title>Integration Presets - Overlabels</title>
+    <title>Integration Presets</title>
     <meta
       name="description"
       content="Reference for every auto-managed control Overlabels exposes through its integrations - Twitch, Ko-fi, Streamlabs, Fourthwall, BMAC, Throne, and Overlabels GPS."

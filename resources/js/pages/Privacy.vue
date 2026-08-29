@@ -11,7 +11,7 @@ const lastUpdated = 'August 4, 2026';
 
 <template>
   <div>
-    <Head title="Privacy Policy - Overlabels">
+    <Head title="Privacy Policy">
       <meta name="description" content="Overlabels Privacy Policy - Learn how we collect, use, and protect your data." />
     </Head>
 

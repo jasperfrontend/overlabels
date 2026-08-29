@@ -102,7 +102,7 @@ const previewExample = computed(() => {
 
 <template>
   <Head>
-    <title>{{ isEdit ? `Edit !${props.alias?.command}` : 'New bot alias' }} - Overlabels</title>
+    <title>{{ isEdit ? `Edit !${props.alias?.command}` : 'New bot alias' }}</title>
   </Head>
 
   <AppLayout :breadcrumbs="breadcrumbItems">

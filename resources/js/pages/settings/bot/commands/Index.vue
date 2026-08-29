@@ -63,7 +63,7 @@ function expiresIn(iso: string): string {
 
 <template>
   <Head>
-    <title>Bot commands - Overlabels</title>
+    <title>Bot commands</title>
   </Head>
 
   <AppLayout :breadcrumbs="breadcrumbItems">

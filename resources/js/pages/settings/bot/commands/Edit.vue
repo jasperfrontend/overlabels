@@ -186,7 +186,7 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
 
 <template>
   <Head>
-    <title>{{ isEdit ? `Edit !${props.command?.command}` : 'New bot command' }} - Overlabels</title>
+    <title>{{ isEdit ? `Edit !${props.command?.command}` : 'New bot command' }}</title>
   </Head>
 
   <AppLayout :breadcrumbs="breadcrumbItems">

@@ -46,7 +46,7 @@ function formatDate(iso: string | null): string {
 
 <template>
   <Head>
-    <title>Bot aliases - Overlabels</title>
+    <title>Bot aliases</title>
   </Head>
 
   <AppLayout :breadcrumbs="breadcrumbItems">

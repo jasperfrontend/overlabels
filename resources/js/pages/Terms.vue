@@ -11,7 +11,7 @@ const effectiveDate = 'January 13, 2025';
 
 <template>
   <div>
-    <Head title="Terms of Service - Overlabels">
+    <Head title="Terms of Service">
       <meta name="description" content="Overlabels Terms of Service - Read our terms and conditions for using our stream overlay platform." />
     </Head>
 

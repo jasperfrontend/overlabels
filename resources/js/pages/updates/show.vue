@@ -72,7 +72,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 <template>
   <Head>
-    <title>{{ props.update.title }} - Overlabels</title>
+    <title>{{ props.update.title }}</title>
     <meta v-if="props.update.excerpt" name="description" :content="props.update.excerpt" />
   </Head>
 
