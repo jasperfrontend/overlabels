@@ -3,10 +3,15 @@
 Build custom Twitch overlays and alerts in HTML and CSS, powered by live data tags, real-time controls,
 and external integrations.
 
-There is no drag-and-drop editor. There is no proprietary file format. There is no runtime you do not control.
+There is no* drag-and-drop editor. There is no proprietary file format. There is no runtime you do not control.
 Your overlay is a webpage, and Overlabels is the engine that keeps it alive.
 
 **[overlabels.com](https://overlabels.com)** - free forever, no paywalls, no tiers.
+
+> [!TIP]
+> \* There actually *is* a drag-and-drop editor now, but it's not ready for prime time.
+> You can definitely use it and it's a lot of fun to play with. The results are great, but the Builder itself is 
+definitely not considered "done". *~Jasper, late August 2026.*
 
 ---
 
@@ -31,49 +36,49 @@ source and it stays in sync with what is actually deployed.
 
 **Start here**
 
-| Page                                                              | What it covers                                      |
-|-------------------------------------------------------------------|-----------------------------------------------------|
-| [Why Overlabels](https://overlabels.com/help/why-overlabels)       | The pitch, for people who write code                |
-| [For Creators](https://overlabels.com/help/for-creators)           | What it actually is beneath the HTML/CSS surface    |
-| [For Designers](https://overlabels.com/help/for-designers)         | Handoff guide: what to deliver, what to avoid       |
-| [Manifesto](https://overlabels.com/help/manifesto)                 | Why it exists and the principles behind it          |
+| Page                                                         | What it covers                                   |
+| ------------------------------------------------------------ | ------------------------------------------------ |
+| [Why Overlabels](https://overlabels.com/help/why-overlabels) | The pitch, for people who write code             |
+| [For Creators](https://overlabels.com/help/for-creators)     | What it actually is beneath the HTML/CSS surface |
+| [For Designers](https://overlabels.com/help/for-designers)   | Handoff guide: what to deliver, what to avoid    |
+| [Manifesto](https://overlabels.com/help/manifesto)           | Why it exists and the principles behind it       |
 
 **Building overlays**
 
-| Page                                                                    | What it covers                                    |
-|-------------------------------------------------------------------------|---------------------------------------------------|
-| [Overlays vs Alerts](https://overlabels.com/help/overlays-vs-alerts)     | The two surfaces and how they fit together        |
-| [The Builder](https://overlabels.com/help/builder)                       | Compose an overlay on a grid, no code required    |
-| [Blocks](https://overlabels.com/help/blocks)                             | Reusable pieces: authoring, CSS scoping, controls |
-| [How an overlay renders](https://overlabels.com/help/rendering)          | The pipeline end to end, and why scripts are stripped |
-| [Testing your alerts](https://overlabels.com/help/testing)               | Fire real Twitch events from a terminal           |
+| Page                                                                 | What it covers                                        |
+| -------------------------------------------------------------------- | ----------------------------------------------------- |
+| [Overlays vs Alerts](https://overlabels.com/help/overlays-vs-alerts) | The two surfaces and how they fit together            |
+| [The Builder](https://overlabels.com/help/builder)                   | Compose an overlay on a grid, no code required        |
+| [Blocks](https://overlabels.com/help/blocks)                         | Reusable pieces: authoring, CSS scoping, controls     |
+| [How an overlay renders](https://overlabels.com/help/rendering)      | The pipeline end to end, and why scripts are stripped |
+| [Testing your alerts](https://overlabels.com/help/testing)           | Fire real Twitch events from a terminal               |
 
 **The template language**
 
-| Page                                                            | What it covers                                          |
-|-----------------------------------------------------------------|---------------------------------------------------------|
-| [Conditional and event tags](https://overlabels.com/help/conditionals) | if/elseif/else, comparisons, event payload tags   |
-| [Formatting pipes](https://overlabels.com/help/formatting)       | Numbers, durations, currencies, dates. Locale-aware     |
-| [Math engine](https://overlabels.com/help/math)                  | Waves, modulo wheels, timestamp racing                  |
+| Page                                                                   | What it covers                                      |
+| ---------------------------------------------------------------------- | --------------------------------------------------- |
+| [Conditional and event tags](https://overlabels.com/help/conditionals) | if/elseif/else, comparisons, event payload tags     |
+| [Formatting pipes](https://overlabels.com/help/formatting)             | Numbers, durations, currencies, dates. Locale-aware |
+| [Math engine](https://overlabels.com/help/math)                        | Waves, modulo wheels, timestamp racing              |
 
 **Live data**
 
-| Page                                                                        | What it covers                                       |
-|-----------------------------------------------------------------------------|------------------------------------------------------|
-| [Controls](https://overlabels.com/help/controls)                             | Text, numbers, counters, timers, toggles             |
-| [Expression controls](https://overlabels.com/help/expressions)               | Client-side formulas over any other control          |
-| [Integration presets](https://overlabels.com/help/integration-presets)       | Every auto-managed control, searchable               |
-| [Lists](https://overlabels.com/help/lists)                                   | Raffles, queues, quote walls, leaderboards           |
-| [Lists in realtime](https://overlabels.com/help/lists-realtime)              | Read a list as JSON and subscribe over WebSocket     |
+| Page                                                                   | What it covers                                   |
+| ---------------------------------------------------------------------- | ------------------------------------------------ |
+| [Controls](https://overlabels.com/help/controls)                       | Text, numbers, counters, timers, toggles         |
+| [Expression controls](https://overlabels.com/help/expressions)         | Client-side formulas over any other control      |
+| [Integration presets](https://overlabels.com/help/integration-presets) | Every auto-managed control, searchable           |
+| [Lists](https://overlabels.com/help/lists)                             | Raffles, queues, quote walls, leaderboards       |
+| [Lists in realtime](https://overlabels.com/help/lists-realtime)        | Read a list as JSON and subscribe over WebSocket |
 
 **Reference**
 
-| Page                                                        | What it covers                                                |
-|-------------------------------------------------------------|---------------------------------------------------------------|
-| [Reference](https://overlabels.com/help/reference)           | Every template tag, EventSub event and foreach field          |
-| [Overlay access tokens](https://overlabels.com/help/tokens)  | The credential in your overlay URL, and what to do if it leaks |
-| [Twitch chat bot](https://overlabels.com/help/bot)           | Letting viewers and mods change controls from chat            |
-| [Free resources](https://overlabels.com/help/resources)      | Colors, fonts, animations and other tools                     |
+| Page                                                        | What it covers                                                 |
+| ----------------------------------------------------------- | -------------------------------------------------------------- |
+| [Reference](https://overlabels.com/help/reference)          | Every template tag, EventSub event and foreach field           |
+| [Overlay access tokens](https://overlabels.com/help/tokens) | The credential in your overlay URL, and what to do if it leaks |
+| [Twitch chat bot](https://overlabels.com/help/bot)          | Letting viewers and mods change controls from chat             |
+| [Free resources](https://overlabels.com/help/resources)     | Colors, fonts, animations and other tools                      |
 
 > [!TIP]
 > **Reading this as a machine?** Every help page is also plain markdown: append `.md` to any URL
@@ -84,14 +89,13 @@ source and it stays in sync with what is actually deployed.
 
 ## Integrations
 
-Twitch EventSub drives followers, subs, gift subs, resubs, cheers, raids, channel point redemptions and
+Twitch EventSub drives followers, subs, gift subs, resubs, cheers, raids, channel point redemptions, and
 stream online/offline. Five donation services sit alongside it - Ko-fi, StreamLabs, Fourthwall,
-Buy Me a Coffee and Throne - and every one of them exposes the same six controls, so a template written
+Buy Me a Coffee, and Throne. Every one of these external integration exposes the same six controls, so a template written
 against one ports to another by swapping the namespace.
 
 ```html
-<span>[[[c:kofi:latest_donor_name]]]</span>
-<span>[[[c:throne:latest_donor_name]]]</span>
+<span>[[[c:kofi:latest_donor_name]]]</span> <span>[[[c:throne:latest_donor_name]]]</span>
 ```
 
 Connect a service and its controls appear automatically. See
@@ -102,9 +106,9 @@ Connect a service and its controls appear automatically. See
 ## Limits
 
 - Up to 1000 overlays per account, 50 controls per overlay.
-- No asset hosting.
+- No asset hosting. Although you can upload one screenshot per overlay.
 - `<script>`, `<iframe>`, `<embed>` and similar tags are stripped from template content before storage.
-  External stylesheets, fonts, icon libraries and CDN-hosted CSS are all fine. Inline scripts are not.
+  External stylesheets, fonts, icon libraries, and CDN-hosted CSS are all fine. Inline scripts are not.
   ([why](https://overlabels.com/help/rendering))
 - Overlay access uses 64-character hex tokens passed in the URL fragment, so they are never sent to the
   server. Tokens are hashed on storage, revocable, and can expire or be pinned to specific client IPs.
@@ -115,7 +119,7 @@ Connect a service and its controls appear automatically. See
 ## Tech stack
 
 | Layer             | Technology                             |
-|-------------------|----------------------------------------|
+| ----------------- | -------------------------------------- |
 | Backend           | Laravel 13, PHP 8.4                    |
 | Frontend          | Vue 3 (Composition API), TypeScript    |
 | Styling           | TailwindCSS v4                         |
@@ -201,16 +205,16 @@ arrived untouched in the initial Laravel scaffold commit (`783b81fc`) and was ne
 `LICENSE` file granting MIT terms was ever published here. The relicense is forward-only and no history has
 been rewritten.
 
-In practice: you can read, run, modify and share the source freely. If you self-host a **modified** version
+In practice: you can read, run, modify, and share the source freely. If you self-host a **modified** version
 that other people can reach over a network, AGPL section 13 requires you to offer those users the source of
 your modified version. Running an unmodified copy for yourself carries no such obligation. This governs the
-Overlabels source code, not the overlay templates, kits and controls you create with it - those are yours.
+Overlabels source code, not the overlay templates, kits, and controls you create with it - those are yours.
 
 ---
 
 ## Contributing
 
-Questions, ideas and improvements are welcome. Open an issue or a pull request.
+Questions, ideas, and improvements are welcome. Open an issue or a pull request.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) covers the workflow, the house rules for user-facing copy, and how to
 sign off your commits. Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md). Security
@@ -218,4 +222,4 @@ issues go through [SECURITY.md](SECURITY.md).
 
 Contributions are accepted under the same AGPL-3.0-or-later terms as the rest of the project.
 
-~ JasperDiscovers
+Overlabels has been created by [JasperDiscovers](https://twitch.tv/JasperDiscovers).
