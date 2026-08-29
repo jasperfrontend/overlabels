@@ -32,6 +32,12 @@ class TwitchScopeService
         'channel:read:charity',
         'channel:read:polls',
         'channel:read:predictions',
+        // Required for channel.cheer. Without it Twitch will not create the
+        // subscription, so no cheer ever reaches the platform: the Bits Cheer
+        // trigger, the bits amount variants, cheers_this_stream and the
+        // all-time bits_received pair were all reachable only from the
+        // integrations test button until this was requested.
+        'bits:read',
         // Authorizes the shared @overlabels chatbot to send messages in the
         // streamer's channel via the Send Chat Message API using an app
         // access token. Without this scope (or moderator status for the bot
@@ -61,6 +67,7 @@ class TwitchScopeService
      * letting Twitch reject and pollute the failed bucket).
      */
     public const array EVENT_TYPE_TO_SCOPE = [
+        'channel.cheer' => 'bits:read',
         'channel.hype_train.begin' => 'channel:read:hype_train',
         'channel.hype_train.progress' => 'channel:read:hype_train',
         'channel.hype_train.end' => 'channel:read:hype_train',

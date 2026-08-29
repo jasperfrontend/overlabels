@@ -1,5 +1,35 @@
 # CHANGELOG AUGUST 2026
 
+## August 29th, 2026 - fix(twitch): cheers can actually reach the platform now
+
+Second finding from the same production read. The Bits Cheer alert has been offerable in the trigger
+picker since the alert system shipped, `channel.cheer` carries bits-based amount variants
+(`at_least` / `exactly`), `cheers_this_stream` is a preset, and the all-time `bits_received` /
+`cheers_received` pair plus the `latest_cheer*` trio were built and fixed as recently as four commits
+ago. All of it was reachable only from the integrations test button.
+
+**Nothing ever subscribed to `channel.cheer`.** It was absent from `UserEventSubManager`'s supported
+events, and `bits:read` - the scope Twitch requires for it - appeared nowhere in the codebase, so it
+was never requested at login and could never have been granted. A real cheer on a real stream did
+nothing and was recorded nowhere.
+
+- **`channel.cheer` is now a supported event** (version 1, `broadcaster_user_id`, gated on
+  `bits:read`), and **`bits:read` is now in `REQUIRED_SCOPES`**, so the OAuth flow asks for it. Both
+  scope maps were updated together; they have disagreed before, which is how `channel.poll.end` was
+  skipped for every user for months.
+- **Existing accounts need one re-authorization.** The reconnect banner already handles this: until
+  a user re-grants, `channel.cheer` is skipped by the same `required_scope` gate every other event
+  uses, rather than being rejected by Twitch into the failed bucket. `bits:read` renders as "Bits" in
+  that banner.
+- **Two new drift guards, both verified to fail first.** One asserts every event type the trigger
+  picker offers is one we actually subscribe to; one asserts the same for every event carrying an
+  amount-variant condition. Both named `channel.cheer` exactly. An alert a user can wire up, save,
+  and see listed as enabled, that can never fire, is the failure mode worth a permanent test - the
+  existing "required scope must be obtainable" guard could not catch it, because an event absent from
+  the map has no scope to check.
+- Nothing downstream changed. The controls, the alert resolution, the events-feed formatter and the
+  per-session bits aggregation were all already correct and already tested.
+
 ## August 29th, 2026 - fix(stream): going live is confirmed in seconds again, not ten minutes
 
 Found by reading the production database after two real streams, not by a test. Both go-lives were

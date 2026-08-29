@@ -38,6 +38,11 @@ class UserEventSubManager
             'condition_keys' => ['broadcaster_user_id'],
             'required_scope' => 'channel:read:subscriptions',
         ],
+        'channel.cheer' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id'],
+            'required_scope' => 'bits:read',
+        ],
         'channel.raid' => [
             'version' => '1',
             'condition_keys' => ['to_broadcaster_user_id'],
@@ -487,6 +492,7 @@ class UserEventSubManager
             'channel.subscribe' => 'Subscription',
             'channel.subscription.gift' => 'Gifted subscription',
             'channel.subscription.message' => 'Resubscription message',
+            'channel.cheer' => 'Bits cheered',
             'channel.raid' => 'Raid received',
             'channel.channel_points_custom_reward_redemption.add' => 'Channel points redeemed',
             'channel.channel_points_custom_reward_redemption.update' => 'Channel points redemption updated',

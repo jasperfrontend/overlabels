@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\EventTemplateMapping;
 use App\Models\User;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchScopeService;
@@ -16,7 +17,7 @@ test('null twitch_scopes falls back to legacy scope set', function () {
     expect($svc->getUserScopes($user))->toEqual(TwitchScopeService::LEGACY_SCOPES);
 });
 
-test('getMissingScopes returns the four new scopes for a legacy user', function () {
+test('getMissingScopes names every scope added since the legacy grant', function () {
     $user = User::factory()->create(['twitch_scopes' => null]);
 
     $missing = app(TwitchScopeService::class)->getMissingScopes($user);
@@ -24,7 +25,10 @@ test('getMissingScopes returns the four new scopes for a legacy user', function 
     expect($missing)->toContain('channel:read:hype_train')
         ->toContain('channel:read:charity')
         ->toContain('channel:read:polls')
-        ->toContain('channel:read:predictions');
+        ->toContain('channel:read:predictions')
+        // Drives the reconnect banner for every existing account - without a
+        // re-auth, channel.cheer is skipped rather than failing loudly.
+        ->toContain('bits:read');
 });
 
 test('getMissingScopes returns empty when the user has all required scopes', function () {
@@ -233,4 +237,34 @@ test('EVENT_TYPE_TO_SCOPE maps each expanded event type to its scope', function 
     expect($map['channel.goal.begin'])->toBe('channel:read:goals');
     expect($map['channel.poll.begin'])->toBe('channel:read:polls');
     expect($map['channel.prediction.begin'])->toBe('channel:read:predictions');
+    expect($map['channel.cheer'])->toBe('bits:read');
+});
+
+test('every alert trigger the UI offers is an event we actually subscribe to', function () {
+    // EventTemplateMapping::EVENT_TYPES is the catalogue behind the trigger
+    // picker. An entry missing from SUPPORTED_EVENTS is an alert a user can
+    // wire up, save, and see listed as enabled - that can never fire, because
+    // nothing ever asks Twitch to send the event.
+    //
+    // channel.cheer sat in that state: an enabled "Bits Cheer" trigger, the
+    // bits amount-variant conditions, cheers_this_stream, the all-time
+    // bits_received pair and latest_cheer* were all shipped and reachable
+    // only from the integrations test button.
+    $unreachable = array_values(array_diff(
+        array_keys(EventTemplateMapping::EVENT_TYPES),
+        array_keys(UserEventSubManager::SUPPORTED_EVENTS),
+    ));
+
+    expect($unreachable)->toBe([]);
+});
+
+test('an amount-variant condition can only be built on an event we receive', function () {
+    // AMOUNT_FIELDS drives the "at least N bits" style variants. A condition on
+    // an event that never arrives is a rule that can never evaluate.
+    $unreachable = array_values(array_diff(
+        array_keys(EventTemplateMapping::AMOUNT_FIELDS),
+        array_keys(UserEventSubManager::SUPPORTED_EVENTS),
+    ));
+
+    expect($unreachable)->toBe([]);
 });

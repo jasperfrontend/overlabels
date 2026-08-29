@@ -15,6 +15,7 @@ const SCOPE_LABELS: Record<string, string> = {
   'channel:read:goals': 'Goals',
   'channel:read:subscriptions': 'Subscriptions',
   'channel:read:redemptions': 'Channel Points',
+  'bits:read': 'Bits',
   'moderator:read:followers': 'Followers',
   'channel:moderate': 'Moderation',
   'user:read:email': 'Email',
