@@ -414,7 +414,7 @@ class OverlayControlController extends Controller
             }
         }
 
-        $control->update(['value' => $sanitized]);
+        $control->writeValue($sanitized);
 
         $this->broadcastUpdate($template, $control, $sanitized);
 

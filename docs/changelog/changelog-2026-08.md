@@ -1,5 +1,47 @@
 # CHANGELOG AUGUST 2026
 
+## August 29th, 2026 - fix(controls): `_at` now means "last written", not "last changed"
+
+The third and last piece of today's thread. Every control exposes an automatic `_at` companion, and
+`latest()` / `argmax()` race those timestamps to answer "which service went last". They were lying.
+
+`_at` is `overlay_controls.updated_at`, and two separate mechanisms stopped it moving when a control
+was written with the value it already held:
+
+1. **Eloquent's dirty check.** Twelve code paths wrote a value with `update(['value' => ...])`, and
+   Eloquent skips the UPDATE entirely when no attribute is dirty. Nobody decided `_at` should mean
+   "last changed" - Laravel decided it, and it leaked into a user-facing contract.
+2. **`ExternalControlService`'s change detection**, which dropped an unchanged value from persistence
+   AND the broadcast.
+
+Between them, any control whose value repeats froze forever: a donor tipping twice in a row, the same
+viewer cheering twice, a service re-sending an identical payload. On prod, Ko-fi's `latest_donor_name`
+sat 25 days stale while test donations were arriving minutes apart, so racing it named Ko-fi when
+Streamlabs had just paid.
+
+- **`OverlayControl::writeValue()` is now the only way to write a control value through a model
+  instance**, and it always moves the timestamp. All twelve paths use it. The two mass-update paths
+  were already fine - a query-builder update always sets `updated_at`.
+- **Noise suppression survives, narrowed to what it was actually for.** Only a key with a POSITIVE
+  configured epsilon suppresses anything, so a GPS fix wandering in the 6th decimal is still dropped
+  from both the value and the broadcast and drift still cannot creep. An identical value is not
+  noise. `valueChanged()` is renamed `exceedsNoiseThreshold()` because the old name described the old
+  behaviour.
+- **A configured epsilon of `0.0` now means "no threshold" rather than "exact compare"**, which only
+  affects `distance`. The config comment says so.
+- **The GPS broadcast cost is smaller than it looks.** The phone is the first filter and stops
+  transmitting altogether when it detects no movement, in both speed and displacement, so a parked
+  device sends nothing to suppress. The backend guard is the backstop, not the gate.
+- **Nine tests, six verified to fail** against the old behaviour - including one that reproduces the
+  exact prod shape, two services 25 and 26 days stale, and asserts the repeat donation now wins the
+  race. One deliberately pins Eloquent's own no-op behaviour, so if that ever changes the workaround
+  can be revisited.
+- **Known consequence: a reset is a write, so it moves `_at`.** Zeroing an already-zero per-stream
+  counter at go-live now moves its timestamp, and toggling a service's test mode moves every `_at` on
+  that service. Nothing races a `*_this_stream` key, and the `latest_cheer*` controls that used to be
+  caught by the go-live reset are not reset at all any more, so nothing regressed - but it is a
+  behaviour change and it is the one place "last written" reads oddly.
+
 ## August 29th, 2026 - fix(twitch): your latest cheerer no longer goes blind when you go offline
 
 Follow-on from the all-time counters below. `latest_cheerer_name`, `latest_cheer_amount` and

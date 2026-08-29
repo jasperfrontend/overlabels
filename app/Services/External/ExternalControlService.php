@@ -57,7 +57,7 @@ class ExternalControlService
                 default => in_array($control->type, ['counter', 'number'], true) ? '0' : '',
             };
 
-            $control->update(['value' => $resetValue]);
+            $control->writeValue($resetValue);
 
             $overlaySlug = $control->overlay_template_id
                 ? ($control->template?->slug ?? '')
@@ -174,16 +174,21 @@ class ExternalControlService
                     $newValue = OverlayControl::sanitizeValue($control->type, $update);
                 }
 
-                // Change detection: a value that didn't move (within an epsilon
-                // for noisy floats) is dropped from BOTH persistence and the
-                // broadcast. A parked GPS device drifting in the 6th decimal
-                // emits nothing; the stored value stays at the last broadcast
-                // value so drift can't accumulate.
-                if (! $this->valueChanged($key, $control->type, $oldValue, $newValue)) {
+                // Noise suppression, and ONLY noise suppression. A key with a
+                // positive configured epsilon (the GPS floats) drops a
+                // sub-threshold change from both persistence and the broadcast,
+                // so the stored value stays put and drift can't accumulate.
+                //
+                // An identical value is NOT noise and is no longer dropped. It
+                // used to be, which froze `_at` on any control whose value
+                // repeats - a repeat donor left latest_donor_name_at stuck at
+                // whenever that name first arrived, so racing it in latest()
+                // named the wrong service. See OverlayControl::writeValue().
+                if (! $this->exceedsNoiseThreshold($key, $control->type, $oldValue, $newValue)) {
                     continue;
                 }
 
-                $control->update(['value' => $newValue]);
+                $control->writeValue($newValue);
 
                 // For template-scoped controls, broadcast to the specific overlay slug.
                 // For user-scoped (overlay_template_id=null), use empty slug so all overlays receive it.
@@ -214,25 +219,34 @@ class ExternalControlService
     }
 
     /**
-     * Whether a control value moved enough to be worth persisting and
-     * broadcasting. Numeric keys with a configured epsilon (GPS floats) use a
-     * threshold compare; other numeric controls use an exact numeric compare;
-     * text/boolean controls use an exact string compare.
+     * Whether an update is worth persisting and broadcasting.
+     *
+     * A POSITIVE epsilon is the only thing that suppresses anything. It exists
+     * for noisy floats - a GPS fix wandering in the 6th decimal is measurement
+     * error, not movement, and writing it would let drift accumulate in the
+     * stored value. (The phone is the first filter and stops transmitting
+     * entirely when it detects no movement; this is the backstop.)
+     *
+     * Everything else always lands, including a value identical to the stored
+     * one. `_at` means "when did this control last receive a write", so a
+     * repeat donor, a repeat cheerer or a re-sent identical payload has to move
+     * it. Dropping those is what froze the timestamp that latest() races.
      */
-    private function valueChanged(string $key, string $type, string $old, string $new): bool
+    private function exceedsNoiseThreshold(string $key, string $type, string $old, string $new): bool
     {
         $epsilon = $this->epsilonFor($key, $type);
 
-        if ($epsilon !== null) {
+        if ($epsilon !== null && $epsilon > 0.0) {
             return abs((float) $new - (float) $old) > $epsilon;
         }
 
-        return $new !== $old;
+        return true;
     }
 
     /**
-     * Resolve the change-detection epsilon for a key, or null when an exact
-     * string comparison should be used (text/boolean controls).
+     * Resolve the configured noise threshold for a key, or null when there
+     * isn't one. A configured 0.0 (or a 0.0 default) reads as "no threshold"
+     * and suppresses nothing - see exceedsNoiseThreshold().
      */
     private function epsilonFor(string $key, string $type): ?float
     {

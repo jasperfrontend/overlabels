@@ -349,7 +349,7 @@ class StreamSessionService
 
         foreach ($controls as $control) {
             $newValue = (string) $transform($control);
-            $control->update(['value' => $newValue]);
+            $control->writeValue($newValue);
 
             $overlaySlug = $control->overlay_template_id
                 ? ($control->template?->slug ?? '')
@@ -384,7 +384,7 @@ class StreamSessionService
 
         foreach ($controls as $control) {
             $resetValue = (string) ($control->config['reset_value'] ?? 0);
-            $control->update(['value' => $resetValue]);
+            $control->writeValue($resetValue);
 
             $overlaySlug = $control->overlay_template_id
                 ? ($control->template?->slug ?? '')

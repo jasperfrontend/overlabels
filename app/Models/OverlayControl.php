@@ -83,6 +83,42 @@ class OverlayControl extends Model
     const string KEY_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 
     /**
+     * Write a value and always move `updated_at`, even when the value being
+     * written is identical to the one already stored.
+     *
+     * THIS IS THE ONLY WAY A CONTROL VALUE SHOULD BE WRITTEN through a model
+     * instance. A plain `update(['value' => ...])` looks like it does the same
+     * thing and does not: Eloquent skips the UPDATE entirely when no attribute
+     * is dirty, so a repeat value silently leaves `updated_at` where it was.
+     *
+     * That matters because `_at` is a user-facing contract, not an internal
+     * audit column. The render payload exposes every control as `c:<key>_at`
+     * (see OverlayTemplateController), and it answers "when did this control
+     * last receive a write" - which is what `latest()` and `argmax()` race
+     * across services in an Expression Control. Under the old dirty-check
+     * behaviour a donor tipping twice in a row, or the same viewer cheering
+     * twice, left the timestamp frozen at whenever that value first appeared,
+     * so racing it named the wrong service. One prod control sat 25 days stale
+     * while donations were arriving minutes apart.
+     *
+     * Broadcast suppression is a separate question and deliberately not
+     * handled here - see ExternalControlService::exceedsNoiseThreshold().
+     */
+    public function writeValue(string $value): bool
+    {
+        $this->value = $value;
+
+        // Nothing dirty means save() would be a no-op, so move the timestamp
+        // explicitly. updateTimestamps() leaves updated_at alone once it is
+        // already dirty, so this survives the save rather than being rewritten.
+        if (! $this->isDirty()) {
+            $this->updated_at = $this->freshTimestamp();
+        }
+
+        return $this->save();
+    }
+
+    /**
      * Sanitise a raw value for a given control type.
      */
     public static function sanitizeValue(string $type, mixed $raw): string

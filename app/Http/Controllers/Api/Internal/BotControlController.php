@@ -116,7 +116,7 @@ class BotControlController extends Controller
                 'toggle' => $control->value === '1' ? '0' : '1',
             };
 
-            $control->update(['value' => $newValue]);
+            $control->writeValue($newValue);
 
             $overlaySlug = $control->overlay_template_id
                 ? ($control->template?->slug ?? '')

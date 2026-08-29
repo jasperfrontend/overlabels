@@ -70,8 +70,7 @@ class BridgePickerLandedToControl
                 continue;
             }
 
-            $control->value = $value;
-            $control->save();
+            $control->writeValue($value);
 
             ControlValueUpdated::dispatch(
                 '',

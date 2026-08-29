@@ -245,7 +245,7 @@ class GpsIntegrationController extends Controller
             ->get();
 
         foreach ($controls as $control) {
-            $control->update(['value' => '0']);
+            $control->writeValue('0');
 
             $overlaySlug = $control->overlay_template_id
                 ? ($control->template?->slug ?? '')

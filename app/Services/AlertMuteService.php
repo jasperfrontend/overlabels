@@ -49,7 +49,7 @@ class AlertMuteService
         $newValue = $muted ? '1' : '0';
 
         if ($control->value !== $newValue) {
-            $control->update(['value' => $newValue]);
+            $control->writeValue($newValue);
 
             ControlValueUpdated::dispatch(
                 '',

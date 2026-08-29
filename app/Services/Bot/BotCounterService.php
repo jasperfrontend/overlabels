@@ -108,7 +108,7 @@ class BotCounterService
                 }
 
                 $newValue = (string) ((float) ($control->value ?? 0) + 1);
-                $control->update(['value' => $newValue]);
+                $control->writeValue($newValue);
 
                 ControlValueUpdated::dispatch(
                     $control->overlay_template_id ? ($control->template?->slug ?? '') : '',
