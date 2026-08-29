@@ -617,10 +617,21 @@ clobbered by a checkout, a stash, or a branch switch that a later step needs to 
   npm run typecheck && npm run build && php artisan test` (build before pest - two tests inspect
   the built assets). Red gate = no push. `/ship` runs exactly this.
 - "Ship it" means gate, commit, push - one shot, no confirmation pause.
-- **Changelog only for a real feature, a big refactor or a substantial functionality change**
-  (removing StreamElements, adding `channel_avatar`, a settings-page revamp), or when asked.
-  Never for tiny or visual iterations: button borders, prose, colours, icons, unifying styles.
-  Entries go in `docs/changelog/changelog-YYYY-MM.md` (per-month), same commit as the change.
+- **From September 2026, EVERY change that ships gets a claim file** - an icon swap included.
+  `docs/changelog/claims/YYYY/MM/OL-YYMM-NNN/claim.md`, same commit as the change. It is a hard,
+  checkable record written for an agent to scrutinize against the diff, not a nice read: Surface
+  (every path in the diff, complete), Claims (one tagged assertion each, naming a symbol), plus
+  Unchanged and Risk when they apply. The ID goes in the commit as a `Changelog: OL-2609-004`
+  trailer, which is how the agent resolves the diff without an amend. `/ship` gates on all three
+  mechanically. **Full format and rules: `docs/changelog/claims-guide.md`.**
+- **The prose changelog is separate and keeps its higher bar: only a real feature, a big refactor
+  or a substantial functionality change** (removing StreamElements, adding `channel_avatar`, a
+  settings-page revamp), or when asked. Never for tiny or visual iterations: button borders, prose,
+  colours, icons, unifying styles. Entries go in `docs/changelog/changelog-YYYY-MM.md` (per-month),
+  same commit as the change. **From September 2026 its heading carries the same ID as the claim
+  file** (`## OL-2609-004 - September 1st, 2026 - fix(twitch): ...`) so the two files cannot drift
+  apart unnoticed. Anything shipped before 2026-09-01 has no claim file, no ID and no commit
+  trailer - the old heading format stands, and August 2026 and earlier are never backfilled.
 - If unsure whether to commit first or apply changes first, commit first then apply
 - NEVER use em dashes in user-facing copy or code. Use hyphens with spaces instead.
 - NEVER call "Fork" in frontend-facing UI. Always use "Copy" instead.
