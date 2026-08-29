@@ -7,7 +7,7 @@ import NudgeBar from '@/components/NudgeBar.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import AppendCommandsCard from '@/components/lists/AppendCommandsCard.vue';
 import SnapshotsCard from '@/components/lists/SnapshotsCard.vue';
-import { ArrowDownFromLineIcon, ArrowLeftIcon, ArrowUpFromLineIcon, CheckIcon, LockIcon, PlayIcon } from '@lucide/vue';
+import { ArrowDownFromLineIcon, ArrowLeftIcon, ArrowUpFromLineIcon, CheckIcon, Eye, LockIcon, PlayIcon } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import type { ToastType } from '@/types/lists';
 import { listItemValues, type ListItem } from '@/utils/listItems';
@@ -591,6 +591,18 @@ async function loadMeta() {
         </span>
       </div>
 
+      <!-- This page looks new NudgeBar variant good. One-off: the key makes
+           "Thanks" close it for good. -->
+      <NudgeBar
+        variant="good"
+        dismiss-key="lists-new-style"
+        title="Wait, this page looks a little different than the others"
+        body="Sharp eye! Indeed, this page is the first page in the dashboard in the &ldquo;new style&rdquo;. Eventually, all pages will look and feel like this one. Enjoy! 😎"
+        :icon="Eye"
+        button-text="Thanks"
+        class="mb-5"
+      />
+
       <!-- Template tag row -->
       <div class="mb-6 flex flex-wrap items-center gap-2">
         <span class="text-xs text-muted-foreground">Template tag</span>
@@ -627,7 +639,7 @@ async function loadMeta() {
           <!-- Editor card -->
           <div class="border border-sidebar-border bg-black/2 p-5 dark:bg-[#0a0512]/50">
             <label for="active-label" class="mb-1.5 block text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Label</label>
-            <input id="active-label" v-model="draftLabel" :disabled="!!isActiveLocked" placeholder="(optional)" class="input-border w-full" />
+            <input id="active-label" v-model="draftLabel" :disabled="isActiveLocked" placeholder="(optional)" class="input-border w-full" />
 
             <div class="mt-5 mb-1.5 flex items-baseline gap-2">
               <label for="active-items" class="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Items</label>

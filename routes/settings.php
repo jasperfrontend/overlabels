@@ -93,6 +93,27 @@ Route::middleware('auth.redirect')->group(function () {
         return back();
     })->name('settings.foreach-caps');
 
+    // Remember that a one-off NudgeBar has been clicked away. Not a settings
+    // screen - it lives here because it is a preference write and this is where
+    // those are. Dismissing twice is a no-op, so the client never has to check
+    // first.
+    Route::post('/nudges/{key}/dismiss', function (Request $request, string $key) {
+        $user = $request->user();
+        $dismissed = collect($user->preference('dismissed_nudges', []))
+            ->push($key)
+            ->unique()
+            // Negative take keeps the NEWEST keys, so hitting the ceiling drops
+            // an ancient dismissal rather than silently discarding the one the
+            // user just made.
+            ->take(-User::MAX_DISMISSED_NUDGES)
+            ->values()
+            ->all();
+
+        $user->setPreference('dismissed_nudges', $dismissed)->save();
+
+        return back();
+    })->where('key', '[a-z0-9-]{1,64}')->name('nudges.dismiss');
+
     // External Integrations
     Route::prefix('settings/integrations')->name('settings.integrations.')->group(function () {
         Route::get('/', [IntegrationController::class, 'index'])->name('index');

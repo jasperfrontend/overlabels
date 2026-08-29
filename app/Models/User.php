@@ -150,6 +150,11 @@ class User extends Authenticatable
             'hide_commands' => false,
             'hidden_logins' => [],
         ],
+        // Keys of one-off NudgeBar announcements this user has clicked away.
+        // Server-side rather than localStorage so a nudge dismissed on the
+        // desktop does not reappear on the phone - these are one-time notices,
+        // and showing one twice is the whole failure mode.
+        'dismissed_nudges' => [],
     ];
 
     public const int FOREACH_CAP_MAX = 50;
@@ -160,6 +165,14 @@ class User extends Authenticatable
      * anyone plausibly needs more.
      */
     public const int MAX_HIDDEN_LOGINS = 200;
+
+    /**
+     * Ceiling on remembered nudge dismissals. The list ships as a shared Inertia
+     * prop on every page, and there will never be anywhere near this many
+     * nudges - the cap is only here so the endpoint cannot grow the row without
+     * bound.
+     */
+    public const int MAX_DISMISSED_NUDGES = 100;
 
     /**
      * The attributes that should be hidden for serialization.

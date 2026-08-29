@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import type { Component } from 'vue';
+import { computed, ref, type Component } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
+import type { AppPageProps } from '@/types';
 
 // Nudge banner from the "Nudge bar" design canvas: a full-bleed radial wash
 // anchored on the left, with a pill CTA. `warn` is the red flavor (disabled
 // lists, unassigned alerts), `good` the green one (celebratory nudges).
-withDefaults(
+const props = withDefaults(
   defineProps<{
     variant?: 'warn' | 'good';
     title: string;
@@ -12,15 +14,58 @@ withDefaults(
     /** A short text glyph ("!") or an imported lucide icon component. */
     icon: string | Component;
     buttonText: string;
+    /**
+     * Give a one-off announcement a stable key and the bar becomes
+     * self-closing: the CTA hides it and remembers that against the user's
+     * account, so it stays gone on reload, on a revisit and on their other
+     * devices. Lowercase, digits and hyphens only - the route rejects the rest.
+     *
+     * Without a key the bar is a permanent nudge (a disabled list, a missing
+     * assignment): the CTA only emits `click` and the bar stays put, because
+     * what it points at is still true.
+     */
+    dismissKey?: string;
   }>(),
   { variant: 'warn' },
 );
 
-defineEmits<{ click: [] }>();
+const emit = defineEmits<{ click: [] }>();
+
+const page = usePage<AppPageProps>();
+
+// Hide on click without waiting for the round trip - the request only has to
+// make it stick for the NEXT page load.
+const dismissedLocally = ref(false);
+
+const visible = computed(() => {
+  if (!props.dismissKey) {
+    return true;
+  }
+
+  return !dismissedLocally.value && !(page.props.dismissedNudges ?? []).includes(props.dismissKey);
+});
+
+function onClick() {
+  emit('click');
+
+  if (!props.dismissKey) {
+    return;
+  }
+
+  dismissedLocally.value = true;
+
+  // No auth user means no preferences row to write to, so the dismissal lasts
+  // as long as the page does. Nothing to do but leave it hidden.
+  if (!page.props.auth?.user) {
+    return;
+  }
+
+  router.post(route('nudges.dismiss', { key: props.dismissKey }), {}, { preserveScroll: true, preserveState: true });
+}
 </script>
 
 <template>
-  <div class="nudge-bar flex flex-wrap items-center gap-4 px-6 py-5" :class="variant">
+  <div v-if="visible" class="nudge-bar flex flex-wrap items-center gap-4 px-6 py-5" :class="variant">
     <div
       class="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] text-xl font-bold dark:text-white"
       :class="variant === 'good' ? 'bg-green-500/25 text-green-700' : 'bg-red-500/25 text-red-700'"
@@ -34,7 +79,7 @@ defineEmits<{ click: [] }>();
     </div>
     <button
       class="nudge-cta shrink-0 cursor-pointer rounded-full border border-black/30 bg-transparent px-4 py-1.5 text-xs font-medium text-foreground hover:bg-black/5 dark:border-white/55 dark:text-white dark:hover:border-white/80 dark:hover:bg-white/8"
-      @click="$emit('click')"
+      @click="onClick"
     >
       {{ buttonText }}
     </button>

@@ -68,6 +68,9 @@ class HandleInertiaRequests extends Middleware
             // this stays empty until a page claims the route.
             'help' => fn () => HelpContext::forRequest($request),
             'isAdmin' => fn () => $request->user()?->isAdmin() ?? false,
+            // One-off nudges this user has already clicked away. Shared rather
+            // than passed per page, because a NudgeBar can sit on any of them.
+            'dismissedNudges' => fn () => $request->user()?->preference('dismissed_nudges', []) ?? [],
             'lockdown' => fn () => app(LockdownService::class)->getStatus(),
             'streamState' => function () use ($request) {
                 $user = $request->user();
