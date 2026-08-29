@@ -23,8 +23,12 @@ uses(RefreshDatabase::class);
  *      and no external donation driver consults stream state either.
  *   2. They survive the go-live reset, because they are not per-stream.
  *
- * The per-stream pair must keep doing the exact opposite, or the two pairs
- * stop meaning different things and comparing them is pointless.
+ * The `latest_cheer*` trio is ungated for the same reason - a cheer that
+ * arrives offline is still the latest cheer, and the donation services record
+ * their `latest_donor_*` values with no live check anywhere.
+ *
+ * The per-stream keys must keep doing the exact opposite, or the two sets stop
+ * meaning different things and comparing them is pointless.
  */
 function cheerControl(User $user, string $key, string $type = 'counter', string $value = '0'): OverlayControl
 {
@@ -87,6 +91,33 @@ it('counts cheers and bits when the live state is not confident', function () {
 
     expect($cheers->fresh()->value)->toBe('1')
         ->and($bits->fresh()->value)->toBe('40');
+});
+
+it('records the latest cheer while the channel is offline', function () {
+    // A cheer that arrives offline is still the latest cheer. Every donation
+    // service records its latest_donor_* the same way, with no live gate
+    // anywhere in the external pipeline.
+    $name = cheerControl($this->user, 'latest_cheerer_name', 'text', '');
+    $amount = cheerControl($this->user, 'latest_cheer_amount', 'number');
+    $message = cheerControl($this->user, 'latest_cheer_message', 'text', '');
+
+    cheer($this->user, bits: 75, name: 'marijke');
+
+    expect($name->fresh()->value)->toBe('marijke')
+        ->and($amount->fresh()->value)->toBe('75')
+        ->and($message->fresh()->value)->toBe('have some bits');
+});
+
+it('names an anonymous offline cheerer Anonymous rather than blank', function () {
+    $name = cheerControl($this->user, 'latest_cheerer_name', 'text', '');
+
+    app(StreamSessionService::class)->handleEvent($this->user, 'channel.cheer', [
+        'bits' => 10,
+        'is_anonymous' => true,
+        'user_name' => 'should_be_ignored',
+    ]);
+
+    expect($name->fresh()->value)->toBe('Anonymous');
 });
 
 it('leaves the per-stream pair alone while offline', function () {

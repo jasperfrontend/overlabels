@@ -1,5 +1,24 @@
 # CHANGELOG AUGUST 2026
 
+## August 29th, 2026 - fix(twitch): your latest cheerer no longer goes blind when you go offline
+
+Follow-on from the all-time counters below. `latest_cheerer_name`, `latest_cheer_amount` and
+`latest_cheer_message` were behind the same `isConfidentlyLive()` gate as the per-stream counters, so
+a cheer that arrived while the channel was offline was silently dropped. All five donation services
+record their `latest_donor_*` values with no live check anywhere in the pipeline, and the cheer
+presets were added for parity with exactly those. Now they match.
+
+The rule is now simply stated: **`*_this_stream` requires a confident live state, nothing else does.**
+A cheer that arrives offline is still the latest cheer.
+
+- **The chat summary keeps its gate, and that is not an inconsistency.** A cheer is a discrete event
+  Twitch delivers whenever it happens; `applyChatSummary()` takes a windowed count that only means
+  something between a `stream.online` and a `stream.offline`. It still drops the whole summary while
+  offline and still answers `applied:false` so the bot does not retry. The comment there claimed
+  parity with the cheer handling, which is no longer true, so it now says what it actually does.
+- **Two more tests**, covering an offline cheer landing in all three controls and an anonymous
+  offline cheerer resolving to `Anonymous` rather than an empty string.
+
 ## August 29th, 2026 - feat(twitch): bits and cheers you have ever received, not just tonight
 
 Two new Twitch preset controls, `cheers_received` and `bits_received`. They are the all-time twins of

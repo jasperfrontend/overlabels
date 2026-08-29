@@ -28,13 +28,14 @@ latest(
   c.kofi.donations_received_at,           c.kofi.latest_donor_name,
   c.fourthwall.donations_received_at,     c.fourthwall.latest_donor_name,
   c.bmac.donations_received_at,           c.bmac.latest_donor_name,
-  c.throne.donations_received_at,         c.throne.latest_donor_name
+  c.throne.donations_received_at,         c.throne.latest_donor_name,
+  c.twitch.cheers_received_at,            c.twitch.latest_cheerer_name
 )
 ```
 
-Calmly outputs the name of the last person who donated through five different services. No other overlay
-or alert service on the market does this, and with Overlabels it's just another function. (And we're
-adding more integrations all the time.)
+Calmly outputs the name of the last person who gave you money, across five donation services and Twitch
+bits. No other overlay or alert service on the market does this, and with Overlabels it's just another
+function. (And we're adding more integrations all the time.)
 
 Every control Overlabels tracks gets an automatic `_at` companion - a Unix timestamp of when that value
 last changed. `latest()` walks through (timestamp, value) pairs and returns the value whose timestamp is

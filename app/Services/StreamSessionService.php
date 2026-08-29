@@ -135,9 +135,10 @@ class StreamSessionService
      * Handle a countable Twitch event: increment the matching control if user has one.
      * For channel.cheer, also accumulates bits and records latest-cheer details.
      *
-     * Two gates, not one. `cheers_received` / `bits_received` are all-time and
-     * count whether or not the channel is live; everything else requires a
-     * confident live state.
+     * Two gates, not one. The all-time totals and the latest_cheer* trio are
+     * applied whether or not the channel is live, matching how every donation
+     * service behaves. Only the `*_this_stream` keys require a confident live
+     * state.
      */
     public function handleEvent(User $user, string $eventType, array $event = []): void
     {
@@ -150,18 +151,25 @@ class StreamSessionService
 
         $bits = $isCheer ? (int) ($event['bits'] ?? 0) : 0;
 
-        // All-time cheer totals are applied BEFORE the live gate, on purpose.
-        // Viewers cheer in offline chat, and a donation through any external
-        // service is counted whenever it arrives - no service driver consults
-        // stream state. These two are the Twitch equivalent of
-        // donations_received / total_received, so they follow that rule rather
-        // than the per-stream one.
+        // Everything that is not per-stream is applied BEFORE the live gate.
+        //
+        // A viewer can cheer in offline chat, and no external donation driver
+        // consults stream state before recording a tip. The all-time totals are
+        // the Twitch equivalent of donations_received / total_received, and the
+        // latest_cheer* trio is the equivalent of the latest_donor_* values on
+        // those same services - none of which go quiet when you stop streaming.
+        // A cheer that arrives offline is still the latest cheer.
         //
         // Everything past the gate below is per-stream and stays strictly
-        // live-only, which is the whole point of the separation: one pair
-        // answers "ever", the other answers "tonight", and comparing them is
-        // only meaningful while they mean different things.
+        // live-only. That is the whole point of the separation: one set answers
+        // "ever", the other answers "tonight", and comparing them is only
+        // meaningful while they keep meaning different things.
         if ($isCheer) {
+            $cheererName = ($event['is_anonymous'] ?? false)
+                ? 'Anonymous'
+                : ($event['user_name'] ?? 'Anonymous');
+            $message = (string) ($event['message'] ?? '');
+
             $this->applyTwitchControl($user, 'cheers_received', function (OverlayControl $control) {
                 $step = (float) ($control->config['step'] ?? 1);
 
@@ -170,6 +178,9 @@ class StreamSessionService
             $this->applyTwitchControl($user, 'bits_received', function (OverlayControl $control) use ($bits) {
                 return (string) ((float) ($control->value ?? 0) + $bits);
             });
+            $this->applyTwitchControl($user, 'latest_cheerer_name', fn () => $cheererName);
+            $this->applyTwitchControl($user, 'latest_cheer_amount', fn () => (string) $bits);
+            $this->applyTwitchControl($user, 'latest_cheer_message', fn () => $message);
         }
 
         // Only apply if user is confidently live
@@ -190,19 +201,11 @@ class StreamSessionService
         }
 
         if ($isCheer) {
-            $cheererName = ($event['is_anonymous'] ?? false)
-                ? 'Anonymous'
-                : ($event['user_name'] ?? 'Anonymous');
-            $message = (string) ($event['message'] ?? '');
-
             $this->applyTwitchControl($user, 'bits_this_stream', function (OverlayControl $control) use ($bits) {
                 $current = (float) ($control->value ?? 0);
 
                 return (string) ($current + $bits);
             });
-            $this->applyTwitchControl($user, 'latest_cheerer_name', fn () => $cheererName);
-            $this->applyTwitchControl($user, 'latest_cheer_amount', fn () => (string) $bits);
-            $this->applyTwitchControl($user, 'latest_cheer_message', fn () => $message);
         }
     }
 
@@ -230,8 +233,13 @@ class StreamSessionService
         ?string $latestChatterName = null,
         ?string $latestChatMessage = null,
     ): array {
-        // "This stream" is meaningless while offline, and the latest_* pair
-        // matches the cheer handling above by only moving during a stream.
+        // "This stream" is meaningless while offline, so the whole summary is
+        // dropped rather than gated per key. This does NOT mirror the cheer
+        // handling above, which stopped gating its latest_* trio: a cheer is a
+        // discrete event Twitch delivers whenever it happens, whereas this is a
+        // windowed count that only means anything between a stream.online and a
+        // stream.offline. Returning applied:false rather than erroring is what
+        // stops the bot retrying a summary there is nothing to do with.
         if (! StreamState::forUser($user)->isConfidentlyLive()) {
             return ['applied' => false, 'unique_chatters' => null];
         }
