@@ -116,7 +116,7 @@ Connect a service and its controls appear automatically. See
 
 | Layer             | Technology                             |
 |-------------------|----------------------------------------|
-| Backend           | Laravel 12, PHP 8.4                    |
+| Backend           | Laravel 13, PHP 8.4                    |
 | Frontend          | Vue 3 (Composition API), TypeScript    |
 | Styling           | TailwindCSS v4                         |
 | UI components     | RekaUI/Shadcn/Vue                      |
