@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Update;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
@@ -27,6 +28,27 @@ class OgImageService
     private const BODY_LINE_MAX = 75;
 
     private const BODY_LINES_MAX = 4;
+
+    /**
+     * Post cards wrap the title over up to three lines instead of truncating
+     * it. A reference entry is named after a tag and fits on one line; a post
+     * is named in a sentence, and TITLE_MAX would ellipsize most of them.
+     */
+    private const UPDATE_TITLE_LINE_MAX = 40;
+
+    private const UPDATE_TITLE_LINES_MAX = 3;
+
+    private const UPDATE_BODY_LINES_MAX = 5;
+
+    /** Roughly five wrapped lines, so the clip lands before the card runs out. */
+    private const UPDATE_EXCERPT_MAX = 360;
+
+    /** Post card geometry, in the SVG's own 1200x630 coordinates. */
+    private const UPDATE_TITLE_TOP = 140;
+
+    private const UPDATE_TITLE_STEP = 58;
+
+    private const UPDATE_TITLE_TO_BODY = 74;
 
     /**
      * Render (or fetch from cache) the OG image for a single reference entry.
@@ -63,6 +85,62 @@ class OgImageService
         $ctx = $this->contextForGpsSession($session, $coords, $streamerName, $speedUnit, $locale, $canonicalUrl);
 
         return $this->renderOrCached($ctx, 'og.gps-session');
+    }
+
+    /**
+     * Render (or fetch from cache) the OG image for a single /updates post.
+     *
+     * Everything in the context is derived from post fields, and the cache key
+     * is a hash of that context, so editing a post's title, excerpt or tags
+     * produces a new image on the next request with nothing to invalidate by
+     * hand. An edit that does not change any of them keeps the existing PNG.
+     */
+    public function urlForUpdate(Update $update, string $canonicalUrl): string
+    {
+        return $this->renderOrCached($this->contextForUpdate($update, $canonicalUrl), 'og.update');
+    }
+
+    /**
+     * Build the SVG-template context for a post card.
+     *
+     * @return array<string, mixed>
+     */
+    private function contextForUpdate(Update $update, string $canonicalUrl): array
+    {
+        $topic = $update->topicTags()[0] ?? 'Update';
+        $date = $update->published_at?->format('j M Y') ?? '';
+
+        // mb_strtoupper rather than strtoupper: a tag is author-typed, so it
+        // can carry anything, and the separator is a multibyte middot.
+        $eyebrow = mb_strtoupper($date === '' ? $topic : "{$topic} · {$date}");
+
+        $titleLines = $this->wrapBody(
+            $update->title,
+            self::UPDATE_TITLE_LINE_MAX,
+            self::UPDATE_TITLE_LINES_MAX,
+        );
+
+        // A post cannot be saved without a title, but an all-whitespace one
+        // would wrap to nothing and render a card with no headline at all.
+        if ($titleLines === []) {
+            $titleLines = ['Update'];
+        }
+
+        return [
+            'eyebrow' => $eyebrow,
+            'titleLines' => $titleLines,
+            'bodyLines' => $this->wrapBody(
+                $update->plainExcerpt(self::UPDATE_EXCERPT_MAX),
+                self::BODY_LINE_MAX,
+                self::UPDATE_BODY_LINES_MAX,
+            ),
+            // The excerpt starts below however many lines the title took, so a
+            // three-line headline pushes it down instead of overlapping it.
+            'bodyTop' => self::UPDATE_TITLE_TOP
+                + (count($titleLines) - 1) * self::UPDATE_TITLE_STEP
+                + self::UPDATE_TITLE_TO_BODY,
+            'url' => $this->truncateUrl($this->urlForFooter($canonicalUrl)),
+        ];
     }
 
     /**
@@ -416,10 +494,21 @@ class OgImageService
     }
 
     /**
+     * Greedy word wrap, ellipsizing once the line budget runs out.
+     *
+     * The bounds default to the body-copy ones every existing caller already
+     * used; post cards pass their own so the same wrap can lay out a 50px
+     * headline over three lines.
+     *
      * @return array<int, string>
      */
-    private function wrapBody(string $text): array
-    {
+    private function wrapBody(
+        string $text,
+        int $lineMax = self::BODY_LINE_MAX,
+        int $linesMax = self::BODY_LINES_MAX,
+    ): array {
+        $text = trim($text);
+
         if ($text === '') {
             return [];
         }
@@ -434,10 +523,10 @@ class OgImageService
 
                 continue;
             }
-            if (mb_strlen($current.' '.$word) > self::BODY_LINE_MAX) {
+            if (mb_strlen($current.' '.$word) > $lineMax) {
                 $lines[] = $current;
-                if (count($lines) === self::BODY_LINES_MAX) {
-                    return $this->ellipsizeLastLine($lines);
+                if (count($lines) === $linesMax) {
+                    return $this->ellipsizeLastLine($lines, $lineMax);
                 }
                 $current = $word;
             } else {
@@ -449,10 +538,10 @@ class OgImageService
             $lines[] = $current;
         }
 
-        if (count($lines) > self::BODY_LINES_MAX) {
-            $lines = array_slice($lines, 0, self::BODY_LINES_MAX);
+        if (count($lines) > $linesMax) {
+            $lines = array_slice($lines, 0, $linesMax);
 
-            return $this->ellipsizeLastLine($lines);
+            return $this->ellipsizeLastLine($lines, $lineMax);
         }
 
         return $lines;
@@ -462,11 +551,11 @@ class OgImageService
      * @param  array<int, string>  $lines
      * @return array<int, string>
      */
-    private function ellipsizeLastLine(array $lines): array
+    private function ellipsizeLastLine(array $lines, int $lineMax = self::BODY_LINE_MAX): array
     {
         $last = $lines[count($lines) - 1];
-        if (mb_strlen($last) > self::BODY_LINE_MAX - 1) {
-            $last = rtrim(mb_substr($last, 0, self::BODY_LINE_MAX - 1));
+        if (mb_strlen($last) > $lineMax - 1) {
+            $last = rtrim(mb_substr($last, 0, $lineMax - 1));
         }
         $lines[count($lines) - 1] = rtrim($last, '.,;:').'…';
 

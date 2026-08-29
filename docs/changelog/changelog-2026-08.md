@@ -1,5 +1,55 @@
 # CHANGELOG AUGUST 2026
 
+## August 29th, 2026 - feat(updates): every post gets its own share card and its own place in search
+
+Fetching `https://overlabels.com/updates/your-bot-can-stop-saying-one-times` as Facebook's scraper
+returned the homepage. Not a redirect - the post, serving the site-wide card: the same title, the
+same description, `/ogimage.jpg`, and, worst of the four, `og:url` pointing at
+`https://overlabels.com/`. Every post ever linked from Twitch or Discord had been telling every
+scraper that the thing behind the link was the front page.
+
+The reason it went unnoticed for months is that the post page looks correct in a browser. `show.vue`
+has a `<Head>` block setting the title and description, and it works - once Vue has mounted. No link
+scraper runs JavaScript, so none of them ever saw it. `/help/reference` and `/map` never had this
+problem because they are plain Blade and own their `<head>` outright.
+
+Nothing new was needed to fix it. `app.blade.php` has had the seam since the public overlay pages
+shipped - a controller shares an `$og` array and the layout renders it server-side - and this is
+that seam, filled in.
+
+- **The card is generated, not picked.** `OgImageService` already renders a Blade `<svg>` through
+  resvg and caches the PNG under a hash of its own context; posts are a fourth caller with a fourth
+  template. Because the cache key is the context, editing a post's title, excerpt or tags produces a
+  new image on the next request and there is nothing to invalidate by hand.
+- **The post card is its own layout, not the reference card with different words.** A reference
+  entry is named after a tag and fits on one line, so that card truncates at 32 characters. A post
+  is named in a sentence: this one wraps the headline over up to three lines and pushes the excerpt
+  down by however many it used. Same palette, same fonts, the logo lifted verbatim.
+- **`og:description` is the excerpt you already wrote**, reduced to plain text, because the excerpt
+  field is markdown too - `show.vue` hands it to marked. A post without one falls back to the top of
+  its body. That stripper does not use `strip_tags()`: it would eat from the `<` in "i <3 you" to
+  the next `>`, the same trap the chat controls avoid. A test pins that exact sentence.
+- **`/updates` was not in `sitemap.xml` at all.** 185 URLs, none of them a post - and this is the
+  one part of the public site that grows on its own. The index and every published post are in it
+  now, derived from the same `published()` scope the page uses, so a future-dated draft is never
+  submitted to a crawler that would find a 404. Posts carry a real `lastmod`; nothing else does,
+  because a made-up one is worse than none.
+- **Filtered and paginated listings are `noindex, follow` and canonicalise to `/updates`.** Page 2
+  of a tag search is the same collection in a different order and has no business competing with
+  the listing in results.
+- **Also new on every page, not just these two:** a server-rendered `<title>`, which the app simply
+  did not have - Inertia sets `document.title` on mount, which replaces this element rather than
+  adding a second. Plus `og:image:width/height/type` and an optional `rel="canonical"`, emitted only
+  where a controller supplies one, since a wrong canonical is worse than no canonical.
+- **`og:generate` warms the post cards on deploy**, alongside the reference ones. A scraper allows a
+  page a second or two, and a cold render is a shell-out to resvg. Miss that window and the scraper
+  caches the fallback image for the post - the precise failure this replaced.
+- **A bug in the reference card's excerpt stripper was found and deliberately left alone.** Its
+  wikilink pass runs before its triple-bracket pass, and the wikilink pattern excludes `[` from its
+  inner class, so `[[[counter:wins]]]` matches from the second bracket and leaves a stray
+  `[counter:wins]`. The post stripper orders those two the other way round. Fixing it on the
+  reference side is a change to a working card and belongs to whoever chooses to make it.
+
 ## August 29th, 2026 - feat(dashboard): the welcome card became a What's New card
 
 A working developer was shown the dashboard cold and asked which two things were new. He could

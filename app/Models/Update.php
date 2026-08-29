@@ -195,6 +195,120 @@ class Update extends Model
     }
 
     /**
+     * The post's tags minus the plumbing ones.
+     *
+     * `whatsnew` says where a post is shown, not what it is about, so it has
+     * no business in a share preview or an article:tag. Everything else the
+     * author typed is a real topic.
+     *
+     * @return array<int, string>
+     */
+    public function topicTags(): array
+    {
+        return array_values(array_filter(
+            $this->tags ?? [],
+            fn (string $tag) => $tag !== self::CARD_TAG,
+        ));
+    }
+
+    /**
+     * The post's description as plain text.
+     *
+     * This is what a scraper reads as og:description and what the OG card
+     * prints under the title, so it has to be prose - a link preview showing
+     * literal `**bold**` or a stray `[label](url)` reads as broken.
+     *
+     * The hand-written excerpt wins, because it is the author saying what the
+     * post is about. The body opening is only a fallback, so an older post
+     * written before the excerpt field still gets a real description instead
+     * of the site-wide default.
+     *
+     * Both paths get stripped: excerpt is markdown too (show.vue hands it to
+     * marked, same as the body).
+     */
+    public function plainExcerpt(int $max = 200): string
+    {
+        $source = trim((string) $this->excerpt);
+
+        if ($source === '') {
+            $source = $this->content();
+        }
+
+        return self::truncateWords(self::stripMarkdown($source), $max);
+    }
+
+    /**
+     * Reduce markdown to flowing prose.
+     *
+     * Deliberately separate from OgImageService::bodyExcerpt(), which does the
+     * same job for help reference entries. That one is tuned for reference
+     * bodies and is working; posts carry things it never sees (blockquotes,
+     * raw HTML, markdown links) and reference entries carry things posts do
+     * not. Merging them would mean changing a working card to fix a new one.
+     *
+     * Step order is load-bearing where noted.
+     */
+    private static function stripMarkdown(string $text): string
+    {
+        // Fences first, so HTML and tag syntax inside a code sample is gone
+        // before anything below can half-interpret it.
+        $text = preg_replace('/```[\s\S]*?```/', '', $text) ?? $text;
+        // Line-anchored passes, while the newlines are still here.
+        $text = preg_replace('/^\s*>\s?/m', '', $text) ?? $text;          // blockquote markers
+        $text = preg_replace('/^#{1,6}\s+.*$/m', '', $text) ?? $text;     // whole heading lines
+        $text = preg_replace('/^\s*(?:[-*+]|\d+\.)\s+/m', '', $text) ?? $text; // list bullets
+        $text = preg_replace('/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/m', '', $text) ?? $text; // rules
+        // Images carry no readable text; links keep their label.
+        $text = preg_replace('/!\[[^\]]*]\([^)]*\)/', '', $text) ?? $text;
+        $text = preg_replace('/\[([^\]]+)]\([^)]*\)/', '$1', $text) ?? $text;
+        // [[[tag]]] markers - keep the tag bare. MUST run before the wikilink
+        // pass below: that pattern excludes `[` from its inner class, so on
+        // `[[[counter:wins]]]` it skips the first bracket and matches the
+        // inner `[[counter:wins]]`, leaving a stray `[counter:wins]` behind.
+        $text = preg_replace('/\[\[\[([^\[\]<>]+?)]]]/', '$1', $text) ?? $text;
+        // Obsidian-style [[slug]] / [[slug|label]] - keep the label.
+        $text = preg_replace_callback(
+            '/\[\[([^\]|\[]+?)(?:\|([^\]]+))?]]/',
+            fn ($m) => trim($m[2] ?? $m[1]),
+            $text,
+        ) ?? $text;
+        // Real HTML tags only. `[a-zA-Z]` after the bracket is what stops this
+        // eating from the `<` in "i <3 you" to the next `>` - the same trap
+        // strip_tags() falls into, which is why it is not used here.
+        $text = preg_replace('#</?[a-zA-Z][^<>]*>#', '', $text) ?? $text;
+        $text = str_replace('`', '', $text);
+        // Emphasis, after the bullet pass so a `* item` line is not read as
+        // one half of an italic pair.
+        $text = preg_replace('/\*\*(.+?)\*\*/s', '$1', $text) ?? $text;
+        $text = preg_replace('/(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?![\w*])/s', '$1', $text) ?? $text;
+        $text = preg_replace('/(?<![\w_])__(.+?)__(?![\w_])/s', '$1', $text) ?? $text;
+
+        return trim(preg_replace('/\s+/', ' ', $text) ?? '');
+    }
+
+    /**
+     * Clip to a length without cutting a word in half, adding an ellipsis only
+     * when something was actually removed.
+     */
+    private static function truncateWords(string $text, int $max): string
+    {
+        if (mb_strlen($text) <= $max) {
+            return $text;
+        }
+
+        $cut = mb_substr($text, 0, $max);
+        $lastSpace = mb_strrpos($cut, ' ');
+
+        // Only honour the word boundary if it is not so early that we would
+        // throw away most of the allowance (a single very long token).
+        if ($lastSpace !== false && $lastSpace > $max * 0.6) {
+            $cut = mb_substr($cut, 0, $lastSpace);
+        }
+
+        return rtrim($cut, " \t\n.,;:").'…';
+    }
+
+    /**
      * The per-row call to action, or null when the author declared none.
      *
      * Read from the projected columns rather than by re-parsing the body, so

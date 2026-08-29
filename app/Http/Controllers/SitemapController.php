@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Update;
 use App\Support\HelpCorpus;
 use Illuminate\Http\Response;
 
@@ -26,6 +27,7 @@ class SitemapController extends Controller
         // nothing here matters more to a machine reader. Its explainer page at
         // /help/llms-txt is what actually links to it.
         ['path' => '/llms.txt', 'priority' => '0.9', 'changefreq' => 'monthly'],
+        ['path' => '/updates', 'priority' => '0.8', 'changefreq' => 'weekly'],
         ['path' => '/privacy', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/terms', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/help/reference', 'priority' => '0.8', 'changefreq' => 'weekly'],
@@ -77,11 +79,35 @@ class SitemapController extends Controller
             ];
         }
 
+        /*
+         * Every published announcement post. These were missing entirely -
+         * the whole of /updates was invisible to the sitemap, which is the
+         * one part of the public site that gains new URLs on its own.
+         *
+         * published() is what keeps a future-dated draft out, exactly as it
+         * keeps it off the page itself. Submitting a URL that answers 404 to
+         * the crawler that follows it is worse than not listing it.
+         */
+        foreach (Update::published()->orderByDesc('published_at')->get() as $update) {
+            $urls[] = [
+                'loc' => self::BASE_URL.'/updates/'.$update->slug,
+                'lastmod' => ($update->updated_at ?? $update->published_at)->toAtomString(),
+                'changefreq' => 'monthly',
+                'priority' => '0.7',
+            ];
+        }
+
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
         foreach ($urls as $u) {
             $xml .= "  <url>\n";
             $xml .= '    <loc>'.htmlspecialchars($u['loc'], ENT_XML1).'</loc>'."\n";
+            // Element order is fixed by the sitemap schema: loc, lastmod,
+            // changefreq, priority. Only rows with a real date carry one -
+            // a made-up lastmod is worse than none.
+            if (isset($u['lastmod'])) {
+                $xml .= '    <lastmod>'.$u['lastmod'].'</lastmod>'."\n";
+            }
             $xml .= '    <changefreq>'.$u['changefreq'].'</changefreq>'."\n";
             $xml .= '    <priority>'.$u['priority'].'</priority>'."\n";
             $xml .= "  </url>\n";

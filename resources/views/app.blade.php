@@ -64,11 +64,29 @@
                 'description' => 'Write HTML and CSS. Bind live Twitch data with triple-bracket tags. React to every Twitch event. Free, open source overlay engine for OBS.',
                 'image' => asset('ogimage.jpg'),
                 'image_alt' => 'Overlabels - write HTML and CSS, bind live Twitch data with triple-bracket tags',
+                // The default card is the 1200x630 JPEG; a controller shipping
+                // a generated PNG overrides the type along with the image.
+                'image_width' => 1200,
+                'image_height' => 630,
+                'image_type' => 'image/jpeg',
                 'twitter_card' => 'summary_large_image',
+                'published_time' => null,
+                'modified_time' => null,
+                'tags' => [],
             ];
             $ogData = array_merge($ogDefaults, $og ?? []);
         @endphp
+        {{-- Server-rendered so a crawler that does not run JavaScript still
+             gets one. Inertia's <Head> sets document.title on mount, which
+             replaces this element's text rather than adding a second one. --}}
+        <title>{{ $pageTitle ?? $ogData['title'] }}</title>
         <meta name="description" content="{{ $ogData['description'] }}" />
+        @isset($canonical)
+            <link rel="canonical" href="{{ $canonical }}" />
+        @endisset
+        @isset($robots)
+            <meta name="robots" content="{{ $robots }}" />
+        @endisset
         <meta property="og:type" content="{{ $ogData['type'] }}" />
         <meta property="og:url" content="{{ $ogData['url'] }}" />
         <meta property="og:site_name" content="{{ $ogData['site_name'] }}" />
@@ -76,11 +94,35 @@
         <meta property="og:description" content="{{ $ogData['description'] }}" />
         <meta property="og:image" content="{{ $ogData['image'] }}" />
         <meta property="og:image:alt" content="{{ $ogData['image_alt'] }}" />
+        <meta property="og:image:width" content="{{ $ogData['image_width'] }}" />
+        <meta property="og:image:height" content="{{ $ogData['image_height'] }}" />
+        <meta property="og:image:type" content="{{ $ogData['image_type'] }}" />
+        @if ($ogData['type'] === 'article')
+            @if (!empty($ogData['published_time']))
+                <meta property="article:published_time" content="{{ $ogData['published_time'] }}" />
+            @endif
+            @if (!empty($ogData['modified_time']))
+                <meta property="article:modified_time" content="{{ $ogData['modified_time'] }}" />
+            @endif
+            @foreach ($ogData['tags'] as $ogTag)
+                <meta property="article:tag" content="{{ $ogTag }}" />
+            @endforeach
+        @endif
         <meta name="twitter:card" content="{{ $ogData['twitter_card'] }}" />
         <meta name="twitter:title" content="{{ $ogData['title'] }}" />
         <meta name="twitter:description" content="{{ $ogData['description'] }}" />
         <meta name="twitter:image" content="{{ $ogData['image'] }}" />
         <meta name="twitter:image:alt" content="{{ $ogData['image_alt'] }}" />
+
+        {{-- Structured data, where a controller supplied any. JSON_HEX_TAG is
+             what stops an author-written title containing "</script>" from
+             closing this block early; the escaped form is still valid JSON. --}}
+        @isset($jsonLd)
+            <script type="application/ld+json">{!! json_encode(
+                array_filter($jsonLd, fn ($value) => $value !== null),
+                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT,
+            ) !!}</script>
+        @endisset
 
         @php
             // During impersonation auth()->user() is the (non-admin) target, so
