@@ -75,6 +75,13 @@ class StreamSessionService
         ['key' => 'redemptions_this_stream', 'type' => 'counter', 'label' => 'Redemptions This Stream', 'value' => '0'],
         ['key' => 'cheers_this_stream', 'type' => 'counter', 'label' => 'Cheers This Stream', 'value' => '0'],
         ['key' => 'bits_this_stream', 'type' => 'number', 'label' => 'Bits This Stream (total)', 'value' => '0'],
+        // The all-time pair, deliberately mirroring donations_received /
+        // total_received on every donation driver. Not on
+        // PER_STREAM_CONTROL_KEYS, and not gated on stream state - see
+        // handleEvent(). Pairing one of these with its This Stream twin is what
+        // makes "bits tonight vs bits ever" a progress bar.
+        ['key' => 'cheers_received', 'type' => 'counter', 'label' => 'Cheers Received (all time)', 'value' => '0'],
+        ['key' => 'bits_received', 'type' => 'number', 'label' => 'Bits Received (all time)', 'value' => '0'],
         ['key' => 'latest_cheerer_name', 'type' => 'text', 'label' => 'Latest Cheerer Name', 'value' => ''],
         ['key' => 'latest_cheer_amount', 'type' => 'number', 'label' => 'Latest Cheer Amount (bits)', 'value' => '0'],
         ['key' => 'latest_cheer_message', 'type' => 'text', 'label' => 'Latest Cheer Message', 'value' => ''],
@@ -127,6 +134,10 @@ class StreamSessionService
     /**
      * Handle a countable Twitch event: increment the matching control if user has one.
      * For channel.cheer, also accumulates bits and records latest-cheer details.
+     *
+     * Two gates, not one. `cheers_received` / `bits_received` are all-time and
+     * count whether or not the channel is live; everything else requires a
+     * confident live state.
      */
     public function handleEvent(User $user, string $eventType, array $event = []): void
     {
@@ -135,6 +146,30 @@ class StreamSessionService
 
         if (! $controlKey && ! $isCheer) {
             return;
+        }
+
+        $bits = $isCheer ? (int) ($event['bits'] ?? 0) : 0;
+
+        // All-time cheer totals are applied BEFORE the live gate, on purpose.
+        // Viewers cheer in offline chat, and a donation through any external
+        // service is counted whenever it arrives - no service driver consults
+        // stream state. These two are the Twitch equivalent of
+        // donations_received / total_received, so they follow that rule rather
+        // than the per-stream one.
+        //
+        // Everything past the gate below is per-stream and stays strictly
+        // live-only, which is the whole point of the separation: one pair
+        // answers "ever", the other answers "tonight", and comparing them is
+        // only meaningful while they mean different things.
+        if ($isCheer) {
+            $this->applyTwitchControl($user, 'cheers_received', function (OverlayControl $control) {
+                $step = (float) ($control->config['step'] ?? 1);
+
+                return (string) ((float) ($control->value ?? 0) + $step);
+            });
+            $this->applyTwitchControl($user, 'bits_received', function (OverlayControl $control) use ($bits) {
+                return (string) ((float) ($control->value ?? 0) + $bits);
+            });
         }
 
         // Only apply if user is confidently live
@@ -155,7 +190,6 @@ class StreamSessionService
         }
 
         if ($isCheer) {
-            $bits = (int) ($event['bits'] ?? 0);
             $cheererName = ($event['is_anonymous'] ?? false)
                 ? 'Anonymous'
                 : ($event['user_name'] ?? 'Anonymous');

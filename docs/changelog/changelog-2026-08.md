@@ -1,5 +1,37 @@
 # CHANGELOG AUGUST 2026
 
+## August 29th, 2026 - feat(twitch): bits and cheers you have ever received, not just tonight
+
+Two new Twitch preset controls, `cheers_received` and `bits_received`. They are the all-time twins of
+`cheers_this_stream` and `bits_this_stream`, and they exist because you could not previously put
+"tonight" and "ever" on screen at the same time. A bits-driven progress bar needs both numbers.
+
+Every donation service already shipped this pair - `donations_received` for the count, `total_received`
+for the amount, both persisting across streams, alongside their `latest_*` values. The commit that
+added the cheer controls back in April was explicitly aiming for parity with donations, and it took
+the `latest_*` half and the per-stream half but never added the persistent half. Nothing in the repo
+suggests that was a decision; it just did not get written.
+
+- **They count while you are offline, and that is the point.** `handleEvent()` returns early unless
+  the channel is confidently live, which is correct for anything named `*_this_stream` and wrong for
+  a lifetime total: viewers cheer in offline chat, and no external donation driver consults stream
+  state before counting a tip. So the two all-time writes now happen before that gate and everything
+  else stays behind it. The separation is what makes comparing the two pairs mean anything.
+- **The per-stream controls are unchanged and stay strictly live-only.** They are still the only keys
+  on `PER_STREAM_CONTROL_KEYS`, so the go-live reset zeroes them and leaves the all-time pair alone.
+- **`cheers_received` is the one to race in `latest()`.** It moves by one on every cheer whatever the
+  amount, so its `_at` is an honest arrival time. `bits_received` moves by the bit count, which a
+  zero-bit cheer leaves untouched. This is the same reasoning behind racing `donations_received_at`
+  rather than `latest_donor_name_at`, corrected across the help corpus earlier today.
+- **Eleven tests, six of them verified to fail** when the all-time writes are moved back behind the
+  live gate. The other five pin the things placement cannot break: surviving the reset, staying off
+  `PER_STREAM_CONTROL_KEYS`, and being resolvable by the add-preset flow.
+- **No migration and no backfill.** Twitch controls are provisioned on demand rather than seeded, so
+  `OverlayControlController::store()` resolves the definition out of `CONTROL_PRESETS` the moment you
+  add one from the presets modal. Existing accounts pick these up by adding them. Both the PHP list
+  and `controlPresets.ts` were updated, since the picker and the allowlist are separate hand-kept
+  lists with nothing guarding the pair.
+
 ## August 29th, 2026 - fix(og): reference cards printed a stray bracket on 52 of 143 entries
 
 The follow-up to the post cards below, which flagged this and left it alone. `bodyExcerpt()` strips

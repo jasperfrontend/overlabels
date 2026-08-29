@@ -66,6 +66,11 @@ export const TWITCH_PRESETS: ServicePreset[] = [
   { key: 'redemptions_this_stream', label: 'Redemptions This Stream', type: 'counter' },
   { key: 'cheers_this_stream', label: 'Cheers This Stream', type: 'counter' },
   { key: 'bits_this_stream', label: 'Bits This Stream (total)', type: 'number' },
+  // All-time twins of the two above, mirroring donations_received /
+  // total_received on the donation services. These keep counting while the
+  // channel is offline; the This Stream pair does not.
+  { key: 'cheers_received', label: 'Cheers Received (all time)', type: 'counter' },
+  { key: 'bits_received', label: 'Bits Received (all time)', type: 'number' },
   { key: 'latest_cheerer_name', label: 'Latest Cheerer Name', type: 'text' },
   { key: 'latest_cheer_amount', label: 'Latest Cheer Amount (bits)', type: 'number' },
   { key: 'latest_cheer_message', label: 'Latest Cheer Message', type: 'text' },
