@@ -2,12 +2,16 @@
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-5xl">
       <span class="inline-flex items-center border-transparent bg-accent text-foreground font-semibold transition-colors mb-4 px-3 py-1 font-mono text-xs hover:bg-background-accent">Getting started</span>
-      <h2 class="mb-4 text-3xl font-bold sm:text-4xl">The Onboarding Wizard</h2>
+      <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Your account sets itself up.</h2>
+      <p class="mb-4 max-w-2xl text-lg text-foreground">
+        Sign in with Twitch and that is the setup. A few seconds later a background job leaves you with a working
+        account: your webhook signing secret, the starter kit copied in - one overlay plus a set of alert templates -
+        and those alerts already mapped to the Twitch events that fire them. There is no wizard to click through.
+      </p>
       <p class="mb-12 max-w-2xl text-lg text-foreground">
-        After signing up, the system will trigger an onboarding wizard which will set you up with the defaults you need to
-        make Overlabels work for you: One overlay, a bunch of alerts and your secret token is generated and applied to the URL
-        you need to add to your OBS. We also generate your personal template tags that match the level of your Twitch account.
-        This so you don't end up with affiliate level capabilities if you're a Twitch partner and vice versa.
+        Template tags need no setup at all. Every account gets the same complete catalogue from the start, with nothing
+        generated per account and nothing locked behind your Twitch tier. A tag your channel has no data for simply
+        renders nothing.
       </p>
 
       <div class="grid gap-10 sm:grid-cols-2">
@@ -19,7 +23,7 @@
           <ul class="space-y-4 text-sm">
             <li class="flex items-start gap-3">
               <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500">01</span>
-              <span class="text-foreground">Secure webhook connection configured</span>
+              <span class="text-foreground">Webhook signing secret generated</span>
             </li>
             <li class="flex items-start gap-3">
               <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500">02</span>
@@ -31,7 +35,7 @@
             </li>
             <li class="flex items-start gap-3">
               <span class="mt-0.5 shrink-0 font-mono text-xs text-sky-500">04</span>
-              <span class="text-foreground">Tag set generated from your Twitch data</span>
+              <span class="text-foreground">Every template tag available immediately</span>
             </li>
           </ul>
         </div>
