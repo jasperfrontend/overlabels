@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\ControlValueUpdated;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Models\StreamState;
@@ -7,6 +8,7 @@ use App\Models\User;
 use App\Services\External\ExternalControlService;
 use App\Services\StreamSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 
 uses(RefreshDatabase::class);
 
@@ -191,20 +193,88 @@ it('treats a zero epsilon as no suppression at all', function () {
     expect($distance->fresh()->updated_at->greaterThan($before))->toBeTrue();
 });
 
-it('moves updated_at when a go-live reset writes zero over an already-zero counter', function () {
-    // A reset is a write, so it moves the timestamp like any other. Nothing
-    // races a per-stream counter's _at, and the latest_* controls that WERE
-    // caught by this are no longer reset at all.
+/**
+ * The second half of the contract: on a SOURCE-MANAGED control, `_at` belongs
+ * to the source. A first-party action - the go-live reset, a test-mode toggle,
+ * the manual GPS reset, a seeded starting total - changes the value and leaves
+ * the timestamp alone.
+ *
+ * That is the same premise that makes setValue()/update() return 403 on a
+ * source-managed control and makes the bot's endpoint filter to
+ * `source_managed = false`: the value is the third party's to write. Us zeroing
+ * a counter is not Ko-fi paying you, and if it moved `_at` a freshly-reset
+ * service would win every latest() race at go-live.
+ */
+it('does not move updated_at when the go-live reset zeroes a per-stream counter', function () {
     StreamState::updateOrCreate(
         ['user_id' => $this->user->id],
         ['state' => StreamState::STATE_LIVE, 'confidence' => 1.0],
     );
-    $follows = managedControl($this->user, 'twitch', 'follows_this_stream', 'counter', '0');
+    $follows = managedControl($this->user, 'twitch', 'follows_this_stream', 'counter', '17');
     backdate($follows);
     $before = $follows->fresh()->updated_at;
 
     app(StreamSessionService::class)->openSession($this->user);
 
-    expect($follows->fresh()->value)->toBe('0')
-        ->and($follows->fresh()->updated_at->greaterThan($before))->toBeTrue();
+    expect($follows->fresh()->value)->toBe('0', 'the value still resets')
+        ->and($follows->fresh()->updated_at->equalTo($before))->toBeTrue();
+});
+
+it('broadcasts the preserved timestamp on a reset rather than stamping now', function () {
+    // The overlay records `_at` from the broadcast payload, so stamping now()
+    // here would move it live and then snap it backwards on the next reload.
+    Event::fake([ControlValueUpdated::class]);
+    StreamState::updateOrCreate(
+        ['user_id' => $this->user->id],
+        ['state' => StreamState::STATE_LIVE, 'confidence' => 1.0],
+    );
+    $follows = managedControl($this->user, 'twitch', 'follows_this_stream', 'counter', '17');
+    backdate($follows);
+    $expected = $follows->fresh()->updated_at->timestamp;
+
+    app(StreamSessionService::class)->openSession($this->user);
+
+    Event::assertDispatched(
+        ControlValueUpdated::class,
+        fn (ControlValueUpdated $e) => $e->key === 'twitch:follows_this_stream'
+            && $e->broadcastWith()['updated_at'] === $expected,
+    );
+});
+
+it('does not move updated_at when a test-mode toggle resets a service', function () {
+    $received = managedControl($this->user, 'kofi', 'donations_received', 'counter', '12');
+    backdate($received);
+    $before = $received->fresh()->updated_at;
+
+    app(ExternalControlService::class)->resetServiceManagedControls($this->user, 'kofi');
+
+    expect($received->fresh()->value)->toBe('0')
+        ->and($received->fresh()->updated_at->equalTo($before))->toBeTrue();
+});
+
+it('does not move updated_at when a starting total is seeded', function () {
+    $total = managedControl($this->user, 'kofi', 'total_received', 'number', '0');
+    backdate($total);
+    $before = $total->fresh()->updated_at;
+
+    app(ExternalControlService::class)->seedTotalReceived($this->user, 'kofi', 65.35);
+
+    expect($total->fresh()->value)->toBe('65.35')
+        ->and($total->fresh()->updated_at->equalTo($before))->toBeTrue();
+});
+
+it('keeps a real donation winning the race against a service that just reset', function () {
+    // The whole point, end to end. Ko-fi resets at go-live; Streamlabs took a
+    // real (repeat) donation before that. Streamlabs must still win.
+    $kofi = managedControl($this->user, 'kofi', 'donations_received', 'counter', '12');
+    $streamlabs = managedControl($this->user, 'streamlabs', 'latest_donor_name', 'text', 'Kevin');
+    backdate($kofi, 10);
+    backdate($streamlabs, 10);
+
+    app(ExternalControlService::class)->applyUpdates($this->user, 'streamlabs', [
+        'latest_donor_name' => 'Kevin',
+    ]);
+    app(ExternalControlService::class)->resetServiceManagedControls($this->user, 'kofi');
+
+    expect($streamlabs->fresh()->updated_at->greaterThan($kofi->fresh()->updated_at))->toBeTrue();
 });

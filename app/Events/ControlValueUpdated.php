@@ -38,6 +38,18 @@ class ControlValueUpdated implements ShouldBroadcast
     public bool $alreadyRecomputed;
 
     /**
+     * The `_at` value the overlay should record, in Unix seconds, or null to
+     * stamp the moment of the broadcast.
+     *
+     * Set explicitly when a FIRST-PARTY action writes a SOURCE-MANAGED control
+     * (a reset, a seeded total). The database timestamp deliberately does not
+     * move for those - see {@see OverlayControl::resetValue()} - so stamping
+     * now() here would move it on the live overlay anyway and then have it snap
+     * backwards on the next reload.
+     */
+    public ?int $updatedAt;
+
+    /**
      * Create a new event instance.
      */
     public function __construct(
@@ -50,7 +62,9 @@ class ControlValueUpdated implements ShouldBroadcast
         ?string $expression = null,
         ?array $randomState = null,
         bool $alreadyRecomputed = false,
+        ?int $updatedAt = null,
     ) {
+        $this->updatedAt = $updatedAt;
         $this->overlaySlug = $overlaySlug;
         $this->key = $key;
         $this->type = $type;
@@ -87,7 +101,7 @@ class ControlValueUpdated implements ShouldBroadcast
             'timer_state' => $this->timerState,
             'expression' => $this->expression,
             'random_state' => $this->randomState,
-            'updated_at' => now()->timestamp,
+            'updated_at' => $this->updatedAt ?? now()->timestamp,
         ];
     }
 

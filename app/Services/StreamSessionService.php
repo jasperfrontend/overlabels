@@ -384,7 +384,10 @@ class StreamSessionService
 
         foreach ($controls as $control) {
             $resetValue = (string) ($control->config['reset_value'] ?? 0);
-            $control->writeValue($resetValue);
+            // Going live is us, not Twitch. The counters zero but their `_at`
+            // stays where the last real event left it, so a reset can never win
+            // a latest() race at stream start.
+            $preservedAt = $control->resetValue($resetValue);
 
             $overlaySlug = $control->overlay_template_id
                 ? ($control->template?->slug ?? '')
@@ -396,6 +399,11 @@ class StreamSessionService
                 $control->type,
                 $resetValue,
                 $user->twitch_id,
+                null,
+                null,
+                null,
+                false,
+                $preservedAt,
             );
 
         }

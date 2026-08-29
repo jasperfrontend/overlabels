@@ -57,7 +57,10 @@ class ExternalControlService
                 default => in_array($control->type, ['counter', 'number'], true) ? '0' : '',
             };
 
-            $control->writeValue($resetValue);
+            // First-party write to a source-managed control: the value moves,
+            // `_at` does not, and the broadcast carries the preserved timestamp
+            // so the live overlay agrees with what a reload would show.
+            $preservedAt = $control->resetValue($resetValue);
 
             $overlaySlug = $control->overlay_template_id
                 ? ($control->template?->slug ?? '')
@@ -69,6 +72,11 @@ class ExternalControlService
                 $control->type,
                 $resetValue,
                 $user->twitch_id,
+                null,
+                null,
+                null,
+                false,
+                $preservedAt,
             );
         }
     }
@@ -93,14 +101,23 @@ class ExternalControlService
      *
      * This is an amount, not a count, so fractional values are expected: a
      * streamer sitting on €65.35 seeds exactly that.
+     *
+     * Seeding is a first-party write to a source-managed control, so it does
+     * NOT move `_at`. Money you raised before connecting is not the service
+     * paying you now, and letting it move the timestamp would make the seeded
+     * service win a latest() race it had no part in.
      */
     public function seedTotalReceived(User $user, string $source, int|float|string $value): void
     {
-        OverlayControl::where('user_id', $user->id)
+        $controls = OverlayControl::where('user_id', $user->id)
             ->where('source', $source)
             ->where('key', 'total_received')
             ->where('source_managed', true)
-            ->update(['value' => (string) $value]);
+            ->get();
+
+        foreach ($controls as $control) {
+            $control->resetValue((string) $value);
+        }
     }
 
     /**

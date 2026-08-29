@@ -245,7 +245,8 @@ class GpsIntegrationController extends Controller
             ->get();
 
         foreach ($controls as $control) {
-            $control->writeValue('0');
+            // The streamer pressing reset is not the phone reporting a fix.
+            $preservedAt = $control->resetValue('0');
 
             $overlaySlug = $control->overlay_template_id
                 ? ($control->template?->slug ?? '')
@@ -257,6 +258,11 @@ class GpsIntegrationController extends Controller
                 $control->type,
                 '0',
                 $user->twitch_id,
+                null,
+                null,
+                null,
+                false,
+                $preservedAt,
             );
         }
     }

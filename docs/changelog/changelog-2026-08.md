@@ -36,11 +36,18 @@ Streamlabs had just paid.
   exact prod shape, two services 25 and 26 days stale, and asserts the repeat donation now wins the
   race. One deliberately pins Eloquent's own no-op behaviour, so if that ever changes the workaround
   can be revisited.
-- **Known consequence: a reset is a write, so it moves `_at`.** Zeroing an already-zero per-stream
-  counter at go-live now moves its timestamp, and toggling a service's test mode moves every `_at` on
-  that service. Nothing races a `*_this_stream` key, and the `latest_cheer*` controls that used to be
-  caught by the go-live reset are not reset at all any more, so nothing regressed - but it is a
-  behaviour change and it is the one place "last written" reads oddly.
+- **On a source-managed control, `_at` belongs to the source.** A first-party action - the go-live
+  reset, a test-mode toggle, the manual GPS reset, a seeded starting total - changes the value and
+  leaves the timestamp exactly where the third party left it. That is the same premise that already
+  makes `setValue()` and `update()` return 403 on a source-managed control and makes the bot's
+  endpoint filter to `source_managed = false`: the value is not ours to write. Us zeroing a counter is
+  not Ko-fi paying you, so `OverlayControl::resetValue()` is the counterpart to `writeValue()` and the
+  four first-party paths use it. Seeding a starting total previously moved `_at` unconditionally,
+  since a mass update always stamps it - that is fixed too.
+- **The reset broadcast carries the preserved timestamp.** The overlay records `_at` from the
+  broadcast payload, so leaving `ControlValueUpdated` to stamp `now()` would have moved it on the live
+  overlay and then snapped it backwards on the next reload. The event takes an optional explicit
+  timestamp now, and a test asserts the go-live reset sends the old one rather than the new.
 
 ## August 29th, 2026 - fix(twitch): your latest cheerer no longer goes blind when you go offline
 

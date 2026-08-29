@@ -119,6 +119,39 @@ class OverlayControl extends Model
     }
 
     /**
+     * Write a value WITHOUT moving `updated_at`, and return the timestamp that
+     * was preserved so the broadcast can carry it too.
+     *
+     * For FIRST-PARTY writes to a SOURCE-MANAGED control: the go-live reset, a
+     * test-mode toggle, the manual GPS reset button, a seeded starting total.
+     *
+     * A source-managed control's value belongs to the third party - which is
+     * exactly why setValue() and update() refuse to touch one (403), and why
+     * the bot's control endpoint filters to `source_managed = false`. `_at`
+     * answers "when did the source last send something", so us zeroing a
+     * counter is not Ko-fi paying you and must not read as though it were.
+     * Otherwise a freshly-reset service wins every latest() race at go-live,
+     * which is the failure this whole contract exists to prevent.
+     *
+     * Use {@see writeValue()} for a write that came FROM the source.
+     */
+    public function resetValue(string $value): int
+    {
+        $this->value = $value;
+
+        $timestamps = $this->timestamps;
+        $this->timestamps = false;
+
+        try {
+            $this->save();
+        } finally {
+            $this->timestamps = $timestamps;
+        }
+
+        return (int) ($this->updated_at?->timestamp ?? $this->created_at?->timestamp ?? now()->timestamp);
+    }
+
+    /**
      * Sanitise a raw value for a given control type.
      */
     public static function sanitizeValue(string $type, mixed $raw): string
