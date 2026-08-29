@@ -240,6 +240,23 @@ test('EVENT_TYPE_TO_SCOPE maps each expanded event type to its scope', function 
     expect($map['channel.cheer'])->toBe('bits:read');
 });
 
+test('every scope the platform requires has a label in the reconnect banner', function () {
+    // The banner renders SCOPE_LABELS[s] ?? s, so a missing label is never an
+    // error - it just shows a streamer the raw string "channel:bot" where it
+    // meant to say "Chat Bot". Both bits:read and channel:bot shipped that way,
+    // and nothing anywhere noticed.
+    $banner = file_get_contents(resource_path('js/components/ScopeUpdateBanner.vue'));
+
+    expect(preg_match('/SCOPE_LABELS[^=]*=\s*\{(.*?)\};/s', $banner, $matches))->toBe(1);
+
+    $unlabelled = array_values(array_filter(
+        TwitchScopeService::REQUIRED_SCOPES,
+        fn (string $scope) => ! str_contains($matches[1], "'{$scope}':"),
+    ));
+
+    expect($unlabelled)->toBe([]);
+});
+
 test('every alert trigger the UI offers is an event we actually subscribe to', function () {
     // EventTemplateMapping::EVENT_TYPES is the catalogue behind the trigger
     // picker. An entry missing from SUPPORTED_EVENTS is an alert a user can
