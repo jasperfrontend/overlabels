@@ -102,7 +102,7 @@ CSS rule:
 - A **chat-vote split bar** that wobbles harder when the vote is close (read: when
   `abs(c.option_a - c.option_b)` is small).
 - A **latest-donor name** that pulls from whichever service tipped most recently:
-  `latest(c.kofi.latest_donor_name_at, c.kofi.latest_donor_name, c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name)`.
+  `latest(c.kofi.donations_received_at, c.kofi.latest_donor_name, c.streamlabs.donations_received_at, c.streamlabs.latest_donor_name)`.
 - A **Lissajous curve, a wave, a breathing UI element, a pseudo-random shader effect** - all expressible
   as a formula on top of `now()`.
 

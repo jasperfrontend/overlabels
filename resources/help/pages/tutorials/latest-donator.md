@@ -27,11 +27,25 @@ This is the part that makes it work, and it is easy to miss.
 You never create it and you cannot forget to update it - it exists for every control, always:
 
 ```
-c:kofi:latest_donor_name        ->  "Marijke"
-c:kofi:latest_donor_name_at     ->  1755381240
+c:kofi:donations_received       ->  12
+c:kofi:donations_received_at    ->  1755381240
 ```
 
 So "which service donated most recently" is just "which `_at` is the biggest number".
+
+## Compare the counter, not the name
+
+Read that heading above one more time: `_at` is when a control **changed**, which is not the same thing
+as when a donation arrived.
+
+If Marijke tips you twice in a row, `latest_donor_name` gets set to "Marijke", and then set to
+"Marijke" again. The value never moved, so its `_at` never moved either. Compare
+`latest_donor_name_at` and that second tip is invisible - your overlay keeps showing whoever last
+donated under a *different* name, possibly from days ago.
+
+`donations_received` has no such problem. It is a counter, so it goes up by one on every single
+donation no matter who sent it, and its `_at` is therefore a true "when did this service last hear from
+anyone". That is the timestamp to compare, and every donation service has it.
 
 ## latest() picks the winner
 
@@ -43,8 +57,8 @@ Create an **Expression Control** with the key `newest_donor`:
 
 ```
 latest(
-  c.kofi.latest_donor_name_at,       c.kofi.latest_donor_name,
-  c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name
+  c.kofi.donations_received_at,       c.kofi.latest_donor_name,
+  c.streamlabs.donations_received_at, c.streamlabs.latest_donor_name
 )
 ```
 
@@ -67,11 +81,11 @@ this is copy and paste:
 
 ```
 latest(
-  c.kofi.latest_donor_name_at,       c.kofi.latest_donor_name,
-  c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,
-  c.fourthwall.latest_donor_name_at, c.fourthwall.latest_donor_name,
-  c.bmac.latest_donor_name_at,       c.bmac.latest_donor_name,
-  c.throne.latest_donor_name_at,     c.throne.latest_donor_name
+  c.kofi.donations_received_at,       c.kofi.latest_donor_name,
+  c.streamlabs.donations_received_at, c.streamlabs.latest_donor_name,
+  c.fourthwall.donations_received_at, c.fourthwall.latest_donor_name,
+  c.bmac.donations_received_at,       c.bmac.latest_donor_name,
+  c.throne.donations_received_at,     c.throne.latest_donor_name
 )
 ```
 
@@ -86,28 +100,28 @@ anything about that donation. Three more expression controls:
 ```
 newest_donor_amount:
 latest(
-  c.kofi.latest_donor_name_at,       c.kofi.latest_donation_amount,
-  c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donation_amount
+  c.kofi.donations_received_at,       c.kofi.latest_donation_amount,
+  c.streamlabs.donations_received_at, c.streamlabs.latest_donation_amount
 )
 
 newest_donor_currency:
 latest(
-  c.kofi.latest_donor_name_at,       c.kofi.latest_donation_currency,
-  c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donation_currency
+  c.kofi.donations_received_at,       c.kofi.latest_donation_currency,
+  c.streamlabs.donations_received_at, c.streamlabs.latest_donation_currency
 )
 
 newest_donor_service:
 latest(
-  c.kofi.latest_donor_name_at,       "Ko-fi",
-  c.streamlabs.latest_donor_name_at, "Streamlabs"
+  c.kofi.donations_received_at,       "Ko-fi",
+  c.streamlabs.donations_received_at, "Streamlabs"
 )
 ```
 
-Note that all of them compare the **same** timestamps - `latest_donor_name_at` in every case. That is
+Note that all of them compare the **same** timestamps - `donations_received_at` in every case. That is
 deliberate. You are answering one question ("which service went last?") and then reading several
 different facts off the winner. Comparing `latest_donation_amount_at` in one and
-`latest_donor_name_at` in another could pick two different services and pair a name with someone else's
-number.
+`latest_donation_message_at` in another could pick two different services and pair a name with someone
+else's number - on top of both being the wrong kind of timestamp, for the reason above.
 
 Then:
 

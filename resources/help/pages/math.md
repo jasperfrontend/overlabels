@@ -265,19 +265,23 @@ a lighthouse-style pulse that never dips below zero. Great for "intensity".
 ## Winners and timestamp racing
 
 This is the trick the rest of the streaming ecosystem does not have. Every control in Overlabels has an
-automatic `_at` companion that stores *the Unix timestamp of its last write*. That means you can race
-signals:
+automatic `_at` companion that stores *the Unix timestamp of the last time its value changed*. That
+means you can race signals:
 
 $$\text{most\_recent\_donor} = \underset{s \in \text{sources}}{\operatorname{argmax}}\ t_{s}$$
 
 ```
 // Who tipped most recently - Ko-fi, Streamlabs, or Fourthwall?
 latest(
-  c.kofi.latest_donor_name_at, c.kofi.latest_donor_name,
-  c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,
-  c.fourthwall.latest_donor_name_at, c.fourthwall.latest_donor_name
+  c.kofi.donations_received_at, c.kofi.latest_donor_name,
+  c.streamlabs.donations_received_at, c.streamlabs.latest_donor_name,
+  c.fourthwall.donations_received_at, c.fourthwall.latest_donor_name
 )
 ```
+
+Race the **counter's** timestamp, not the name's. Since `_at` tracks changes, a donor tipping twice in
+a row leaves `latest_donor_name_at` untouched - the name was already theirs. `donations_received`
+increments on every donation whoever sent it, so its `_at` is the honest arrival time.
 
 The value at each odd position is a timestamp; the even position next to it is the label you want
 returned. `latest()` picks the biggest timestamp and returns its paired label. `oldest()` / `argmin()` do

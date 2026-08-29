@@ -204,13 +204,13 @@ Expression: c.streamlabs.total_received + c.kofi.total_received
 
 // Latest donor across all services
 Expression: latest(
-  c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,
-  c.kofi.latest_donor_name_at, c.kofi.latest_donor_name
+  c.streamlabs.donations_received_at, c.streamlabs.latest_donor_name,
+  c.kofi.donations_received_at, c.kofi.latest_donor_name
 )
 <div>Latest donor: [[[c:latest_donor]]]</div>
 
 // Seconds since last donation
-Expression: now() - max(c.kofi.latest_donor_at, c.streamlabs.latest_donor_at)
+Expression: now() - max(c.kofi.donations_received_at, c.streamlabs.donations_received_at)
 <div>Last donation: [[[c:since_last_donation|duration:mm:ss]]] ago</div>
 ```
 
@@ -241,7 +241,7 @@ math the trailing noise is invisible. For text display, pipe through a [formatte
 `|round:2` to get a clean `0.2`.
 
 **`now()`** - returns the current timestamp in seconds. Useful for calculating time since an event, e.g.
-`now() - c.kofi.latest_donor_at`.
+`now() - c.kofi.donations_received_at`.
 
 ### list writer
 
@@ -265,8 +265,8 @@ Target: wins_log
 
 // Persist the result of an expression that aggregates across services
 Expression: latest(
-  c.kofi.latest_donor_at, c.kofi.latest_donor_name,
-  c.streamlabs.latest_donor_at, c.streamlabs.latest_donor_name
+  c.kofi.donations_received_at, c.kofi.latest_donor_name,
+  c.streamlabs.donations_received_at, c.streamlabs.latest_donor_name
 )
 
 Source: c.latest_donor (the expression above)
@@ -568,7 +568,7 @@ When comparing values across multiple services, avoid chaining `? :` operators. 
 Instead of this:
 
 ```
-c.streamlabs.latest_donor_name_at > c.kofi.latest_donor_name_at
+c.streamlabs.donations_received_at > c.kofi.donations_received_at
   ? c.streamlabs.latest_donor_name
   : c.kofi.latest_donor_name
 ```
@@ -577,10 +577,16 @@ Do this:
 
 ```
 latest(
-  c.streamlabs.latest_donor_name_at, c.streamlabs.latest_donor_name,
-  c.kofi.latest_donor_name_at, c.kofi.latest_donor_name
+  c.streamlabs.donations_received_at, c.streamlabs.latest_donor_name,
+  c.kofi.donations_received_at, c.kofi.latest_donor_name
 )
 ```
+
+Note which timestamp is being raced: `donations_received_at`, not `latest_donor_name_at`. `_at` moves
+when a control **changes**, so a donor tipping twice in a row never moves the name's timestamp. The
+counter goes up on every donation regardless of who sent it, so it is the one that answers "when did
+this service last hear from anyone". [Latest donator from any source](/help/tutorials/latest-donator)
+walks through it.
 
 ### Use now() to track time since an event
 
@@ -591,9 +597,9 @@ Example - seconds since the latest donation:
 
 ```
 now() - max(
-  c.kofi.latest_donor_at,
-  c.streamlabs.latest_donor_at,
-  c.fourthwall.latest_donor_at
+  c.kofi.donations_received_at,
+  c.streamlabs.donations_received_at,
+  c.fourthwall.donations_received_at
 )
 ```
 

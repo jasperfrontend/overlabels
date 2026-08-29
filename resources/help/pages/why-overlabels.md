@@ -24,11 +24,11 @@ One function:
 
 ```
 latest(
-  c.streamlabs.latest_donor_name_at,     c.streamlabs.latest_donor_name,
-  c.kofi.latest_donor_name_at,           c.kofi.latest_donor_name,
-  c.fourthwall.latest_donor_name_at,     c.fourthwall.latest_donor_name,
-  c.bmac.latest_donor_name_at,           c.bmac.latest_donor_name,
-  c.twitch.latest_cheerer_name_at,       c.twitch.latest_cheerer_name
+  c.streamlabs.donations_received_at,     c.streamlabs.latest_donor_name,
+  c.kofi.donations_received_at,           c.kofi.latest_donor_name,
+  c.fourthwall.donations_received_at,     c.fourthwall.latest_donor_name,
+  c.bmac.donations_received_at,           c.bmac.latest_donor_name,
+  c.throne.donations_received_at,         c.throne.latest_donor_name
 )
 ```
 
@@ -37,7 +37,7 @@ or alert service on the market does this, and with Overlabels it's just another 
 adding more integrations all the time.)
 
 Every control Overlabels tracks gets an automatic `_at` companion - a Unix timestamp of when that value
-last updated. `latest()` walks through (timestamp, value) pairs and returns the value whose timestamp is
+last changed. `latest()` walks through (timestamp, value) pairs and returns the value whose timestamp is
 the largest. Same mechanism gives you `oldest()`, `max()`, and `min()`.
 
 ## Add up every donation this stream (and make sense of Bits)
