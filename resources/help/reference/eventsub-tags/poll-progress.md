@@ -2,7 +2,7 @@ mid-poll vote count update :: fires frequently as votes come in.
 
 ### Poll
 - `[[[event.title]]]` :: Poll question
-- `[::[event.ends_at]]]` :: When the poll closes
+- `[[[event.ends_at]]]` :: When the poll closes
 
 ### Choices
 - `[[[event.choices.count]]]` :: How many choices

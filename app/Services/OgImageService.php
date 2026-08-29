@@ -475,14 +475,21 @@ class OgImageService
         $text = preg_replace('/```[\s\S]*?```/', '', $text) ?? $text;
         // Drop ALL markdown headings so "### Train State" doesn't leak.
         $text = preg_replace('/^#{1,6}\s+.*$/m', '', $text) ?? $text;
+        // Strip [[[tag]]] markers - keep tag bare, no brackets. MUST run
+        // before the wikilink pass below, not after. That pattern excludes `[`
+        // from its inner class, so on `[[[channel_name]]]` it cannot match at
+        // the first bracket and instead matches the inner `[[channel_name]]`,
+        // leaving a stray `[channel_name]` on the card. 52 of the 143 entries
+        // rendered a bracketed tag that way. Swapping the two is safe: a
+        // genuine `[[slug]]` or `[[slug|label]]` has no third bracket for the
+        // pattern below to consume, so it resolves identically either way.
+        $text = preg_replace('/\[\[\[([^\[\]<>]+?)]]]/', '$1', $text) ?? $text;
         // Strip Obsidian-style links [[slug]] / [[slug|label]] - keep label.
         $text = preg_replace_callback(
             '/\[\[([^\]|\[]+?)(?:\|([^\]]+))?]]/',
             fn ($m) => trim($m[2] ?? $m[1]),
             $text,
         ) ?? $text;
-        // Strip [[[tag]]] markers - keep tag bare, no brackets.
-        $text = preg_replace('/\[\[\[([^\[\]<>]+?)]]]/', '$1', $text) ?? $text;
         // Strip inline code backticks.
         $text = str_replace('`', '', $text);
         // Strip leading list bullets ("- ", "* ", "1. ") so the prose flows.

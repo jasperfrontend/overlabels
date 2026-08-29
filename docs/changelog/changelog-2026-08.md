@@ -1,5 +1,29 @@
 # CHANGELOG AUGUST 2026
 
+## August 29th, 2026 - fix(og): reference cards printed a stray bracket on 52 of 143 entries
+
+The follow-up to the post cards below, which flagged this and left it alone. `bodyExcerpt()` strips
+Obsidian wikilinks before it strips `[[[tag]]]` markers, and the wikilink pattern excludes `[` from
+its inner character class. So on `[[[event.user_id]]]` it cannot match at the first bracket, matches
+the inner `[[event.user_id]]` instead, and leaves `[event.user_id]` on the card. Every EventSub
+entry lists its fields that way, which is why it reached 36% of the corpus.
+
+Swapping the two passes is safe rather than a trade: a genuine `[[chat]]` or `[[slug|label]]` has no
+third bracket for the tag pattern to consume, so it resolves identically whichever runs first. That
+was verified both ways against the real corpus before the change, and the count went 52 to 0.
+
+- **Six tests, by reflection.** `bodyExcerpt()` is private and its output never becomes a string a
+  caller can see - it is folded into a context array that is hashed into a PNG filename, so there is
+  nothing else to assert on. Three of the six were confirmed to fail against the old ordering, and
+  the three covering plain wikilinks pass either way, which is the point.
+- **No cache to clear.** The card filename is a hash of its context, so 52 entries simply resolve to
+  new names and `og:generate` renders them on the next deploy. The orphaned PNGs go with the
+  container, since `public/` is rebuilt from the image on every boot.
+- **One entry was a typo, not a stripper bug.** `eventsub-tags/poll-progress` had `[::[event.ends_at]]]`
+  in its source, one character off. It was the last leak on the cards and it was also breaking the
+  docs page: every other tag on that page renders as a click-to-copy pill and that one rendered as
+  literal mangled text.
+
 ## August 29th, 2026 - feat(updates): every post gets its own share card and its own place in search
 
 Fetching `https://overlabels.com/updates/your-bot-can-stop-saying-one-times` as Facebook's scraper
