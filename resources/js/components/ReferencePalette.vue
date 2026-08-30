@@ -105,7 +105,12 @@ onMounted(() => {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="flex max-h-[85vh] max-w-xl flex-col gap-0 overflow-hidden bg-sidebar p-0" @interact-outside="open = false">
+    <!--
+      The height is FIXED, not content-driven. The dialog is vertically centered,
+      so a height that tracks the result count makes the whole panel jump every
+      time a query narrows the list. Only the list inside may grow and shrink.
+    -->
+    <DialogContent class="flex h-[min(640px,85vh)] max-w-xl flex-col gap-0 overflow-hidden bg-sidebar p-0" @interact-outside="open = false">
       <DialogTitle class="sr-only">Search the documentation</DialogTitle>
       <div class="flex items-center gap-2 border-b border-sidebar-border px-3">
         <Search class="size-4 shrink-0 text-muted-foreground" />
