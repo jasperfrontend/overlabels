@@ -101,6 +101,9 @@ shaped the way it is. Long reads for when you want to see how far the template l
 - [**Inside the Follower bowling lane**](/help/deep-dives/follower-bowling-lane) - a chat-driven
   bowling minigame: a List as the queue, one timestamp as both the clock and the dice roll, and a
   full animation sequence without a line of JavaScript.
+- [**Inside the Math Engine Showcase**](/help/deep-dives/math-engine-showcase) - a BRB scene of six
+  live demos: epicycles, a spirograph, a sweeping clock, dice, six waveforms and a bouncing
+  counter, built from 28 expression controls and the wall clock.
 
 ## Look something up
 
