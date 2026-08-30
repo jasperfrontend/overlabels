@@ -143,10 +143,15 @@ const adminNavItems = computed<NavItem[]>(() => {
       <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
       <NavMain v-if="!user" label="Learn" :items="helpNavItems" />
-      <div v-if="user" class="px-4 pt-2 text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
-        <kbd class="rounded border px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd class="rounded border px-1 py-0.5 text-[10px]">K</kbd> shortcuts
-        <div class="mt-1 h-0" />
-        <kbd class="rounded border px-1 py-0.5 text-[10px]">Ctrl</kbd> + <kbd class="rounded border px-1 py-0.5 text-[10px]">Space</kbd> go to
+      <div v-if="user" class="px-4 pt-2 text-[11px] group-data-[collapsible=icon]:hidden">
+        <kbd class="rounded-sm border border-violet-500 px-1 py-0.5 text-[10px] dark:border-violet-400">Ctrl</kbd> +
+        <kbd class="rounded-sm border border-violet-500 px-1 py-0.5 text-[10px] dark:border-violet-400">K</kbd> shortcuts
+        <div class="mt-2 h-0" />
+        <kbd class="rounded-sm border border-violet-500 px-1 py-0.5 text-[10px] dark:border-violet-400">Ctrl</kbd> +
+        <kbd class="rounded-sm border border-violet-500 px-1 py-0.5 text-[10px] dark:border-violet-400">Space</kbd> go to
+        <div class="mt-2 h-0" />
+        <kbd class="rounded-sm border border-violet-500 px-1 py-0.5 text-[10px] dark:border-violet-400">Alt</kbd> +
+        <kbd class="rounded-sm border border-violet-500 px-1 py-0.5 text-[10px] dark:border-violet-400">R</kbd> Reference
       </div>
     </SidebarContent>
 
