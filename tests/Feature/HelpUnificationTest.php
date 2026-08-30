@@ -150,12 +150,15 @@ it('indexes all three kinds for the one search box', function () {
 })->group('help');
 
 it('derives a tutorial from its directory rather than new machinery', function () {
-    // Tutorials are ordinary help pages under pages/tutorials/, so routing, the
-    // .md twin, HelpContext and the sitemap pick them up with no new code. If
-    // this ever needs its own table, controller or route, something went wrong.
+    // Tutorials (pages/tutorials/) and deep dives (pages/deep-dives/) are
+    // ordinary help pages, so routing, the .md twin, HelpContext and the
+    // sitemap pick them up with no new code. If this ever needs its own table,
+    // controller or route, something went wrong.
     expect(HelpCorpus::kindOf('tutorials/show-chat-on-screen'))->toBe(HelpCorpus::KIND_TUTORIAL)
+        ->and(HelpCorpus::kindOf('deep-dives/follower-bowling-lane'))->toBe(HelpCorpus::KIND_DEEP_DIVE)
         ->and(HelpCorpus::kindOf('conditionals'))->toBe(HelpCorpus::KIND_GUIDE)
-        ->and(HelpPage::url('tutorials/show-chat-on-screen'))->toBe('/help/tutorials/show-chat-on-screen');
+        ->and(HelpPage::url('tutorials/show-chat-on-screen'))->toBe('/help/tutorials/show-chat-on-screen')
+        ->and(HelpPage::url('deep-dives/follower-bowling-lane'))->toBe('/help/deep-dives/follower-bowling-lane');
 })->group('help');
 
 it('carries declared keywords from frontmatter into the search corpus', function () {

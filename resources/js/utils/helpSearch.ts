@@ -72,6 +72,9 @@ const SCORE_CUTOFF = 0.5;
 const KIND_WEIGHT: Record<string, number> = {
   tutorial: 0.5,
   guide: 0.7,
+  // A deep dive is a long read about one overlay: promoted like a guide, never
+  // above the tutorial that answers the question directly.
+  'deep-dive': 0.7,
   reference: 1,
 };
 

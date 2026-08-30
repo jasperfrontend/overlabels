@@ -2,9 +2,10 @@
 
 @section('content')
     <div class="mb-10">
-        @if ($kind === \App\Support\HelpCorpus::KIND_TUTORIAL)
+        {{-- Guides are the default kind and carry no badge; tutorials and deep dives name themselves. --}}
+        @if ($kind !== \App\Support\HelpCorpus::KIND_GUIDE)
             <span class="mb-3 inline-block border border-sidebar-border px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                Tutorial
+                {{ \App\Support\HelpCorpus::KIND_LABELS[$kind] }}
             </span>
         @endif
 

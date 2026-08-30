@@ -45,6 +45,7 @@ class SitemapController extends Controller
     private const KIND_PRIORITY = [
         HelpCorpus::KIND_TUTORIAL => '0.8',
         HelpCorpus::KIND_GUIDE => '0.7',
+        HelpCorpus::KIND_DEEP_DIVE => '0.7',
         HelpCorpus::KIND_REFERENCE => '0.6',
     ];
 

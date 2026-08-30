@@ -20,6 +20,7 @@ use Illuminate\Support\Str;
  * living in the `tutorials/` subdirectory, exactly like the `bot/` pages that
  * already worked that way, so routing, the `.md` twin, HelpContext and the
  * sitemap pick them up with no new code. The kind is derived from the slug.
+ * Deep dives (`deep-dives/`) follow the identical pattern.
  */
 final class HelpCorpus
 {
@@ -27,10 +28,15 @@ final class HelpCorpus
 
     public const KIND_GUIDE = 'guide';
 
+    public const KIND_DEEP_DIVE = 'deep-dive';
+
     public const KIND_REFERENCE = 'reference';
 
     /** The subdirectory under resources/help/pages that makes a page a tutorial. */
     public const TUTORIAL_PREFIX = 'tutorials/';
+
+    /** The subdirectory that makes a page a deep dive - same mechanism, longer read. */
+    public const DEEP_DIVE_PREFIX = 'deep-dives/';
 
     /**
      * Page slugs that a reference entry deliberately shadows in the wikilink map.
@@ -49,6 +55,7 @@ final class HelpCorpus
     public const KIND_LABELS = [
         self::KIND_TUTORIAL => 'Tutorial',
         self::KIND_GUIDE => 'Guide',
+        self::KIND_DEEP_DIVE => 'Deep dive',
         self::KIND_REFERENCE => 'Reference',
     ];
 
@@ -64,8 +71,12 @@ final class HelpCorpus
      */
     public static function kindOf(string $slug): string
     {
-        return str_starts_with($slug, self::TUTORIAL_PREFIX)
-            ? self::KIND_TUTORIAL
+        if (str_starts_with($slug, self::TUTORIAL_PREFIX)) {
+            return self::KIND_TUTORIAL;
+        }
+
+        return str_starts_with($slug, self::DEEP_DIVE_PREFIX)
+            ? self::KIND_DEEP_DIVE
             : self::KIND_GUIDE;
     }
 
@@ -113,8 +124,14 @@ final class HelpCorpus
         // Tutorials lead, because the index page leads with them and the search
         // results should agree with it: someone typing "chat" wants the tutorial
         // before the twelve reference fields it mentions.
+        // Deep dives sit last among the prose: they are long reads about one
+        // overlay, not the page someone searching for an answer wants first.
         usort($docs, function (array $a, array $b): int {
-            $rank = fn (array $d): int => $d['kind'] === self::KIND_TUTORIAL ? 0 : 1;
+            $rank = fn (array $d): int => match ($d['kind']) {
+                self::KIND_TUTORIAL => 0,
+                self::KIND_DEEP_DIVE => 2,
+                default => 1,
+            };
 
             return [$rank($a), $a['title']] <=> [$rank($b), $b['title']];
         });

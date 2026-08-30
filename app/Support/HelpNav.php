@@ -18,7 +18,7 @@ use App\Services\HelpReferenceService;
 final class HelpNav
 {
     /**
-     * Sidebar for the prose side: tutorials first, then guides.
+     * Sidebar for the prose side: tutorials first, then guides, then deep dives.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -29,6 +29,7 @@ final class HelpNav
         foreach ([
             HelpCorpus::KIND_TUTORIAL => 'Tutorials',
             HelpCorpus::KIND_GUIDE => 'Guides',
+            HelpCorpus::KIND_DEEP_DIVE => 'Deep dives',
         ] as $kind => $label) {
             $docs = HelpCorpus::ofKind($kind);
 

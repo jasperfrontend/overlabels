@@ -93,6 +93,15 @@ Short, copy-and-paste tutorials. Each one ends with something on screen.
 - [**Chat Castle**](/help/gamejam) - chat-driven dungeon raid. Commands, rounds, energy blocks, chest
   contents, and how to not lose the HP pool.
 
+## Deep dives
+
+Full teardowns of real overlays, one at a time: every control, every trick, and why each piece is
+shaped the way it is. Long reads for when you want to see how far the template language stretches.
+
+- [**Inside the Follower bowling lane**](/help/deep-dives/follower-bowling-lane) - a chat-driven
+  bowling minigame: a List as the queue, one timestamp as both the clock and the dice roll, and a
+  full animation sequence without a line of JavaScript.
+
 ## Look something up
 
 - [**Reference**](/help/reference) - every template tag, EventSub event, and foreach field. Press
