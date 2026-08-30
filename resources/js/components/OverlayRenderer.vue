@@ -1040,6 +1040,11 @@ function handleListUpdated(event: any) {
     [`${baseKey}:last`]: values.length > 0 ? values[values.length - 1] : '',
     [`${baseKey}:empty`]: values.length === 0 ? '1' : '0',
     [`${baseKey}:sum`]: computeListSum(event.slug, values),
+    // Who `pop` / `draw` just took out. Shipped with every list broadcast
+    // (null until something has been removed) so a removal can be shown on
+    // screen even though the removed value is no longer in `items`.
+    [`${baseKey}:last_removed`]: typeof event.last_removed === 'string' ? event.last_removed : '',
+    [`${baseKey}:last_removed_at`]: typeof event.last_removed_at === 'number' ? String(event.last_removed_at) : '',
   };
   values.forEach((value, i) => {
     patch[`${baseKey}.${i}`] = value;

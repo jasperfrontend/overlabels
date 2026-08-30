@@ -43,6 +43,11 @@ class ListUpdated implements ShouldBroadcast
         public ?int $updatedAt,
         public ?int $expiresAt = null,
         public ?int $disabledAt = null,
+        // The value most recently popped or drawn, and when (Unix seconds).
+        // A removal broadcasts the remaining items, so this is how the
+        // overlay learns WHO left - the raffle winner, the next in a queue.
+        public ?string $lastRemoved = null,
+        public ?int $lastRemovedAt = null,
     ) {}
 
     /**
@@ -64,6 +69,8 @@ class ListUpdated implements ShouldBroadcast
             'updated_at' => $this->updatedAt,
             'expires_at' => $this->expiresAt,
             'disabled_at' => $this->disabledAt,
+            'last_removed' => $this->lastRemoved,
+            'last_removed_at' => $this->lastRemovedAt,
         ];
     }
 
@@ -90,6 +97,8 @@ class ListUpdated implements ShouldBroadcast
             $list->updated_at?->timestamp ?? now()->timestamp,
             $list->expires_at?->timestamp,
             $list->disabled_at?->timestamp,
+            $list->last_removed,
+            $list->last_removed_at?->timestamp,
         );
     }
 }

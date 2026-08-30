@@ -1,5 +1,22 @@
 # CHANGELOG AUGUST 2026
 
+## August 30th, 2026 - feat(lists): a List remembers what pop and draw took out
+
+`!list raffle draw` picked a winner, removed them, announced them in chat - and broadcast the
+remaining items to every overlay. The overlay could watch the list shrink and never learn who
+won. Same for `pop first` on a queue: "who's next" only ever reached chat. Found while building a
+chat-driven overlay where the person removed from a queue is the one who gets to play.
+
+- **`last_removed` and `last_removed_at` on the List**, set by `pop first`, `pop last` and
+  `draw` (chat and the web action endpoint share `ListActionService`, so both). `clear` leaves
+  them alone - emptying a list is not picking someone. NULL until something has been removed.
+- **Two new read tags, `[[[c:list:<slug>:last_removed]]]` and `:last_removed_at`** (Unix
+  seconds), in the render payload and patched live by the `list.updated` broadcast like every
+  other derived tag. In an Expression Control that is `c.list["<slug>:last_removed_at"]`, so
+  "just drawn" can be animated from the timestamp alone, the way `_at` works on controls.
+- `ListLastRemovedTest` pins pop first/last, draw, clear-leaves-it, the broadcast payload, the
+  null-before-any-removal case, and the real render endpoint exposing both tags.
+
 ## August 30th, 2026 - feat(templates): import an overlay from its .md
 
 Every public overlay has had a `.md` twin since the share document shipped: source, controls with

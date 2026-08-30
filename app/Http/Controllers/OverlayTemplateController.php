@@ -726,6 +726,15 @@ class OverlayTemplateController extends Controller
                 $listData[$baseKey.':random'] = $count > 0 ? (string) $items[array_rand($items)] : '';
                 $listData[$baseKey.':sum'] = $this->sumListItems($list->slug, $items);
 
+                // What `pop` / `draw` most recently took out, and when. The
+                // removal itself only ships the remaining items, so this is
+                // the one rail the overlay has for "who was drawn / who is
+                // up next" after the fact.
+                $listData[$baseKey.':last_removed'] = (string) ($list->last_removed ?? '');
+                $listData[$baseKey.':last_removed_at'] = $list->last_removed_at
+                    ? (string) $list->last_removed_at->timestamp
+                    : '';
+
                 // Expiry-related tags: static Unix timestamp + a synthetic
                 // timer state the renderer ticks via the same RAF machinery
                 // it uses for [type=timer] controls. The countdown key

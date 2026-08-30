@@ -54,6 +54,8 @@ with slug `donors` and items `["Alice", "Bob", "Carol"]`:
 | `[[[c:list:donors:empty]]]` | `0` (would be `1` if empty) - pair with [conditional tags](/help/conditionals) |
 | `[[[c:list:donors:random]]]` | Random item - stable per overlay mount (does not re-roll on each broadcast) |
 | `[[[c:list:donors:sum]]]` | Numeric sum of items. Empties and whitespace are 0; non-numeric content shows an inline error pointing at the offending row. |
+| `[[[c:list:donors:last_removed]]]` | The value most recently taken out by `pop` or `draw` - the raffle winner, the next person in a queue. Empty until something has been removed; `clear` does not change it. |
+| `[[[c:list:donors:last_removed_at]]]` | Unix seconds of that removal. In an Expression Control that is `c.list["donors:last_removed_at"]`, so an overlay can animate "just drawn" from the timestamp alone. |
 | `[[[c:list:donors:expires_at]]]` | Unix seconds when the List expires (empty when no deadline set). |
 | `[[[c:list:donors:countdown]]]` | Live seconds remaining until expiry. Ticks every frame; pair with [formatting pipes](/help/formatting). |
 

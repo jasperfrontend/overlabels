@@ -54,6 +54,8 @@ class OptionSet extends Model
         'expires_at',
         'chat_permissions',
         'event_feed',
+        'last_removed',
+        'last_removed_at',
     ];
 
     protected $casts = [
@@ -67,6 +69,7 @@ class OptionSet extends Model
         'expires_at' => 'datetime',
         'chat_permissions' => 'array',
         'event_feed' => 'array',
+        'last_removed_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

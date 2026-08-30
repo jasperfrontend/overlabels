@@ -373,6 +373,8 @@ it('ListUpdated broadcasts on the alerts.{twitch_id} channel as list.updated', f
             'updated_at' => 1234567890,
             'expires_at' => null,
             'disabled_at' => null,
+            'last_removed' => null,
+            'last_removed_at' => null,
         ]);
 });
 

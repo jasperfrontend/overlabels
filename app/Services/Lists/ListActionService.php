@@ -482,6 +482,10 @@ class ListActionService
             $winnerValue = ListItems::values($current)[$winnerIdx];
             $locked->update([
                 'items' => ListItems::removeAt($current, $winnerIdx),
+                // The winner leaves the items, so this is the only place an
+                // overlay can still read who was drawn.
+                'last_removed' => $winnerValue,
+                'last_removed_at' => now(),
             ]);
             $this->broadcast($owner, $locked->fresh());
 
@@ -518,6 +522,8 @@ class ListActionService
 
             $locked->update([
                 'items' => ListItems::removeAt($current, $idx),
+                'last_removed' => $poppedValue,
+                'last_removed_at' => now(),
             ]);
             $this->broadcast($owner, $locked->fresh());
 
