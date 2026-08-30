@@ -386,7 +386,7 @@ it('draw picks a winner, removes them, and snapshots before', function () {
 
     $reply = app(ListActionService::class)->handleInvocation($user, 'raffle draw', 'Mod');
 
-    expect($reply)->toMatch("/^🎰 Winner of 'raffle': (alice|bob)$/")
+    expect($reply)->toMatch("/^🎰 Random draw from 'raffle': (alice|bob)$/")
         ->and(count($list->fresh()->items))->toBe(1)
         ->and(ListSnapshot::where('list_id', $list->id)->where('reason', 'before_draw')->count())->toBe(1);
 });

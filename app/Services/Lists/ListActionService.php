@@ -449,6 +449,7 @@ class ListActionService
         }
 
         return DB::transaction(function () use ($owner, $list) {
+            /** @var OptionSet $locked */
             $locked = OptionSet::lockForUpdate()->find($list->id);
             $count = count($locked->items ?? []);
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_CLEAR, $owner->id);
@@ -468,14 +469,15 @@ class ListActionService
     {
         $items = array_values($list->items ?? []);
         if ($items === []) {
-            return "Can't draw - '$list->slug' is empty.";
+            return "Can't draw: '$list->slug' is empty.";
         }
 
         return DB::transaction(function () use ($owner, $list) {
+            /** @var OptionSet $locked */
             $locked = OptionSet::lockForUpdate()->find($list->id);
             $current = array_values($locked->items ?? []);
             if ($current === []) {
-                return "Can't draw - '$locked->slug' is empty.";
+                return "Can't draw: '$locked->slug' is empty.";
             }
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_DRAW, $owner->id);
             $winnerIdx = array_rand($current);
@@ -489,7 +491,7 @@ class ListActionService
             ]);
             $this->broadcast($owner, $locked->fresh());
 
-            return "🎰 Winner of '$locked->slug': $winnerValue";
+            return "🎰 Random draw from '$locked->slug': $winnerValue";
         });
     }
 
@@ -510,10 +512,11 @@ class ListActionService
         }
 
         return DB::transaction(function () use ($owner, $list, $which) {
+            /** @var OptionSet $locked */
             $locked = OptionSet::lockForUpdate()->find($list->id);
             $current = array_values($locked->items ?? []);
             if ($current === []) {
-                return "Can't pop - '$locked->slug' is empty.";
+                return "Can't pop: '$locked->slug' is empty.";
             }
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_POP, $owner->id);
 
