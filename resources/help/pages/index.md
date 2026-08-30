@@ -104,6 +104,9 @@ shaped the way it is. Long reads for when you want to see how far the template l
 - [**Inside the Math Engine Showcase**](/help/deep-dives/math-engine-showcase) - a BRB scene of six
   live demos: epicycles, a spirograph, a sweeping clock, dice, six waveforms and a bouncing
   counter, built from 28 expression controls and the wall clock.
+- [**Inside Rarotonga**](/help/deep-dives/rarotonga) - a real OpenStreetMap coastline doing five
+  jobs at once, and live great-circle distance and bearing from a chain of haversine expression
+  controls. The compass points the "wrong" way, and is right.
 
 ## Look something up
 
