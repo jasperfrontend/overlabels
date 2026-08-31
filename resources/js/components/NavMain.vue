@@ -23,10 +23,14 @@ const isActive = (href: string): boolean => {
     itemPath = path;
     itemSearch = search ? `?${search}` : '';
   }
-  if (itemSearch) {
-    return page.url === `${itemPath}${itemSearch}`;
+  const [currentPath, currentSearch] = page.url.split('?');
+  if (currentPath !== itemPath) {
+    return false;
   }
-  return page.url.split('?')[0] === itemPath;
+  // Declared params are constraints; params the item doesn't declare
+  // (search, page, sort) are ignored - same rule as HelpContext matching.
+  const currentParams = new URLSearchParams(currentSearch ?? '');
+  return Array.from(new URLSearchParams(itemSearch)).every(([key, value]) => currentParams.get(key) === value);
 };
 </script>
 
