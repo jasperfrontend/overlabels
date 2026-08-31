@@ -28,6 +28,9 @@ declare module 'vue' {
 }
 
 declare global {
+  // Compile-time constant injected by Vite's `define` (see vite.config.mts).
+  const __COMMIT_HASH__: string;
+
   let route: typeof route;
 
   interface Window {
