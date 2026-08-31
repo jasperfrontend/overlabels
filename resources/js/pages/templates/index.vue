@@ -18,6 +18,7 @@ interface FiltersShape {
   filter?: string;
   search?: string;
   type?: string;
+  assignment?: string;
   sort?: string;
   direction?: string;
 }
@@ -37,6 +38,7 @@ function normalizeFilters(input?: FiltersShape) {
     filter: str(input?.filter) || 'all_templates',
     search: str(input?.search),
     type: str(input?.type),
+    assignment: str(input?.assignment),
     sort: str(input?.sort) || 'created_at',
     direction: str(input?.direction) || 'desc',
   };
@@ -53,6 +55,12 @@ function buildQuery(): Record<string, string> {
   }
   if (filters.value.search) params.search = filters.value.search;
   if (filters.value.type) params.type = filters.value.type;
+  // Assignment is only meaningful for alerts; dropping it here keeps the URL
+  // canonical when the type filter moves away, and the server-echoed filters
+  // clear the stale value on the next navigation.
+  if (filters.value.type === 'alert' && filters.value.assignment) {
+    params.assignment = filters.value.assignment;
+  }
   if (filters.value.sort && filters.value.sort !== 'created_at') {
     params.sort = filters.value.sort;
   }
@@ -80,6 +88,12 @@ const typeOptions = [
   { value: 'static', label: 'Static overlay' },
   { value: 'alert', label: 'Event alert' },
   { value: 'block', label: 'Block' },
+];
+
+const assignmentOptions = [
+  { value: '', label: 'All alerts' },
+  { value: 'assigned', label: 'Assigned' },
+  { value: 'unassigned', label: 'Unassigned' },
 ];
 
 const ownerOptions = [
@@ -195,6 +209,14 @@ const breadcrumbs: BreadcrumbItem[] = [
       <FilterBar class="mb-4">
         <FilterSearchInput v-model="filters.search" label="Search title" placeholder="Search overlays and alerts..." @search="debounceSearch" />
         <FilterSelect v-model="filters.type" label="Type" select-id="filter-type" :options="typeOptions" @change="applyFilter" />
+        <FilterSelect
+          v-if="filters.type === 'alert'"
+          v-model="filters.assignment"
+          label="Assignment"
+          select-id="filter-assignment"
+          :options="assignmentOptions"
+          @change="applyFilter"
+        />
         <FilterSelect v-model="filters.filter" label="Ownership" select-id="filter-visibility" :options="ownerOptions" @change="applyFilter" />
         <FilterSelect v-model="filters.sort" label="Order" select-id="filter-sort" :options="sortOptions" @change="applyFilter" />
       </FilterBar>

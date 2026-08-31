@@ -77,6 +77,19 @@ class OverlayTemplateController extends Controller
             ->when($request->input('type'), function ($query, $type) {
                 $query->where('type', $type);
             })
+            // Assignment only means something for alerts, and only relative to
+            // the viewer: a mapping row is per-user, so "assigned" is "assigned
+            // for YOU" - the same scoping as the eager loads below.
+            ->when($request->input('type') === 'alert' && $request->input('assignment') === 'assigned', function ($query) use ($request) {
+                $query->where(function ($q) use ($request) {
+                    $q->whereHas('eventMappings', fn ($m) => $m->where('user_id', $request->user()->id))
+                        ->orWhereHas('externalEventMappings', fn ($m) => $m->where('user_id', $request->user()->id));
+                });
+            })
+            ->when($request->input('type') === 'alert' && $request->input('assignment') === 'unassigned', function ($query) use ($request) {
+                $query->whereDoesntHave('eventMappings', fn ($m) => $m->where('user_id', $request->user()->id))
+                    ->whereDoesntHave('externalEventMappings', fn ($m) => $m->where('user_id', $request->user()->id));
+            })
             ->when($request->input('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $searchTerm = '%'.strtolower($search).'%';
@@ -98,7 +111,7 @@ class OverlayTemplateController extends Controller
 
         return Inertia::render('templates/index', [
             'templates' => $templates,
-            'filters' => (object) $request->only(['filter', 'search', 'type', 'sort', 'direction']),
+            'filters' => (object) $request->only(['filter', 'search', 'type', 'assignment', 'sort', 'direction']),
         ]);
     }
 
