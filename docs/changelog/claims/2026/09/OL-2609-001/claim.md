@@ -20,7 +20,10 @@
 - **C8** [unverified] The three behavior tests in C7 were run with the controller change stashed and failed; the C3 test passes either way by design.
 
 ### Unchanged
-The eager loads of `eventMappings`/`externalEventMappings`, the ownership/type/search/sort filters, and `TemplateCollection` rendering. The other two `FilterBar` pages (`dashboard/recents.vue`, `dashboard/lists/index.vue`) pass nothing new.
+- `index()` already eager-loads `eventMappings`/`externalEventMappings` to draw each alert's event icon in the list; the new filter queries the same relations, but those eager-load closures are not in the diff.
+- The Assignment field joins four existing filters (search, type, ownership, sort); none of their query clauses in `index()` changed.
+- `TemplateCollection.vue` renders the rows under the filter bar and derives icons from the same mappings; it is not in the diff.
+- `dashboard/recents.vue` and `dashboard/lists/index.vue` also render `FilterBar` and so inherit the five-column grid, but neither file is in the diff.
 
 ### Risk
 Pages sharing `FilterBar` with fewer than five fields (recents, lists) now render fields at one fifth of the row instead of one quarter at `lg` and up.

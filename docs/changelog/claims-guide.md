@@ -96,8 +96,8 @@ A real change carries its weight:
 - **C6** [unverified] Twitch requires `bits:read` for `channel.cheer` v1.
 
 ### Unchanged
-Controls, alert resolution, the events-feed formatter, and per-session bits aggregation. All were
-already correct and already tested.
+- The handling path for cheers was never the gap, only the subscription was: `EventTemplateMapping::resolveForEvent()` and the events-feed formatter already accept `channel.cheer` payloads and are not in the diff.
+- The `latest_cheer*` controls and per-session bits aggregation consume the same payloads once they arrive; neither is in the diff.
 
 ### Risk
 Existing accounts need one re-authorization before cheers arrive. Until then cheers are silently
@@ -124,10 +124,22 @@ point. Two implicit exceptions, never listed: the claim file itself, and the pro
 where "I fixed the symptom and left the working code alone" gets recorded, and it is what makes an
 appearance in the diff readable as a violation rather than a surprise.
 
+An expectation must be built before it can be denied. The reader was not in the room, so a bare noun
+("the eager loads didn't move") relates to nothing they know. Each line names the symbol, says what
+ties it to THIS change, then states it is not in the diff - "the filter reads the same relations
+`index()` already eager-loads for the list's icons; those eager loads are untouched" hands the
+reader both the tether and a check they can run. And no smuggled judgments: "was already correct and
+already tested" is an assertion, and assertions live in Claims with a tag or nowhere.
+
 **Risk** - the user-visible consequence: a required re-authorization, a manual step, a migration, a
 behaviour that changes for existing data.
 
 ## Writing claims
+
+**Write for a reader who is cold on purpose.** The audit agent is deliberately kept uninformed - no
+session context, no memory of how the change came to be - because confirmation from context is
+worthless. Every line in every section must stand on the tree and the diff alone; a sentence that
+only lands if you watched the change happen is unreadable to the only reader that matters.
 
 **One assertion per claim.** "X and Y" is two claims. A compound claim can be half-true, and a report
 that has to answer it with one verdict will round it to whichever half it looked at first.
