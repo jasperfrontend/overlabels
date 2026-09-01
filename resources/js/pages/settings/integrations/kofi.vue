@@ -9,6 +9,7 @@ import EventTypeToggleList from '@/components/EventTypeToggleList.vue';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import RekaToast from '@/components/RekaToast.vue';
+import TestModeToggle from '@/components/TestModeToggle.vue';
 import { Separator } from '@/components/ui/separator';
 import { parseAmountInput } from '@/utils/amountInput';
 import { type BreadcrumbItem } from '@/types';
@@ -49,10 +50,6 @@ const form = useForm({
   enabled_events: props.integration.settings?.enabled_events ?? ['donation', 'subscription', 'shop_order'],
   enabled: props.integration.connected ? props.integration.enabled : true,
 });
-
-// Test mode is independent of the main form — toggled instantly via its own endpoint
-const testMode = ref(props.integration.test_mode ?? false);
-const testModeLoading = ref(false);
 
 // Starting donation total - one-time seed, locked after setting.
 // This is money, not a tally, so it is a free-text field: the streamer types
@@ -109,21 +106,6 @@ function save() {
     // across the round-trip, so the typed value would otherwise stick.
     onSuccess: () => form.reset('verification_token'),
   });
-}
-
-async function toggleTestMode() {
-  testModeLoading.value = true;
-  try {
-    const { data } = await axios.patch('/settings/integrations/kofi/test-mode', {
-      test_mode: testMode.value,
-    });
-    testMode.value = data.test_mode;
-  } catch {
-    // revert on failure
-    testMode.value = !testMode.value;
-  } finally {
-    testModeLoading.value = false;
-  }
 }
 
 async function disconnect() {
@@ -232,45 +214,16 @@ function formatDate(iso: string | null): string {
           </div>
         </form>
 
-        <!-- Test mode — independent toggle, saves instantly -->
         <template v-if="integration.connected">
           <Separator />
-          <div class="space-y-2">
-            <div class="flex items-center gap-3">
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="testMode"
-                :disabled="testModeLoading"
-                class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
-                :class="testMode ? 'bg-yellow-500' : 'bg-muted-foreground/30'"
-                @click="
-                  testMode = !testMode;
-                  toggleTestMode();
-                "
-              >
-                <span
-                  class="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform"
-                  :class="testMode ? 'translate-x-4.5' : 'translate-x-0.5'"
-                />
-              </button>
-              <Label
-                class="cursor-pointer"
-                @click="
-                  testMode = !testMode;
-                  toggleTestMode();
-                "
-              >
-                Test mode
-              </Label>
-            </div>
-            <p class="text-sm text-muted-foreground">
-              Disables duplicate event detection. Fire the same Ko-fi webhook as many times as you like.
-              <span v-if="testMode" class="font-bold text-yellow-500">
-                Turn this off before going live - your donation total will reset to {{ donationsSeedValue ?? 0 }}.
-              </span>
-            </p>
-          </div>
+          <TestModeToggle
+            service="kofi"
+            service-label="Ko-fi"
+            how-to-fire="press the test buttons on Ko-fi's webhook page"
+            total-label="donation total"
+            :initial="integration.test_mode"
+            :seed-value="donationsSeedValue"
+          />
         </template>
 
         <!-- Starting donation total (one-time seed) -->

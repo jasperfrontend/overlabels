@@ -8,6 +8,7 @@ import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import RekaToast from '@/components/RekaToast.vue';
+import TestModeToggle from '@/components/TestModeToggle.vue';
 import { Separator } from '@/components/ui/separator';
 import { parseAmountInput } from '@/utils/amountInput';
 import { type BreadcrumbItem } from '@/types';
@@ -41,10 +42,6 @@ const connectForm = useForm({});
 function connect() {
   connectForm.post('/settings/integrations/throne', { preserveScroll: true });
 }
-
-// Test mode is independent of the main form - toggled instantly via its own endpoint
-const testMode = ref(props.integration.test_mode ?? false);
-const testModeLoading = ref(false);
 
 // Starting gift total - one-time seed.
 // This is money, not a tally, so it is a free-text field: the streamer types
@@ -91,21 +88,6 @@ function copyWebhookUrl() {
     copied.value = true;
     setTimeout(() => (copied.value = false), 5000);
   });
-}
-
-async function toggleTestMode() {
-  testModeLoading.value = true;
-  try {
-    const { data } = await axios.patch('/settings/integrations/throne/test-mode', {
-      test_mode: testMode.value,
-    });
-    testMode.value = data.test_mode;
-  } catch {
-    // revert on failure
-    testMode.value = !testMode.value;
-  } finally {
-    testModeLoading.value = false;
-  }
 }
 
 async function disconnect() {
@@ -199,44 +181,15 @@ function formatDate(iso: string | null): string {
           <!-- Last received -->
           <p class="text-sm text-muted-foreground">Last event received: {{ formatDate(integration.last_received_at) }}</p>
 
-          <!-- Test mode - independent toggle, saves instantly -->
           <Separator />
-          <div class="space-y-2">
-            <div class="flex items-center gap-3">
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="testMode"
-                :disabled="testModeLoading"
-                class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
-                :class="testMode ? 'bg-yellow-500' : 'bg-muted-foreground/30'"
-                @click="
-                  testMode = !testMode;
-                  toggleTestMode();
-                "
-              >
-                <span
-                  class="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform"
-                  :class="testMode ? 'translate-x-4.5' : 'translate-x-0.5'"
-                />
-              </button>
-              <Label
-                class="cursor-pointer"
-                @click="
-                  testMode = !testMode;
-                  toggleTestMode();
-                "
-              >
-                Test mode
-              </Label>
-            </div>
-            <p class="text-sm text-muted-foreground">
-              Disables duplicate event detection. Fire Throne's "Test webhook" as many times as you like.
-              <span v-if="testMode" class="font-bold text-yellow-500">
-                Turn this off before going live - your gift total will reset to {{ donationsSeedValue ?? 0 }}.
-              </span>
-            </p>
-          </div>
+          <TestModeToggle
+            service="throne"
+            service-label="Throne"
+            how-to-fire='press "Test webhook" in Throne'
+            total-label="gift total"
+            :initial="integration.test_mode"
+            :seed-value="donationsSeedValue"
+          />
 
           <!-- Starting gift total (one-time seed) -->
           <Separator />

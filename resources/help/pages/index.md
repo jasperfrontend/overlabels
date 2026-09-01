@@ -119,6 +119,8 @@ shaped the way it is. Long reads for when you want to see how far the template l
   lives after the `#`, and what to do the moment one leaks.
 - [**Why Ko-fi**](/help/why-kofi) - why we chose Ko-fi as our first External Integration over Patreon,
   Stripe, or built-in payments.
+- [**Test mode on donation integrations**](/help/integration-test-mode) - send the same test donation
+  as often as you like while you build, and what gets reset when you switch it off.
 - [**Free Resources**](/help/resources) - colors, fonts, animations, images, and other tools for building
   overlays.
 
