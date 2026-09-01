@@ -35,7 +35,7 @@ const { tokens } = defineProps<{ tokens: Token[] }>();
 /** UI */
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Overlay Access Tokens', href: '/tokens' },
+  { title: 'Overlay Access Tokens', href: '/settings/tokens' },
 ];
 
 /** Create flow */
@@ -84,7 +84,7 @@ const validationMessage = (error: unknown): string | null => {
 
 const createToken = async () => {
   try {
-    const { data } = await axios.post('/tokens', form.value);
+    const { data } = await axios.post('/settings/tokens', form.value);
     newToken.value = data.plain_token ?? '';
     showCreateModal.value = false;
     showTokenModal.value = true;
@@ -109,7 +109,7 @@ const toastMessage = ref<string | null>(null);
 const revokeToken = async (t: Token) => {
   if (!(await confirm({ message: 'Are you sure you want to revoke this token?', confirmLabel: 'Revoke' }))) return;
   try {
-    await axios.post(`/tokens/${t.id}/revoke`);
+    await axios.post(`/settings/tokens/${t.id}/revoke`);
     toastMessage.value = `Token "${t.name}" revoked. It no longer opens any overlay.`;
     router.reload({ only: ['tokens'] });
   } catch (error) {
@@ -121,7 +121,7 @@ const revokeToken = async (t: Token) => {
 const deleteToken = async (t: Token) => {
   if (!(await confirm({ message: 'Are you sure you want to delete this token? This cannot be undone.', confirmLabel: 'Delete' }))) return;
   try {
-    await axios.delete(`/tokens/${t.id}`);
+    await axios.delete(`/settings/tokens/${t.id}`);
     toastMessage.value = `Token "${t.name}" deleted.`;
     router.reload({ only: ['tokens'] });
   } catch (error) {
@@ -131,7 +131,7 @@ const deleteToken = async (t: Token) => {
 };
 
 // const showUsage = (t: Token) => {
-//   router.visit(`/tokens/${t.id}/usage`);
+//   router.visit(`/settings/tokens/${t.id}/usage`);
 // };
 
 const page = usePage();

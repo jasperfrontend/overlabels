@@ -23,7 +23,7 @@ When you generate a token, Overlabels asks the operating system for **32 random 
 as hexadecimal. That is 64 characters and **256 bits of randomness**. There is no pattern, no encoded user
 ID, no timestamp inside it. It is not guessable, and it is not derived from anything about you.
 
-The first 8 characters are stored separately as a **prefix**, purely so your [tokens page](/tokens) can
+The first 8 characters are stored separately as a **prefix**, purely so your [tokens page](/settings/tokens) can
 show you which token is which without ever holding the real thing.
 
 ## Why it lives after the `#`
@@ -89,7 +89,7 @@ alt-tab, a screenshot of your OBS setup.
 
 Do this:
 
-1. Go to [your tokens page](/tokens) and **revoke** the exposed token. It stops working immediately.
+1. Go to [your tokens page](/settings/tokens) and **revoke** the exposed token. It stops working immediately.
 2. Generate a new one.
 3. Update the browser source in OBS. Only the part after the `#` changes.
 

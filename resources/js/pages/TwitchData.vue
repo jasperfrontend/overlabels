@@ -40,7 +40,7 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
   {
     title: 'Your Twitch Data',
-    href: '/twitchdata',
+    href: '/settings/twitchdata',
   },
 ];
 
@@ -189,32 +189,36 @@ watch(
           </div>
 
           <div class="mb-4 flex flex-row flex-wrap justify-between gap-2">
-            <button @click="() => refreshData('/twitchdata/refresh/user', 'User')" :disabled="isRefreshing" class="btn btn-cancel">
+            <button @click="() => refreshData('/settings/twitchdata/refresh/user', 'User')" :disabled="isRefreshing" class="btn btn-cancel">
               <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
               User
             </button>
 
-            <button @click="() => refreshData('/twitchdata/refresh/info', 'Bio')" :disabled="isRefreshing" class="btn btn-cancel">
+            <button @click="() => refreshData('/settings/twitchdata/refresh/info', 'Bio')" :disabled="isRefreshing" class="btn btn-cancel">
               <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
               Bio
             </button>
 
-            <button @click="() => refreshData('/twitchdata/refresh/following', 'Following')" :disabled="isRefreshing" class="btn btn-cancel">
+            <button @click="() => refreshData('/settings/twitchdata/refresh/following', 'Following')" :disabled="isRefreshing" class="btn btn-cancel">
               <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
               Following
             </button>
 
-            <button @click="() => refreshData('/twitchdata/refresh/followers', 'Followers')" :disabled="isRefreshing" class="btn btn-cancel">
+            <button @click="() => refreshData('/settings/twitchdata/refresh/followers', 'Followers')" :disabled="isRefreshing" class="btn btn-cancel">
               <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
               Followers
             </button>
 
-            <button @click="() => refreshData('/twitchdata/refresh/subscribers', 'Subscribers')" :disabled="isRefreshing" class="btn btn-cancel">
+            <button
+              @click="() => refreshData('/settings/twitchdata/refresh/subscribers', 'Subscribers')"
+              :disabled="isRefreshing"
+              class="btn btn-cancel"
+            >
               <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
               Subscribers
             </button>
 
-            <button @click="() => refreshData('/twitchdata/refresh/goals', 'Goals')" :disabled="isRefreshing" class="btn btn-cancel">
+            <button @click="() => refreshData('/settings/twitchdata/refresh/goals', 'Goals')" :disabled="isRefreshing" class="btn btn-cancel">
               <RefreshIcon :class="{ 'animate-spin': isRefreshing }" />
               Goals
             </button>

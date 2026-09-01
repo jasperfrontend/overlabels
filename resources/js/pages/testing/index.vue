@@ -17,7 +17,7 @@ const props = defineProps<{
 
 const breadcrumbs = [
   { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Testing Guide', href: '/testing' },
+  { title: 'Testing Guide', href: '/settings/testing' },
 ];
 
 type EventFamily = 'basic' | 'channel_points' | 'stream' | 'hype_train' | 'charity' | 'goals' | 'polls' | 'predictions';

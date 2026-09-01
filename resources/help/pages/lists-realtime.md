@@ -37,7 +37,7 @@ just wiring those two calls.
 ## Step 1 - Get a token
 
 You authenticate with an **Overlay Access Token** - the same 64-character token your overlay URLs use.
-Generate one from your dashboard's [Overlay Access Tokens](/tokens) page and copy it.
+Generate one from your dashboard's [Overlay Access Tokens](/settings/tokens) page and copy it.
 
 > [!WARNING]
 > **Treat the token like sharing your overlay URL.** The token identifies *you*, so it can only ever read
@@ -189,7 +189,7 @@ you have a live, custom overlay driven by chat.
 | Symptom | Likely cause and fix |
 |---|---|
 | Fetch fails / blocked by mixed content | Your page is served over `http` (or `file://`). Host it over **https**. The API and the WebSocket both require it. |
-| `401` from the read endpoint | Token missing, not 64 chars, or revoked. Regenerate it on the [Overlay Access Tokens](/tokens) page and update your page. |
+| `401` from the read endpoint | Token missing, not 64 chars, or revoked. Regenerate it on the [Overlay Access Tokens](/settings/tokens) page and update your page. |
 | `404` from the read endpoint | No List with that slug on your account. Check the slug exactly (lowercase, underscores) on your [Lists page](/dashboard/lists). |
 | Loads once, never updates | The subscribe step isn't connecting. Check the browser console: is `pusher.subscribe` firing `pusher:subscription_succeeded`? Confirm you used `key/host/port` from the `realtime` block, and prefixed the channel with `private-`. |
 | `403` "Channel not permitted" | The token's account doesn't match the channel's twitch id, or the slug is malformed. Use the exact `realtime.channel` string from the read response, and the same token. |

@@ -279,7 +279,7 @@ it('serves the tag browser to a connected user', function () {
     $user = User::factory()->create(['access_token' => 'token', 'twitch_id' => '73327367']);
 
     $this->actingAs($user)
-        ->get('/tags')
+        ->get('/settings/tags')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('TemplateTagGenerator')
@@ -291,7 +291,7 @@ it('serves the tag browser to a connected user', function () {
 it('refuses the tag browser to a user with no Twitch connection', function () {
     $user = User::factory()->create(['access_token' => null]);
 
-    $this->actingAs($user)->get('/tags')->assertForbidden();
+    $this->actingAs($user)->get('/settings/tags')->assertForbidden();
 });
 
 it('serves the same catalogue as JSON for the template editor', function () {

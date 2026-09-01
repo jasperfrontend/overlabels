@@ -7,7 +7,7 @@ canonical: https://overlabels.com/help/conditionals
 context: templates.edit, templates.create, tags.generator
 ---
 
-See your [static Template Tags](/tags) for your account. Need to format numbers, durations, or
+See your [static Template Tags](/settings/tags) for your account. Need to format numbers, durations, or
 currencies? See [Formatting Pipes](/help/formatting).
 
 ## Conditional Template Syntax
@@ -1188,7 +1188,7 @@ milestone followers.
 
 ### Test Your Conditions
 
-Use the [Twitch Testing Guide](/testing) to test your alert templates with different event values to
+Use the [Twitch Testing Guide](/settings/testing) to test your alert templates with different event values to
 ensure they work as expected. Be sure to install the [Twitch CLI](https://dev.twitch.tv/docs/cli/) first.
 
 ### Style Conditional Content

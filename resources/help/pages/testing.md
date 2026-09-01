@@ -9,7 +9,7 @@ context: testing.index
 
 You have built a follower alert. To see it, you need a follower. That is a bad development loop.
 
-The [Testing page](/testing) fixes it: it hands you a ready-to-run command for every Twitch event
+The [Testing page](/settings/testing) fixes it: it hands you a ready-to-run command for every Twitch event
 Overlabels supports, pre-filled with your Twitch ID, your webhook URL and your webhook secret. Paste one
 into a terminal and a real EventSub webhook arrives at your account, taking exactly the same path a real
 follow would.

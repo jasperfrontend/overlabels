@@ -42,7 +42,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Template Tags', href: '/tags' },
+  { title: 'Template Tags', href: '/settings/tags' },
 ];
 
 const toastMessage = ref('');

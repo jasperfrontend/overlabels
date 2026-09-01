@@ -278,39 +278,42 @@ Route::get('/login', [PageController::class, 'notAuthorized'])
     ->middleware(['guest'])
     ->name('login');
 
-Route::get('/twitchdata', [TwitchDataController::class, 'index'])
+// Developer tools live under /settings like every other non-content page.
+// Born at the root; old bookmarks keep working.
+Route::redirect('/twitchdata', '/settings/twitchdata', 301);
+Route::get('/settings/twitchdata', [TwitchDataController::class, 'index'])
     ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata');
 
-Route::get('/twitchdata/refresh/expensive', [TwitchDataController::class, 'getLiveTwitchData'])
+Route::get('/settings/twitchdata/refresh/expensive', [TwitchDataController::class, 'getLiveTwitchData'])
     ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.expensive');
 
-Route::post('/twitchdata/refresh/all', [TwitchDataController::class, 'refreshAllTwitchApiData'])
+Route::post('/settings/twitchdata/refresh/all', [TwitchDataController::class, 'refreshAllTwitchApiData'])
     ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.all');
 
-Route::post('/twitchdata/refresh/user', [TwitchDataController::class, 'refreshUserInfoData'])
+Route::post('/settings/twitchdata/refresh/user', [TwitchDataController::class, 'refreshUserInfoData'])
     ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.user');
 
-Route::post('/twitchdata/refresh/info', [TwitchDataController::class, 'refreshChannelInfoData'])
+Route::post('/settings/twitchdata/refresh/info', [TwitchDataController::class, 'refreshChannelInfoData'])
     ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.info');
 
-Route::post('/twitchdata/refresh/following', [TwitchDataController::class, 'refreshFollowedChannelsData'])
+Route::post('/settings/twitchdata/refresh/following', [TwitchDataController::class, 'refreshFollowedChannelsData'])
     ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.following');
 
-Route::post('/twitchdata/refresh/followers', [TwitchDataController::class, 'refreshChannelFollowersData'])
+Route::post('/settings/twitchdata/refresh/followers', [TwitchDataController::class, 'refreshChannelFollowersData'])
     ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.followers');
 
-Route::post('/twitchdata/refresh/subscribers', [TwitchDataController::class, 'refreshSubscribersData'])
+Route::post('/settings/twitchdata/refresh/subscribers', [TwitchDataController::class, 'refreshSubscribersData'])
     ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.subscribers');
 
-Route::post('/twitchdata/refresh/goals', [TwitchDataController::class, 'refreshGoalsData'])
+Route::post('/settings/twitchdata/refresh/goals', [TwitchDataController::class, 'refreshGoalsData'])
     ->middleware(['auth.redirect', 'twitch.token'])
     ->name('twitchdata.refresh.goals');
 
@@ -589,10 +592,12 @@ Route::middleware('auth.redirect')->group(function () {
     Route::get('/settings/wiring', [WiringController::class, 'index'])->name('wiring.index');
 
     // Testing Guide
-    Route::get('/testing', [TestingController::class, 'index'])->name('testing.index');
+    Route::redirect('/testing', '/settings/testing', 301);
+    Route::get('/settings/testing', [TestingController::class, 'index'])->name('testing.index');
 
     // Access Token Management
-    Route::prefix('tokens')->name('tokens.')->group(function () {
+    Route::redirect('/tokens', '/settings/tokens', 301);
+    Route::prefix('settings/tokens')->name('tokens.')->group(function () {
         Route::get('/', [OverlayAccessTokenController::class, 'index'])->name('index');
         Route::post('/', [OverlayAccessTokenController::class, 'store'])->name('store');
         Route::post('/{token}/revoke', [OverlayAccessTokenController::class, 'revoke'])->name('revoke');
@@ -733,7 +738,8 @@ Route::middleware('auth.redirect')->group(function () {
         ->name('eventsub.connect');
 
     // Template tag reference, showing the account's current values
-    Route::get('/tags', [TemplateTagController::class, 'index'])
+    Route::redirect('/tags', '/settings/tags', 301);
+    Route::get('/settings/tags', [TemplateTagController::class, 'index'])
         ->name('tags.generator');
 
     // Replay a historical event as an alert

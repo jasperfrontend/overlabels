@@ -29,10 +29,10 @@ const sidebarNavGroups: NavGroup[] = [
     label: 'Developer tools',
     hint: 'Sensitive data. Do not open on stream.',
     items: [
-      { title: 'Token Generator', href: '/tokens' },
-      { title: 'Tags Generator', href: '/tags' },
-      { title: 'Your Twitch Data', href: '/twitchdata' },
-      { title: 'Testing Guide', href: '/testing' },
+      { title: 'Token Generator', href: '/settings/tokens' },
+      { title: 'Tags Generator', href: '/settings/tags' },
+      { title: 'Your Twitch Data', href: '/settings/twitchdata' },
+      { title: 'Testing Guide', href: '/settings/testing' },
     ],
   },
 ];
