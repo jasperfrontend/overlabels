@@ -21,7 +21,7 @@ Every donation integration provisions the same six keys, so a template written a
 |---|---|---|---|
 | [[kofi]] | `c:kofi:` | 6 | nothing |
 | [[gps]] | `c:gps:` | 13 | does not use the shared schema |
-| [[checkin]] | `c:checkin:` | 10 | does not use the shared schema |
+| [[checkin]] | `c:checkin:` | 11 | does not use the shared schema |
 | [[streamlabs]] | `c:streamlabs:` | 6 | nothing |
 | [[fourthwall]] | `c:fourthwall:` | 6 | nothing |
 | [[bmac]] | `c:bmac:` | 7 | `latest_support_type` |

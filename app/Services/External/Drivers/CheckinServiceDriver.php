@@ -34,6 +34,7 @@ class CheckinServiceDriver implements ExternalServiceDriver, StatefulExternalSer
         'checkins_this_stream',
         'unique_countries_this_stream',
         'farthest_checkin_this_stream',
+        'farthest_checkin_name_this_stream',
     ];
 
     /**
@@ -104,6 +105,10 @@ class CheckinServiceDriver implements ExternalServiceDriver, StatefulExternalSer
             ['key' => 'checkins_this_stream', 'type' => 'counter', 'label' => 'Checkins This Stream', 'value' => '0'],
             ['key' => 'unique_countries_this_stream', 'type' => 'number', 'label' => 'Unique Countries This Stream', 'value' => '0'],
             ['key' => 'farthest_checkin_this_stream', 'type' => 'number', 'label' => 'Farthest Checkin This Stream', 'value' => '0'],
+            // Text control on the per-stream reset list, so the explicit
+            // reset_value keeps the go-live reset from writing the literal
+            // string "0" into it (the latest_cheerer_name lesson).
+            ['key' => 'farthest_checkin_name_this_stream', 'type' => 'text', 'label' => 'Farthest Checkin Name This Stream', 'value' => '', 'config' => ['reset_value' => '']],
             ['key' => 'checkins_total', 'type' => 'number', 'label' => 'Checkins Total (all time)', 'value' => '0'],
             ['key' => 'latest_checkin_name', 'type' => 'text', 'label' => 'Latest Checkin Name', 'value' => ''],
             ['key' => 'latest_checkin_place', 'type' => 'text', 'label' => 'Latest Checkin Place', 'value' => ''],
@@ -178,6 +183,13 @@ class CheckinServiceDriver implements ExternalServiceDriver, StatefulExternalSer
         if ($distanceKm !== null) {
             $current = (float) $this->currentControlValue($user->id, 'farthest_checkin_this_stream');
             $updates['farthest_checkin_this_stream'] = (string) max((float) $distanceKm, $current);
+
+            // The name rides the record: it moves only when a checkin
+            // strictly beats the current farthest, so a tie keeps the
+            // original record holder and a replayed event changes nothing.
+            if ((float) $distanceKm > $current) {
+                $updates['farthest_checkin_name_this_stream'] = (string) ($raw['chatter_display_name'] ?? '');
+            }
         }
     }
 

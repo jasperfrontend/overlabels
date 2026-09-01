@@ -79,8 +79,8 @@ On the settings page you choose what a pin's life looks like:
 
 Connecting provisions these, usable anywhere as `[[[c:checkin:...]]]` and in Expression Controls:
 
-- `checkins_this_stream`, `unique_countries_this_stream`, `farthest_checkin_this_stream` -
-  per-stream, reset at go-live
+- `checkins_this_stream`, `unique_countries_this_stream`, `farthest_checkin_this_stream`,
+  `farthest_checkin_name_this_stream` - per-stream, reset at go-live
 - `checkins_total` - all time
 - `latest_checkin_name`, `latest_checkin_place`, `latest_checkin_country`, `latest_checkin_lat`,
   `latest_checkin_lng`, `latest_checkin_distance` - the most recent pin, persists across streams
@@ -94,7 +94,14 @@ through the distance pipe, so the same control speaks both systems:
 [[[c:checkin:farthest_checkin_this_stream|distance:mi]]] miles
 ```
 
-That makes `farthest_checkin_this_stream` a great "who came furthest" callout.
+That makes the farthest pair a great "who came furthest" callout -
+`farthest_checkin_name_this_stream` holds the viewer who set the record:
+
+```
+Farthest checkin: [[[c:checkin:farthest_checkin_name_this_stream]]],
+[[[c:checkin:farthest_checkin_this_stream|distance:km]]] km away
+```
+
 
 ## The raw pin feed
 

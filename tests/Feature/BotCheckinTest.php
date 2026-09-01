@@ -276,11 +276,30 @@ test('farthest checkin only ever moves up', function () {
 
     postCheckin(['args' => 'Paris']);
     $farthest = (float) checkinControlValue($this->user, 'farthest_checkin_this_stream');
+    expect(checkinControlValue($this->user, 'farthest_checkin_name_this_stream'))->toBe('ViewerOne');
 
     postCheckin(['chatter_id' => '222', 'chatter_login' => 'viewer_two', 'chatter_display_name' => 'ViewerTwo', 'args' => 'Rotterdam, NL']);
 
-    // Rotterdam is closer to Amsterdam than Paris; the record stands.
-    expect((float) checkinControlValue($this->user, 'farthest_checkin_this_stream'))->toBe($farthest);
+    // Rotterdam is closer to Amsterdam than Paris; the record stands, and so
+    // does the name of the viewer who set it.
+    expect((float) checkinControlValue($this->user, 'farthest_checkin_this_stream'))->toBe($farthest)
+        ->and(checkinControlValue($this->user, 'farthest_checkin_name_this_stream'))->toBe('ViewerOne');
+});
+
+test('a farther checkin takes the record name with it', function () {
+    connectCheckin($this->user, [
+        'home_place_label' => 'Amsterdam, NL',
+        'home_lat' => 52.37403,
+        'home_lng' => 4.88969,
+    ]);
+
+    postCheckin();
+    expect(checkinControlValue($this->user, 'farthest_checkin_name_this_stream'))->toBe('ViewerOne');
+
+    postCheckin(['chatter_id' => '222', 'chatter_login' => 'viewer_two', 'chatter_display_name' => 'ViewerTwo', 'args' => 'Paris']);
+
+    // Paris is farther from Amsterdam than Rotterdam; distance and name move together.
+    expect(checkinControlValue($this->user, 'farthest_checkin_name_this_stream'))->toBe('ViewerTwo');
 });
 
 test('unique countries counts countries, not checkins', function () {
@@ -326,6 +345,23 @@ test('going live resets the per-stream checkin controls and clears per-stream gl
         ->and(checkinControlValue($this->user, 'latest_checkin_place'))->toBe('Rotterdam, NL');
 
     Event::assertDispatched(CheckinsUpdated::class, fn (CheckinsUpdated $e) => $e->cleared && $e->count === 0);
+});
+
+test('the go-live reset clears the farthest name to empty, never the string zero', function () {
+    connectCheckin($this->user, [
+        'home_place_label' => 'Amsterdam, NL',
+        'home_lat' => 52.37403,
+        'home_lng' => 4.88969,
+    ]);
+
+    postCheckin(['args' => 'Paris']);
+    expect(checkinControlValue($this->user, 'farthest_checkin_name_this_stream'))->toBe('ViewerOne');
+
+    app(StreamSessionService::class)->openSession($this->user);
+
+    // A text control with no reset_value would get the literal string "0"
+    // (the latest_cheerer_name lesson) - the provisioned config prevents that.
+    expect(checkinControlValue($this->user, 'farthest_checkin_name_this_stream'))->toBe('');
 });
 
 test('going live does not clear globes in persistent mode', function () {

@@ -108,6 +108,7 @@ export const CHECKIN_PRESETS: ServicePreset[] = [
   { key: 'checkins_this_stream', label: 'Checkins This Stream', type: 'counter' },
   { key: 'unique_countries_this_stream', label: 'Unique Countries This Stream', type: 'number' },
   { key: 'farthest_checkin_this_stream', label: 'Farthest Checkin This Stream', type: 'number' },
+  { key: 'farthest_checkin_name_this_stream', label: 'Farthest Checkin Name This Stream', type: 'text' },
   { key: 'checkins_total', label: 'Checkins Total (all time)', type: 'number' },
   { key: 'latest_checkin_name', label: 'Latest Checkin Name', type: 'text' },
   { key: 'latest_checkin_place', label: 'Latest Checkin Place', type: 'text' },

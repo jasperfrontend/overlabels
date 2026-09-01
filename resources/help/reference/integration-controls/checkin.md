@@ -1,6 +1,6 @@
 # Chat Checkin controls
 
-Chat Checkin provisions 10 controls when you connect it. They are filled in automatically and stay up to date; you read them, Overlabels writes them.
+Chat Checkin provisions 11 controls when you connect it. They are filled in automatically and stay up to date; you read them, Overlabels writes them.
 
 Reference them anywhere a tag works, using the `c:checkin:` prefix.
 
@@ -11,6 +11,7 @@ Reference them anywhere a tag works, using the `c:checkin:` prefix.
 | `[[[c:checkin:checkins_this_stream]]]` | counter | `0` | Checkins This Stream |
 | `[[[c:checkin:unique_countries_this_stream]]]` | number | `0` | Unique Countries This Stream |
 | `[[[c:checkin:farthest_checkin_this_stream]]]` | number | `0` | Farthest Checkin This Stream |
+| `[[[c:checkin:farthest_checkin_name_this_stream]]]` | text | empty | Farthest Checkin Name This Stream |
 | `[[[c:checkin:checkins_total]]]` | number | `0` | Checkins Total (all time) |
 | `[[[c:checkin:latest_checkin_name]]]` | text | empty | Latest Checkin Name |
 | `[[[c:checkin:latest_checkin_place]]]` | text | empty | Latest Checkin Place |

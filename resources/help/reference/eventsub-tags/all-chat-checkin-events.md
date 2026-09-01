@@ -15,7 +15,7 @@ Every value arrives as a string. `event.distance` is empty unless you set a home
 `event.lat` and `event.lng` are the coordinates of the resolved CITY, never of the viewer. Checkins resolve against a city gazetteer, so nothing finer than a city can appear here - a viewer cannot pin an address onto your stream even on purpose.
 
 ### Tags and controls answer different questions
-The event tags are the single checkin that just happened; the `c:checkin:` controls are the running state: `c:checkin:checkins_this_stream`, `c:checkin:unique_countries_this_stream`, `c:checkin:farthest_checkin_this_stream`, `c:checkin:checkins_total`, plus the `latest_checkin_*` set that mirrors these tags.
+The event tags are the single checkin that just happened; the `c:checkin:` controls are the running state: `c:checkin:checkins_this_stream`, `c:checkin:unique_countries_this_stream`, `c:checkin:farthest_checkin_this_stream`, `c:checkin:farthest_checkin_name_this_stream`, `c:checkin:checkins_total`, plus the `latest_checkin_*` set that mirrors these tags.
 
 example:
 ```
