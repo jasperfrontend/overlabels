@@ -7,6 +7,7 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import RekaToast from '@/components/RekaToast.vue';
 import { Separator } from '@/components/ui/separator';
 import { parseAmountInput } from '@/utils/amountInput';
 import { type BreadcrumbItem } from '@/types';
@@ -41,6 +42,7 @@ const testModeLoading = ref(false);
 // parseAmountInput settles it into the single number the server expects.
 const seedInput = ref('');
 const seedLoading = ref(false);
+const toastMessage = ref<string | null>(null);
 const seedError = ref<string | null>(null);
 const donationsSeedSet = ref(props.integration.donations_seed_set);
 const donationsSeedValue = ref(props.integration.donations_seed_value);
@@ -63,6 +65,7 @@ async function setSeedCount() {
     });
     donationsSeedSet.value = data.donations_seed_set;
     donationsSeedValue.value = data.donations_seed_value;
+    toastMessage.value = `Starting total set to ${Number(data.donations_seed_value).toLocaleString(userLocale.value)}.`;
   } catch (e: unknown) {
     const err = e as { response?: { data?: { error?: string; errors?: { initial_count?: string[] } } } };
     seedError.value = err.response?.data?.errors?.initial_count?.[0] ?? err.response?.data?.error ?? 'Something went wrong.';
@@ -102,13 +105,6 @@ const userLocale = computed<string | undefined>(() => {
   return user?.locale || undefined;
 });
 
-const flashSuccess = computed<string | null>(() => {
-  return (page.props as { flash?: { success?: string } })?.flash?.success ?? null;
-});
-const flashError = computed<string | null>(() => {
-  return (page.props as { flash?: { error?: string } })?.flash?.error ?? null;
-});
-
 function formatDate(iso: string | null): string {
   if (!iso) return 'Never';
   return new Date(iso).toLocaleString(userLocale.value);
@@ -125,13 +121,6 @@ function formatDate(iso: string | null): string {
           <HeadingSmall title="Fourthwall" description="Receive donation alerts and update overlay controls from your Fourthwall shop." />
           <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
-        </div>
-
-        <div v-if="flashError" class="border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {{ flashError }}
-        </div>
-        <div v-if="flashSuccess" class="border border-green-500/40 bg-green-500/10 px-3 py-2 text-sm text-green-600 dark:text-green-400">
-          {{ flashSuccess }}
         </div>
 
         <!-- Not connected state -->
@@ -194,8 +183,7 @@ function formatDate(iso: string | null): string {
                   toggleTestMode();
                 "
               >
-                Test mode <span v-if="testMode" class="ml-1 text-yellow-500">enabled</span>
-                <span v-if="testModeLoading" class="ml-1 text-xs text-yellow-500">saving...</span>
+                Test mode
               </Label>
             </div>
             <p class="text-sm text-muted-foreground">
@@ -204,9 +192,6 @@ function formatDate(iso: string | null): string {
                 Turn this off before going live - your donation total will reset to {{ donationsSeedValue ?? 0 }}.
               </span>
             </p>
-            <div v-if="testMode" class="border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-400">
-              Test mode is on. Every incoming event fires an alert regardless of duplicate transaction IDs.
-            </div>
           </div>
         </template>
 
@@ -287,5 +272,6 @@ function formatDate(iso: string | null): string {
         </template>
       </div>
     </SettingsLayout>
+    <RekaToast v-if="toastMessage" :message="toastMessage" type="success" @dismiss="toastMessage = null" />
   </AppLayout>
 </template>

@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
-import { Head, usePage, router } from '@inertiajs/vue3';
+import { ref, computed, onMounted } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
 import EventsTable from '@/components/EventsTable.vue';
 import Pagination from '@/components/Pagination.vue';
-import RekaToast from '@/components/RekaToast.vue';
 import EventsEmptyState from '@/components/EventsEmptyState.vue';
 import { ChevronDown, ChevronUp, RefreshCw, SlidersHorizontal, Volume2, VolumeX } from '@lucide/vue';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
 import { useEventFilters, type EventFiltersShape } from '@/composables/useEventFilters';
 import { loadHiddenTypes, saveHiddenTypes } from '@/utils/hiddenEventTypes';
-import type { AppPageProps } from '@/types';
 
 interface UnifiedEvent {
   id: number;
@@ -114,22 +112,8 @@ onMounted(() => {
   }
 });
 
-const page = usePage<AppPageProps>();
-const toastMessage = ref<string | null>(null);
-const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 const showInfo = ref(false);
 const filtersOpen = ref(false);
-
-watch(
-  () => page.props.flash?.message,
-  (newMessage) => {
-    if (newMessage) {
-      toastMessage.value = newMessage;
-      toastType.value = (page.props.flash?.type as typeof toastType.value) || 'info';
-    }
-  },
-  { immediate: true },
-);
 
 const refreshing = ref(false);
 const muting = ref(false);
@@ -310,6 +294,4 @@ function eventTypeLabel(type: string): string {
       </div>
     </div>
   </div>
-
-  <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
 </template>

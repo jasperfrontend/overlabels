@@ -158,16 +158,6 @@ onUnmounted(() => {
   }
 });
 watch(
-  () => page.props.flash?.message,
-  (newMessage) => {
-    if (newMessage) {
-      toastMessage.value = newMessage;
-      toastType.value = page.props.flash?.type || 'info';
-    }
-  },
-  { immediate: true },
-);
-watch(
   () => auth.value.user,
   (authUser) => {
     if (authUser) {

@@ -68,7 +68,7 @@ Route::middleware('auth.redirect')->group(function () {
         $user->setPreference('chat_filters.hidden_logins', $logins);
         $user->save();
 
-        return back();
+        return back()->with('success', 'Chat display settings saved. Reload your overlay in OBS to apply them.');
     })->name('settings.chat.update');
 
     Route::patch('/settings/locale', function (Request $request) {

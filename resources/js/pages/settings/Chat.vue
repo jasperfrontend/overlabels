@@ -26,7 +26,7 @@ const hideCommands = ref(props.chatFilters.hide_commands);
 const hiddenLoginsText = ref(props.chatFilters.hidden_logins.join('\n'));
 
 const saving = ref(false);
-const confirmation = ref('');
+const saveError = ref('');
 
 const loginCount = computed(
   () =>
@@ -38,9 +38,10 @@ const loginCount = computed(
 
 const overCap = computed(() => loginCount.value > MAX_HIDDEN_LOGINS);
 
+// Success is the session flash the route sets, shown by AppLayout's toast.
 function save() {
   saving.value = true;
-  confirmation.value = '';
+  saveError.value = '';
 
   router.patch(
     route('settings.chat.update'),
@@ -50,14 +51,8 @@ function save() {
     },
     {
       preserveScroll: true,
-      onSuccess: () => {
-        confirmation.value = 'Chat display settings updated. Reload your overlay in OBS to apply them.';
-        setTimeout(() => {
-          confirmation.value = '';
-        }, 6000);
-      },
       onError: () => {
-        confirmation.value = 'Saving failed.';
+        saveError.value = 'Saving failed.';
       },
       onFinish: () => {
         saving.value = false;
@@ -114,8 +109,6 @@ function save() {
           <p v-else-if="loginCount > 0" class="text-sm text-muted-foreground">{{ loginCount }} {{ loginCount === 1 ? 'name' : 'names' }} listed.</p>
         </div>
 
-        <!-- Stacked, not side by side: the confirmation is long enough that as a
-             flex sibling it squeezed the button and wrapped its label onto two lines. -->
         <div class="flex flex-col items-start gap-3">
           <button
             type="button"
@@ -126,7 +119,7 @@ function save() {
             <Save class="mr-2 size-4" />
             {{ saving ? 'Saving...' : 'Save chat settings' }}
           </button>
-          <p v-if="confirmation" class="text-sm text-muted-foreground">{{ confirmation }}</p>
+          <p v-if="saveError" class="text-sm text-destructive">{{ saveError }}</p>
         </div>
       </div>
     </SettingsLayout>

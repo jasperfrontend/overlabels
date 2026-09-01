@@ -57,9 +57,16 @@ class HandleInertiaRequests extends Middleware
                     'foreach_caps',
                 ]) : null,
             ],
+            // One toast, rendered once in AppLayout. Controllers flash under three
+            // spellings (`message` + `type`, bare `success`, bare `error`); all
+            // three land here as message + type so no page reads the session itself.
             'flash' => [
-                'message' => fn () => $request->session()->get('message'),
-                'type' => fn () => $request->session()->get('type'),
+                'message' => fn () => $request->session()->get('message')
+                    ?? $request->session()->get('success')
+                    ?? $request->session()->get('error'),
+                'type' => fn () => $request->session()->get('type')
+                    ?? ($request->session()->has('success') ? 'success' : null)
+                    ?? ($request->session()->has('error') ? 'error' : null),
                 'fork_wizard' => fn () => $request->session()->get('fork_wizard'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

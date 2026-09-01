@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, usePage, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import EventsTable from '@/components/EventsTable.vue';
 import Pagination from '@/components/Pagination.vue';
-import RekaToast from '@/components/RekaToast.vue';
 import EventsEmptyState from '@/components/EventsEmptyState.vue';
 import EventsFeedLinkButton from '@/components/EventsFeedLinkButton.vue';
 import FilterBar from '@/components/FilterBar.vue';
@@ -14,7 +13,7 @@ import { Check, ChevronDown, ChevronRight, ListPlus, Radio, RefreshCw, Trash2 } 
 import Heading from '@/components/Heading.vue';
 import { EVENT_TYPE_LABELS } from '@/composables/useEventColors';
 import { useEventFilters, type EventFiltersShape } from '@/composables/useEventFilters';
-import type { AppPageProps, OverlayTemplate } from '@/types';
+import type { OverlayTemplate } from '@/types';
 
 interface FeedList {
   id: number;
@@ -113,21 +112,6 @@ const rangeOptions = [
   { value: '7d', label: 'Last 7 days' },
   { value: '30d', label: 'Last 30 days' },
 ];
-
-const page = usePage<AppPageProps>();
-const toastMessage = ref<string | null>(null);
-const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
-
-watch(
-  () => page.props.flash?.message,
-  (newMessage) => {
-    if (newMessage) {
-      toastMessage.value = newMessage;
-      toastType.value = (page.props.flash?.type as typeof toastType.value) || 'info';
-    }
-  },
-  { immediate: true },
-);
 
 /* ------------------ Bulk delete: clearing out the feed ------------------ */
 
@@ -607,7 +591,5 @@ const breadcrumbs = [
         </div>
       </section>
     </div>
-
-    <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
   </AppLayout>
 </template>

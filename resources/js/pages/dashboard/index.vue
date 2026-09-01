@@ -1,32 +1,18 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import WhatsNewCard from '@/components/WhatsNewCard.vue';
 import TemplateCollection from '@/components/TemplateCollection.vue';
 import UpdatesList from '@/components/UpdatesList.vue';
 import EventsTable from '@/components/EventsTable.vue';
-import RekaToast from '@/components/RekaToast.vue';
 import { Plus } from '@lucide/vue';
 import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
 import type { AppPageProps, OverlayTemplate, Update, UsageSummary, WhatsNew } from '@/types';
 import EmptyState from '@/components/EmptyState.vue';
 
 const page = usePage<AppPageProps>();
-const toastMessage = ref<string | null>(null);
-const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
-
-watch(
-  () => page.props.flash?.message,
-  (newMessage) => {
-    if (newMessage) {
-      toastMessage.value = newMessage;
-      toastType.value = (page.props.flash?.type as typeof toastType.value) || 'info';
-    }
-  },
-  { immediate: true },
-);
 
 interface UnifiedEvent {
   id: number;
@@ -133,6 +119,5 @@ const breadcrumbs = [
         </Card>
       </section>
     </div>
-    <RekaToast v-if="toastMessage" :message="toastMessage" :type="toastType" @dismiss="toastMessage = null" />
   </AppLayout>
 </template>

@@ -97,7 +97,8 @@ class BotCommandsController extends Controller
         // bump() provisions again at fire time, so this is convenience only.
         $this->counters->provision($user, $data['reply']);
 
-        return redirect()->route('settings.bot.commands.index');
+        return redirect()->route('settings.bot.commands.index')
+            ->with('success', "Command !{$data['command']} created.");
     }
 
     public function update(Request $request, BotCommand $botCommand): RedirectResponse
@@ -118,16 +119,19 @@ class BotCommandsController extends Controller
 
         $this->counters->provision($request->user(), $data['reply']);
 
-        return redirect()->route('settings.bot.commands.index');
+        return redirect()->route('settings.bot.commands.index')
+            ->with('success', "Command !{$data['command']} saved.");
     }
 
     public function destroy(Request $request, BotCommand $botCommand): RedirectResponse
     {
         abort_unless($botCommand->user_id === $request->user()->id, 404);
 
+        $command = $botCommand->command;
         $botCommand->delete();
 
-        return redirect()->route('settings.bot.commands.index');
+        return redirect()->route('settings.bot.commands.index')
+            ->with('success', "Command !{$command} deleted.");
     }
 
     /**

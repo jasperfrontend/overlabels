@@ -83,7 +83,8 @@ class BotAliasesController extends Controller
             'hidden' => $data['hidden'],
         ]);
 
-        return redirect()->route('settings.bot.aliases.index');
+        return redirect()->route('settings.bot.aliases.index')
+            ->with('success', "Alias !{$data['command']} created.");
     }
 
     public function update(Request $request, BotAlias $botAlias): RedirectResponse
@@ -101,16 +102,19 @@ class BotAliasesController extends Controller
             'hidden' => $data['hidden'],
         ]);
 
-        return redirect()->route('settings.bot.aliases.index');
+        return redirect()->route('settings.bot.aliases.index')
+            ->with('success', "Alias !{$data['command']} saved.");
     }
 
     public function destroy(Request $request, BotAlias $botAlias): RedirectResponse
     {
         abort_unless($botAlias->user_id === $request->user()->id, 404);
 
+        $command = $botAlias->command;
         $botAlias->delete();
 
-        return redirect()->route('settings.bot.aliases.index');
+        return redirect()->route('settings.bot.aliases.index')
+            ->with('success', "Alias !{$command} deleted.");
     }
 
     private function validatePayload(Request $request, ?BotAlias $existing = null): array

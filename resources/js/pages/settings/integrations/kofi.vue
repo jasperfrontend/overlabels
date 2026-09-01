@@ -8,6 +8,7 @@ import HeadingSmall from '@/components/HeadingSmall.vue';
 import EventTypeToggleList from '@/components/EventTypeToggleList.vue';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import RekaToast from '@/components/RekaToast.vue';
 import { Separator } from '@/components/ui/separator';
 import { parseAmountInput } from '@/utils/amountInput';
 import { type BreadcrumbItem } from '@/types';
@@ -59,6 +60,7 @@ const testModeLoading = ref(false);
 // it into the single number the server expects.
 const seedInput = ref('');
 const seedLoading = ref(false);
+const toastMessage = ref<string | null>(null);
 const seedError = ref<string | null>(null);
 const donationsSeedSet = ref(props.integration.donations_seed_set);
 const donationsSeedValue = ref(props.integration.donations_seed_value);
@@ -81,6 +83,7 @@ async function setSeedCount() {
     });
     donationsSeedSet.value = data.donations_seed_set;
     donationsSeedValue.value = data.donations_seed_value;
+    toastMessage.value = `Starting total set to ${Number(data.donations_seed_value).toLocaleString(userLocale.value)}.`;
   } catch (e: any) {
     seedError.value = e.response?.data?.errors?.initial_count?.[0] ?? e.response?.data?.error ?? 'Something went wrong.';
   } finally {
@@ -180,7 +183,7 @@ function formatDate(iso: string | null): string {
               id="verification_token"
               v-model="form.verification_token"
               type="text"
-              :placeholder="integration.has_token ? '(token saved — enter new to replace)' : 'Paste your verification token'"
+              :placeholder="integration.has_token ? '(token saved - enter new to replace)' : 'Paste your verification token'"
               autocomplete="off"
               class="input-border w-full"
             />
@@ -254,19 +257,15 @@ function formatDate(iso: string | null): string {
                   toggleTestMode();
                 "
               >
-                Test mode <span v-if="testMode" class="ml-1 text-yellow-500">enabled</span>
-                <span v-if="testModeLoading" class="ml-1 text-xs text-yellow-500">saving…</span>
+                Test mode
               </Label>
             </div>
             <p class="text-sm text-muted-foreground">
               Disables duplicate event detection. Fire the same Ko-fi webhook as many times as you like.
               <span v-if="testMode" class="font-bold text-yellow-500">
-                Turn this off before going live — your donation total will reset to {{ donationsSeedValue ?? 0 }}.
+                Turn this off before going live - your donation total will reset to {{ donationsSeedValue ?? 0 }}.
               </span>
             </p>
-            <div v-if="testMode" class="border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-400">
-              Test mode is on. Every incoming webhook fires an alert regardless of duplicate transaction IDs.
-            </div>
           </div>
         </template>
 
@@ -276,7 +275,7 @@ function formatDate(iso: string | null): string {
           <div class="space-y-2">
             <p class="text-sm font-medium">Starting donation total</p>
 
-            <!-- Already seeded — locked -->
+            <!-- Already seeded - locked -->
             <template v-if="donationsSeedSet">
               <p class="text-sm text-muted-foreground">
                 Starting total set to <strong>{{ donationsSeedValue?.toLocaleString(userLocale) }}</strong
@@ -299,7 +298,7 @@ function formatDate(iso: string | null): string {
                   <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
                 </div>
                 <button type="button" class="btn btn-primary" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
-                  {{ seedLoading ? 'Saving…' : 'Set starting total' }}
+                  {{ seedLoading ? 'Saving...' : 'Set starting total' }}
                 </button>
               </div>
             </template>
@@ -327,7 +326,7 @@ function formatDate(iso: string | null): string {
                   <p v-if="seedError" class="text-xs text-destructive">{{ seedError }}</p>
                 </div>
                 <button type="button" class="btn btn-primary" :disabled="seedLoading || seedAmount === null" @click="setSeedCount">
-                  {{ seedLoading ? 'Saving…' : 'Set starting total' }}
+                  {{ seedLoading ? 'Saving...' : 'Set starting total' }}
                 </button>
               </div>
             </template>
@@ -347,5 +346,6 @@ function formatDate(iso: string | null): string {
         </template>
       </div>
     </SettingsLayout>
+    <RekaToast v-if="toastMessage" :message="toastMessage" type="success" @dismiss="toastMessage = null" />
   </AppLayout>
 </template>

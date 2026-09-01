@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Button } from '@/components/ui/button';
@@ -31,9 +31,6 @@ const props = defineProps<{
   broadcasterLogin: string;
   recentRateLimits: RateLimitEvent[];
 }>();
-
-const page = usePage();
-const flash = computed(() => (page.props.flash ?? {}) as { message?: string; type?: 'success' | 'error' });
 
 const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
@@ -79,14 +76,6 @@ function toggleDebug() {
         title="Chat Castle control panel"
         :description="`Controls for ${broadcasterLogin}'s game. Mirrors the gamejam:* artisan commands.`"
       />
-
-      <div
-        v-if="flash.message"
-        class="rounded-sm border p-3 text-sm"
-        :class="flash.type === 'error' ? 'border-red-500/30 bg-red-500/5 text-red-500' : 'border-green-500/30 bg-green-500/5 text-green-500'"
-      >
-        {{ flash.message }}
-      </div>
 
       <!-- Current state -->
       <section class="space-y-3 rounded-sm border border-border p-4">

@@ -5,6 +5,7 @@ import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import Modal from '@/components/Modal.vue';
+import RekaToast from '@/components/RekaToast.vue';
 import Heading from '@/components/Heading.vue';
 import CollectionList from '@/components/CollectionList.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -101,10 +102,15 @@ const copyToken = async () => {
   await alert('Token copied to clipboard!');
 };
 
+// Revoke and delete both leave the list looking almost the same, so they say
+// what they did. The create flow has its own modal and needs no toast.
+const toastMessage = ref<string | null>(null);
+
 const revokeToken = async (t: Token) => {
   if (!(await confirm({ message: 'Are you sure you want to revoke this token?', confirmLabel: 'Revoke' }))) return;
   try {
     await axios.post(`/tokens/${t.id}/revoke`);
+    toastMessage.value = `Token "${t.name}" revoked. It no longer opens any overlay.`;
     router.reload({ only: ['tokens'] });
   } catch (error) {
     console.error('Failed to revoke token:', error);
@@ -116,6 +122,7 @@ const deleteToken = async (t: Token) => {
   if (!(await confirm({ message: 'Are you sure you want to delete this token? This cannot be undone.', confirmLabel: 'Delete' }))) return;
   try {
     await axios.delete(`/tokens/${t.id}`);
+    toastMessage.value = `Token "${t.name}" deleted.`;
     router.reload({ only: ['tokens'] });
   } catch (error) {
     console.error('Failed to delete token:', error);
@@ -269,6 +276,8 @@ const formatDate = (date: string | null | undefined) => (date ? new Date(date).t
           </button>
         </div>
       </Modal>
+
+      <RekaToast v-if="toastMessage" :message="toastMessage" type="success" @dismiss="toastMessage = null" />
     </SettingsLayout>
   </AppLayout>
 </template>

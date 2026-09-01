@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { ref, watch } from 'vue';
 
@@ -71,8 +71,6 @@ watch([eventType, processed], () => {
   debounce = setTimeout(applyFilters, 300);
 });
 
-const page = usePage();
-
 const prunePeriod = ref('90');
 const showPruneConfirm = ref(false);
 
@@ -99,13 +97,6 @@ watch([prunePeriod, () => props.source], () => {
           <span class="text-sm text-muted-foreground">{{ events.total }} total</span>
         </template>
       </PageHeader>
-
-      <div
-        v-if="page.props.flash?.message"
-        class="rounded border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-700 dark:bg-green-950 dark:text-green-300"
-      >
-        {{ page.props.flash.message }}
-      </div>
 
       <!-- Source tabs -->
       <div class="flex gap-1">

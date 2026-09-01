@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
 interface AccessLog {
@@ -29,8 +29,6 @@ const props = defineProps<{
   logs: Paginator;
   filters: { template_slug?: string; from?: string; to?: string };
 }>();
-
-const page = usePage();
 
 const breadcrumbs = [
   { title: 'Admin', href: route('admin.dashboard') },
@@ -86,13 +84,6 @@ watch(prunePeriod, () => {
           <span class="text-sm text-muted-foreground">{{ logs.total }} total</span>
         </template>
       </PageHeader>
-
-      <div
-        v-if="page.props.flash?.message"
-        class="rounded border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-700 dark:bg-green-950 dark:text-green-300"
-      >
-        {{ page.props.flash.message }}
-      </div>
 
       <div class="flex flex-wrap gap-2">
         <input v-model="templateSlug" placeholder="Template slug…" class="rounded border bg-background px-3 py-1.5 text-sm" />
