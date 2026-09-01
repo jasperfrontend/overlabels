@@ -49,8 +49,12 @@ final class HelpCorpus
      *
      * Anything not on this list must not collide - see HelpUnificationTest. A
      * silent collision would repoint existing links to a different document.
+     *
+     * `checkin` is the same situation as `chat`: the generated
+     * integration-controls reference entry owns the wikilink name, the guide
+     * at /help/checkin is reached by ordinary markdown links.
      */
-    public const SHADOWED_PAGE_SLUGS = ['chat'];
+    public const SHADOWED_PAGE_SLUGS = ['chat', 'checkin'];
 
     public const KIND_LABELS = [
         self::KIND_TUTORIAL => 'Tutorial',

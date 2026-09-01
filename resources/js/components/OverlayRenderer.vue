@@ -45,6 +45,8 @@ import { type BadgeManifest, EMPTY_BADGE_MANIFEST, badgeImages, toBadgeManifest 
 import { toChatFilters } from '@/utils/chatFilters';
 import { withChatSlots } from '@/utils/chatSlots';
 import { DEFAULT_CHECKINS_WINDOW, clampCheckinsWindow, pinsFromData, toPin, upsertPin, withCheckinSlots } from '@/utils/checkinSlots';
+import { GLOBE_SELECTOR, replaceGlobeTags, sourceUsesGlobe } from '@/globe/globeTag';
+import type { GlobeInstance } from '@/globe/checkinGlobe';
 import type { ChatMessage } from '@/utils/ircParser';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
 import { useCssCustomProperties } from '@/composables/useCssCustomProperties';
@@ -149,6 +151,13 @@ const templateUsesBadgeArt = computed(() => {
   const source = `${rawHtml.value ?? ''}\n${css.value ?? ''}`;
   return /\[\[\[[\w]+\.badge_images\b/.test(source);
 });
+
+/**
+ * Does this template embed the 3D checkin globe? Gates both the literal
+ * placeholder pre-pass in compiledHtml and the lazy three.js chunk - the
+ * same source-gating discipline as chat and badge art above.
+ */
+const templateUsesGlobe = computed(() => sourceUsesGlobe(rawHtml.value ?? ''));
 
 /**
  * Render one chat message to safe HTML for the `chat.N.html` slot.
@@ -417,7 +426,10 @@ function parseSource(source: string | null | undefined, encode: boolean = true):
   return result;
 }
 
-const compiledHtml = computed(() => parseSource(rawHtml.value, true));
+// The globe tag is a literal pre-pass over the AUTHORED source, before the
+// block engine and tag pass - a data-driven tag cannot emit markup (values
+// render HTML-encoded, absent values render ''). See globeTag.ts.
+const compiledHtml = computed(() => parseSource(templateUsesGlobe.value ? replaceGlobeTags(rawHtml.value) : rawHtml.value, true));
 // On the fast path, compiledCss resolves to the statically-rewritten stylesheet
 // (no `data.value` dependency), so the computed never re-runs after mount and
 // the watcher fires exactly once for the initial inject. Tag updates flow
@@ -468,10 +480,80 @@ watchEffect(
     morphdom(el, template, {
       childrenOnly: true,
       getNodeKey: getMorphNodeKey,
+      // The globe mounts a canvas + label layer INSIDE its placeholder, while
+      // the compiled HTML always contains the placeholder empty - without
+      // this guard every data write would wipe the mounted globe.
+      onBeforeElChildrenUpdated: (fromEl) => !fromEl.hasAttribute('data-checkin-globe'),
     });
+
+    if (templateUsesGlobe.value) {
+      syncGlobes();
+    }
   },
   { flush: 'post' },
 );
+
+// ── Checkin globe ────────────────────────────────────────────────────────────
+// three.js only ever downloads when the template contains the globe tag (the
+// emote-library discipline). Instances are keyed by their placeholder element
+// so morphdom re-renders (guarded above) and template edits both stay clean.
+let globeModule: typeof import('@/globe/checkinGlobe') | null = null;
+let globeModuleLoading = false;
+const globeInstances = new Map<HTMLElement, GlobeInstance>();
+
+function loadGlobeModule() {
+  if (globeModule || globeModuleLoading) return;
+  globeModuleLoading = true;
+  void import('@/globe/checkinGlobe')
+    .then((mod) => {
+      globeModule = mod;
+      syncGlobes();
+    })
+    .catch((err) => {
+      // A failed chunk degrades to an empty placeholder rather than killing
+      // the overlay - same contract as the emote library.
+      console.warn('checkin globe failed to load', err);
+    })
+    .finally(() => {
+      globeModuleLoading = false;
+    });
+}
+
+function syncGlobes() {
+  if (!globeModule) {
+    loadGlobeModule();
+    return;
+  }
+  const container = staticContainer.value;
+  if (!container) return;
+
+  const pins = data.value ? pinsFromData(data.value) : [];
+  const present = new Set<HTMLElement>();
+
+  for (const el of container.querySelectorAll<HTMLElement>(GLOBE_SELECTOR)) {
+    present.add(el);
+    let instance = globeInstances.get(el);
+    if (!instance) {
+      instance = globeModule.mountCheckinGlobe(el);
+      globeInstances.set(el, instance);
+    }
+    instance.update(pins);
+  }
+
+  for (const [el, instance] of globeInstances) {
+    if (!present.has(el)) {
+      instance.destroy();
+      globeInstances.delete(el);
+    }
+  }
+}
+
+function destroyGlobes() {
+  for (const instance of globeInstances.values()) {
+    instance.destroy();
+  }
+  globeInstances.clear();
+}
 
 // Alert overlay gets the same treatment below, once compiledAlertHtml is
 // declared (see after the alert section).
@@ -897,6 +979,9 @@ onUnmounted(() => {
   health.destroy();
   expressionEngine.destroy();
   cssApplier.teardown();
+  // Cancels the globes' animation frames and disposes their WebGL contexts;
+  // an OBS source that reloads would otherwise leak a context per reload.
+  destroyGlobes();
   // Closes the socket, cancels the reconnect backoff and drops any queued
   // flush. Without this an OBS source that reloads leaks a connection per
   // reload, and the backoff timer keeps reopening one after the component dies.

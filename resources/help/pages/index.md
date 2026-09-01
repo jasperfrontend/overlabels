@@ -90,6 +90,8 @@ Short, copy-and-paste tutorials. Each one ends with something on screen.
   per-message tag, badges and emotes, Shared Chat, the display filters, and the four chat controls.
 - [**Twitch Chat Bot**](/help/bot) - the @overlabels bot joins your channel so viewers and mods can
   change controls from chat.
+- [**Chat Checkin**](/help/checkin) - viewers pin themselves on a 3D globe with !checkin. The globe
+  tag, the pin feed, counters, distances and alerts.
 - [**Chat Castle**](/help/gamejam) - chat-driven dungeon raid. Commands, rounds, energy blocks, chest
   contents, and how to not lose the HP pool.
 

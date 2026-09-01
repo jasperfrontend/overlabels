@@ -92,6 +92,7 @@ export default defineConfig(() => ({
                         { name: 'codemirror', test: /node_modules[\\/](vue-codemirror|codemirror|@codemirror)[\\/]/ },
                         { name: 'websocket', test: /node_modules[\\/](pusher-js|laravel-echo)[\\/]/ },
                         { name: 'leaflet', test: /node_modules[\\/]leaflet[\\/]/ },
+                        { name: 'globe', test: /node_modules[\\/]three[\\/]/ },
                     ],
                 },
             },
