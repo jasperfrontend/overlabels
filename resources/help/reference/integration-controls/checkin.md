@@ -10,14 +10,14 @@ Reference them anywhere a tag works, using the `c:checkin:` prefix.
 |---|---|---|---|
 | `[[[c:checkin:checkins_this_stream]]]` | counter | `0` | Checkins This Stream |
 | `[[[c:checkin:unique_countries_this_stream]]]` | number | `0` | Unique Countries This Stream |
-| `[[[c:checkin:farthest_checkin_km_this_stream]]]` | number | `0` | Farthest Checkin This Stream (km) |
+| `[[[c:checkin:farthest_checkin_this_stream]]]` | number | `0` | Farthest Checkin This Stream |
 | `[[[c:checkin:checkins_total]]]` | number | `0` | Checkins Total (all time) |
 | `[[[c:checkin:latest_checkin_name]]]` | text | empty | Latest Checkin Name |
 | `[[[c:checkin:latest_checkin_place]]]` | text | empty | Latest Checkin Place |
 | `[[[c:checkin:latest_checkin_country]]]` | text | empty | Latest Checkin Country |
 | `[[[c:checkin:latest_checkin_lat]]]` | text | empty | Latest Checkin Latitude |
 | `[[[c:checkin:latest_checkin_lng]]]` | text | empty | Latest Checkin Longitude |
-| `[[[c:checkin:latest_checkin_distance_km]]]` | number | `0` | Latest Checkin Distance (km) |
+| `[[[c:checkin:latest_checkin_distance]]]` | number | `0` | Latest Checkin Distance |
 
 ## Events that update them
 

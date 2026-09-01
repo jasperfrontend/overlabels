@@ -7,21 +7,21 @@ available on the `checkin` event, fired when a viewer runs `!checkin <place>` in
 - `[[[event.country_code]]]` :: Two-letter country code, e.g. "NL"
 - `[[[event.lat]]]` :: City latitude in decimal degrees
 - `[[[event.lng]]]` :: City longitude in decimal degrees
-- `[[[event.distance_km]]]` :: Distance in km from your home location :: empty when no home location is set
+- `[[[event.distance]]]` :: Distance from your home location, in km :: empty when no home location is set :: render with `[[[event.distance|distance:km]]]` or `|distance:mi`
 
-Every value arrives as a string. `event.distance_km` is empty unless you set a home location on the Chat Checkin settings page - use `??` for a fallback: `[[[event.distance_km ?? 0]]]`.
+Every value arrives as a string. `event.distance` is empty unless you set a home location on the Chat Checkin settings page - use `??` for a fallback: `[[[event.distance ?? 0]]]`.
 
 ### Coordinates are city-level
 `event.lat` and `event.lng` are the coordinates of the resolved CITY, never of the viewer. Checkins resolve against a city gazetteer, so nothing finer than a city can appear here - a viewer cannot pin an address onto your stream even on purpose.
 
 ### Tags and controls answer different questions
-The event tags are the single checkin that just happened; the `c:checkin:` controls are the running state: `c:checkin:checkins_this_stream`, `c:checkin:unique_countries_this_stream`, `c:checkin:farthest_checkin_km_this_stream`, `c:checkin:checkins_total`, plus the `latest_checkin_*` set that mirrors these tags.
+The event tags are the single checkin that just happened; the `c:checkin:` controls are the running state: `c:checkin:checkins_this_stream`, `c:checkin:unique_countries_this_stream`, `c:checkin:farthest_checkin_this_stream`, `c:checkin:checkins_total`, plus the `latest_checkin_*` set that mirrors these tags.
 
 example:
 ```
 <div class="checkin-alert">
   [[[event.user_name]]] joined from [[[event.place]]]
-  [[[if:event.distance_km]]]<span>[[[event.distance_km]]] km away</span>[[[endif]]]
+  [[[if:event.distance]]]<span>[[[event.distance|distance:km]]] km away</span>[[[endif]]]
 </div>
 ```
 

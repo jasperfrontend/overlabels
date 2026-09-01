@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Cache;
  *
  * The payload this driver normalizes is therefore controller-built, already
  * enriched with resolver output and upsert facts (pin_created,
- * new_this_stream, total_pins, distance_km). The driver maps facts onto
+ * new_this_stream, total_pins, distance). The driver maps facts onto
  * controls; it never re-derives them.
  */
 class CheckinServiceDriver implements ExternalServiceDriver, StatefulExternalServiceDriver
@@ -33,7 +33,7 @@ class CheckinServiceDriver implements ExternalServiceDriver, StatefulExternalSer
     public const array PER_STREAM_CONTROL_KEYS = [
         'checkins_this_stream',
         'unique_countries_this_stream',
-        'farthest_checkin_km_this_stream',
+        'farthest_checkin_this_stream',
     ];
 
     /**
@@ -64,7 +64,10 @@ class CheckinServiceDriver implements ExternalServiceDriver, StatefulExternalSer
 
     public function normalizeEvent(array $payload, string $eventType): NormalizedExternalEvent
     {
-        $distanceKm = $payload['distance_km'] ?? null;
+        // Kilometers, like every distance in the pipeline: the |distance:
+        // pipe's documented input unit. Presentation (km or mi) is the
+        // template's call, never the tag name's.
+        $distanceKm = $payload['distance'] ?? null;
 
         $tags = [
             'event.user_name' => (string) ($payload['chatter_display_name'] ?? ''),
@@ -74,7 +77,7 @@ class CheckinServiceDriver implements ExternalServiceDriver, StatefulExternalSer
             'event.country_code' => (string) ($payload['country_code'] ?? ''),
             'event.lat' => (string) ($payload['lat'] ?? ''),
             'event.lng' => (string) ($payload['lng'] ?? ''),
-            'event.distance_km' => $distanceKm !== null ? (string) $distanceKm : '',
+            'event.distance' => $distanceKm !== null ? (string) $distanceKm : '',
         ];
 
         return new NormalizedExternalEvent(
@@ -100,14 +103,14 @@ class CheckinServiceDriver implements ExternalServiceDriver, StatefulExternalSer
         return [
             ['key' => 'checkins_this_stream', 'type' => 'counter', 'label' => 'Checkins This Stream', 'value' => '0'],
             ['key' => 'unique_countries_this_stream', 'type' => 'number', 'label' => 'Unique Countries This Stream', 'value' => '0'],
-            ['key' => 'farthest_checkin_km_this_stream', 'type' => 'number', 'label' => 'Farthest Checkin This Stream (km)', 'value' => '0'],
+            ['key' => 'farthest_checkin_this_stream', 'type' => 'number', 'label' => 'Farthest Checkin This Stream', 'value' => '0'],
             ['key' => 'checkins_total', 'type' => 'number', 'label' => 'Checkins Total (all time)', 'value' => '0'],
             ['key' => 'latest_checkin_name', 'type' => 'text', 'label' => 'Latest Checkin Name', 'value' => ''],
             ['key' => 'latest_checkin_place', 'type' => 'text', 'label' => 'Latest Checkin Place', 'value' => ''],
             ['key' => 'latest_checkin_country', 'type' => 'text', 'label' => 'Latest Checkin Country', 'value' => ''],
             ['key' => 'latest_checkin_lat', 'type' => 'text', 'label' => 'Latest Checkin Latitude', 'value' => ''],
             ['key' => 'latest_checkin_lng', 'type' => 'text', 'label' => 'Latest Checkin Longitude', 'value' => ''],
-            ['key' => 'latest_checkin_distance_km', 'type' => 'number', 'label' => 'Latest Checkin Distance (km)', 'value' => '0'],
+            ['key' => 'latest_checkin_distance', 'type' => 'number', 'label' => 'Latest Checkin Distance', 'value' => '0'],
         ];
     }
 
@@ -127,8 +130,8 @@ class CheckinServiceDriver implements ExternalServiceDriver, StatefulExternalSer
             $updates['checkins_total'] = (string) (int) $raw['total_pins'];
         }
 
-        if (($raw['distance_km'] ?? null) !== null) {
-            $updates['latest_checkin_distance_km'] = (string) $raw['distance_km'];
+        if (($raw['distance'] ?? null) !== null) {
+            $updates['latest_checkin_distance'] = (string) $raw['distance'];
         }
 
         // Counters count unique viewers, not command invocations: a pin move
@@ -170,11 +173,11 @@ class CheckinServiceDriver implements ExternalServiceDriver, StatefulExternalSer
             $updates['unique_countries_this_stream'] = (string) max(count($set), $current);
         }
 
-        $distanceKm = $raw['distance_km'] ?? null;
+        $distanceKm = $raw['distance'] ?? null;
 
         if ($distanceKm !== null) {
-            $current = (float) $this->currentControlValue($user->id, 'farthest_checkin_km_this_stream');
-            $updates['farthest_checkin_km_this_stream'] = (string) max((float) $distanceKm, $current);
+            $current = (float) $this->currentControlValue($user->id, 'farthest_checkin_this_stream');
+            $updates['farthest_checkin_this_stream'] = (string) max((float) $distanceKm, $current);
         }
     }
 

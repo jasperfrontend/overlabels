@@ -99,8 +99,8 @@ class BotCheckinController extends Controller
 
         $reply = "{$data['chatter_display_name']} checked in from {$place->label()}!";
 
-        if ($payload['distance_km'] !== null && $payload['distance_km'] >= 1) {
-            $reply .= ' That is '.number_format((float) $payload['distance_km']).' km away.';
+        if ($payload['distance'] !== null && $payload['distance'] >= 1) {
+            $reply .= ' That is '.number_format((float) $payload['distance']).' km away.';
         }
 
         return response()->json(['reply' => $reply]);
@@ -172,7 +172,9 @@ class BotCheckinController extends Controller
             'country_name' => $place->countryName,
             'lat' => $place->lat,
             'lng' => $place->lng,
-            'distance_km' => $distanceKm,
+            // Kilometers - the |distance: pipe's input unit. Only the DB
+            // column keeps the unit in its name, as documentation at rest.
+            'distance' => $distanceKm,
             'at' => $now->getTimestamp(),
             'pin_created' => $existing === null,
             'new_this_stream' => $newThisStream,

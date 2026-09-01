@@ -75,15 +75,22 @@ On the settings page you choose what a pin's life looks like:
 
 Connecting provisions these, usable anywhere as `[[[c:checkin:...]]]` and in Expression Controls:
 
-- `checkins_this_stream`, `unique_countries_this_stream`, `farthest_checkin_km_this_stream` -
+- `checkins_this_stream`, `unique_countries_this_stream`, `farthest_checkin_this_stream` -
   per-stream, reset at go-live
 - `checkins_total` - all time
 - `latest_checkin_name`, `latest_checkin_place`, `latest_checkin_country`, `latest_checkin_lat`,
-  `latest_checkin_lng`, `latest_checkin_distance_km` - the most recent pin, persists across streams
+  `latest_checkin_lng`, `latest_checkin_distance` - the most recent pin, persists across streams
 
 Distances need a home location (your own city, set on the settings page). Set it and every checkin
-gets its haversine distance from home - `farthest_checkin_km_this_stream` makes a great
-"who came furthest" callout.
+gets its haversine distance from home. Distance values are stored in kilometers and rendered
+through the distance pipe, so the same control speaks both systems:
+
+```
+[[[c:checkin:farthest_checkin_this_stream|distance:km]]] km
+[[[c:checkin:farthest_checkin_this_stream|distance:mi]]] miles
+```
+
+That makes `farthest_checkin_this_stream` a great "who came furthest" callout.
 
 ## The raw pin feed
 
@@ -91,12 +98,12 @@ Prefer to build your own visualization? The pins are a foreach iterable, newest 
 
 ```
 [[[foreach:checkins as pin]]]
-  <div>[[[pin.name]]] - [[[pin.place]]] ([[[pin.distance_km]]] km)</div>
+  <div>[[[pin.name]]] - [[[pin.place]]] ([[[pin.distance|distance:km]]] km)</div>
 [[[endforeach]]]
 ```
 
 Fields: `name`, `login`, `place`, `country`, `country_code`, `lat`, `lng`, `at` (Unix seconds),
-`distance_km` (empty without a home location). `[[[checkins.count]]]` is the total in the current
+`distance` (km, empty without a home location). `[[[checkins.count]]]` is the total in the current
 window. The number of pins kept is a foreach cap on [Settings - Account](/settings/account),
 default 50.
 

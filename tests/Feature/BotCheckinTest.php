@@ -222,8 +222,8 @@ test('a home location gives checkins a distance', function () {
     // Amsterdam to Paris is ~430 km as the haversine flies.
     expect($pin->distance_km)->toBeGreaterThan(400)->toBeLessThan(460)
         ->and($response->json('reply'))->toContain('km away')
-        ->and((float) checkinControlValue($this->user, 'latest_checkin_distance_km'))->toBeGreaterThan(400)
-        ->and((float) checkinControlValue($this->user, 'farthest_checkin_km_this_stream'))->toBeGreaterThan(400);
+        ->and((float) checkinControlValue($this->user, 'latest_checkin_distance'))->toBeGreaterThan(400)
+        ->and((float) checkinControlValue($this->user, 'farthest_checkin_this_stream'))->toBeGreaterThan(400);
 });
 
 test('farthest checkin only ever moves up', function () {
@@ -234,12 +234,12 @@ test('farthest checkin only ever moves up', function () {
     ]);
 
     postCheckin(['args' => 'Paris']);
-    $farthest = (float) checkinControlValue($this->user, 'farthest_checkin_km_this_stream');
+    $farthest = (float) checkinControlValue($this->user, 'farthest_checkin_this_stream');
 
     postCheckin(['chatter_id' => '222', 'chatter_login' => 'viewer_two', 'chatter_display_name' => 'ViewerTwo', 'args' => 'Rotterdam, NL']);
 
     // Rotterdam is closer to Amsterdam than Paris; the record stands.
-    expect((float) checkinControlValue($this->user, 'farthest_checkin_km_this_stream'))->toBe($farthest);
+    expect((float) checkinControlValue($this->user, 'farthest_checkin_this_stream'))->toBe($farthest);
 });
 
 test('unique countries counts countries, not checkins', function () {
@@ -280,7 +280,7 @@ test('going live resets the per-stream checkin controls and clears per-stream gl
 
     expect(checkinControlValue($this->user, 'checkins_this_stream'))->toBe('0')
         ->and(checkinControlValue($this->user, 'unique_countries_this_stream'))->toBe('0')
-        ->and(checkinControlValue($this->user, 'farthest_checkin_km_this_stream'))->toBe('0')
+        ->and(checkinControlValue($this->user, 'farthest_checkin_this_stream'))->toBe('0')
         // latest_* persist across streams - the latest_cheer* rule.
         ->and(checkinControlValue($this->user, 'latest_checkin_place'))->toBe('Rotterdam, NL');
 

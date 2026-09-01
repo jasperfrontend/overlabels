@@ -11,7 +11,7 @@ function pin(login: string, place = 'Rotterdam, NL'): CheckinPin {
     lat: '51.9225',
     lng: '4.47917',
     at: '1756700000',
-    distance_km: '',
+    distance: '',
   };
 }
 

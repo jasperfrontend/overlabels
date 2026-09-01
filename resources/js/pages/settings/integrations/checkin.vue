@@ -138,8 +138,9 @@ function formatDate(iso: string | null): string {
             <Label for="home_place">Home location</Label>
             <p class="text-sm text-muted-foreground">
               Your own city, so checkins get a distance. Powers
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10">latest_checkin_distance_km</code> and
-              <code class="rounded bg-black/10 px-1 dark:bg-white/10">farthest_checkin_km_this_stream</code>. Leave empty to skip distances.
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10">latest_checkin_distance</code> and
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10">farthest_checkin_this_stream</code> - render them in km or miles with the
+              <code class="rounded bg-black/10 px-1 dark:bg-white/10">|distance:km</code> pipe. Leave empty to skip distances.
             </p>
             <Input id="home_place" v-model="form.home_place" placeholder="Rotterdam, NL" autocomplete="off" />
             <p v-if="form.errors.home_place" class="text-sm text-destructive">{{ form.errors.home_place }}</p>

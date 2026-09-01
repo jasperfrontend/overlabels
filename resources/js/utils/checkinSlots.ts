@@ -16,7 +16,9 @@ export const CHECKIN_SLOT_PREFIX = 'checkins.';
 
 export const DEFAULT_CHECKINS_WINDOW = 50;
 
-export const PIN_FIELDS = ['name', 'login', 'place', 'country', 'country_code', 'lat', 'lng', 'at', 'distance_km'] as const;
+// `distance` is kilometers - the |distance: pipe's input unit; the name
+// stays unit-free so the pipe owns presentation.
+export const PIN_FIELDS = ['name', 'login', 'place', 'country', 'country_code', 'lat', 'lng', 'at', 'distance'] as const;
 
 export type CheckinPin = Record<(typeof PIN_FIELDS)[number], string>;
 

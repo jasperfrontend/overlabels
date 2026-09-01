@@ -106,7 +106,9 @@ class Checkin extends Model
             'lat' => (string) $this->lat,
             'lng' => (string) $this->lng,
             'at' => (string) $this->checked_in_at->getTimestamp(),
-            'distance_km' => $this->distance_km !== null ? (string) $this->distance_km : '',
+            // Kilometers, unit-free name: presentation belongs to the
+            // |distance: pipe (km or mi), never to the field name.
+            'distance' => $this->distance_km !== null ? (string) $this->distance_km : '',
         ];
     }
 }

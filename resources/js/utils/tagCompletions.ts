@@ -157,7 +157,7 @@ const ITEM_FIELDS: Record<string, string[]> = {
     'source_channel',
   ],
   // Mirrors checkinSlots.ts.
-  checkins: ['name', 'login', 'place', 'country', 'country_code', 'lat', 'lng', 'at', 'distance_km'],
+  checkins: ['name', 'login', 'place', 'country', 'country_code', 'lat', 'lng', 'at', 'distance'],
   'event.choices': ['title', 'votes', 'channel_points_votes', 'bits_votes', 'id'],
   'event.outcomes': ['title', 'color', 'users', 'channel_points', 'id'],
   'event.top_contributions': ['user_name', 'user_login', 'user_id', 'type', 'total'],

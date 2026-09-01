@@ -107,14 +107,14 @@ export const GPS_PRESETS: ServicePreset[] = [
 export const CHECKIN_PRESETS: ServicePreset[] = [
   { key: 'checkins_this_stream', label: 'Checkins This Stream', type: 'counter' },
   { key: 'unique_countries_this_stream', label: 'Unique Countries This Stream', type: 'number' },
-  { key: 'farthest_checkin_km_this_stream', label: 'Farthest Checkin This Stream (km)', type: 'number' },
+  { key: 'farthest_checkin_this_stream', label: 'Farthest Checkin This Stream', type: 'number' },
   { key: 'checkins_total', label: 'Checkins Total (all time)', type: 'number' },
   { key: 'latest_checkin_name', label: 'Latest Checkin Name', type: 'text' },
   { key: 'latest_checkin_place', label: 'Latest Checkin Place', type: 'text' },
   { key: 'latest_checkin_country', label: 'Latest Checkin Country', type: 'text' },
   { key: 'latest_checkin_lat', label: 'Latest Checkin Latitude', type: 'text' },
   { key: 'latest_checkin_lng', label: 'Latest Checkin Longitude', type: 'text' },
-  { key: 'latest_checkin_distance_km', label: 'Latest Checkin Distance (km)', type: 'number' },
+  { key: 'latest_checkin_distance', label: 'Latest Checkin Distance', type: 'number' },
 ];
 
 export function getPresetsForSource(source: string): ServicePreset[] {

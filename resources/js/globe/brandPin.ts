@@ -25,7 +25,7 @@ export const BRAND_PIN: CheckinPin = {
   lat: '-21.2078',
   lng: '-159.775',
   at: '',
-  distance_km: '',
+  distance: '',
 };
 
 /**
