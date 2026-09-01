@@ -156,12 +156,12 @@ describe('foreach scope', () => {
 describe('bang snippets', () => {
   it('always offers the block and loop snippets', () => {
     const labels = bangSnippets({ ...data, controls: [] }).map((s) => s.label);
-    expect(labels).toEqual(['!chat', '!subs', '!followers', '!goals', '!followed', '!if', '!ifelse', '!foreach']);
+    expect(labels).toEqual(['!chat', '!subs', '!followers', '!goals', '!checkins', '!followed', '!if', '!ifelse', '!foreach']);
   });
 
   it('covers every iterable a static overlay can loop over', () => {
     const templates = bangSnippets({ ...data, controls: [] }).map((s) => s.template);
-    for (const iterable of ['chat', 'subscribers', 'channel_followers', 'followed_channels', 'goals']) {
+    for (const iterable of ['chat', 'subscribers', 'channel_followers', 'followed_channels', 'goals', 'checkins']) {
       expect(
         templates.some((t) => t.includes(`[[[foreach:${iterable} as `)),
         iterable,

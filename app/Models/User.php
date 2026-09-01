@@ -142,6 +142,11 @@ class User extends Authenticatable
             // unchanged. FOREACH_CAP_MAX keeps it there as a ceiling, which is
             // the measured limit rather than an arbitrary one.
             'chat' => 50,
+            // Enforced on BOTH sides: the render payload slices the initial
+            // window server-side, and checkins.updated deltas are upserted and
+            // trimmed client-side (a broadcast carries one pin, never the
+            // window - Reverb's 10 KB limit rules a full-window rebuild out).
+            'checkins' => 50,
         ],
         // Chat overlay display filters. Both default to showing everything:
         // deciding for the streamer which of their chatters is worth rendering

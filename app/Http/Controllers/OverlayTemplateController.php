@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\TemplateUpdated;
+use App\Models\Checkin;
 use App\Models\EventTemplateMapping;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\ExternalIntegration;
@@ -10,6 +11,7 @@ use App\Models\OptionSet;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
+use App\Models\User;
 use App\Models\UserFreesoundSound;
 use App\Services\HtmlSanitizationService;
 use App\Services\ImageUploadService;
@@ -848,6 +850,16 @@ class OverlayTemplateController extends Controller
                 'user_login' => strtolower((string) ($user->twitch_data['login'] ?? '')),
             ]);
 
+            // Checkin pins, merged only when the template actually loops over
+            // them: extractForeachTags always emits `<iterable>.count`, so a
+            // foreach:checkins block puts `checkins.count` on the allowlist -
+            // the same signal mapForTemplate uses for the Twitch iterables.
+            // Live updates arrive as checkins.updated deltas; this is the one
+            // full window the overlay ever receives.
+            if (in_array('checkins.count', $allowlist, true)) {
+                $finalData = array_merge($finalData, $this->buildCheckinData($user));
+            }
+
             // Preload compiled_css for every alert template owned by this user that
             // could fire on this static overlay (no targeting = fires everywhere, or
             // explicitly targets this overlay). Shipped once on overlay mount so the
@@ -942,6 +954,10 @@ class OverlayTemplateController extends Controller
                 // directly from Twitch, so it travels to the client and becomes
                 // the socket's window size.
                 'chat_window' => $user->foreachCaps()['chat'],
+                // How many checkin pins the overlay keeps. The initial window
+                // above is already sliced to this; the client re-applies it
+                // when trimming after each checkins.updated delta.
+                'checkins_window' => $user->foreachCaps()['checkins'],
             ]);
 
         } catch (Exception $e) {
@@ -953,6 +969,45 @@ class OverlayTemplateController extends Controller
 
             return response()->json(['error' => 'Failed to render overlay'], 500);
         }
+    }
+
+    /**
+     * The checkins iterable for the render payload: `checkins.count` plus
+     * `checkins.N.<field>` for the newest pins, index 0 = newest, capped at
+     * the user's `checkins` foreach cap. The count is the uncapped window
+     * count, matching how the other iterables ship a raw count next to a
+     * sliced list. Pin lifetime (per_stream vs persistent) comes from the
+     * integration settings; per_stream with no open stream session is an
+     * empty window, matching the counters that reset at go-live.
+     *
+     * @return array<string, string>
+     */
+    private function buildCheckinData(User $user): array
+    {
+        $pinLifetime = 'per_stream';
+
+        $integration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'checkin')
+            ->where('enabled', true)
+            ->first();
+
+        if ($integration) {
+            $pinLifetime = ($integration->settings ?? [])['pin_lifetime'] ?? 'per_stream';
+        }
+
+        $cap = $user->foreachCaps()['checkins'];
+
+        $data = [
+            'checkins.count' => (string) Checkin::windowCountFor($user, $pinLifetime),
+        ];
+
+        foreach (Checkin::windowFor($user, $pinLifetime, $cap) as $i => $checkin) {
+            foreach ($checkin->toPinArray() as $field => $value) {
+                $data["checkins.{$i}.{$field}"] = $value;
+            }
+        }
+
+        return $data;
     }
 
     /**

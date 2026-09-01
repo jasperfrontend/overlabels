@@ -44,6 +44,7 @@ import { useTwitchChat } from '@/composables/useTwitchChat';
 import { type BadgeManifest, EMPTY_BADGE_MANIFEST, badgeImages, toBadgeManifest } from '@/utils/badgeRenderer';
 import { toChatFilters } from '@/utils/chatFilters';
 import { withChatSlots } from '@/utils/chatSlots';
+import { DEFAULT_CHECKINS_WINDOW, clampCheckinsWindow, pinsFromData, toPin, upsertPin, withCheckinSlots } from '@/utils/checkinSlots';
 import type { ChatMessage } from '@/utils/ircParser';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
 import { useCssCustomProperties } from '@/composables/useCssCustomProperties';
@@ -116,6 +117,10 @@ const emoteParser = useEmoteParser();
 const expressionEngine = useExpressionEngine(data);
 const cssApplier = useCssCustomProperties();
 const twitchChat = useTwitchChat();
+// The checkins foreach cap, from the render payload. The window is
+// client-enforced from the first broadcast onward (checkins.updated carries
+// one pin, never the window), so the cap has to live here.
+const checkinsWindow = ref<number>(DEFAULT_CHECKINS_WINDOW);
 
 /**
  * Does this template render chat at all?
@@ -798,6 +803,10 @@ onMounted(async () => {
       }
     }
 
+    // The checkin window cap. clampCheckinsWindow falls back to the default
+    // on NaN (an older server not shipping the field), never to 1.
+    checkinsWindow.value = clampCheckinsWindow(json.checkins_window);
+
     // Initialise user locale for pipe formatters
     userLocale.value = json.locale ?? 'en-US';
 
@@ -940,6 +949,11 @@ function setupAlertListener() {
   channel.listen('.list.updated', handleListUpdated);
   channel.listen('.list.deleted', handleListDeleted);
 
+  // Checkin pin deltas: one pin per broadcast plus the authoritative window
+  // count, upserted into the checkins.* keys client-side. `cleared` is the
+  // go-live wipe for per-stream globes.
+  channel.listen('.checkins.updated', handleCheckinsUpdated);
+
   // Listen for stream online/offline status
   channel.listen('.stream.status', (event: any) => {
     streamLive.value = Boolean(event.live);
@@ -1010,6 +1024,24 @@ function applyControlUpdate(event: any) {
       [atKey]: timestamp,
     };
   }
+}
+
+function handleCheckinsUpdated(event: any) {
+  if (!data.value || typeof data.value !== 'object') return;
+
+  const count = Number.isFinite(Number(event?.count)) ? Number(event.count) : 0;
+
+  // Drop-then-write via withCheckinSlots, so a cleared window cannot
+  // resurrect pins (the withChatSlots rule).
+  let pins = event?.cleared ? [] : pinsFromData(data.value);
+
+  const pin = event?.cleared ? null : toPin(event?.pin);
+  if (pin) {
+    pins = upsertPin(pins, pin, checkinsWindow.value);
+  }
+
+  data.value = withCheckinSlots(data.value, pins, count);
+  bump();
 }
 
 function handleListUpdated(event: any) {

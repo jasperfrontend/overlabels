@@ -156,6 +156,8 @@ const ITEM_FIELDS: Record<string, string[]> = {
     'first',
     'source_channel',
   ],
+  // Mirrors checkinSlots.ts.
+  checkins: ['name', 'login', 'place', 'country', 'country_code', 'lat', 'lng', 'at', 'distance_km'],
   'event.choices': ['title', 'votes', 'channel_points_votes', 'bits_votes', 'id'],
   'event.outcomes': ['title', 'color', 'users', 'channel_points', 'id'],
   'event.top_contributions': ['user_name', 'user_login', 'user_id', 'type', 'total'],
@@ -171,6 +173,7 @@ const ITERABLES: Array<{ label: string; alias: string; info: string; alertOnly?:
   { label: 'followed_channels', alias: 'channel', info: 'Channels you follow.' },
   { label: 'goals', alias: 'goal', info: 'Your active channel goals.' },
   { label: 'chat', alias: 'msg', info: 'Live chat, oldest first. Opens a direct connection to Twitch chat.' },
+  { label: 'checkins', alias: 'pin', info: 'Viewer !checkin pins, newest first. Needs the Chat Checkin integration.' },
   { label: 'event.choices', alias: 'choice', info: 'Poll choices from the event payload.', alertOnly: true },
   { label: 'event.outcomes', alias: 'outcome', info: 'Prediction outcomes from the event payload.', alertOnly: true },
   { label: 'event.top_contributions', alias: 'contribution', info: 'Hype train top contributions.', alertOnly: true },
@@ -409,6 +412,11 @@ const BASE_BANGS: BangSnippet[] = [
       '  <div class="goal-row">[[[goal.description]]]: [[[goal.current_amount]]] / [[[goal.target_amount]]]</div>',
       '[[[endforeach]]]',
     ].join('\n'),
+  },
+  {
+    label: '!checkins',
+    info: 'Viewer !checkin pins, one line each with place and name.',
+    template: ['[[[foreach:checkins as pin]]]', '  <div class="checkin-pin">[[[pin.name]]] - [[[pin.place]]]</div>', '[[[endforeach]]]'].join('\n'),
   },
   {
     label: '!followed',

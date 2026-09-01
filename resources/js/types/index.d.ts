@@ -123,6 +123,8 @@ export interface ForeachCaps {
   followed: number;
   /** Chat is the one cap enforced client-side, as the socket's window size. */
   chat: number;
+  /** Checkins: server slices the initial window, the client trims after each delta. */
+  checkins: number;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;

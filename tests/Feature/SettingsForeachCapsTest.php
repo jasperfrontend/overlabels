@@ -15,6 +15,7 @@ test('PATCH /settings/foreach-caps saves every cap to preferences', function () 
         'followers' => 8,
         'followed' => 4,
         'chat' => 12,
+        'checkins' => 20,
     ]);
 
     $response->assertRedirect();
@@ -26,6 +27,7 @@ test('PATCH /settings/foreach-caps saves every cap to preferences', function () 
         'followers' => 8,
         'followed' => 4,
         'chat' => 12,
+        'checkins' => 20,
     ]);
 });
 
@@ -83,7 +85,7 @@ test('PATCH /settings/foreach-caps requires every key', function () {
         'subscribers' => 10,
     ]);
 
-    $response->assertSessionHasErrors(['goals', 'followers', 'followed', 'chat']);
+    $response->assertSessionHasErrors(['goals', 'followers', 'followed', 'chat', 'checkins']);
 });
 
 test('PATCH /settings/foreach-caps preserves locale on save', function () {
@@ -97,6 +99,7 @@ test('PATCH /settings/foreach-caps preserves locale on save', function () {
         'followers' => 5,
         'followed' => 5,
         'chat' => 50,
+        'checkins' => 50,
     ]);
 
     $user->refresh();
