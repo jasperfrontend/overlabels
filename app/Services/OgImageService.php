@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Update;
+use App\Support\HelpCorpus;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
@@ -114,8 +115,56 @@ class OgImageService
         // can carry anything, and the separator is a multibyte middot.
         $eyebrow = mb_strtoupper($date === '' ? $topic : "{$topic} · {$date}");
 
-        $titleLines = $this->wrapBody(
+        return $this->headlineContext(
+            $eyebrow,
             $update->title,
+            'Update',
+            $update->plainExcerpt(self::UPDATE_EXCERPT_MAX),
+            $canonicalUrl,
+        );
+    }
+
+    /**
+     * Render (or fetch from cache) the OG image for a help guide, tutorial or
+     * deep dive - anything HelpController serves from resources/help/pages.
+     *
+     * Uses the post card, not the reference card: a guide is named in a
+     * sentence ("Test mode on donation integrations") and the reference
+     * card's single 32-character title line would ellipsize most of them.
+     *
+     * @param  array{kind: string, heading: string, lead: string}  $page  The shape HelpPage::render() returns
+     */
+    public function urlForPage(array $page, string $canonicalUrl): string
+    {
+        $kindLabel = HelpCorpus::KIND_LABELS[$page['kind']] ?? ucfirst($page['kind']);
+
+        return $this->renderOrCached(
+            $this->headlineContext(
+                mb_strtoupper($kindLabel),
+                $page['heading'],
+                $kindLabel,
+                $this->bodyExcerpt($page['lead']),
+                $canonicalUrl,
+            ),
+            'og.update',
+        );
+    }
+
+    /**
+     * The og.update card's context: a headline wrapped over up to three lines
+     * with the excerpt starting below it. Shared by posts and help pages.
+     *
+     * @return array<string, mixed>
+     */
+    private function headlineContext(
+        string $eyebrow,
+        string $title,
+        string $titleFallback,
+        string $excerpt,
+        string $canonicalUrl,
+    ): array {
+        $titleLines = $this->wrapBody(
+            $title,
             self::UPDATE_TITLE_LINE_MAX,
             self::UPDATE_TITLE_LINES_MAX,
         );
@@ -123,14 +172,14 @@ class OgImageService
         // A post cannot be saved without a title, but an all-whitespace one
         // would wrap to nothing and render a card with no headline at all.
         if ($titleLines === []) {
-            $titleLines = ['Update'];
+            $titleLines = [$titleFallback];
         }
 
         return [
             'eyebrow' => $eyebrow,
             'titleLines' => $titleLines,
             'bodyLines' => $this->wrapBody(
-                $update->plainExcerpt(self::UPDATE_EXCERPT_MAX),
+                $excerpt,
                 self::BODY_LINE_MAX,
                 self::UPDATE_BODY_LINES_MAX,
             ),

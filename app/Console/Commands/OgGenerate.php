@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Update;
 use App\Services\HelpReferenceService;
 use App\Services\OgImageService;
+use App\Support\HelpPage;
 use Illuminate\Console\Command;
 
 class OgGenerate extends Command
@@ -38,9 +39,33 @@ class OgGenerate extends Command
         $this->newLine(2);
         $this->info("Rendered OG images for {$total} entries + index.");
 
+        $this->generatePages($og);
         $this->generateUpdates($og);
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Warm the card for every guide, tutorial and deep dive. Same reason as
+     * the posts below: a scraper that arrives before the first render caches
+     * the fallback image for good.
+     */
+    private function generatePages(OgImageService $og): void
+    {
+        $slugs = HelpPage::all();
+
+        $bar = $this->output->createProgressBar(count($slugs));
+        $bar->start();
+
+        foreach ($slugs as $slug) {
+            $page = HelpPage::render($slug);
+            $og->urlForPage($page, $page['canonical']);
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine(2);
+        $this->info('Rendered OG images for '.count($slugs).' help pages.');
     }
 
     /**

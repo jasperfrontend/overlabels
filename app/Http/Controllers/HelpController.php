@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\OgImageService;
 use App\Support\HelpNav;
 use App\Support\HelpPage;
 use Illuminate\Http\Request;
@@ -24,6 +25,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class HelpController extends Controller
 {
+    public function __construct(
+        private readonly OgImageService $og,
+    ) {}
+
     public function show(Request $request, string $slug): SymfonyResponse
     {
         if (! HelpPage::exists($slug)) {
@@ -48,6 +53,10 @@ class HelpController extends Controller
             'pageTitle' => $page['title'],
             'pageDescription' => $page['description'],
             'canonicalUrl' => $page['canonical'],
+            // Pre-rendered on deploy by og:generate; this is a cache hit unless
+            // the frontmatter changed since. The layout falls back to the
+            // generic image when the render fails.
+            'ogImage' => $this->og->urlForPage($page, $page['canonical']),
         ]);
     }
 
