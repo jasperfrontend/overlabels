@@ -1,5 +1,6 @@
 ---
 title: The Code Editor - Autocomplete and Bang Snippets in Overlabels
+section: Building overlays
 description: How the template editor completes your tags as you type, knows your own controls and Lists, and expands !chat, !subs and !kofi into working blocks.
 heading: The code editor
 lead: Type [[[ and the editor offers every tag you can use, including your own controls and Lists. Type !chat and it writes the whole loop for you.

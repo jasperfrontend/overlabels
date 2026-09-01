@@ -1,5 +1,6 @@
 ---
 title: Why Overlabels
+section: Getting started
 description: Overlabels is a third-party data normalization engine for Twitch. Donations, subs, bits, followers - it all becomes math you can work with.
 heading: Why Overlabels
 lead: Overlabels is a third-party data normalization engine for Twitch and the services around it. Donations, subs, bits, followers - it all becomes math you can work with.

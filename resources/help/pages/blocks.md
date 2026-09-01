@@ -1,5 +1,6 @@
 ---
 title: Blocks - reusable building pieces for the Builder
+section: Building overlays
 description: "Blocks are the third template type in Overlabels: small, self-contained overlay pieces with live data and controls, built once and placed on any grid in the Builder. How to author one, how CSS scoping and snapshots work, and how controls travel."
 heading: Blocks
 lead: "A block is a small, self-contained overlay piece: a follower counter, a donation goal, anything that can live within Overlabels. Build it once with the same HTML, CSS, and tags as any overlay - then anyone can place it on a grid in the Builder, no code required on their end."

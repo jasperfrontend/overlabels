@@ -1,5 +1,6 @@
 ---
 title: How an overlay renders - the pipeline end to end
+section: Getting started
 description: "What happens between an OBS browser source opening your overlay URL and a follower alert animating on screen: boot, tag replacement, conditionals, the WebSocket channel, alert render flow, and why scripts are stripped."
 heading: How an overlay renders
 lead: From the browser source opening a URL to a follower alert animating on screen - the whole path, in order. Worth reading once, and worth having when something is not appearing and you need to know which step to suspect.

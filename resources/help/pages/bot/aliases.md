@@ -5,7 +5,7 @@ heading: Bot Aliases
 lead: Short chat commands that rewrite to longer ones. Positional placeholders, one-hop guard, shared validation.
 canonical: https://overlabels.com/help/bot/aliases
 context: settings.bot.aliases.*
-section: Bot
+section: Bot & chat
 ---
 
 ## What is an alias?

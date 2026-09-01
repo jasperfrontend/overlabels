@@ -1,5 +1,32 @@
 # Changelog - September 2026
 
+## OL-2609-021 - September 2nd, 2026 - feat(help): the help site gets its own design and a seven-section guide taxonomy
+
+The help docs stopped borrowing the app's chrome. Both pages came from a Claude Design canvas: a
+landing page with a search hero, cards for tutorials and deep dives, and the guides laid out in
+columns; and a document page with a collapsible tree on the left, the prose in the middle and an
+"On this page" rail on the right that follows you as you scroll. Same Blade, same markdown, same
+search index underneath - this is the page around the content, not the content.
+
+- The 32 guides were one alphabetical list. They are now filed into seven sections by a `section:`
+  line in each page's frontmatter: Getting started, Tags & syntax, Building overlays, Live data,
+  Bot & chat, Integrations & testing, For machines. The landing columns, the sidebar branches, the
+  breadcrumb, previous/next and "Related docs" all derive from it. The list of sections is closed;
+  a typo fails a test rather than opening an eighth column.
+- On the landing page each section is its own card with an icon tile and a line saying what the
+  group is for, Getting started twice as wide as the rest. The first cut was seven bare columns of
+  titles and read as one wall of text. Links inside follow the order index.md lists them in, so
+  "Why Overlabels" leads instead of landing last alphabetically; there is no `order:` key.
+- The design's own grouping was kept where it was right and corrected where it was not: Random
+  Rolls and Counters is a bot page, not syntax; Controls, Expression Controls and Lists are live
+  data, not build tooling; the three machine-readable pages belong together.
+- Every document page shows its kind, a reading time, a "Copy page as Markdown" button that copies
+  the `.md` twin byte for byte, and links to the pages either side of it in its section.
+- Search results open in a panel under the field, with arrow keys and Escape, instead of replacing
+  the sidebar. Alt+R still focuses it from anywhere.
+- `/help` is now built from the corpus; `/help.md` is still the hand-written index and a test keeps
+  the two filed the same way. Kind identity is flat tints and words, no gradients.
+
 ## OL-2609-014 - September 1st, 2026 - style(events): redesign the event list into dense kind-tagged rows
 
 The event list - the oldest surviving layout in the app, still named `EventsTable.vue` from when it

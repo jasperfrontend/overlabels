@@ -1,5 +1,6 @@
 ---
 title: Why tags are parsed exactly once - Overlabels
+section: Tags & syntax
 description: "Overlabels resolves [[[tag]]] markers in a single pass per render, and substituted values are never re-scanned for tags. This page explains the rule, the attack it prevents, and what it means while writing templates."
 heading: Why tags are parsed exactly once
 lead: Every render scans your template for tags one time. Whatever a tag resolves to is inserted as plain text and never scanned again - so a value that happens to look like a tag renders as the literal characters. This is a security rule, and this page explains it.

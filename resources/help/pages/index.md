@@ -1,8 +1,8 @@
 ---
 title: Help - Overlabels
 description: Learn how to build Twitch overlays with Overlabels - tutorials, conditional tags, controls, formatting, and a searchable reference.
-heading: Welcome to Overlabels Help
-lead: Start with something you want on screen. The tutorials are short and end with a working overlay; the guides underneath explain how the pieces work when you want to go further.
+heading: How can we help?
+lead: Tutorials, guides and deep dives for building Twitch overlays in plain HTML and CSS. Your overlay is a webpage. Start here.
 canonical: https://overlabels.com/help
 ---
 
@@ -14,7 +14,7 @@ canonical: https://overlabels.com/help
 > [`/llms.txt`](https://overlabels.com/llms.txt) - what it contains and how to hand it to an assistant
 > is explained at [llms.txt](/help/llms-txt).
 
-## I want to...
+## Tutorials
 
 Short, copy-and-paste tutorials. Each one ends with something on screen.
 
@@ -27,9 +27,12 @@ Short, copy-and-paste tutorials. Each one ends with something on screen.
 - [**Show my latest donator, from any source**](/help/tutorials/latest-donator) - one name across all
   five donation services, using `latest()` and the automatic `_at` timestamps.
 
-## How it works
+## Guides
 
-### Getting oriented
+How each part of the engine works, grouped the same way the help site groups them. Skim the group you
+need, ignore the rest.
+
+### Getting started
 
 - [**Why Overlabels**](/help/why-overlabels) - the pitch, for coders. Third-party data normalization,
   math on any value, Expression Controls, and why this thing is a bit special.
@@ -39,27 +42,13 @@ Short, copy-and-paste tutorials. Each one ends with something on screen.
   surfaces, the unknown-background problem, variable-length content, fluid layout, CSS animation, and a
   deliverables checklist.
 - [**Manifesto**](/help/manifesto) - what Overlabels is, why it exists, and the principles behind it.
-
-### Building overlays
-
 - [**Overlays vs Alerts**](/help/overlays-vs-alerts) - the two kinds of overlay and how they fit
   together: why alerts are most powerful rendered inside a static overlay's DOM, plus Targeting vs
   Triggers.
-- [**The Builder**](/help/builder) - compose an overlay without writing code: set up a grid, click a
-  cell, pick a block, save. Compiles to a plain static overlay that works with everything else.
-- [**Blocks**](/help/blocks) - reusable building pieces for the Builder: how to author one, how CSS
-  scoping and snapshots keep everyone safe, and how controls travel with your block.
-- [**The code editor**](/help/editor) - autocomplete for every tag, your controls and your Lists, and
-  bang snippets like `!chat` that write a whole block for you.
 - [**How an overlay renders**](/help/rendering) - the pipeline end to end: boot, tag replacement,
   conditionals, live updates, alert render flow, and why scripts are stripped.
-- [**Styling with Tailwind**](/help/tailwind) - utility classes compile at save time, not in the
-  browser: which Tailwind v3 syntax works, why borders need one extra line, and when to just write
-  CSS.
-- [**Testing your alerts**](/help/testing) - fire any of 28 real Twitch events at your own account from a
-  terminal, instead of waiting for a real follower.
 
-### The template language
+### Tags & syntax
 
 - [**Conditional and Event Tags**](/help/conditionals) - if/else logic, comparisons, event data tags, and
   integration tags for Ko-fi and StreamLabs.
@@ -69,6 +58,20 @@ Short, copy-and-paste tutorials. Each one ends with something on screen.
   math behind live overlays.
 - [**Why tags are parsed exactly once**](/help/tags-parse-once) - substituted values are never
   re-scanned for tags. The security rule behind it, and what it means while writing templates.
+
+### Building overlays
+
+- [**The Builder**](/help/builder) - compose an overlay without writing code: set up a grid, click a
+  cell, pick a block, save. Compiles to a plain static overlay that works with everything else.
+- [**Blocks**](/help/blocks) - reusable building pieces for the Builder: how to author one, how CSS
+  scoping and snapshots keep everyone safe, and how controls travel with your block.
+- [**The code editor**](/help/editor) - autocomplete for every tag, your controls and your Lists, and
+  bang snippets like `!chat` that write a whole block for you.
+- [**Styling with Tailwind**](/help/tailwind) - utility classes compile at save time, not in the
+  browser: which Tailwind v3 syntax works, why borders need one extra line, and when to just write
+  CSS.
+- [**Free Resources**](/help/resources) - colors, fonts, animations, images, and other tools for building
+  overlays.
 
 ### Live data
 
@@ -84,16 +87,41 @@ Short, copy-and-paste tutorials. Each one ends with something on screen.
   live updates over WebSocket, and add your own custom page (a wheel, a leaderboard) to OBS. Step by
   step.
 
-### Chat
+### Bot & chat
 
-- [**Twitch Chat in an Overlay**](/help/chat) - render live chat with one foreach loop. Every
-  per-message tag, badges and emotes, Shared Chat, the display filters, and the four chat controls.
 - [**Twitch Chat Bot**](/help/bot) - the @overlabels bot joins your channel so viewers and mods can
   change controls from chat.
+- [**Bot Commands**](/help/bot/commands) - every chat command the bot understands: controls, the `!ol`
+  meta-command, list operations, and the built-ins.
+- [**Bot Aliases**](/help/bot/aliases) - short chat commands that rewrite to longer ones.
+- [**Random Rolls and Counters**](/help/bot/random-and-counters) - roll a random number or keep a
+  running count, set up from chat in one line.
+- [**Twitch Chat in an Overlay**](/help/chat) - render live chat with one foreach loop. Every
+  per-message tag, badges and emotes, Shared Chat, the display filters, and the four chat controls.
 - [**Chat Checkin**](/help/checkin) - viewers pin themselves on a 3D globe with !checkin. The globe
   tag, the pin feed, counters, distances and alerts.
 - [**Chat Castle**](/help/gamejam) - chat-driven dungeon raid. Commands, rounds, energy blocks, chest
   contents, and how to not lose the HP pool.
+
+### Integrations & testing
+
+- [**Why Ko-fi**](/help/why-kofi) - why we chose Ko-fi as our first External Integration over Patreon,
+  Stripe, or built-in payments.
+- [**Test mode on donation integrations**](/help/integration-test-mode) - send the same test donation
+  as often as you like while you build, and what gets reset when you switch it off.
+- [**Testing your alerts**](/help/testing) - fire any of 28 real Twitch events at your own account from a
+  terminal, instead of waiting for a real follower.
+- [**Overlay Access Tokens**](/help/tokens) - what the 64-character token in your overlay URL is, why it
+  lives after the `#`, and what to do the moment one leaks.
+
+### For machines
+
+- [**llms.txt**](/help/llms-txt) - the complete overlay-authoring guide as one plain text file, written
+  for language models. What is in it, and how to hand it to an assistant.
+- [**Markdown endpoints**](/help/markdown-endpoints) - append `.md` to any help page, public overlay or
+  public kit URL and get plain markdown back.
+- [**help-reference-index.json**](/help/help-reference-index-json) - the entire reference as one JSON
+  array. Build your own frontend over it or feed it to an autocomplete.
 
 ## Deep dives
 
@@ -110,25 +138,8 @@ shaped the way it is. Long reads for when you want to see how far the template l
   jobs at once, and live great-circle distance and bearing from a chain of haversine expression
   controls. The compass points the "wrong" way, and is right.
 
-## Look something up
+## Reference
 
 - [**Reference**](/help/reference) - every template tag, EventSub event, and foreach field. Press
-  `Alt+R` from anywhere, or use the search box at the top of this page - it covers tutorials, guides and
-  reference entries at once.
-- [**Overlay Access Tokens**](/help/tokens) - what the 64-character token in your overlay URL is, why it
-  lives after the `#`, and what to do the moment one leaks.
-- [**Why Ko-fi**](/help/why-kofi) - why we chose Ko-fi as our first External Integration over Patreon,
-  Stripe, or built-in payments.
-- [**Test mode on donation integrations**](/help/integration-test-mode) - send the same test donation
-  as often as you like while you build, and what gets reset when you switch it off.
-- [**Free Resources**](/help/resources) - colors, fonts, animations, images, and other tools for building
-  overlays.
-
-### For machines
-
-- [**llms.txt**](/help/llms-txt) - the complete overlay-authoring guide as one plain text file, written
-  for language models. What is in it, and how to hand it to an assistant.
-- [**Markdown endpoints**](/help/markdown-endpoints) - append `.md` to any help page, public overlay or
-  public kit URL and get plain markdown back.
-- [**help-reference-index.json**](/help/help-reference-index-json) - the entire reference as one JSON
-  array. Build your own frontend over it or feed it to an autocomplete.
+  `Alt+R` from anywhere, or use the search box at the top of every help page - it covers tutorials,
+  guides, deep dives and reference entries at once.

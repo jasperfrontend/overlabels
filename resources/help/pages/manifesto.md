@@ -1,5 +1,6 @@
 ---
 title: The Overlabels Manifesto
+section: Getting started
 description: Our principles for building a data engine, not a design engine. Why Overlabels exists and the philosophy behind it.
 heading: The Overlabels Manifesto
 lead: Our principles for building a data engine, not a design engine. Why Overlabels exists and the philosophy behind it.

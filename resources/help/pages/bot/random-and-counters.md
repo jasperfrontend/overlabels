@@ -5,7 +5,7 @@ heading: Random Rolls and Counters
 lead: Roll a random number or keep a running count, set up from chat in one line. Your counters are real Controls, so the number in chat and the number on your overlay are the same number.
 canonical: https://overlabels.com/help/bot/random-and-counters
 context: settings.bot.commands.*
-section: Bot
+section: Bot & chat
 ---
 
 Two tags, both written straight into a chat command, both set up without leaving Twitch.

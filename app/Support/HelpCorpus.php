@@ -63,11 +63,58 @@ final class HelpCorpus
         self::KIND_REFERENCE => 'Reference',
     ];
 
+    /**
+     * The guide taxonomy, in display order.
+     *
+     * A guide declares which of these it belongs to in a `section:` frontmatter
+     * line, and the landing page and the sidebar tree are built from that. The
+     * list is closed on purpose: a `section:` value not on it fails
+     * HelpTaxonomyTest rather than quietly opening an eighth column, and a
+     * section with no pages fails too, so the constant cannot rot into labels
+     * nothing uses. Tutorials and deep dives are kinds, not sections, and
+     * declare nothing.
+     *
+     * Before September 2026 the thirty-odd guides were one alphabetical list.
+     *
+     * Label => the one-line description the landing page prints under it.
+     */
+    public const SECTIONS = [
+        'Getting started' => 'What Overlabels is, and how an overlay gets from a text field to your stream.',
+        'Tags & syntax' => 'The template language: conditionals, formatting pipes and the math engine.',
+        'Building overlays' => 'The editor, the Builder, blocks and styling.',
+        'Live data' => 'Controls, expressions and Lists - the values your overlay reads.',
+        'Bot & chat' => 'The @overlabels bot, chat commands and chat on screen.',
+        'Integrations & testing' => 'Donation services, test mode, firing fake events and access tokens.',
+        'For machines' => 'Plain-text and JSON versions of everything here, for assistants and scripts.',
+    ];
+
+    /**
+     * Links that belong in a section but are not markdown pages.
+     *
+     * These are the two help pages that deliberately stay Inertia (live data
+     * from controlPresets.ts, and a Vue app), so they are not in the corpus
+     * and cannot declare a `section:` of their own. They are listed here so the
+     * landing and the sidebar show them where the index has always shown them.
+     *
+     * @var array<string,array<int,array{title:string,url:string}>>
+     */
+    public const SECTION_EXTRAS = [
+        'Live data' => [
+            ['title' => 'Integration Presets', 'url' => '/help/integration-presets'],
+        ],
+        'Bot & chat' => [
+            ['title' => 'Chat Castle', 'url' => '/help/gamejam'],
+        ],
+    ];
+
     /** @var array<int,array<string,mixed>>|null */
     private static ?array $memo = null;
 
     /** @var array<string,string>|null */
     private static ?array $links = null;
+
+    /** @var array<string,int>|null */
+    private static ?array $indexOrder = null;
 
     /**
      * Which kind a page slug is. Reference entries never come through here -
@@ -91,7 +138,7 @@ final class HelpCorpus
      * this, and the only caller that does not want it (the nav) is already
      * paying for the file reads anyway.
      *
-     * @return array<int,array{kind:string,kindLabel:string,slug:string,title:string,lead:string,url:string,path:string,body:string,keywords:array<int,string>,category:?string,categoryLabel:?string}>
+     * @return array<int,array{kind:string,kindLabel:string,slug:string,title:string,lead:string,url:string,path:string,body:string,keywords:array<int,string>,category:?string,categoryLabel:?string,section:?string}>
      */
     public static function all(): array
     {
@@ -122,6 +169,9 @@ final class HelpCorpus
                 'keywords' => HelpPage::splitKeywords($meta['keywords'] ?? null),
                 'category' => null,
                 'categoryLabel' => null,
+                // Which SECTIONS column a guide sits in. Null for tutorials and
+                // deep dives, whose kind already places them.
+                'section' => isset($meta['section']) ? trim($meta['section']) : null,
             ];
         }
 
@@ -157,10 +207,147 @@ final class HelpCorpus
                 'keywords' => [],
                 'category' => $entry['category'],
                 'categoryLabel' => $entry['categoryLabel'],
+                'section' => null,
             ];
         }
 
         return self::$memo = $docs;
+    }
+
+    /**
+     * The guides, grouped into SECTIONS in display order.
+     *
+     * Each section carries its label, its description, an anchor for the
+     * landing page, and its pages in index.md order (see sortByIndex()).
+     * SECTION_EXTRAS take part in that ordering like any other link. The root
+     * help index is the landing page itself and is never listed.
+     *
+     * A guide with no section, or with one that is not in SECTIONS, is left
+     * out here and reported by HelpTaxonomyTest - the landing must never
+     * silently swallow a page.
+     *
+     * @return array<int,array{label:string,description:string,anchor:string,items:array<int,array<string,mixed>>}>
+     */
+    public static function sections(): array
+    {
+        $byLabel = array_fill_keys(array_keys(self::SECTIONS), []);
+
+        foreach (self::ofKind(self::KIND_GUIDE) as $doc) {
+            if ($doc['slug'] === 'index' || ! isset($byLabel[$doc['section'] ?? ''])) {
+                continue;
+            }
+            $byLabel[$doc['section']][] = $doc;
+        }
+
+        $sections = [];
+
+        foreach ($byLabel as $label => $docs) {
+            foreach (self::SECTION_EXTRAS[$label] ?? [] as $extra) {
+                $docs[] = [
+                    'kind' => self::KIND_GUIDE,
+                    'kindLabel' => self::KIND_LABELS[self::KIND_GUIDE],
+                    'slug' => null,
+                    'title' => $extra['title'],
+                    'lead' => '',
+                    'url' => $extra['url'],
+                    'section' => $label,
+                ];
+            }
+
+            $sections[] = [
+                'label' => $label,
+                'description' => self::SECTIONS[$label],
+                'anchor' => self::sectionAnchor($label),
+                'items' => self::sortByIndex($docs),
+            ];
+        }
+
+        return $sections;
+    }
+
+    /**
+     * One kind's pages in index.md order - the tutorials as the index lists
+     * them, not alphabetically.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public static function ordered(string $kind): array
+    {
+        return self::sortByIndex(self::ofKind($kind));
+    }
+
+    /**
+     * Sort documents by where index.md links them.
+     *
+     * index.md is already the hand-written listing every page must appear in
+     * (HelpPageTest enforces the link, HelpTaxonomyTest the heading it sits
+     * under), so its order is the one place an author already decides what
+     * comes first. Reading that back means "Why Overlabels" can lead Getting
+     * started without a new frontmatter key to keep in step. Anything the
+     * index does not link sorts last, by title.
+     *
+     * @param  array<int,array<string,mixed>>  $docs
+     * @return array<int,array<string,mixed>>
+     */
+    public static function sortByIndex(array $docs): array
+    {
+        $order = self::indexOrder();
+
+        usort($docs, fn (array $a, array $b): int => [
+            $order[$a['url']] ?? PHP_INT_MAX, $a['title'],
+        ] <=> [
+            $order[$b['url']] ?? PHP_INT_MAX, $b['title'],
+        ]);
+
+        return $docs;
+    }
+
+    /**
+     * url => position of its first link in index.md.
+     *
+     * @return array<string,int>
+     */
+    private static function indexOrder(): array
+    {
+        if (self::$indexOrder !== null) {
+            return self::$indexOrder;
+        }
+
+        $path = HelpPage::path('index');
+        $source = $path !== null ? (string) file_get_contents($path) : '';
+
+        preg_match_all('#\]\((/help[^)\s]*)\)#', $source, $matches);
+
+        $order = [];
+        foreach ($matches[1] as $position => $url) {
+            $order[$url] ??= $position;
+        }
+
+        return self::$indexOrder = $order;
+    }
+
+    /**
+     * The section a guide belongs to, with its neighbours, or null.
+     *
+     * @return array{label:string,anchor:string,items:array<int,array<string,mixed>>}|null
+     */
+    public static function sectionOf(string $slug): ?array
+    {
+        foreach (self::sections() as $section) {
+            foreach ($section['items'] as $item) {
+                if ($item['slug'] === $slug) {
+                    return $section;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** The landing-page anchor for a section label: `Bot & chat` is `#bot-chat`. */
+    public static function sectionAnchor(string $label): string
+    {
+        return Str::slug($label);
     }
 
     /**
@@ -227,5 +414,6 @@ final class HelpCorpus
     {
         self::$memo = null;
         self::$links = null;
+        self::$indexOrder = null;
     }
 }

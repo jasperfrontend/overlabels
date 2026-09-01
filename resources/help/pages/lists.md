@@ -1,5 +1,6 @@
 ---
 title: Lists in Overlabels
+section: Live data
 description: User-owned arrays of values that streamers manage from the dashboard or chat. Raffles, queues, quote walls, leaderboards, donation goals.
 heading: Lists in Overlabels
 lead: User-owned arrays of values that streamers manage from the dashboard or chat. Raffles, queues, quote walls, leaderboards, donation goals.

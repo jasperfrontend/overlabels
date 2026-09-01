@@ -1,5 +1,6 @@
 ---
 title: How to Use Controls
+section: Live data
 description: Learn how to create, manage, and use Controls in your Twitch overlays. Counters, timers, toggles, and more - all updated live during your stream.
 heading: How to Use Controls
 lead: Learn how to create, manage, and use Controls in your Twitch overlays. Counters, timers, toggles, and more - all updated live during your stream.

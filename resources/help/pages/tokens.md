@@ -1,5 +1,6 @@
 ---
 title: Overlay Access Tokens - how overlay URLs stay private
+section: Integrations & testing
 description: "How Overlabels overlay tokens work: 256 bits of randomness, hashed on storage, carried in the URL fragment so they are never sent to a server. Expiry, IP allowlists, access logs, and what to do when one leaks."
 heading: Overlay Access Tokens
 lead: The 64-character token at the end of your overlay URL is the thing that makes the overlay yours. Here is what it is, why it lives after the # instead of in the path, and what to do the moment you think one has leaked.

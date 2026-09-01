@@ -1,5 +1,6 @@
 ---
 title: The Builder - compose an overlay without writing code
+section: Building overlays
 description: "Set up a grid, click a cell, pick a block, save. The Builder compiles your composition into a plain static overlay that works with everything else in Overlabels - OBS, alerts, controls, live data."
 heading: The Builder
 lead: "Overlabels is HTML and CSS all the way down - but you don't have to write any of it. The Builder lets you compose a full overlay by placing ready-made blocks on a grid. Set up the grid, click a cell, pick a block, save. Done."

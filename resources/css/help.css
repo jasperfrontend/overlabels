@@ -1,0 +1,310 @@
+/*
+ * Chrome for the help site: layouts/help.blade.php and the views under
+ * resources/views/help. Prose typography is help-prose.css; this file is the
+ * page around it - backdrop, nav, search, cards, pills, the sidebar tree and
+ * the table of contents.
+ *
+ * Everything reads the app's theme tokens, so light, dark and sepia all work
+ * without a second palette. The three variables below are the only help-only
+ * values: a translucent card surface, the veil over the page gradient, and the
+ * search field's ground.
+ */
+
+:root {
+  --help-card: hsl(0 0% 100% / 0.72);
+  --help-veil: transparent;
+  --help-search-bg: hsl(0 0% 100%);
+}
+
+.dark {
+  --help-card: rgb(12 9 18 / 0.55);
+  --help-veil: rgb(15 13 18 / 0.78);
+  --help-search-bg: rgb(10 7 16 / 0.6);
+}
+
+.theme-sepia {
+  --help-card: hsl(28 9% 10% / 0.6);
+  --help-veil: transparent;
+  --help-search-bg: hsl(28 9% 10% / 0.8);
+}
+
+@layer components {
+  /*
+   * The signature page gradient, fixed behind the whole document. Spots are
+   * transparent outside dark mode, so light and sepia get their plain base.
+   */
+  .help-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(at 11% 50%, var(--gradient-spot-1) 0px, transparent 65%),
+      radial-gradient(at 50% 70%, var(--gradient-spot-2) 0px, transparent 65%),
+      radial-gradient(at 91% 28%, var(--gradient-spot-3) 0px, transparent 65%), var(--gradient-base);
+  }
+
+  .help-backdrop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--help-veil);
+  }
+
+  /* ---- Nav ---- */
+
+  .help-eyebrow {
+    @apply inline-flex items-center rounded-full border border-violet-500/40 px-2.5 py-0.5 font-mono text-[11px] tracking-[0.06em] text-violet-600 uppercase dark:text-violet-400;
+  }
+
+  .help-btn {
+    @apply inline-flex cursor-pointer items-center rounded-full border border-foreground/50 bg-transparent px-[18px] py-[7px] text-sm text-foreground transition-colors hover:border-foreground/80 hover:bg-foreground/10;
+  }
+
+  .help-btn--sm {
+    @apply px-4 py-1.5 text-[13px];
+  }
+
+  .help-btn.is-copied {
+    @apply border-green-500/60 text-green-600 dark:text-green-400;
+  }
+
+  /* ---- Search ---- */
+
+  .help-search {
+    @apply relative flex items-center gap-2.5 rounded-full border border-sidebar-border text-left transition-colors;
+    background: var(--help-search-bg);
+  }
+
+  .help-search:focus-within {
+    @apply border-violet-400/70;
+  }
+
+  .help-search--hero {
+    @apply h-[54px] gap-3 pr-2.5 pl-5;
+  }
+
+  .help-search--compact {
+    @apply h-[38px] w-[150px] pr-2 pl-3.5 sm:w-[240px];
+  }
+
+  .help-search input {
+    @apply min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground/70;
+  }
+
+  .help-search--hero input {
+    @apply text-[15px];
+  }
+
+  .help-search--compact input {
+    @apply text-[13px];
+  }
+
+  .help-search-icon {
+    @apply shrink-0 text-muted-foreground;
+  }
+
+  .help-search--hero .help-search-icon {
+    @apply size-[18px];
+  }
+
+  .help-search--compact .help-search-icon {
+    @apply size-3.5;
+  }
+
+  .help-search-clear {
+    @apply shrink-0 cursor-pointer rounded-full p-1 text-muted-foreground hover:text-foreground;
+  }
+
+  .help-search-kbd {
+    @apply hidden shrink-0 rounded-md border border-border bg-foreground/5 px-2 py-0.5 font-mono text-[11px] text-muted-foreground sm:inline-block;
+  }
+
+  /*
+   * Results drop under the field instead of replacing the sidebar: the landing
+   * page has no sidebar, and a search should not move the page around it.
+   */
+  .help-search-results {
+    @apply absolute top-[calc(100%+8px)] right-0 left-0 z-30 max-h-[60vh] overflow-y-auto rounded-lg border border-sidebar-border bg-popover p-1 shadow-lg;
+  }
+
+  .help-search--compact .help-search-results {
+    @apply left-auto w-[360px] max-w-[calc(100vw-2rem)];
+  }
+
+  .help-search-head {
+    @apply px-3 pt-1.5 pb-1 font-mono text-[11px] tracking-[0.08em] text-muted-foreground/70 uppercase;
+  }
+
+  .help-search-result {
+    @apply flex cursor-pointer flex-col gap-0.5 rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-accent focus:bg-accent focus:outline-none;
+  }
+
+  .help-search-result-kind {
+    @apply font-mono text-[10px] tracking-[0.08em] text-muted-foreground/70 uppercase;
+  }
+
+  .help-search-empty {
+    @apply p-4 text-center text-xs text-muted-foreground;
+  }
+
+  /* ---- Cards and pills ---- */
+
+  .help-card {
+    @apply border border-sidebar-border;
+    background: var(--help-card);
+  }
+
+  .help-card--hover {
+    @apply transition-colors hover:border-violet-500/50;
+  }
+
+  /*
+   * Kind is carried by a flat tint and a word, never a gradient: tutorials are
+   * green, guides blue, deep dives violet, reference orange. The same four
+   * colours label search results and the related-docs row.
+   */
+  .help-pill {
+    @apply inline-flex items-center rounded-full px-3 py-[3px] font-mono text-[11px] tracking-[0.08em] uppercase;
+  }
+
+  .help-pill--tutorial {
+    @apply bg-green-500/10 text-green-600 dark:text-green-400;
+  }
+
+  .help-pill--guide {
+    @apply bg-blue-500/10 text-blue-600 dark:text-blue-400;
+  }
+
+  .help-pill--deep-dive {
+    @apply bg-violet-500/10 text-violet-600 dark:text-violet-400;
+  }
+
+  .help-pill--reference {
+    @apply bg-orange-500/10 text-orange-600 dark:text-orange-400;
+  }
+
+  .help-pill-text {
+    @apply font-mono text-[10px] tracking-[0.08em] uppercase;
+  }
+
+  .help-pill-text--tutorial {
+    @apply text-green-600 dark:text-green-400;
+  }
+
+  .help-pill-text--guide {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+
+  .help-pill-text--deep-dive {
+    @apply text-violet-600 dark:text-violet-400;
+  }
+
+  .help-pill-text--reference {
+    @apply text-orange-600 dark:text-orange-400;
+  }
+
+  .help-count {
+    @apply font-mono text-xs text-muted-foreground/70;
+  }
+
+  .help-kbd {
+    @apply rounded border border-sidebar-border px-1 font-mono text-[11px];
+  }
+
+  /* ---- Landing lists ---- */
+
+  .help-doc-link {
+    @apply flex items-baseline justify-between gap-3 py-[7px] text-sm text-muted-foreground transition-colors hover:text-foreground;
+  }
+
+  /* Inside a card: a hoverable row, so the eye lands on one line. */
+  .help-doc-link--row {
+    @apply rounded-md px-2 py-1.5 text-foreground/90 hover:bg-foreground/5;
+  }
+
+  /*
+   * Section identity is a bordered, flat-tinted icon tile plus its label -
+   * the same border-and-icon rule the control types follow.
+   */
+  .help-section-icon {
+    @apply flex size-9 shrink-0 items-center justify-center rounded-md border border-sidebar-border bg-violet-500/10 text-violet-600 dark:text-violet-400;
+  }
+
+  .help-section-icon svg {
+    @apply size-[18px];
+  }
+
+  .help-doc-link-arrow {
+    @apply text-violet-400 opacity-0 transition-opacity;
+  }
+
+  .help-doc-link:hover .help-doc-link-arrow {
+    @apply opacity-100;
+  }
+
+  .help-section-title {
+    @apply flex items-center gap-1.5 text-[13px] font-semibold text-foreground;
+  }
+
+  .help-section-title::before {
+    content: '→';
+    @apply font-normal text-muted-foreground/70;
+  }
+
+  /* ---- Sidebar tree ---- */
+
+  .help-tree-row {
+    @apply flex items-center gap-2 rounded-md px-3 py-[5px] text-[13.5px] font-semibold text-foreground/90 hover:bg-foreground/5 hover:text-foreground;
+    list-style: none;
+  }
+
+  .help-tree-row::-webkit-details-marker {
+    display: none;
+  }
+
+  .help-tree-row--section {
+    @apply font-normal text-muted-foreground;
+  }
+
+  .help-tree-caret {
+    @apply w-3 shrink-0 text-center text-[11px] text-muted-foreground/70;
+  }
+
+  .help-tree-caret::before {
+    content: '▸';
+  }
+
+  details[open] > summary > .help-tree-caret::before {
+    content: '▾';
+  }
+
+  .help-tree-count {
+    @apply ml-auto font-mono text-[11px] font-normal text-muted-foreground/60;
+  }
+
+  .help-tree-children {
+    @apply mt-1 flex flex-col gap-0.5 pl-2.5;
+  }
+
+  .help-tree-children--deep {
+    @apply pl-5;
+  }
+
+  .help-tree-link {
+    @apply block rounded-md px-3 py-[5px] text-[13.5px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground;
+  }
+
+  .help-tree-link.is-active {
+    @apply bg-violet-500/15 text-foreground;
+  }
+
+  /* ---- Table of contents ---- */
+
+  .help-toc-link {
+    @apply block border-l border-sidebar-border py-1 pl-3.5 text-[13px] text-muted-foreground/80 transition-colors hover:text-foreground;
+  }
+
+  .help-toc-link.is-active {
+    @apply border-violet-400 text-violet-400;
+  }
+}

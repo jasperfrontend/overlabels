@@ -1,5 +1,6 @@
 ---
 title: Math Engine
+section: Tags & syntax
 description: "The math-side of Overlabels: waves, modulo wheels, pseudo-random shaders, timestamp racing, and the expression tricks that make overlays feel alive."
 heading: Math Engine
 lead: Waves, modulo wheels, pseudo-random shaders, timestamp racing, and the expression tricks that make overlays feel alive - built entirely in a text field.

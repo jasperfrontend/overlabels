@@ -5,7 +5,7 @@ heading: Twitch Chat Bot
 lead: The @overlabels bot joins your channel as a moderator and lets you - and optionally your mods, VIPs, or viewers - change overlay controls directly from chat. No tab-switching, no dashboards during a stream.
 canonical: https://overlabels.com/help/bot
 context: settings.bot.*
-section: Bot
+section: Bot & chat
 ---
 
 - [**Commands**](/help/bot/commands) - the built-in chat commands the bot ships with, plus one

@@ -5,7 +5,7 @@ heading: Bot Commands
 lead: Every chat command the @overlabels Twitch bot understands - controls, !ol chat-admin meta-command, list operations, and built-ins.
 canonical: https://overlabels.com/help/bot/commands
 context: settings.bot.commands.*
-section: Bot
+section: Bot & chat
 ---
 
 Warning: This page is... Slightly overwhelming. I'm fully aware of that and I hope to make this page less

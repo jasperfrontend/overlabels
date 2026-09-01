@@ -1,5 +1,6 @@
 ---
 title: Chat Checkin - pin your viewers on a 3D globe - Overlabels
+section: Bot & chat
 description: Let viewers pin themselves on your overlay with !checkin. A 3D globe, counters, distances, alerts and a raw pin feed, all from one chat command.
 heading: Chat Checkin
 lead: Viewers type !checkin Rotterdam, NL and land on your globe. One command, one pin per viewer, city-level only.

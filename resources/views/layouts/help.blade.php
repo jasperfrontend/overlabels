@@ -16,7 +16,7 @@
     </script>
     <style>
         html { background-color: oklch(1 0 0); }
-        html.dark { background-color: oklch(0.145 0 0); }
+        html.dark { background-color: #1d0b30; }
         html.theme-sepia { background-color: hsl(30 7% 8%); }
     </style>
 
@@ -42,6 +42,7 @@
         $resolvedOgImage = !empty($ogImage)
             ? (str_starts_with($ogImage, 'http') ? $ogImage : url($ogImage))
             : asset('ogimage.jpg');
+        $isLanding = ($helpSection ?? '') === 'landing';
     @endphp
 
     <meta property="og:type" content="website" />
@@ -64,113 +65,54 @@
 
     @vite(['resources/js/help/main.ts'])
 </head>
-<body class="font-sans antialiased bg-background text-foreground min-h-screen">
-    <header class="border-b border-sidebar-border">
-        <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <a href="/help" class="flex items-center gap-2 cursor-pointer">
-                <img src="/favicon.png" width="26" alt="" class="size-6" />
-                <span class="font-semibold">Overlabels Help</span>
-            </a>
-            <nav class="flex items-center gap-4 text-sm">
-                <a href="/help" class="cursor-pointer hover:underline {{ ($helpSection ?? '') === 'docs' ? 'text-foreground font-medium' : 'text-muted-foreground' }}">Guides</a>
-                <a href="/help/reference" class="cursor-pointer hover:underline {{ ($helpSection ?? '') === 'reference' ? 'text-foreground font-medium' : 'text-muted-foreground' }}">Reference</a>
-                <a href="/updates" class="cursor-pointer text-muted-foreground hover:underline">Updates</a>
-                <a href="/dashboard" class="cursor-pointer text-muted-foreground hover:underline">Dashboard</a>
-            </nav>
-        </div>
-    </header>
+<body class="help-body font-sans antialiased text-foreground">
+    {{--
+        The signature page gradient sits behind everything, with a veil over
+        it in dark mode so prose stays readable. In light and sepia the spots
+        are transparent and the veil is off, so the page is simply its base
+        colour - the same tokens the rest of the app uses.
+    --}}
+    <div class="help-backdrop" aria-hidden="true"></div>
 
-    <main class="mx-auto max-w-6xl px-4 py-6">
-        {{--
-            One search box for the whole corpus - tutorials, guides and reference
-            entries alike. Before this, search existed only on the reference and
-            covered only the reference, so the answer to "where do I search the
-            docs" depended on which of two unrelated pages you happened to be on.
-        --}}
-        <div class="relative mb-4">
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24" fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
-                aria-hidden="true"
-                width="16"
-                height="16"
-            >
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-            </svg>
-            <label for="help-search" class="sr-only">Search the documentation</label>
-            <input
-                id="help-search"
-                type="text"
-                placeholder="Search everything (e.g. chat, follower, raid, hype train)..."
-                class="w-full py-2 pl-9 pr-9 text-sm input-border"
-                autocomplete="off"
-            />
-            <button
-                id="help-search-clear"
-                type="button"
-                aria-label="Clear search"
-                class="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded p-1 text-muted-foreground hover:bg-accent hidden"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true">
-                    <path d="M18 6 6 18M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-
-        <div class="grid gap-6 md:grid-cols-[280px_minmax(0,1fr)]">
-            <aside
-                id="help-sidebar"
-                class="max-h-[calc(100vh-12rem)] overflow-y-auto border border-sidebar-border p-2"
-            >
-                {{--
-                    The sidebar is section-aware rather than one list of everything:
-                    a 147-entry tag tree is the right nav for the reference and the
-                    wrong nav for a tutorial. Search spans everything; browsing
-                    stays scoped to where you are.
-                --}}
-                <div id="help-nav-tree">
-                    @foreach ($navGroups ?? [] as $group)
-                        <div class="px-2 pt-2 pb-1 text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wide">
-                            {{ $group['label'] }}
-                            @if (!empty($group['count']))
-                                <span class="ml-1 normal-case font-normal text-muted-foreground/50">({{ $group['count'] }})</span>
-                            @endif
-                        </div>
-                        @foreach ($group['items'] as $item)
-                            <a
-                                href="{{ $item['url'] }}"
-                                @if (!empty($item['active'])) data-help-active aria-current="page" @endif
-                                @class([
-                                    'block rounded-md px-2 py-1 text-xs cursor-pointer hover:bg-sidebar-accent',
-                                    'font-mono' => !empty($group['mono']),
-                                    'bg-card text-violet-400' => !empty($item['active']),
-                                    'text-foreground' => empty($item['active']),
-                                ])
-                            >{{ $item['title'] }}</a>
-                        @endforeach
-                    @endforeach
+    <div class="relative z-[1] flex min-h-screen flex-col">
+        <header @class(['border-b border-sidebar-border' => !$isLanding])>
+            <nav class="mx-auto flex h-[68px] max-w-[1240px] items-center justify-between gap-4 px-4 sm:px-6" aria-label="Help">
+                <a href="/help" class="flex shrink-0 cursor-pointer items-center gap-2.5 text-foreground">
+                    <img src="/favicon-light.svg" alt="" class="size-[22px] dark:hidden" /><img src="/favicon.png" alt="" class="hidden size-[22px] dark:block" />
+                    <span class="text-base font-semibold tracking-tight">Overlabels</span>
+                    <span class="help-eyebrow">Help</span>
+                </a>
+                <div class="flex min-w-0 items-center gap-3 sm:gap-5">
+                    @unless ($isLanding)
+                        @include('help._search', ['compact' => true])
+                    @endunless
+                    <a href="/help/reference" @class(['hidden cursor-pointer text-sm md:inline', 'text-foreground' => ($helpSection ?? '') === 'reference', 'text-muted-foreground hover:text-foreground' => ($helpSection ?? '') !== 'reference'])>Reference</a>
+                    <a href="/updates" class="hidden cursor-pointer text-sm text-muted-foreground hover:text-foreground md:inline">Updates</a>
+                    <a href="/#kits" class="hidden cursor-pointer text-sm text-muted-foreground hover:text-foreground lg:inline">Kits</a>
+                    <a href="/dashboard" class="help-btn shrink-0">Open the dashboard</a>
                 </div>
-                <div id="help-search-results" class="hidden"></div>
-            </aside>
+            </nav>
+        </header>
 
-            <article class="min-w-0">
-                @yield('content')
-            </article>
-        </div>
-    </main>
+        <main class="flex-1">
+            @yield('content')
+        </main>
 
-    <footer class="border-t border-sidebar-border">
-        <div class="mx-auto max-w-6xl px-4 py-4 text-xs text-foreground">
-            Building an overlay with an AI assistant? The complete authoring guide is one plain text file:
-            <a href="/llms.txt" class="font-mono underline cursor-pointer">https://overlabels.com/llms.txt</a>
-            (<a href="/help/llms-txt" class="underline cursor-pointer">what is this?</a>).
-        </div>
-    </footer>
+        <footer class="border-t border-sidebar-border">
+            <div class="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-x-8 gap-y-3 px-4 py-6 sm:px-6">
+                <span class="text-[13px] text-muted-foreground">
+                    Building an overlay with an AI assistant? The complete authoring guide is one plain text file:
+                    <a href="/llms.txt" class="cursor-pointer font-mono text-foreground underline">llms.txt</a>
+                    (<a href="/help/llms-txt" class="cursor-pointer underline">what is this?</a>).
+                </span>
+                <div class="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-xs">
+                    <span class="text-muted-foreground/70">Machine-readable too:</span>
+                    <a href="/help-reference-index.json" class="cursor-pointer text-muted-foreground hover:text-foreground">help-reference-index.json</a>
+                    <a href="/help/markdown-endpoints" class="cursor-pointer text-muted-foreground hover:text-foreground">add .md to any URL</a>
+                </div>
+            </div>
+        </footer>
+    </div>
 
     <div id="help-toast-root" aria-live="polite" aria-atomic="true"></div>
 </body>

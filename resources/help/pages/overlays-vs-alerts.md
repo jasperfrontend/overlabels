@@ -1,5 +1,6 @@
 ---
 title: Overlays vs Alerts - how alerts render inside your static overlay
+section: Getting started
 description: The difference between a static overlay and an alert in Overlabels, why alerts are most powerful rendered inside a static overlay's DOM, and how Targeting and Triggers fit together.
 heading: Overlays vs Alerts
 lead: "Overlabels has two kinds of overlay: the always-on static overlay, and the one-shot alert. They look similar in the editor, but they're meant to work together - and understanding how is the difference between a uniform, polished overlay and a bunch of disconnected boxes."

@@ -12,17 +12,21 @@
     @apply text-foreground;
   }
 
-  /* Sections were `<section class="mb-14">`; headings carry the rhythm now. */
+  /*
+   * Sections were `<section class="mb-14">`; headings carry the rhythm now.
+   * Each h2 opens with a rule above it, so a long guide reads as sections
+   * rather than one column of text. The first one has nothing to separate.
+   */
   .help-prose h2 {
-    @apply mt-14 mb-4 scroll-mt-24 text-2xl font-bold;
+    @apply mt-11 mb-4 scroll-mt-6 border-t border-sidebar-border pt-5 text-2xl font-bold;
   }
 
   .help-prose h2:first-child {
-    @apply mt-0;
+    @apply mt-0 border-t-0 pt-0;
   }
 
   .help-prose h3 {
-    @apply mt-8 mb-3 scroll-mt-24 text-xl font-semibold;
+    @apply mt-8 mb-3 scroll-mt-6 text-xl font-semibold;
   }
 
   .help-prose h4 {
@@ -82,7 +86,7 @@
   }
 
   .help-prose pre {
-    @apply mb-6 overflow-x-auto border border-sidebar-border bg-background p-4 text-sm;
+    @apply mb-6 overflow-x-auto rounded-lg border border-sidebar-border bg-background p-4 text-sm;
   }
 
   .help-prose pre code {
@@ -167,7 +171,7 @@
      * invalid. The tags had no background and no border for months.
      */
   .help-prose .ov-tag {
-    @apply inline-block cursor-pointer rounded-md border border-violet-400/40 bg-violet-400/15 px-2 py-0.5 font-mono text-[0.85em] leading-normal text-violet-400 transition-colors select-none;
+    @apply inline-block cursor-pointer rounded-full border border-violet-400/40 bg-violet-400/15 px-2.5 py-0.5 font-mono text-[0.85em] leading-normal text-violet-400 transition-colors select-none;
   }
 
   .help-prose .ov-tag:hover {

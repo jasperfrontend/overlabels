@@ -1,5 +1,6 @@
 ---
 title: help-reference-index.json - Overlabels Help
+section: For machines
 description: The entire Overlabels reference - every template tag, EventSub event, EventSub tag, foreach loop field and integration control - as one JSON array at /help-reference-index.json. No auth, no key.
 heading: help-reference-index.json
 lead: The entire reference - every template tag, EventSub event, EventSub tag, and foreach loop field - as one JSON array. No auth, no key, nothing to sign up for.

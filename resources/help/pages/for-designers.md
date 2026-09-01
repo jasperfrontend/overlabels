@@ -1,5 +1,6 @@
 ---
 title: Overlabels for Designers - what to deliver, what to avoid
+section: Getting started
 description: "A handoff guide for designers working on Twitch overlays in Overlabels. The two surfaces (static + alert), the unknown-background problem, variable-length content, fluid layout, CSS animation constraints, and a concrete deliverables checklist."
 heading: Overlabels for Designers
 lead: This page is for the designer working on a Twitch overlay that will be implemented in Overlabels, and for the streamer who hired them and is wondering what to actually ask for.

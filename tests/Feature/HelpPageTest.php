@@ -64,6 +64,14 @@ it('serves every help page as crawlable html carrying its whole rendered body', 
     // response. An Inertia shell (which is what these pages used to serve)
     // fails it for every page at once.
     foreach (HelpPage::all() as $slug) {
+        // The root index is the landing page, a listing derived from the
+        // corpus rather than a rendering of index.md. HelpTaxonomyTest holds
+        // it to a stronger promise: every document linked, every section
+        // present, and index.md filed the same way.
+        if ($slug === 'index') {
+            continue;
+        }
+
         $page = HelpPage::render($slug);
         $response = $this->get(HelpPage::url($slug));
 

@@ -1,5 +1,6 @@
 ---
 title: Free Resources
+section: Building overlays
 description: Free tools and resources for building beautiful Twitch overlays. Colors, gradients, icons, fonts, textures, animations, sounds, and CSS tools - all free to use.
 heading: Free Resources
 lead: Tools we love for building overlays. All free, no credit(card) required unless noted.

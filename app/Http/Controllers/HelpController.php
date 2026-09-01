@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\HelpReferenceService;
 use App\Services\OgImageService;
+use App\Support\HelpCorpus;
 use App\Support\HelpNav;
 use App\Support\HelpPage;
 use Illuminate\Http\Request;
@@ -25,6 +27,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class HelpController extends Controller
 {
+    /** How many sibling pages the "Related docs" row offers. */
+    private const int RELATED_LIMIT = 3;
+
     public function __construct(
         private readonly OgImageService $og,
     ) {}
@@ -45,11 +50,7 @@ class HelpController extends Controller
 
         $page = HelpPage::render($slug);
 
-        return response()->view('help.doc', [
-            ...$page,
-            'markdownUrl' => HelpPage::url($slug).'.md',
-            'helpSection' => 'docs',
-            'navGroups' => HelpNav::docGroups($slug),
+        $shared = [
             'pageTitle' => $page['title'],
             'pageDescription' => $page['description'],
             'canonicalUrl' => $page['canonical'],
@@ -57,6 +58,36 @@ class HelpController extends Controller
             // the frontmatter changed since. The layout falls back to the
             // generic image when the render fails.
             'ogImage' => $this->og->urlForPage($page, $page['canonical']),
+        ];
+
+        // The root index is the landing page: a derived listing of the whole
+        // corpus, not a rendering of index.md. The markdown file still carries
+        // the hand-written listing for /help.md, the crawl entry point, and
+        // HelpTaxonomyTest keeps the two in step.
+        if ($slug === 'index') {
+            return response()->view('help.landing', [
+                ...$shared,
+                ...$page,
+                'helpSection' => 'landing',
+                'tutorials' => HelpCorpus::ordered(HelpCorpus::KIND_TUTORIAL),
+                'deepDives' => HelpCorpus::ordered(HelpCorpus::KIND_DEEP_DIVE),
+                'sections' => HelpCorpus::sections(),
+                'referenceCount' => count(app(HelpReferenceService::class)->all()),
+            ]);
+        }
+
+        [$prev, $next, $related, $group] = $this->neighbours($slug);
+
+        return response()->view('help.doc', [
+            ...$shared,
+            ...$page,
+            'markdownUrl' => HelpPage::url($slug).'.md',
+            'helpSection' => 'docs',
+            'navGroups' => HelpNav::docGroups($slug),
+            'group' => $group,
+            'prev' => $prev,
+            'next' => $next,
+            'related' => $related,
         ]);
     }
 
@@ -82,5 +113,59 @@ class HelpController extends Controller
             200,
             ['Content-Type' => 'text/markdown; charset=utf-8']
         );
+    }
+
+    /**
+     * Previous, next and related pages, plus the group that defines "nearby".
+     *
+     * A guide's group is its section; a tutorial's or deep dive's is its kind.
+     * Previous and next walk that group in order, and related is the rest of
+     * it, up to RELATED_LIMIT. Nothing here is authored: a page's neighbours
+     * are whatever sits beside it in the taxonomy, so adding a page to a
+     * section links it from every page already there.
+     *
+     * @return array{0:?array<string,mixed>,1:?array<string,mixed>,2:array<int,array<string,mixed>>,3:array{label:string,url:string}}
+     */
+    private function neighbours(string $slug): array
+    {
+        $kind = HelpCorpus::kindOf($slug);
+
+        if ($kind === HelpCorpus::KIND_GUIDE) {
+            $section = HelpCorpus::sectionOf($slug);
+            $docs = $section['items'] ?? [];
+            $group = [
+                'label' => $section['label'] ?? HelpCorpus::KIND_LABELS[$kind].'s',
+                'url' => '/help#'.($section['anchor'] ?? 'guides'),
+            ];
+        } else {
+            $docs = HelpCorpus::ordered($kind);
+            $group = [
+                'label' => $kind === HelpCorpus::KIND_TUTORIAL ? 'Tutorials' : 'Deep dives',
+                'url' => '/help#'.($kind === HelpCorpus::KIND_TUTORIAL ? 'tutorials' : 'deep-dives'),
+            ];
+        }
+
+        $index = null;
+        foreach ($docs as $i => $doc) {
+            if ($doc['slug'] === $slug) {
+                $index = $i;
+                break;
+            }
+        }
+
+        if ($index === null) {
+            return [null, null, [], $group];
+        }
+
+        $prev = $docs[$index - 1] ?? null;
+        $next = $docs[$index + 1] ?? null;
+
+        $related = array_values(array_filter(
+            $docs,
+            fn (array $d, int $i): bool => $i !== $index && $i !== $index - 1 && $i !== $index + 1,
+            ARRAY_FILTER_USE_BOTH,
+        ));
+
+        return [$prev, $next, array_slice($related, 0, self::RELATED_LIMIT), $group];
     }
 }

@@ -1,5 +1,6 @@
 ---
 title: Lists in realtime
+section: Live data
 description: "Build a live data page off an Overlabels List: get a token, read the list as JSON, render it, subscribe to live updates over WebSocket, and add it to OBS. A step-by-step guide."
 heading: Lists in realtime
 lead: Build a page that reads one of your Lists and updates live - a wheel, a leaderboard, a ticker - and drop it into OBS. Step by step.

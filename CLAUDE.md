@@ -454,6 +454,7 @@ title: Show a donation goal bar - Overlabels Tutorial
 description: Longer sentence for the meta description and the search result.
 heading: Show a donation goal bar
 lead: The paragraph under the H1, and the HelpBeacon card body.
+section: Live data
 context: templates.create?type=static
 canonical: https://overlabels.com/help/tutorials/donation-goal-bar
 keywords: donation goal, progress bar, goal bar, fundraiser
@@ -462,6 +463,19 @@ keywords: donation goal, progress bar, goal bar, fundraiser
 
 - `title` / `description` are for the browser tab and Google, and may run long.
 - `heading` / `lead` are the on-page H1 and intro AND the beacon card copy.
+- **`section:` is REQUIRED on a guide and forbidden on a tutorial or deep dive** (their directory
+  already places them). It must be one of `HelpCorpus::SECTIONS`, verbatim: `Getting started`,
+  `Tags & syntax`, `Building overlays`, `Live data`, `Bot & chat`, `Integrations & testing`,
+  `For machines`. The landing page columns, the sidebar tree, breadcrumbs, previous/next and
+  "Related docs" are all derived from it. `HelpTaxonomyTest` names a guide without one, a value
+  off the list, a section nothing uses, and an index.md that files a page under a different heading
+  than its frontmatter. Adding an eighth section is one constant entry (label => one-line
+  description, printed on its landing card) plus at least one page, plus an icon in
+  `help/_section-icon.blade.php` if the fallback book is not wanted.
+  **Order within a section, and among tutorials and deep dives, is index.md order**
+  (`HelpCorpus::sortByIndex()`): the author already decides what comes first there, so there is no
+  `order:` key to keep in step. (Sept 2026, from a Claude Design canvas; before that the guides were
+  one alphabetical list.)
 - **`keywords:` is how a page becomes findable by a word that is only in its body.** Comma-separated,
   optional, and multi-word terms stay whole (`bang snippets` is one keyword). **Search cannot see into
   a body** - Fuse applies a field norm, so the same exact match scores 0.0 in a short field and 0.89 in
@@ -471,7 +485,12 @@ keywords: donation goal, progress bar, goal bar, fundraiser
 - **If the page declares a `context:`, `heading` is capped at 40 chars and `lead` at 320** (the panel is 375px). No context, no cap. `HelpContextTest` names the offending slug.
 - `context:` is optional and often should be omitted. **Max 3 pages may resolve to one context.** As of Aug 2026 `templates.create?type=static` is FULL at 3 of 3 (bare `templates.create` from `conditionals`/`formatting` matches any bag, plus one tutorial), so claiming it means displacing something. Check before adding one: `HelpContext::for('some.route', ['type' => 'static'])` in tinker returns everything that would resolve.
 
-**Link every new page from `resources/help/pages/index.md`.** A test enforces it: `llms.txt` names `/help.md` as the crawl entry point, so an unlinked page is undiscoverable.
+**Link every new page from `resources/help/pages/index.md`, under the `###` heading that matches its
+`section:`.** A test enforces both: `llms.txt` names `/help.md` as the crawl entry point, so an
+unlinked page is undiscoverable, and index.md is the hand-written twin of the derived landing page,
+so the two must file a page the same way. `/help` itself is `help/landing.blade.php`, built from
+`HelpCorpus::sections()` - index.md's body is served only as `/help.md`. The two Inertia help pages
+that cannot carry frontmatter are listed via `HelpCorpus::SECTION_EXTRAS`.
 
 Free in the body: `##` becomes a TOC with stable anchors, fenced blocks get a Copy button, `[[[tag]]]` becomes a click-to-copy pill (inside code blocks too), `> [!NOTE|TIP|WARNING|IMPORTANT]` become callouts, `[[slug]]` resolves to a reference entry, `$$tex$$` renders with KaTeX.
 
@@ -481,7 +500,7 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 
 - **`App\Support\HelpMarkdown` is the one pipeline.** Stage order is load-bearing and commented: extract math -> wikilinks -> convert -> restore math -> callouts -> tag widgets -> heading anchors. Steps 2 and 6 cannot swap: the wikilink regex relies on its lookbehind to stay out of `[[[tag]]]`, so the tags must still be intact when it runs.
 - **Soft breaks are per-kind, not global.** Reference entries are written one statement per line and need `<br />`; guides are prose wrapped at ~100 columns and would break mid-sentence. `HelpMarkdown::render($body, $links, softBreaks:)` - the caller decides. Test-pinned in both directions.
-- `App\Support\HelpCorpus` is the unified index behind the nav, the sitemap, the wikilink map and search. `HelpNav` builds the section-aware sidebar (tutorials/guides list on prose, category tree on reference - a 147-entry tree is the wrong nav for a tutorial).
+- `App\Support\HelpCorpus` is the unified index behind the nav, the sitemap, the wikilink map and search. `HelpNav` builds the section-aware sidebar as one tree shape for both corpora (`help/_tree.blade.php`, native `<details>`, the branch holding the current page open, everything else collapsed to a row with a count). Search results drop under the search field (`help/_search.blade.php`, included exactly once per page), not into the sidebar - the landing has none.
 - **These pages are Blade, not Inertia, and must stay that way.** Documentation a crawler cannot read is documentation only existing users can find. `HelpController::show()` and `HelpReferenceController::show()` both answer an `X-Inertia` request with 409 + `X-Inertia-Location` so in-app `<Link>`s hard-load instead of parsing HTML as an Inertia payload. **This is not SSR** - it is a hand-written Blade view, and the SSR ban is unrelated and still absolute.
 - A test asserts, for every page of every kind, that the whole rendered body appears byte-for-byte in the response. It fails for the entire corpus at once if anything puts these back behind a shell.
 - **The sitemap is derived from `HelpCorpus`, never hand-listed.** The old array had rotted by fourteen pages.

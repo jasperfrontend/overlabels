@@ -181,7 +181,8 @@ final class HelpPage
      * @return array{
      *     slug:string, kind:string, title:string, description:string,
      *     heading:string, lead:string, canonical:string, section:?string,
-     *     html:string, toc:array<int,array{id:string,text:string}>
+     *     html:string, toc:array<int,array{id:string,text:string}>,
+     *     readingMinutes:int
      * }
      */
     public static function render(string $slug): array
@@ -212,10 +213,27 @@ final class HelpPage
             'heading' => $meta['heading'] ?? $meta['title'] ?? Str::headline($slug),
             'lead' => $meta['lead'] ?? $meta['description'] ?? '',
             'canonical' => $meta['canonical'] ?? 'https://overlabels.com'.self::url($slug),
-            'section' => $meta['section'] ?? null,
+            'section' => isset($meta['section']) ? trim($meta['section']) : null,
             'html' => $html,
             'toc' => $toc,
+            'readingMinutes' => self::readingMinutes($body),
         ];
+    }
+
+    /**
+     * Whole minutes at a slow reading pace, never less than one.
+     *
+     * Counted on the markdown source, so code samples and tag pills weigh in
+     * as the words they are - a tutorial that is mostly a block to paste still
+     * takes time to read. 200 words a minute is the conservative end of adult
+     * prose speed, which suits documentation that gets read while something is
+     * broken.
+     */
+    public static function readingMinutes(string $body): int
+    {
+        $words = str_word_count(strip_tags($body));
+
+        return max(1, (int) ceil($words / 200));
     }
 
     /**

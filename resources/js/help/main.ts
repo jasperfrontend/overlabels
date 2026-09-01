@@ -15,20 +15,16 @@ import { buildHelpSearch, docLabel, type HelpDoc, type HelpSearch } from '../uti
 const SIDEBAR_SCROLL_KEY = 'help-sidebar-scroll';
 
 /**
- * Generous, because this list replaces the whole sidebar tree rather than
- * popping up over it - and because naming a section has to return the section.
- * `Template Tags` is 65 entries, and the card on the reference index promises
- * exactly that number. The score cutoff, not this, is what bounds an ordinary
- * query: no fuzzy search over the current corpus keeps more than about fifty.
+ * Generous, because naming a section has to return the section. `Template
+ * Tags` is 65 entries, and the card on the reference index promises exactly
+ * that number. The score cutoff, not this, is what bounds an ordinary query:
+ * no fuzzy search over the current corpus keeps more than about fifty.
  */
 const SEARCH_LIMIT = 150;
 
 document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.getElementById('help-sidebar');
-  const tree = document.getElementById('help-nav-tree');
-  const results = document.getElementById('help-search-results');
   const input = document.getElementById('help-search') as HTMLInputElement | null;
-  const clearBtn = document.getElementById('help-search-clear');
 
   // Landing on a deep reference entry used to leave the sidebar scrolled to the
   // top, with the highlighted entry hundreds of pixels below the fold - the one
@@ -40,12 +36,25 @@ document.addEventListener('DOMContentLoaded', () => {
   sidebar?.addEventListener('scroll', () => saveSidebarScroll(sidebar, input));
 
   wireCopyButtons();
+  wireCopyPageButton();
   wireBodyTagClicks();
   wireGlobalShortcut(input);
+  wireTableOfContents();
   addCodeBlockCopyButtons();
   void renderMath();
+  wireSearch(input);
+});
 
-  if (!input || !tree || !results || !clearBtn) return;
+/**
+ * Search results open in a panel under the field. They used to replace the
+ * sidebar tree, which only worked on pages that had one; the landing page has
+ * the search in its hero and no sidebar at all.
+ */
+function wireSearch(input: HTMLInputElement | null) {
+  const results = document.getElementById('help-search-results');
+  const clearBtn = document.getElementById('help-search-clear');
+  const container = input?.closest('.help-search');
+  if (!input || !results || !clearBtn || !container) return;
 
   let searcher: HelpSearch | null = null;
 
@@ -53,67 +62,174 @@ document.addEventListener('DOMContentLoaded', () => {
     .then((r) => r.json())
     .then((data: HelpDoc[]) => {
       searcher = buildHelpSearch(data);
+      if (input.value.trim()) render();
     })
     .catch(() => {
       // Search becomes a no-op if the index 404s; the static tree still
       // works. Don't shout in production logs.
     });
 
-  const renderResults = () => {
+  const close = () => {
+    results.classList.add('hidden');
+    results.innerHTML = '';
+  };
+
+  const render = () => {
     const q = input.value.trim();
     if (!q) {
-      tree.classList.remove('hidden');
-      results.classList.add('hidden');
-      results.innerHTML = '';
+      close();
       clearBtn.classList.add('hidden');
       return;
     }
     clearBtn.classList.remove('hidden');
-    tree.classList.add('hidden');
     results.classList.remove('hidden');
 
     if (!searcher) {
-      results.innerHTML = '<div class="p-4 text-center text-xs text-muted-foreground">Loading...</div>';
+      results.innerHTML = '<div class="help-search-empty">Loading...</div>';
       return;
     }
 
     const matches = searcher.search(q, SEARCH_LIMIT);
     if (matches.length === 0) {
-      results.innerHTML = '<div class="p-4 text-center text-xs text-red-400">Nothing matched.</div>';
+      results.innerHTML = '<div class="help-search-empty">Nothing matched.</div>';
       return;
     }
 
-    const head = `<div class="px-2 pt-1 pb-2 text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wide">${matches.length} results</div>`;
+    const head = `<div class="help-search-head">${matches.length} results</div>`;
     const body = matches
       .map(
         (e) => `
-            <a href="${escapeHtml(e.url)}"
-               class="flex w-full flex-col items-start gap-0.5 rounded-md px-2 py-1.5 text-left text-sm cursor-pointer hover:bg-accent">
-              <span class="${e.kind === 'reference' ? 'font-mono ' : ''}text-xs truncate w-full">${escapeHtml(e.title)}</span>
-              <span class="text-[10px] uppercase tracking-wide text-muted-foreground/70">${escapeHtml(docLabel(e))}</span>
+            <a href="${escapeHtml(e.url)}" class="help-search-result" role="option">
+              <span class="${e.kind === 'reference' ? 'font-mono ' : ''}truncate text-[13px]">${escapeHtml(e.title)}</span>
+              <span class="help-search-result-kind help-pill-text--${escapeHtml(e.kind)}">${escapeHtml(docLabel(e))}</span>
             </a>`,
       )
       .join('');
     results.innerHTML = head + body;
   };
 
-  input.addEventListener('input', renderResults);
+  input.addEventListener('input', render);
+  input.addEventListener('focus', () => {
+    if (input.value.trim()) render();
+  });
   clearBtn.addEventListener('click', () => {
     input.value = '';
-    renderResults();
+    render();
     input.focus();
+  });
+
+  // Arrow keys walk the results; Enter follows the focused one, which is a
+  // plain link, so the browser does that part. Escape puts the page back.
+  const links = () => Array.from(results.querySelectorAll<HTMLAnchorElement>('a.help-search-result'));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      const first = links()[0];
+      if (first) {
+        e.preventDefault();
+        first.focus();
+      }
+    } else if (e.key === 'Escape') {
+      input.value = '';
+      render();
+      input.blur();
+    }
+  });
+  results.addEventListener('keydown', (e) => {
+    const items = links();
+    const index = items.indexOf(document.activeElement as HTMLAnchorElement);
+    if (index === -1) return;
+    if (e.key === 'ArrowDown' && items[index + 1]) {
+      e.preventDefault();
+      items[index + 1].focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      (items[index - 1] ?? input).focus();
+    } else if (e.key === 'Escape') {
+      close();
+      input.focus();
+    }
   });
 
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement | null;
-    const btn = target?.closest('[data-help-search]') as HTMLElement | null;
-    if (!btn) return;
-    const term = btn.getAttribute('data-help-search') ?? '';
-    input.value = term;
-    renderResults();
-    input.focus();
+    if (!target) return;
+
+    // Category cards on the reference index fill the search with their label.
+    const btn = target.closest('[data-help-search]') as HTMLElement | null;
+    if (btn) {
+      input.value = btn.getAttribute('data-help-search') ?? '';
+      render();
+      input.focus();
+      input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      return;
+    }
+
+    if (!container.contains(target)) close();
   });
-});
+}
+
+/**
+ * Highlight the table-of-contents entry for the section under the reader.
+ * The last heading that has scrolled past the top of the viewport wins, so
+ * the active entry is the section currently being read, not the next one.
+ */
+function wireTableOfContents() {
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('#help-toc .help-toc-link'));
+  const headings = Array.from(document.querySelectorAll<HTMLElement>('.help-prose h2[id]'));
+  if (!links.length || !headings.length) return;
+
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    let current = headings[0].id;
+    for (const h of headings) {
+      if (h.getBoundingClientRect().top < 120) current = h.id;
+    }
+    links.forEach((l) => l.classList.toggle('is-active', l.getAttribute('href') === `#${current}`));
+  };
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    },
+    { passive: true },
+  );
+  update();
+}
+
+/**
+ * "Copy page as Markdown" fetches the page's .md twin and copies that - the
+ * source file byte for byte, which is what an assistant wants pasted in.
+ * Copying the rendered text would lose the frontmatter and the fences.
+ */
+function wireCopyPageButton() {
+  const button = document.querySelector<HTMLButtonElement>('[data-help-copy-page]');
+  if (!button) return;
+
+  const url = button.getAttribute('data-help-copy-page') ?? '';
+  const label = button.textContent ?? '';
+
+  button.addEventListener('click', async () => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(String(response.status));
+      const markdown = await response.text();
+      await navigator.clipboard.writeText(markdown);
+      button.textContent = 'Copied as Markdown';
+      button.classList.add('is-copied');
+      showToast('Copied the page as Markdown');
+    } catch {
+      showToast('Could not copy this page');
+    }
+    window.setTimeout(() => {
+      button.textContent = label;
+      button.classList.remove('is-copied');
+    }, 1500);
+  });
+}
 
 /**
  * Render any TeX the server left as `.help-math` placeholders. KaTeX is
@@ -282,7 +398,7 @@ function showToast(message: string) {
   if (!root) return;
   const el = document.createElement('div');
   el.className =
-    'fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-md border border-sidebar-border bg-card px-3 py-2 text-sm text-foreground shadow-lg';
+    'fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-md border border-sidebar-border bg-popover px-3 py-2 text-sm text-foreground shadow-lg';
   el.textContent = message;
   root.appendChild(el);
   window.setTimeout(() => {

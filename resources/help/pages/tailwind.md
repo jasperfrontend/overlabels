@@ -1,5 +1,6 @@
 ---
 title: Styling with Tailwind - how utility classes really work in Overlabels
+section: Building overlays
 description: "Overlabels compiles Tailwind v3 utility classes at save time, not in the browser: what that means in practice, which syntax works, why borders need one extra line, and when to just write CSS."
 heading: Styling with Tailwind
 lead: You can style an overlay with Tailwind utility classes and never write a stylesheet. But Overlabels does not load Tailwind the way a website does, and knowing how the classes actually become CSS explains every surprise you might hit - including the one where your borders are invisible.

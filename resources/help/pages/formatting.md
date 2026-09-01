@@ -1,5 +1,6 @@
 ---
 title: Formatting Pipes
+section: Tags & syntax
 description: Learn how to format numbers, durations, currencies, and dates in your Twitch overlays using pipe syntax. Zero dependencies, fully locale-aware.
 heading: Formatting Pipes
 lead: Learn how to format numbers, durations, currencies, and dates in your Twitch overlays using pipe syntax. Zero dependencies, fully locale-aware.

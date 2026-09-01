@@ -1,5 +1,6 @@
 ---
 title: Why Ko-fi
+section: Integrations & testing
 description: Why Overlabels chose Ko-fi over PayPal for streamer donations. Zero platform fees, guest checkout, instant payouts, and more.
 heading: Overlabels ♥ Ko-fi
 lead: Why we chose Ko-fi as our first external integration - and why we think you should use it too.

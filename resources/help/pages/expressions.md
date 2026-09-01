@@ -1,5 +1,6 @@
 ---
 title: Expression Controls
+section: Live data
 description: "Expression Controls in Overlabels: math-powered live data with no code and no server. Build chained formulas like the Haversine distance, progress bars, and more, evaluated live as your data changes."
 heading: Expression Controls
 lead: Math-powered live data, no code and no server. Build chained formulas like the Haversine distance and progress bars, evaluated live as your data changes.

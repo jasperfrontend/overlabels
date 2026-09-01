@@ -1,5 +1,6 @@
 ---
 title: Twitch Chat in an Overlay
+section: Bot & chat
 description: Render live Twitch chat in an Overlabels overlay - the foreach loop, every per-message tag, badges and emotes, Shared Chat, display filters, and the four chat controls.
 heading: Twitch Chat in an Overlay
 lead: Render live Twitch chat with one foreach loop. Every per-message tag, badges and emotes, what happens during a collab, and the settings that decide what gets drawn.

@@ -1,5 +1,6 @@
 ---
 title: Conditional Tags Reference
+section: Tags & syntax
 description: Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, and Fourthwall integration tags in Overlabels overlays.
 heading: Conditional Tags Reference
 lead: Complete reference for conditional template tags, event data, Ko-fi, StreamLabs, and Fourthwall integration tags in Overlabels overlays.

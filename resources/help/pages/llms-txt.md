@@ -1,5 +1,6 @@
 ---
 title: llms.txt - Overlabels Help
+section: For machines
 description: Overlabels publishes its complete overlay-authoring guide as one plain text file at /llms.txt, written for language models. What is in it, and how to hand it to an assistant.
 heading: llms.txt
 lead: Overlabels publishes its complete overlay-authoring guide as one plain text file, written for language models. This page explains what is in it and how to hand it to an assistant.

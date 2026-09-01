@@ -1,5 +1,6 @@
 ---
 title: Markdown endpoints (.md) - Overlabels Help
+section: For machines
 description: Every prose help page, every public overlay and every public kit on Overlabels is fetchable as plain markdown by appending .md to its URL. What that covers, and the few pages it does not.
 heading: Markdown endpoints (.md)
 lead: Every prose help page on Overlabels is fetchable as plain markdown by appending `.md` to its URL - including this one. Public overlays and kits have a `.md` too.

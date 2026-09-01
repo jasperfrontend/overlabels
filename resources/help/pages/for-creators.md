@@ -1,5 +1,6 @@
 ---
 title: Overlabels for Creators - what this thing actually is
+section: Getting started
 description: "A long-form description of Overlabels: a reactive value graph that happens to render to a Twitch overlay. The expensive part is the live math layer. Here's what that means, what's possible, and what's still missing."
 heading: Overlabels for Creators
 lead: "If you've heard of Overlabels, you probably heard 'Twitch overlays you build with HTML and CSS'. That's true and it's also selling the cheap part. The expensive part - the part that makes Overlabels different from every other overlay tool - is the live math layer underneath."

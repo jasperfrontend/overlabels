@@ -1,5 +1,6 @@
 ---
 title: Testing your alerts with the Twitch CLI
+section: Integrations & testing
 description: "Fire any of 28 real Twitch EventSub events at your own Overlabels account from a terminal. Setting up the Twitch CLI, using the Testing page, what your webhook secret is for, and why you should never show these commands on stream."
 heading: Testing your alerts
 lead: Fire real Twitch events at your own account from a terminal, without waiting for an actual follower. What the Testing page gives you, how to set up the Twitch CLI, and the one rule about never showing these commands on stream.

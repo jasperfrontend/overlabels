@@ -1,5 +1,6 @@
 ---
 title: Test mode on donation integrations - what it does and when to use it
+section: Integrations & testing
 description: "What the test mode switch on Ko-fi, Buy Me a Coffee, Fourthwall, StreamLabs and Throne actually does: repeats are accepted, nothing counts toward usage, and turning it off resets the service's controls to their starting values."
 heading: Test mode on donation integrations
 lead: Every donation integration page has a test mode switch. It lets you send the same test donation over and over while you build your alerts, and it cleans up after itself when you turn it off. Here is exactly what happens on both sides of the switch.
