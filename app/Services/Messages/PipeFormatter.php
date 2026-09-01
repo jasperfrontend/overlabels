@@ -32,7 +32,7 @@ class PipeFormatter
             'lowercase' => mb_strtolower($value),
             'login' => self::login($value),
             'mention' => self::mention($value),
-            'distance' => self::distance($value, $args),
+            'distance' => self::distance($value, $args, $locale),
             'duration' => self::duration($value, $args),
             default => $value,
         };
@@ -126,23 +126,35 @@ class PipeFormatter
         return $trimmed === '' ? '' : '@'.ltrim($trimmed, '@');
     }
 
-    private static function distance(string $value, string $args): string
+    /**
+     * Input is KILOMETERS - the contract formatters.ts documents and the
+     * April 2026 changelog announced ("Input assumed km"), and the unit every
+     * distance control actually stores (GPS distance/session_distance, the
+     * checkin distances). This method shipped assuming meters and divided km
+     * by 1000, so every server-side |distance: on a real control spoke a
+     * value 1000x too small; the m/ft units it invented existed in neither
+     * the JS side nor any documentation and are gone with the meters.
+     *
+     * Mirrors formatters.ts formatDistance(): no args or unknown unit means
+     * km passthrough, mi converts, output is locale-formatted with at most
+     * two fraction digits.
+     */
+    private static function distance(string $value, string $args, string $locale): string
     {
         if (! is_numeric($value)) {
             return $value;
         }
-        $meters = (float) $value;
-        $unit = strtolower($args === '' ? 'km' : $args);
+        if ($args === '') {
+            return $value;
+        }
 
-        $converted = match ($unit) {
-            'km' => $meters / 1000,
-            'm' => $meters,
-            'mi' => $meters / 1609.344,
-            'ft' => $meters * 3.280839895,
-            default => $meters,
-        };
+        $km = (float) $value;
+        $converted = strtolower($args) === 'mi' ? $km / 1.609344 : $km;
 
-        return (string) round($converted, 2);
+        $formatter = new NumberFormatter($locale, NumberFormatter::DECIMAL);
+        $formatter->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, 2);
+
+        return $formatter->format($converted);
     }
 
     private static function duration(string $value, string $args): string

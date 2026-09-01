@@ -380,21 +380,26 @@ test('resolver applies number formatter with locale', function () {
     expect($output)->toBe('1,234,567');
 });
 
-test('resolver applies distance formatter to convert meters', function () {
+test('resolver applies the distance formatter on km input, the formatters.ts contract', function () {
+    // The control stores KILOMETERS, exactly like the real GPS and checkin
+    // distance controls do. This test previously stored 8704 "meters" and
+    // pinned a divide-by-1000 that existed only server-side - the JS pipe and
+    // the April 2026 changelog both say input is km, so every bot reply piping
+    // a real control through |distance: spoke a value 1000x too small.
     $user = makeOptedInBotUser();
     OverlayControl::create([
         'user_id' => $user->id,
         'overlay_template_id' => null,
         'key' => 'session_distance',
         'type' => 'number',
-        'value' => '8704',
+        'value' => '8.7',
         'source_managed' => false,
     ]);
 
     $resolver = app(BotCommandResolver::class);
 
-    expect($resolver->resolve($user, '[[[c:session_distance|distance:mi]]]'))->toBe('5.41')
-        ->and($resolver->resolve($user, '[[[c:session_distance|distance:km]]]'))->toBe('8.7');
+    expect($resolver->resolve($user, '[[[c:session_distance|distance:km]]]'))->toBe('8.7')
+        ->and($resolver->resolve($user, '[[[c:session_distance|distance:mi]]]'))->toBe('5.41');
 });
 
 test('resolver applies uppercase formatter', function () {
