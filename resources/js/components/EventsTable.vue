@@ -301,6 +301,9 @@ const twitchRowLabels: Record<string, RowLabel> = {
 };
 
 const externalEventLabels: Record<string, Record<string, string>> = {
+  checkin: {
+    checkin: 'checkin',
+  },
   kofi: {
     donation: 'Ko-fi tip',
     subscription: 'Ko-fi subscription',
@@ -358,7 +361,10 @@ function hypeTrainPhrase(event: UnifiedEvent): string {
 
 function who(event: UnifiedEvent): string | null {
   if (event.source !== 'twitch') {
-    return (event.normalized_payload?.['event.from_name'] as string) ?? null;
+    // Most drivers write `event.from_name`; checkin names its actor
+    // `event.user_name`. Drivers cast absent values to '', hence || not ??.
+    const p = event.normalized_payload;
+    return (p?.['event.from_name'] as string) || (p?.['event.user_name'] as string) || null;
   }
   const d = event.event_data ?? {};
   if (event.event_type === 'channel.raid') return (d.from_broadcaster_user_name as string) ?? null;
@@ -374,7 +380,9 @@ function details(event: UnifiedEvent): string | null {
     const currency = p['event.currency'] as string | undefined;
     if (amount) return currency ? `${amount} ${currency}` : amount;
     const tier = p['event.tier_name'] as string | undefined;
-    return tier ?? null;
+    if (tier) return tier;
+    // Checkin events carry a place instead of an amount.
+    return (p['event.place'] as string) || null;
   }
   const d = event.event_data ?? {};
   switch (event.event_type) {
@@ -496,12 +504,13 @@ function fullTime(iso: string): string {
                   <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
                   <!-- Hover-revealed from md up; always visible below, where there
                        is no hover to reveal it. The whole row triggers the same
-                       confirm - this is the affordance that says so. -->
+                       confirm - this is the affordance that says so. On
+                       non-replayable rows it stays as an invisible spacer so the
+                       time column lines up down the whole list. -->
                   <button
-                    v-if="canReplay(event)"
                     type="button"
                     class="shrink-0 cursor-pointer rounded-full border border-foreground/15 px-3 py-0.5 text-[11px] font-medium text-foreground/70 transition-opacity hover:bg-foreground/5 hover:text-foreground md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100"
-                    :class="confirmingId === event.id ? 'md:opacity-100' : ''"
+                    :class="[canReplay(event) ? '' : 'invisible', confirmingId === event.id ? 'md:opacity-100' : '']"
                     @click.stop="openConfirm(event)"
                     @keydown.enter.stop
                     @keydown.space.stop
@@ -514,7 +523,9 @@ function fullTime(iso: string): string {
 
             <PopoverContent class="w-auto bg-accent p-3" side="top" :side-offset="-1" align="start">
               <div class="flex items-center gap-3">
-                <span class="text-sm text-foreground">Replay &ldquo;{{ event.label }}&rdquo;?</span>
+                <!-- The dashboard and unified feed send external events without
+                     a server label - fall back to the row's own kind tag. -->
+                <span class="text-sm text-foreground">Replay &ldquo;{{ event.label || kind(event) }}&rdquo;?</span>
                 <button :ref="(el: any) => el?.focus({ focusVisible: true })" class="btn btn-primary btn-xs" @click="confirmAndReplay(event)">
                   Yes
                 </button>
