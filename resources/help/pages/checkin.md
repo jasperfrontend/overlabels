@@ -57,6 +57,12 @@ The labels are ordinary HTML with the class `ol-globe-label` (plus `is-hidden` w
 the far side), so your template's CSS owns them completely. The 3D library only downloads on
 overlays that actually contain the tag.
 
+> [!TIP]
+> Every globe ships with one permanent resident: Overlabels itself, checked in at Avarua, Cook
+> Islands. It is the maker's mark - it lives only on the globe drawing and never counts toward
+> your checkin numbers, the pin feed, or alerts. Style its label via
+> `.ol-globe-label[data-login="overlabels"]` if you want to give it a look of its own.
+
 ## Pin lifetime
 
 On the settings page you choose what a pin's life looks like:

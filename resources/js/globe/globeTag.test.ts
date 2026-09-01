@@ -1,4 +1,6 @@
+import type { CheckinPin } from '@/utils/checkinSlots';
 import { describe, expect, it } from 'vitest';
+import { BRAND_PIN, withBrandPin } from './brandPin';
 import { GLOBE_TAG, replaceGlobeTags, sourceUsesGlobe } from './globeTag';
 import { isLandCell, landDots, latLngToUnitVector, MASK_COLS, MASK_ROWS } from './landmask';
 
@@ -60,6 +62,48 @@ describe('landmask', () => {
     expect(isLandCell(-1, 0)).toBe(false);
     expect(isLandCell(0, MASK_COLS)).toBe(false);
     expect(isLandCell(MASK_ROWS, 0)).toBe(false);
+  });
+});
+
+describe("the maker's mark", () => {
+  function realPin(login: string): CheckinPin {
+    return {
+      name: login.toUpperCase(),
+      login,
+      place: 'Rotterdam, NL',
+      country: 'Netherlands',
+      country_code: 'NL',
+      lat: '51.9225',
+      lng: '4.47917',
+      at: '1756700000',
+      distance_km: '',
+    };
+  }
+
+  it('Overlabels is checked in at Avarua on every globe', () => {
+    const pins = withBrandPin([realPin('viewer_one')]);
+
+    expect(pins).toHaveLength(2);
+    expect(pins[pins.length - 1]).toBe(BRAND_PIN);
+    expect(BRAND_PIN.place).toBe('Avarua, CK');
+  });
+
+  it('an empty globe still carries the mark', () => {
+    expect(withBrandPin([])).toEqual([BRAND_PIN]);
+  });
+
+  it('a real pin under the overlabels login yields to the mark instead of duplicating it', () => {
+    const pins = withBrandPin([realPin('overlabels'), realPin('viewer_one')]);
+
+    expect(pins.filter((p) => p.login === 'overlabels')).toHaveLength(1);
+    expect(pins[pins.length - 1].place).toBe('Avarua, CK');
+  });
+
+  it('never mutates the input window', () => {
+    const input = [realPin('viewer_one')];
+    withBrandPin(input);
+
+    expect(input).toHaveLength(1);
   });
 });
 

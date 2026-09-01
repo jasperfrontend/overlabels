@@ -22,6 +22,7 @@
 
 import type { CheckinPin } from '@/utils/checkinSlots';
 import * as THREE from 'three';
+import { withBrandPin } from './brandPin';
 import { landDots, latLngToUnitVector } from './landmask';
 
 export interface GlobeInstance {
@@ -237,7 +238,8 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
 
   return {
     update(pins: CheckinPin[]): void {
-      rebuildPins(pins);
+      // Every globe carries the maker's mark - see brandPin.ts.
+      rebuildPins(withBrandPin(pins));
     },
     destroy(): void {
       destroyed = true;
