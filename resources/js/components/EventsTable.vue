@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RefreshCw, ChevronDown, ChevronRight, Gift } from '@lucide/vue';
-import { useEventColors } from '@/composables/useEventColors';
+import { useEventColors, eventLabel } from '@/composables/useEventColors';
 import type { UnifiedEvent } from '@/composables/useEventColors';
 import ProviderIcon from '@/components/ProviderIcon.vue';
 import { outcomeLabel } from '@/utils/deliveryOutcome';
@@ -269,9 +269,40 @@ async function replayViaToken(event: UnifiedEvent, token: string) {
   }
 }
 
+/* ------------------------------- Row copy --------------------------------
+   Each row reads KIND then who then the rest: a monospace uppercase kind tag
+   carries the event type, the acting user is bold, and details() carries the
+   payload ("500 bits", a reward title). `phrase()` holds whatever part of the
+   old one-string label was not the kind ("went live", poll/goal verbs).
+*/
+
+interface RowLabel {
+  kind: string;
+  phrase?: string;
+}
+
+const twitchRowLabels: Record<string, RowLabel> = {
+  'channel.follow': { kind: 'follow' },
+  'channel.subscribe': { kind: 'sub' },
+  'channel.subscription.message': { kind: 'resub' },
+  'channel.subscription.gift': { kind: 'gift sub' },
+  'channel.cheer': { kind: 'cheer' },
+  'channel.raid': { kind: 'raid' },
+  'channel.channel_points_custom_reward_redemption.add': { kind: 'redeem' },
+  'channel.channel_points_custom_reward_redemption.update': { kind: 'redeem', phrase: 'redemption updated' },
+  'stream.online': { kind: 'stream', phrase: 'went live' },
+  'stream.offline': { kind: 'stream', phrase: 'ended the stream' },
+  'channel.poll.begin': { kind: 'poll', phrase: 'started' },
+  'channel.poll.progress': { kind: 'poll', phrase: 'updated' },
+  'channel.poll.end': { kind: 'poll', phrase: 'ended' },
+  'channel.goal.begin': { kind: 'goal', phrase: 'started' },
+  'channel.goal.progress': { kind: 'goal', phrase: 'progressed' },
+  'channel.goal.end': { kind: 'goal', phrase: 'ended' },
+};
+
 const externalEventLabels: Record<string, Record<string, string>> = {
   kofi: {
-    donation: 'Ko tip-fi',
+    donation: 'Ko-fi tip',
     subscription: 'Ko-fi subscription',
     shop_order: 'Ko-fi shop order',
     commission: 'Ko-fi commission',
@@ -298,65 +329,31 @@ const externalEventLabels: Record<string, Record<string, string>> = {
   },
 };
 
-// Flat map - every Twitch event type resolves to exactly one human label.
-// Keeping this next to externalEventLabels so both label sources are visible
-// at a glance when adding new event types.
-const twitchEventLabels: Record<string, string> = {
-  'channel.follow': 'follow',
-  'channel.subscribe': 'sub',
-  'channel.subscription.message': 'resub',
-  'channel.subscription.gift': 'gifted',
-  'channel.cheer': 'cheer',
-  'channel.raid': 'raid',
-  'channel.channel_points_custom_reward_redemption.add': 'redeem',
-  'channel.channel_points_custom_reward_redemption.update': 'redemption updated',
-  'stream.online': 'went live',
-  'stream.offline': 'ended the stream',
+const HYPE_TRAIN_PREFIX = 'channel.hype_train.';
 
-  // Polls
-  'channel.poll.begin': 'Poll started',
-  'channel.poll.progress': 'Poll updated',
-  'channel.poll.end': 'Poll ended',
-
-  // Hype train labels are computed dynamically from event data - see hypeTrainLabels()
-
-  // Goals
-  'channel.goal.begin': 'Goal started',
-  'channel.goal.progress': 'Goal progressed',
-  'channel.goal.end': 'Goal ended',
-};
-
-function label(event: UnifiedEvent): string {
+function kind(event: UnifiedEvent): string {
   if (event.source === 'twitch') {
-    if (event.event_type.startsWith('channel.hype_train.')) {
-      return hypeTrainLabels(event) || event.event_type;
-    }
-    return twitchEventLabels[event.event_type] ?? event.label ?? event.event_type;
+    if (event.event_type.startsWith(HYPE_TRAIN_PREFIX)) return 'hype train';
+    return twitchRowLabels[event.event_type]?.kind ?? event.label ?? event.event_type;
   }
-  return externalEventLabels[event.source]?.[event.event_type] ?? `${event.source}: ${event.event_type}`;
+  return externalEventLabels[event.source]?.[event.event_type] ?? eventLabel({ eventType: event.event_type, service: event.source });
 }
 
-function hypeTrainLabels(event: UnifiedEvent): string {
-  if (
-    event.event_type !== 'channel.hype_train.begin' &&
-    event.event_type !== 'channel.hype_train.progress' &&
-    event.event_type !== 'channel.hype_train.end'
-  )
-    return '';
+function phrase(event: UnifiedEvent): string | null {
+  if (event.source !== 'twitch') return null;
+  if (event.event_type.startsWith(HYPE_TRAIN_PREFIX)) return hypeTrainPhrase(event);
+  return twitchRowLabels[event.event_type]?.phrase ?? null;
+}
+
+function hypeTrainPhrase(event: UnifiedEvent): string {
   const d = event.event_data as Record<string, unknown>;
   const progress = d.progress as number;
   const goal = d.goal as number;
   const level = d.level as number;
-  if (event.event_type === 'channel.hype_train.begin') {
-    return `Hype Train started level ${level}: ${progress} of ${goal}`;
-  }
-  if (event.event_type === 'channel.hype_train.progress') {
-    return `Hype Train progressed to level ${level}: ${progress} of ${goal}`;
-  }
-  if (event.event_type === 'channel.hype_train.end') {
-    return `Hype Train ended level ${level}.`;
-  }
-  return '';
+  if (event.event_type === 'channel.hype_train.begin') return `started level ${level}: ${progress} of ${goal}`;
+  if (event.event_type === 'channel.hype_train.progress') return `level ${level}: ${progress} of ${goal}`;
+  if (event.event_type === 'channel.hype_train.end') return `ended at level ${level}`;
+  return event.event_type;
 }
 
 function who(event: UnifiedEvent): string | null {
@@ -399,37 +396,42 @@ function details(event: UnifiedEvent): string | null {
   }
 }
 
+// Compact single-unit age ("2m", "4h", "3d") - the full timestamp lives in the
+// title attribute. Dense rows earn their density here; "2 minutes ago" was the
+// widest thing on every row.
 function relativeTime(iso: string): string {
-  const diff = new Date(iso).getTime() - Date.now();
-  const abs = Math.abs(diff);
+  const diff = Date.now() - new Date(iso).getTime();
   const minute = 60_000;
   const hour = 60 * minute;
   const day = 24 * hour;
   const week = 7 * day;
-  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
-  if (abs < minute) return 'just now';
-  if (abs < hour) return rtf.format(Math.round(diff / minute), 'minute');
-  if (abs < day) return rtf.format(Math.round(diff / hour), 'hour');
-  if (abs < week) return rtf.format(Math.round(diff / day), 'day');
-  return rtf.format(Math.round(diff / week), 'week');
+  if (diff < minute) return 'now';
+  if (diff < hour) return `${Math.floor(diff / minute)}m`;
+  if (diff < day) return `${Math.floor(diff / hour)}h`;
+  if (diff < week) return `${Math.floor(diff / day)}d`;
+  return `${Math.floor(diff / week)}w`;
+}
+
+function fullTime(iso: string): string {
+  return new Date(iso).toLocaleString();
 }
 </script>
 
 <template>
-  <div class="mt-4 flex flex-col gap-2">
-    <label v-if="selectable && displayRows.length > 0" class="mb-1 flex w-fit cursor-pointer items-center gap-2 text-xs text-foreground">
+  <div class="mt-4">
+    <label v-if="selectable && displayRows.length > 0" class="mb-2 flex w-fit cursor-pointer items-center gap-2 text-xs text-foreground">
       <input type="checkbox" class="cursor-pointer" :checked="allOnPageSelected" @change="togglePage" />
       Select everything on this page
     </label>
 
-    <div v-for="{ event, recipients, covered } in displayRows" :key="`${event.source}-${event.id}`" class="flex flex-col gap-1">
-      <div class="flex items-start gap-2">
+    <div class="flex flex-col divide-y divide-foreground/5">
+      <div v-for="{ event, recipients, covered } in displayRows" :key="`${event.source}-${event.id}`" class="flex items-start gap-2">
         <input
           v-if="selectable"
           type="checkbox"
-          class="mt-2 shrink-0 cursor-pointer"
+          class="mt-3 shrink-0 cursor-pointer"
           :checked="isRowSelected(event)"
-          :aria-label="`Select ${who(event) ? who(event) + ' ' : ''}${label(event)}`"
+          :aria-label="`Select ${who(event) ? who(event) + ' ' : ''}${kind(event)}`"
           @change="toggleRow(event, covered)"
         />
         <div class="min-w-0 flex-1">
@@ -437,9 +439,9 @@ function relativeTime(iso: string): string {
             <PopoverTrigger as-child>
               <div
                 :class="[
-                  'group collection-row flex flex-row items-start justify-between gap-4 px-4 py-2',
+                  'group collection-row flex flex-col gap-1 px-3 py-2 text-sm sm:flex-row sm:items-center sm:gap-3',
                   eventHoverBorderClass(event),
-                  canReplay(event) && confirmingId !== event.id ? 'cursor-pointer transition-all duration-100' : '',
+                  canReplay(event) && confirmingId !== event.id ? 'cursor-pointer' : '',
                   confirmingId !== null && confirmingId !== event.id ? 'opacity-30' : '',
                   confirmingId === event.id ? 'border-violet-400 dark:border-violet-300' : '',
                 ]"
@@ -449,37 +451,63 @@ function relativeTime(iso: string): string {
                 @keydown.enter.prevent="openConfirm(event)"
                 @keydown.space.prevent="openConfirm(event)"
               >
-                <div class="group flex min-w-0 flex-1 flex-col gap-0 text-sm md:flex-row" :id="label(event)">
-                  <div class="flex max-w-full flex-nowrap items-center gap-x-2 gap-y-1">
-                    <ProviderIcon :source="event.source" class="h-4 w-4 shrink-0" :class="eventDotClass(event)" />
-                    <div v-if="who(event)" class="max-w-40 overflow-hidden font-bold text-ellipsis whitespace-nowrap">{{ who(event) }}</div>
-                    <div class="overflow-x-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground md:max-w-90">{{ label(event) }}</div>
-                    <span v-if="details(event)" class="max-w-40 overflow-hidden text-ellipsis whitespace-nowrap">{{ details(event) }}</span>
-                    <button
-                      v-if="recipients.length"
-                      type="button"
-                      class="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-sm border border-sidebar px-1.5 py-0.5 text-xs text-foreground hover:bg-background"
-                      :aria-expanded="isExpanded(event.id)"
-                      @click.stop="toggleExpanded(event.id)"
-                      @keydown.enter.stop
-                      @keydown.space.stop
-                    >
-                      <Gift class="h-3 w-3" />
-                      {{ recipients.length }}
-                      <ChevronDown v-if="isExpanded(event.id)" class="h-3 w-3" />
-                      <ChevronRight v-else class="h-3 w-3" />
-                    </button>
-                  </div>
-                  <div class="flex w-full items-center gap-2 pl-4 text-xs">
-                    <!-- What became of this event's alert. Nothing for rows from before the ledger. -->
-                    <span v-if="outcomeLabel(event.outcome)" class="ml-2 whitespace-nowrap text-foreground/60 md:ml-auto">{{
-                      outcomeLabel(event.outcome)
-                    }}</span>
-                    <div class="ml-2 text-ellipsis whitespace-nowrap" :class="outcomeLabel(event.outcome) ? '' : 'md:ml-auto'">
-                      {{ relativeTime(event.created_at) }}
-                    </div>
-                    <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
-                  </div>
+                <div class="flex min-w-0 flex-1 items-center gap-2.5">
+                  <!-- Shape carries the source, color reinforces the event type.
+                       Both stay on at rest - the pairing is deliberate, never
+                       reduce it to hover-only. -->
+                  <span
+                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-foreground/[0.06] transition-colors group-hover:bg-foreground/10"
+                    aria-hidden="true"
+                  >
+                    <ProviderIcon :source="event.source" class="h-3.5 w-3.5" :class="eventDotClass(event)" />
+                  </span>
+                  <span
+                    class="shrink-0 font-mono text-[10px] font-medium tracking-wider text-foreground/50 uppercase transition-colors group-hover:text-foreground/75"
+                  >
+                    {{ kind(event) }}
+                  </span>
+                  <span v-if="who(event)" class="min-w-0 truncate font-semibold text-foreground">{{ who(event) }}</span>
+                  <span v-if="phrase(event)" class="min-w-0 truncate text-foreground/80">{{ phrase(event) }}</span>
+                  <span v-if="details(event)" class="min-w-0 truncate text-foreground/70">{{ details(event) }}</span>
+                  <button
+                    v-if="recipients.length"
+                    type="button"
+                    class="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full border border-foreground/15 px-2 py-0.5 text-xs text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+                    :aria-expanded="isExpanded(event.id)"
+                    @click.stop="toggleExpanded(event.id)"
+                    @keydown.enter.stop
+                    @keydown.space.stop
+                  >
+                    <Gift class="h-3 w-3" />
+                    {{ recipients.length }}
+                    <ChevronDown v-if="isExpanded(event.id)" class="h-3 w-3" />
+                    <ChevronRight v-else class="h-3 w-3" />
+                  </button>
+                </div>
+
+                <div class="flex shrink-0 items-center gap-2 pl-9 sm:pl-0">
+                  <!-- What became of this event's alert. Nothing for rows from before the ledger. -->
+                  <span v-if="outcomeLabel(event.outcome)" class="text-[11px] whitespace-nowrap text-foreground/50">
+                    {{ outcomeLabel(event.outcome) }}
+                  </span>
+                  <span class="font-mono text-[10px] whitespace-nowrap text-foreground/40 tabular-nums" :title="fullTime(event.created_at)">
+                    {{ relativeTime(event.created_at) }}
+                  </span>
+                  <RefreshCw v-if="replayingId === event.id" class="h-3 w-3 animate-spin" />
+                  <!-- Hover-revealed from md up; always visible below, where there
+                       is no hover to reveal it. The whole row triggers the same
+                       confirm - this is the affordance that says so. -->
+                  <button
+                    v-if="canReplay(event)"
+                    type="button"
+                    class="shrink-0 cursor-pointer rounded-full border border-foreground/15 px-3 py-0.5 text-[11px] font-medium text-foreground/70 transition-opacity hover:bg-foreground/5 hover:text-foreground md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100"
+                    :class="confirmingId === event.id ? 'md:opacity-100' : ''"
+                    @click.stop="openConfirm(event)"
+                    @keydown.enter.stop
+                    @keydown.space.stop
+                  >
+                    Replay
+                  </button>
                 </div>
               </div>
             </PopoverTrigger>
@@ -496,7 +524,7 @@ function relativeTime(iso: string): string {
           </Popover>
 
           <!-- Gift-sub recipients, folded under the gifter's row -->
-          <div v-if="recipients.length && isExpanded(event.id)" class="ml-1 flex flex-col gap-1 border-l border-sidebar pl-4">
+          <div v-if="recipients.length && isExpanded(event.id)" class="mb-2 ml-6 flex flex-col gap-1 border-l border-foreground/10 pl-4">
             <div v-for="recipient in recipients" :key="`recipient-${recipient.id}`" class="flex items-center gap-2 text-xs text-foreground">
               <div class="h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40"></div>
               <span class="font-medium">{{ who(recipient) }}</span>

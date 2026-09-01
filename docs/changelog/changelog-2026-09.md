@@ -1,5 +1,24 @@
 # Changelog - September 2026
 
+## OL-2609-014 - September 1st, 2026 - style(events): redesign the event list into dense kind-tagged rows
+
+The event list - the oldest surviving layout in the app, still named `EventsTable.vue` from when it
+was literally a table - got a proper redesign, based on a Claude Design mock. Every surface that
+shows events picks it up at once: the dashboard card, /dashboard/events, /dashboard/recents and the
+shareable events feed.
+
+- Rows are dense, hairline-separated single lines: the pixelgrid provider icon in a small badge, a
+  monospace uppercase kind tag (FOLLOW, CHEER, GIFT SUB, KO-FI TIP), the name in bold, then the
+  payload - "500 bits", the reward title, the tip amount.
+- The whole row is still the replay trigger with the same confirm popover, and a hover-revealed
+  Replay pill on the right now says so. On touch screens the pill is always visible.
+- Timestamps compacted to "2m" / "4h" / "3d", with the full date on hover.
+- Kept deliberately against the mock: icons stay tinted by event type at rest (the shape-plus-color
+  pairing is a recorded accessibility decision), and rows stay on the shared collection-row skin
+  with the per-event hover accent.
+- Selection, gift-sub grouping, resub dedup and delivery outcomes all carried over unchanged. One
+  casualty of the rewrite: the "Ko tip-fi" label typo, which had apparently shipped that way.
+
 ## OL-2609-007 - September 1st, 2026 - feat(checkin): Chat Checkin - !checkin pins your viewers on a 3D globe
 
 Viewers type `!checkin Rotterdam, NL` in chat and land as a pin on the streamer's overlay - on a
