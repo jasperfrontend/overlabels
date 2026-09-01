@@ -7,6 +7,7 @@ use App\Models\ExternalIntegration;
 use App\Models\GeoPlace;
 use App\Models\OverlayControl;
 use App\Models\StreamSession;
+use App\Models\StreamState;
 use App\Models\User;
 use App\Services\External\ExternalControlService;
 use App\Services\External\ExternalServiceRegistry;
@@ -49,6 +50,14 @@ beforeEach(function () {
     }
 });
 
+function checkinLiveState(User $user, string $state): void
+{
+    StreamState::updateOrCreate(
+        ['user_id' => $user->id],
+        ['state' => $state, 'confidence' => 1.0],
+    );
+}
+
 function connectCheckin(User $user, array $settings = []): ExternalIntegration
 {
     $integration = ExternalIntegration::create([
@@ -59,6 +68,10 @@ function connectCheckin(User $user, array $settings = []): ExternalIntegration
     ]);
 
     app(ExternalControlService::class)->provision($user, ExternalServiceRegistry::driver('checkin'));
+
+    // The command is gated on isConfidentlyLive, so a connected channel in
+    // these tests is a LIVE channel; the offline tests flip the state back.
+    checkinLiveState($user, StreamState::STATE_LIVE);
 
     return $integration;
 }
@@ -108,6 +121,31 @@ test('checkin stays silent when the integration is disabled', function () {
     connectCheckin($this->user)->update(['enabled' => false]);
 
     postCheckin()->assertOk()->assertJson(['reply' => null]);
+});
+
+test('checkin is refused while the stream is offline, with a reply saying so', function () {
+    connectCheckin($this->user);
+    checkinLiveState($this->user, StreamState::STATE_OFFLINE);
+
+    $response = postCheckin();
+
+    // A spoken refusal, not silence: a swallowed command means the viewer
+    // retypes it later and Twitch's repeated-message filter eats the retry.
+    expect($response->json('reply'))->toContain('live')
+        ->and(Checkin::count())->toBe(0)
+        ->and(ExternalEvent::count())->toBe(0)
+        ->and(checkinControlValue($this->user, 'checkins_this_stream'))->toBe('0')
+        ->and(checkinControlValue($this->user, 'latest_checkin_name'))->toBe('');
+});
+
+test('the offline refusal sits behind the per-viewer cooldown', function () {
+    connectCheckin($this->user);
+    checkinLiveState($this->user, StreamState::STATE_OFFLINE);
+
+    postCheckin();
+    $second = postCheckin();
+
+    expect($second->json('reply'))->toBeNull();
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -219,9 +257,12 @@ test('a home location gives checkins a distance', function () {
     $response = postCheckin(['args' => 'Paris']);
 
     $pin = Checkin::first();
-    // Amsterdam to Paris is ~430 km as the haversine flies.
+    // Amsterdam to Paris is ~430 km as the haversine flies. The reply must
+    // speak the STORED value (one decimal), not a rounded opinion of it -
+    // the overlay's |distance:km shows 430.2, so the bot says 430.2.
     expect($pin->distance_km)->toBeGreaterThan(400)->toBeLessThan(460)
         ->and($response->json('reply'))->toContain('km away')
+        ->and($response->json('reply'))->toContain((string) $pin->distance_km)
         ->and((float) checkinControlValue($this->user, 'latest_checkin_distance'))->toBeGreaterThan(400)
         ->and((float) checkinControlValue($this->user, 'farthest_checkin_this_stream'))->toBeGreaterThan(400);
 });

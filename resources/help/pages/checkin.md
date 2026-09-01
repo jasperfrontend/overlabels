@@ -20,6 +20,10 @@ with typo tolerance ("amsterdamm" still lands) and ranked by population when a n
 (bare "Paris" is Paris, France; "Paris, US" is Paris, Texas). A place that will not resolve gets a
 friendly reply and nothing else. Each viewer has ONE pin: checking in again moves it.
 
+Checkins only open while the stream is live - the same confidently-live gate every per-stream
+counter follows. An offline attempt stores nothing and the bot says so, so nobody is left
+guessing whether their command worked.
+
 > [!NOTE]
 > Everything is city-level by design. The index contains nothing finer than a city, so nobody can
 > pin a street address onto your stream - not even on purpose. Coordinates on a pin are the

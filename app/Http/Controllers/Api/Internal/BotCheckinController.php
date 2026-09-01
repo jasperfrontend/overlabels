@@ -18,6 +18,7 @@ use App\Services\External\ExternalServiceRegistry;
 use App\Services\Geo\PlaceResolverService;
 use App\Services\Geo\ResolvedPlace;
 use App\Services\Location\GeoMath;
+use App\Services\StreamSessionService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -87,6 +88,17 @@ class BotCheckinController extends Controller
             return response()->json(['reply' => null]);
         }
 
+        // Checkins are a live-stream ritual: the whole command follows the
+        // house isConfidentlyLive gate (the same one handleEvent applies to
+        // every *_this_stream counter). Nothing lands offline - no pin, no
+        // event, no controls - and the reply says so, because a silently
+        // swallowed command means the viewer retypes it later and hands
+        // Twitch's repeated-message filter a reason to eat it. The reply
+        // sits behind the cooldown above, so offline spam stays quiet.
+        if (! StreamSessionService::isLive($user)) {
+            return response()->json(['reply' => 'Checkins open when the stream is live. Come back then!']);
+        }
+
         $place = $this->resolver->resolve($args);
 
         if (! $place) {
@@ -100,7 +112,12 @@ class BotCheckinController extends Controller
         $reply = "{$data['chatter_display_name']} checked in from {$place->label()}!";
 
         if ($payload['distance'] !== null && $payload['distance'] >= 1) {
-            $reply .= ' That is '.number_format((float) $payload['distance']).' km away.';
+            // Speak the stored value, not an opinion about it: the control
+            // holds km rounded to one decimal, so the reply says 57.5 where
+            // the overlay's |distance:km shows 57.5. Trailing .0 drops, and
+            // thousands keep their separator (12,345.7 km).
+            $km = rtrim(rtrim(number_format((float) $payload['distance'], 1), '0'), '.');
+            $reply .= " That is {$km} km away.";
         }
 
         return response()->json(['reply' => $reply]);
