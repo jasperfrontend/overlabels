@@ -197,6 +197,7 @@ command that uses it is refused with a reason.
 |---|---|---|
 | `!followage [@user]` | Everyone | How long the chatter (or a named user) has followed this channel. |
 | `!accountage [@user]` | Everyone | How long ago a Twitch account was created. |
+| `!checkin <place>` | Everyone | Pin yourself on the streamer's map, city-level: `!checkin Rotterdam, NL`. Needs the Chat Checkin integration connected. |
 | `!ping` | Everyone | Liveness check. The bot says pong. |
 
 ```

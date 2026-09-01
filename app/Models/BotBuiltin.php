@@ -53,6 +53,7 @@ class BotBuiltin extends Model
         ['command' => 'followage', 'permission_level' => 'everyone'],
         ['command' => 'accountage', 'permission_level' => 'everyone'],
         ['command' => 'ping', 'permission_level' => 'moderator'],
+        ['command' => 'checkin', 'permission_level' => 'everyone'],
     ];
 
     /**
