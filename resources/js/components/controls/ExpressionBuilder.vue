@@ -266,6 +266,7 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
     kofi: 'Ko-fi',
     streamlabs: 'StreamLabs',
     gps: 'Overlabels GPS',
+    checkin: 'Chat Checkin',
   };
 
   // Custom first, then services alphabetically

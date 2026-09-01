@@ -4,6 +4,7 @@ namespace App\Services\External;
 
 use App\Contracts\ExternalServiceDriver;
 use App\Services\External\Drivers\BMACServiceDriver;
+use App\Services\External\Drivers\CheckinServiceDriver;
 use App\Services\External\Drivers\FourthwallServiceDriver;
 use App\Services\External\Drivers\GpsServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
@@ -19,6 +20,7 @@ class ExternalServiceRegistry
     private static array $drivers = [
         'kofi' => KofiServiceDriver::class,
         'gps' => GpsServiceDriver::class,
+        'checkin' => CheckinServiceDriver::class,
         'streamlabs' => StreamLabsServiceDriver::class,
         'fourthwall' => FourthwallServiceDriver::class,
         'bmac' => BMACServiceDriver::class,
@@ -69,6 +71,7 @@ class ExternalServiceRegistry
         return match ($service) {
             'kofi' => 'Ko-fi',
             'gps' => 'Overlabels GPS',
+            'checkin' => 'Chat Checkin',
             'streamlabs' => 'Streamlabs',
             'throne' => 'Throne',
             'patreon' => 'Patreon',

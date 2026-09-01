@@ -5,6 +5,7 @@ use App\Http\Controllers\Settings\BMACIntegrationController;
 use App\Http\Controllers\Settings\BotAliasesController;
 use App\Http\Controllers\Settings\BotCommandsController;
 use App\Http\Controllers\Settings\BotSettingsController;
+use App\Http\Controllers\Settings\CheckinIntegrationController;
 use App\Http\Controllers\Settings\ControlUsageController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\GpsIntegrationController;
@@ -129,6 +130,10 @@ Route::middleware('auth.redirect')->group(function () {
         Route::delete('/overlabels-mobile', [GpsIntegrationController::class, 'disconnect'])->name('overlabels-mobile.disconnect');
         Route::post('/overlabels-mobile/reset-session', [GpsIntegrationController::class, 'resetSession'])->name('overlabels-mobile.reset-session');
         Route::post('/overlabels-mobile/reset-lifetime', [GpsIntegrationController::class, 'resetLifetime'])->name('overlabels-mobile.reset-lifetime');
+
+        Route::get('/checkin', [CheckinIntegrationController::class, 'show'])->name('checkin.show');
+        Route::post('/checkin', [CheckinIntegrationController::class, 'save'])->name('checkin.save');
+        Route::delete('/checkin', [CheckinIntegrationController::class, 'disconnect'])->name('checkin.disconnect');
 
         Route::get('/streamlabs', [StreamLabsIntegrationController::class, 'show'])->name('streamlabs.show');
         Route::get('/streamlabs/redirect', [StreamLabsIntegrationController::class, 'redirect'])->name('streamlabs.redirect');

@@ -298,4 +298,10 @@ export const PRESET_GROUPS: PresetGroupMeta[] = [
     blurb: 'Live telemetry from the Overlabels mobile app.',
     requiresService: 'gps',
   },
+  {
+    source: 'checkin',
+    label: 'Chat Checkin',
+    blurb: 'Where your chat is: pins, countries and distances from !checkin.',
+    requiresService: 'checkin',
+  },
 ];

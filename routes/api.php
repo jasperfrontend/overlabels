@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Internal\BotAccountageController;
 use App\Http\Controllers\Api\Internal\BotChannelController;
 use App\Http\Controllers\Api\Internal\BotChatAdminController;
 use App\Http\Controllers\Api\Internal\BotChatStatsController;
+use App\Http\Controllers\Api\Internal\BotCheckinController;
 use App\Http\Controllers\Api\Internal\BotCommandController;
 use App\Http\Controllers\Api\Internal\BotCommandMapController;
 use App\Http\Controllers\Api\Internal\BotControlController;
@@ -241,6 +242,8 @@ Route::prefix('/internal/bot')
             Route::post('/controls/{login}/{key}', [BotControlController::class, 'update'])
                 ->where(['login' => '[a-z0-9_]+', 'key' => '[a-z][a-z0-9_]{0,49}']);
             Route::post('/chat-stats/{login}', [BotChatStatsController::class, 'store'])
+                ->where('login', '[a-z0-9_]+');
+            Route::post('/checkin/{login}', [BotCheckinController::class, 'store'])
                 ->where('login', '[a-z0-9_]+');
             Route::get('/outbox', [BotOutboxController::class, 'index']);
             Route::post('/settings/{login}/controls-access', [BotSettingsController::class, 'setControlsAccess'])

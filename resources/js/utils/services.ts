@@ -14,6 +14,7 @@ export const SERVICE_LABELS: Record<string, string> = {
   bmac: 'Buy Me a Coffee',
   throne: 'Throne',
   gps: 'Overlabels GPS',
+  checkin: 'Chat Checkin',
 };
 
 /**

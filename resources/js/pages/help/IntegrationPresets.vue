@@ -6,6 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import {
   KOFI_PRESETS,
   GPS_PRESETS,
+  CHECKIN_PRESETS,
   STREAMLABS_PRESETS,
   FOURTHWALL_PRESETS,
   BMAC_PRESETS,
@@ -14,7 +15,7 @@ import {
   type ServicePreset,
 } from '@/components/controls/controlPresets';
 import { fuzzyMatch, presetHaystack, serviceLabel } from '@/utils/services';
-import { Coffee, Gift, HandHeart, MapPinned, Megaphone, ShoppingBag, Tv, type LucideIcon } from '@lucide/vue';
+import { Coffee, Gift, Globe2, HandHeart, MapPinned, Megaphone, ShoppingBag, Tv, type LucideIcon } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -82,6 +83,14 @@ const sections: ServiceSection[] = [
     icon: MapPinned,
     presets: GPS_PRESETS,
   },
+  {
+    source: 'checkin',
+    label: serviceLabel('checkin'),
+    description:
+      'Where your chat is: viewers pin themselves with !checkin City, CC. Counters for pins and countries, plus the latest pin and its distance from home.',
+    icon: Globe2,
+    presets: CHECKIN_PRESETS,
+  },
 ];
 
 const search = ref('');
@@ -123,7 +132,7 @@ function copyTag(tag: string) {
     <title>Integration Presets</title>
     <meta
       name="description"
-      content="Reference for every auto-managed control Overlabels exposes through its integrations - Twitch, Ko-fi, Streamlabs, Fourthwall, BMAC, Throne, and Overlabels GPS."
+      content="Reference for every auto-managed control Overlabels exposes through its integrations - Twitch, Ko-fi, Streamlabs, Fourthwall, BMAC, Throne, Overlabels GPS, and Chat Checkin."
     />
   </Head>
 

@@ -31,6 +31,7 @@ export const PROVIDER_ICONS: Record<string, ProviderIcon> = {
   kofi: { bits: 0x00ff, label: 'Ko-fi' }, // solid base
   throne: { bits: 0xcc00, label: 'Throne' }, // corner block
   gps: { bits: 0x6f22, label: 'Overlabels GPS' }, // map pin
+  checkin: { bits: 0x1687, label: 'Chat Checkin' }, // orbit (min pairwise distance 7)
 };
 
 // Catch-all for any source without a dedicated icon. A small centered block

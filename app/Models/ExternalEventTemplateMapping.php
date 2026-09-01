@@ -115,6 +115,9 @@ class ExternalEventTemplateMapping extends Model
             'wishlist' => 'Buy Me a Coffee Wishlist',
             'commission' => 'Buy Me a Coffee Commission',
         ],
+        'checkin' => [
+            'checkin' => 'Chat Checkin',
+        ],
         'fourthwall' => [
             'donation' => 'Fourthwall Donation',
         ],

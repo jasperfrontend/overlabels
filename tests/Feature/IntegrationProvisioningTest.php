@@ -179,6 +179,16 @@ test('the webhook url is present for webhook services and absent for the oauth p
         ->assertInertia(fn ($page) => $page->missing('integration.webhook_url'));
 });
 
+test('connecting checkin provisions exactly the controls its driver declares', function () {
+    $user = connectingUser();
+
+    expect(serviceControlKeys($user, 'checkin'))->toBe([]);
+
+    $this->post('/settings/integrations/checkin', ['pin_lifetime' => 'per_stream'])->assertRedirect();
+
+    expect(serviceControlKeys($user, 'checkin'))->toBe(expectedControlKeys('checkin'));
+});
+
 /**
  * Structural guard: a sixth donation integration added with a hand-rolled
  * controller would reintroduce exactly the bug this file exists to prevent.
@@ -186,8 +196,11 @@ test('the webhook url is present for webhook services and absent for the oauth p
  * inheritance rather than trusting the next author to remember.
  */
 test('every donation integration settings route is served by the shared base controller', function () {
+    // gps and checkin are first-party telemetry/chat integrations, not
+    // donations: no test mode, no seed, no shared donation keys. Their
+    // provisioning is asserted separately below and in their own tests.
     $donationServices = collect(ExternalServiceRegistry::services())
-        ->reject(fn (string $s) => $s === 'gps')
+        ->reject(fn (string $s) => in_array($s, ['gps', 'checkin'], true))
         ->values();
 
     expect($donationServices)->not->toBeEmpty();

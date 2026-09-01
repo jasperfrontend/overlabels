@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Events\CheckinsUpdated;
 use App\Events\ControlValueUpdated;
+use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Models\StreamSession;
 use App\Models\StreamState;
 use App\Models\User;
+use App\Services\External\Drivers\CheckinServiceDriver;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -411,6 +414,62 @@ class StreamSessionService
         Log::info("Reset per-stream twitch controls for user {$user->id}", [
             'count' => $controls->count(),
         ]);
+
+        $this->resetCheckinControls($user);
+    }
+
+    /**
+     * The checkin integration's per-stream counters, reset the same way as the
+     * twitch block above: explicit key list (never a bare source sweep),
+     * resetValue() so `_at` stays put, preserved timestamp on the broadcast.
+     *
+     * The country set mirrors the chatter set two paragraphs up: the counter
+     * only ever moves upward during a stream, so forgetting the cached set is
+     * what actually implements the reset. In per_stream pin mode the globe's
+     * window also becomes empty at go-live, so a cleared checkins.updated
+     * tells connected overlays to drop their pins.
+     */
+    private function resetCheckinControls(User $user): void
+    {
+        Cache::forget(CheckinServiceDriver::countrySetCacheKey($user->id));
+
+        $controls = OverlayControl::where('user_id', $user->id)
+            ->where('source', 'checkin')
+            ->whereIn('key', CheckinServiceDriver::PER_STREAM_CONTROL_KEYS)
+            ->where('source_managed', true)
+            ->with('template')
+            ->get();
+
+        foreach ($controls as $control) {
+            $resetValue = (string) ($control->config['reset_value'] ?? 0);
+            $preservedAt = $control->resetValue($resetValue);
+
+            $overlaySlug = $control->overlay_template_id
+                ? ($control->template?->slug ?? '')
+                : '';
+
+            ControlValueUpdated::dispatch(
+                $overlaySlug,
+                $control->broadcastKey(),
+                $control->type,
+                $resetValue,
+                $user->twitch_id,
+                null,
+                null,
+                null,
+                false,
+                $preservedAt,
+            );
+        }
+
+        $integration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'checkin')
+            ->where('enabled', true)
+            ->first();
+
+        if ($integration && (($integration->settings ?? [])['pin_lifetime'] ?? 'per_stream') === 'per_stream') {
+            CheckinsUpdated::dispatch($user->twitch_id, null, 0, true);
+        }
     }
 
     /**
