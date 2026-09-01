@@ -104,6 +104,10 @@ function copyWebhookUrl() {
 function save() {
   form.post('/settings/integrations/kofi', {
     preserveScroll: true,
+    // Clear the token field so the "(token saved - enter new to replace)"
+    // placeholder shows on the next render. Inertia preserves component state
+    // across the round-trip, so the typed value would otherwise stick.
+    onSuccess: () => form.reset('verification_token'),
   });
 }
 
