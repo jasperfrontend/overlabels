@@ -149,6 +149,7 @@ jobs:
           # already running. When you add a new accessory, append another
           # line here.
           kamal accessory boot expression-engine || true
+          kamal accessory boot streamlabs-listener || true
 
       - name: Notify app of successful deploy
         env:

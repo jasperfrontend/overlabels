@@ -362,6 +362,16 @@ accessories:
         - STREAMLABS_LISTENER_SECRET
     options:
       memory: 128m
+      # Resolve overlabels.com to this host so the listener's polls land on
+      # kamal-proxy on this box instead of leaving for the Cloudflare edge and
+      # coming back in as visitors from the Netherlands. kamal-proxy holds the
+      # Let's Encrypt cert for the name, so TLS still verifies - only the route
+      # changes. host-gateway is the docker0 address (172.17.0.1), where the
+      # proxy's published :443 answers. Same fix as the bot repo (96b734d).
+      # NOTE: `kamal deploy` does not recreate a running accessory, so this
+      # only applies once the old container is removed and the boot step in
+      # deploy.yml recreates it.
+      add-host: "overlabels.com:host-gateway"
 
   # Expression Control evaluator. Pure compute, no inbound from the internet.
   # Imports the same engine code the overlay runs so server-side and overlay
