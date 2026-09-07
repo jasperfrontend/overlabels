@@ -198,6 +198,11 @@ class LivingTitleService
         }
     }
 
+    public function hasScope(User $user): bool
+    {
+        return $this->scopes->hasScope($user, self::SCOPE);
+    }
+
     public static function pendingKey(int $userId): string
     {
         return "living-title:pending:{$userId}";

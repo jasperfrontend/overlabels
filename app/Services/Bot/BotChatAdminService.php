@@ -6,6 +6,7 @@ use App\Models\BotAlias;
 use App\Models\BotBuiltin;
 use App\Models\BotCommand;
 use App\Models\User;
+use App\Services\LivingTitleService;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -28,6 +29,7 @@ readonly class BotChatAdminService
         private BotCommandValidator $exprValidator,
         private BotAliasValidator $aliasValidator,
         private BotCounterService $counters,
+        private LivingTitleService $titles,
     ) {}
 
     /**
@@ -67,8 +69,115 @@ readonly class BotChatAdminService
             'alias:options' => $this->aliasOptions($owner, $payload),
             'list:' => $this->listAll($owner, $payload),
             'help:' => $this->showHelp($payload),
-            default => 'unknown !ol command - try !ol help',
+            'title:set' => $this->titleSet($owner, $payload),
+            'title:show' => $this->titleShow($owner),
+            'title:resume' => $this->titleResume($owner),
+            'title:off' => $this->titleOff($owner),
+            default => $subject === 'title'
+                ? 'do you mean !ol title [set, show, resume, off]'
+                : 'unknown !ol command - try !ol help',
         };
+    }
+
+    // ------- title (the living Twitch title) -------
+
+    /**
+     * `!ol title set <text>` saves the text as the title template, exactly as
+     * the settings page would: same save gate, same immediate render. A bare
+     * `!title` would collide with StreamElements, WizeBot and Fossabot, which
+     * is why this lives behind `!ol`. Mods can set it - they can in the
+     * Twitch dashboard too.
+     */
+    private function titleSet(User $owner, array $payload): string
+    {
+        $template = trim((string) ($payload['payload'] ?? ''));
+
+        if ($template === '') {
+            return 'usage: !ol title set <text> - tags work: !ol title set Road to 2K | [[[followers_total]]] followers';
+        }
+
+        $problem = $this->titles->problem($template);
+
+        if ($problem !== null) {
+            return 'error: '.$problem;
+        }
+
+        $owner->setPreference('living_title.enabled', true);
+        $owner->setPreference('living_title.template', $template);
+        $owner->setPreference('living_title.paused', false);
+        $owner->setPreference('living_title.paused_title', null);
+        $owner->setPreference('living_title.last_error', null);
+        $owner->save();
+
+        $this->titles->schedule($owner, 0);
+
+        $rendered = $this->titles->preview($owner, $template);
+        $reply = 'title template saved, rendering as: '.$rendered['resolved'];
+
+        if ($rendered['truncated']) {
+            $reply .= ' (cut at '.LivingTitleService::MAX_LENGTH.' characters)';
+        }
+
+        if (! $this->titles->hasScope($owner)) {
+            $reply .= ' - Twitch has not allowed Overlabels to change your title yet, reauthorize once at /settings/title';
+        }
+
+        return $reply;
+    }
+
+    private function titleShow(User $owner): string
+    {
+        $settings = $owner->livingTitle();
+
+        if ($settings['template'] === '') {
+            return 'no title template yet - !ol title set <text>';
+        }
+
+        $reply = 'title template: '.$settings['template'];
+
+        if (! $settings['enabled']) {
+            $reply .= ' (off)';
+        } elseif ($settings['paused']) {
+            $reply .= ' (paused - the title was changed on Twitch, !ol title resume to take over again)';
+        }
+
+        if ($settings['last_written'] !== null) {
+            $reply .= ' - last written to Twitch: '.$settings['last_written'];
+        }
+
+        return $reply;
+    }
+
+    private function titleResume(User $owner): string
+    {
+        $settings = $owner->livingTitle();
+
+        if (! $settings['enabled']) {
+            return 'title updates are off - !ol title set <text> to start them';
+        }
+
+        if (! $settings['paused']) {
+            return 'title is not paused';
+        }
+
+        $this->titles->resume($owner);
+
+        return 'title resumed, Twitch updates within a few seconds';
+    }
+
+    private function titleOff(User $owner): string
+    {
+        if (! $owner->livingTitle()['enabled']) {
+            return 'title updates are already off';
+        }
+
+        $owner->setPreference('living_title.enabled', false);
+        $owner->setPreference('living_title.paused', false);
+        $owner->setPreference('living_title.paused_title', null);
+        $owner->setPreference('living_title.last_written', null);
+        $owner->save();
+
+        return 'title updates off - the title stays as it is on Twitch';
     }
 
     // ------- cmd (Bot Commands) -------
@@ -323,7 +432,8 @@ readonly class BotChatAdminService
             'alias' => '!ol alias add|edit|delete|options <name> [target]. example: !ol alias add w !inc wins {1}',
             'options' => 'options: cooldown <secs> | permission everyone|sub|vip|mod|broadcaster | enabled true|false | hidden true|false | destroy <hours> (0 cancels, cmd only)',
             'tags' => 'random: [[[rand:0-69]]] (two whole numbers, low to high). counting: [[[counter:wins]]] adds 1 each time the command runs and shows the total - use [[[c:wins]]] to show it without adding.',
-            default => '!ol cmd <add|edit|delete|options> ; !ol alias <add|edit|delete|options> ; !ol list ; !ol help <cmd|alias|options|tags>',
+            'title' => '!ol title set <text> keeps your Twitch title true to a template, tags included. !ol title show | resume | off. example: !ol title set Road to 2K | [[[followers_total]]] followers',
+            default => '!ol cmd <add|edit|delete|options> ; !ol alias <add|edit|delete|options> ; !ol title <set|show|resume|off> ; !ol list ; !ol help <cmd|alias|options|tags|title>',
         };
     }
 

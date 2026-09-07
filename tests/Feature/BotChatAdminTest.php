@@ -1,10 +1,13 @@
 <?php
 
+use App\Jobs\SyncLivingTitle;
 use App\Models\BotAlias;
 use App\Models\BotChatOutbox;
 use App\Models\BotCommand;
 use App\Models\User;
+use App\Services\TwitchScopeService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Testing\TestResponse;
 
 uses(DatabaseTransactions::class);
@@ -435,6 +438,97 @@ it('help returns a usage line', function () {
     ]))->assertOk();
 
     expect(BotChatOutbox::latest('id')->first()?->message)->toContain('!ol');
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// title: the living Twitch title from chat
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('title set saves the template, switches it on and renders at once', function () {
+    Queue::fake();
+    $user = adminUser();
+    $user->update(['twitch_scopes' => TwitchScopeService::REQUIRED_SCOPES]);
+
+    postManage(managePayload([
+        'subject' => 'title',
+        'action' => 'set',
+        'payload' => 'Road to 2K | [[[followers_total]]] followers',
+    ]))->assertOk();
+
+    $settings = $user->fresh()->livingTitle();
+    expect($settings['template'])->toBe('Road to 2K | [[[followers_total]]] followers');
+    expect($settings['enabled'])->toBeTrue();
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
+        ->toStartWith('title template saved, rendering as: Road to 2K |');
+    Queue::assertPushed(SyncLivingTitle::class, 1);
+});
+
+it('title set refuses channel_title with the same sentence the settings page uses', function () {
+    Queue::fake();
+    $user = adminUser();
+
+    postManage(managePayload([
+        'subject' => 'title',
+        'action' => 'set',
+        'payload' => 'Now: [[[channel_title]]]',
+    ]))->assertOk();
+
+    expect($user->fresh()->livingTitle()['enabled'])->toBeFalse();
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
+        ->toStartWith('error: ')->toContain('feed on itself');
+    Queue::assertNothingPushed();
+});
+
+it('title set without text, a bare title, and an unknown verb each hint at the verbs', function (string $action, string $expected) {
+    $user = adminUser();
+
+    postManage(managePayload(['subject' => 'title', 'action' => $action, 'payload' => '']))->assertOk();
+
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)->toStartWith($expected);
+})->with([
+    'bare' => ['', 'do you mean !ol title [set, show, resume, off]'],
+    'unknown verb' => ['road', 'do you mean !ol title [set, show, resume, off]'],
+    'set without text' => ['set', 'usage: !ol title set <text>'],
+]);
+
+it('title show, resume and off report and change the state', function () {
+    Queue::fake();
+    $user = adminUser();
+    $user->setPreference('living_title.enabled', true);
+    $user->setPreference('living_title.template', '[[[followers_total]]] followers');
+    $user->setPreference('living_title.last_written', '1234 followers');
+    $user->setPreference('living_title.paused', true);
+    $user->setPreference('living_title.paused_title', 'Typed on Twitch');
+    $user->save();
+
+    postManage(managePayload(['subject' => 'title', 'action' => 'show']))->assertOk();
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)
+        ->toContain('title template: [[[followers_total]]] followers')
+        ->toContain('paused')
+        ->toContain('last written to Twitch: 1234 followers');
+
+    postManage(managePayload(['subject' => 'title', 'action' => 'resume']))->assertOk();
+    expect($user->fresh()->livingTitle()['paused'])->toBeFalse();
+    Queue::assertPushed(SyncLivingTitle::class, 1);
+
+    postManage(managePayload(['subject' => 'title', 'action' => 'resume']))->assertOk();
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)->toBe('title is not paused');
+
+    postManage(managePayload(['subject' => 'title', 'action' => 'off']))->assertOk();
+    $settings = $user->fresh()->livingTitle();
+    expect($settings['enabled'])->toBeFalse();
+    expect($settings['last_written'])->toBeNull();
+    expect(BotChatOutbox::where('user_id', $user->id)->latest('id')->first()?->message)->toStartWith('title updates off');
+});
+
+it('title obeys the same mod-or-broadcaster gate as every other !ol verb', function () {
+    $user = adminUser();
+
+    postManage(managePayload(['subject' => 'title', 'action' => 'set', 'payload' => 'x', 'badges' => ['vip']]))
+        ->assertOk()
+        ->assertJson(['queued' => false, 'reason' => 'gate']);
+
+    expect($user->fresh()->livingTitle()['template'])->toBe('');
 });
 
 it('rejects non-mod chatters', function () {
