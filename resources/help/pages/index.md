@@ -86,6 +86,8 @@ need, ignore the rest.
 - [**Lists in realtime**](/help/lists-realtime) - the builder guide: read a List as JSON, subscribe to
   live updates over WebSocket, and add your own custom page (a wheel, a leaderboard) to OBS. Step by
   step.
+- [**Living Twitch title**](/help/living-title) - write your stream title with tags in it and
+  Overlabels keeps it true on Twitch. Settings page, `!ol title` from chat, and a category picker.
 
 ### Bot & chat
 
