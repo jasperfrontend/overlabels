@@ -208,7 +208,9 @@ function confirmAndReplay(event: UnifiedEvent) {
   replay(event);
 }
 
-const nonReplayableTypes = ['stream.online', 'stream.offline', 'channel.channel_points_custom_reward_redemption.update'];
+// channel.chat.notification is stored and never alerted (STORE_ONLY_EVENTS
+// server-side), so a replay would only ever answer "no template mapping".
+const nonReplayableTypes = ['stream.online', 'stream.offline', 'channel.channel_points_custom_reward_redemption.update', 'channel.chat.notification'];
 
 function canReplay(event: UnifiedEvent): boolean {
   if (event.source !== 'twitch') return true;
@@ -298,6 +300,7 @@ const twitchRowLabels: Record<string, RowLabel> = {
   'channel.goal.begin': { kind: 'goal', phrase: 'started' },
   'channel.goal.progress': { kind: 'goal', phrase: 'progressed' },
   'channel.goal.end': { kind: 'goal', phrase: 'ended' },
+  'channel.chat.notification': { kind: 'chat notice' },
 };
 
 const externalEventLabels: Record<string, Record<string, string>> = {
@@ -369,6 +372,7 @@ function who(event: UnifiedEvent): string | null {
   const d = event.event_data ?? {};
   if (event.event_type === 'channel.raid') return (d.from_broadcaster_user_name as string) ?? null;
   if (event.event_type === 'stream.online' || event.event_type === 'stream.offline') return null;
+  if (event.event_type === 'channel.chat.notification') return (d.chatter_user_name as string) ?? null;
   return (d.user_name as string) ?? null;
 }
 
@@ -399,6 +403,9 @@ function details(event: UnifiedEvent): string | null {
       return ((d.reward as Record<string, unknown>)?.title as string) ?? null;
     case 'channel.channel_points_custom_reward_redemption.update':
       return null;
+    case 'channel.chat.notification':
+      // Twitch's notice_type, e.g. sub, resub, sub_gift, prime_paid_upgrade, raid.
+      return d.notice_type ? String(d.notice_type).replaceAll('_', ' ') : null;
     default:
       return null;
   }

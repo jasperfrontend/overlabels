@@ -36,6 +36,20 @@ use Throwable;
 
 class TwitchEventSubController extends Controller
 {
+    /**
+     * Event types that are stored and metered, and then dropped: no cache
+     * refresh, no per-stream counter, no alert, no broadcast to the overlay.
+     *
+     * channel.chat.notification is the USERNOTICE feed. Its `sub` notice
+     * arrives next to the channel.subscribe for the same viewer, so letting
+     * it run the alert path would fire every sub alert and counter twice.
+     * And OverlayRenderer spreads every broadcast payload into the overlay's
+     * tag data, where the notice's `message` object would blank a
+     * [[[message]]] the resub had just filled. The rows exist to be read
+     * later, as the ledger a Plus Points count is built from.
+     */
+    public const array STORE_ONLY_EVENTS = ['channel.chat.notification'];
+
     private TwitchEventSubService $eventSubService;
 
     private TwitchApiService $twitchService;
@@ -562,6 +576,10 @@ class TwitchEventSubController extends Controller
             // testCheer() synthetic events use a different path and are not counted.
             if ($user) {
                 app(EventMeter::class)->record($user->id);
+            }
+
+            if (in_array($eventType, self::STORE_ONLY_EVENTS, true)) {
+                return;
             }
 
             // Clear relevant caches based on event type

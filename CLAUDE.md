@@ -304,6 +304,38 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
 - `ExternalEvent` append-only model (UPDATED_AT = null), global dedup on (service, message_id)
 - `ControlValueUpdated::dispatch()` uses variadic `...$arguments` - use POSITIONAL args, not named args
 
+### Chat notices and Plus Points (Sept 2026)
+
+- **Twitch does not expose Plus Points anywhere in the API.** Verified 2026-09-07 on
+  CasualElephant's prod rows (a partner with a live Plus goal, consent given): 630 goal events since
+  June, all `follow` or `subscription`, never a value near his tracker's 28. Do not look for a
+  `plus_program` goal type, and do not propose Helix as the source.
+- Plus Points are a **monthly ledger of charges** (+1/+2/+6 per paid recurring sub charged, gifts and
+  Prime excluded, reset on the 1st), not a weighted count of current subscribers. A snapshot of
+  `GET /subscriptions` is the wrong model, and `subscribers_points` is Sub Points, which includes
+  Prime and gifts and moves both ways.
+- **`channel.chat.notification` is the only route**, and it yields a floor: it is the one EventSub
+  payload with `is_prime`, and the only one reporting `gift_paid_upgrade` / `prime_paid_upgrade`, but
+  a renewal the viewer did not share never appears in chat. Nothing fixes that.
+- The subscription rides on the bot: condition `{broadcaster_user_id, user_id: bot}`, app token,
+  bot's `user:bot` + streamer's `channel:bot` (already in `REQUIRED_SCOPES`), so no re-auth. The
+  bot's Twitch id is `TWITCHBOT_USER_ID` (public, `env.clear` in `config/deploy.yml`, `1130071166`).
+  Twitch also accepts the bot being a **moderator** of the channel in place of `channel:bot`; that
+  is a read grant, not the bot moderating, and is the fallback for a streamer who will not log in
+  again.
+- **The rows are store-only.** `TwitchEventSubController::STORE_ONLY_EVENTS` returns right after
+  `TwitchEvent::create()` + meter: no counters, no alert, no overlay broadcast, no delivery outcome.
+  A `sub` notice arrives next to the `channel.subscribe` for the same viewer, so anything else
+  double-counts. Pinned by `ChatNotificationSubscriptionTest` (7 tests; the store-only one was
+  verified to fail with the guard disabled).
+- **Rolling a new event type out to existing accounts is manual.** `eventsub:monitor --fix` only
+  repairs accounts with NO subscriptions. Run `eventsub:backfill-goals` once on prod after the
+  deploy; it is generic and idempotent despite its name.
+- Nothing reads the ledger yet. Next step, when it comes: a month of rows on CasualElephant's
+  channel compared against his tracker, THEN decide the shape (a `plus_points_this_month`
+  source-managed control with a scheduler reset at 00:00 UTC on the 1st was the leading option) and
+  the name, which must not promise Twitch's number if it is a floor.
+
 ### Donation integration controllers (consolidated Aug 2026)
 
 - The five donation integrations (kofi, streamlabs, fourthwall, bmac, throne) all extend `DonationIntegrationController`. It owns `show()`, `setTestMode()`, `seedDonationCount()` and `disconnect()`; subclasses supply `service()` and their connect flow only. GPS deliberately does NOT extend it (telemetry, not donations - no test mode, no seed).

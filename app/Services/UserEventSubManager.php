@@ -166,6 +166,19 @@ class UserEventSubManager
             'condition_keys' => ['broadcaster_user_id'],
             'required_scope' => 'channel:read:predictions',
         ],
+        // Chat notices: the USERNOTICE feed (sub, resub, gift, paid upgrade,
+        // raid, announcement, ...). The only EventSub payload that says whether
+        // a sub is Prime, and the only one that reports a gift or Prime sub
+        // converting to a paid one - which is what a Plus Points count needs.
+        // The condition names a second user: the bot, whose user:bot grant
+        // pairs with the streamer's channel:bot (already in REQUIRED_SCOPES),
+        // so the subscription costs no streamer a re-authorization. Stored
+        // only - see TwitchEventSubController::STORE_ONLY_EVENTS.
+        'channel.chat.notification' => [
+            'version' => '1',
+            'condition_keys' => ['broadcaster_user_id', 'user_id'],
+            'required_scope' => 'channel:bot',
+        ],
     ];
 
     public function __construct(TwitchEventSubService $eventSubService, TwitchScopeService $scopeService)
@@ -202,6 +215,12 @@ class UserEventSubManager
         // Determine webhook URL (production vs local)
         $webhookUrl = $this->getWebhookUrl();
 
+        // Second party in the channel.chat.notification condition. An install
+        // without a bot (local dev) leaves it unset and that one event fails
+        // with a message that says so, instead of a Twitch 400 on a condition
+        // missing its user_id.
+        $botUserId = trim((string) config('services.twitchbot.user_id', ''));
+
         $total = count(self::SUPPORTED_EVENTS);
 
         foreach (self::SUPPORTED_EVENTS as $eventType => $config) {
@@ -229,8 +248,15 @@ class UserEventSubManager
                 continue;
             }
 
+            if (in_array('user_id', $config['condition_keys'], true) && $botUserId === '') {
+                $results['failed'][$eventType] = 'TWITCHBOT_USER_ID is not configured';
+                $this->broadcastSetupProgress($user, $results, $total);
+
+                continue;
+            }
+
             // Build condition based on event type
-            $condition = $this->buildCondition($eventType, $user->twitch_id);
+            $condition = $this->buildCondition($eventType, $user->twitch_id, $botUserId);
 
             // Create subscription with Twitch
             $payload = [
@@ -453,7 +479,7 @@ class UserEventSubManager
     /**
      * Build condition array for an event type
      */
-    private function buildCondition(string $eventType, string $twitchId): array
+    private function buildCondition(string $eventType, string $twitchId, string $botUserId = ''): array
     {
         return match ($eventType) {
             'channel.follow' => [
@@ -462,6 +488,10 @@ class UserEventSubManager
             ],
             'channel.raid' => [
                 'to_broadcaster_user_id' => $twitchId,
+            ],
+            'channel.chat.notification' => [
+                'broadcaster_user_id' => $twitchId,
+                'user_id' => $botUserId,
             ],
             default => [
                 'broadcaster_user_id' => $twitchId,
@@ -513,6 +543,7 @@ class UserEventSubManager
             'channel.prediction.progress' => 'Prediction progress',
             'channel.prediction.lock' => 'Prediction locked',
             'channel.prediction.end' => 'Prediction ended',
+            'channel.chat.notification' => 'Chat notice (sub, gift, raid as seen in chat)',
         ];
 
         // Only return labels for events that are actually in SUPPORTED_EVENTS

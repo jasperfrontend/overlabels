@@ -1,5 +1,41 @@
 # Changelog - September 2026
 
+## OL-2609-023 - September 7th, 2026 - feat(twitch): subscribe to channel.chat.notification and store it, the ledger a Plus Points count is built from
+
+Twitch's Plus Program counts Plus Points: +1, +2 or +6 every time a paid recurring sub is charged in
+a calendar month, with gifts and Prime excluded, reset to zero on the 1st. Streamers chasing the
+100- and 300-point levels put the running number in their stream title and keep it there by hand,
+because no service computes it. Twitch keeps the number to itself: CasualElephant, a partner with
+a Plus goal on his channel, let us read his events, and in 630 goal events since June Twitch has
+only ever sent `follow` and `subscription` goals. His Plus tracker shows 28; no goal event has ever
+carried a value under 142. The Plus goal is not a creator goal in the API sense.
+
+The one route to a number is chat. `channel.chat.notification` is the USERNOTICE feed, and it is
+the only EventSub payload that says whether a sub is Prime (`sub.is_prime`, `resub.is_prime`) and
+the only one that reports a gift or Prime sub converting to paid (`gift_paid_upgrade`,
+`prime_paid_upgrade`). It still cannot see a renewal the viewer chose not to share, so what it
+yields is a floor on Plus Points, not the number. Whether the floor sits close enough to the
+dashboard to be worth putting in a title is a measurement, and it needs a month of rows first.
+
+- **Subscribed with the bot as the second party.** The condition names the broadcaster and the bot.
+  Twitch accepts it on an app token when the bot has `user:bot` and the streamer has `channel:bot`,
+  both of which are already granted, so no streamer is asked to log in again. The bot's Twitch user
+  id is new configuration: `TWITCHBOT_USER_ID`, a public value, set in `config/deploy.yml`.
+- **Stored and nothing else.** A `sub` notice arrives alongside the `channel.subscribe` for the same
+  viewer, so letting it through the alert path would fire every sub alert and counter twice. And
+  the overlay spreads every broadcast payload into its tag data, where the notice's `message`
+  object would blank a `[[[message]]]` the resub had just filled. `STORE_ONLY_EVENTS` on the
+  webhook controller returns after the row is written: no cache refresh, no per-stream counter,
+  no alert, no broadcast, no delivery outcome. The events feed shows the rows as "chat notice"
+  with the notice type, and offers no Replay.
+- **No count, control or tag yet.** The rows are the ledger; nothing reads them. The plan is to let
+  a month accumulate on CasualElephant's channel, then compare the floor against the 28 on his
+  tracker before deciding what to expose and under what name.
+- **Rollout is one manual step.** The health monitor only repairs accounts with no subscriptions at
+  all. Existing accounts get the new subscription from a single `eventsub:backfill-goals` run on
+  production after the deploy, which is generic and idempotent despite its name. The 6 of 19
+  connected accounts still without `channel:bot` pick it up on their next login.
+
 ## OL-2609-021 - September 2nd, 2026 - feat(help): the help site gets its own design and a seven-section guide taxonomy
 
 The help docs stopped borrowing the app's chrome. Both pages came from a Claude Design canvas: a

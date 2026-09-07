@@ -169,6 +169,9 @@ env:
     # OAuth redirect URIs - hard-coded for clarity (services.php has APP_URL fallbacks)
     TWITCH_REDIRECT_URI: https://overlabels.com/auth/callback/twitch
     TWITCHBOT_REDIRECT_URI: https://overlabels.com/auth/twitchbot/callback
+    # The @overlabels bot account's Twitch user id - public, so clear not secret.
+    # Goes into the channel.chat.notification subscription condition.
+    TWITCHBOT_USER_ID: "1130071166"
 
     DB_CONNECTION: pgsql
     DB_HOST: overlabels-postgres

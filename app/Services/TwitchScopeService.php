@@ -85,6 +85,7 @@ class TwitchScopeService
         'channel.prediction.progress' => 'channel:read:predictions',
         'channel.prediction.lock' => 'channel:read:predictions',
         'channel.prediction.end' => 'channel:read:predictions',
+        'channel.chat.notification' => 'channel:bot',
     ];
 
     /**

@@ -60,6 +60,11 @@ return [
         'client_secret' => env('TWITCHBOT_CLIENT_SECRET'),
         'redirect' => env('TWITCHBOT_REDIRECT_URI', env('APP_URL').'/auth/twitchbot/callback'),
         'listener_secret' => env('TWITCHBOT_LISTENER_SECRET'),
+        // The bot account's Twitch user id. channel.chat.notification names it
+        // in the subscription condition next to the broadcaster: the bot's
+        // user:bot grant pairs with the streamer's channel:bot, so no streamer
+        // has to authorize anything new. Unset = that subscription is skipped.
+        'user_id' => env('TWITCHBOT_USER_ID'),
     ],
 
     'expression_engine' => [
