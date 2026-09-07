@@ -333,10 +333,15 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   request (OL-2609-024). Only that account ever uses it. If a later plain login by that account
   turns out to drop the grant on Twitch's side, log in via `?scopes=bot` again - existing
   subscriptions are not revoked by it, only new creates re-check.
-- Corollary worth knowing: the bot sends chat "as app" through the BOT app, so a streamer's
-  `channel:bot` grant to the MAIN app is not what lets those sends through. Not investigated
-  further (Sept 7th 2026); if bot replies fail in a channel, mod status is the other thing Twitch
-  accepts.
+- **Bot replies work by MOD STATUS, not by `channel:bot` (confirmed Sept 7th 2026).** The bot
+  sends "as app" through the BOT app, and Twitch requires that app to hold `user:bot` from the bot
+  AND `channel:bot` from the broadcaster, or the bot to be a moderator. Streamers grant
+  `channel:bot` to the MAIN app, which the bot app never sees, so that scope has been decorative
+  for sends since May 16th 2026 - the May 16th changelog's "re-auth fixes the 401" is wrong. The
+  bot is modded in every channel where replies have ever worked (jasperdiscovers, ticanuk) and not
+  in casualelephant's, where they never have. `/settings/integrations` already tells streamers to
+  run `/mod overlabels`; that instruction is the load-bearing one. Decision: leave it as-is. Do not
+  pitch moving the bot onto the main app unless replies fail in a channel that HAS modded it.
 - **The rows are store-only.** `TwitchEventSubController::STORE_ONLY_EVENTS` returns right after
   `TwitchEvent::create()` + meter: no counters, no alert, no overlay broadcast, no delivery outcome.
   A `sub` notice arrives next to the `channel.subscribe` for the same viewer, so anything else
