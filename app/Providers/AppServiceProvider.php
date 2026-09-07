@@ -205,6 +205,35 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // The living title's settings endpoints each end in a Helix call, and
+        // three of them in a WRITE to the streamer's channel: save and resume
+        // render at once and PATCH the title, the category picker PATCHes
+        // game_id. Without a limiter a session could fire those endlessly and
+        // Overlabels would relay every one to Twitch. Keyed per user because
+        // the Twitch account is the identity; the IP fallback is safety only.
+        // 10/min is far above a person clicking Save and far below a loop.
+        RateLimiter::for('twitch-write', function (Request $request) {
+            $key = $request->user()?->id ?: $request->ip();
+
+            return [
+                Limit::perMinute(10)->by('twitch-write:'.$key),
+                Limit::perHour(60)->by('twitch-write:'.$key),
+            ];
+        });
+
+        // The read side of the same page: the live preview renders against
+        // Helix (cached, but a cold cache is six calls) and the category box
+        // is one Helix search per request. The client debounces both; this
+        // is for the client that does not.
+        RateLimiter::for('twitch-read', function (Request $request) {
+            $key = $request->user()?->id ?: $request->ip();
+
+            return [
+                Limit::perMinute(30)->by('twitch-read:'.$key),
+                Limit::perHour(300)->by('twitch-read:'.$key),
+            ];
+        });
+
         Event::listen(function (SocialiteWasCalled $event) {
             $event->extendSocialite('twitch', Provider::class);
         });

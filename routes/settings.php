@@ -77,11 +77,13 @@ Route::middleware('auth.redirect')->group(function () {
     // LivingTitleService, which is the only writer the platform has.
     Route::prefix('settings/title')->name('settings.title.')->group(function () {
         Route::get('/', [LivingTitleController::class, 'show'])->name('show');
-        Route::patch('/', [LivingTitleController::class, 'update'])->name('update');
-        Route::post('/preview', [LivingTitleController::class, 'preview'])->name('preview');
-        Route::post('/resume', [LivingTitleController::class, 'resume'])->name('resume');
-        Route::get('/categories', [LivingTitleController::class, 'categories'])->name('categories');
-        Route::post('/category', [LivingTitleController::class, 'setCategory'])->name('category');
+        // Every route below ends in a Helix call; the three writes PATCH the
+        // streamer's channel. The limiters are defined in AppServiceProvider.
+        Route::patch('/', [LivingTitleController::class, 'update'])->middleware('throttle:twitch-write')->name('update');
+        Route::post('/preview', [LivingTitleController::class, 'preview'])->middleware('throttle:twitch-read')->name('preview');
+        Route::post('/resume', [LivingTitleController::class, 'resume'])->middleware('throttle:twitch-write')->name('resume');
+        Route::get('/categories', [LivingTitleController::class, 'categories'])->middleware('throttle:twitch-read')->name('categories');
+        Route::post('/category', [LivingTitleController::class, 'setCategory'])->middleware('throttle:twitch-write')->name('category');
     });
 
     Route::patch('/settings/locale', function (Request $request) {
