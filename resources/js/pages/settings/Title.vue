@@ -8,7 +8,7 @@ import { useLivingTitle } from '@/composables/useLivingTitle';
 import { type BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { AlertTriangle, Pause, Play, Save, Search, Sparkles } from '@lucide/vue';
+import { AlertTriangle, Gamepad2, Pause, Play, Save, Search, Sparkles, Tv } from '@lucide/vue';
 
 interface LivingTitleProps {
   enabled: boolean;
@@ -215,14 +215,15 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div v-if="channel" class="space-y-1 text-sm">
-          <p v-if="channel.title">
-            <span class="text-muted-foreground">On Twitch right now:</span>
-            <span class="font-medium">{{ channel.title }}</span>
-          </p>
-          <p v-if="channel.game_name">
-            <span class="text-muted-foreground">Category:</span>
-            <span class="font-medium">{{ channel.game_name }}</span>
+        <div v-if="channel && (channel.title || channel.game_name)" class="border border-sidebar-border p-4">
+          <div class="mb-2 flex items-center gap-2 text-xs tracking-wide text-muted-foreground uppercase">
+            <Tv class="size-3.5" />
+            On Twitch right now
+          </div>
+          <p v-if="channel.title" class="text-base font-medium wrap-break-word">{{ channel.title }}</p>
+          <p v-if="channel.game_name" class="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Gamepad2 class="size-3.5 shrink-0" />
+            <span>{{ channel.game_name }}</span>
           </p>
         </div>
 
