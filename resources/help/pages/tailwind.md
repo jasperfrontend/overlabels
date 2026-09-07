@@ -5,6 +5,8 @@ description: "Overlabels compiles Tailwind v3 utility classes at save time, not 
 heading: Styling with Tailwind
 lead: You can style an overlay with Tailwind utility classes and never write a stylesheet. But Overlabels does not load Tailwind the way a website does, and knowing how the classes actually become CSS explains every surprise you might hit - including the one where your borders are invisible.
 canonical: https://overlabels.com/help/tailwind
+keywords: border, tailwind border, border not, not showing, border invisible, border not working, border not showing, tailwind invisible border
+
 ---
 
 Write `class="flex items-center gap-3"` in a template and it just works. Underneath, there is no
