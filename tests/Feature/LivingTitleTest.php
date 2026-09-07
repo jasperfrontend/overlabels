@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\LivingTitleChanged;
 use App\Jobs\SyncLivingTitle;
 use App\Models\OverlayControl;
 use App\Models\User;
@@ -9,6 +10,7 @@ use App\Services\TwitchTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Testing\TestResponse;
@@ -185,7 +187,7 @@ test('switching off forgets what was written, so the next switch-on always write
     $this->actingAs($this->user)->patch('/settings/title', ['enabled' => false, 'template' => 'x'])->assertRedirect();
 
     expect($this->user->fresh()->livingTitle()['last_written'])->toBeNull();
-    Queue::assertNothingPushed();
+    Queue::assertNotPushed(SyncLivingTitle::class);
 });
 
 test('an empty template cannot be enabled', function () {
@@ -194,7 +196,7 @@ test('an empty template cannot be enabled', function () {
     $this->actingAs($this->user)->patch('/settings/title', ['enabled' => true, 'template' => '   '])->assertRedirect();
 
     expect($this->user->fresh()->livingTitle()['enabled'])->toBeFalse();
-    Queue::assertNothingPushed();
+    Queue::assertNotPushed(SyncLivingTitle::class);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -317,6 +319,62 @@ test('a channel.update before anything was written, or while off, does not pause
     'nothing written yet' => [['last_written' => null]],
     'switched off' => [['enabled' => false, 'last_written' => 'Old']],
 ]);
+
+test('a pause and a resume are both broadcast to the account, state only, never the template', function () {
+    Event::fake([LivingTitleChanged::class]);
+    Queue::fake();
+    Http::fake();
+    livingTitleOn($this->user, '[[[followers_total]]]', ['last_written' => '1234']);
+
+    postTwitchEventForTitle($this->user, 'channel.update', ['title' => 'Typed on Twitch', 'category_id' => '1', 'category_name' => 'x', 'language' => 'en'])
+        ->assertOk();
+
+    Event::assertDispatched(LivingTitleChanged::class, fn (LivingTitleChanged $e) => $e->broadcasterId === '73327367'
+        && $e->state['paused'] === true
+        && $e->state['paused_title'] === 'Typed on Twitch'
+        && ! array_key_exists('template', $e->state));
+
+    app(LivingTitleService::class)->resume($this->user->fresh());
+
+    Event::assertDispatched(LivingTitleChanged::class, fn (LivingTitleChanged $e) => $e->state['paused'] === false);
+});
+
+test('every app page carries the paused slice for the header', function () {
+    $patches = [];
+    fakeHelix($patches);
+    livingTitleOn($this->user, '[[[followers_total]]]', ['paused' => true, 'paused_title' => 'Typed on Twitch']);
+
+    $this->actingAs($this->user)
+        ->get('/settings/chat')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('livingTitle.enabled', true)
+            ->where('livingTitle.paused', true)
+            ->where('livingTitle.paused_title', 'Typed on Twitch')
+            ->missing('livingTitle.template')
+        );
+});
+
+test('saving after a pause writes again even when the template renders the same string', function () {
+    // Found on prod: title paused by a dashboard edit, template re-saved
+    // unchanged, nothing written. The render equalled last_written, so the
+    // only-on-change rule skipped it while Twitch showed the dashboard text.
+    // The queue is sync in tests, so the save runs the job inline.
+    $patches = [];
+    fakeHelix($patches);
+    livingTitleOn($this->user, '[[[followers_total]]] followers', [
+        'last_written' => '1234 followers',
+        'paused' => true,
+        'paused_title' => 'This is a test',
+    ]);
+
+    $this->actingAs($this->user)
+        ->patch('/settings/title', ['enabled' => true, 'template' => '[[[followers_total]]] followers'])
+        ->assertRedirect();
+
+    expect($patches)->toBe([['title' => '1234 followers']]);
+    expect($this->user->fresh()->livingTitle()['last_written'])->toBe('1234 followers');
+});
 
 test('resume clears the pause and renders at once', function () {
     Queue::fake();

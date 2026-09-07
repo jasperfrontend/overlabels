@@ -62,6 +62,8 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
   impersonating: { real_admin_id: number; target_user_id: number; target_name: string | null } | null;
   lockdown: { active: boolean; activated_at?: string; activated_by?: number; activated_by_name?: string; reason?: string } | null;
   streamState: StreamState | null;
+  /** The living title's paused/enabled slice; kept true by `living-title.updated`. */
+  livingTitle: { enabled: boolean; paused: boolean; paused_title: string | null } | null;
   twitchScope: { missing: string[] } | null;
 };
 

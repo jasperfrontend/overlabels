@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\StreamState;
 use App\Models\User;
+use App\Services\LivingTitleService;
 use App\Services\LockdownService;
 use App\Services\TwitchScopeService;
 use App\Support\HelpContext;
@@ -97,6 +98,14 @@ class HandleInertiaRequests extends Middleware
                         ? $state->currentSession->started_at->toISOString()
                         : null,
                 ];
+            },
+            // The living title's paused/enabled slice, so the header can say
+            // "Title paused" on first paint; LivingTitleChanged keeps it true
+            // after that without a reload.
+            'livingTitle' => function () use ($request) {
+                $user = $request->user();
+
+                return $user ? LivingTitleService::sharedState($user) : null;
             },
             'twitchScope' => function () use ($request) {
                 $user = $request->user();

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\LivingTitleChanged;
 use App\Exceptions\TwitchTokenInvalidException;
 use App\Jobs\SyncLivingTitle;
 use App\Models\OverlayControl;
@@ -18,7 +19,7 @@ use Throwable;
  *
  * A stream title written as a one-line template with [[[tags]]] in it:
  *
- *   Road to 2K | [[[followers_total]]] followers | playing [[[channel_game_name]]]
+ *   Road to 2K | [[[followers_total]]] followers | playing [[[channel_game]]]
  *
  * Something a tag could read changes, the template is rendered again, and if
  * the string differs from the last one sent, it is PATCHed to Twitch. This is
@@ -220,13 +221,13 @@ class LivingTitleService
         }
 
         if (! $this->scopes->hasScope($user, self::SCOPE)) {
-            $this->remember($user, ['last_error' => 'Twitch has not yet allowed Overlabels to change your title. Reauthorize Twitch once to grant it.']);
+            $this->apply($user, ['last_error' => 'Twitch has not yet allowed Overlabels to change your title. Reauthorize Twitch once to grant it.']);
 
             return;
         }
 
         if (! $this->tokens->ensureValidToken($user)) {
-            $this->remember($user, ['last_error' => 'Your Twitch login has expired. Log in again to keep the title updating.']);
+            $this->apply($user, ['last_error' => 'Your Twitch login has expired. Log in again to keep the title updating.']);
 
             return;
         }
@@ -240,7 +241,7 @@ class LivingTitleService
         }
 
         $previous = $settings['last_written'];
-        $this->remember($user, ['last_written' => $title]);
+        $this->apply($user, ['last_written' => $title]);
 
         try {
             $written = $this->twitch->updateChannel($user->access_token, $user->twitch_id, ['title' => $title]);
@@ -252,7 +253,7 @@ class LivingTitleService
         }
 
         if (! $written) {
-            $this->remember($user, [
+            $this->apply($user, [
                 'last_written' => $previous,
                 'last_error' => 'Twitch did not accept the last title update. It will be tried again on the next change.',
             ]);
@@ -261,7 +262,7 @@ class LivingTitleService
         }
 
         $this->twitch->clearChannelInfoCaches($user->twitch_id);
-        $this->remember($user, ['written_at' => now()->timestamp, 'last_error' => null]);
+        $this->apply($user, ['written_at' => now()->timestamp, 'last_error' => null]);
 
         Log::info('living_title.written', ['user_id' => $user->id, 'length' => mb_strlen($title)]);
     }
@@ -288,7 +289,7 @@ class LivingTitleService
             return;
         }
 
-        $this->remember($user, ['paused' => true, 'paused_title' => $incoming]);
+        $this->apply($user, ['paused' => true, 'paused_title' => $incoming]);
 
         Log::info('living_title.paused', ['user_id' => $user->id]);
     }
@@ -298,7 +299,10 @@ class LivingTitleService
      */
     public function resume(User $user): void
     {
-        $this->remember($user, ['paused' => false, 'paused_title' => null]);
+        // Forget what was written, or the next render compares equal to it
+        // and skips - while Twitch is still showing the dashboard edit that
+        // caused the pause. Null here means "write whatever renders next".
+        $this->apply($user, ['paused' => false, 'paused_title' => null, 'last_written' => null]);
         $this->schedule($user, 0);
     }
 
@@ -328,14 +332,43 @@ class LivingTitleService
     }
 
     /**
+     * Write living-title fields and tell every open app page. THE one write
+     * path: the settings page, the chat verbs, the sync job and the pause all
+     * come through here, which is what makes the header's "Title paused" and
+     * the settings banner true without a reload.
+     *
      * @param  array<string,mixed>  $fields
      */
-    private function remember(User $user, array $fields): void
+    public function apply(User $user, array $fields): void
     {
         foreach ($fields as $key => $value) {
             $user->setPreference("living_title.{$key}", $value);
         }
 
         $user->save();
+
+        if ($user->twitch_id) {
+            $settings = $user->livingTitle();
+            unset($settings['template']);
+            broadcast(new LivingTitleChanged((string) $user->twitch_id, $settings));
+        }
+    }
+
+    /**
+     * The slice of state every app page carries (HandleInertiaRequests), so
+     * the header can show "Title paused" on first paint and the broadcast
+     * above only ever has to correct it.
+     *
+     * @return array{enabled:bool,paused:bool,paused_title:?string}
+     */
+    public static function sharedState(User $user): array
+    {
+        $settings = $user->livingTitle();
+
+        return [
+            'enabled' => $settings['enabled'],
+            'paused' => $settings['paused'],
+            'paused_title' => $settings['paused_title'],
+        ];
     }
 }

@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/composables/useInitials';
+import { useLivingTitle } from '@/composables/useLivingTitle';
 import { useStreamState } from '@/composables/useStreamState';
 import type { User } from '@/types';
-import { usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { Pause } from '@lucide/vue';
 import { computed } from 'vue';
 
 const { isLive, isTransitioning, uptime } = useStreamState();
+// "Title paused" is the one living-title state worth a place in the header:
+// it means Overlabels stopped writing your title because you changed it on
+// Twitch, and nobody sits on the settings page during a stream to see that.
+const { paused: titlePaused } = useLivingTitle();
 
 interface Props {
   user: User;
@@ -38,6 +44,15 @@ const showAvatar = computed(() => props?.user?.avatar && props?.user?.avatar !==
     <span v-if="isLive" class="w-30 font-mono text-xs text-green-400">Live for {{ uptime }}</span>
     <span v-else-if="isTransitioning" class="w-25 font-mono text-xs text-yellow-400">Checking stream</span>
     <span v-else class="w-25 font-mono text-xs text-muted-foreground">Not streaming</span>
+    <Link
+      v-if="titlePaused"
+      href="/settings/title"
+      class="relative z-10 inline-flex cursor-pointer items-center gap-1 font-mono text-xs text-amber-400 hover:underline"
+      title="Your title was changed on Twitch, so Overlabels stopped writing it. Click to resume."
+    >
+      <Pause class="size-3" />
+      Title paused
+    </Link>
   </div>
   <div v-else>
     <!-- Plain anchor: '/' is a Blade view, not an Inertia page. -->

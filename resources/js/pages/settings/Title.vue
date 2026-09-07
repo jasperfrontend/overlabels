@@ -4,6 +4,7 @@ import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Label } from '@/components/ui/label';
+import { useLivingTitle } from '@/composables/useLivingTitle';
 import { type BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
@@ -48,6 +49,16 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const enabled = ref(props.livingTitle.enabled);
 const template = ref(props.livingTitle.template);
+
+// The pause and the last error come from the live state, not the prop: a
+// channel.update arriving while this page is open must flip the banner
+// without a reload. Falls back to the prop until the first broadcast.
+const live = useLivingTitle();
+const paused = computed(() => live.state.value?.paused ?? props.livingTitle.paused);
+const pausedTitle = computed(() => live.state.value?.paused_title ?? props.livingTitle.paused_title);
+const lastError = computed(() =>
+  live.state.value && 'last_error' in live.state.value ? (live.state.value.last_error ?? null) : props.livingTitle.last_error,
+);
 
 const saving = ref(false);
 const saveError = ref('');
@@ -215,13 +226,12 @@ onBeforeUnmount(() => {
           </p>
         </div>
 
-        <div v-if="livingTitle.paused" class="flex items-start gap-3 border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+        <div v-if="paused" class="flex items-start gap-3 border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
           <Pause class="mt-0.5 size-4 shrink-0 text-amber-400" />
           <div class="space-y-2">
             <p>
-              <span class="font-medium">Paused.</span> Your title was changed on Twitch to
-              <span class="font-medium">"{{ livingTitle.paused_title }}"</span>, so Overlabels stopped writing rather than overwrite you. Resume when
-              you want the template back in charge.
+              <span class="font-medium">Paused.</span> Your title was changed on Twitch to <span class="font-medium">"{{ pausedTitle }}"</span>, so
+              Overlabels stopped writing rather than overwrite you. Resume when you want the template back in charge.
             </p>
             <button type="button" :disabled="resuming" class="btn btn-sm btn-secondary cursor-pointer disabled:cursor-not-allowed" @click="resume">
               <Play class="mr-1 size-3.5" />
@@ -230,9 +240,9 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div v-else-if="livingTitle.last_error" class="flex items-start gap-3 border border-rose-500/40 bg-rose-500/10 p-4 text-sm">
+        <div v-else-if="lastError" class="flex items-start gap-3 border border-rose-500/40 bg-rose-500/10 p-4 text-sm">
           <AlertTriangle class="mt-0.5 size-4 shrink-0 text-rose-400" />
-          <p>{{ livingTitle.last_error }}</p>
+          <p>{{ lastError }}</p>
         </div>
 
         <div class="space-y-3">

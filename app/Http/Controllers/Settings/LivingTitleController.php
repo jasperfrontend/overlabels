@@ -63,17 +63,18 @@ class LivingTitleController extends Controller
         $enabled = (bool) $data['enabled'] && $template !== '';
 
         $user = $request->user();
-        $user->setPreference('living_title.enabled', $enabled);
-        $user->setPreference('living_title.template', $template);
-        // A save is the streamer speaking, so a pause ends here. Switching
-        // off forgets what was written: the next switch-on always writes.
-        $user->setPreference('living_title.paused', false);
-        $user->setPreference('living_title.paused_title', null);
-        $user->setPreference('living_title.last_error', null);
-        if (! $enabled) {
-            $user->setPreference('living_title.last_written', null);
-        }
-        $user->save();
+        // A save is the streamer speaking, so a pause ends here, and what was
+        // last written is forgotten so the next render always writes. Without
+        // that, saving after a pause compared the render against a title
+        // Twitch no longer showed, found it equal, and wrote nothing.
+        $this->titles->apply($user, [
+            'enabled' => $enabled,
+            'template' => $template,
+            'paused' => false,
+            'paused_title' => null,
+            'last_error' => null,
+            'last_written' => null,
+        ]);
 
         if ($enabled) {
             $this->titles->schedule($user, 0);

@@ -102,12 +102,14 @@ readonly class BotChatAdminService
             return 'error: '.$problem;
         }
 
-        $owner->setPreference('living_title.enabled', true);
-        $owner->setPreference('living_title.template', $template);
-        $owner->setPreference('living_title.paused', false);
-        $owner->setPreference('living_title.paused_title', null);
-        $owner->setPreference('living_title.last_error', null);
-        $owner->save();
+        $this->titles->apply($owner, [
+            'enabled' => true,
+            'template' => $template,
+            'paused' => false,
+            'paused_title' => null,
+            'last_error' => null,
+            'last_written' => null,
+        ]);
 
         $this->titles->schedule($owner, 0);
 
@@ -171,11 +173,12 @@ readonly class BotChatAdminService
             return 'title updates are already off';
         }
 
-        $owner->setPreference('living_title.enabled', false);
-        $owner->setPreference('living_title.paused', false);
-        $owner->setPreference('living_title.paused_title', null);
-        $owner->setPreference('living_title.last_written', null);
-        $owner->save();
+        $this->titles->apply($owner, [
+            'enabled' => false,
+            'paused' => false,
+            'paused_title' => null,
+            'last_written' => null,
+        ]);
 
         return 'title updates off - the title stays as it is on Twitch';
     }
