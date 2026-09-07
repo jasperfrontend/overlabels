@@ -318,11 +318,25 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   payload with `is_prime`, and the only one reporting `gift_paid_upgrade` / `prime_paid_upgrade`, but
   a renewal the viewer did not share never appears in chat. Nothing fixes that.
 - The subscription rides on the bot: condition `{broadcaster_user_id, user_id: bot}`, app token,
-  bot's `user:bot` + streamer's `channel:bot` (already in `REQUIRED_SCOPES`), so no re-auth. The
-  bot's Twitch id is `TWITCHBOT_USER_ID` (public, `env.clear` in `config/deploy.yml`, `1130071166`).
-  Twitch also accepts the bot being a **moderator** of the channel in place of `channel:bot`; that
-  is a read grant, not the bot moderating, and is the fallback for a streamer who will not log in
-  again.
+  bot's `user:read:chat` + `user:bot` and streamer's `channel:bot` (already in `REQUIRED_SCOPES`),
+  so no streamer re-auths. The bot's Twitch id is `TWITCHBOT_USER_ID` (public, `env.clear` in
+  `config/deploy.yml`, `1130071166`). Twitch also accepts the bot being a **moderator** of the
+  channel in place of `channel:bot`; that is a read grant, not the bot moderating, and is the
+  fallback for a streamer who will not log in again.
+- **Twitch checks scopes per CLIENT ID, and Overlabels has two Twitch apps.** The main app
+  (`TWITCH_CLIENT_ID`) is what streamers authorize and what creates every EventSub subscription; the
+  bot app (`TWITCHBOT_CLIENT_ID`) is what `bot_tokens` and the bot container use. The bot account's
+  `user:bot` on the bot app counts for NOTHING on the main app: the first backfill 403'd
+  ("subscription missing proper authorization") on exactly the 13 accounts that passed the
+  `channel:bot` gate. The @overlabels account therefore logs in to Overlabels once via
+  `/auth/redirect/twitch?scopes=bot`, which adds `TwitchScopeService::BOT_ACCOUNT_SCOPES` to the
+  request (OL-2609-024). Only that account ever uses it. If a later plain login by that account
+  turns out to drop the grant on Twitch's side, log in via `?scopes=bot` again - existing
+  subscriptions are not revoked by it, only new creates re-check.
+- Corollary worth knowing: the bot sends chat "as app" through the BOT app, so a streamer's
+  `channel:bot` grant to the MAIN app is not what lets those sends through. Not investigated
+  further (Sept 7th 2026); if bot replies fail in a channel, mod status is the other thing Twitch
+  accepts.
 - **The rows are store-only.** `TwitchEventSubController::STORE_ONLY_EVENTS` returns right after
   `TwitchEvent::create()` + meter: no counters, no alert, no overlay broadcast, no delivery outcome.
   A `sub` notice arrives next to the `channel.subscribe` for the same viewer, so anything else

@@ -47,6 +47,22 @@ class TwitchScopeService
     ];
 
     /**
+     * Extra scopes the BOT ACCOUNT grants to this app, on top of REQUIRED_SCOPES,
+     * by logging in through /auth/redirect/twitch?scopes=bot. Never asked of a
+     * streamer.
+     *
+     * channel.chat.notification is created with this app's app access token
+     * and names the bot as the chatting user in its condition. Twitch checks
+     * scopes per client id: the bot's user:bot on its own Twitch app (the
+     * bot_tokens grant) counts for nothing here, so without these on THIS
+     * client every create is a 403 "subscription missing proper authorization".
+     */
+    public const array BOT_ACCOUNT_SCOPES = [
+        'user:read:chat',
+        'user:bot',
+    ];
+
+    /**
      * Scopes granted by every user authenticated before twitch_scopes existed.
      * Used as the fallback when users.twitch_scopes is null so we don't
      * falsely flag every legacy user's currently-working scopes as missing.

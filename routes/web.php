@@ -386,7 +386,17 @@ Route::get('/auth/redirect/twitch', function (Request $request) {
         $driver->with(['force_verify' => 'true']);
     }
 
-    return $driver->scopes(TwitchScopeService::REQUIRED_SCOPES)->redirect();
+    // ?scopes=bot is how the @overlabels bot account authorizes this app for
+    // channel.chat.notification (see TwitchScopeService::BOT_ACCOUNT_SCOPES).
+    // Harmless on any other account - the extras are simply granted and
+    // ignored - and always re-consented, since the point is a new grant.
+    $scopes = TwitchScopeService::REQUIRED_SCOPES;
+    if ($request->query('scopes') === 'bot') {
+        $scopes = array_values(array_unique(array_merge($scopes, TwitchScopeService::BOT_ACCOUNT_SCOPES)));
+        $driver->with(['force_verify' => 'true']);
+    }
+
+    return $driver->scopes($scopes)->redirect();
 });
 
 // Refresh Twitch token endpoint
