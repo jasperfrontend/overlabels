@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\LivingTitleService;
 use Carbon\Carbon;
 use Database\Factories\OverlayControlFactory;
 use Eloquent;
@@ -81,6 +82,20 @@ class OverlayControl extends Model
     const array RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gps', 'alerts', 'fourthwall', 'bmac', 'throne', 'checkin'];
 
     const string KEY_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
+
+    /**
+     * Every control write on the platform - writeValue(), resetValue(), a
+     * manual edit, provisioning - passes through save(), so this one hook is
+     * how the living title (LivingTitleService) hears that something a
+     * [[[c:...]]] tag could read has changed. It is a debounced no-op for the
+     * accounts the feature is off for.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (OverlayControl $control): void {
+            app(LivingTitleService::class)->controlChanged($control);
+        });
+    }
 
     /**
      * Write a value and always move `updated_at`, even when the value being

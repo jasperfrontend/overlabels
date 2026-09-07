@@ -155,6 +155,21 @@ class User extends Authenticatable
             'hide_commands' => false,
             'hidden_logins' => [],
         ],
+        // The living Twitch title (LivingTitleService). `template` is what the
+        // streamer wrote, `last_written` is the rendered string last sent to
+        // Twitch - the comparison that keeps a re-render from writing an
+        // unchanged title, and the fingerprint a channel.update is checked
+        // against to tell our own echo from a dashboard edit. `paused` is set
+        // when that check fails and cleared only by the streamer.
+        'living_title' => [
+            'enabled' => false,
+            'template' => '',
+            'last_written' => null,
+            'written_at' => null,
+            'paused' => false,
+            'paused_title' => null,
+            'last_error' => null,
+        ],
         // Keys of one-off NudgeBar announcements this user has clicked away.
         // Server-side rather than localStorage so a nudge dismissed on the
         // desktop does not reappear on the phone - these are one-time notices,
@@ -310,6 +325,32 @@ class User extends Authenticatable
         return [
             'hide_commands' => (bool) ($stored['hide_commands'] ?? $defaults['hide_commands']),
             'hidden_logins' => $logins,
+        ];
+    }
+
+    /**
+     * The living title settings and its write bookkeeping, merged with
+     * defaults and cast. Not in $appends for the same reason chatFilters()
+     * is not: the settings page and the sync job ask for it, nothing else
+     * needs it.
+     *
+     * @return array{enabled: bool, template: string, last_written: ?string, written_at: ?int, paused: bool, paused_title: ?string, last_error: ?string}
+     */
+    public function livingTitle(): array
+    {
+        $defaults = self::PREFERENCE_DEFAULTS['living_title'];
+        $stored = (array) ($this->preference('living_title') ?? []);
+
+        $string = fn (string $key): ?string => isset($stored[$key]) && $stored[$key] !== '' ? (string) $stored[$key] : null;
+
+        return [
+            'enabled' => (bool) ($stored['enabled'] ?? $defaults['enabled']),
+            'template' => (string) ($stored['template'] ?? $defaults['template']),
+            'last_written' => $string('last_written'),
+            'written_at' => isset($stored['written_at']) ? (int) $stored['written_at'] : null,
+            'paused' => (bool) ($stored['paused'] ?? $defaults['paused']),
+            'paused_title' => $string('paused_title'),
+            'last_error' => $string('last_error'),
         ];
     }
 

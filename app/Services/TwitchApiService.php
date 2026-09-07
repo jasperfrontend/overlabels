@@ -189,6 +189,75 @@ class TwitchApiService
     }
 
     /**
+     * PATCH helix/channels. The one write this service makes to Twitch: the
+     * living title (LivingTitleService) sets `title` and the category picker
+     * sets `game_id`. Needs channel:manage:broadcast on the streamer's token.
+     *
+     * Twitch answers 204 on success and 400 on a title over 140 characters or
+     * an unknown game id. Returns true on success, false on any other answer
+     * (logged, not retried: a title write is not worth a second attempt, the
+     * next render will try again). A 401 throws exactly like a GET does.
+     *
+     * @param  array<string,mixed>  $fields  title and/or game_id
+     *
+     * @throws TwitchTokenInvalidException
+     */
+    public function updateChannel(string $accessToken, string $broadcasterId, array $fields): bool
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer $accessToken",
+                'Client-Id' => $this->clientId,
+            ])->timeout(10)->patch("$this->baseUrl/channels?broadcaster_id=$broadcasterId", $fields);
+        } catch (ConnectionException $e) {
+            Log::warning('Failed to update channel: connection error', ['error' => $e->getMessage()]);
+
+            return false;
+        }
+
+        if ($response->status() === 401) {
+            throw new TwitchTokenInvalidException('Invalid OAuth token - requires re-authentication');
+        }
+
+        if ($response->successful()) {
+            return true;
+        }
+
+        Log::warning('Failed to update channel', [
+            'status' => $response->status(),
+            'response' => $response->body(),
+            'fields' => array_keys($fields),
+        ]);
+
+        return false;
+    }
+
+    /**
+     * GET helix/search/categories: substring match on the category name, the
+     * same lookup Twitch's own category picker runs. Returns id, name and
+     * box art for each hit, nothing else.
+     *
+     * @return array<int, array{id:string,name:string,box_art_url:string}>
+     *
+     * @throws Exception
+     */
+    public function searchCategories(string $accessToken, string $query, int $first = 20): array
+    {
+        $response = $this->makeApiRequest(
+            $accessToken,
+            'search/categories',
+            ['query' => $query, 'first' => $first],
+            'search categories'
+        );
+
+        return array_values(array_map(fn (array $row) => [
+            'id' => (string) ($row['id'] ?? ''),
+            'name' => (string) ($row['name'] ?? ''),
+            'box_art_url' => (string) ($row['box_art_url'] ?? ''),
+        ], $response['data'] ?? []));
+    }
+
+    /**
      * @throws Exception
      */
     public function getUserInfo(string $accessToken, string $userId): ?array

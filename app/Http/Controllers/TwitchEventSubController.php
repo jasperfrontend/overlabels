@@ -16,6 +16,7 @@ use App\Models\UserEventsubSubscription;
 use App\Services\AlertMuteService;
 use App\Services\DeliveryLedger;
 use App\Services\EventMeter;
+use App\Services\LivingTitleService;
 use App\Services\LockdownService;
 use App\Services\Messages\AlertMessageRenderer;
 use App\Services\StreamSessionService;
@@ -584,6 +585,17 @@ class TwitchEventSubController extends Controller
 
             // Clear relevant caches based on event type
             $this->refreshCachesForEvent($eventType, $broadcasterId);
+
+            // The living title re-renders on any event, debounced. Except a
+            // channel.update, which IS a title change - possibly ours, possibly
+            // the streamer's - and is judged rather than re-rendered.
+            if ($user) {
+                if ($eventType === 'channel.update') {
+                    app(LivingTitleService::class)->handleChannelUpdate($user, $event);
+                } else {
+                    app(LivingTitleService::class)->schedule($user);
+                }
+            }
 
             // Stream session lifecycle and per-stream controls
             if ($user) {

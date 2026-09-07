@@ -1,5 +1,40 @@
 # Changelog - September 2026
 
+## OL-2609-026 - September 7th, 2026 - feat(twitch): the living title - a tag template kept true on Twitch, plus a category picker
+
+Everything in Overlabels receives data and reacts to it. This is the first thing that writes back
+to Twitch other than the bot's chat replies: a stream title written as a template, with tags in it,
+that keeps itself true.
+
+```
+Road to 2K | [[[followers_total]]] followers | playing [[[channel_game]]]
+```
+
+A follow arrives, `followers_total` moves, the title on Twitch updates. It lives at
+`/settings/title`, with a preview rendered against your real values and a counter against Twitch's
+140-character limit.
+
+- **Nothing new renders it.** A title is the same shape as a bot command reply - one line, tags,
+  if/else, pipes, `??` defaults, no loops - and it is resolved by the same `BotCommandResolver`
+  against the same data: Helix tags, every control, every list. The save gate speaks in the same
+  `Conditionals::describeProblem()` voice for a stray `endif` or a `foreach`.
+- **Three rules were decided before a line was written.** `[[[channel_title]]]` is refused inside
+  the template: our own write fires `channel.update`, the app consumes it, and the tag would feed on
+  itself. A `channel.update` carrying a title we did not write pauses the feature rather than
+  overwrite a dashboard edit a minute later; Resume is a click. And a burst of events becomes one
+  write: renders are debounced to one per 30 seconds and PATCHed only when the text changed.
+  A title that flickers is worse than one that lags.
+- **"Any event" re-renders it, not a curated list.** Every stored EventSub event and every control
+  write on the platform - Ko-fi, chat stats, GPS, counters, the go-live reset, a manual edit - goes
+  through one `saved` hook on the control model. A curated list would have rotted the first time a
+  tag was added; the debounce is what makes "anything" affordable.
+- **The category is a separate, one-shot pick.** A search box against Twitch's own category lookup;
+  choosing one sets it on Twitch right then and is never remembered or re-asserted. Streamers change
+  category from the dashboard mid-stream and the title must not fight them over it.
+- **One re-authorization.** `channel:manage:broadcast` is the first write scope the platform has
+  ever held. The reconnect banner asks for it; until it is granted the title records why it is not
+  writing and sends nothing.
+
 ## OL-2609-023 - September 7th, 2026 - feat(twitch): subscribe to channel.chat.notification and store it, the ledger a Plus Points count is built from
 
 Twitch's Plus Program counts Plus Points: +1, +2 or +6 every time a paid recurring sub is charged in

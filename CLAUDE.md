@@ -293,6 +293,34 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   anywhere, because the bot's dispatcher drops commands missing from the map by design. This has
   happened twice (`!s` in April, `!followage` / `!accountage` in May).
 
+## Living Twitch Title (Sept 2026)
+
+- `/settings/title`, `LivingTitleService`, `SyncLivingTitle`, `preferences.living_title`. A one-line
+  tag template rendered by **`BotCommandResolver` unchanged** (same shape and data as a bot reply,
+  bot-context tags resolve empty) and PATCHed to Twitch through `TwitchApiService::updateChannel()`,
+  **the only write helper the platform has**. Scope `channel:manage:broadcast` is in
+  `REQUIRED_SCOPES`; every pre-existing account re-auths once.
+- **Three rules, not negotiable.** (1) `channel_title` is refused in the template - our PATCH fires
+  `channel.update`, the app consumes it, the tag would feed on itself. `rand:` and list `:random`
+  are refused beside it: a value that differs every render defeats "only write on change". (2) A
+  `channel.update` whose title differs from `last_written` PAUSES the feature; resume is the
+  streamer's click or a save. Nothing written yet = nothing to protect, so no pause. (3) One write
+  per 30 s at most, and only when the rendered string differs from `last_written`.
+- **"Any event" is implemented as two hooks, not a list**: `TwitchEventSubController` after the
+  cache refresh (channel.update judged, everything else scheduled) and `OverlayControl::booted()`
+  `saved` - every control write on the platform passes through `save()`. Do not add a curated list
+  of triggering events; do not add a third dispatch site without a reason the two miss.
+- The debounce is a `Cache::add` key with the delay as TTL; the job forgets it FIRST. Trailing-edge,
+  so a burst's last event is always rendered. `SyncLivingTitle` is deliberately not
+  `ShouldBeUnique` (see the VerifyStreamState lesson).
+- `last_written` is stored BEFORE the PATCH so our own echo is recognised however fast it lands;
+  a failed PATCH puts the previous value back. Both sides go through `fit()` (one line, single
+  spaces, 140) so Twitch's whitespace normalisation cannot make our own title look foreign.
+- **The category is a one-shot write, never remembered, never re-asserted by a render.** Streamers
+  change category from the dashboard mid-stream; the title must not fight them. Search is
+  `GET helix/search/categories` proxied with the streamer's token.
+- The handoff's example tag `channel_game_name` does not exist; the tag is `channel_game`.
+
 ## External Integrations (Implemented Mar 2026)
 
 - Pipeline: ExternalWebhookController -> verifyRequest -> parsePayload -> normalizeEvent -> ExternalEvent (dedup on service+message_id) -> ExternalControlService.applyUpdates -> ExternalAlertService.dispatch

@@ -44,6 +44,10 @@ class TwitchScopeService
         // account), Twitch returns 401 on bot replies and the Chat Bot
         // Badge does not render.
         'channel:bot',
+        // The living title (LivingTitleService) writes the stream title and
+        // category through PATCH helix/channels. This is the only write scope
+        // the platform holds; everything above is read.
+        'channel:manage:broadcast',
     ];
 
     /**

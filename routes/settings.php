@@ -11,6 +11,7 @@ use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\GpsIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\KofiIntegrationController;
+use App\Http\Controllers\Settings\LivingTitleController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Http\Controllers\Settings\ThroneIntegrationController;
 use App\Http\Controllers\Settings\UsageController;
@@ -70,6 +71,18 @@ Route::middleware('auth.redirect')->group(function () {
 
         return back()->with('success', 'Chat display settings saved. Reload your overlay in OBS to apply them.');
     })->name('settings.chat.update');
+
+    // The living Twitch title: a tag template kept true on Twitch, plus the
+    // one-shot category picker. Everything that writes to Twitch goes through
+    // LivingTitleService, which is the only writer the platform has.
+    Route::prefix('settings/title')->name('settings.title.')->group(function () {
+        Route::get('/', [LivingTitleController::class, 'show'])->name('show');
+        Route::patch('/', [LivingTitleController::class, 'update'])->name('update');
+        Route::post('/preview', [LivingTitleController::class, 'preview'])->name('preview');
+        Route::post('/resume', [LivingTitleController::class, 'resume'])->name('resume');
+        Route::get('/categories', [LivingTitleController::class, 'categories'])->name('categories');
+        Route::post('/category', [LivingTitleController::class, 'setCategory'])->name('category');
+    });
 
     Route::patch('/settings/locale', function (Request $request) {
         $request->validate(['locale' => 'required|string|max:10']);
