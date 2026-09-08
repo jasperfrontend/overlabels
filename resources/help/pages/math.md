@@ -42,7 +42,7 @@ reactive). The two substrates never parse each other's syntax.
 |-----------------------------------|----------------------------------------------------------------------------|
 | `max(a, b, ...)`                  | Largest of the args                                                        |
 | `min(a, b, ...)`                  | Smallest of the args                                                       |
-| `clamp(lo, x, hi)`                | x pinned to [lo, hi]                                                       |
+| `clamp(x, lo, hi)`                | x pinned to [lo, hi]                                                       |
 | `sum(a, b, ...)`                  | Arithmetic sum                                                             |
 | `avg(a, b, ...)`                  | Arithmetic mean                                                            |
 | `abs(x)`                          | \|x\|                                                                      |
@@ -246,7 +246,7 @@ floats, or negative values.
 
 ```
 // Hype meter: 0..100, never overshoots, never negative
-clamp(0, c.cheer_bits / 100, 100)
+clamp(c.cheer_bits / 100, 0, 100)
 ```
 
 ### Round for display, keep precision internally
@@ -333,7 +333,7 @@ then snaps back to zero and starts climbing again:
 
 ```
 // c:milestone_pct ->
-clamp(0, (t.followers_total - floor(t.followers_total / 1000) * 1000) / 10, 100)
+clamp((t.followers_total - floor(t.followers_total / 1000) * 1000) / 10, 0, 100)
 ```
 
 That is \(\text{pct} = \frac{F \bmod 1000}{10}\) wearing a clamp guard. Wire it into CSS:
@@ -346,7 +346,7 @@ two-second fade-in on every new follow:
 
 ```
 // c:greet_opacity ->
-clamp(0, (now_ms() - t.followers_latest_user_name_at * 1000) / 2000, 1)
+clamp((now_ms() - t.followers_latest_user_name_at * 1000) / 2000, 0, 1)
 ```
 
 Note the `* 1000`. Every `_at` companion is Unix *seconds*, so it has to be lifted into milliseconds
@@ -369,7 +369,7 @@ t.subscribers_latest_is_gift
 ```
 // Scale from 0..1 based on peak raid size, saturating at 500 viewers
 // c:raid_hype ->
-clamp(0, t.last_raid_viewers_peak / 500, 1)
+clamp(t.last_raid_viewers_peak / 500, 0, 1)
 
 // "who raided me" label, or empty if no raid yet
 // c:raid_label ->
