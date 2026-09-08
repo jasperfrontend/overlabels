@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -46,9 +45,6 @@ class Update extends Model
      */
     public const array LINK_KEYS = ['route', 'params', 'url', 'label'];
 
-    /** Cache key for the route/path list the visit detector consults. */
-    private const string CTA_TARGETS_KEY = 'whatsnew:cta-targets';
-
     protected $fillable = [
         'title',
         'slug',
@@ -75,10 +71,6 @@ class Update extends Model
 
             $update->projectCta();
         });
-
-        // The cached target list is derived from rows, so any write can move it.
-        static::saved(fn () => Cache::forget(self::CTA_TARGETS_KEY));
-        static::deleted(fn () => Cache::forget(self::CTA_TARGETS_KEY));
     }
 
     /**
@@ -125,40 +117,6 @@ class Update extends Model
     public function interactions(): HasMany
     {
         return $this->hasMany(UpdateInteraction::class);
-    }
-
-    /**
-     * Every route name and internal path a live card entry points at.
-     *
-     * Cached because the visit detector consults it on every authenticated
-     * request, and the answer is "no" for almost all of them. Checking an
-     * in-memory array first means an ordinary page load does no database work
-     * at all - only a request that actually lands on a route some update
-     * advertises pays for a query.
-     *
-     * @return array{routes: array<int, string>, paths: array<int, string>}
-     */
-    public static function ctaTargets(): array
-    {
-        return Cache::rememberForever(self::CTA_TARGETS_KEY, function () {
-            $rows = static::query()
-                ->whereJsonContains('tags', self::CARD_TAG)
-                ->where(fn ($q) => $q->whereNotNull('cta_route')->orWhereNotNull('cta_url'))
-                ->get(['cta_route', 'cta_url']);
-
-            return [
-                'routes' => $rows->pluck('cta_route')->filter()->unique()->values()->all(),
-                'paths' => $rows->pluck('cta_url')
-                    ->filter()
-                    // Only internal paths can ever be observed. An absolute URL
-                    // leaves the app, so it goes stale on click instead.
-                    ->filter(fn (string $url) => str_starts_with($url, '/'))
-                    ->map(fn (string $url) => trim(parse_url($url, PHP_URL_PATH) ?: '/', '/') ?: '/')
-                    ->unique()
-                    ->values()
-                    ->all(),
-            ];
-        });
     }
 
     /**
@@ -320,7 +278,7 @@ class Update extends Model
      * since disappeared drops the link instead of throwing - a stale CTA is
      * worth less than a dashboard that still loads.
      *
-     * @return array{label:string,href:string,external:bool}|null
+     * @return array{label:string,href:string}|null
      */
     public function cta(): ?array
     {
@@ -347,9 +305,6 @@ class Update extends Model
         return [
             'label' => $this->cta_label,
             'href' => $href,
-            // An absolute URL leaves the app, so no request of ours will ever
-            // observe the visit. The card marks those stale on click instead.
-            'external' => $this->cta_url !== null && ! str_starts_with($this->cta_url, '/'),
         ];
     }
 }

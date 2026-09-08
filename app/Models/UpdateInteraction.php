@@ -9,11 +9,14 @@ use Illuminate\Support\Carbon;
 /**
  * What one user has done with one update on the What's New card.
  *
- * `visited_at` and `dismissed_at` are independent. Visiting greys a row out
- * but leaves it on the card, because "I have seen where this goes" is not the
- * same claim as "stop showing me this". Dismissing removes it.
+ * One fact: `dismissed_at`, the moment the post stopped being news to this
+ * account. Opening the post sets it, so does the row's dismiss button, so
+ * does "Mark all as seen". Undo nulls it and leaves the row.
  *
- * @property Carbon|null $visited_at
+ * It is a timestamp rather than a boolean because "Mark all as seen" stamps
+ * every row it touches with the same instant, and that shared value is what
+ * Undo reverses as one batch.
+ *
  * @property Carbon|null $dismissed_at
  */
 class UpdateInteraction extends Model
@@ -21,12 +24,10 @@ class UpdateInteraction extends Model
     protected $fillable = [
         'user_id',
         'update_id',
-        'visited_at',
         'dismissed_at',
     ];
 
     protected $casts = [
-        'visited_at' => 'datetime',
         'dismissed_at' => 'datetime',
     ];
 

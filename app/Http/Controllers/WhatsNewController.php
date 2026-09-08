@@ -9,8 +9,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * The What's New card on the dashboard: which posts a user has not cleared,
- * which of those they have already been to, and the writes that move both.
+ * The What's New card on the dashboard: which posts a user has not seen yet,
+ * and the writes that clear them.
+ *
+ * "Seen" has three doors, all writing `dismissed_at`: opening the post (see
+ * UpdateController::show()), the row's dismiss button, and "Mark all as seen".
+ * There is no separate notion of having visited where a post points - a card
+ * that stayed full after every row had been read was the complaint that
+ * removed it.
  */
 class WhatsNewController extends Controller
 {
@@ -32,10 +38,7 @@ class WhatsNewController extends Controller
      */
     public static function props(User $user): array
     {
-        $unseen = Update::query()
-            ->unseenBy($user)
-            ->with(['interactions' => fn ($q) => $q->where('user_id', $user->id)])
-            ->get();
+        $unseen = Update::query()->unseenBy($user)->get();
 
         return [
             'items' => $unseen->take(self::CARD_LIMIT)->map(fn (Update $update) => [
@@ -45,9 +48,6 @@ class WhatsNewController extends Controller
                 'published_at' => $update->published_at,
                 'href' => route('updates.show', $update->slug),
                 'cta' => $update->cta(),
-                // Stale: the reader has already been where this points. It stays
-                // on the card, in greys, until they clear it.
-                'stale' => $update->interactions->first()?->visited_at !== null,
             ])->values()->all(),
             'total' => $unseen->count(),
             'canUndo' => UpdateInteraction::query()
@@ -94,31 +94,15 @@ class WhatsNewController extends Controller
     }
 
     /**
-     * Mark one entry visited from the browser.
-     *
-     * Only needed for a CTA pointing somewhere outside the app: the reader
-     * leaves, so no request of ours can observe the visit the way
-     * MarkWhatsNewVisited does for an internal route.
-     */
-    public function markVisited(Request $request, Update $update): RedirectResponse
-    {
-        UpdateInteraction::query()->updateOrCreate(
-            ['user_id' => $request->user()->id, 'update_id' => $update->id],
-            ['visited_at' => now()],
-        );
-
-        return back();
-    }
-
-    /**
      * Undo the most recent clearing.
      *
      * Scoped to the newest batch rather than every entry the account has ever
      * cleared, because the button sits next to one press. Undoing months of
-     * them would resurrect posts the reader deliberately got rid of.
+     * them would resurrect posts the reader deliberately got rid of. A post
+     * that was cleared by being opened is a batch of one, so Undo after
+     * reading brings back exactly that post.
      *
-     * The row itself survives with `dismissed_at` nulled, so an entry that was
-     * grey before it was cleared comes back grey.
+     * The row itself survives with `dismissed_at` nulled.
      */
     public function undo(Request $request): RedirectResponse
     {

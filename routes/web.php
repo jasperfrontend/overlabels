@@ -195,9 +195,11 @@ Route::post('/dashboard/events/mute', [AlertMuteController::class, 'update'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.events.mute');
 
-// What's New card. Both writes touch update_dismissals for the current user
-// only and answer with back(), so the dashboard re-renders from the same
-// selection query that drew the card in the first place.
+// What's New card. Every write touches update_interactions for the current
+// user only and answers with back(), so the dashboard re-renders from the same
+// selection query that drew the card in the first place. Opening a post marks
+// it seen too - that write lives in UpdateController::show(), because it is
+// the post page that observes the read, not the card.
 Route::post('/dashboard/whats-new/seen', [WhatsNewController::class, 'markSeen'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.whats-new.seen');
@@ -209,12 +211,6 @@ Route::delete('/dashboard/whats-new/seen', [WhatsNewController::class, 'undo'])
 Route::delete('/dashboard/whats-new/{update}', [WhatsNewController::class, 'dismiss'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.whats-new.dismiss');
-
-// Only used by a CTA that leaves the app - an internal one is observed by
-// MarkWhatsNewVisited on the way in, with no help from the browser.
-Route::post('/dashboard/whats-new/{update}/visited', [WhatsNewController::class, 'markVisited'])
-    ->middleware(['auth.redirect'])
-    ->name('dashboard.whats-new.visited');
 
 // Token-authed events feed shell (phone-friendly /dashboard/events sibling).
 // Served without auth on purpose: the overlay token lives in the URL fragment

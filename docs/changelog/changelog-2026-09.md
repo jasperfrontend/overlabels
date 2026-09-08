@@ -1,5 +1,32 @@
 # Changelog - September 2026
 
+## OL-2609-036 - September 8th, 2026 - fix(dashboard): opening a post marks it seen on the What's New card, and the visit middleware is gone
+
+The card shipped on August 29th with two records per post: "visited", set by a middleware when the
+reader landed on the page a post's call to action pointed at, which greyed the row but left it on
+the card; and "seen", set only by the dismiss button or "Mark all as seen", which removed it. Eleven
+days of use said it did not work. A row sometimes greyed and sometimes did not, and a card with every
+row read was still the full-height card until a button was pressed.
+
+The flakiness was never the middleware. Inertia restores the dashboard from its history snapshot on
+Back, so returning to it that way showed the card as it was before the click, and returning by the
+sidebar showed it fresh. And opening the post itself, the one thing a reader would call reading it,
+was not a visit at all: only the call-to-action target counted.
+
+- **Opening the post marks it seen.** `UpdateController::show()` writes `dismissed_at` for a
+  logged-in reader when the post is on their card, and only then: a guest, a post older than the
+  account, a post without the tag or one already cleared writes nothing. Undo after reading brings
+  back exactly that post.
+- **The visited layer is gone.** `MarkWhatsNewVisited`, the `dashboard.whats-new.visited` route,
+  `Update::ctaTargets()` and its cache, the `stale` styling and the `visited_at` column, dropped by
+  migration. One record per post, one meaning.
+- **The card drops the row itself on click.** Because Back restores a snapshot, the card rewrites
+  its own history entry through `router.replaceProp` as the title is clicked, so Back lands on a card
+  that agrees with the database. Bound with `@click.capture`, because Inertia's `Link` overwrites a
+  plain `@click`.
+- **Landing on a call-to-action target records nothing now.** Going to `/wiring` is not reading the
+  post about wiring. The per-row link stays; it is just a link.
+
 ## OL-2609-034 - September 8th, 2026 - feat(gamejam): remove Chat Castle entirely
 
 Chat Castle was the chat-driven dungeon game built in a week in April 2026: viewers typed `!join`,

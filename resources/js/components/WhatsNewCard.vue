@@ -52,12 +52,24 @@ function dismiss(item: WhatsNewItem): void {
   });
 }
 
-// An internal destination is caught server-side on arrival, so the card says
-// nothing. An external one takes the reader out of the app where no request of
-// ours will ever see it, so the click is the only chance to record it.
-function onCtaClick(item: WhatsNewItem): void {
-  if (!item.cta?.external || item.stale) return;
-  router.post(route('dashboard.whats-new.visited', item.id), {}, { preserveScroll: true, preserveState: true });
+// Opening the post is what marks it seen, and the server does that on
+// arrival (UpdateController::show). The card still has to drop the row
+// itself, because of the Back button: Inertia restores this page from its
+// history entry, not from the server, so without this the reader comes back
+// to a card still announcing the post they just read. replaceProp rewrites
+// the current entry, so Back lands on a card that agrees with the database.
+//
+// Bound with .capture: Link spreads its own onClick over the attrs it is
+// given, so a plain @click on it never fires.
+function opened(item: WhatsNewItem): void {
+  router.replaceProp('whatsNew', (current: unknown): WhatsNew => {
+    const value = current as WhatsNew;
+    return {
+      items: value.items.filter((row) => row.id !== item.id),
+      total: Math.max(0, value.total - 1),
+      canUndo: true,
+    };
+  });
 }
 </script>
 
@@ -90,29 +102,25 @@ function onCtaClick(item: WhatsNewItem): void {
         <span class="relative mt-1.5 inline-flex h-4 w-4 items-center justify-center">
           <!-- Teal and yellow are deliberately foreign to the app's violet, and
                they are fixed palette values rather than theme tokens so no
-               theme (Sepia included) can tint them back into the family. A
-               stale row drops to grey and stops pinging: the reader has been
-               where this points, so it has nothing left to announce. -->
-          <span v-if="!item.stale" class="whats-new-ping absolute h-2 w-2 rounded-full bg-yellow-400" aria-hidden="true" />
-          <span class="relative h-2 w-2 rounded-full" :class="item.stale ? 'bg-muted-foreground/40' : 'bg-teal-400'" aria-hidden="true" />
+               theme (Sepia included) can tint them back into the family. -->
+          <span class="whats-new-ping absolute h-2 w-2 rounded-full bg-yellow-400" aria-hidden="true" />
+          <span class="relative h-2 w-2 rounded-full bg-teal-400" aria-hidden="true" />
         </span>
 
         <div class="flex flex-col gap-1.5">
-          <Link :href="item.href" class="font-semibold hover:underline" :class="item.stale ? 'text-muted-foreground' : 'text-foreground'">
+          <Link :href="item.href" class="font-semibold text-foreground hover:underline" @click.capture="opened(item)">
             {{ item.title }}
           </Link>
-          <div class="font-mono text-xs" :class="item.stale ? 'text-muted-foreground/70' : 'text-violet-600 dark:text-violet-400'">
-            {{ formatDate(item.published_at) }}<span v-if="item.stale"> · visited</span>
+          <div class="font-mono text-xs text-violet-600 dark:text-violet-400">
+            {{ formatDate(item.published_at) }}
           </div>
-          <p v-if="item.excerpt" class="max-w-[62ch] text-sm leading-relaxed" :class="item.stale ? 'text-muted-foreground' : 'text-foreground'">
+          <p v-if="item.excerpt" class="max-w-[62ch] text-sm leading-relaxed text-foreground">
             {{ item.excerpt }}
           </p>
           <a
             v-if="item.cta"
             :href="item.cta.href"
-            class="mt-1 inline-flex cursor-pointer items-center gap-1.5 self-start text-sm"
-            :class="item.stale ? 'text-muted-foreground hover:text-foreground' : 'text-teal-600 hover:text-foreground dark:text-teal-400'"
-            @click="onCtaClick(item)"
+            class="mt-1 inline-flex cursor-pointer items-center gap-1.5 self-start text-sm text-teal-600 hover:text-foreground dark:text-teal-400"
           >
             {{ item.cta.label }}
             <ArrowRight class="h-3.5 w-3.5" />

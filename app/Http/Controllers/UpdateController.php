@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Update;
+use App\Models\UpdateInteraction;
 use App\Services\OgImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -48,12 +49,14 @@ class UpdateController extends Controller
         ]);
     }
 
-    public function show(string $slug): Response
+    public function show(Request $request, string $slug): Response
     {
         $update = Update::query()
             ->where('slug', $slug)
             ->published()
             ->firstOrFail();
+
+        $this->markSeen($request, $update);
 
         // The body is served without its CTA frontmatter, because show.vue
         // hands it straight to marked and a leaked block renders as a large
@@ -68,6 +71,39 @@ class UpdateController extends Controller
         return Inertia::render('updates/show', [
             'update' => $update,
         ]);
+    }
+
+    /**
+     * Opening a post is reading it, so it leaves the What's New card here.
+     *
+     * Scoped to posts currently on the reader's card. A guest has no card; a
+     * post that predates the account or lacks the tag was never on it, and
+     * writing a row for one would light the "all caught up" bar for an
+     * account that never cleared anything. Reading a post a second time is
+     * not a new event either: the row already carries `dismissed_at`, so it
+     * is no longer unseen and the batch Undo would reverse does not move.
+     */
+    private function markSeen(Request $request, Update $update): void
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return;
+        }
+
+        $onCard = Update::query()
+            ->unseenBy($user)
+            ->whereKey($update->id)
+            ->exists();
+
+        if (! $onCard) {
+            return;
+        }
+
+        UpdateInteraction::query()->updateOrCreate(
+            ['user_id' => $user->id, 'update_id' => $update->id],
+            ['dismissed_at' => now()],
+        );
     }
 
     /**

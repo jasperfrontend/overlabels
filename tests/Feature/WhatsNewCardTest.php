@@ -4,6 +4,7 @@ use App\Models\Update;
 use App\Models\UpdateInteraction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 
 uses(RefreshDatabase::class);
 
@@ -194,7 +195,7 @@ it('takes a url verbatim', function () {
     makeCardUpdate(['body' => "---\nurl: https://example.com/x?a=1\nlabel: Read more\n---\n\nBody.\n"]);
 
     expect(whatsNewProp($user)['items'][0]['cta'])
-        ->toBe(['label' => 'Read more', 'href' => 'https://example.com/x?a=1', 'external' => true]);
+        ->toBe(['label' => 'Read more', 'href' => 'https://example.com/x?a=1']);
 });
 
 it('drops the link rather than throwing when the route has since been renamed', function () {
@@ -218,107 +219,112 @@ it('has no cta when the author declared none', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Going stale on a visit
+// Opening the post is reading it
 // ──────────────────────────────────────────────────────────────────────────────
 
-it('goes stale when the reader lands on the route it points at', function () {
+it('marks a post seen when a logged in reader opens it', function () {
     $user = cardUser();
-    makeCardUpdate(['body' => "---\nroute: dashboard.recents\nlabel: See recent events\n---\n\nBody.\n"]);
+    $update = makeCardUpdate();
 
-    expect(whatsNewProp($user)['items'][0]['stale'])->toBeFalse();
+    expect(whatsNewProp($user)['items'])->toHaveCount(1);
 
-    $this->actingAs($user)->get(route('dashboard.recents'))->assertOk();
+    $this->actingAs($user)->get(route('updates.show', $update->slug))->assertOk();
 
     $prop = whatsNewProp($user);
 
-    // Still on the card - visiting is not dismissing.
-    expect($prop['items'])->toHaveCount(1)
-        ->and($prop['items'][0]['stale'])->toBeTrue()
-        ->and($prop['total'])->toBe(1);
+    expect($prop['items'])->toBeEmpty()
+        ->and($prop['total'])->toBe(0)
+        ->and($prop['canUndo'])->toBeTrue()
+        ->and(UpdateInteraction::where('user_id', $user->id)->first()->dismissed_at)->not->toBeNull();
 });
 
-it('goes stale on arrival however the reader got there', function () {
-    // The whole point: the sidebar, a bookmark or a typed URL all count. The
-    // card never sees the click, so it cannot be what triggers this.
+it('leaves the other posts on the card', function () {
     $user = cardUser();
-    makeCardUpdate(['body' => "---\nurl: /dashboard/recents\nlabel: See recent events\n---\n\nBody.\n"]);
+    $one = makeCardUpdate(['slug' => 'one', 'title' => 'One']);
+    makeCardUpdate(['slug' => 'two', 'title' => 'Two']);
 
-    $this->actingAs($user)->get('/dashboard/recents')->assertOk();
+    $this->actingAs($user)->get(route('updates.show', $one->slug))->assertOk();
 
-    expect(whatsNewProp($user)['items'][0]['stale'])->toBeTrue();
+    expect(collect(whatsNewProp($user)['items'])->pluck('title')->all())->toBe(['Two']);
 });
 
-it('ignores a route no entry points at', function () {
-    $user = cardUser();
-    makeCardUpdate(['body' => "---\nroute: dashboard.recents\nlabel: Go\n---\n\nBody.\n"]);
+it('writes nothing when a guest opens a post', function () {
+    $update = makeCardUpdate();
 
-    $this->actingAs($user)->get(route('updates.index'))->assertOk();
+    $this->get(route('updates.show', $update->slug))->assertOk();
 
-    expect(whatsNewProp($user)['items'][0]['stale'])->toBeFalse()
-        ->and(UpdateInteraction::count())->toBe(0);
+    expect(UpdateInteraction::count())->toBe(0);
 });
 
-it('matches on the route name regardless of its parameters', function () {
-    // A CTA aimed at a filtered view is satisfied by arriving at the page.
-    // Demanding an exact query string leaves rows stuck teal for readers who
-    // did exactly what was asked.
-    $user = cardUser();
-    makeCardUpdate([
-        'body' => "---\nroute: templates.index\nparams: filter=community&type=static\nlabel: Browse\n---\n\nBody.\n",
-    ]);
+it('writes nothing for a post that was never on the reader\'s card', function () {
+    // A post older than the account is not news to it. Writing a row anyway
+    // would set canUndo and light the caught-up bar for someone who has
+    // never cleared anything.
+    $user = User::factory()->create();
+    $update = makeCardUpdate(['published_at' => now()->subMonth()]);
 
-    $this->actingAs($user)->get('/templates?filter=mine&type=alert')->assertOk();
+    $this->actingAs($user)->get(route('updates.show', $update->slug))->assertOk();
 
-    expect(whatsNewProp($user)['items'][0]['stale'])->toBeTrue();
+    expect(UpdateInteraction::count())->toBe(0)
+        ->and(whatsNewProp($user)['canUndo'])->toBeFalse();
 });
 
-it('does not write again once an entry is already stale', function () {
+it('writes nothing for a post without the card tag', function () {
     $user = cardUser();
-    makeCardUpdate(['body' => "---\nroute: dashboard.recents\nlabel: Go\n---\n\nBody.\n"]);
+    $update = makeCardUpdate(['tags' => ['release']]);
 
-    $this->actingAs($user)->get(route('dashboard.recents'))->assertOk();
-    $first = UpdateInteraction::where('user_id', $user->id)->first()->visited_at;
+    $this->actingAs($user)->get(route('updates.show', $update->slug))->assertOk();
+
+    expect(UpdateInteraction::count())->toBe(0);
+});
+
+it('does not move the batch when a post is opened again', function () {
+    $user = cardUser();
+    $update = makeCardUpdate();
+
+    $this->actingAs($user)->get(route('updates.show', $update->slug))->assertOk();
+    $first = UpdateInteraction::where('user_id', $user->id)->first()->dismissed_at;
 
     $this->travel(5)->minutes();
-    $this->actingAs($user)->get(route('dashboard.recents'))->assertOk();
+    $this->actingAs($user)->get(route('updates.show', $update->slug))->assertOk();
 
     expect(UpdateInteraction::where('user_id', $user->id)->count())->toBe(1)
-        ->and(UpdateInteraction::where('user_id', $user->id)->first()->visited_at->timestamp)
+        ->and(UpdateInteraction::where('user_id', $user->id)->first()->dismissed_at->timestamp)
         ->toBe($first->timestamp);
 });
 
-it('does not go stale for a different account', function () {
+it('brings an opened post back with undo', function () {
+    $user = cardUser();
+    $update = makeCardUpdate();
+
+    $this->actingAs($user)->get(route('updates.show', $update->slug))->assertOk();
+    $this->actingAs($user)->delete(route('dashboard.whats-new.undo'))->assertRedirect();
+
+    expect(collect(whatsNewProp($user)['items'])->pluck('id')->all())->toBe([$update->id]);
+});
+
+it('does not mark a post seen for a different account', function () {
     $mine = cardUser();
     $theirs = cardUser();
-    makeCardUpdate(['body' => "---\nroute: dashboard.recents\nlabel: Go\n---\n\nBody.\n"]);
+    $update = makeCardUpdate();
 
-    $this->actingAs($mine)->get(route('dashboard.recents'))->assertOk();
+    $this->actingAs($mine)->get(route('updates.show', $update->slug))->assertOk();
 
-    expect(whatsNewProp($theirs)['items'][0]['stale'])->toBeFalse();
+    expect(whatsNewProp($theirs)['items'])->toHaveCount(1);
 });
 
-it('marks an external link visited from the browser', function () {
-    $user = cardUser();
-    $update = makeCardUpdate(['body' => "---\nurl: https://example.com/x\nlabel: Read more\n---\n\nBody.\n"]);
-
-    expect(whatsNewProp($user)['items'][0]['cta']['external'])->toBeTrue();
-
-    $this->actingAs($user)->post(route('dashboard.whats-new.visited', $update))->assertRedirect();
-
-    expect(whatsNewProp($user)['items'][0]['stale'])->toBeTrue();
-});
-
-it('survives a stale entry through an undo', function () {
-    // Undo nulls dismissed_at and leaves the row, so an entry that was grey
-    // before it was cleared comes back grey rather than shouting again.
+it('has no visited route and no visit middleware', function () {
+    // The old layer: a middleware that greyed a row when the reader landed on
+    // the page its CTA pointed at, and a route the card posted to for external
+    // links. Both are gone; landing on a CTA target is not reading the post.
     $user = cardUser();
     makeCardUpdate(['body' => "---\nroute: dashboard.recents\nlabel: Go\n---\n\nBody.\n"]);
 
     $this->actingAs($user)->get(route('dashboard.recents'))->assertOk();
-    $this->actingAs($user)->post(route('dashboard.whats-new.seen'))->assertRedirect();
-    $this->actingAs($user)->delete(route('dashboard.whats-new.undo'))->assertRedirect();
 
-    expect(whatsNewProp($user)['items'][0]['stale'])->toBeTrue();
+    expect(UpdateInteraction::count())->toBe(0)
+        ->and(whatsNewProp($user)['items'])->toHaveCount(1)
+        ->and(Route::has('dashboard.whats-new.visited'))->toBeFalse();
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -337,20 +343,6 @@ it('dismisses a single entry and leaves the rest', function () {
     expect(collect($prop['items'])->pluck('title')->all())->toBe(['Two'])
         ->and($prop['total'])->toBe(1)
         ->and($prop['canUndo'])->toBeTrue();
-});
-
-it('dismisses a stale entry without losing that it was visited', function () {
-    $user = cardUser();
-    $update = makeCardUpdate(['body' => "---\nroute: dashboard.recents\nlabel: Go\n---\n\nBody.\n"]);
-
-    $this->actingAs($user)->get(route('dashboard.recents'))->assertOk();
-    $this->actingAs($user)->delete(route('dashboard.whats-new.dismiss', $update))->assertRedirect();
-
-    $row = UpdateInteraction::where('user_id', $user->id)->first();
-
-    expect(whatsNewProp($user)['items'])->toBeEmpty()
-        ->and($row->visited_at)->not->toBeNull()
-        ->and($row->dismissed_at)->not->toBeNull();
 });
 
 it('refuses to dismiss on behalf of another account', function () {

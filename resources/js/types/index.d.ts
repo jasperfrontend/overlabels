@@ -216,10 +216,7 @@ export interface WhatsNewItem {
   excerpt: string | null;
   published_at: string;
   href: string;
-  /** `external` means the link leaves the app, so the visit can only be recorded on click. */
-  cta: { label: string; href: string; external: boolean } | null;
-  /** The reader has already been where this points. Stays on the card, in greys. */
-  stale: boolean;
+  cta: { label: string; href: string } | null;
 }
 
 export interface WhatsNew {
