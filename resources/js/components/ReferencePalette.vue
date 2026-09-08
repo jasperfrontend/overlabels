@@ -2,8 +2,8 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
-import { useHelpReference, type HelpDoc } from '@/composables/useHelpReference';
-import { docLabel } from '@/utils/helpSearch';
+import { useHelpReference, type HelpHit } from '@/composables/useHelpReference';
+import { docLabel, snippet } from '@/utils/helpSearch';
 import { BookOpen, Search } from '@lucide/vue';
 
 const { search, loading, failed, loadIndex } = useHelpReference();
@@ -14,30 +14,12 @@ const selectedIndex = ref(0);
 const inputRef = ref<HTMLInputElement | null>(null);
 
 // `loading` is a dependency of search() only through the corpus it populates,
-// which is a shallowRef the fuse index does not touch. Reading it here is what
-// makes the list re-evaluate once the fetch lands.
-const results = computed<HelpDoc[]>(() => (loading.value ? [] : search(query.value, 40)));
-
-// Short snippet for preview, with query term bias if present. The lead is
-// written to introduce the page, so prefer it and fall back to the body for
-// reference entries, which have no lead.
-function snippet(entry: HelpDoc): string {
-  if (entry.lead) return entry.lead;
-
-  const body = entry.body
-    .replace(/^#+\s+.*$/gm, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  const q = query.value.trim().toLowerCase();
-  if (q.length >= 2) {
-    const idx = body.toLowerCase().indexOf(q);
-    if (idx > 30) {
-      const start = Math.max(0, idx - 30);
-      return (start > 0 ? '...' : '') + body.slice(start, start + 140) + (body.length > start + 140 ? '...' : '');
-    }
-  }
-  return body.slice(0, 140) + (body.length > 140 ? '...' : '');
-}
+// which is a shallowRef the search index does not touch. Reading it here is
+// what makes the list re-evaluate once the fetch lands.
+//
+// A result is a section of a page, or the page itself. The url carries the
+// anchor, so opening it lands on the heading that answered the query.
+const results = computed<HelpHit[]>(() => (loading.value ? [] : search(query.value, 40)));
 
 watch(query, () => {
   selectedIndex.value = 0;
@@ -58,7 +40,7 @@ watch(open, (val) => {
  * and the point of the palette is looking something up while you keep working
  * on the page you are on.
  */
-function navigate(entry: HelpDoc) {
+function navigate(entry: HelpHit) {
   open.value = false;
   window.open(entry.url, '_blank', 'noopener,noreferrer');
 }
@@ -147,10 +129,15 @@ onMounted(() => {
           <BookOpen class="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
-              <span class="truncate text-sm" :class="entry.kind === 'reference' ? 'font-mono' : 'font-medium'">{{ entry.title }}</span>
-              <span class="shrink-0 text-[10px] tracking-wide text-muted-foreground/70 uppercase">{{ docLabel(entry) }}</span>
+              <span class="flex min-w-0 items-baseline gap-1.5 text-sm">
+                <span class="max-w-[70%] shrink-0 truncate" :class="entry.doc.kind === 'reference' ? 'font-mono' : 'font-medium'">{{
+                  entry.doc.title
+                }}</span>
+                <span v-if="entry.section?.heading" class="min-w-0 truncate text-muted-foreground">&rsaquo; {{ entry.section.heading }}</span>
+              </span>
+              <span class="shrink-0 text-[10px] tracking-wide text-muted-foreground/70 uppercase">{{ docLabel(entry.doc) }}</span>
             </div>
-            <p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{{ snippet(entry) }}</p>
+            <p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{{ snippet(entry, query) }}</p>
           </div>
         </button>
       </div>

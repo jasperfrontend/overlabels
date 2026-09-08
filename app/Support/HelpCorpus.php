@@ -138,7 +138,7 @@ final class HelpCorpus
      * this, and the only caller that does not want it (the nav) is already
      * paying for the file reads anyway.
      *
-     * @return array<int,array{kind:string,kindLabel:string,slug:string,title:string,lead:string,url:string,path:string,body:string,keywords:array<int,string>,category:?string,categoryLabel:?string,section:?string}>
+     * @return array<int,array{kind:string,kindLabel:string,slug:string,title:string,lead:string,url:string,path:string,body:string,sections:array<int,array{id:?string,heading:string,text:string}>,keywords:array<int,string>,category:?string,categoryLabel:?string,section:?string}>
      */
     public static function all(): array
     {
@@ -151,6 +151,7 @@ final class HelpCorpus
         foreach (HelpPage::all() as $slug) {
             $meta = HelpPage::meta($slug);
             $path = HelpPage::path($slug);
+            $raw = $path !== null ? (string) file_get_contents($path) : '';
 
             $docs[] = [
                 'kind' => self::kindOf($slug),
@@ -162,10 +163,17 @@ final class HelpCorpus
                 'lead' => $meta['lead'] ?? $meta['description'] ?? '',
                 'url' => HelpPage::url($slug),
                 'path' => (string) $path,
-                'body' => $path !== null ? (string) file_get_contents($path) : '',
-                // Search terms the author declared for this page. Separate from
-                // `body` because Fuse's field norm makes a match in a 20KB body
-                // score like coincidence - see HelpPage::splitKeywords().
+                'body' => $raw,
+                // What search actually indexes: one entry per heading, so a
+                // result lands on the section that answers the query rather
+                // than the top of a long page. Frontmatter is split off first,
+                // or the intro section would rank for every page's own keys.
+                // The root index is a table of contents: its sections are lists
+                // of links to the pages that answer things, and a result
+                // pointing at "Bot & chat" on the landing page answers nothing.
+                'sections' => $slug === 'index' ? [] : HelpMarkdown::sections(Frontmatter::split($raw)[1]),
+                // Search terms the author declared for this page, for words a
+                // page is about but never says - see HelpPage::splitKeywords().
                 'keywords' => HelpPage::splitKeywords($meta['keywords'] ?? null),
                 'category' => null,
                 'categoryLabel' => null,
@@ -200,6 +208,7 @@ final class HelpCorpus
                 'url' => "/help/reference/{$entry['category']}/{$entry['slug']}",
                 'path' => $entry['path'],
                 'body' => $entry['body'],
+                'sections' => HelpMarkdown::sections($entry['body']),
                 // Reference entries have no frontmatter at all - their title is
                 // read from the first heading - so there is nowhere to declare
                 // one. They are named after the thing they document, which is

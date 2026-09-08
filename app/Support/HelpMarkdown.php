@@ -310,15 +310,7 @@ final class HelpMarkdown
                 $inner = $m[2];
                 $text = trim(html_entity_decode(strip_tags($inner), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 
-                // "1. Writing block CSS" -> "writing-block-css"
-                $base = Str::slug(preg_replace('/^\s*\d+[.)]\s*/', '', $text)) ?: 'section';
-
-                $id = $base;
-                $n = 2;
-                while (isset($used[$id])) {
-                    $id = $base.'-'.$n++;
-                }
-                $used[$id] = true;
+                $id = self::headingId($text, $used);
 
                 if ($level === 2) {
                     $toc[] = ['id' => $id, 'text' => $text];
@@ -330,5 +322,117 @@ final class HelpMarkdown
         );
 
         return [$html, $toc];
+    }
+
+    /**
+     * The anchor for a heading, unique within one document.
+     *
+     * Shared by the renderer and sections() so a search result can link to
+     * `#controls` and land on the heading the page actually renders with that
+     * id. Any drift between the two is a search result that opens the top of
+     * the page instead of the answer, and HelpSearchIndexTest walks the whole
+     * corpus for exactly that.
+     *
+     * @param  array<string,bool>  $used  ids already handed out in this document, mutated
+     */
+    private static function headingId(string $text, array &$used): string
+    {
+        // "1. Writing block CSS" -> "writing-block-css"
+        $base = Str::slug(preg_replace('/^\s*\d+[.)]\s*/', '', $text)) ?: 'section';
+
+        $id = $base;
+        $n = 2;
+        while (isset($used[$id])) {
+            $id = $base.'-'.$n++;
+        }
+        $used[$id] = true;
+
+        return $id;
+    }
+
+    /**
+     * Split a markdown body into the pieces a search result can land on.
+     *
+     * One entry per h2/h3, plus a leading entry with a null id for whatever
+     * comes before the first heading. Each carries the heading's text and the
+     * raw markdown beneath it, with the h1 and the heading lines themselves
+     * left out - the title is its own field and the heading is its own field.
+     *
+     * This exists because search indexes sections, not pages. A page is a
+     * 20 KB blob that mentions most of the product's vocabulary, so any page
+     * matched most queries weakly and the one that answered it drowned. A
+     * section is a few hundred words about one thing, and its heading is the
+     * best two-word summary of it that anyone will ever write.
+     *
+     * Headings inside fenced code are code, not headings.
+     *
+     * @return array<int,array{id:?string,heading:string,text:string}>
+     */
+    public static function sections(string $markdown): array
+    {
+        $sections = [];
+        $used = [];
+        $current = ['id' => null, 'heading' => '', 'lines' => []];
+        $inFence = false;
+
+        foreach (preg_split('/\r?\n/', $markdown) ?: [] as $line) {
+            if (preg_match('/^\s*(```|~~~)/', $line)) {
+                $inFence = ! $inFence;
+                $current['lines'][] = $line;
+
+                continue;
+            }
+
+            if ($inFence) {
+                $current['lines'][] = $line;
+
+                continue;
+            }
+
+            if (preg_match('/^#\s+/', $line)) {
+                continue;
+            }
+
+            if (preg_match('/^#{2,3}\s+(.+?)\s*#*\s*$/', $line, $m)) {
+                $sections[] = $current;
+                $heading = self::plainHeading($m[1]);
+                $current = ['id' => self::headingId($heading, $used), 'heading' => $heading, 'lines' => []];
+
+                continue;
+            }
+
+            $current['lines'][] = $line;
+        }
+
+        $sections[] = $current;
+
+        $out = [];
+        foreach ($sections as $s) {
+            $text = trim(implode("\n", $s['lines']));
+
+            if ($text === '' && $s['id'] === null) {
+                continue;
+            }
+
+            $out[] = ['id' => $s['id'], 'heading' => $s['heading'], 'text' => $text];
+        }
+
+        return $out;
+    }
+
+    /**
+     * A heading as the browser shows it: markdown inline markup removed, so
+     * the id derived from it matches the one addHeadingAnchors() derives from
+     * the rendered HTML.
+     */
+    private static function plainHeading(string $md): string
+    {
+        $text = preg_replace('/\[\[([^\]|]+)\|([^\]]+)\]\]/', '$2', $md) ?? $md;
+        $text = preg_replace('/(?<!\[)\[\[([^\]]+)\]\](?!\])/', '$1', $text) ?? $text;
+        $text = preg_replace('/\[([^\]]+)\]\([^)]*\)/', '$1', $text) ?? $text;
+        $text = str_replace(['`', '**', '__'], '', $text);
+        $text = preg_replace('/(?<![\w\[])[*_](?=\S)(.+?)(?<=\S)[*_](?![\w\]])/', '$1', $text) ?? $text;
+
+        return trim(html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
 }

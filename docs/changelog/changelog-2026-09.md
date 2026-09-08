@@ -1,5 +1,38 @@
 # Changelog - September 2026
 
+## OL-2609-032 - September 8th, 2026 - feat(help): search ranks sections with a real term engine, and a result lands on the heading that answers
+
+Live on stream, trying to explain how controls are changed from chat, the help search was tried
+with "controls", "chat", "controls chat", "enablecontrols", "twitch controls" and "bot controls".
+Four returned nothing. The other two returned lists without the Bot Commands page - the page that
+says `!enablecontrols` three times, in a table, under a heading called Controls.
+
+The search was not keyword search. It was Fuse, a fuzzy string matcher, run over each page as one
+20 KB blob. Two words in a query were one string to approximately match, so "controls chat" could
+never match anything. And a term in a long body scored like coincidence however many times it
+appeared, because the length norm scales with the page. `keywords:` frontmatter existed as a patch
+for that defect and was on 12 of 41 prose pages.
+
+- **The engine is MiniSearch now - BM25 over tokenised terms.** Every word must match, then any
+  word. Filler (`how`, `do`, `the`) is dropped from index and query alike, plurals fold into
+  singulars, a typo of a letter or two in a long word still finds it, and a leading `!` is
+  punctuation. The same six queries all find the page; "enablecontrols" and its typo land on the
+  section.
+- **The unit is a section, not a page.** `HelpMarkdown::sections()` splits every body at its h2 and
+  h3 headings, using the same id the renderer stamps on the heading, and a result links to it:
+  `/help/bot/commands#controls`. Both search surfaces show "Bot Commands › Controls" with a snippet
+  cut around the query. A test walks the whole corpus and asserts every section id is an id the
+  rendered page actually has.
+- **Nothing in the corpus changed.** No page was edited, no keyword was added; `keywords:` stays for
+  words a page is about but never says, and a declared one still leads the results.
+- One piece of "tuned behaviour" from the old engine turned out to be an artefact: "raid" surfaced
+  the Random Rolls and Counters guide, which never says raid. It was a one-edit fuzzy match on
+  "rand". Not kept.
+
+Two things this is not. It is not semantic search: a question whose words the answering section
+does not use still misses, and that ceiling is for another day if it turns out to matter. And it is
+not a change to the reference index contract - `help-reference-index.json` is byte-identical.
+
 ## OL-2609-026 - September 7th, 2026 - feat(twitch): the living title - a tag template kept true on Twitch, plus a category picker
 
 Everything in Overlabels receives data and reacts to it. This is the first thing that writes back

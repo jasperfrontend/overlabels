@@ -1,4 +1,4 @@
-import Fuse, { type IFuseOptions } from 'fuse.js';
+import MiniSearch, { type SearchOptions } from 'minisearch';
 
 /**
  * One search behaviour for the whole documentation site.
@@ -7,7 +7,26 @@ import Fuse, { type IFuseOptions } from 'fuse.js';
  * on every help page - and they must rank identically, or "search the docs"
  * means two different things depending on where you are standing. Both import
  * this.
+ *
+ * The engine is MiniSearch (BM25 over tokenised terms) and the unit it indexes
+ * is a SECTION, not a page. Both were decided on the same night, for the same
+ * reason: on stream, "controls", "chat", "controls chat", "enablecontrols",
+ * "twitch controls" and "bot controls" all failed to find the bot commands
+ * page, which says `!enablecontrols` three times under a heading called
+ * Controls. The previous engine was a fuzzy string matcher run over each page
+ * as one 20 KB blob, so it could not split a query into words, and a term
+ * buried in a long body scored like coincidence however many times it appeared.
+ * A section is a few hundred words about one thing, its heading is the best
+ * summary of it anyone will write, and the result can link straight to it.
  */
+export interface HelpSection {
+  /** The heading's anchor on the page. Null for the text above the first heading. */
+  id: string | null;
+  heading: string;
+  /** Raw markdown under the heading, frontmatter and heading line excluded. */
+  text: string;
+}
+
 export interface HelpDoc {
   kind: string;
   kindLabel: string;
@@ -15,7 +34,7 @@ export interface HelpDoc {
   title: string;
   lead: string;
   url: string;
-  body: string;
+  sections: HelpSection[];
   /** Reference entries only - the folder under resources/help/reference. Null for pages. */
   category?: string | null;
   categoryLabel?: string | null;
@@ -26,90 +45,254 @@ export interface HelpDoc {
   keywords?: string[];
 }
 
-export const FUSE_OPTIONS: IFuseOptions<HelpDoc> = {
-  keys: [
-    { name: 'title', weight: 2 },
-    { name: 'slug', weight: 2 },
-    { name: 'lead', weight: 1 },
-    { name: 'kindLabel', weight: 0.3 },
-    // Deliberately light. A guide body is ~20 KB of prose that mentions most of
-    // the vocabulary in the product, so at weight 1 every long page matched
-    // every query weakly and drowned the entries that actually answered it.
-    { name: 'body', weight: 0.5 },
-  ],
-  threshold: 0.35,
-  ignoreLocation: true,
-  minMatchCharLength: 2,
-  includeScore: true,
-};
+/** One result: a document, the section that matched (if any), and the url to open. */
+export interface HelpHit {
+  doc: HelpDoc;
+  section: HelpSection | null;
+  url: string;
+}
 
-/**
- * Drop coincidental matches.
- *
- * Measured against the real corpus, the scores are strongly bimodal: genuine
- * matches land under 0.15 (0.13 for the tutorial on "latest donator", 0.10 for
- * the hype train entries on "hype train") and coincidence starts at 0.78. There
- * is nothing at all in between, so this sits in the middle of a wide empty band
- * rather than on a cliff edge.
- *
- * This is what makes "Nothing matched" honest. Before it, `chat.0.text` scored
- * 0.996 against the chat tutorial and returned it as though it were an answer.
- */
-const SCORE_CUTOFF = 0.5;
+/** What goes into the engine: one record per section, carrying its page's identity. */
+interface SectionRecord {
+  id: number;
+  doc: number;
+  sec: number;
+  kind: string;
+  /** The page title, on the intro record only. */
+  title: string;
+  /** The page title again, on every record, at low weight: context, not subject. */
+  page: string;
+  heading: string;
+  lead: string;
+  text: string;
+  slug: string;
+  keywords: string;
+}
 
 /**
  * Prose outranks a reference entry that matched equally well.
  *
- * There are 143 reference entries against 29 prose pages, all drawing on the
- * same vocabulary, so a question phrased in words tends to surface tags. Fuse
- * scores 0 as perfect and 1 as worst, so a multiplier below 1 promotes.
- *
- * This changes 3 of 15 sample queries - "follower" leads with the tutorial
- * instead of the `channel_followers` tag, "controls" surfaces Expression
- * Controls, "raid" surfaces Random Rolls and Counters - and leaves exact tag
- * lookups alone, since those score near 0 and stay near 0 when scaled.
+ * There are ~145 reference entries against ~40 prose pages, all drawing on the
+ * same vocabulary, so a question phrased in words tends to surface tags. A
+ * tutorial answers the question directly and leads; a deep dive is a long read
+ * about one overlay and sits between a guide and the reference.
  */
-const KIND_WEIGHT: Record<string, number> = {
-  tutorial: 0.5,
-  guide: 0.7,
-  // A deep dive is a long read about one overlay: promoted like a guide, never
-  // above the tutorial that answers the question directly.
-  'deep-dive': 0.7,
+const KIND_BOOST: Record<string, number> = {
+  tutorial: 1.5,
+  guide: 1.25,
+  'deep-dive': 1.1,
   reference: 1,
 };
 
-function rank(fuse: Fuse<HelpDoc>, query: string, limit: number): HelpDoc[] {
-  return fuse
-    .search(query, { limit: limit * 3 })
-    .filter((r) => (r.score ?? 1) <= SCORE_CUTOFF)
-    .map((r) => ({
-      item: r.item,
-      score: (r.score ?? 1) * (KIND_WEIGHT[r.item.kind] ?? 1),
-    }))
-    .sort((a, b) => a.score - b.score)
-    .slice(0, limit)
-    .map((r) => r.item);
+/**
+ * Field boosts. A word in a title or a heading is what the section IS about;
+ * a word in the text is something it mentions. Keywords are the author's own
+ * statement of what a page is about, so they weigh like a title.
+ *
+ * `page` is the title repeated on every section at text weight. It has to be
+ * there so "twitch controls" can reach a section of the Controls guide that
+ * never says "controls" itself, and it has to be light: at title weight the
+ * 45 sections of that guide were the entire answer to "controls" and the bot
+ * commands page's own "Controls" heading ranked twelfth.
+ */
+const FIELD_BOOST: Record<string, number> = {
+  title: 3,
+  keywords: 3,
+  heading: 2.5,
+  slug: 2,
+  lead: 1.5,
+  text: 1,
+  page: 1,
+};
+
+/**
+ * The most sections one page may occupy in a result list. A 45-section guide
+ * that says "control" in every one of them must not be the entire answer to
+ * "controls" - the third-best section of it is worth less than the best
+ * section of the next page.
+ */
+const MAX_HITS_PER_DOC = 3;
+
+/**
+ * Light English stemming, applied to the index and the query alike, so
+ * "controls" finds "control" and "commands" finds "command". Deliberately
+ * tiny: plurals are the one inflection that shows up in queries, and a full
+ * stemmer would fold tag names into each other.
+ */
+export function stem(term: string): string {
+  if (term.length > 4 && term.endsWith('ies')) return term.slice(0, -3) + 'y';
+  if (term.length > 3 && term.endsWith('s') && !/(ss|us|is)$/.test(term)) return term.slice(0, -1);
+
+  return term;
 }
 
-export function rankedSearch(fuse: Fuse<HelpDoc>, query: string, limit: number): HelpDoc[] {
-  const hits = rank(fuse, query, limit);
+/**
+ * Words that carry no meaning on their own and would otherwise decide a
+ * query. "how do mods change controls" must mean "mods change controls": with
+ * the filler kept, the all-words pass finds no section saying "how" and "do"
+ * and "mods" and falls through to any-word, where "the" and "a" match
+ * everything. Dropped from the index and the query alike.
+ */
+const STOP_WORDS = new Set([
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'but',
+  'by',
+  'can',
+  'do',
+  'does',
+  'for',
+  'from',
+  'how',
+  'i',
+  'in',
+  'into',
+  'is',
+  'it',
+  'its',
+  'my',
+  'of',
+  'on',
+  'or',
+  'that',
+  'the',
+  'this',
+  'to',
+  'what',
+  'when',
+  'where',
+  'which',
+  'with',
+  'you',
+  'your',
+]);
 
-  if (hits.length > 0) return hits;
+function processTerm(term: string): string | null {
+  const t = term.toLowerCase();
 
-  /*
-   * Fall back to the root of a dotted name.
-   *
-   * Tag names are hierarchical and the reference documents the root: there is
-   * an entry for `chat`, none for `chat.0.text`. Someone pasting a tag they saw
-   * in a template is asking about the loop it belongs to, and answering
-   * "Nothing matched" to a tag that plainly exists reads as the search being
-   * broken rather than the query being too specific.
-   *
-   * Only on an empty result, so it can never displace a real match.
-   */
-  const root = query.trim().split('.')[0];
+  return STOP_WORDS.has(t) ? null : stem(t);
+}
 
-  return root && root !== query.trim() ? rank(fuse, root, limit) : hits;
+/**
+ * Letters and digits are words; everything else is a boundary. The default
+ * tokenizer splits on a fixed list of ASCII punctuation that leaves backticks
+ * attached, so a word closing an inline code span was a different term from
+ * the same word in prose and was unfindable. This also splits `latest_donor_name`
+ * and `c:kofi:total` into their words, which is what a query types.
+ */
+function tokenize(text: string): string[] {
+  return text.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+}
+
+/**
+ * Typo tolerance for words long enough to have typos in. Short terms are tag
+ * fragments and section names, where one edit is a different word entirely.
+ */
+function fuzzy(term: string): number | false {
+  return term.length > 4 ? 0.2 : false;
+}
+
+function buildEngine(docs: HelpDoc[]): MiniSearch<SectionRecord> {
+  const engine = new MiniSearch<SectionRecord>({
+    fields: ['title', 'page', 'heading', 'lead', 'text', 'slug', 'keywords'],
+    storeFields: ['doc', 'sec', 'kind'],
+    tokenize,
+    processTerm,
+    searchOptions: {
+      // Length normalisation turned down from the 0.7 default. BM25 rewards
+      // a short document for containing the term at all, and a reference
+      // entry's three-line "Controls" section was beating the bot commands
+      // page's "Controls" section, the one with the table of commands in it.
+      // Half-strength keeps short sections competitive without letting
+      // brevity outrank substance.
+      bm25: { k: 1.2, b: 0.35, d: 0.5 },
+      prefix: true,
+      fuzzy,
+      boost: FIELD_BOOST,
+      boostDocument: (_id, _term, stored) => KIND_BOOST[(stored?.kind as string) ?? ''] ?? 1,
+    },
+  });
+
+  const records: SectionRecord[] = [];
+  let id = 0;
+
+  docs.forEach((doc, di) => {
+    const sections = doc.sections.length > 0 ? doc.sections : [{ id: null, heading: '', text: '' }];
+
+    sections.forEach((section, si) => {
+      const intro = section.id === null;
+
+      records.push({
+        id: id++,
+        doc: di,
+        sec: si,
+        kind: doc.kind,
+        page: doc.title,
+        heading: section.heading,
+        // Page-level fields ride on the intro record only, so a page with
+        // forty sections is not forty matches for its own title.
+        title: intro ? doc.title : '',
+        lead: intro ? doc.lead : '',
+        slug: intro ? doc.slug : '',
+        keywords: intro ? (doc.keywords ?? []).join(' ') : '',
+        text: section.text,
+      });
+    });
+  });
+
+  engine.addAll(records);
+
+  return engine;
+}
+
+function toHit(doc: HelpDoc, section: HelpSection | null): HelpHit {
+  return {
+    doc,
+    section,
+    url: section?.id ? `${doc.url}#${section.id}` : doc.url,
+  };
+}
+
+function pageHit(doc: HelpDoc): HelpHit {
+  return toHit(doc, null);
+}
+
+/**
+ * Every word must match, then any word.
+ *
+ * "controls chat" is a question about one thing and the section answering it
+ * says both words. Only when nothing does is the query treated as a bag of
+ * alternatives, so a stray word never empties the list but never dilutes it
+ * either.
+ */
+function rank(engine: MiniSearch<SectionRecord>, docs: HelpDoc[], query: string, limit: number): HelpHit[] {
+  const options: SearchOptions[] = [{ combineWith: 'AND' }, { combineWith: 'OR' }];
+  const perDoc = new Map<number, number>();
+  const hits: HelpHit[] = [];
+
+  for (const option of options) {
+    for (const r of engine.search(query, option)) {
+      const di = r.doc as number;
+      const seen = perDoc.get(di) ?? 0;
+      if (seen >= MAX_HITS_PER_DOC) continue;
+      perDoc.set(di, seen + 1);
+
+      const doc = docs[di];
+      const section = doc.sections[r.sec as number] ?? null;
+      hits.push(toHit(doc, section));
+
+      if (hits.length >= limit) return hits;
+    }
+
+    if (hits.length > 0) return hits;
+  }
+
+  return hits;
 }
 
 /**
@@ -127,23 +310,15 @@ function normalize(value: string | null | undefined): string {
 }
 
 /**
- * Everything filed under a section the query names.
+ * Everything filed under a reference folder the query names.
  *
- * Fuzzy search cannot answer "show me the foreach loops". The nine entries in
+ * Term search cannot answer "show me the foreach loops". The nine entries in
  * that folder are named `chat`, `goals`, `raw`, `subscribers` and so on: not one
- * of them contains the word, so a search for it scored 0.55 against the closest
- * thing in the corpus and the cutoff correctly threw it away. The sidebar knows
- * these nine belong together and search did not.
- *
- * Deliberately NOT solved by adding `category` to FUSE_OPTIONS. Fuse normalises
- * a document's score across all its keys, so a sixth key moves every score in
- * the corpus: measured against the real index it dropped `bot/random-and-counters`
- * from "raid" and `all-ko-fi-events` from "kofi", both of which are the tuned
- * behaviour the weights above exist to produce. This runs alongside the fuzzy
- * pass instead of inside it, so ranking is bit-for-bit what it was.
+ * of them contains the word. The sidebar knows these nine belong together and
+ * search did not.
  *
  * Prefix match, on the whole name rather than its words: `foreach`, `eventsub`
- * and `integration` name a section, `tags` and `controls` do not - those are
+ * and `integration` name a folder, `tags` and `controls` do not - those are
  * questions about tags and controls, and the guides answering them must keep
  * winning. Punctuation is ignored, so the `Foreach Loops` button on the
  * reference index and someone typing `foreach-loops` land in the same place.
@@ -174,26 +349,11 @@ export interface KeywordMatches {
 /**
  * Pages whose author declared this query as a keyword.
  *
- * This exists because fuzzy search cannot see into a long body. Fuse applies a
- * field norm, so an identical exact match scores 0.0 in a short field and 0.89
- * in a 20KB one - above the cutoff that exists to throw coincidence away. The
- * editor guide says `autocomplete` five times, has it as a heading, and scored
- * 0.98 for that word: the search answered "Nothing matched" about a page that
- * is largely about it. Weighting `body` higher cannot fix that, because the
- * norm scales with length no matter what the weight is.
- *
- * Deliberately NOT a sixth key in FUSE_OPTIONS, for the same reason `category`
- * is not one. Fuse normalises a document's score across all its keys, so an
- * extra key moves every score in the corpus: measured against the real index,
- * adding one at weight 1.5 dropped `all-ko-fi-events` from "kofi" and
- * `bot/random-and-counters` from "raid" - the exact regressions the weights
- * above were tuned to avoid. This runs alongside the fuzzy pass, so ranking is
- * bit-for-bit what it was and a page without keywords behaves identically.
- *
- * Split into two tiers because they are different claims. An exact match is the
- * author saying this page IS about that word, which beats a fuzzy match on a
- * word that merely looks similar - "bang" should open the editor guide, not
- * `user_offline_banner`. A prefix is a hint, so it appends instead.
+ * Keywords are also an indexed field, so they take part in ordinary ranking
+ * and in multi-word queries. This pass is the stronger claim on top of that:
+ * an exact match is the author saying this page IS about that word, and it
+ * leads the list ahead of anything the engine ranked - "bang" opens the editor
+ * guide, not `user_offline_banner`. A prefix is a hint, so it appends instead.
  *
  * Prefix, not substring, and on word boundaries: `autocom` finds `autocomplete`
  * and `snip` finds `bang snippets`, while `ang` matches neither. Mid-word
@@ -230,59 +390,89 @@ export function keywordMatch(docs: HelpDoc[], query: string): KeywordMatches {
  * The pile a result belongs to, as shown beside its title.
  *
  * A reference entry names its folder - "Foreach Loops", not the word
- * "Reference". 146 of the 175 documents are reference entries, so "Reference"
- * distinguishes nothing, and after searching for a section it is the one thing
- * confirming the results ARE the section you asked for. The reference sidebar
- * showed this before the three help surfaces were merged onto one search.
+ * "Reference". Most of the corpus is reference entries, so "Reference"
+ * distinguishes nothing, and after searching for a folder it is the one thing
+ * confirming the results ARE the folder you asked for.
  */
 export function docLabel(doc: HelpDoc): string {
   return doc.categoryLabel || doc.kindLabel;
 }
 
+/**
+ * The text to preview under a result: the matched section, biased towards the
+ * first occurrence of the query, or the page's lead when nothing narrower
+ * matched. Markdown noise that reads badly in one line is stripped.
+ */
+export function snippet(hit: HelpHit, query: string, length = 140): string {
+  const source = hit.section?.text || hit.doc.lead || hit.doc.sections[0]?.text || '';
+  const text = source
+    .replace(/^#+\s+.*$/gm, '')
+    .replace(/^\s*\|?\s*-{3,}.*$/gm, '')
+    .replace(/[`*|>]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const q = query.trim().toLowerCase();
+  if (q.length >= 2) {
+    const idx = text.toLowerCase().indexOf(q);
+    if (idx > 30) {
+      const start = Math.max(0, idx - 30);
+
+      return '...' + text.slice(start, start + length) + (text.length > start + length ? '...' : '');
+    }
+  }
+
+  return text.slice(0, length) + (text.length > length ? '...' : '');
+}
+
 export interface HelpSearch {
   /** Every document, in corpus order. */
   all: HelpDoc[];
-  search(query: string, limit: number): HelpDoc[];
+  search(query: string, limit: number): HelpHit[];
 }
 
 /** First occurrence of each url wins, so earlier passes keep their position. */
-function dedupe(docs: HelpDoc[]): HelpDoc[] {
+function dedupe(hits: HelpHit[]): HelpHit[] {
   const seen = new Set<string>();
 
-  return docs.filter((d) => {
-    if (seen.has(d.url)) return false;
-    seen.add(d.url);
+  return hits.filter((h) => {
+    if (seen.has(h.url)) return false;
+    seen.add(h.url);
 
     return true;
   });
 }
 
 /**
- * Declared keywords, then ranked matches, then partial keywords, then the rest
- * of any section the query named.
+ * Declared keywords, then ranked sections, then partial keywords, then the
+ * rest of any reference folder the query named.
  *
  * That order matters at both ends. A page whose author declared the query as a
- * keyword leads, because that is a deliberate statement about what the page is
- * and it beats a fuzzy match on a word that merely looks similar. At the other
- * end, "template tags" has one genuine hit - the page listing all of them - and
- * it must stay on top of the 64 individual entries that follow it.
+ * keyword leads, because that is a deliberate statement about what the page is.
+ * At the other end, "template tags" has one genuine hit - the page listing all
+ * of them - and it must stay on top of the 64 individual entries that follow.
  *
- * A partial keyword sits behind the fuzzy hits rather than in front: it is a
+ * A partial keyword sits behind the ranked hits rather than in front: it is a
  * hint, not a claim, and it must never displace something that matched outright.
  */
 export function buildHelpSearch(docs: HelpDoc[]): HelpSearch {
-  const fuse = new Fuse(docs, FUSE_OPTIONS);
+  const engine = buildEngine(docs);
 
   return {
     all: docs,
-    search(query: string, limit: number): HelpDoc[] {
+    search(query: string, limit: number): HelpHit[] {
       const q = query.trim();
 
-      if (!q) return docs.slice(0, limit);
+      if (!q) return docs.slice(0, limit).map(pageHit);
 
       const keywords = keywordMatch(docs, q);
 
-      return dedupe([...keywords.exact, ...rankedSearch(fuse, q, limit), ...keywords.partial, ...sectionMatch(docs, q)]).slice(0, limit);
+      return dedupe([
+        ...keywords.exact.map(pageHit),
+        ...rank(engine, docs, q, limit),
+        ...keywords.partial.map(pageHit),
+        ...sectionMatch(docs, q).map(pageHit),
+      ]).slice(0, limit);
     },
   };
 }

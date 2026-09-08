@@ -162,12 +162,10 @@ it('derives a tutorial from its directory rather than new machinery', function (
 })->group('help');
 
 it('carries declared keywords from frontmatter into the search corpus', function () {
-    // The editor guide is the case this exists for: it says "autocomplete" five
-    // times and has it as a heading, and the search returned nothing for that
-    // word. Fuse applies a field norm, so an identical exact match scores 0.0
-    // in a short field and 0.89 in a 20KB body - above the cutoff that throws
-    // coincidence away. Weighting `body` higher cannot fix it, because the norm
-    // scales with length whatever the weight is.
+    // Keywords are the author's statement of what a page is about, for words
+    // the page never says. The engine can see into a body now (it indexes
+    // sections), so a keyword is no longer the only way a body word is found,
+    // but a declared one still leads the results - see helpSearch.ts.
     $editor = collect(HelpCorpus::all())->firstWhere('slug', 'editor');
 
     expect($editor)->not->toBeNull()

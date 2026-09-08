@@ -1,4 +1,4 @@
-import { buildHelpSearch, type HelpDoc, type HelpSearch } from '@/utils/helpSearch';
+import { buildHelpSearch, type HelpDoc, type HelpHit, type HelpSearch } from '@/utils/helpSearch';
 import { ref, shallowRef } from 'vue';
 
 /**
@@ -15,7 +15,7 @@ import { ref, shallowRef } from 'vue';
  * so the palette answers "where is this documented" rather than only "which tag
  * is this".
  */
-export type { HelpDoc };
+export type { HelpDoc, HelpHit };
 
 export const entries = shallowRef<HelpDoc[]>([]);
 export const loading = ref(false);
@@ -62,7 +62,7 @@ export function loadIndex(): Promise<void> {
 }
 
 export function useHelpReference() {
-  function search(query: string, limit = 30): HelpDoc[] {
+  function search(query: string, limit = 30): HelpHit[] {
     return searcher ? searcher.search(query, limit) : [];
   }
 

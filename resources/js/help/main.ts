@@ -100,8 +100,11 @@ function wireSearch(input: HTMLInputElement | null) {
       .map(
         (e) => `
             <a href="${escapeHtml(e.url)}" class="help-search-result" role="option">
-              <span class="${e.kind === 'reference' ? 'font-mono ' : ''}truncate text-[13px]">${escapeHtml(e.title)}</span>
-              <span class="help-search-result-kind help-pill-text--${escapeHtml(e.kind)}">${escapeHtml(docLabel(e))}</span>
+              <span class="help-search-result-title">
+                <span class="${e.doc.kind === 'reference' ? 'font-mono ' : ''}truncate">${escapeHtml(e.doc.title)}</span>
+                ${e.section?.heading ? `<span class="help-search-result-section">&rsaquo; ${escapeHtml(e.section.heading)}</span>` : ''}
+              </span>
+              <span class="help-search-result-kind help-pill-text--${escapeHtml(e.doc.kind)}">${escapeHtml(docLabel(e.doc))}</span>
             </a>`,
       )
       .join('');

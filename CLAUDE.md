@@ -555,12 +555,11 @@ keywords: donation goal, progress bar, goal bar, fundraiser
   (`HelpCorpus::sortByIndex()`): the author already decides what comes first there, so there is no
   `order:` key to keep in step. (Sept 2026, from a Claude Design canvas; before that the guides were
   one alphabetical list.)
-- **`keywords:` is how a page becomes findable by a word that is only in its body.** Comma-separated,
-  optional, and multi-word terms stay whole (`bang snippets` is one keyword). **Search cannot see into
-  a body** - Fuse applies a field norm, so the same exact match scores 0.0 in a short field and 0.89 in
-  a 20KB one, above the cutoff that throws coincidence away. `/help/editor` says "autocomplete" five
-  times, has it as a heading, and searching for it returned NOTHING. Raising the `body` weight cannot
-  fix that; the norm scales with length whatever the weight is.
+- **`keywords:` is for words a page is ABOUT but never SAYS** - "dono" on the donation tutorial,
+  "mods" on the bot page. Comma-separated, optional, multi-word terms stay whole (`bang snippets` is
+  one keyword). Since Sept 2026 search sees into every section of a body, so a word the page uses is
+  found without one; do not pad a page's keywords with words already in its headings. A declared
+  keyword still leads the results when it matches exactly.
 - **If the page declares a `context:`, `heading` is capped at 40 chars and `lead` at 320** (the panel is 375px). No context, no cap. `HelpContextTest` names the offending slug.
 - `context:` is optional and often should be omitted. **Max 3 pages may resolve to one context.** As of Aug 2026 `templates.create?type=static` is FULL at 3 of 3 (bare `templates.create` from `conditionals`/`formatting` matches any bag, plus one tutorial), so claiming it means displacing something. Check before adding one: `HelpContext::for('some.route', ['type' => 'static'])` in tinker returns everything that would resolve.
 
@@ -585,8 +584,28 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 - **The sitemap is derived from `HelpCorpus`, never hand-listed.** The old array had rotted by fourteen pages.
 - `/help/integration-presets` and `/help/gamejam` stay Inertia deliberately (live data from `controlPresets.ts`, and a Vue app). `HelpLayout.vue` exists only for them. Do not "finish the job" by converting them.
 - **`public/help-reference-index.json` is a documented public contract** ("BYOF" on the reference page, plus `/help/help-reference-index-json`). It is still emitted byte-identically alongside the newer unified `help-index.json`. Do not merge or reshape it.
-- **`keywords:` is a separate deterministic pass (`keywordMatch`), NOT a sixth Fuse key** - the same call already made for `category`. Fuse normalises a document's score across all its keys, so an extra key moves EVERY score in the corpus: measured against the real index, adding one at weight 1.5 dropped `all-ko-fi-events` from "kofi" and `bot/random-and-counters` from "raid". Running alongside keeps ranking bit-for-bit and makes a page without keywords behave identically. Two tiers, because they are different claims: an exact match leads the results (the author saying the page IS about that word - "bang" must beat `user_offline_banner`), a prefix appends after the fuzzy hits (a hint never displaces a real match). Prefixes match the whole term or a word inside it, so `snip` finds `bang snippets` but `ang` finds nothing. Reference entries have no frontmatter, so they never carry keywords.
-- Search ranking lives in `resources/js/utils/helpSearch.ts` and is shared by the Alt+R palette and the on-page search box, so "search the docs" cannot mean two things. `body` is weighted 0.5 on purpose (a ~20KB guide otherwise weakly matches everything) and results scoring above 0.5 are dropped - measured scores are bimodal, real matches under 0.15 and coincidence above 0.78. A dotted query falls back to its root, so `chat.0.text` finds the `chat` entry.
+- **Search is MiniSearch (BM25) over SECTIONS, not Fuse over pages (Sept 2026, OL-2609-032).** On
+  stream, "controls", "chat", "controls chat", "enablecontrols", "twitch controls" and "bot controls"
+  all failed to find `/help/bot/commands`, which says `!enablecontrols` three times under a heading
+  called Controls. Fuse was a fuzzy string matcher run over each page as one 20 KB blob: it could not
+  split a query into words, and its length norm scored a term buried in a long body as coincidence.
+  `HelpMarkdown::sections()` splits a body at every h2/h3 with the SAME id the renderer gives the
+  heading (shared `headingId()`), `HelpCorpus` carries `sections` and the unified index ships them
+  in place of `body`; a result links to `/help/bot/commands#controls`. `HelpSearchIndexTest` walks
+  the whole corpus asserting section ids equal rendered heading ids - keep it, a drift there is a
+  result that opens the top of the page instead of the answer. The root `index` page has no
+  sections on purpose (a landing's sections are link lists).
+- Ranking lives in `resources/js/utils/helpSearch.ts`, shared by the Alt+R palette and the on-page
+  box. Decisions there, each with its reason in a comment: every word must match, then any word;
+  filler words (`how`, `do`, `the`...) dropped from index and query; plural stemming only;
+  letters-and-digits tokenizer (the default kept backticks inside words); page title on the intro
+  record at weight 3 and on every section at weight 1 (at 3 the Controls guide's 45 sections WERE
+  the answer to "controls"); BM25 `b` 0.35 (short reference sections beat the section with the
+  table in it); max 3 sections per page. `keywordMatch` (exact leads, prefix appends) and
+  `sectionMatch` (a reference folder by name) run alongside the engine as before. The old
+  "raid -> Random Rolls and Counters" tuning was a fuzzy artefact of `raid` ~ `rand` - the guide
+  never says raid - and was dropped. `helpSearch.corpus.test.ts` pins the six on-stream queries
+  against the real index; it skips in CI (index built after `npm test`) and runs on every local gate.
 - **Do not restore `cache: 'force-cache'` on the index fetch.** It served a corpus predating the last deploy.
 - The `chat` reference slug deliberately shadows the `/help/chat` page slug in the wikilink map, declared in `HelpCorpus::SHADOWED_PAGE_SLUGS` and pinned in both directions. Any other collision is a bug.
 

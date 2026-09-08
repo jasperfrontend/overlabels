@@ -139,6 +139,20 @@
     @apply flex cursor-pointer flex-col gap-0.5 rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-accent focus:bg-accent focus:outline-none;
   }
 
+  /* A result names its page and, when a heading matched, the section under it.
+     The page name keeps its whole text; the heading is what gives way. */
+  .help-search-result-title {
+    @apply flex min-w-0 items-baseline gap-1.5 text-[13px];
+  }
+
+  .help-search-result-title > :first-child {
+    @apply max-w-[70%] shrink-0;
+  }
+
+  .help-search-result-section {
+    @apply min-w-0 truncate text-muted-foreground;
+  }
+
   .help-search-result-kind {
     @apply font-mono text-[10px] tracking-[0.08em] text-muted-foreground/70 uppercase;
   }

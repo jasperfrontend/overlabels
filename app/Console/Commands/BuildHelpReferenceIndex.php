@@ -10,7 +10,7 @@ class BuildHelpReferenceIndex extends Command
 {
     protected $signature = 'help:build-index';
 
-    protected $description = 'Emit the help search indexes to public/ for the client-side fuzzy search.';
+    protected $description = 'Emit the help search indexes to public/ for the client-side search.';
 
     /**
      * Two indexes, on purpose.
@@ -48,12 +48,14 @@ class BuildHelpReferenceIndex extends Command
                 'title' => $d['title'],
                 'lead' => $d['lead'],
                 'url' => $d['url'],
-                'body' => $d['body'],
-                // Declared in the page's `keywords:` frontmatter. Searched by a
-                // separate exact/prefix pass rather than a sixth Fuse key,
-                // because adding a key renormalises every score in the corpus.
-                // Deliberately absent from help-reference-index.json below:
-                // that shape is a documented public contract.
+                // Sections, not the body. Search ranks headings and the text
+                // under them and links to the anchor, and the body is the same
+                // bytes again - shipping both doubled the file for nothing.
+                'sections' => $d['sections'],
+                // Declared in the page's `keywords:` frontmatter, for words a
+                // page is about but never says. Deliberately absent from
+                // help-reference-index.json below: that shape is a documented
+                // public contract.
                 'keywords' => $d['keywords'],
                 // The folder a document lives in is a thing people search for:
                 // "foreach" is expected to return the nine foreach loop fields,
