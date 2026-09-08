@@ -71,6 +71,31 @@ function opened(item: WhatsNewItem): void {
     };
   });
 }
+
+// Acting on a row's call to action counts as reading it too. That link is a
+// plain anchor pointing at a full-page route or off the app, so no server
+// request of ours runs on arrival; the row is cleared on the way out through
+// the same dismiss endpoint as the X, and the link is followed once that has
+// landed. One round trip before the page changes. A modified click (new tab,
+// new window) is left to the browser and only the write happens, so the
+// dashboard the reader stays on redraws without the row.
+function followCta(event: MouseEvent, item: WhatsNewItem): void {
+  if (!item.cta) return;
+
+  const href = item.cta.href;
+  const modified = event.ctrlKey || event.metaKey || event.shiftKey || event.altKey;
+
+  if (modified) {
+    router.delete(route('dashboard.whats-new.dismiss', item.id), { preserveScroll: true });
+    return;
+  }
+
+  event.preventDefault();
+  router.delete(route('dashboard.whats-new.dismiss', item.id), {
+    preserveScroll: true,
+    onFinish: () => window.location.assign(href),
+  });
+}
 </script>
 
 <template>
@@ -121,6 +146,7 @@ function opened(item: WhatsNewItem): void {
             v-if="item.cta"
             :href="item.cta.href"
             class="mt-1 inline-flex cursor-pointer items-center gap-1.5 self-start text-sm text-teal-600 hover:text-foreground dark:text-teal-400"
+            @click="followCta($event, item)"
           >
             {{ item.cta.label }}
             <ArrowRight class="h-3.5 w-3.5" />
