@@ -1,7 +1,5 @@
 <?php
 
-use App\Console\Commands\GamejamDebug;
-use App\Events\GameStateChanged;
 use App\Events\UserRegistered;
 use App\Http\Controllers\AlertMuteController;
 use App\Http\Controllers\DashboardController;
@@ -9,7 +7,6 @@ use App\Http\Controllers\EventDeletionController;
 use App\Http\Controllers\EventTemplateMappingController;
 use App\Http\Controllers\ExternalEventController;
 use App\Http\Controllers\FreesoundController;
-use App\Http\Controllers\GamejamAdminController;
 use App\Http\Controllers\GpsSessionController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HelpReferenceController;
@@ -26,7 +23,6 @@ use App\Http\Controllers\OverlayReportController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\RecipeInstanceController;
-use App\Http\Controllers\RoomBuilderController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
@@ -41,7 +37,6 @@ use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\WhatsNewController;
 use App\Http\Controllers\WiringController;
 use App\Jobs\SetupUserEventSubSubscriptions;
-use App\Models\Game;
 use App\Models\User;
 use App\Services\TwitchApiService;
 use App\Services\TwitchScopeService;
@@ -59,40 +54,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
-
-// gamejam routes
-Route::get('/gamejam', function () {
-    return Inertia::render('gamejam/index');
-})->name('gamejam');
-
-Route::middleware(['auth.redirect'])->prefix('gamejam/admin')->name('gamejam.admin.')->group(function () {
-    Route::get('/', [GamejamAdminController::class, 'index'])->name('index');
-    Route::post('/start', [GamejamAdminController::class, 'start'])->name('start');
-    Route::post('/end', [GamejamAdminController::class, 'end'])->name('end');
-    Route::post('/debug/toggle', [GamejamAdminController::class, 'toggleDebug'])->name('debug.toggle');
-});
-
-// eventually place the route here that renders all active rooms in the gamejam
-
-Route::get('/gamejam/live/{login}', function (string $login) {
-    $login = strtolower($login);
-
-    $user = User::where('bot_enabled', true)
-        ->whereNotNull('twitch_data')
-        ->get()
-        ->first(fn (User $u) => strtolower($u->twitch_data['login'] ?? '') === $login);
-
-    abort_unless($user, 404);
-
-    $game = Game::activeFor($user);
-
-    return Inertia::render('gamejam/live', [
-        'broadcasterId' => (string) $user->twitch_id,
-        'broadcasterLogin' => $login,
-        'snapshot' => $game ? GameStateChanged::snapshotFor($game) : null,
-        'debugEnabled' => GamejamDebug::isEnabledFor($user),
-    ]);
-})->where('login', '[a-z0-9_]+')->name('gamejam.live');
 
 Route::get('/privacy', function () {
     return Inertia::render('Privacy');
@@ -141,10 +102,6 @@ Route::redirect('/help/bot/expressions.md', '/help/bot/commands.md', 301);
 // The manifesto was a top-level route before the help pages became markdown.
 // Google still has the old URL and reported it as a 404.
 Route::redirect('/manifesto', '/help/manifesto', 301);
-
-Route::get('/help/gamejam', function () {
-    return Inertia::render('help/gamejam/Index');
-})->name('help.gamejam');
 
 // The hand-written per-service control pages were replaced by the generated
 // `integration-controls` category. They were filed under eventsub-tags despite
@@ -201,13 +158,6 @@ Route::prefix('updates')->name('updates.')->group(function () {
 });
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
-
-// Dev-only tile-map builder. Guarded by admin.role + env=local check in the controller.
-Route::middleware(['admin.role'])->prefix('dev/room-builder')->name('dev.room-builder.')->group(function () {
-    Route::get('/{room}', [RoomBuilderController::class, 'show'])->where('room', '[0-9]+')->name('show');
-    Route::get('/{room}/assets', [RoomBuilderController::class, 'assets'])->where('room', '[0-9]+')->name('assets');
-    Route::post('/{room}', [RoomBuilderController::class, 'save'])->where('room', '[0-9]+')->name('save');
-});
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])

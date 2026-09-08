@@ -31,10 +31,9 @@ class SitemapController extends Controller
         ['path' => '/privacy', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/terms', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/help/reference', 'priority' => '0.8', 'changefreq' => 'weekly'],
-        // The two help pages that are Vue components rather than markdown, so
-        // HelpCorpus does not know about them.
+        // The one help page that is a Vue component rather than markdown, so
+        // HelpCorpus does not know about it.
         ['path' => '/help/integration-presets', 'priority' => '0.6', 'changefreq' => 'monthly'],
-        ['path' => '/help/gamejam', 'priority' => '0.6', 'changefreq' => 'monthly'],
     ];
 
     /**

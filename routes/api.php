@@ -13,7 +13,6 @@ use App\Http\Controllers\Api\Internal\BotCommandController;
 use App\Http\Controllers\Api\Internal\BotCommandMapController;
 use App\Http\Controllers\Api\Internal\BotControlController;
 use App\Http\Controllers\Api\Internal\BotFollowageController;
-use App\Http\Controllers\Api\Internal\BotGamejamActionController;
 use App\Http\Controllers\Api\Internal\BotListActionController;
 use App\Http\Controllers\Api\Internal\BotListAppenderController;
 use App\Http\Controllers\Api\Internal\BotOutboxController;
@@ -218,8 +217,7 @@ Route::get('/internal/streamlabs/integrations', function () {
 
 // Internal endpoints for the @overlabels Twitch bot service (separate repo/Railway service).
 // Auth: X-Internal-Secret header, validated by bot.internal middleware.
-// Two throttle buckets: gamejam votes get their own per-channel bucket so a
-// busy raid can't starve token/outbox/control polls. See AppServiceProvider.
+// One throttle bucket, bot-internal. See AppServiceProvider.
 Route::prefix('/internal/bot')
     ->middleware(['bot.internal'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
@@ -247,11 +245,6 @@ Route::prefix('/internal/bot')
                 ->where('login', '[a-z0-9_]+');
             Route::get('/outbox', [BotOutboxController::class, 'index']);
             Route::post('/settings/{login}/controls-access', [BotSettingsController::class, 'setControlsAccess'])
-                ->where('login', '[a-z0-9_]+');
-        });
-
-        Route::middleware('throttle:bot-gamejam-action')->group(function () {
-            Route::post('/gamejam/action/{login}', [BotGamejamActionController::class, 'handle'])
                 ->where('login', '[a-z0-9_]+');
         });
     });

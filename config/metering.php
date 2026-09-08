@@ -48,8 +48,8 @@ return [
     // Which per-user channel families count toward a user's quota. Each of
     // these embeds the owner's twitch_id as the first segment, which is how we
     // attribute a broadcast back to a user. Public/global channels
-    // (app-updates, bot-channels, map.{slug}) and the niche gamejam.{id} feed
-    // are intentionally excluded - they are not "overlay updates".
+    // (app-updates, bot-channels, map.{slug}) are intentionally excluded -
+    // they are not "overlay updates".
     'channels' => ['alerts', 'twitch-events', 'lists'],
 
     // Redis connection backing the counters. Counters are month-keyed and

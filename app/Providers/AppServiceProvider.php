@@ -17,7 +17,6 @@ use App\Observers\BotChatOutboxObserver;
 use App\Observers\BotCommandMapObserver;
 use App\Observers\UserObserver;
 use App\Services\Bot\BotPushAnnouncer;
-use App\Services\Bot\RateLimitLog as BotRateLimitLog;
 use App\Services\BroadcastMeter;
 use App\Services\DefaultTemplateProviderService;
 use App\Services\EventMeter;
@@ -61,10 +60,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(EventMeter::class);
 
         // One announcer per request so its "already nudged the bot about this"
-        // bag covers the whole request. Opting into the bot seeds seventeen
-        // BotBuiltin rows in a loop and one gamejam round writes several
-        // outbox messages; without the shared instance each row would be its
-        // own synchronous broadcast.
+        // bag covers the whole request. Opting into the bot seeds fifteen
+        // BotBuiltin rows in a loop; without the shared instance each row
+        // would be its own synchronous broadcast.
         //
         // scoped(), NOT singleton(): a queue worker boots the container once
         // and keeps plain singletons for the life of the process, so the
@@ -153,21 +151,6 @@ class AppServiceProvider extends ServiceProvider
         // has to leave headroom above that for controls writes and bursts.
         RateLimiter::for('bot-internal', function (Request $request) {
             return Limit::perMinute(600)->by('bot-internal:'.$request->ip());
-        });
-
-        // Bot gamejam votes: own bucket, keyed per-channel so a flood in one
-        // channel can't starve another. 50 players * 2 rounds/min = 100 votes
-        // baseline; multi-key spam pushes higher. 1200/min (20/sec) per login.
-        RateLimiter::for('bot-gamejam-action', function (Request $request) {
-            $login = $request->route('login') ?? 'unknown';
-
-            return Limit::perMinute(1200)
-                ->by('bot-gamejam-action:'.$login)
-                ->response(function (Request $request, array $headers) use ($login) {
-                    BotRateLimitLog::record('gamejam-action', $login, $request->ip());
-
-                    return response()->json(['message' => 'Too Many Attempts.'], 429, $headers);
-                });
         });
 
         // Template creation. Every one of these writes a row and burns a slug,

@@ -640,7 +640,7 @@ test('outbox returns unsent messages and marks them sent', function () {
 
     BotChatOutbox::create([
         'user_id' => $user->id,
-        'message' => '@alice you became inactive due to lack of input. Type !join if you want to play again next round!',
+        'message' => '@alice thanks for the follow!',
     ]);
 
     $response = $this->getJson('/api/internal/bot/outbox', ['X-Internal-Secret' => 'test-bot-secret'])

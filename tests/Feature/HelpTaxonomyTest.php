@@ -57,9 +57,8 @@ it('lists every guide in its section, in index.md order', function () {
         ->and(array_column($sections['For machines']['items'], 'slug'))->toContain('llms-txt')
         ->and(HelpCorpus::ordered(HelpCorpus::KIND_TUTORIAL)[0]['slug'])->toBe('tutorials/show-chat-on-screen');
 
-    // The two Inertia pages that cannot declare a section of their own.
-    expect(array_column($sections['Live data']['items'], 'url'))->toContain('/help/integration-presets')
-        ->and(array_column($sections['Bot & chat']['items'], 'url'))->toContain('/help/gamejam');
+    // The one Inertia page that cannot declare a section of its own.
+    expect(array_column($sections['Live data']['items'], 'url'))->toContain('/help/integration-presets');
 
     $listed = [];
     foreach (HelpCorpus::sections() as $section) {

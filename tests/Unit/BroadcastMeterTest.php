@@ -30,10 +30,6 @@ test('ignores public and global channels', function () use ($prefixes) {
     expect(BroadcastMeter::ownerFromChannel('map.aB3xQ', $prefixes))->toBeNull();
 });
 
-test('ignores the gamejam feed (not a metered overlay channel)', function () use ($prefixes) {
-    expect(BroadcastMeter::ownerFromChannel('gamejam.123456', $prefixes))->toBeNull();
-});
-
 test('does not attribute a channel with a non-numeric owner segment', function () use ($prefixes) {
     expect(BroadcastMeter::ownerFromChannel('alerts.notanid', $prefixes))->toBeNull();
 });

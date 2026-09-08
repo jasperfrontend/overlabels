@@ -77,7 +77,7 @@ it('nudges once however many messages one action queues', function () {
 
     Event::fake([BotOutboxPending::class]);
 
-    // A gamejam round writes several messages in one go. The bot claims every
+    // One request can write several messages in one go. The bot claims every
     // pending row in a single transaction, so one nudge covers all of them and
     // the rest would be broadcasts spent on nothing.
     foreach (range(1, 5) as $i) {

@@ -117,5 +117,5 @@ it('refuses an unrelated channel namespace', function () {
     $user = User::factory()->create();
     $token = liveToken($user);
 
-    authPost($token, "private-gamejam.{$user->twitch_id}")->assertStatus(403);
+    authPost($token, "private-admin.{$user->twitch_id}")->assertStatus(403);
 });

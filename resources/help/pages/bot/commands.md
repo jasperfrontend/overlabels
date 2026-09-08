@@ -220,9 +220,6 @@ there's no follow relationship. The broadcaster querying their own follow date g
 Twitch auto-follows broadcasters to themselves on signup. Account creation dates are public Twitch data,
 so `!accountage` needs no broadcaster permission.
 
-Chat Castle (the chat-driven map game) ships several chat verbs of its own - `!join`, `!p`, `!h`, `!a`,
-`!s`, `!castlehelp`. Those are documented separately at [/help/gamejam](/help/gamejam).
-
 ## Permission tiers
 
 Permission tiers stack from least to most privileged: a moderator can invoke anything tagged Moderator+,

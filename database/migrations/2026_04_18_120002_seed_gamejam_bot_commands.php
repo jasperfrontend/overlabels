@@ -4,17 +4,18 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Seed join/p/h/a into every opted-in streamer's command table so the bot
- * will dispatch them.
+ * Originally seeded the Chat Castle verbs join/p/h/a into every opted-in
+ * streamer's command table. Chat Castle was removed on 2026-09-08 and those
+ * four keys were struck from the frozen list below; the teardown migration of
+ * that date deletes the rows this once wrote. What remains re-states the
+ * April 14th eight, which is harmless and keeps this slot in the sequence.
  *
  * Rewritten Aug 2026 for the same reason as the 2026-04-14 seed above it: this
  * called BotCommand::seedDefaults(), and that method moved to BotBuiltin while
  * the table underneath was renamed. See that file for the full note.
  *
- * The frozen list is what DEFAULTS held on 2026-04-18 - the April 14th set plus
- * the four Chat Castle verbs this migration was written for. The earlier eight
- * are already in place by now; insertOrIgnore makes re-stating them free, and
- * stating them is what keeps this slot honest about what seedDefaults did here.
+ * The earlier eight are already in place by now; insertOrIgnore makes
+ * re-stating them free.
  */
 return new class extends Migration
 {
@@ -28,10 +29,6 @@ return new class extends Migration
         'enable' => 'moderator',
         'disable' => 'moderator',
         'toggle' => 'moderator',
-        'join' => 'everyone',
-        'p' => 'everyone',
-        'h' => 'everyone',
-        'a' => 'everyone',
     ];
 
     public function up(): void

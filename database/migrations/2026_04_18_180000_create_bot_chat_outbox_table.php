@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
  * Backend-to-bot chat queue. The bot polls this table every few seconds
  * and posts each row into the target channel's chat. Existed because the
  * bot has no Reverb/Pusher client and we didn't want to add one just for
- * the gamejam inactive-mention message.
+ * one chat message.
  */
 return new class extends Migration
 {

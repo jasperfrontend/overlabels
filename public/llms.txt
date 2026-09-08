@@ -564,11 +564,10 @@ generated from the drivers:
 | Every integration's controls, side by side | `/help/reference/integration-controls/all-integration-controls.md` |
 | One service, e.g. Ko-fi | `/help/reference/integration-controls/kofi.md` |
 
-**Two help URLs have no `.md` twin** and will return an app shell if you fetch them:
+**One help URL has no `.md` twin** and will return an app shell if you fetch it:
 
 - `/help/integration-presets` - searchable preset catalogue, rendered live from source data. The same
   information is described in §5.2 above and on `/help/controls.md`.
-- `/help/gamejam` - Chat Castle documentation, still a Vue page.
 
 - Overlabels: https://overlabels.com
 - Help index (human): https://overlabels.com/help

@@ -91,19 +91,16 @@ final class HelpCorpus
     /**
      * Links that belong in a section but are not markdown pages.
      *
-     * These are the two help pages that deliberately stay Inertia (live data
-     * from controlPresets.ts, and a Vue app), so they are not in the corpus
-     * and cannot declare a `section:` of their own. They are listed here so the
-     * landing and the sidebar show them where the index has always shown them.
+     * This is the one help page that deliberately stays Inertia (live data
+     * from controlPresets.ts), so it is not in the corpus and cannot declare a
+     * `section:` of its own. It is listed here so the landing and the sidebar
+     * show it where the index has always shown it.
      *
      * @var array<string,array<int,array{title:string,url:string}>>
      */
     public const SECTION_EXTRAS = [
         'Live data' => [
             ['title' => 'Integration Presets', 'url' => '/help/integration-presets'],
-        ],
-        'Bot & chat' => [
-            ['title' => 'Chat Castle', 'url' => '/help/gamejam'],
         ],
     ];
 

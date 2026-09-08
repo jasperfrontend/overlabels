@@ -1,5 +1,32 @@
 # Changelog - September 2026
 
+## OL-2609-034 - September 8th, 2026 - feat(gamejam): remove Chat Castle entirely
+
+Chat Castle was the chat-driven dungeon game built in a week in April 2026: viewers typed `!join`,
+voted a direction with `!p`, `!h`, `!a` and `!s`, and a party crawled through five rooms of zombies
+on a live page. It was shelved in May, after one stream test, on art direction - the game logic was
+finished and the tiles were placeholders nobody wanted to look at. Four months later nothing had
+moved, and it was still costing something every day: six bot verbs seeded into every opted-in
+channel, a throttle bucket, a Vue help page holding the last Inertia help layout alive, seven tables,
+and 1,300 tracked asset files. Today it was removed, not archived.
+
+- **Everything with the word in it is gone.** The seven `Game*` models and their tables, the
+  `Gamejam` services and the round-resolution job, the admin and live pages, the room builder and
+  its five room maps, the `/help/gamejam` page and `HelpLayout.vue` (its only remaining user), the
+  five artisan commands, the internal bot endpoint and its rate limiter, the five tests that only
+  the game exercised, and the tile art under `public/`.
+- **The six bot verbs leave `BotBuiltin::DEFAULTS` and the registry.** `join`, `p`, `h`, `a`, `s`
+  and `castlehelp` no longer seed for anyone who opts in, and a teardown migration deletes them from
+  every existing channel's registry, so the command map the bot reads stops listing them. The bot's
+  own handlers for those verbs are now dead code in its repository; the dispatcher drops any verb
+  the map does not carry, so nothing fires.
+- **The schema migrations are deleted and one migration drops the tables.** A fresh database never
+  creates them; production drops them on deploy, rows included. There is no rollback for that and
+  the migration says so.
+- **What stays is history.** April and May's changelog entries describe the game as it was built,
+  and the private design document went with it. The game is not coming back in this shape; the
+  `!checkin` integration is what a chat-driven feature looks like on this platform now.
+
 ## OL-2609-032 - September 8th, 2026 - feat(help): search ranks sections with a real term engine, and a result lands on the heading that answers
 
 Live on stream, trying to explain how controls are changed from chat, the help search was tried

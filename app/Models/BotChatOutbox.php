@@ -15,7 +15,7 @@ class BotChatOutbox extends Model
      * How long a queued message stays worth posting.
      *
      * Chat replies are perishable in a way almost nothing else here is: a
-     * `!wins` answer, a sub thank-you or a gamejam round result means nothing
+     * `!wins` answer or a sub thank-you means nothing
      * once the conversation has moved on, and posting one late is worse than
      * not posting it - it reads as the bot malfunctioning. So the claim path
      * drops anything older than this instead of delivering it.

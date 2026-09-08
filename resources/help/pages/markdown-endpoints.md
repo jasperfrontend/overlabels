@@ -106,10 +106,9 @@ as one JSON file instead of crawling it - see
 
 ## Pages without a .md twin
 
-Three help URLs render live data or an interactive UI rather than a file, so they have no markdown
+Two help URLs render live data or an interactive UI rather than a file, so they have no markdown
 version:
 
 - `/help/integration-presets` - the searchable preset catalogue, rendered from source data.
 - `/help/reference` - the reference index itself. The entries under it each have one; the index is a
   listing, and the JSON above is its machine form.
-- `/help/gamejam` - Chat Castle documentation.

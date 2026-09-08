@@ -26,7 +26,7 @@ use Illuminate\Http\Request;
  * ever authorize channels under its own owner's id, so it can never read
  * another user's lists or alerts.
  *
- * Anything else (different user, presence channel, gamejam, etc.) is
+ * Anything else (different user, presence channel, etc.) is
  * rejected with 403 before any signature is produced.
  */
 class OverlayBroadcastingAuthController extends Controller

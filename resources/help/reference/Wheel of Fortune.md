@@ -72,7 +72,7 @@ If `remove_after_spin` and all slots have been consumed, then on the *next* spin
 ### Triggers
 
 - **Dashboard button** posts to an authenticated internal route -> `WheelService::spin($wheel, 'dashboard', $user->login)`.
-- **`!spin` chat command** follows the existing bot-stays-dumb pattern: bot POSTs to an internal API, the controller calls `WheelService::spin($wheel, 'chat', $chatterLogin)`. Same shape as `!join` for Gamejam.
+- **`!spin` chat command** follows the existing bot-stays-dumb pattern: bot POSTs to an internal API, the controller calls `WheelService::spin($wheel, 'chat', $chatterLogin)`.
 - **Automation** (future Flows) calls the service directly.
 
 The bot does not roll the RNG, does not pick a slot, does not validate. It is a chat-shaped pipe.

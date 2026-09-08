@@ -20,8 +20,8 @@ use App\Models\User;
  *
  * COALESCED PER REQUEST. Both events are ShouldBroadcastNow and broadcasts are
  * the metered resource here, while one user action can touch many rows -
- * opting into the bot seeds seventeen BotBuiltin rows, and one gamejam round
- * writes several outbox messages. The bot re-reads everything pending either
+ * opting into the bot seeds fifteen BotBuiltin rows in one loop. The bot
+ * re-reads everything pending either
  * way, so a second broadcast in the same request carries no information the
  * first did not.
  *

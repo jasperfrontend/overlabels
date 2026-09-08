@@ -102,8 +102,6 @@ need, ignore the rest.
   per-message tag, badges and emotes, Shared Chat, the display filters, and the four chat controls.
 - [**Chat Checkin**](/help/checkin) - viewers pin themselves on a 3D globe with !checkin. The globe
   tag, the pin feed, counters, distances and alerts.
-- [**Chat Castle**](/help/gamejam) - chat-driven dungeon raid. Commands, rounds, energy blocks, chest
-  contents, and how to not lose the HP pool.
 
 ### Integrations & testing
 

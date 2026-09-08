@@ -88,7 +88,7 @@ test('rejects unknown private channel even for valid token holder', function () 
         'slug' => 'overlay-slug',
         'token' => $plain,
         'socket_id' => '1.2',
-        'channel_name' => 'private-gamejam.12345',
+        'channel_name' => 'private-admin.12345',
     ]);
 
     $response->assertStatus(403);
