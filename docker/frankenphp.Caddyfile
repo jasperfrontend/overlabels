@@ -69,5 +69,17 @@
 	@machine_readable path_regexp ^/(llms\.txt|help(/[\w-]+)*\.md)$
 	header @machine_readable Access-Control-Allow-Origin "*"
 
+	# The two search indexes are rebuilt by the entrypoint on every deploy and
+	# fetched by the Alt+R palette and the help page search under a fixed URL.
+	# Without an explicit Cache-Control, a browser applies heuristic freshness
+	# (a tenth of the time since Last-Modified) and answers fetch() from its
+	# cache without asking - so for hours after a deploy that changed the
+	# index's shape, a returning Firefox fed the new search code the old file
+	# and both surfaces reported the index as unloadable. `no-cache` means
+	# "always revalidate": the ETag is unchanged between deploys, so the cost
+	# is a 304 per open, and a deploy is seen on the next open.
+	@search_index path /help-index.json /help-reference-index.json
+	header @search_index Cache-Control "no-cache"
+
 	php_server
 }
