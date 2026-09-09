@@ -6,9 +6,11 @@ use App\Models\OverlayTemplate;
 use App\Models\Recipe;
 use App\Models\RecipeInstance;
 use App\Models\User;
+use App\Services\BotModeratedChannels;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
 use App\Support\OverlayMarkdown;
+use App\Support\ProductSetup;
 use App\Support\WiringFacts;
 use App\Support\WiringReport;
 use Illuminate\Http\RedirectResponse;
@@ -67,6 +69,14 @@ class ProductController extends Controller
         $user = $request->user();
         $instance = $user ? $this->instanceFor($user, $slug) : null;
 
+        // Coming back to the page mid-setup is the moment to re-ask Twitch
+        // about mod status rather than serve a five-minute-old answer, since
+        // typing /mod overlabels is the step people leave for.
+        $inSetup = $user && $instance && ProductSetup::activeSlug($user) === $slug;
+        if ($inSetup) {
+            app(BotModeratedChannels::class)->forget();
+        }
+
         $overlays = collect($manifest['installs']['overlays'] ?? [])
             ->map(function (array $overlay) use ($slug) {
                 $doc = OverlayMarkdown::parse(
@@ -83,6 +93,14 @@ class ProductController extends Controller
             'description' => $manifest['description'],
             'url' => route('products.show', $slug),
         ]);
+
+        $installed = $instance ? $this->installedView($instance) : null;
+
+        // The page seeing nothing left is what ends the flow: the banner's
+        // "Go to installed product" is just a link here.
+        if ($inSetup && $installed && $installed['remaining'] === 0) {
+            ProductSetup::end($user);
+        }
 
         return Inertia::render('products/show', [
             'product' => [
@@ -119,7 +137,7 @@ class ProductController extends Controller
                     ->all(),
                 'notes' => $manifest['notes'] ?? [],
             ],
-            'installed' => $instance ? $this->installedView($instance) : null,
+            'installed' => $installed,
         ]);
     }
 
@@ -142,7 +160,18 @@ class ProductController extends Controller
             return redirect()->route('products.show', $slug)->withErrors(['install' => $e->getMessage()]);
         }
 
+        // From here every app page carries the setup banner until the
+        // product page sees nothing left, or the person says not now.
+        ProductSetup::start($user, $slug);
+
         return redirect()->route('products.show', $slug);
+    }
+
+    public function dismissSetup(Request $request): RedirectResponse
+    {
+        ProductSetup::end($request->user());
+
+        return back();
     }
 
     public function uninstall(Request $request, string $slug): RedirectResponse
@@ -159,6 +188,10 @@ class ProductController extends Controller
             $this->installer->uninstall($instance);
         } catch (RuntimeException $e) {
             return redirect()->route('products.show', $slug)->withErrors(['uninstall' => $e->getMessage()]);
+        }
+
+        if (ProductSetup::activeSlug($request->user()) === $slug) {
+            ProductSetup::end($request->user());
         }
 
         return redirect()->route('products.show', $slug);
@@ -222,9 +255,12 @@ class ProductController extends Controller
             ->values()
             ->all();
 
+        $subject = $circuit['subjects'][0] ?? null;
+
         return [
             'installed_at' => $instance->created_at->toIso8601String(),
-            'subject' => $circuit['subjects'][0] ?? null,
+            'subject' => $subject,
+            'remaining' => (int) ($subject['missing'] ?? 0),
             'overlays' => $overlays,
             'removes' => $this->installer->removals($instance),
         ];

@@ -65,6 +65,15 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
   /** The living title's paused/enabled slice; kept true by `living-title.updated`. */
   livingTitle: { enabled: boolean; paused: boolean; paused_title: string | null } | null;
   twitchScope: { missing: string[] } | null;
+  /** A product install mid-way: what is left and where to go back to. Null when no flow is active. */
+  productSetup: {
+    slug: string;
+    name: string;
+    url: string;
+    remaining: number;
+    next: { label: string; message: string } | null;
+    ready: boolean;
+  } | null;
 };
 
 /* Twitch event types.

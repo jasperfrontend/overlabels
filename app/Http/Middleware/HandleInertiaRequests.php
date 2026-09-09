@@ -6,8 +6,10 @@ use App\Models\StreamState;
 use App\Models\User;
 use App\Services\LivingTitleService;
 use App\Services\LockdownService;
+use App\Services\Recipes\RecipeCatalog;
 use App\Services\TwitchScopeService;
 use App\Support\HelpContext;
+use App\Support\ProductSetup;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -119,6 +121,16 @@ class HandleInertiaRequests extends Middleware
                 }
 
                 return ['missing' => $missing];
+            },
+            // The product setup banner. Null for everyone not mid-install, so
+            // the wiring queries behind it only run while a flow is active.
+            'productSetup' => function () use ($request) {
+                $user = $request->user();
+                if (! $user || ProductSetup::activeSlug($user) === null) {
+                    return null;
+                }
+
+                return ProductSetup::banner($user, app(RecipeCatalog::class));
             },
             'impersonating' => function () use ($request) {
                 $targetId = $request->session()->get('impersonating_user_id');

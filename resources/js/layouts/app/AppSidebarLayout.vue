@@ -5,6 +5,7 @@ import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import LockdownBanner from '@/components/LockdownBanner.vue';
+import ProductSetupBanner from '@/components/ProductSetupBanner.vue';
 import ScopeUpdateBanner from '@/components/ScopeUpdateBanner.vue';
 import VersionBanner from '@/components/VersionBanner.vue';
 import type { BreadcrumbItemType } from '@/types';
@@ -23,6 +24,7 @@ withDefaults(defineProps<Props>(), {
     <AppSidebar />
     <AppContent variant="sidebar" class="overflow-x-clip">
       <VersionBanner />
+      <ProductSetupBanner />
       <LockdownBanner />
       <ImpersonationBanner />
       <ScopeUpdateBanner />

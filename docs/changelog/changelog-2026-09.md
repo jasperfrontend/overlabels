@@ -1,5 +1,24 @@
 # Changelog - September 2026
 
+## OL-2609-042 - September 9th, 2026 - feat(products): a setup banner on every app page reels a mid-install streamer back to the product
+
+Installing Follower Bowling on a fresh account showed the gap. The checklist sends you to a
+settings page to switch the bot on, to the tokens page for an overlay link, to your own chat to
+type the mod command. Each of those means leaving the product page, and nothing brought you back.
+
+- **One fact: "setting up product X".** Install sets it, on the user, no migration. From then on
+  a fuchsia banner sits at the top of every app page: what product, how many things are left,
+  which one is next, and one button back to the product page. A green banner with "Go to
+  installed product" when nothing is left. "Not now" ends it for good.
+- **The banner and the page cannot disagree.** Both read the product's wiring circuit; the next
+  step is simply the first missing line in checklist order.
+- **It ends where it should.** The product page seeing nothing left ends it, an uninstall of that
+  product ends it, and a mid-setup visit to the product page re-asks Twitch about mod status
+  instead of serving the five-minute cache, since typing the mod command is exactly the step
+  people leave for.
+- **It never nags.** No flow, no queries, no banner. The product pages themselves live outside
+  the app layout, so the banner never appears on the one page it points at.
+
 ## OL-2609-040 - September 9th, 2026 - feat(products): the product checklist says whether the bot is a moderator, from the bot's own side of Twitch
 
 The products entry two below listed this as the one checklist line that would help most and the
