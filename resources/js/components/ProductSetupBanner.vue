@@ -18,7 +18,7 @@ const summary = computed(() => {
   if (!s) return '';
   if (s.ready) return `${s.name} is ready.`;
   const left = s.remaining === 1 ? 'one thing left' : `${s.remaining} things left`;
-  return s.next ? `Setting up ${s.name}, ${left}. Next: ${s.next.label.toLowerCase()}.` : `Setting up ${s.name}, ${left}.`;
+  return s.next ? `Setting up ${s.name}, ${left}. Next: ${s.next.todo}.` : `Setting up ${s.name}, ${left}.`;
 });
 
 function dismiss(): void {

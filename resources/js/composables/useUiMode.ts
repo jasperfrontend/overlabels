@@ -51,11 +51,15 @@ export function applyUiMode(mode: UiMode | null, root: HTMLElement | null = type
 export interface UiModeSetup {
   slug: string;
   ready: boolean;
+  /** The next step's target control, when the flow has one. */
+  next?: { target: string | null } | null;
 }
 
 export interface ResolvedUiMode extends ParsedUiMode {
   /** True when the flow the mode belongs to has nothing left to do. */
   ready: boolean;
+  /** The control the next step points at, matched by useProductTarget(). */
+  target: string | null;
 }
 
 /**
@@ -67,10 +71,10 @@ export interface ResolvedUiMode extends ParsedUiMode {
  */
 export function resolveUiMode(parsed: ParsedUiMode, setup: UiModeSetup | null | undefined): ResolvedUiMode {
   if (setup) {
-    return { mode: 'product', product: parsed.product ?? setup.slug, ready: setup.ready };
+    return { mode: 'product', product: parsed.product ?? setup.slug, ready: setup.ready, target: setup.next?.target ?? null };
   }
 
-  return { ...parsed, ready: false };
+  return { ...parsed, ready: false, target: null };
 }
 
 export function useUiMode(options: { apply?: boolean } = {}) {
@@ -79,11 +83,24 @@ export function useUiMode(options: { apply?: boolean } = {}) {
   const mode = computed(() => resolved.value.mode);
   const product = computed(() => resolved.value.product);
   const ready = computed(() => resolved.value.ready);
+  const target = computed(() => resolved.value.target);
 
   // The layout applies it once for the whole app; components only read it.
   if (options.apply) {
     watchEffect(() => applyUiMode(mode.value));
   }
 
-  return { mode, product, ready };
+  return { mode, product, ready, target };
+}
+
+/**
+ * True when the flow's next step points at this control. A page binds it as
+ * `:class="{ 'product-target': isTarget }"` on the one element the step is
+ * about, so the ruthless mode reaches the exact toggle or button rather than
+ * stopping at the page's front door. Keys live in ProductSetup::STEPS.
+ */
+export function useProductTarget(key: string) {
+  const { mode, target } = useUiMode();
+
+  return computed(() => mode.value === 'product' && target.value === key);
 }

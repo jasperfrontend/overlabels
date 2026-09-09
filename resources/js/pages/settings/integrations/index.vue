@@ -9,6 +9,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { type BreadcrumbItem } from '@/types';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { FlaskConical, Power, PowerOff, ZapOff } from '@lucide/vue';
+import { useProductTarget } from '@/composables/useUiMode';
+
+// While a product install's next step is "switch the bot on", the bot card
+// wears the fuchsia target edge (see ProductSetup::STEPS).
+const botIsProductTarget = useProductTarget('bot-toggle');
 
 interface ServiceInfo {
   key: string;
@@ -330,7 +335,8 @@ function formatDate(iso: string | null): string {
             title="Overlabels bot"
             description="Let the shared @overlabels Twitch account join your chat so you can use it to manage your overlay controls."
           />
-          <div class="mt-4 border border-sidebar-border p-4">
+          <!-- Lit up while a product install's next step is this toggle. -->
+          <div class="mt-4 border border-sidebar-border p-4" :class="{ 'product-target': botIsProductTarget }">
             <div class="flex items-center justify-between">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">

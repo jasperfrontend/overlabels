@@ -13,6 +13,38 @@
 @custom-variant sepia (&:is(.theme-sepia *));
 @custom-variant product (&:is([data-mode='product'] *));
 
+/* The one control a product install's next step points at, while the flow is
+   on (see useProductTarget). A thin fuchsia edge with a soft glow: the 10px
+   frame says "you are in the flow", this says "and this is the button". */
+.product-target {
+  outline: 2px solid var(--color-fuchsia-500);
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 6px rgb(217 70 239 / 0.18),
+    0 0 28px rgb(217 70 239 / 0.45);
+  animation: product-target-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes product-target-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 6px rgb(217 70 239 / 0.14),
+      0 0 22px rgb(217 70 239 / 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgb(217 70 239 / 0.24),
+      0 0 34px rgb(217 70 239 / 0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-target {
+    animation: none;
+  }
+}
+
 @theme inline {
   --font-sans: 'Albert Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 

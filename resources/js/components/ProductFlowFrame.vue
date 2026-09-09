@@ -16,7 +16,15 @@ const { mode, ready } = useUiMode();
     class="product-flow-frame pointer-events-none fixed inset-0 z-40 border-[10px]"
     :class="ready ? 'product-flow-frame-ready border-green-500' : 'border-fuchsia-500'"
     aria-hidden="true"
-  />
+  >
+    <!-- The frame names itself, bottom left, in the border's own colour. -->
+    <span
+      class="absolute bottom-0 left-0 px-3 py-1 font-mono text-[11px] font-semibold tracking-[0.16em] text-white uppercase"
+      :class="ready ? 'bg-green-500' : 'bg-fuchsia-500'"
+    >
+      {{ ready ? 'Product installation complete' : 'Product installation mode enabled' }}
+    </span>
+  </div>
 </template>
 
 <style scoped>

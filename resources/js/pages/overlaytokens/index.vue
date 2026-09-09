@@ -11,9 +11,14 @@ import CollectionList from '@/components/CollectionList.vue';
 import { type BreadcrumbItem } from '@/types';
 import { AlertTriangle, KeyRound } from '@lucide/vue';
 import { useConfirm } from '@/composables/useConfirm';
+import { useProductTarget } from '@/composables/useUiMode';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 
 const { confirm, alert } = useConfirm();
+
+// While a product install's next step is "create an overlay link", the
+// Create token button wears the fuchsia target edge (see ProductSetup::STEPS).
+const createIsProductTarget = useProductTarget('token-create');
 /** Types */
 type TokenAbility = 'read' | 'write';
 
@@ -150,7 +155,9 @@ const formatDate = (date: string | null | undefined) => (date ? new Date(date).t
       <div>
         <div class="mb-6 flex items-center justify-between">
           <HeadingSmall title="Overlay Access Tokens" description="Manage your access tokens for your overlays." />
-          <button @click="showCreateModal = true" class="btn btn-sm btn-primary"><KeyRound class="mr-2 size-3.5 shrink-0" /> Create token</button>
+          <button @click="showCreateModal = true" class="btn btn-sm btn-primary" :class="{ 'product-target': createIsProductTarget }">
+            <KeyRound class="mr-2 size-3.5 shrink-0" /> Create token
+          </button>
         </div>
 
         <!-- Token list: same row as /triggers. Rows are not navigable - a token has no page of its own. -->

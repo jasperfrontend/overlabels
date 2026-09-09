@@ -3,15 +3,17 @@ import { applyUiMode, parseUiMode, resolveUiMode } from './useUiMode';
 
 describe('resolveUiMode', () => {
   it('is on while a setup flow is active, whatever the URL says', () => {
-    expect(resolveUiMode(parseUiMode('/dashboard'), { slug: 'chat_checkin', ready: false })).toEqual({
+    expect(resolveUiMode(parseUiMode('/dashboard'), { slug: 'chat_checkin', ready: false, next: { target: 'bot-toggle' } })).toEqual({
       mode: 'product',
       product: 'chat_checkin',
       ready: false,
+      target: 'bot-toggle',
     });
-    expect(resolveUiMode(parseUiMode('/settings/integrations'), { slug: 'follower_bowling', ready: true })).toEqual({
+    expect(resolveUiMode(parseUiMode('/settings/integrations'), { slug: 'follower_bowling', ready: true, next: null })).toEqual({
       mode: 'product',
       product: 'follower_bowling',
       ready: true,
+      target: null,
     });
   });
 
@@ -27,8 +29,9 @@ describe('resolveUiMode', () => {
       mode: 'product',
       product: 'chat_checkin',
       ready: false,
+      target: null,
     });
-    expect(resolveUiMode(parseUiMode('/dashboard'), undefined)).toEqual({ mode: null, product: null, ready: false });
+    expect(resolveUiMode(parseUiMode('/dashboard'), undefined)).toEqual({ mode: null, product: null, ready: false, target: null });
   });
 });
 

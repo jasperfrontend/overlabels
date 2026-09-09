@@ -62,6 +62,8 @@ it('starts the flow on install and shares the banner on an app page', function (
             ->where('productSetup.ready', false)
             ->where('productSetup.remaining', 2)
             ->where('productSetup.next.label', 'The bot is switched on')
+            ->where('productSetup.next.todo', 'make sure the bot is switched on')
+            ->where('productSetup.next.target', 'bot-toggle')
         );
 });
 

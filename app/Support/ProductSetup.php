@@ -21,6 +21,27 @@ final class ProductSetup
 {
     public const PREFERENCE = 'product_setup';
 
+    /**
+     * The human half of each wire, for the banner: what to DO, as an
+     * instruction, and which control on the destination page is the one to
+     * touch. A wire's label is a state ("The bot is switched on") and reads
+     * wrong after "Next:"; this is the imperative. The target is a key the
+     * destination page matches with useProductTarget() to light up the exact
+     * element, so the ruthless mode does not end at the page's front door.
+     *
+     * @var array<string, array{todo: string, target: ?string}>
+     */
+    public const STEPS = [
+        'product.bot_on' => ['todo' => 'make sure the bot is switched on', 'target' => 'bot-toggle'],
+        'product.bot_hears' => ['todo' => 'check the bot can hear your chat', 'target' => 'bot-toggle'],
+        'product.bot_modded' => ['todo' => 'type /mod overlabels in your own chat', 'target' => 'bot-toggle'],
+        'product.integration' => ['todo' => 'reconnect its integration', 'target' => null],
+        'product.overlay' => ['todo' => 'get its overlay back by installing again', 'target' => null],
+        'product.list' => ['todo' => 'get its list back by installing again', 'target' => null],
+        'product.command' => ['todo' => 'switch its chat commands back on', 'target' => null],
+        'product.token' => ['todo' => 'create an overlay link for OBS', 'target' => 'token-create'],
+    ];
+
     public static function start(User $user, string $slug): void
     {
         $user->setPreference(self::PREFERENCE, ['slug' => $slug, 'started_at' => now()->timestamp])->save();
@@ -71,7 +92,12 @@ final class ProductSetup
             'name' => $manifest['name'],
             'url' => route('products.show', $slug),
             'remaining' => count($missing),
-            'next' => $next ? ['label' => $next['label'], 'message' => $next['message']] : null,
+            'next' => $next ? [
+                'label' => $next['label'],
+                'message' => $next['message'],
+                'todo' => self::STEPS[$next['key']]['todo'] ?? strtolower($next['label']),
+                'target' => self::STEPS[$next['key']]['target'] ?? null,
+            ] : null,
             'ready' => $missing === [],
         ];
     }

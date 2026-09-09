@@ -1,5 +1,20 @@
 # Changelog - September 2026
 
+## OL-2609-049 - September 9th, 2026 - feat(products): the flow frame names itself, the banner says what to do, and the next step's control lights up on its page
+
+Ruthless state falls apart at the page's front door if the page does not say which button. So
+the frame, the banner and the destination now agree, and each one points one level closer.
+
+- **The frame names itself.** Bottom left, in its own colour: "Product installation mode
+  enabled", and "Product installation complete" once the flow is fulfilled.
+- **The banner gives an instruction, not a state.** "Next: the bot is switched on" read as a
+  claim about a bot that was off. Each step now carries what to do: "make sure the bot is
+  switched on", "type /mod overlabels in your own chat", "create an overlay link for OBS".
+- **The destination lights the exact control.** Each step names the control it is about, and
+  the page the step sends you to gives that one element a thin fuchsia edge with a soft glow
+  while the flow is on: the Chat bot card on integrations, the Create token button on tokens.
+  Not 10px, the frame already did that; this is the finger on the button.
+
 ## OL-2609-048 - September 9th, 2026 - feat(products): product mode is on for the whole app while a setup flow is active, with a glowing frame
 
 "You can't half flow." The URL-carried product mode from earlier today lit one page for one
