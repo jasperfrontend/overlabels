@@ -65,7 +65,7 @@ class AdminUpdateController extends Controller
         ], $request);
 
         return redirect()
-            ->route('admin.updates.index')
+            ->route('admin.updates.edit', $update->id)
             ->with('message', 'Update published.');
     }
 
@@ -101,7 +101,7 @@ class AdminUpdateController extends Controller
         ], $request);
 
         return redirect()
-            ->route('admin.updates.index')
+            ->route('admin.updates.edit', $update->id)
             ->with('message', 'Update saved.');
     }
 
