@@ -1,5 +1,36 @@
 import { describe, expect, it } from 'vitest';
-import { applyUiMode, parseUiMode } from './useUiMode';
+import { applyUiMode, parseUiMode, resolveUiMode } from './useUiMode';
+
+describe('resolveUiMode', () => {
+  it('is on while a setup flow is active, whatever the URL says', () => {
+    expect(resolveUiMode(parseUiMode('/dashboard'), { slug: 'chat_checkin', ready: false })).toEqual({
+      mode: 'product',
+      product: 'chat_checkin',
+      ready: false,
+    });
+    expect(resolveUiMode(parseUiMode('/settings/integrations'), { slug: 'follower_bowling', ready: true })).toEqual({
+      mode: 'product',
+      product: 'follower_bowling',
+      ready: true,
+    });
+  });
+
+  it('lets the URL name the product when both do, and the flow fill in when the URL does not', () => {
+    expect(resolveUiMode(parseUiMode('/t?state=product&product=follower_bowling'), { slug: 'chat_checkin', ready: false }).product).toBe(
+      'follower_bowling',
+    );
+    expect(resolveUiMode(parseUiMode('/t?state=product'), { slug: 'chat_checkin', ready: false }).product).toBe('chat_checkin');
+  });
+
+  it('falls back to the URL alone, never ready, when no flow is active', () => {
+    expect(resolveUiMode(parseUiMode('/t?state=product&product=chat_checkin'), null)).toEqual({
+      mode: 'product',
+      product: 'chat_checkin',
+      ready: false,
+    });
+    expect(resolveUiMode(parseUiMode('/dashboard'), undefined)).toEqual({ mode: null, product: null, ready: false });
+  });
+});
 
 describe('parseUiMode', () => {
   it('reads the product mode and its slug from a URL', () => {

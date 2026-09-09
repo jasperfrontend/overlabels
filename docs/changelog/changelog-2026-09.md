@@ -1,5 +1,26 @@
 # Changelog - September 2026
 
+## OL-2609-048 - September 9th, 2026 - feat(products): product mode is on for the whole app while a setup flow is active, with a glowing frame
+
+"You can't half flow." The URL-carried product mode from earlier today lit one page for one
+visit and dropped on the next click, which is right for a single hop and wrong for a person three
+steps into an install. The fix is not to forward the query through every link, and not a client
+store that ticks a step when its button was clicked: a click is intent, not completion. The fix
+is to admit what the mode really means.
+
+- **Product mode is on while a setup flow is active. Full stop.** The one fact the install
+  already writes on the account drives it, on every app page, across every navigation, until the
+  flow is fulfilled or dismissed. The URL query remains as the one-visit hint and as the name of
+  the product to go back to.
+- **A 10px glowing frame around the whole app says so.** Fuchsia and slowly pulsing while
+  anything is left, green and still once nothing is. It is decoration: nothing to click, no
+  layout, off under reduced motion. The banner above the page keeps the words and the way back.
+- **Completion stays a server fact.** The checklist is recomputed on every page load from the
+  bot toggle, the token table and Twitch's own answer, so the frame turns green when the world
+  says so, never because a button was pressed.
+- **The green Add to OBS tab now lights on any visit** to the overlay page during a flow, from the
+  sidebar or the band alike, and the callout's way back knows the product from the flow.
+
 ## OL-2609-047 - September 9th, 2026 - feat(products): the Follower Bowling lane is redesigned to the hero's look
 
 The hero banner on the products page got a lane to match. Claude Design drew it from the banner

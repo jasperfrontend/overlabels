@@ -1,3 +1,4 @@
+import type { AppPageProps } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { computed, watchEffect } from 'vue';
 
@@ -46,16 +47,43 @@ export function applyUiMode(mode: UiMode | null, root: HTMLElement | null = type
   }
 }
 
+/** The slice of the shared `productSetup` prop the mode needs. */
+export interface UiModeSetup {
+  slug: string;
+  ready: boolean;
+}
+
+export interface ResolvedUiMode extends ParsedUiMode {
+  /** True when the flow the mode belongs to has nothing left to do. */
+  ready: boolean;
+}
+
+/**
+ * Pure: the mode is on while a product setup flow is active on the account,
+ * or when the URL says so for one visit. You are in the flow or you are not;
+ * there is no half. The URL's product slug wins when both name one, and the
+ * flow's slug fills in when the URL names none, so the way back is always
+ * known.
+ */
+export function resolveUiMode(parsed: ParsedUiMode, setup: UiModeSetup | null | undefined): ResolvedUiMode {
+  if (setup) {
+    return { mode: 'product', product: parsed.product ?? setup.slug, ready: setup.ready };
+  }
+
+  return { ...parsed, ready: false };
+}
+
 export function useUiMode(options: { apply?: boolean } = {}) {
-  const page = usePage();
-  const parsed = computed(() => parseUiMode(page.url));
-  const mode = computed(() => parsed.value.mode);
-  const product = computed(() => parsed.value.product);
+  const page = usePage<AppPageProps>();
+  const resolved = computed(() => resolveUiMode(parseUiMode(page.url), page.props.productSetup));
+  const mode = computed(() => resolved.value.mode);
+  const product = computed(() => resolved.value.product);
+  const ready = computed(() => resolved.value.ready);
 
   // The layout applies it once for the whole app; components only read it.
   if (options.apply) {
     watchEffect(() => applyUiMode(mode.value));
   }
 
-  return { mode, product };
+  return { mode, product, ready };
 }
