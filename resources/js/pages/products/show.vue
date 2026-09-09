@@ -5,6 +5,8 @@ import { Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, Trash2, 
 import type { AppPageProps } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import RekaToast from '@/components/RekaToast.vue';
+import { ref, watch } from 'vue';
 
 type WireState = 'satisfied' | 'missing' | 'not_applicable';
 
@@ -56,6 +58,23 @@ const page = usePage<AppPageProps>();
 const isAuthed = computed(() => !!page.props.auth?.user);
 const installError = computed(() => (page.props.errors as Record<string, string> | undefined)?.install);
 
+// Same flash-to-toast wiring as AppLayout. This page renders outside it, so
+// without this an install or uninstall only swapped a button label.
+const flashMessage = ref<string | null>(null);
+const flashType = ref<'info' | 'success' | 'warning' | 'error'>('info');
+const flashKey = ref(0);
+
+watch(
+  () => page.props.flash,
+  (flash) => {
+    if (!flash?.message) return;
+    flashMessage.value = flash.message;
+    flashType.value = flash.type || 'info';
+    flashKey.value++;
+  },
+  { immediate: true },
+);
+
 // Only the wires that apply to this product are steps. A wire that does not
 // apply is not a step someone skipped, so it is not shown at all here: the
 // product page is a checklist, and a checklist with greyed-out lines for
@@ -103,6 +122,7 @@ async function uninstall(): Promise<void> {
   <!-- This page renders outside AppLayout, where the app's single ConfirmDialog
        normally lives, so the uninstall confirm needs its own mount. -->
   <ConfirmDialog />
+  <RekaToast v-if="flashMessage" :key="flashKey" :message="flashMessage" :type="flashType" @dismiss="flashMessage = null" />
   <div class="min-h-screen bg-background text-foreground">
     <div class="mx-auto max-w-4xl p-4 lg:p-6">
       <div class="mb-6 flex items-center justify-between">

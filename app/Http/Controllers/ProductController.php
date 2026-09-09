@@ -164,7 +164,7 @@ class ProductController extends Controller
         // product page sees nothing left, or the person says not now.
         ProductSetup::start($user, $slug);
 
-        return redirect()->route('products.show', $slug);
+        return redirect()->route('products.show', $slug)->with('success', $manifest['name'].' is installed.');
     }
 
     public function dismissSetup(Request $request): RedirectResponse
@@ -176,7 +176,7 @@ class ProductController extends Controller
 
     public function uninstall(Request $request, string $slug): RedirectResponse
     {
-        $this->listedManifest($slug);
+        $manifest = $this->listedManifest($slug);
         $instance = $this->instanceFor($request->user(), $slug);
 
         // Nothing installed is nothing to undo; the page already shows that.
@@ -194,7 +194,7 @@ class ProductController extends Controller
             ProductSetup::end($request->user());
         }
 
-        return redirect()->route('products.show', $slug);
+        return redirect()->route('products.show', $slug)->with('success', $manifest['name'].' is uninstalled.');
     }
 
     /**

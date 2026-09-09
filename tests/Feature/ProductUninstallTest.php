@@ -136,7 +136,8 @@ it('uninstalls from the product page and shows the page uninstalled', function (
 
     $this->actingAs($user)
         ->post('/products/follower_bowling/uninstall')
-        ->assertRedirect('/products/follower_bowling');
+        ->assertRedirect('/products/follower_bowling')
+        ->assertSessionHas('success', 'Follower Bowling is uninstalled.');
 
     expect(RecipeInstance::where('user_id', $user->id)->count())->toBe(0);
 

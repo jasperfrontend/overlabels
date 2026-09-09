@@ -183,7 +183,8 @@ it('installs the product on POST and shows the page in its installed state', fun
 
     $this->actingAs($user)
         ->post('/products/chat_checkin/install')
-        ->assertRedirect('/products/chat_checkin');
+        ->assertRedirect('/products/chat_checkin')
+        ->assertSessionHas('success', 'Chat Checkin is installed.');
 
     $instance = RecipeInstance::where('user_id', $user->id)->first();
     expect($instance)->not->toBeNull()
