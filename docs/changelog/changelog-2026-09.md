@@ -33,9 +33,10 @@ answer to that: one page, one button, and the page keeps count of what is left.
 - **The catalogue is the repo.** `RecipeCatalog` reads `resources/recipes/*/manifest.json` and
   writes the `recipes` row on demand, so prod, which runs no seeder, installs from the file.
 - **What is left for you is a wiring circuit.** Every installed product is a subject on
-  `/settings/wiring` with five wires: bot on, bot hearing you, integration connected, overlay still
-  there, an active overlay link for OBS. The product page shows the same five as a checklist with
-  ticks and buttons, and hides the ones that do not apply to that product.
+  `/settings/wiring` with seven wires: bot on, bot hearing you, integration connected, overlay still
+  there, list still there, chat commands on, an active overlay link for OBS. The product page shows
+  the same seven as a checklist with ticks and buttons, and hides the ones that do not apply to
+  that product.
 - **Not built:** a modded check. Twitch needs `moderation:read` for it, which means every account
   re-authorizing once, and that is a separate decision. Uninstall is manual for now.
 
