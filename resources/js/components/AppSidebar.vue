@@ -114,6 +114,7 @@ const adminNavItems = computed<NavItem[]>(() => {
     { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
     { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert },
     { title: 'Updates', href: route('admin.updates.index'), icon: Newspaper },
+    { title: 'Twitch Bot', href: route('admin.twitchbot.index'), icon: BotIcon },
   ];
 });
 </script>
