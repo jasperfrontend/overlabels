@@ -3,10 +3,16 @@ import { usePage } from '@inertiajs/vue3';
 import { computed, watchEffect } from 'vue';
 
 /**
- * A UI mode carried by the URL: `?state=product&product=<slug>` on any app
- * page means "this visit is the last mile of a product install". It is a
- * fact, not a click, so a reload, a bookmark or a trip to OBS and back keep
- * it. Navigating anywhere without it drops it.
+ * Product UI mode. ON while a product setup flow is active on the account,
+ * OFF otherwise. You are in the flow or you are not; there is no half, and
+ * nothing in a URL can start one. The shared `productSetup` prop is the one
+ * source: the server recomputes it from live facts on every visit.
+ *
+ * The URL can still carry a last-mile hint, `?state=product&product=<slug>`,
+ * which the green band on a finished product page attaches to its OBS
+ * button. The hint opens the Add to OBS tab first and shows the callout with
+ * the way back. It never turns the mode on: the frame, the banner and the
+ * `product:` styling come from the flow alone.
  *
  * One fact feeds two things: `data-mode` on the document root, so a Tailwind
  * variant (`product:`) can restyle an element in any component, and the
@@ -15,25 +21,24 @@ import { computed, watchEffect } from 'vue';
 export type UiMode = 'product';
 
 export interface ParsedUiMode {
-  mode: UiMode | null;
-  /** The product slug the mode points back to, when the URL names one. */
+  /** The URL carries the last-mile hint. */
+  lastMile: boolean;
+  /** The product slug the hint points back to, when the URL names one. */
   product: string | null;
 }
 
-const MODES: readonly UiMode[] = ['product'];
 const SLUG = /^[a-z][a-z0-9_]{0,49}$/;
 
-/** Pure: reads the mode out of a URL or path-with-query. Unknown values are no mode. */
+/** Pure: reads the last-mile hint out of a URL or path-with-query. Unknown values are no hint. */
 export function parseUiMode(url: string): ParsedUiMode {
   const query = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
   const params = new URLSearchParams(query.split('#')[0]);
-  const state = params.get('state');
-  const mode = MODES.includes(state as UiMode) ? (state as UiMode) : null;
+  const lastMile = params.get('state') === 'product';
   const product = params.get('product');
 
   return {
-    mode,
-    product: mode && product && SLUG.test(product) ? product : null,
+    lastMile,
+    product: lastMile && product && SLUG.test(product) ? product : null,
   };
 }
 
@@ -56,6 +61,8 @@ export interface UiModeSetup {
 }
 
 export interface ResolvedUiMode extends ParsedUiMode {
+  /** 'product' while a flow is active, null otherwise. Never set by the URL. */
+  mode: UiMode | null;
   /** True when the flow the mode belongs to has nothing left to do. */
   ready: boolean;
   /** The control the next step points at, matched by useProductTarget(). */
@@ -63,24 +70,28 @@ export interface ResolvedUiMode extends ParsedUiMode {
 }
 
 /**
- * Pure: the mode is on while a product setup flow is active on the account,
- * or when the URL says so for one visit. You are in the flow or you are not;
- * there is no half. The URL's product slug wins when both name one, and the
- * flow's slug fills in when the URL names none, so the way back is always
- * known.
+ * Pure. The URL's product slug wins when both name one, and the flow's slug
+ * fills in when the URL names none, so the way back is always known.
  */
 export function resolveUiMode(parsed: ParsedUiMode, setup: UiModeSetup | null | undefined): ResolvedUiMode {
   if (setup) {
-    return { mode: 'product', product: parsed.product ?? setup.slug, ready: setup.ready, target: setup.next?.target ?? null };
+    return {
+      mode: 'product',
+      lastMile: parsed.lastMile,
+      product: parsed.product ?? setup.slug,
+      ready: setup.ready,
+      target: setup.next?.target ?? null,
+    };
   }
 
-  return { ...parsed, ready: false, target: null };
+  return { mode: null, lastMile: parsed.lastMile, product: parsed.product, ready: false, target: null };
 }
 
 export function useUiMode(options: { apply?: boolean } = {}) {
   const page = usePage<AppPageProps>();
   const resolved = computed(() => resolveUiMode(parseUiMode(page.url), page.props.productSetup));
   const mode = computed(() => resolved.value.mode);
+  const lastMile = computed(() => resolved.value.lastMile);
   const product = computed(() => resolved.value.product);
   const ready = computed(() => resolved.value.ready);
   const target = computed(() => resolved.value.target);
@@ -90,7 +101,7 @@ export function useUiMode(options: { apply?: boolean } = {}) {
     watchEffect(() => applyUiMode(mode.value));
   }
 
-  return { mode, product, ready, target };
+  return { mode, lastMile, product, ready, target };
 }
 
 /**

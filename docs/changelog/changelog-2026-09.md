@@ -1,5 +1,18 @@
 # Changelog - September 2026
 
+## OL-2609-050 - September 9th, 2026 - fix(products): the URL hint can no longer switch product mode on after a flow has ended
+
+Found on a reinstall where everything was already set up. The finished product page's green
+"Add to OBS" button carries the last-mile hint in its URL, and that hint was still allowed to
+switch the mode on by itself, a leftover from the morning when the URL was the only switch. So a
+flow that had just ended came back framed and bannered on the overlay page, and looked stuck.
+
+- **The URL never starts a flow.** The mode has one source now, the flow on the account. A visit
+  carrying the hint after the flow has ended shows no frame, no banner and no green.
+- **The hint keeps its useful half.** It still opens the Add to OBS tab first and shows the
+  last-step callout with the way back, which is the reading it was meant to have: the flow is
+  done, here is the last mile.
+
 ## OL-2609-049 - September 9th, 2026 - feat(products): the flow frame names itself, the banner says what to do, and the next step's control lights up on its page
 
 Ruthless state falls apart at the page's front door if the page does not say which button. So

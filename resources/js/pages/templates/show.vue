@@ -93,11 +93,13 @@ const mainTabs = computed(() => {
 
 const activeTab = ref('html');
 
-// `?state=product` on this URL is the last mile of a product install: the
-// visit exists to add the overlay to OBS, so that tab opens first and is
-// green, and the last-step callout exists. Nothing else on the page changes.
-const { mode: uiMode, product: uiProduct } = useUiMode();
-const mainTab = ref<string>(uiMode.value === 'product' ? 'obs' : 'overview');
+// A product install's last mile: while the flow is on, or when the URL
+// carries the last-mile hint from a finished product page, this visit exists
+// to add the overlay to OBS, so that tab opens first and the callout with the
+// way back exists. The green on the tab comes from the flow alone.
+const { mode: uiMode, lastMile: uiLastMile, product: uiProduct } = useUiMode();
+const obsFirst = uiMode.value === 'product' || uiLastMile.value;
+const mainTab = ref<string>(obsFirst ? 'obs' : 'overview');
 
 const { eventTypeDotClass } = useEventColors();
 
@@ -407,7 +409,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Add to OBS tab (owner only) -->
         <div v-if="canEdit && mainTab === 'obs'" class="mb-6 p-4 pt-6">
-          <ProductLastStep v-if="uiMode === 'product'" :product="uiProduct" />
+          <ProductLastStep v-if="uiMode === 'product' || uiLastMile" :product="uiProduct" />
           <AddToObsPanel :template="props.template" />
         </div>
 
