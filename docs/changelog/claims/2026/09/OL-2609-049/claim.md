@@ -13,6 +13,7 @@
 - `resources/js/pages/settings/integrations/index.vue` - the Chat bot card binds `product-target` on the `bot-toggle` key
 - `resources/js/pages/overlaytokens/index.vue` - the Create token button binds `product-target` on the `token-create` key
 - `tests/Feature/ProductSetupFlowTest.php` - the dashboard assertion checks `next.todo` and `next.target`
+- `resources/js/types/index.d.ts` - `productSetup.next` gains `todo` and `target` (committed in a follow-up under this ID; it was left unstaged in the first commit)
 
 ### Claims
 - **C1** [code] `ProductSetup::STEPS` has an entry for each of the eight `product.*` wires; `banner()` sets `next.todo` from it, falling back to the lower-cased label for an unknown key, and `next.target` from it, falling back to null.

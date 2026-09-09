@@ -71,7 +71,8 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     name: string;
     url: string;
     remaining: number;
-    next: { label: string; message: string } | null;
+    /** `todo` is the instruction after "Next:"; `target` names the control on the destination page. */
+    next: { label: string; message: string; todo: string; target: string | null } | null;
     ready: boolean;
   } | null;
 };
