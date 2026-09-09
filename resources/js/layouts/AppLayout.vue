@@ -9,6 +9,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import type { AppPageProps, BreadcrumbItemType } from '@/types';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import { useUiMode } from '@/composables/useUiMode';
 import { usePage } from '@inertiajs/vue3';
 import { ref, computed, onMounted, watch } from 'vue';
 
@@ -44,6 +45,10 @@ watch(
 const showKeyboardShortcuts = ref(false);
 const { register, getAllShortcuts } = useKeyboardShortcuts();
 const keyboardShortcutsList = computed(() => getAllShortcuts());
+
+// The one place the URL's UI mode is written onto <html data-mode>, so the
+// `product:` Tailwind variant works in every component under this layout.
+useUiMode({ apply: true });
 
 onMounted(() => {
   register(

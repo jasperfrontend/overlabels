@@ -11,6 +11,7 @@
 
 @custom-variant dark (&:is(.dark *));
 @custom-variant sepia (&:is(.theme-sepia *));
+@custom-variant product (&:is([data-mode='product'] *));
 
 @theme inline {
   --font-sans: 'Albert Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';

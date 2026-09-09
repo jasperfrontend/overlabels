@@ -12,6 +12,8 @@ import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import { useUiMode } from '@/composables/useUiMode';
+import ProductLastStep from '@/components/ProductLastStep.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { BreadcrumbItem, OverlayControl } from '@/types/index.js';
 import {
@@ -90,7 +92,12 @@ const mainTabs = computed(() => {
 });
 
 const activeTab = ref('html');
-const mainTab = ref<string>('overview');
+
+// `?state=product` on this URL is the last mile of a product install: the
+// visit exists to add the overlay to OBS, so that tab opens first and is
+// green, and the last-step callout exists. Nothing else on the page changes.
+const { mode: uiMode, product: uiProduct } = useUiMode();
+const mainTab = ref<string>(uiMode.value === 'product' ? 'obs' : 'overview');
 
 const { eventTypeDotClass } = useEventColors();
 
@@ -312,6 +319,9 @@ const breadcrumbs: BreadcrumbItem[] = [
               mainTab === tab.key
                 ? 'dark:hover-bg-violet-500 border-t-2 border-t-violet-400 bg-white text-black dark:bg-violet-500/30 dark:text-violet-300'
                 : 'text-accent-foreground',
+              // In the product UI mode the Add to OBS tab is the whole point of
+              // the visit, so it is green whatever the theme says.
+              tab.key === 'obs' ? 'product:border-t-green-400 product:bg-green-600 product:text-white product:hover:bg-green-700' : '',
             ]"
           >
             <component :is="tab.icon" class="h-4 w-4" />
@@ -397,6 +407,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Add to OBS tab (owner only) -->
         <div v-if="canEdit && mainTab === 'obs'" class="mb-6 p-4 pt-6">
+          <ProductLastStep v-if="uiMode === 'product'" :product="uiProduct" />
           <AddToObsPanel :template="props.template" />
         </div>
 
