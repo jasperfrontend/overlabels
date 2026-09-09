@@ -5,6 +5,7 @@ import { Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, Trash2, 
 import type { AppPageProps } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import ProductBadge from '@/components/ProductBadge.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import { ref, watch } from 'vue';
 
@@ -40,6 +41,7 @@ interface Product {
   lists: { slug: string; label: string }[];
   commands: { command: string; kind: 'appender' | 'alias' | 'command'; detail: string }[];
   notes: string[];
+  ready_message: string | null;
 }
 
 interface Installed {
@@ -81,6 +83,8 @@ watch(
 // things that were never part of the product reads as unfinished.
 const steps = computed(() => (props.installed?.subject?.wires ?? []).filter((wire) => wire.state !== 'not_applicable'));
 const remaining = computed(() => steps.value.filter((wire) => wire.state === 'missing').length);
+const done = computed(() => steps.value.length - remaining.value);
+const progress = computed(() => (steps.value.length ? Math.round((done.value / steps.value.length) * 100) : 100));
 
 const integrationLabels: Record<string, string> = {
   checkin: 'Chat Checkin',
@@ -140,21 +144,32 @@ async function uninstall(): Promise<void> {
       <!-- The same artwork as the listing card, full width, as the page's hero. -->
       <img v-if="product.hero" :src="product.hero" alt="" class="mb-4 block aspect-video w-full object-cover" />
 
-      <header class="flex flex-col gap-3 border border-sidebar-border bg-sidebar p-5">
+      <!-- Installed, the header turns green and carries the badge large. This
+           is the one page in the app that is allowed to celebrate: the person
+           did nothing but press a button and follow a few lines, and the page's
+           job is to make that feel like it counted. -->
+      <header
+        class="flex flex-col gap-3 border p-5"
+        :class="installed ? 'border-green-500/60 bg-green-950/40 dark:bg-green-950/40' : 'border-sidebar-border bg-sidebar'"
+      >
         <div class="flex flex-wrap items-start justify-between gap-4">
-          <div class="min-w-0">
-            <h1 class="text-2xl font-semibold text-foreground">{{ product.name }}</h1>
-            <p v-if="product.requires_bot" class="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Bot class="size-3.5" />
-              Works through the Overlabels bot in your chat
-            </p>
+          <div class="flex min-w-0 items-start gap-3">
+            <ProductBadge
+              label="An official Overlabels product"
+              class="mt-0.5 size-9 shrink-0"
+              :class="installed ? 'text-green-500' : 'text-violet-400'"
+            />
+            <div class="min-w-0">
+              <p v-if="installed" class="text-xs font-semibold tracking-wide text-green-500 uppercase">Installed</p>
+              <h1 class="text-2xl font-semibold text-foreground">{{ product.name }}</h1>
+              <p v-if="product.requires_bot" class="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Bot class="size-3.5" />
+                Works through the Overlabels bot in your chat
+              </p>
+            </div>
           </div>
 
           <div class="flex shrink-0 flex-col items-end gap-2">
-            <span v-if="installed" class="inline-flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
-              <Check class="size-4" />
-              Installed
-            </span>
             <button v-if="installed" type="button" class="btn btn-sm btn-chill cursor-pointer" @click="uninstall">
               <Trash2 class="mr-2 size-4" />
               Uninstall
@@ -176,18 +191,48 @@ async function uninstall(): Promise<void> {
         <p v-if="uninstallError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ uninstallError }}</p>
       </header>
 
-      <!-- Installed: the checklist. Everything the installer did is a tick,
-           everything left is a step with a button. -->
+      <!-- Installed and finished: the win, said once and loudly. The badge,
+           the name, what it means in the streamer's world, and the two things
+           they want next. No settings vocabulary here. -->
+      <section
+        v-if="installed && installed.subject && remaining === 0"
+        class="product-ready mt-8 flex flex-col items-center gap-4 border border-green-500 bg-green-600 p-8 text-center text-white"
+      >
+        <ProductBadge label="An official Overlabels product" class="size-16 text-white" />
+        <div>
+          <h2 class="text-2xl font-semibold">Everything is in place</h2>
+          <p v-if="product.ready_message" class="mt-1 text-base text-white/90">{{ product.ready_message }}</p>
+        </div>
+        <div class="flex flex-wrap justify-center gap-2">
+          <Link
+            v-for="overlay in installed.overlays"
+            :key="overlay.id"
+            :href="route('templates.show', overlay.id)"
+            class="inline-flex cursor-pointer items-center gap-2 border border-white/60 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
+          >
+            <ExternalLink class="size-4" />
+            Add {{ overlay.name }} to OBS
+          </Link>
+        </div>
+      </section>
+
+      <!-- Installed, steps left: the checklist as a progress piece. Everything
+           the installer did is already a tick; each remaining line has one
+           button; the bar fills as they go. -->
       <section v-if="installed && installed.subject" class="mt-8 flex flex-col gap-3">
         <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 class="text-lg font-semibold text-foreground">Finish setting up</h2>
+          <h2 class="text-lg font-semibold text-foreground">{{ remaining ? 'Finish setting up' : 'Your setup' }}</h2>
           <span v-if="remaining" class="text-sm text-fuchsia-600 tabular-nums dark:text-fuchsia-400">
             {{ remaining === 1 ? 'One thing left' : `${remaining} things left` }}
           </span>
           <span v-else class="inline-flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
             <Check class="size-4" />
-            Everything is in place
+            {{ steps.length }} of {{ steps.length }} done
           </span>
+        </div>
+
+        <div class="h-2 w-full overflow-hidden bg-muted" role="progressbar" :aria-valuenow="done" :aria-valuemin="0" :aria-valuemax="steps.length">
+          <div class="product-progress h-full" :class="remaining ? 'bg-fuchsia-500' : 'bg-green-500'" :style="{ width: `${progress}%` }" />
         </div>
 
         <ul class="flex flex-col gap-2">
@@ -195,11 +240,16 @@ async function uninstall(): Promise<void> {
             v-for="wire in steps"
             :key="wire.key"
             class="collection-row border p-3"
-            :class="wire.state === 'missing' ? 'border-fuchsia-500/40' : 'border-border'"
+            :class="wire.state === 'missing' ? 'border-fuchsia-500/40' : 'border-green-500/40'"
           >
             <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <TriangleAlert v-if="wire.state === 'missing'" class="size-4 shrink-0 self-center text-fuchsia-600 dark:text-fuchsia-400" />
-              <Check v-else class="size-4 shrink-0 self-center text-green-600 dark:text-green-400" />
+              <span
+                v-else
+                class="product-tick inline-flex size-5 shrink-0 items-center justify-center self-center rounded-full bg-green-500 text-white"
+              >
+                <Check class="size-3.5" stroke-width="3" />
+              </span>
               <p class="font-medium text-foreground">{{ wire.label }}</p>
             </div>
             <div class="mt-1 flex flex-col gap-2 pl-6 sm:flex-row sm:items-center sm:gap-3">
@@ -289,3 +339,35 @@ async function uninstall(): Promise<void> {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* The only motion on the page: the bar fills, a completed tick lands. Both
+   are gone under reduced motion. */
+.product-progress {
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.product-tick {
+  animation: product-tick-land 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes product-tick-land {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-progress {
+    transition: none;
+  }
+  .product-tick {
+    animation: none;
+  }
+}
+</style>

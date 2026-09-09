@@ -14,6 +14,7 @@
   "requires_bot": true,
   "listed": true,
   "hero": "/products/follower-bowling-hero.svg",
+  "ready_message": "Your chat can type !bowl right now. Switch on gobowl when you want the lane on screen.",
   "notes": [
     "Mods run the lane: !fbfirst sends the next person in line, !fbdraw picks one at random. Both are aliases for !list lane pop first and !list lane draw, and you can rename them under Settings, Bot aliases.",
     "The overlay is hidden until you switch on its gobowl control, so it can sit in OBS all stream and only show when you say so.",

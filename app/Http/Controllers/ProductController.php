@@ -136,6 +136,7 @@ class ProductController extends Controller
                     ->values()
                     ->all(),
                 'notes' => $manifest['notes'] ?? [],
+                'ready_message' => $manifest['ready_message'] ?? null,
             ],
             'installed' => $installed,
         ]);

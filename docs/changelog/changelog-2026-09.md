@@ -1,5 +1,25 @@
 # Changelog - September 2026
 
+## OL-2609-044 - September 9th, 2026 - feat(products): the verified badge on every product surface, and a green finished state on the product page
+
+Everywhere else in Overlabels the person did the work, so the design stays out of the way. A
+product is the opposite: the person pressed a button and followed a few lines, and the page that
+says "done" has to make that feel like it counted anyway. This is the one page that is allowed to
+celebrate, and it is a deliberate exception to the house restraint, for this surface only.
+
+- **One mark for "an official Overlabels product".** The verified badge from TDesign Icons, on
+  the listing heading, on every card, in the product page header and in the setup banner. Violet
+  by default, green once installed.
+- **The finished state says so loudly, once.** When every step is done the page shows a solid
+  green band with the badge large, "Everything is in place", one line in the streamer's world
+  ("Your chat can type !checkin right now, and the globe is waiting in OBS"), and one button per
+  overlay straight to its Add to OBS page. The header above it has gone green as well.
+- **The checklist became a progress piece.** A bar that fills as steps complete, fuchsia while
+  anything is left and green when nothing is, and a tick that lands on each finished line. Both
+  motions are gone under reduced motion, and nothing else on the page moves.
+- **Install and uninstall show the app's toast** on the product page, which used to swap a button
+  label and nothing else. That shipped just before this, as its own change.
+
 ## OL-2609-042 - September 9th, 2026 - feat(products): a setup banner on every app page reels a mid-install streamer back to the product
 
 Installing Follower Bowling on a fresh account showed the gap. The checklist sends you to a

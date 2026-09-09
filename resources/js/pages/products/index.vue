@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { Bot, Check, Ellipsis, Package } from '@lucide/vue';
+import { Bot, Check, Ellipsis } from '@lucide/vue';
 import EmptyState from '@/components/EmptyState.vue';
+import ProductBadge from '@/components/ProductBadge.vue';
 import type { AppPageProps } from '@/types';
 
 interface ProductSummary {
@@ -44,7 +45,7 @@ const isAuthed = computed(() => !!page.props.auth?.user);
 
       <header class="mb-8 flex flex-col gap-2">
         <div class="flex items-center gap-2">
-          <Package class="size-5 text-violet-400" />
+          <ProductBadge label="Official Overlabels products" class="size-6 text-violet-400" />
           <h1 class="text-2xl font-semibold text-foreground">Products</h1>
         </div>
         <p class="max-w-prose text-foreground">
@@ -60,7 +61,10 @@ const isAuthed = computed(() => !!page.props.auth?.user);
                inside the same card so the whole thing stays one link. -->
           <img v-if="product.hero" :src="product.hero" alt="" class="mb-4 block aspect-video w-full object-cover" />
           <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <h2 class="text-lg font-medium text-foreground">{{ product.name }}</h2>
+            <h2 class="inline-flex items-center gap-2 text-lg font-medium text-foreground">
+              <ProductBadge class="size-5 shrink-0" :class="product.installed ? 'text-green-500' : 'text-violet-400'" />
+              {{ product.name }}
+            </h2>
             <span v-if="product.installed" class="inline-flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
               <Check class="size-4" />
               Installed

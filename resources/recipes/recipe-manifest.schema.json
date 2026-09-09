@@ -95,6 +95,12 @@
       "description": "Site-relative path of a 16:9 hero image shown above the product on the /products listing. Lives under public/products/. Optional.",
       "pattern": "^/products/[a-z0-9_-]+\\.(svg|png|webp|jpg)$"
     },
+    "ready_message": {
+      "type": "string",
+      "description": "One line for the moment every step is done, in the streamer's world: what their chat can do right now. Shown once, large, under 'Everything is in place'.",
+      "minLength": 1,
+      "maxLength": 160
+    },
     "notes": {
       "type": "array",
       "description": "Short plain-text lines shown on the product page after install, for the optional things the installer does not decide for the streamer.",

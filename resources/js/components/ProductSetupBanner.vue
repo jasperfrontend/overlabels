@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowRight, Check, Package } from '@lucide/vue';
+import { ArrowRight, Check } from '@lucide/vue';
+import ProductBadge from '@/components/ProductBadge.vue';
 import type { AppPageProps } from '@/types';
 
 // Shown on every app page while a product install is mid-way. It exists to
@@ -34,7 +35,7 @@ function dismiss(): void {
   >
     <span class="inline-flex items-center gap-2">
       <Check v-if="setup.ready" class="size-4 shrink-0" />
-      <Package v-else class="size-4 shrink-0" />
+      <ProductBadge v-else class="size-4 shrink-0" />
       {{ summary }}
     </span>
     <span class="flex items-center gap-2">
