@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { Bot, Check, Package, Sparkles } from '@lucide/vue';
+import { Bot, Check, Ellipsis, Package } from '@lucide/vue';
 import EmptyState from '@/components/EmptyState.vue';
 import type { AppPageProps } from '@/types';
 
@@ -76,7 +76,7 @@ const isAuthed = computed(() => !!page.props.auth?.user);
              hole reads as unfinished; a grid with two cards and a labelled
              placeholder reads as a shelf with room on it. -->
         <li class="flex">
-          <EmptyState dashed class="w-full" :icon="Sparkles" message="More to come!" />
+          <EmptyState dashed class="w-full" :icon="Ellipsis" message="More to come!" />
         </li>
       </ul>
     </div>
