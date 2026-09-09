@@ -145,6 +145,25 @@ class ProductController extends Controller
         return redirect()->route('products.show', $slug);
     }
 
+    public function uninstall(Request $request, string $slug): RedirectResponse
+    {
+        $this->listedManifest($slug);
+        $instance = $this->instanceFor($request->user(), $slug);
+
+        // Nothing installed is nothing to undo; the page already shows that.
+        if (! $instance) {
+            return redirect()->route('products.show', $slug);
+        }
+
+        try {
+            $this->installer->uninstall($instance);
+        } catch (RuntimeException $e) {
+            return redirect()->route('products.show', $slug)->withErrors(['uninstall' => $e->getMessage()]);
+        }
+
+        return redirect()->route('products.show', $slug);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -207,6 +226,7 @@ class ProductController extends Controller
             'installed_at' => $instance->created_at->toIso8601String(),
             'subject' => $circuit['subjects'][0] ?? null,
             'overlays' => $overlays,
+            'removes' => $this->installer->removals($instance),
         ];
     }
 }

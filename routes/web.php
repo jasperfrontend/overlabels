@@ -694,6 +694,9 @@ Route::middleware('auth.redirect')->group(function () {
         ->middleware('throttle:kit-fork')
         ->name('products.install')
         ->where('slug', '[a-z][a-z0-9_]*');
+    Route::post('/products/{slug}/uninstall', [ProductController::class, 'uninstall'])
+        ->name('products.uninstall')
+        ->where('slug', '[a-z][a-z0-9_]*');
 
     // Trigger overview - read-only matrix; per-template editing lives on
     // the template edit page (Triggers tab).

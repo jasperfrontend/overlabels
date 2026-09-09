@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, TriangleAlert } from '@lucide/vue';
+import { Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, Trash2, TriangleAlert } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
+import { useConfirm } from '@/composables/useConfirm';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 type WireState = 'satisfied' | 'missing' | 'not_applicable';
 
@@ -42,6 +44,7 @@ interface Installed {
   installed_at: string;
   subject: Subject | null;
   overlays: { ref: string; name: string; slug: string; id: number }[];
+  removes: string[];
 }
 
 const props = defineProps<{
@@ -71,6 +74,24 @@ function integrationLabel(key: string): string {
 function install(): void {
   router.post(route('products.install', props.product.slug));
 }
+
+const { confirm } = useConfirm();
+const uninstallError = computed(() => (page.props.errors as Record<string, string> | undefined)?.uninstall);
+
+// The dialog names exactly what goes, from the install's own ledger. An
+// integration the streamer had before the install is not on the list and
+// is not touched.
+async function uninstall(): Promise<void> {
+  const removes = props.installed?.removes ?? [];
+  const lines = removes.length ? removes.map((line) => `- ${line}`).join('\n') : '- Nothing is left to remove; only the install record goes.';
+  const ok = await confirm({
+    title: `Uninstall ${props.product.name}?`,
+    message: `This removes:\n${lines}\n\nYou can install it again afterwards.`,
+    confirmLabel: 'Uninstall',
+  });
+  if (!ok) return;
+  router.post(route('products.uninstall', props.product.slug));
+}
 </script>
 
 <template>
@@ -79,6 +100,9 @@ function install(): void {
     <meta name="description" :content="product.description" />
   </Head>
 
+  <!-- This page renders outside AppLayout, where the app's single ConfirmDialog
+       normally lives, so the uninstall confirm needs its own mount. -->
+  <ConfirmDialog />
   <div class="min-h-screen bg-background text-foreground">
     <div class="mx-auto max-w-4xl p-4 lg:p-6">
       <div class="mb-6 flex items-center justify-between">
@@ -106,11 +130,15 @@ function install(): void {
             </p>
           </div>
 
-          <div class="flex shrink-0 flex-col items-end gap-1">
+          <div class="flex shrink-0 flex-col items-end gap-2">
             <span v-if="installed" class="inline-flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
               <Check class="size-4" />
               Installed
             </span>
+            <button v-if="installed" type="button" class="btn btn-sm btn-chill cursor-pointer" @click="uninstall">
+              <Trash2 class="mr-2 size-4" />
+              Uninstall
+            </button>
             <button v-else-if="isAuthed" type="button" class="btn btn-primary cursor-pointer" @click="install">
               <Download class="mr-2 size-4" />
               Install
@@ -125,6 +153,7 @@ function install(): void {
         <p class="max-w-prose text-foreground">{{ product.description }}</p>
 
         <p v-if="installError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ installError }}</p>
+        <p v-if="uninstallError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ uninstallError }}</p>
       </header>
 
       <!-- Installed: the checklist. Everything the installer did is a tick,

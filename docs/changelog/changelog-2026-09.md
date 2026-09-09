@@ -1,5 +1,24 @@
 # Changelog - September 2026
 
+## OL-2609-039 - September 9th, 2026 - feat(products): a product can be uninstalled from its page, from the install's own ledger
+
+The products entry below said uninstalling was by hand. It is a button now, and the reason it
+could be one quickly is that the install had been keeping the receipt all along: every row an
+install creates goes into the instance's `primitive_map` by id, which is what made renaming the
+aliases safe in the first place. Uninstall walks that ledger back.
+
+- **The dialog names what goes.** Overlay, list, commands, aliases, and the integration, each as
+  a line, read live from the ledger so a row the streamer already deleted by hand is not promised.
+  Ids, not names, so a renamed `!fbfirst` is still found.
+- **An integration is only disconnected if the install connected it.** The install now records
+  whether it created the connection or found one the streamer already had. Found means kept,
+  settings and all. Installs from before this change have no record, and those never disconnect,
+  which is the safe way round.
+- **An overlay in a Kit refuses the whole thing.** The kit pivot would block that delete anyway;
+  checking first means nothing else is half-removed. The page says which kit.
+- **Uninstall then install is the upgrade path.** An account that installed Follower Bowling
+  before it had the two mod aliases gets them that way.
+
 ## OL-2609-038 - September 9th, 2026 - feat(products): Chat Checkin and Follower Bowling are installable products, on a public /products page
 
 A kit is a bundle of overlays and alerts, and copying one is enough when that is all a thing

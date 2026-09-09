@@ -21,6 +21,7 @@ use App\Services\Bot\BotCounterService;
 use App\Services\External\ExternalControlService;
 use App\Services\External\ExternalServiceRegistry;
 use App\Services\HtmlSanitizationService;
+use App\Services\ImageUploadService;
 use App\Support\ListItems;
 use App\Support\OverlayMarkdown;
 use Illuminate\Support\Facades\DB;
@@ -49,6 +50,7 @@ class RecipeInstaller
         private readonly BotAliasValidator $aliasValidator,
         private readonly BotCommandValidator $commandValidator,
         private readonly BotCounterService $counters,
+        private readonly ImageUploadService $images,
     ) {}
 
     /**
@@ -191,7 +193,9 @@ class RecipeInstaller
             }
 
             foreach ($manifest['installs']['integrations'] ?? [] as $service) {
-                $this->connectIntegration($user, $service);
+                // Whether the install CREATED the connection or found one the
+                // streamer already had decides what uninstall may disconnect.
+                $primitiveMap['integrations'][$service] = ['created' => $this->connectIntegration($user, $service)];
             }
 
             foreach ($manifest['installs']['lists'] ?? [] as $list) {
@@ -350,7 +354,7 @@ class RecipeInstaller
      * re-enables a row the streamer had switched off, because the product
      * being installed does not work without it.
      */
-    private function connectIntegration(User $user, string $service): void
+    private function connectIntegration(User $user, string $service): bool
     {
         $driver = ExternalServiceRegistry::driver($service);
 
@@ -365,6 +369,97 @@ class RecipeInstaller
         }
 
         $this->controlService->provision($user, $driver);
+
+        return $integration->wasRecentlyCreated;
+    }
+
+    /**
+     * Everything an uninstall would remove, in the words the confirm dialog
+     * uses. Rows the streamer already deleted by hand are not listed, and
+     * an integration the install only found (not created) is never listed.
+     *
+     * @return list<string>
+     */
+    public function removals(RecipeInstance $instance): array
+    {
+        $map = $instance->primitive_map ?? [];
+        $lines = [];
+
+        foreach (OverlayTemplate::whereIn('id', array_values($map['overlays'] ?? []))->get() as $template) {
+            $lines[] = 'The overlay '.$template->name;
+        }
+        foreach (OptionSet::whereIn('id', array_values($map['lists'] ?? []))->get() as $list) {
+            $lines[] = 'The list '.($list->label ?: $list->slug).' and everything in it';
+        }
+        foreach (ListAppender::whereIn('id', array_values($map['list_appenders'] ?? []))->get() as $appender) {
+            $lines[] = 'The !'.$appender->command.' chat command';
+        }
+        foreach (BotAlias::whereIn('id', array_values($map['bot_aliases'] ?? []))->get() as $alias) {
+            $lines[] = 'The !'.$alias->command.' alias';
+        }
+        foreach (BotCommand::whereIn('id', array_values($map['bot_commands'] ?? []))->get() as $command) {
+            $lines[] = 'The !'.$command->command.' chat command';
+        }
+        foreach ($map['integrations'] ?? [] as $service => $info) {
+            if (($info['created'] ?? false) && ExternalIntegration::where('user_id', $instance->user_id)->where('service', $service)->exists()) {
+                $lines[] = 'The '.$service.' integration connection and its controls';
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Undo an install: delete every row the ledger in primitive_map names,
+     * then the instance, whose cascades take the picker primitives and the
+     * chat triggers. Rows the streamer already deleted are skipped. An
+     * overlay that sits in a Kit refuses the whole uninstall before anything
+     * is touched, because the kit pivot restricts the delete and a half-done
+     * uninstall is worse than none.
+     *
+     * An integration is disconnected only if the install created it. One
+     * the streamer had before the install is theirs and stays.
+     */
+    public function uninstall(RecipeInstance $instance): void
+    {
+        $map = $instance->primitive_map ?? [];
+        $user = $instance->user;
+
+        $overlays = OverlayTemplate::whereIn('id', array_values($map['overlays'] ?? []))->get();
+        foreach ($overlays as $template) {
+            $kit = $template->kits()->first();
+            if ($kit) {
+                throw new RuntimeException(
+                    "The overlay {$template->name} is in your kit {$kit->title}. Take it out of the kit, then uninstall again."
+                );
+            }
+        }
+
+        DB::transaction(function () use ($map, $user, $overlays, $instance) {
+            foreach ($overlays as $template) {
+                $screenshotUrl = $template->screenshot_url;
+                $template->delete();
+                $this->images->deleteByUrl($screenshotUrl);
+            }
+
+            BotCommand::whereIn('id', array_values($map['bot_commands'] ?? []))->delete();
+            BotAlias::whereIn('id', array_values($map['bot_aliases'] ?? []))->delete();
+            ListAppender::whereIn('id', array_values($map['list_appenders'] ?? []))->delete();
+            OptionSet::whereIn('id', array_values($map['lists'] ?? []))->delete();
+
+            foreach ($map['integrations'] ?? [] as $service => $info) {
+                if (! ($info['created'] ?? false)) {
+                    continue;
+                }
+                $integration = ExternalIntegration::where('user_id', $user->id)->where('service', $service)->first();
+                if ($integration) {
+                    $this->controlService->deprovision($user, $service);
+                    $integration->delete();
+                }
+            }
+
+            $instance->delete();
+        });
     }
 
     /**
