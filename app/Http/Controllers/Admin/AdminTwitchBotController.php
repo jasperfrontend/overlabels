@@ -16,7 +16,7 @@ class AdminTwitchBotController extends Controller
 {
     private const ACCOUNT = 'overlabels';
 
-    private const SCOPES = ['user:read:chat', 'user:write:chat', 'user:bot'];
+    private const SCOPES = ['user:read:chat', 'user:write:chat', 'user:bot', 'user:read:moderated_channels'];
 
     public function index(): Response
     {

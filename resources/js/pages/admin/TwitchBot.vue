@@ -73,6 +73,15 @@ const canConnect = computed(() => props.client_id_configured && props.listener_s
             No tokens stored yet. Click below to authenticate the @overlabels account via Twitch OAuth. You will be prompted to sign into Twitch -
             make sure you are signed in as @overlabels (use an incognito window if you are currently signed in as another Twitch account).
           </p>
+
+          <!-- The moderated-channels lookup behind the "bot is a mod" wire
+               needs this scope on the bot token. A token minted before it
+               was added keeps working for everything else; the wire simply
+               reads as not checked until the account is authenticated again. -->
+          <p v-if="props.connected && !props.scopes.includes('user:read:moderated_channels')" class="text-sm text-foreground">
+            This token predates <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">user:read:moderated_channels</code>, so the products
+            page cannot tell streamers whether the bot is a moderator in their chat yet. Authenticate again to add it.
+          </p>
         </CardContent>
       </Card>
 

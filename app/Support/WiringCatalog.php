@@ -117,6 +117,14 @@ final class WiringCatalog
             'route' => 'settings.bot.commands.index',
             'cta' => 'Check the bot',
         ],
+        'product.bot_modded' => [
+            'label' => 'The bot is a moderator in your chat',
+            'satisfied' => 'Twitch lists your channel among the ones the Overlabels bot moderates, so its replies get through.',
+            'missing' => 'The bot is switched on but it is not a moderator in your channel, and Twitch drops its replies without one. Type /mod overlabels in your own chat. This page rechecks within five minutes.',
+            'not_applicable' => 'Checked once the bot is switched on and the bot account has reported which channels it moderates.',
+            'route' => 'settings.integrations.index',
+            'cta' => 'How to mod the bot',
+        ],
         'product.integration' => [
             'label' => 'Its integration is connected',
             'satisfied' => 'The integration this product reads from is connected and enabled.',
@@ -192,7 +200,7 @@ final class WiringCatalog
             'label' => 'Products',
             'outcome' => 'Each product you installed has everything it needs to run.',
             'subject' => 'product',
-            'wires' => ['product.bot_on', 'product.bot_hears', 'product.integration', 'product.overlay', 'product.list', 'product.command', 'product.token'],
+            'wires' => ['product.bot_on', 'product.bot_hears', 'product.bot_modded', 'product.integration', 'product.overlay', 'product.list', 'product.command', 'product.token'],
         ],
     ];
 

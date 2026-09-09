@@ -196,7 +196,7 @@ it('installs the product on POST and shows the page in its installed state', fun
             ->component('products/show')
             ->where('installed.overlays.0.name', 'Chat Checkin globe')
             ->where('installed.subject.key', 'product:'.$instance->id)
-            ->has('installed.subject.wires', 7)
+            ->has('installed.subject.wires', 8)
         );
 
     $this->actingAs($user)

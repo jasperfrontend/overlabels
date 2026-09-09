@@ -17,6 +17,7 @@ use App\Models\RecipeInstance;
 use App\Models\StreamState;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
+use App\Services\BotModeratedChannels;
 use App\Services\BotPresence;
 use App\Services\BroadcastMeter;
 use Illuminate\Support\Carbon;
@@ -377,6 +378,18 @@ final class WiringFacts
             default => WiringCatalog::MISSING,
         };
 
+        // Mod status from the bot's own side of Twitch. Unknown (no token,
+        // no scope, Twitch not answering) is not a finding against the
+        // streamer, so it reads as not applicable with its own sentence.
+        $modded = match (true) {
+            $botOn !== WiringCatalog::SATISFIED => WiringCatalog::NOT_APPLICABLE,
+            default => match (app(BotModeratedChannels::class)->moderates((string) $user->twitch_id)) {
+                true => WiringCatalog::SATISFIED,
+                false => WiringCatalog::MISSING,
+                null => WiringCatalog::NOT_APPLICABLE,
+            },
+        };
+
         $integration = match (true) {
             $services === [] => WiringCatalog::NOT_APPLICABLE,
             ExternalIntegration::where('user_id', $user->id)
@@ -430,6 +443,7 @@ final class WiringFacts
             'states' => [
                 'product.bot_on' => $botOn,
                 'product.bot_hears' => $botHears,
+                'product.bot_modded' => $modded,
                 'product.integration' => $integration,
                 'product.overlay' => $overlay,
                 'product.list' => $list,

@@ -1,5 +1,23 @@
 # Changelog - September 2026
 
+## OL-2609-040 - September 9th, 2026 - feat(products): the product checklist says whether the bot is a moderator, from the bot's own side of Twitch
+
+The products entry two below listed this as the one checklist line that would help most and the
+one that needed every account to log in again. It needed neither. Bot replies work by mod status,
+and Twitch will tell the bot itself which channels it moderates: one call with the bot account's
+own token answers for every streamer at once.
+
+- **One scope, on the bot token, granted once by the admin.** `user:read:moderated_channels`
+  joins the three the @overlabels account already grants on the admin Twitch Bot page. No streamer
+  sees a reconnect banner. Until that page is used once more on prod, the line reads as not
+  checked, and the admin page says so.
+- **The wire never accuses.** No token, no scope, Twitch not answering: all of those are "not
+  checked", with their own sentence, never a red line telling a streamer to do something they may
+  have done. A real "no" says to type `/mod overlabels` and that the page rechecks within five
+  minutes, which is the cache.
+- **Presence and mod status stay two questions.** The bot reporting it can hear your chat is one
+  thing; Twitch delivering its replies is another, and now both are on the list.
+
 ## OL-2609-039 - September 9th, 2026 - feat(products): a product can be uninstalled from its page, from the install's own ledger
 
 The products entry below said uninstalling was by hand. It is a button now, and the reason it
