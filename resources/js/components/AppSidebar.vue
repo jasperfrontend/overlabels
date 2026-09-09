@@ -21,6 +21,7 @@ import {
   LogIn,
   MapPin,
   Newspaper,
+  Package,
   Pipette,
   Radio,
   ScrollText,
@@ -53,6 +54,7 @@ const mainNavItems = computed<NavItem[]>(() =>
         { title: 'Blocks', href: '/templates?filter=mine&type=block', icon: Blocks },
         { title: 'Lists', href: route('lists.index'), icon: ListIcon },
         { title: 'Kits', href: route('kits.index'), icon: LayoutGrid },
+        { title: 'Products', href: '/products', icon: Package },
       ]
     : [],
 );

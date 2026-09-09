@@ -17,3 +17,9 @@ resources/views/mail/*
 # Formatting a teaching example is not a style fix, it is a content edit, so
 # this is content and stays out - same reasoning as resources/views/mail above.
 resources/help/**
+
+# Recipe overlay documents: the exact format OverlayMarkdown::parse() reads
+# (double-quoted front matter, an unpadded controls table, one tag per line).
+# Prettier single-quotes the name and pads the table, and the parser then
+# finds no controls and no description. Same reasoning as resources/help.
+resources/recipes/**/*.md

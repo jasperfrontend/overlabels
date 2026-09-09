@@ -1,0 +1,27 @@
+{
+  "recipe_format_version": 1,
+  "slug": "chat_checkin",
+  "name": "Chat Checkin",
+  "version": 1,
+  "description": "Viewers type !checkin and their city lands as a pin on a spinning globe in your overlay, with a count of checkins and countries and who checked in from farthest away. Installs the globe overlay and connects the Chat Checkin integration. You switch the bot on and put the overlay in OBS.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "Initial release. The first listed product: an install that creates an overlay and connects an integration, with no picker primitives at all.",
+  "min_overlabels_version": 1,
+  "requires_integrations": ["checkin"],
+  "requires_bot": true,
+  "listed": true,
+  "hero": "/products/chat-checkin-hero.svg",
+  "notes": [
+    "Set a home place under Settings, Integrations, Chat Checkin and the HUD shows how far away the farthest checkin is. Without one, distances stay empty.",
+    "Pins clear at the start of every stream by default. The same page can keep them forever instead.",
+    "The overlay has two toggles, HUD and pin list, both off. Switch them on from the overlay's Controls tab."
+  ],
+  "max_instances_per_user": 1,
+  "installs": {
+    "overlays": [{ "ref": "globe", "file": "globe.md" }],
+    "integrations": ["checkin"]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "recipe_format_version": 1,
+  "slug": "follower_bowling",
+  "name": "Follower Bowling",
+  "version": 1,
+  "description": "Your ten newest followers get racked as pins. Chat types !bowl to get in line, a mod sends the next bowler down the lane, and the ball, the pins and the score play out on your overlay. Installs the lane overlay, the queue List and the !bowl command. You switch the bot on and put the overlay in OBS.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "Initial release. The second listed product, and the first to install a List and a chat command.",
+  "min_overlabels_version": 1,
+  "requires_integrations": [],
+  "requires_bot": true,
+  "listed": true,
+  "hero": "/products/follower-bowling-hero.svg",
+  "notes": [
+    "Mods run the lane: !fbfirst sends the next person in line, !fbdraw picks one at random. Both are aliases for !list lane pop first and !list lane draw, and you can rename them under Settings, Bot aliases.",
+    "The overlay is hidden until you switch on its gobowl control, so it can sit in OBS all stream and only show when you say so.",
+    "Every throw is decided by the moment the bowler was taken off the list. No randomness, no scripts."
+  ],
+  "max_instances_per_user": 1,
+  "installs": {
+    "overlays": [{ "ref": "lane", "file": "lane.md" }],
+    "lists": [{ "ref": "lane", "slug": "lane", "label": "Bowling lane" }],
+    "list_appenders": [
+      {
+        "command": "!bowl",
+        "list": "lane",
+        "value": "[[[bot:from_user]]]",
+        "permissions": "everyone",
+        "cooldown_seconds": 0,
+        "dedup_policy": "per_chatter"
+      }
+    ],
+    "bot_aliases": [
+      { "command": "!fbfirst", "target": "!list lane pop first", "permissions": "moderator" },
+      { "command": "!fbdraw", "target": "!list lane draw", "permissions": "moderator" }
+    ]
+  }
+}

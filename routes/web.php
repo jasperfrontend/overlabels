@@ -22,6 +22,7 @@ use App\Http\Controllers\OverlayControlController;
 use App\Http\Controllers\OverlayReportController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipeInstanceController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
@@ -270,6 +271,14 @@ Route::get('/overlay/{slug}', [OverlayTemplateController::class, 'serveAuthentic
 Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePublic'])
     ->name('overlay.public')
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
+
+// Products: listed recipes a streamer installs in one click. Reading about
+// one needs no account, which is why these two sit outside the auth group;
+// the install itself is in it, further down next to kits.
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{slug}', [ProductController::class, 'show'])
+    ->name('products.show')
+    ->where('slug', '[a-z][a-z0-9_]*');
 
 // A public kit as plain markdown: the kit, then every overlay in it described
 // exactly as its own `.md` describes it.
@@ -679,6 +688,12 @@ Route::middleware('auth.redirect')->group(function () {
         Route::post('/{kit}/fork', [KitController::class, 'fork'])
             ->middleware('throttle:kit-fork')->name('fork');
     });
+
+    // Installing a product. The read side is public, above.
+    Route::post('/products/{slug}/install', [ProductController::class, 'install'])
+        ->middleware('throttle:kit-fork')
+        ->name('products.install')
+        ->where('slug', '[a-z][a-z0-9_]*');
 
     // Trigger overview - read-only matrix; per-template editing lives on
     // the template edit page (Triggers tab).

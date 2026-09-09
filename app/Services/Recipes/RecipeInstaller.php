@@ -2,17 +2,29 @@
 
 namespace App\Services\Recipes;
 
+use App\Models\BotAlias;
 use App\Models\BotBuiltin;
 use App\Models\BotCommand;
+use App\Models\ExternalIntegration;
+use App\Models\ListAppender;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
+use App\Models\OverlayTemplate;
 use App\Models\Picker;
 use App\Models\Recipe;
 use App\Models\RecipeChatTrigger;
 use App\Models\RecipeInstance;
 use App\Models\User;
+use App\Services\Bot\BotAliasValidator;
+use App\Services\Bot\BotCommandValidator;
+use App\Services\Bot\BotCounterService;
+use App\Services\External\ExternalControlService;
+use App\Services\External\ExternalServiceRegistry;
+use App\Services\HtmlSanitizationService;
 use App\Support\ListItems;
+use App\Support\OverlayMarkdown;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -23,16 +35,20 @@ use RuntimeException;
  * in the manifest to produce per-user OptionSet / Picker / OverlayControl
  * rows wired together via the new recipe_instance_id FK.
  *
- * Triggers from the manifest are intentionally NOT materialised yet -
- * chat-command routing and the dashboard-button endpoint are step 4 work.
- * The installer reads triggers out of the manifest only when stored for
- * later use; today they live on the catalogue row and consumers ignore
- * them.
+ * The manifest's `installs` section is the product half: overlays are
+ * created from markdown documents shipped next to the manifest, through
+ * the same parser the import button uses, and integrations are connected
+ * the way their settings page connects them (row enabled, controls
+ * provisioned). Created overlay ids land in `primitive_map.overlays`.
  */
 class RecipeInstaller
 {
     public function __construct(
         private readonly RecipeManifestValidator $validator,
+        private readonly ExternalControlService $controlService,
+        private readonly BotAliasValidator $aliasValidator,
+        private readonly BotCommandValidator $commandValidator,
+        private readonly BotCounterService $counters,
     ) {}
 
     /**
@@ -85,7 +101,13 @@ class RecipeInstaller
 
         $this->assertNoChatCommandCollisions($recipe->manifest, $user);
 
-        return DB::transaction(function () use ($recipe, $user, $instanceSlug, $label) {
+        // Aliases and commands go through the same validators the settings
+        // forms use, BEFORE the transaction: a reply the form would refuse
+        // refuses the whole install, with nothing created.
+        $aliases = $this->validatedAliases($recipe->manifest, $user);
+        $commands = $this->validatedCommands($recipe->manifest, $user);
+
+        return DB::transaction(function () use ($recipe, $user, $instanceSlug, $label, $aliases, $commands) {
             $manifest = $recipe->manifest;
 
             $instance = RecipeInstance::create([
@@ -97,7 +119,7 @@ class RecipeInstaller
 
             $primitiveMap = ['option_sets' => [], 'pickers' => []];
 
-            foreach ($manifest['primitives']['option_sets'] as $os) {
+            foreach ($manifest['primitives']['option_sets'] ?? [] as $os) {
                 // The manifest authors plain string arrays; wrap them into
                 // item objects at install time. The manifest schema is
                 // unchanged.
@@ -116,7 +138,7 @@ class RecipeInstaller
                 $primitiveMap['option_sets'][$os['ref']] = $row->id;
             }
 
-            foreach ($manifest['primitives']['pickers'] as $p) {
+            foreach ($manifest['primitives']['pickers'] ?? [] as $p) {
                 $optionSetId = $primitiveMap['option_sets'][$p['option_set_ref']] ?? null;
                 if ($optionSetId === null) {
                     throw new RuntimeException(
@@ -136,7 +158,7 @@ class RecipeInstaller
                 $primitiveMap['pickers'][$p['ref']] = $row->id;
             }
 
-            foreach ($manifest['control_exports'] as $export) {
+            foreach ($manifest['control_exports'] ?? [] as $export) {
                 $field = $this->parseFromField($export['from']);
                 $type = match ($field) {
                     'result_at' => 'number',
@@ -161,6 +183,60 @@ class RecipeInstaller
                     'source' => null,
                     'source_managed' => true,
                 ]);
+            }
+
+            foreach ($manifest['installs']['overlays'] ?? [] as $overlay) {
+                $template = $this->installOverlay($recipe, $user, $overlay['file']);
+                $primitiveMap['overlays'][$overlay['ref']] = $template->id;
+            }
+
+            foreach ($manifest['installs']['integrations'] ?? [] as $service) {
+                $this->connectIntegration($user, $service);
+            }
+
+            foreach ($manifest['installs']['lists'] ?? [] as $list) {
+                $row = $this->installList($user, $instance, $list);
+                $primitiveMap['lists'][$list['ref']] = $row->id;
+            }
+
+            foreach ($manifest['installs']['list_appenders'] ?? [] as $appender) {
+                $listId = $primitiveMap['lists'][$appender['list']] ?? null;
+                if ($listId === null) {
+                    throw new RuntimeException(
+                        "List appender '{$appender['command']}' targets unknown list '{$appender['list']}'."
+                    );
+                }
+                $row = $this->installListAppender($user, $listId, $appender);
+                $primitiveMap['list_appenders'][ltrim($appender['command'], '!')] = $row->id;
+            }
+
+            foreach ($aliases as $alias) {
+                $row = BotAlias::create([
+                    'user_id' => $user->id,
+                    'command' => $alias['command'],
+                    'target_template' => $alias['target_template'],
+                    'permission_level' => $alias['permission_level'],
+                    'cooldown_seconds' => $alias['cooldown_seconds'],
+                    'enabled' => true,
+                    'hidden' => $alias['hidden'],
+                ]);
+                $primitiveMap['bot_aliases'][$alias['command']] = $row->id;
+            }
+
+            foreach ($commands as $command) {
+                $row = BotCommand::create([
+                    'user_id' => $user->id,
+                    'command' => $command['command'],
+                    'permission_level' => $command['permission_level'],
+                    'cooldown_seconds' => $command['cooldown_seconds'],
+                    'reply' => $command['reply'],
+                    'enabled' => true,
+                    'hidden' => $command['hidden'],
+                ]);
+                // Same convenience the settings form does: a counter: tag in
+                // the reply names a control, so make it exist now.
+                $this->counters->provision($user, $command['reply']);
+                $primitiveMap['bot_commands'][$command['command']] = $row->id;
             }
 
             $instance->update(['primitive_map' => $primitiveMap]);
@@ -197,6 +273,236 @@ class RecipeInstaller
     }
 
     /**
+     * One overlay from a markdown document next to the manifest, created the
+     * way the import button creates one: the same parser, the same sanitizer,
+     * the same control rows. The document is repo content, validated by test
+     * rather than per request, so a parse failure here is a broken product,
+     * not bad user input.
+     */
+    private function installOverlay(Recipe $recipe, User $user, string $file): OverlayTemplate
+    {
+        $path = self::directoryFor($recipe->slug).DIRECTORY_SEPARATOR.basename($file);
+        $markdown = is_file($path) ? file_get_contents($path) : false;
+
+        if ($markdown === false) {
+            throw new RuntimeException("Recipe '{$recipe->slug}' names an overlay file that does not exist: {$file}");
+        }
+
+        $doc = OverlayMarkdown::parse($markdown);
+
+        $fields = array_filter(
+            HtmlSanitizationService::sanitizeTemplateFields([
+                'name' => $doc['name'],
+                'description' => $doc['description'],
+                'head' => $doc['head'],
+                'html' => $doc['html'],
+                'css' => $doc['css'],
+                'type' => $doc['type'],
+                'tts_message' => $doc['tts_message'],
+                'chat_message' => $doc['chat_message'],
+                'tts_delay_ms' => $doc['tts_delay_ms'],
+                'alert_sound_url' => $doc['alert_sound_url'],
+            ]),
+            fn ($value) => $value !== null,
+        );
+        $fields['is_public'] = false;
+
+        $template = $user->overlayTemplates()->create($fields);
+        $template->template_tags = $template->extractTemplateTags($user->foreachCaps());
+        $template->save();
+
+        foreach ($doc['controls'] as $i => $item) {
+            // A list_writer points at control and List IDs on the author's
+            // account. They mean nothing here, same as in a fork or an import.
+            if ($item['type'] === 'list_writer') {
+                continue;
+            }
+
+            $config = $item['config'];
+            $value = $item['value'];
+
+            if ($item['type'] === 'expression') {
+                $expression = trim((string) ($config['expression'] ?? ''));
+                $config = [
+                    'expression' => $expression,
+                    'dependencies' => OverlayControl::extractExpressionDependencies($expression),
+                ];
+                $value = null;
+            }
+
+            OverlayControl::createForTemplate($template, $user, [
+                'key' => $item['key'],
+                'label' => $item['label'],
+                'description' => $item['description'],
+                'type' => $item['type'],
+                'value' => $value,
+                'config' => $config,
+                'sort_order' => $i,
+            ]);
+        }
+
+        return $template;
+    }
+
+    /**
+     * Connect an external service exactly as its settings page would: the
+     * integration row enabled, its controls provisioned. Idempotent, and it
+     * re-enables a row the streamer had switched off, because the product
+     * being installed does not work without it.
+     */
+    private function connectIntegration(User $user, string $service): void
+    {
+        $driver = ExternalServiceRegistry::driver($service);
+
+        $integration = ExternalIntegration::firstOrCreate(
+            ['user_id' => $user->id, 'service' => $service],
+            ['enabled' => true],
+        );
+
+        if (! $integration->enabled) {
+            $integration->enabled = true;
+            $integration->save();
+        }
+
+        $this->controlService->provision($user, $driver);
+    }
+
+    /**
+     * One user List, empty, exactly as /dashboard/lists creates one. The slug
+     * is the manifest's, not per instance: the overlay reads
+     * [[[c:list:<slug>]]] and mods type !list <slug>, so it has to be the
+     * name the product documents. A slug the account already uses is a
+     * refusal, not a merge - the existing list may hold anything.
+     *
+     * @param  array{ref: string, slug: string, label?: string}  $list
+     */
+    private function installList(User $user, RecipeInstance $instance, array $list): OptionSet
+    {
+        if (OptionSet::where('user_id', $user->id)->where('slug', $list['slug'])->exists()) {
+            throw new RuntimeException(
+                "You already have a list with the slug '{$list['slug']}'. Rename or delete it, then install again."
+            );
+        }
+
+        $built = ListItems::freshFromValues([], 1);
+
+        return OptionSet::create([
+            'user_id' => $user->id,
+            'recipe_instance_id' => $instance->id,
+            'slug' => $list['slug'],
+            'label' => $list['label'] ?? null,
+            'items' => $built['items'],
+            'next_item_id' => $built['next_id'],
+            'min_items' => 0,
+            'max_items' => null,
+            'user_editable' => true,
+        ]);
+    }
+
+    /**
+     * One chat command that appends to an installed list, exactly as the
+     * list's Appenders panel creates one. Command collisions were refused
+     * before the transaction opened, in assertNoChatCommandCollisions().
+     *
+     * @param  array<string, mixed>  $appender
+     */
+    private function installListAppender(User $user, int $listId, array $appender): ListAppender
+    {
+        return ListAppender::create([
+            'user_id' => $user->id,
+            'target_list_id' => $listId,
+            'command' => strtolower(ltrim((string) $appender['command'], '!')),
+            'permission_level' => $appender['permissions'] ?? 'everyone',
+            'cooldown_seconds' => $appender['cooldown_seconds'] ?? 0,
+            'value_template' => $appender['value'] ?? '[[[bot:from_user]]]',
+            'dedup_policy' => $appender['dedup_policy'] ?? ListAppender::DEDUP_PER_CHATTER,
+            'enabled' => true,
+        ]);
+    }
+
+    /**
+     * The manifest's bot aliases, run through BotAliasValidator exactly as
+     * the settings form runs its input, so the same refusals apply: a
+     * builtin's name, a command the account already has, a chain, a
+     * self-loop, a bad placeholder. The validator's field message becomes
+     * the install's refusal.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return list<array<string, mixed>>
+     */
+    private function validatedAliases(array $manifest, User $user): array
+    {
+        $aliases = [];
+
+        foreach ($manifest['installs']['bot_aliases'] ?? [] as $alias) {
+            try {
+                $aliases[] = $this->aliasValidator->validateAndNormalize($user->id, [
+                    'command' => $alias['command'],
+                    'target_template' => $alias['target'],
+                    'permission_level' => $alias['permissions'] ?? 'moderator',
+                    'cooldown_seconds' => $alias['cooldown_seconds'] ?? 0,
+                    'enabled' => true,
+                    'hidden' => $alias['hidden'] ?? false,
+                ]);
+            } catch (ValidationException $e) {
+                throw new RuntimeException("Alias {$alias['command']}: ".$this->firstMessage($e));
+            }
+        }
+
+        return $aliases;
+    }
+
+    /**
+     * The manifest's custom bot commands, through BotCommandValidator: the
+     * reply's blocks, tags, rand ranges and counter keys are checked the
+     * way the form checks them.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return list<array<string, mixed>>
+     */
+    private function validatedCommands(array $manifest, User $user): array
+    {
+        $commands = [];
+
+        foreach ($manifest['installs']['bot_commands'] ?? [] as $command) {
+            try {
+                $commands[] = $this->commandValidator->validateAndNormalize($user->id, [
+                    'command' => $command['command'],
+                    'reply' => $command['reply'],
+                    'permission_level' => $command['permissions'] ?? 'everyone',
+                    'cooldown_seconds' => $command['cooldown_seconds'] ?? 0,
+                    'enabled' => true,
+                    'hidden' => $command['hidden'] ?? false,
+                ]);
+            } catch (ValidationException $e) {
+                throw new RuntimeException("Command {$command['command']}: ".$this->firstMessage($e));
+            }
+        }
+
+        return $commands;
+    }
+
+    private function firstMessage(ValidationException $e): string
+    {
+        foreach ($e->errors() as $messages) {
+            foreach ($messages as $message) {
+                return (string) $message;
+            }
+        }
+
+        return $e->getMessage();
+    }
+
+    /**
+     * Where a recipe's shipped files live. Manifests are repo content under
+     * resources/recipes/<slug>/, and the overlay documents sit beside them.
+     */
+    public static function directoryFor(string $slug): string
+    {
+        return base_path('resources/recipes/'.$slug);
+    }
+
+    /**
      * Walks the manifest's chat_command triggers and refuses the install
      * if any of the command names collide with an existing BotBuiltin,
      * BotCommand, or RecipeChatTrigger for this user. Resolution at
@@ -218,8 +524,36 @@ class RecipeInstaller
                 $commands[] = $cmd;
             }
         }
+        // List appenders, aliases and custom commands are chat commands too,
+        // and all share the one namespace.
+        foreach (['list_appenders', 'bot_aliases', 'bot_commands'] as $section) {
+            foreach ($manifest['installs'][$section] ?? [] as $entry) {
+                $cmd = strtolower(ltrim((string) ($entry['command'] ?? ''), '!'));
+                if ($cmd !== '') {
+                    $commands[] = $cmd;
+                }
+            }
+        }
         if ($commands === []) {
             return;
+        }
+
+        $appenderCollision = ListAppender::where('user_id', $user->id)
+            ->whereIn('command', $commands)
+            ->value('command');
+        if ($appenderCollision) {
+            throw new RuntimeException(
+                "You already have a list append command '!{$appenderCollision}'. Rename or delete it, then install again."
+            );
+        }
+
+        $aliasCollision = BotAlias::where('user_id', $user->id)
+            ->whereIn('command', $commands)
+            ->value('command');
+        if ($aliasCollision) {
+            throw new RuntimeException(
+                "You already have an alias '!{$aliasCollision}'. Rename or delete it, then install again."
+            );
         }
 
         $builtinCollision = BotBuiltin::where('user_id', $user->id)

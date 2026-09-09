@@ -98,6 +98,65 @@ final class WiringCatalog
             'route' => 'settings.bot.commands.index',
             'cta' => 'Check the bot',
         ],
+        // A product's wires are the human half of its install: everything
+        // the installer could not do because it happens in Twitch, in OBS,
+        // or on a toggle that is the streamer's to flip.
+        'product.bot_on' => [
+            'label' => 'The bot is switched on',
+            'satisfied' => 'The Overlabels bot is switched on for your channel.',
+            'missing' => 'This product works through chat, and the bot is switched off for your channel, so nothing answers. Switch it on, then type /mod overlabels in your own chat.',
+            'not_applicable' => 'This product does not use the bot.',
+            'route' => 'settings.integrations.index',
+            'cta' => 'Switch the bot on',
+        ],
+        'product.bot_hears' => [
+            'label' => 'The bot can hear your chat',
+            'satisfied' => 'The bot reported your chat among the ones it is listening to.',
+            'missing' => 'The bot is switched on but it is not listening to your chat. Most often the bot account is banned or timed out in your channel.',
+            'not_applicable' => 'Checked once the bot is switched on and has reported in.',
+            'route' => 'settings.bot.commands.index',
+            'cta' => 'Check the bot',
+        ],
+        'product.integration' => [
+            'label' => 'Its integration is connected',
+            'satisfied' => 'The integration this product reads from is connected and enabled.',
+            'missing' => 'The integration this product reads from has been disconnected or disabled, so nothing reaches the overlay. Installing again reconnects it.',
+            'not_applicable' => 'This product has no integration to connect.',
+            'route' => 'settings.integrations.index',
+            'cta' => 'Open integrations',
+        ],
+        'product.overlay' => [
+            'label' => 'Its overlay still exists',
+            'satisfied' => 'The overlay the install created is on your account.',
+            'missing' => 'The overlay the install created has been deleted. Installing again creates it fresh.',
+            'not_applicable' => 'This product creates no overlay.',
+            'route' => 'templates.index',
+            'cta' => 'Open your overlays',
+        ],
+        'product.token' => [
+            'label' => 'You have an overlay link for OBS',
+            'satisfied' => 'You have an active overlay token, so the overlay can be added to OBS as a browser source.',
+            'missing' => 'You have no active overlay token yet. Create one, then add the overlay to OBS as a browser source using the link it gives you.',
+            'not_applicable' => '',
+            'route' => 'tokens.index',
+            'cta' => 'Create an overlay link',
+        ],
+        'product.list' => [
+            'label' => 'Its list still exists',
+            'satisfied' => 'The list the install created is on your account.',
+            'missing' => 'The list the install created has been deleted, so nothing can join it. Installing again creates it fresh.',
+            'not_applicable' => 'This product creates no list.',
+            'route' => 'lists.index',
+            'cta' => 'Open your lists',
+        ],
+        'product.command' => [
+            'label' => 'Its chat commands are on',
+            'satisfied' => 'Every chat command, alias and appender the install created is enabled.',
+            'missing' => 'A chat command the install created has been deleted or switched off. Installing again creates it fresh.',
+            'not_applicable' => 'This product creates no chat command.',
+            'route' => 'settings.bot.commands.index',
+            'cta' => 'Open your bot commands',
+        ],
     ];
 
     /**
@@ -128,6 +187,12 @@ final class WiringCatalog
             'outcome' => 'Each list is filled by something and shown somewhere.',
             'subject' => 'list',
             'wires' => ['lists.readable'],
+        ],
+        'products' => [
+            'label' => 'Products',
+            'outcome' => 'Each product you installed has everything it needs to run.',
+            'subject' => 'product',
+            'wires' => ['product.bot_on', 'product.bot_hears', 'product.integration', 'product.overlay', 'product.list', 'product.command', 'product.token'],
         ],
     ];
 

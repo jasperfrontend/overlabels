@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="Albert Sans, sans-serif">
+  <defs>
+    <clipPath id="frame"><rect x="0" y="0" width="1280" height="720" rx="8"></rect></clipPath>
+    <linearGradient id="base" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#2c074b"></stop>
+      <stop offset="0.7" stop-color="#120720"></stop>
+      <stop offset="1" stop-color="#120720"></stop>
+    </linearGradient>
+    <radialGradient id="spotA" gradientUnits="userSpaceOnUse" cx="998" cy="158" r="704" gradientTransform="translate(0 45) scale(1 0.716)">
+      <stop offset="0" stop-color="#650e8f" stop-opacity="0.7"></stop>
+      <stop offset="0.7" stop-color="#650e8f" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="spotB" gradientUnits="userSpaceOnUse" cx="230" cy="634" r="768" gradientTransform="translate(0 180) scale(1 0.656)">
+      <stop offset="0" stop-color="#5b21b6" stop-opacity="0.55"></stop>
+      <stop offset="0.7" stop-color="#5b21b6" stop-opacity="0"></stop>
+    </radialGradient>
+    <linearGradient id="lane" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1d0b30" stop-opacity="0.9"></stop>
+      <stop offset="0.6" stop-color="#650e8f" stop-opacity="0.4"></stop>
+      <stop offset="1" stop-color="#f472b6" stop-opacity="0.18"></stop>
+    </linearGradient>
+    <linearGradient id="gutter" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.2"></stop>
+      <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"></stop>
+    </linearGradient>
+    <linearGradient id="trail" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity="0"></stop>
+      <stop offset="1" stop-color="#3b82f6" stop-opacity="0.4"></stop>
+    </linearGradient>
+    <radialGradient id="ball" cx="0.34" cy="0.28" r="0.72">
+      <stop offset="0" stop-color="#60a5fa"></stop>
+      <stop offset="0.55" stop-color="#2563eb"></stop>
+      <stop offset="1" stop-color="#1e40af"></stop>
+    </radialGradient>
+    <radialGradient id="ballGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.45" stop-color="#3b82f6" stop-opacity="0.55"></stop>
+      <stop offset="1" stop-color="#3b82f6" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="pinGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.4" stop-color="#ec4899" stop-opacity="0.6"></stop>
+      <stop offset="1" stop-color="#ec4899" stop-opacity="0"></stop>
+    </radialGradient>
+    <pattern id="boards" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="40" height="1" fill="#a78bfa" fill-opacity="0.09"></rect>
+    </pattern>
+    <filter id="blur10" x="-30%" y="-120%" width="160%" height="340%"><feGaussianBlur stdDeviation="10"></feGaussianBlur></filter>
+    <filter id="blur45" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="45"></feGaussianBlur></filter>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect x="0" y="0" width="1280" height="720" fill="url(#base)"></rect>
+    <rect x="0" y="0" width="1280" height="720" fill="url(#spotB)"></rect>
+    <rect x="0" y="0" width="1280" height="720" fill="url(#spotA)"></rect>
+
+    <g transform="rotate(-15 660 350)">
+      <rect x="-120" y="150" width="1560" height="400" fill="#650e8f" fill-opacity="0.6" filter="url(#blur45)"></rect>
+      <rect x="-120" y="150" width="1560" height="400" fill="url(#lane)"></rect>
+      <rect x="-120" y="150" width="1560" height="400" fill="url(#boards)"></rect>
+      <rect x="-120" y="150" width="1560" height="1" fill="#a78bfa" fill-opacity="0.35"></rect>
+      <rect x="-120" y="549" width="1560" height="1" fill="#a78bfa" fill-opacity="0.35"></rect>
+      <rect x="-120" y="150" width="1560" height="14" fill="url(#gutter)"></rect>
+      <rect x="-120" y="536" width="1560" height="14" fill="url(#gutter)"></rect>
+
+      <ellipse cx="-30" cy="373" rx="150" ry="17" fill="url(#trail)" filter="url(#blur10)"></ellipse>
+      <circle cx="129" cy="373" r="95" fill="url(#ballGlow)"></circle>
+      <circle cx="129" cy="373" r="39" fill="url(#ball)"></circle>
+
+      <g font-size="22" font-weight="700" fill="#1d0b30" text-anchor="middle" dominant-baseline="central">
+        <circle cx="913" cy="350" r="70" fill="url(#pinGlow)"></circle>
+        <circle cx="913" cy="350" r="32" fill="#fafafa" stroke="#ec4899" stroke-width="2"></circle>
+        <text x="913" y="351">nyx</text>
+        <g fill="#fafafa" fill-opacity="0.92" stroke="#a78bfa" stroke-opacity="0.9" stroke-width="2">
+          <circle cx="997" cy="308" r="32"></circle><circle cx="997" cy="392" r="32"></circle>
+          <circle cx="1081" cy="266" r="32"></circle><circle cx="1081" cy="350" r="32"></circle><circle cx="1081" cy="434" r="32"></circle>
+          <circle cx="1165" cy="224" r="32"></circle><circle cx="1165" cy="308" r="32"></circle><circle cx="1165" cy="392" r="32"></circle><circle cx="1165" cy="476" r="32"></circle>
+        </g>
+        <text x="997" y="309">kip</text><text x="997" y="393">mo</text>
+        <text x="1081" y="267">ash</text><text x="1081" y="351">rue</text><text x="1081" y="435">jax</text>
+        <text x="1165" y="225">vee</text><text x="1165" y="309">tam</text><text x="1165" y="393">sol</text><text x="1165" y="477">dre</text>
+      </g>
+    </g>
+
+    <text x="64" y="91" font-family="JetBrains Mono, monospace" font-size="13" letter-spacing="2.6" fill="#f472b6">AN OVERLABELS.COM PRODUCT</text>
+    <g font-size="118" font-weight="800" letter-spacing="-5.3" fill="#fafafa">
+      <text x="64" y="199">FOLLOWER</text>
+      <text x="64" y="300">BOWLING</text>
+    </g>
+    <g font-size="22" font-weight="500" fill="#e9d5ff">
+      <text x="64" y="601">Your ten newest followers get racked as pins.</text>
+      <text x="64" y="642">Chat types !bowl. Mods run the lane.</text>
+    </g>
+    <rect x="0.5" y="0.5" width="1279" height="719" rx="8" fill="none" stroke="#5b3a8c" stroke-opacity="0.9"></rect>
+  </g>
+</svg>

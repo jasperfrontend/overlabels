@@ -7,8 +7,13 @@ use App\Models\BotAlias;
 use App\Models\BotCommand;
 use App\Models\EventTemplateMapping;
 use App\Models\ExternalEventTemplateMapping;
+use App\Models\ExternalIntegration;
 use App\Models\ListAppender;
 use App\Models\ListMetaCommand;
+use App\Models\OptionSet;
+use App\Models\OverlayAccessToken;
+use App\Models\OverlayTemplate;
+use App\Models\RecipeInstance;
 use App\Models\StreamState;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
@@ -43,6 +48,7 @@ final class WiringFacts
         return [
             'alerts' => [self::alertsSubject($user)],
             'bot' => [self::botSubject($user)],
+            'products' => self::productSubjects($user),
             'lists' => self::listSubjects($user),
         ];
     }
@@ -323,5 +329,113 @@ final class WiringFacts
         }
 
         return $subjects;
+    }
+
+    /**
+     * One subject per installed product: a recipe instance whose manifest
+     * has an `installs` section. Picker-only recipes (coin flip, dice) have
+     * no human half and are not products, so they do not appear.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private static function productSubjects(User $user): array
+    {
+        $instances = RecipeInstance::with('recipe')
+            ->where('user_id', $user->id)
+            ->orderBy('created_at')
+            ->get()
+            ->filter(fn (RecipeInstance $instance) => isset($instance->recipe?->manifest['installs']));
+
+        return $instances->map(fn (RecipeInstance $instance) => self::productSubject($instance))->values()->all();
+    }
+
+    /**
+     * The five wires of one installed product, read live. Public because the
+     * product page shows the same block for the product it is about.
+     *
+     * @return array<string, mixed>
+     */
+    public static function productSubject(RecipeInstance $instance): array
+    {
+        $user = $instance->user;
+        $manifest = $instance->recipe?->manifest ?? [];
+        $requiresBot = (bool) ($manifest['requires_bot'] ?? false);
+        $services = $manifest['installs']['integrations'] ?? [];
+        $overlayIds = array_values($instance->primitive_map['overlays'] ?? []);
+
+        $botOn = match (true) {
+            ! $requiresBot => WiringCatalog::NOT_APPLICABLE,
+            (bool) $user->bot_enabled => WiringCatalog::SATISFIED,
+            default => WiringCatalog::MISSING,
+        };
+
+        $presence = app(BotPresence::class);
+        $login = strtolower($user->twitch_data['login'] ?? '');
+        $botHears = match (true) {
+            $botOn !== WiringCatalog::SATISFIED, $login === '', ! $presence->reporting() => WiringCatalog::NOT_APPLICABLE,
+            $presence->present($login) => WiringCatalog::SATISFIED,
+            default => WiringCatalog::MISSING,
+        };
+
+        $integration = match (true) {
+            $services === [] => WiringCatalog::NOT_APPLICABLE,
+            ExternalIntegration::where('user_id', $user->id)
+                ->whereIn('service', $services)
+                ->where('enabled', true)
+                ->count() === count($services) => WiringCatalog::SATISFIED,
+            default => WiringCatalog::MISSING,
+        };
+
+        $overlay = match (true) {
+            ($manifest['installs']['overlays'] ?? []) === [] => WiringCatalog::NOT_APPLICABLE,
+            $overlayIds !== [] && OverlayTemplate::whereIn('id', $overlayIds)->count() === count($overlayIds) => WiringCatalog::SATISFIED,
+            default => WiringCatalog::MISSING,
+        };
+
+        $listIds = array_values($instance->primitive_map['lists'] ?? []);
+        $list = match (true) {
+            ($manifest['installs']['lists'] ?? []) === [] => WiringCatalog::NOT_APPLICABLE,
+            $listIds !== [] && OptionSet::whereIn('id', $listIds)->count() === count($listIds) => WiringCatalog::SATISFIED,
+            default => WiringCatalog::MISSING,
+        };
+
+        // Every chat command the install created, whichever table it lives
+        // in, must still exist and be switched on.
+        $appenderIds = array_values($instance->primitive_map['list_appenders'] ?? []);
+        $aliasIds = array_values($instance->primitive_map['bot_aliases'] ?? []);
+        $commandIds = array_values($instance->primitive_map['bot_commands'] ?? []);
+        $declaresCommands = ($manifest['installs']['list_appenders'] ?? []) !== []
+            || ($manifest['installs']['bot_aliases'] ?? []) !== []
+            || ($manifest['installs']['bot_commands'] ?? []) !== [];
+        $allOn = $appenderIds !== [] || $aliasIds !== [] || $commandIds !== [];
+        $allOn = $allOn
+            && ListAppender::whereIn('id', $appenderIds)->where('enabled', true)->count() === count($appenderIds)
+            && BotAlias::whereIn('id', $aliasIds)->where('enabled', true)->count() === count($aliasIds)
+            && BotCommand::whereIn('id', $commandIds)->where('enabled', true)->count() === count($commandIds);
+        $command = match (true) {
+            ! $declaresCommands => WiringCatalog::NOT_APPLICABLE,
+            $allOn => WiringCatalog::SATISFIED,
+            default => WiringCatalog::MISSING,
+        };
+
+        $token = OverlayAccessToken::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->exists() ? WiringCatalog::SATISFIED : WiringCatalog::MISSING;
+
+        return [
+            'key' => 'product:'.$instance->id,
+            'label' => $instance->label ?: ($manifest['name'] ?? $instance->instance_slug),
+            'context' => ['Installed '.$instance->created_at->diffForHumans()],
+            'states' => [
+                'product.bot_on' => $botOn,
+                'product.bot_hears' => $botHears,
+                'product.integration' => $integration,
+                'product.overlay' => $overlay,
+                'product.list' => $list,
+                'product.command' => $command,
+                'product.token' => $token,
+            ],
+        ];
     }
 }

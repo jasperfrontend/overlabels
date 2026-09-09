@@ -1,5 +1,44 @@
 # Changelog - September 2026
 
+## OL-2609-038 - September 9th, 2026 - feat(products): Chat Checkin and Follower Bowling are installable products, on a public /products page
+
+A kit is a bundle of overlays and alerts, and copying one is enough when that is all a thing
+needs. Chat Checkin was never that: to run it you connected an integration on a settings page,
+switched the bot on, modded it, added the globe tag to an overlay and put that overlay in OBS.
+Five steps in four places, and nothing telling you which ones you had done. Products are the
+answer to that: one page, one button, and the page keeps count of what is left.
+
+- **`/products` and `/products/{slug}` are public.** A visitor can read what a product does
+  without an account; the install button is where the login happens. Two are listed: Chat Checkin
+  and Follower Bowling. Dice and Coin Flip stay unlisted; they are picker recipes, not products.
+- **The install is the Recipes installer, taught six new things.** A manifest can now carry an
+  `installs` section: overlays, as markdown documents shipped next to the manifest in the exact
+  format the import button reads and the public `.md` endpoint emits; integrations, connected the
+  way their settings page connects them; Lists, created empty the way the dashboard creates one;
+  list appenders, the chat commands that fill them; Bot Aliases; and custom Bot Commands. The
+  aliases and commands go through the same validators the settings forms use, before anything is
+  created, so a reply the form would refuse refuses the install. Chat Checkin uses the first two,
+  Follower Bowling adds a list, `!bowl`, and two moderator aliases: `!fbfirst` for `!list lane
+  pop first` and `!fbdraw` for `!list lane draw`, both renameable afterwards. Nothing ships a
+  custom command yet. The picker sections became optional so a manifest can be a product without
+  being a dice roll.
+- **Follower Bowling refuses rather than merges.** Its list is called `lane` and its command is
+  `!bowl`, because the overlay reads `c:list:lane` and mods type `!list lane`. An account that
+  already has either, which is every account that built bowling by hand from the deep dive, gets
+  the refusal on the product page and nothing created. The followers cap the deep dive asked for is
+  gone: the overlay caps its own pins in the `foreach`.
+- **A product can carry a hero.** Both listing cards wear their Claude Design artwork from
+  `public/products/`, stripped of the content-credentials blob each arrived with. The checkin one
+  is 200 KB of dots, because the globe is drawn, not pasted.
+- **The catalogue is the repo.** `RecipeCatalog` reads `resources/recipes/*/manifest.json` and
+  writes the `recipes` row on demand, so prod, which runs no seeder, installs from the file.
+- **What is left for you is a wiring circuit.** Every installed product is a subject on
+  `/settings/wiring` with five wires: bot on, bot hearing you, integration connected, overlay still
+  there, an active overlay link for OBS. The product page shows the same five as a checklist with
+  ticks and buttons, and hides the ones that do not apply to that product.
+- **Not built:** a modded check. Twitch needs `moderation:read` for it, which means every account
+  re-authorizing once, and that is a separate decision. Uninstall is manual for now.
+
 ## OL-2609-036 - September 8th, 2026 - fix(dashboard): opening a post marks it seen on the What's New card, and the visit middleware is gone
 
 The card shipped on August 29th with two records per post: "visited", set by a middleware when the
