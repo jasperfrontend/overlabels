@@ -1,5 +1,23 @@
 # Changelog - September 2026
 
+## OL-2609-046 - September 9th, 2026 - fix(products): Follower Bowling racks ten pins for a channel with fewer followers
+
+A fresh account has one follower. Every channel the bowling lane had ever been tried on had
+hundreds, so nobody noticed that a new channel bowls at one pin, and that a strike, which needs
+ten knocked down, could never happen there. The one person a product exists for got the broken
+version.
+
+- **Stand-in pins fill the rack.** After the followers loop the lane keeps ten small gated blocks,
+  one per slot, each rendering a dimmed Twitch avatar with a question mark when the loop did not
+  fill that slot. They take the same fall flags, so the physics, the score and the strike are
+  untouched. A real follower takes a stand-in's slot the moment they arrive.
+- **The product page says what you are seeing.** A channel with fewer followers than pins gets one
+  line under the product: how many pins are real, and that the rest fill in as followers arrive.
+  Not a step, because a follower count is not a step anyone can take.
+- **The one caveat, reported not fixed:** the pins the loop renders are capped by the account's
+  followers foreach setting, default five. A channel above five followers now shows five real pins
+  and five stand-ins until it raises that cap. Those slots were simply empty before.
+
 ## OL-2609-044 - September 9th, 2026 - feat(products): the verified badge on every product surface, and a green finished state on the product page
 
 Everywhere else in Overlabels the person did the work, so the design stays out of the way. A

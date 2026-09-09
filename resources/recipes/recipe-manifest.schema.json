@@ -95,6 +95,12 @@
       "description": "Site-relative path of a 16:9 hero image shown above the product on the /products listing. Lives under public/products/. Optional.",
       "pattern": "^/products/[a-z0-9_-]+\\.(svg|png|webp|jpg)$"
     },
+    "follower_pins": {
+      "type": "integer",
+      "description": "How many of the channel's followers the product puts on screen at once (Follower Bowling racks ten). The product page then tells a streamer with fewer how many slots are filled and that the rest fill in as followers arrive. Optional.",
+      "minimum": 1,
+      "maximum": 100
+    },
     "ready_message": {
       "type": "string",
       "description": "One line for the moment every step is done, in the streamer's world: what their chat can do right now. Shown once, large, under 'Everything is in place'.",

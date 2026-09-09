@@ -10,6 +10,8 @@ use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
+use App\Services\TwitchApiService;
+use App\Support\OverlayMarkdown;
 use App\Support\WiringCatalog;
 use App\Support\WiringFacts;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -152,6 +154,33 @@ it('reports the list and command wires and leaves the integration wire out', fun
 
     OptionSet::find($instance->primitive_map['lists']['lane'])->delete();
     expect(WiringFacts::productSubject($instance->fresh())['states']['product.list'])->toBe(WiringCatalog::MISSING);
+});
+
+it('pads the rack with stand-in pins for the followers a channel does not have', function () {
+    $doc = OverlayMarkdown::parse(file_get_contents(base_path('resources/recipes/follower_bowling/lane.md')));
+
+    // One gated stand-in per slot, each carrying its slot's fall flag, so the
+    // physics and the strike logic see ten pins whatever the follower count.
+    foreach (range(0, 9) as $slot) {
+        expect($doc['html'])->toContain("[[[if:channel_followers.count <= {$slot}]]]")
+            ->and($doc['html'])->toContain("style=\"--fall: var(--pin{$slot})\"");
+    }
+    expect(substr_count($doc['html'], 'pin pin-filler'))->toBe(10)
+        ->and(substr_count($doc['html'], 'https://images.overlabels.com/overlays/twitch-avatar.png'))->toBe(10)
+        ->and($doc['css'])->toContain('.pin-filler img');
+});
+
+it('tells a small channel how many pins are real, and says nothing when Twitch cannot be asked', function () {
+    $user = bowlingUser(['access_token' => 'streamer-token']);
+    $instance = installProduct($user, 'follower_bowling');
+
+    $this->mock(TwitchApiService::class)
+        ->shouldReceive('getCachedFollowersTotal')->with('streamer-token', (string) $user->twitch_id)->andReturn(1, 25, null);
+
+    expect(WiringFacts::productSubject($instance)['context'])
+        ->toContain('Your rack has 1 of 10 pins from real followers; the rest are stand-ins until more followers arrive');
+    expect(collect(WiringFacts::productSubject($instance)['context'])->filter(fn ($line) => str_contains($line, 'pins')))->toBeEmpty();
+    expect(collect(WiringFacts::productSubject($instance)['context'])->filter(fn ($line) => str_contains($line, 'pins')))->toBeEmpty();
 });
 
 it('keeps the checkin product free of list and command wires', function () {

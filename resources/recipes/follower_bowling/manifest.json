@@ -14,6 +14,7 @@
   "requires_bot": true,
   "listed": true,
   "hero": "/products/follower-bowling-hero.svg",
+  "follower_pins": 10,
   "ready_message": "Your chat can type !bowl right now. Switch on gobowl when you want the lane on screen.",
   "notes": [
     "Mods run the lane: !fbfirst sends the next person in line, !fbdraw picks one at random. Both are aliases for !list lane pop first and !list lane draw, and you can rename them under Settings, Bot aliases.",

@@ -20,6 +20,7 @@ use App\Models\UserEventsubSubscription;
 use App\Services\BotModeratedChannels;
 use App\Services\BotPresence;
 use App\Services\BroadcastMeter;
+use App\Services\TwitchApiService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -436,10 +437,24 @@ final class WiringFacts
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
             ->exists() ? WiringCatalog::SATISFIED : WiringCatalog::MISSING;
 
+        $context = ['Installed '.$instance->created_at->diffForHumans()];
+
+        // A product that racks the channel's followers tells a small channel
+        // what it is looking at. Not a wire: a channel's follower count is not
+        // a step anyone can take. Twitch not answering means no sentence.
+        $pins = (int) ($manifest['follower_pins'] ?? 0);
+        if ($pins > 0 && $user->access_token) {
+            $total = app(TwitchApiService::class)->getCachedFollowersTotal($user->access_token, (string) $user->twitch_id);
+            if ($total !== null && $total < $pins) {
+                $filled = max(0, $total);
+                $context[] = "Your rack has {$filled} of {$pins} pins from real followers; the rest are stand-ins until more followers arrive";
+            }
+        }
+
         return [
             'key' => 'product:'.$instance->id,
             'label' => $instance->label ?: ($manifest['name'] ?? $instance->instance_slug),
-            'context' => ['Installed '.$instance->created_at->diffForHumans()],
+            'context' => $context,
             'states' => [
                 'product.bot_on' => $botOn,
                 'product.bot_hears' => $botHears,

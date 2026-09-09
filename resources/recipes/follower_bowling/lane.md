@@ -49,10 +49,20 @@ The markup.
     <div class="ball" id="ball"></div>
     <div class="pins" id="pins">
       [[[foreach:channel_followers as f]]][[[if:loop.index <= 9]]]<div class="pin" data-key="[[[f.user_id]]]" style="--fall: var(--pin[[[loop.index]]])"><img src="[[[f.user_profile_image_url]]]" alt=""><span>[[[f.user_name]]]</span></div>[[[endif]]][[[endforeach]]]
+      [[[if:channel_followers.count <= 0]]]<div class="pin pin-filler" style="--fall: var(--pin0)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
+      [[[if:channel_followers.count <= 1]]]<div class="pin pin-filler" style="--fall: var(--pin1)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
+      [[[if:channel_followers.count <= 2]]]<div class="pin pin-filler" style="--fall: var(--pin2)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
+      [[[if:channel_followers.count <= 3]]]<div class="pin pin-filler" style="--fall: var(--pin3)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
+      [[[if:channel_followers.count <= 4]]]<div class="pin pin-filler" style="--fall: var(--pin4)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
+      [[[if:channel_followers.count <= 5]]]<div class="pin pin-filler" style="--fall: var(--pin5)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
+      [[[if:channel_followers.count <= 6]]]<div class="pin pin-filler" style="--fall: var(--pin6)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
+      [[[if:channel_followers.count <= 7]]]<div class="pin pin-filler" style="--fall: var(--pin7)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
+      [[[if:channel_followers.count <= 8]]]<div class="pin pin-filler" style="--fall: var(--pin8)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
+      [[[if:channel_followers.count <= 9]]]<div class="pin pin-filler" style="--fall: var(--pin9)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
     </div>
     <div class="bowler" id="bowler">[[[c:list:lane:last_removed]]]</div>
     <div class="score" id="score">[[[if:c:bowl_knocked = 10]]]STRIKE![[[elseif:c:bowl_knocked = 0]]]GUTTER[[[else]]][[[c:bowl_knocked]]] PINS[[[endif]]]</div>
-    <div class="throw" id="throw">mods: !list lane pop first &middot; !list lane draw</div>
+    <div class="throw" id="throw">mods: !fbfirst &middot; !fbdraw</div>
   </div>
 </div>
 [[[endif]]]
@@ -271,6 +281,19 @@ body {
   padding: 1px 6px;
   border-radius: 999px;
   background: rgb(0 0 0 / 0.55);
+}
+
+/* A filler pin stands in for a follower the channel does not have yet, so a
+   new channel still bowls at ten. Same physics, dimmer face; a real follower
+   takes its slot the moment they arrive. */
+.pin-filler img {
+  border-style: dashed;
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+
+.pin-filler span {
+  opacity: 0.7;
 }
 
 .pin:nth-child(1) { left: 930px; top: 130px; }

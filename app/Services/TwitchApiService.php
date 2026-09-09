@@ -672,6 +672,22 @@ class TwitchApiService
         return $this->getCachedData('channel_followers', $userId, fn () => $this->getChannelFollowers($accessToken, $userId));
     }
 
+    /**
+     * The channel's follower total from the same 2-minute cache the overlay
+     * render uses, or null when Twitch cannot be asked right now. A product
+     * page uses it for one sentence; it must never make that page fail.
+     */
+    public function getCachedFollowersTotal(string $accessToken, string $userId): ?int
+    {
+        try {
+            $total = $this->getCachedChannelFollowers($accessToken, $userId)['total'] ?? null;
+        } catch (Throwable) {
+            return null;
+        }
+
+        return is_numeric($total) ? (int) $total : null;
+    }
+
     protected function getCachedSubscribers(string $accessToken, string $userId): array
     {
         return $this->getCachedData('subscribers', $userId, fn () => $this->getChannelSubscribers($accessToken, $userId));
