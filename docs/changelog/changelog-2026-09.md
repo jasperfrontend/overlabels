@@ -1,5 +1,25 @@
 # Changelog - September 2026
 
+## OL-2609-047 - September 9th, 2026 - feat(products): the Follower Bowling lane is redesigned to the hero's look
+
+The hero banner on the products page got a lane to match. Claude Design drew it from the banner
+and the Overlabels design system; this brings it onto the engine. A product's overlay is a file in
+the repo, so a redesign is that file changing, and every new install gets it.
+
+- **Same game, new skin.** The twenty expression controls and their formulas are untouched. The
+  ball still travels by the same number, the pins still fall by the same flags, the score still
+  reads STRIKE, GUTTER or a count. What changed is what those numbers paint: a deep violet lane
+  with pink gutters and a foul line, aiming arrows on the boards, an 84 px blue ball with finger
+  holes and a trail, and the ten pins in a rack whose apex points at the ball, the head pin with a
+  pink ring.
+- **The queue is a panel.** "In line" with the count, the first three numbered, the first in pink,
+  the `!bowl` chip and "Your ten newest followers are the pins" at the foot. The mods line is a
+  pink chip naming `!fbfirst` and `!fbdraw`.
+- **It is a strip now.** 1840 by 440 along the bottom of a 1080p canvas, the same footprint as
+  the design's 1920 by 560 artboard. The old lane was 260 px tall.
+- **Existing installs keep their lane** until they uninstall and install. There is no in-place
+  update of an installed product, and that stays a decision for another day.
+
 ## OL-2609-046 - September 9th, 2026 - fix(products): Follower Bowling racks ten pins for a channel with fewer followers
 
 A fresh account has one follower. Every channel the bowling lane had ever been tried on had

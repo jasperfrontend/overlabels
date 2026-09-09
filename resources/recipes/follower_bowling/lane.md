@@ -38,15 +38,27 @@ The markup.
 [[[if:c:gobowl]]]
 <div data-overlabels-engine="v1" class="lane-widget" id="lane-widget" data-last-throw="[[[c:list:lane:last_removed_at]]]">
   <div class="queue" id="queue">
-    <div class="queue-title">[[[c:list:lane:count]]] player[[[if:c:list:lane:count != 1]]]s[[[endif]]]</div>
-    [[[foreach:c:list:lane as p]]][[[if:loop.index <= 3]]]<div class="waiting">[[[p]]]</div>[[[endif]]][[[endforeach]]]
-    <div class="queue-hint">!bowl to join</div>
+    <div class="queue-head">
+      <span class="queue-label">In line</span>
+      <span class="queue-rule"></span>
+      <span class="queue-count">[[[c:list:lane:count]]]</span>
+    </div>
+    <div class="queue-list">
+      [[[foreach:c:list:lane as p]]][[[if:loop.index <= 2]]]<div class="waiting"><span class="waiting-index"></span><span class="waiting-name">[[[p]]]</span></div>[[[endif]]][[[endforeach]]]
+    </div>
+    <div class="queue-foot">
+      <div class="queue-join"><span class="chip chip-cmd">!bowl</span><span class="queue-join-text">to join</span></div>
+      <div class="queue-hint">Your ten newest followers are the pins.</div>
+    </div>
   </div>
   <div class="lane">
     <div class="gutter top"></div>
     <div class="gutter bottom"></div>
     <div class="foul"></div>
-    <div class="ball" id="ball"></div>
+    <div class="arrow arrow-big"></div>
+    <div class="arrow arrow-small"></div>
+    <div class="ball-trail"></div>
+    <div class="ball" id="ball"><span class="hole hole-1"></span><span class="hole hole-2"></span><span class="hole hole-3"></span></div>
     <div class="pins" id="pins">
       [[[foreach:channel_followers as f]]][[[if:loop.index <= 9]]]<div class="pin" data-key="[[[f.user_id]]]" style="--fall: var(--pin[[[loop.index]]])"><img src="[[[f.user_profile_image_url]]]" alt=""><span>[[[f.user_name]]]</span></div>[[[endif]]][[[endforeach]]]
       [[[if:channel_followers.count <= 0]]]<div class="pin pin-filler" style="--fall: var(--pin0)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
@@ -60,9 +72,9 @@ The markup.
       [[[if:channel_followers.count <= 8]]]<div class="pin pin-filler" style="--fall: var(--pin8)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
       [[[if:channel_followers.count <= 9]]]<div class="pin pin-filler" style="--fall: var(--pin9)"><img src="https://images.overlabels.com/overlays/twitch-avatar.png" alt=""><span>?</span></div>[[[endif]]]
     </div>
-    <div class="bowler" id="bowler">[[[c:list:lane:last_removed]]]</div>
+    <div class="bowler chip" id="bowler">[[[c:list:lane:last_removed]]]</div>
     <div class="score" id="score">[[[if:c:bowl_knocked = 10]]]STRIKE![[[elseif:c:bowl_knocked = 0]]]GUTTER[[[else]]][[[c:bowl_knocked]]] PINS[[[endif]]]</div>
-    <div class="throw" id="throw">mods: !fbfirst &middot; !fbdraw</div>
+    <div class="throw" id="throw"><span class="chip chip-mods">mods</span><span class="throw-cmds">!fbfirst &middot; !fbdraw</span></div>
   </div>
 </div>
 [[[endif]]]
@@ -93,11 +105,19 @@ The stylesheet. Tags work in here too.
   --pin8: [[[c:pin_8]]];
   --pin9: [[[c:pin_9]]];
 
-  --ink: #e8eef5;
-  --wood: #2a1f14;
-  --wood-line: rgb(255 220 170 / 0.08);
-  --edge: rgb(232 238 245 / 0.25);
-  --accent: #ffb347;
+  /* the hero's palette: deep violet field, pink accents, blue ball */
+  --ink: #fafafa;
+  --ink-soft: #e9d5ff;
+  --ink-muted: #9ca3af;
+  --violet: #a78bfa;
+  --violet-soft: #c4b5fd;
+  --pink: #f472b6;
+  --pink-deep: #ec4899;
+  --blue: #60a5fa;
+  --field: #1d0b30;
+  --field-deep: #2c074b;
+  --glow: #650e8f;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 * {
@@ -120,77 +140,170 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* the whole thing is a 1840 x 440 strip along the bottom of a 1080p canvas */
 .lane-widget {
   position: absolute;
-  left: 250px;
-  bottom: 40px;
-  width: 1420px;
-  height: 260px;
+  left: 40px;
+  bottom: 60px;
+  width: 1840px;
+  height: 440px;
   display: grid;
-  grid-template-columns: 200px 1200px;
-  gap: 20px;
+  grid-template-columns: 340px 1460px;
+  gap: 40px;
 }
 
-/* the waiting line, fed by the lane List */
+/* ---------- the queue panel, fed by the lane List ---------- */
 .queue {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  padding: 14px 16px;
-  border: 1px solid var(--edge);
-  border-radius: 16px;
-  background: rgb(6 16 25 / 0.75);
+  padding: 28px 26px;
+  border-radius: 8px;
+  border: 1px solid rgb(167 139 250 / 0.35);
+  background:
+    radial-gradient(120% 70% at 15% 0%, rgb(101 14 143 / 0.55), transparent 70%),
+    linear-gradient(180deg, var(--field-deep), var(--field));
+  box-shadow: 0 0 60px rgb(101 14 143 / 0.35);
 }
 
-.queue-title {
-  font-size: 11px;
-  letter-spacing: 0.14em;
+.queue-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.queue-label {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgb(232 238 245 / 0.6);
-  margin-bottom: 4px;
+  color: var(--pink);
+}
+
+.queue-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgb(244 114 182 / 0.5), rgb(167 139 250 / 0.05));
+}
+
+.queue-count {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--violet-soft);
+}
+
+.queue-list {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  counter-reset: place;
 }
 
 .waiting {
-  font-size: 16px;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  counter-increment: place;
+}
+
+.waiting-index::before {
+  content: counter(place);
+  display: inline-block;
+  width: 24px;
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--violet);
+}
+
+.waiting-name {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgb(232 238 245 / 0.08);
 }
 
-.waiting:first-of-type {
-  background: var(--accent);
-  color: #1a1206;
+/* first in line is next up: pink, bold, brighter */
+.waiting:first-child .waiting-index::before {
+  color: var(--pink);
+}
+
+.waiting:first-child .waiting-name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.queue-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.queue-join {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.queue-join-text {
+  font-size: 15px;
+  color: var(--violet-soft);
 }
 
 .queue-hint {
-  margin-top: 6px;
-  font-size: 12px;
-  color: rgb(232 238 245 / 0.55);
+  font-size: 14px;
+  color: var(--ink-muted);
 }
 
+.chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--mono);
+  border-radius: 9999px;
+}
+
+.chip-cmd {
+  font-size: 16px;
+  padding: 9px 16px;
+  color: var(--blue);
+  background: rgb(59 130 246 / 0.12);
+}
+
+.chip-mods {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 11px;
+  color: var(--pink);
+  background: rgb(236 72 153 / 0.12);
+}
+
+/* ---------- the lane ---------- */
 .lane {
   position: relative;
   width: 100%;
   height: 100%;
-  border: 1px solid var(--edge);
-  border-radius: 16px;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 58px, var(--wood-line) 58px 60px),
-    var(--wood);
+  border-radius: 8px;
   overflow: hidden;
+  border-top: 1px solid rgb(167 139 250 / 0.35);
+  border-bottom: 1px solid rgb(167 139 250 / 0.35);
+  box-shadow: 0 0 90px rgb(101 14 143 / 0.55);
+  background:
+    repeating-linear-gradient(180deg, rgb(167 139 250 / 0.09) 0 1px, transparent 1px 40px),
+    linear-gradient(90deg, rgb(29 11 48 / 0.95), rgb(101 14 143 / 0.42) 62%, rgb(244 114 182 / 0.2));
 }
 
 .gutter {
   position: absolute;
   left: 0;
   right: 0;
-  height: 18px;
-  background: rgb(0 0 0 / 0.45);
+  height: 14px;
+  background: linear-gradient(90deg, rgb(139 92 246 / 0.2), rgb(236 72 153 / 0.5));
+  box-shadow: inset 0 0 12px 0 rgb(236 72 153 / 0.5);
 }
 
 .gutter.top {
@@ -203,89 +316,152 @@ body {
 
 .foul {
   position: absolute;
-  left: 110px;
-  top: 18px;
-  bottom: 18px;
+  left: 108px;
+  top: 14px;
+  bottom: 14px;
   width: 2px;
-  background: rgb(232 238 245 / 0.18);
+  background: linear-gradient(180deg, rgb(244 114 182 / 0), rgb(244 114 182 / 0.55), rgb(244 114 182 / 0));
 }
 
-/* the ball: x along the lane, y into the gutter on a miss, spin from distance */
+/* aiming arrows on the boards */
+.arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.arrow-big {
+  left: 196px;
+  top: 184px;
+  border-top: 36px solid transparent;
+  border-bottom: 36px solid transparent;
+  border-left: 24px solid rgb(244 114 182 / 0.14);
+}
+
+.arrow-small {
+  left: 288px;
+  top: 202px;
+  border-top: 18px solid transparent;
+  border-bottom: 18px solid transparent;
+  border-left: 16px solid rgb(244 114 182 / 0.1);
+}
+
+/* the ball: x along the lane from the foul line to the rack, y into the
+   gutter on a miss, spin from distance, the pulse on release; the trail
+   follows it */
+.ball-trail {
+  position: absolute;
+  top: 204px;
+  left: calc(var(--bx) * 850px - 40px);
+  width: 300px;
+  height: 32px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgb(59 130 246 / 0), rgb(59 130 246 / 0.4));
+  filter: blur(10px);
+  opacity: calc(var(--on) * var(--bx));
+}
+
 .ball {
   position: absolute;
-  top: 50%;
-  left: calc(60px + var(--bx) * 840px);
-  width: 44px;
-  height: 44px;
-  margin: -22px 0 0 -22px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #4a6cff, #0b1a6e 70%);
-  box-shadow: 0 6px 14px rgb(0 0 0 / 0.6);
-  transform: translateY(calc(var(--by) * 100px)) rotate(calc(var(--bx) * 1080deg)) scale(var(--pulse));
+  top: 178px;
+  left: calc(224px + var(--bx) * 850px);
+  width: 84px;
+  height: 84px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 34% 28%, var(--blue), #2563eb 55%, #1e40af);
+  box-shadow:
+    0 0 50px rgb(59 130 246 / 0.6),
+    inset -7px -9px 18px rgb(0 0 0 / 0.45);
+  transform: translateY(calc(var(--by) * 140px)) rotate(calc(var(--bx) * 1080deg)) scale(var(--pulse));
   opacity: var(--on);
 }
 
-.ball::before,
-.ball::after {
-  content: "";
+.hole {
   position: absolute;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: rgb(0 0 0 / 0.7);
-  top: 14px;
-  left: 16px;
+  width: 11px;
+  height: 11px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 40% 35%, #163a80, #0b1d43);
+  box-shadow:
+    inset 0 2px 3px rgb(0 0 0 / 0.75),
+    0 1px 0 rgb(147 197 253 / 0.3);
 }
 
-.ball::after {
-  top: 20px;
-  left: 24px;
+.hole-1 {
+  left: 34px;
+  top: 22px;
+  width: 12px;
+  height: 12px;
 }
 
-/* pins: the 1-2-3-4 triangle, front pin first (index 0 is the head pin) */
+.hole-2 {
+  left: 22px;
+  top: 41px;
+}
+
+.hole-3 {
+  left: 44px;
+  top: 45px;
+}
+
+/* ---------- pins: apex left toward the ball, 1-2-3-4 columns ---------- */
 .pins {
   position: absolute;
-  inset: 0;
+  left: 1072px;
+  top: 66px;
+  width: 308px;
+  height: 308px;
 }
 
 .pin {
   position: absolute;
-  width: 56px;
-  display: grid;
-  justify-items: center;
-  gap: 3px;
-  margin-left: -28px;
-  margin-top: -30px;
+  width: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   transform-origin: 50% 90%;
   transform: rotate(calc(var(--fall) * 78deg)) translate(calc(var(--fall) * 26px), calc(var(--fall) * 8px));
   opacity: calc(1 - var(--fall) * 0.7);
-  transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.6, 1), opacity 0.35s;
+  transition:
+    transform 0.35s cubic-bezier(0.3, 1.4, 0.6, 1),
+    opacity 0.35s;
 }
 
 .pin img {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 2px solid var(--ink);
-  background: #10131a;
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  border: 2px solid rgb(167 139 250 / 0.9);
+  background: radial-gradient(circle at 35% 30%, #4c1d6f, var(--field));
+  box-shadow: 0 0 18px rgb(139 92 246 / 0.35);
   object-fit: cover;
 }
 
 .pin span {
-  font-size: 10px;
+  max-width: 92px;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--ink-soft);
   white-space: nowrap;
-  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: rgb(0 0 0 / 0.55);
 }
 
-/* A filler pin stands in for a follower the channel does not have yet, so a
-   new channel still bowls at ten. Same physics, dimmer face; a real follower
-   takes its slot the moment they arrive. */
+/* the head pin carries the pink ring */
+.pin:nth-child(1) img {
+  border-color: var(--pink-deep);
+  box-shadow: 0 0 28px rgb(236 72 153 / 0.6);
+}
+
+.pin:nth-child(1) span {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* a stand-in for a follower the channel does not have yet, so a new
+   channel still bowls at ten: same physics, dimmer face; a real follower
+   takes its slot the moment they arrive */
 .pin-filler img {
   border-style: dashed;
   opacity: 0.55;
@@ -296,53 +472,64 @@ body {
   opacity: 0.7;
 }
 
-.pin:nth-child(1) { left: 930px; top: 130px; }
-.pin:nth-child(2) { left: 995px; top: 90px; }
-.pin:nth-child(3) { left: 995px; top: 170px; }
-.pin:nth-child(4) { left: 1060px; top: 48px; }
-.pin:nth-child(5) { left: 1060px; top: 130px; }
-.pin:nth-child(6) { left: 1060px; top: 212px; }
-.pin:nth-child(7) { left: 1125px; top: 34px; }
-.pin:nth-child(8) { left: 1125px; top: 94px; }
-.pin:nth-child(9) { left: 1125px; top: 154px; }
-.pin:nth-child(10) { left: 1125px; top: 214px; }
+.pin:nth-child(1) { left: -18px; top: 126px; }
+.pin:nth-child(2) { left: 66px; top: 84px; }
+.pin:nth-child(3) { left: 66px; top: 168px; }
+.pin:nth-child(4) { left: 150px; top: 42px; }
+.pin:nth-child(5) { left: 150px; top: 126px; }
+.pin:nth-child(6) { left: 150px; top: 210px; }
+.pin:nth-child(7) { left: 234px; top: 0; }
+.pin:nth-child(8) { left: 234px; top: 84px; }
+.pin:nth-child(9) { left: 234px; top: 168px; }
+.pin:nth-child(10) { left: 234px; top: 252px; }
 
+/* ---------- who bowls, what happened, who runs the lane ---------- */
 .bowler {
   position: absolute;
-  left: 140px;
-  top: 30px;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  left: 32px;
+  top: 34px;
+  gap: 10px;
+  font-size: 14px;
+  padding: 8px 16px;
+  color: #f9a8d4;
+  background: rgb(29 11 48 / 0.72);
   opacity: var(--bowler);
   transition: opacity 0.25s;
 }
 
 .bowler::after {
-  content: " bowls";
-  font-weight: 400;
-  color: rgb(232 238 245 / 0.7);
+  content: "bowls";
+  color: var(--violet-soft);
 }
 
 .score {
   position: absolute;
-  left: 140px;
-  top: 58px;
-  font-size: 48px;
+  left: 32px;
+  top: 84px;
+  font-size: 56px;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-  text-shadow: 0 2px 12px rgb(0 0 0 / 0.6);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-shadow:
+    0 0 24px rgb(244 114 182 / 0.55),
+    0 2px 12px rgb(0 0 0 / 0.6);
   opacity: var(--show);
   transition: opacity 0.25s;
 }
 
 .throw {
   position: absolute;
-  left: 140px;
-  bottom: 30px;
-  font-size: 14px;
-  color: rgb(232 238 245 / 0.7);
+  left: 32px;
+  bottom: 34px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.throw-cmds {
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--violet-soft);
 }
 ```
 
