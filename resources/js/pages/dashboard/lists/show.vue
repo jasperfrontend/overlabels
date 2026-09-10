@@ -12,6 +12,7 @@ import type { BreadcrumbItem } from '@/types';
 import type { ToastType } from '@/types/lists';
 import { listItemValues, type ListItem } from '@/utils/listItems';
 import { useConfirm } from '@/composables/useConfirm';
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 
 const { confirm } = useConfirm();
 interface ListRow {
@@ -154,6 +155,16 @@ function saveAll() {
     },
   );
 }
+
+// Ctrl+S saves, same as the header chip. The shortcut registry is global and
+// keyed by id, so this lives alongside the overlay editor's own ctrl+s without
+// clashing - only the mounted page's entry is in the registry. The modifier is
+// what lets it fire while the caret is still in the items textarea.
+const { register } = useKeyboardShortcuts();
+
+onMounted(() => {
+  register('save-list', 'ctrl+s', () => saveAll(), { description: 'Save list' });
+});
 
 async function deleteActive() {
   if (list.value.recipe_instance_id !== null) {
