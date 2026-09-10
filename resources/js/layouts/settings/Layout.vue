@@ -20,6 +20,7 @@ const sidebarNavGroups: NavGroup[] = [
       { title: 'Integrations', href: '/settings/integrations' },
       { title: 'Bot commands', href: '/settings/bot/commands' },
       { title: 'Bot aliases', href: '/settings/bot/aliases' },
+      { title: 'Built-in commands', href: '/settings/bot/builtins' },
       { title: 'Triggers', href: '/settings/triggers' },
       { title: 'Wiring', href: '/settings/wiring' },
       { title: 'Usage', href: '/settings/usage' },

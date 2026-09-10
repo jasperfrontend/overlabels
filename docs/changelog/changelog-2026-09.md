@@ -1,5 +1,37 @@
 # Changelog - September 2026
 
+## OL-2609-062 - September 10th, 2026 - feat(bot): built-in commands get a switch and a tier, per channel
+
+Seventeen commands arrived with the bot, on by default, and there was no way to switch any of them
+off. `!followage` answered whoever asked, forever. That is not very Overlabels: the whole platform is
+built on not deciding for the streamer, and here we were shipping verbs into their chat with no door
+marked exit.
+
+The odd part is that the door was already built. `bot_builtins` has stored `enabled` and
+`permission_level` per channel per command since the registry existed, and the command map has always
+filtered on the first and published the second - the bot drops any command missing from the map by
+design. The columns were seeded at signup and then never written again by anything. So this is a page,
+not a feature: `/settings/bot/builtins`, a switch and a "who can use it" tier on each row, and the
+bot needed no change at all to honour either.
+
+Not everything on that page is yours to set, and the split is the same one source-managed controls
+have. A command a product installed - `!stack` and `!tower` from Chat Tower, `!checkin` from Chat
+Checkin - belongs to that product: its settings, cooldown included, live on the product's own page,
+and switching it off from an unrelated screen would quietly break the thing you just installed. And
+`!enablecontrols` / `!disablecontrols` stay on permanently, because they are the master switch for
+every chat control command: turn them off and there is no way back to controls from chat. Both kinds
+are shown rather than hidden - you should be able to confirm your product's commands are present -
+and both are refused by the controller rather than merely lacking a knob in the UI, the way
+`OverlayControl::setValue()` refuses a `source_managed` write.
+
+Ownership is declared once in `BotBuiltin::DEFAULTS` and stored nowhere. It is a property of the verb
+and identical for every account, so there is no column, no migration and no backfill, and adding a
+builtin stays the two edits it has always been.
+
+No cooldown here yet. Builtins are the one command type that has never had one, and they ride the
+bot's channel-wide window - which dropped to 1s today in OL-2609-061. If a per-command cooldown is
+ever wanted, it is an additive field on the map rather than anything structural.
+
 ## OL-2609-060 - September 10th, 2026 - fix(controls): Expression Controls resolve in bot replies, alert messages and the living title
 
 Drop `[[[c:subs_plus_1]]]` on an overlay and it renders 5. Drop the same tag in your Twitch

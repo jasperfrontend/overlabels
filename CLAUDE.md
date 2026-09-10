@@ -292,6 +292,24 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   the command works for exactly one of those two groups and is silent for the other - no error
   anywhere, because the bot's dispatcher drops commands missing from the map by design. This has
   happened twice (`!s` in April, `!followage` / `!accountage` in May).
+- **Every builtin declares an `owner` in that same DEFAULTS entry, and it is not a column** (Sept
+  10th 2026, OL-2609-062). `OWNER_USER` is the streamer's to switch off and re-tier on
+  `/settings/bot/builtins`; `OWNER_PRODUCT` (plus a `service` key - `!stack`/`!tower`/`!checkin`) and
+  `OWNER_PLATFORM` (`!enablecontrols`/`!disablecontrols`) are frozen, and
+  `BotBuiltinsController::update()` **403s them rather than the page merely hiding the knob** - the
+  same arrangement `OverlayControl::setValue()` has for `source_managed`. Ownership is a property of
+  the verb, identical for every account, so there is nothing to store and the two edits above stay
+  two. A product's command is frozen because disabling it breaks the product the streamer installed,
+  from a page that looks unrelated to it; the controls pair is frozen because it IS the master switch
+  for `controls_enabled`, so switching it off strands that switch with no chat route back.
+- **`enabled` and `permission_level` on `bot_builtins` were always honoured - there was just no UI.**
+  The command map has filtered `->where('enabled', true)` and published the tier since the registry
+  existed, so the page writes two columns the bot already read. That is why switching a builtin off
+  needed no bot change. A per-builtin cooldown WOULD: builtins are the one command type with no
+  `cooldown_seconds` anywhere and they ride the bot's channel-wide `COMMAND_COOLDOWN_MS`. Adding one
+  is an additive map field (bot learns to read it with the channel window as fallback, then the app
+  emits it), not a `type` change - two steps, not four. Not built; product commands take their pacing
+  from their integration's own setting instead.
 
 ## Living Twitch Title (Sept 2026)
 

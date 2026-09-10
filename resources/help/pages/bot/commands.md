@@ -4,7 +4,7 @@ description: Every chat command the @overlabels Twitch bot understands - control
 heading: Bot Commands
 lead: Every chat command the @overlabels Twitch bot understands - controls, !ol chat-admin meta-command, list operations, and built-ins.
 canonical: https://overlabels.com/help/bot/commands
-context: settings.bot.commands.*
+context: settings.bot.commands.*, settings.bot.builtins.*
 section: Bot & chat
 ---
 
@@ -228,3 +228,15 @@ VIP+, Sub+, or Everyone. Broadcaster can invoke anything.
 `Everyone` → `Sub+` → `VIP+` → `Mod+` → `Broadcaster`
 
 Founder counts as Sub+ on the @overlabels tier ladder. The bot doesn't model founder as a separate tier.
+
+## Switching built-ins off
+
+Every built-in command on this page has a switch and a tier of its own, per channel, on
+**Settings -> Built-in commands**. Don't want `!followage` in your chat? Switch it off and the bot
+stops answering it. Only want mods using `!ping`? Move its tier.
+
+Two kinds stay as they are. A command a product installed - `!stack` and `!tower` from Chat Tower,
+`!checkin` from Chat Checkin - belongs to that product and is set up on the product's own page,
+cooldown included; switching it off from somewhere else would quietly break the thing you installed.
+And `!enablecontrols` / `!disablecontrols` are always on, because they are the switch for every
+chat control command and turning them off would leave you no way to turn controls back on from chat.

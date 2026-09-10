@@ -3,6 +3,7 @@
 use App\Http\Controllers\Settings\AccountController;
 use App\Http\Controllers\Settings\BMACIntegrationController;
 use App\Http\Controllers\Settings\BotAliasesController;
+use App\Http\Controllers\Settings\BotBuiltinsController;
 use App\Http\Controllers\Settings\BotCommandsController;
 use App\Http\Controllers\Settings\BotSettingsController;
 use App\Http\Controllers\Settings\CheckinIntegrationController;
@@ -192,6 +193,13 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/{botCommand}/edit', [BotCommandsController::class, 'edit'])->name('edit');
         Route::patch('/{botCommand}', [BotCommandsController::class, 'update'])->name('update');
         Route::delete('/{botCommand}', [BotCommandsController::class, 'destroy'])->name('destroy');
+    });
+
+    // Built-in bot commands: the per-channel registry of which platform verbs are
+    // on and at what tier. A product's or the platform's own commands are frozen.
+    Route::prefix('settings/bot/builtins')->name('settings.bot.builtins.')->group(function () {
+        Route::get('/', [BotBuiltinsController::class, 'index'])->name('index');
+        Route::patch('/{botBuiltin}', [BotBuiltinsController::class, 'update'])->name('update');
     });
 
     // Bot Aliases: mod-only command rewrites that expand to another bot command before dispatch.
