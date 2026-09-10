@@ -3,7 +3,6 @@
 namespace App\Services\Bot;
 
 use App\Models\OptionSet;
-use App\Models\OverlayControl;
 use App\Models\User;
 use App\Services\Messages\PipeFormatter;
 use App\Services\TemplateDataMapperService;
@@ -11,6 +10,7 @@ use App\Services\TwitchApiService;
 use App\Services\TwitchTokenService;
 use App\Support\BotTags;
 use App\Support\Conditionals;
+use App\Support\ControlSnapshot;
 use App\Support\Dsl;
 use App\Support\ListItems;
 use Illuminate\Support\Facades\Log;
@@ -94,9 +94,16 @@ class BotCommandResolver
      *                        fetch and resolves bare tags to empty. Used by the
      *                        builder UI's live preview and the validator.
      */
-    public function resolve(User $user, string $reply, array $botContext = [], bool $dryRun = false): string
+    public function resolve(User $user, string $reply, array $botContext = [], bool $dryRun = false, ?ControlSnapshot $snapshot = null): string
     {
-        $controls = $this->loadControls($user);
+        // A random-mode control rolls fresh every time it is loaded, so two
+        // resolve() calls for the same chat command are two rolls: the value
+        // a list appender writes and the reply it speaks would disagree. A
+        // caller resolving more than one template for the same query takes
+        // ONE ControlSnapshot and passes it to every call. Lists are still
+        // read fresh per call on purpose - a success reply reports the
+        // post-append count. `rand:` tags roll per occurrence by design.
+        $controls = ($snapshot ?? ControlSnapshot::for($user))->values;
         $lists = $this->loadLists($user);
         $twitchTags = $dryRun ? [] : $this->loadTwitchTags($user);
         $locale = (string) ($user->preference('locale', 'en-US'));
@@ -185,26 +192,6 @@ class BotCommandResolver
         $value = $twitchTags[$key] ?? null;
 
         return $value === null ? '' : (string) $value;
-    }
-
-    /**
-     * @return array<string,string> Map of control identifier -> resolved value.
-     *                              Service-managed controls use broadcastKey
-     *                              (e.g. "kofi:donations_received"); own
-     *                              controls use the plain key.
-     */
-    private function loadControls(User $user): array
-    {
-        $rows = OverlayControl::where('user_id', $user->id)->get();
-        $map = [];
-        foreach ($rows as $control) {
-            $identifier = $control->source_managed
-                ? $control->broadcastKey()
-                : $control->key;
-            $map[$identifier] = $control->resolveDisplayValue();
-        }
-
-        return $map;
     }
 
     /**

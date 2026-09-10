@@ -60,11 +60,16 @@ class ExternalAlertService
             : null;
 
         try {
-            $ttsText = app(AlertMessageRenderer::class)->render(
+            // One snapshot for everything this alert says: TTS, chat and
+            // the payload the overlay renders. See renderAlert().
+            $rendered = app(AlertMessageRenderer::class)->renderAlert(
                 $user,
                 $template->tts_message,
+                $template->chat_message,
                 $data,
             );
+            $ttsText = $rendered['tts'];
+            $data = $rendered['data'];
 
             $alertId = (string) Str::uuid();
 
@@ -98,11 +103,7 @@ class ExternalAlertService
             // Optional bot chat message - queued for the bot to post. Gated on
             // bot_enabled so we never enqueue a message the bot can't deliver.
             if ($user->bot_enabled) {
-                $botMessage = app(AlertMessageRenderer::class)->renderMessage(
-                    $user,
-                    $template->chat_message,
-                    $data,
-                );
+                $botMessage = $rendered['chat'];
                 if ($botMessage !== null) {
                     BotChatOutbox::create([
                         'user_id' => $user->id,

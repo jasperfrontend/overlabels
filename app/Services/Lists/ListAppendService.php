@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Bot\BotCommandResolver;
 use App\Services\Bot\BotCommandService;
 use App\Support\BotChatGate;
+use App\Support\ControlSnapshot;
 use App\Support\ListItems;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -102,7 +103,13 @@ readonly class ListAppendService
                 return $this->handleArgsEmpty($appender, $user, $context);
             }
 
-            $resolvedValue = $this->resolver->resolve($user, $appender->value_template, $context);
+            // The value and the success reply are one query: both resolve
+            // against ONE control snapshot, so a random-mode control the
+            // reply speaks is the number the list holds. The reply itself
+            // is resolved after the append, so its list tags see the
+            // post-append state.
+            $snapshot = ControlSnapshot::for($user);
+            $resolvedValue = $this->resolver->resolve($user, $appender->value_template, $context, snapshot: $snapshot);
 
             $currentItems = $list->items ?? [];
 
@@ -142,12 +149,13 @@ readonly class ListAppendService
 
             ListUpdated::dispatchFor((string) $user->twitch_id, $list->fresh());
 
-            // Optional success reply. Resolved against the same context
-            // as value_template so it can reference [[[bot:from_user]]]
-            // / [[[bot:args]]] etc. Empty resolved string -> silent (no
-            // outbox row), matching the args_empty_reply contract.
+            // Optional success reply. Same context and same control
+            // snapshot as value_template; lists read fresh so
+            // [[[c:list:x:count]]] is the post-append count. Empty resolved
+            // string -> silent (no outbox row), matching the
+            // args_empty_reply contract.
             if ($appender->success_reply) {
-                $reply = $this->resolver->resolve($user, $appender->success_reply, $context);
+                $reply = $this->resolver->resolve($user, $appender->success_reply, $context, snapshot: $snapshot);
                 if ($reply !== '') {
                     BotChatOutbox::create([
                         'user_id' => $user->id,

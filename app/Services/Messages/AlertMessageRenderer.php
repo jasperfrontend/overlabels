@@ -5,6 +5,7 @@ namespace App\Services\Messages;
 use App\Models\OverlayControl;
 use App\Models\User;
 use App\Support\Conditionals;
+use App\Support\ControlSnapshot;
 use App\Support\Dsl;
 
 /**
@@ -82,7 +83,37 @@ class AlertMessageRenderer
     }
 
     /**
-     * Core single-pass tag substitution shared by render() and renderMessage().
+     * Render everything ONE alert says - its TTS line, its chat line and
+     * the payload the overlay renders its HTML from - against a single
+     * control snapshot. render() and renderMessage() each take their own
+     * snapshot, so an alert built from the pair would speak one roll of a
+     * random-mode control and post another; the overlay, which ticks its
+     * random controls locally, would show a third. This is the one door
+     * for a fired alert. The tts gate applies to `tts` only; `chat` is
+     * gated on bot_enabled at the dispatch site, as before.
+     *
+     * `data` is $templateData plus the snapshot's rolls under their `c:`
+     * keys. The overlay's alert merge prefers payload keys over its live
+     * data, so that is what makes the screen agree with the speaker.
+     *
+     * @param  array<string,mixed>  $templateData
+     * @return array{tts: ?string, chat: ?string, data: array<string,mixed>}
+     */
+    public function renderAlert(User $user, ?string $ttsMessage, ?string $chatMessage, array $templateData): array
+    {
+        $snapshot = ControlSnapshot::for($user);
+        $data = array_merge($templateData, $snapshot->rolls);
+
+        return [
+            'tts' => $this->isGatedOff($user) ? null : $this->resolveWith($user, $ttsMessage, $snapshot->values, $data),
+            'chat' => $this->resolveWith($user, $chatMessage, $snapshot->values, $data),
+            'data' => $data,
+        ];
+    }
+
+    /**
+     * Single-template entry: takes its own snapshot. Anything resolving more
+     * than one template for the same query goes through renderAlert().
      *
      * @param  array<string,mixed>  $templateData
      */
@@ -92,7 +123,21 @@ class AlertMessageRenderer
             return null;
         }
 
-        $controls = $this->loadControls($user);
+        return $this->resolveWith($user, $message, ControlSnapshot::for($user)->values, $templateData);
+    }
+
+    /**
+     * Core single-pass tag substitution. $controls is a snapshot's `values`.
+     *
+     * @param  array<string,string>  $controls
+     * @param  array<string,mixed>  $templateData
+     */
+    private function resolveWith(User $user, ?string $message, array $controls, array $templateData): ?string
+    {
+        if ($message === null || trim($message) === '') {
+            return null;
+        }
+
         $locale = (string) ($user->preference('locale', 'en-US'));
 
         $message = Conditionals::render(
@@ -146,23 +191,6 @@ class AlertMessageRenderer
         $value = $templateData[$key] ?? null;
 
         return $value === null ? '' : (string) $value;
-    }
-
-    /**
-     * @return array<string,string>
-     */
-    private function loadControls(User $user): array
-    {
-        $rows = OverlayControl::where('user_id', $user->id)->get();
-        $map = [];
-        foreach ($rows as $control) {
-            $identifier = $control->source_managed
-                ? $control->broadcastKey()
-                : $control->key;
-            $map[$identifier] = $control->resolveDisplayValue();
-        }
-
-        return $map;
     }
 
     /**
