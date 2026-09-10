@@ -45,6 +45,7 @@ import { type BadgeManifest, EMPTY_BADGE_MANIFEST, badgeImages, toBadgeManifest 
 import { toChatFilters } from '@/utils/chatFilters';
 import { withChatSlots } from '@/utils/chatSlots';
 import { DEFAULT_CHECKINS_WINDOW, clampCheckinsWindow, pinsFromData, toPin, upsertPin, withCheckinSlots } from '@/utils/checkinSlots';
+import { DEFAULT_TOWER_WINDOW, appendBlock, blocksFromData, clampTowerWindow, toBlock, withTowerSlots } from '@/utils/towerSlots';
 import { GLOBE_SELECTOR, replaceGlobeTags, sourceUsesGlobe } from '@/globe/globeTag';
 import type { GlobeInstance } from '@/globe/checkinGlobe';
 import type { ChatMessage } from '@/utils/ircParser';
@@ -123,6 +124,9 @@ const twitchChat = useTwitchChat();
 // client-enforced from the first broadcast onward (checkins.updated carries
 // one pin, never the window), so the cap has to live here.
 const checkinsWindow = ref<number>(DEFAULT_CHECKINS_WINDOW);
+// The tower window, same arrangement: tower.updated carries one block, so
+// the top-of-tower trim happens here.
+const towerWindow = ref<number>(DEFAULT_TOWER_WINDOW);
 
 /**
  * Does this template render chat at all?
@@ -888,6 +892,7 @@ onMounted(async () => {
     // The checkin window cap. clampCheckinsWindow falls back to the default
     // on NaN (an older server not shipping the field), never to 1.
     checkinsWindow.value = clampCheckinsWindow(json.checkins_window);
+    towerWindow.value = clampTowerWindow(json.tower_window);
 
     // Initialise user locale for pipe formatters
     userLocale.value = json.locale ?? 'en-US';
@@ -1039,6 +1044,11 @@ function setupAlertListener() {
   // go-live wipe for per-stream globes.
   channel.listen('.checkins.updated', handleCheckinsUpdated);
 
+  // Tower block deltas: one block per broadcast plus the authoritative
+  // height, appended to the tower.* keys client-side and trimmed from the
+  // bottom. `cleared` is a topple, the go-live wipe or the settings reset.
+  channel.listen('.tower.updated', handleTowerUpdated);
+
   // Listen for stream online/offline status
   channel.listen('.stream.status', (event: any) => {
     streamLive.value = Boolean(event.live);
@@ -1126,6 +1136,26 @@ function handleCheckinsUpdated(event: any) {
   }
 
   data.value = withCheckinSlots(data.value, pins, count);
+  bump();
+}
+
+function handleTowerUpdated(event: any) {
+  if (!data.value || typeof data.value !== 'object') return;
+
+  const height = Number.isFinite(Number(event?.height)) ? Number(event.height) : 0;
+
+  // Drop-then-write via withTowerSlots, so a topple cannot leave rubble
+  // behind. The culprit block on a topple is NOT appended: the tower it
+  // was placed on is gone, and the collapse itself is the template's to
+  // animate off the last_topple_* controls, whose `_at` moves with it.
+  let blocks = event?.cleared ? [] : blocksFromData(data.value);
+
+  const block = event?.cleared ? null : toBlock(event?.block);
+  if (block) {
+    blocks = appendBlock(blocks, block, towerWindow.value);
+  }
+
+  data.value = withTowerSlots(data.value, blocks, height);
   bump();
 }
 

@@ -158,6 +158,8 @@ const ITEM_FIELDS: Record<string, string[]> = {
   ],
   // Mirrors checkinSlots.ts.
   checkins: ['name', 'login', 'place', 'country', 'country_code', 'lat', 'lng', 'at', 'distance'],
+  // Mirrors towerSlots.ts.
+  tower: ['name', 'login', 'color', 'position', 'offset', 'x', 'record', 'at'],
   'event.choices': ['title', 'votes', 'channel_points_votes', 'bits_votes', 'id'],
   'event.outcomes': ['title', 'color', 'users', 'channel_points', 'id'],
   'event.top_contributions': ['user_name', 'user_login', 'user_id', 'type', 'total'],
@@ -174,6 +176,7 @@ const ITERABLES: Array<{ label: string; alias: string; info: string; alertOnly?:
   { label: 'goals', alias: 'goal', info: 'Your active channel goals.' },
   { label: 'chat', alias: 'msg', info: 'Live chat, oldest first. Opens a direct connection to Twitch chat.' },
   { label: 'checkins', alias: 'pin', info: 'Viewer !checkin pins, newest first. Needs the Chat Checkin integration.' },
+  { label: 'tower', alias: 'block', info: 'The Chat Tower blocks, bottom to top. Needs the Chat Tower integration.' },
   { label: 'event.choices', alias: 'choice', info: 'Poll choices from the event payload.', alertOnly: true },
   { label: 'event.outcomes', alias: 'outcome', info: 'Prediction outcomes from the event payload.', alertOnly: true },
   { label: 'event.top_contributions', alias: 'contribution', info: 'Hype train top contributions.', alertOnly: true },
@@ -417,6 +420,15 @@ const BASE_BANGS: BangSnippet[] = [
     label: '!checkins',
     info: 'Viewer !checkin pins, one line each with place and name.',
     template: ['[[[foreach:checkins as pin]]]', '  <div class="checkin-pin">[[[pin.name]]] - [[[pin.place]]]</div>', '[[[endforeach]]]'].join('\n'),
+  },
+  {
+    label: '!tower',
+    info: 'The Chat Tower blocks, bottom to top, each with its name and colour.',
+    template: [
+      '[[[foreach:tower as block]]]',
+      '  <div class="tower-block" style="background: [[[block.color ?? #9146ff]]]">[[[block.name]]]</div>',
+      '[[[endforeach]]]',
+    ].join('\n'),
   },
   {
     label: '!followed',
