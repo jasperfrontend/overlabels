@@ -287,6 +287,25 @@ class OverlayControl extends Model
     }
 
     /**
+     * How a `c:` tag NAMES this control - the identifier the overlay payload,
+     * ControlSnapshot and the expression data context all key on, so
+     * `[[[c:kofi:donations_received]]]` and `c.kofi.donations_received` find
+     * the same row.
+     *
+     * Deliberately NOT the same as broadcastKey(): that one namespaces by
+     * source and by recipe instance for every control, which is right for an
+     * event name and wrong for a tag - an own control is written `[[[c:goal]]]`,
+     * never `[[[c:user:goal]]]`. Only a service-managed control is namespaced
+     * here. The two coincide for every row that exists today, which is exactly
+     * why the difference is worth naming once instead of being retyped at each
+     * call site and getting it wrong at one of them.
+     */
+    public function tagIdentifier(): string
+    {
+        return $this->source_managed ? $this->broadcastKey() : $this->key;
+    }
+
+    /**
      * Single entry point to create a control for a template.
      * Validates key uniqueness within the template.
      */

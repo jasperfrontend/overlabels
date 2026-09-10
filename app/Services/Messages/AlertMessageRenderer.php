@@ -4,6 +4,7 @@ namespace App\Services\Messages;
 
 use App\Models\OverlayControl;
 use App\Models\User;
+use App\Services\Controls\ExpressionControlHydrator;
 use App\Support\Conditionals;
 use App\Support\ControlSnapshot;
 use App\Support\Dsl;
@@ -53,6 +54,10 @@ class AlertMessageRenderer
     }
 
     private const int MAX_RESOLVED_LENGTH = 500;
+
+    public function __construct(
+        private readonly ExpressionControlHydrator $expressions,
+    ) {}
 
     private const string GATE_KEY = 'tts';
 
@@ -137,6 +142,11 @@ class AlertMessageRenderer
         if ($message === null || trim($message) === '') {
             return null;
         }
+
+        // Expression Controls hold no value of their own - see
+        // ExpressionControlHydrator. Same call, same reason, as
+        // BotCommandResolver::resolve().
+        $controls = $this->expressions->hydrate($user, $controls, $message);
 
         $locale = (string) ($user->preference('locale', 'en-US'));
 

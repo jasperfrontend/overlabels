@@ -4,6 +4,7 @@ namespace App\Services\Bot;
 
 use App\Models\OptionSet;
 use App\Models\User;
+use App\Services\Controls\ExpressionControlHydrator;
 use App\Services\Messages\PipeFormatter;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
@@ -82,6 +83,7 @@ class BotCommandResolver
         private readonly TwitchApiService $twitch,
         private readonly TemplateDataMapperService $mapper,
         private readonly TwitchTokenService $tokens,
+        private readonly ExpressionControlHydrator $expressions,
     ) {}
 
     /**
@@ -106,6 +108,15 @@ class BotCommandResolver
         $controls = ($snapshot ?? ControlSnapshot::for($user))->values;
         $lists = $this->loadLists($user);
         $twitchTags = $dryRun ? [] : $this->loadTwitchTags($user);
+
+        // An Expression Control holds no value of its own; the row's scalar is
+        // a cache only a dependency change refreshes, and an expression over
+        // `t.` tags depends on no control at all, so it never refreshed. The
+        // hydrator evaluates the ones this reply actually names. Skipped under
+        // dryRun, which exists to avoid exactly this kind of fetch.
+        if (! $dryRun) {
+            $controls = $this->expressions->hydrate($user, $controls, $reply);
+        }
         $locale = (string) ($user->preference('locale', 'en-US'));
 
         $reply = Conditionals::render(

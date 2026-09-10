@@ -660,9 +660,7 @@ class OverlayTemplateController extends Controller
             foreach ($controls as $control) {
                 // Service-managed controls use namespaced broadcast key (e.g. "kofi:donations_received")
                 // matching the [[[c:kofi:donations_received]]] template tag syntax.
-                $dataKey = $control->source_managed
-                    ? 'c:'.$control->broadcastKey()
-                    : 'c:'.$control->key;
+                $dataKey = 'c:'.$control->tagIdentifier();
                 $controlData[$dataKey] = $control->resolveDisplayValue();
                 // Inject companion _at timestamp (Unix epoch seconds)
                 $controlData[$dataKey.'_at'] = $control->updated_at

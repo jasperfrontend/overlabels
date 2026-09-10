@@ -1,5 +1,35 @@
 # Changelog - September 2026
 
+## OL-2609-060 - September 10th, 2026 - fix(controls): Expression Controls resolve in bot replies, alert messages and the living title
+
+Drop `[[[c:subs_plus_1]]]` on an overlay and it renders 5. Drop the same tag in your Twitch
+title and it rendered nothing at all. Same for a bot command, same for an alert's TTS line.
+
+An Expression Control has no value of its own. The overlay evaluates the formula in the browser
+on every tick, so an overlay is always live. PHP never evaluated anything: it read a scalar
+cached on the row, and that cache was only ever refreshed when a control the expression
+*depends on* changed. An expression over Twitch data, `t.subscribers_total + 1`, depends on no
+control at all, so nothing ever refreshed it and the row kept the null it was created with.
+Forever. Even a control-dependent expression was null until its first dependency update.
+
+- **Evaluated on read now, through the same sidecar the overlay's evaluator shares.** Parity by
+  construction rather than by more triggers, which would still have left a freshly created
+  control empty until something happened to fire. No migration, and the save path, the cycle
+  detector and the dependency validator are untouched.
+- **It costs nothing when nothing needs it.** Only expression controls the template actually
+  names are evaluated, so a bot command mentioning none pays not even a query. If the sidecar is
+  unreachable the control keeps its stored value, which is exactly what these surfaces printed
+  before.
+- **The `_at` companions were missing server-side too**, and that one was quietly worse: the
+  engine does not error on an unknown identifier, it coerces, so `max(c.a_at, c.b_at)` returned
+  0 and got stored as the control's value. One local control read "seconds since the last spin"
+  and held 1788971784, which is seconds since 1970. The context now carries every control's
+  `_at`, same rule and same fallback as the overlay payload.
+- **One definition of how a `c:` tag names a control.** `OverlayControl::tagIdentifier()`. The
+  rule was written out longhand in four places and only the fourth had it wrong; a control with
+  a source but not service-managed would have resolved to 0 in silence, the same failure `_at`
+  had. No row in the wild had that shape, so nothing changes today.
+
 ## OL-2609-055 - September 10th, 2026 - feat(products): Chat Tower, the third product - the tower overlay, the manifest, the record list, the hero and the help page
 
 The product half of Chat Tower, on top of the integration (OL-2609-051), the bot verbs

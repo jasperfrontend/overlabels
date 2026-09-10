@@ -43,9 +43,7 @@ final readonly class ControlSnapshot
         $rolls = [];
 
         foreach (OverlayControl::where('user_id', $user->id)->get() as $control) {
-            $identifier = $control->source_managed
-                ? $control->broadcastKey()
-                : $control->key;
+            $identifier = $control->tagIdentifier();
             $value = $control->resolveDisplayValue();
             $values[$identifier] = $value;
 
