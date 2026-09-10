@@ -7,6 +7,7 @@ import {
   KOFI_PRESETS,
   GPS_PRESETS,
   CHECKIN_PRESETS,
+  TOWER_PRESETS,
   STREAMLABS_PRESETS,
   FOURTHWALL_PRESETS,
   BMAC_PRESETS,
@@ -15,7 +16,7 @@ import {
   type ServicePreset,
 } from '@/components/controls/controlPresets';
 import { fuzzyMatch, presetHaystack, serviceLabel } from '@/utils/services';
-import { Coffee, Gift, Globe2, HandHeart, MapPinned, Megaphone, ShoppingBag, Tv, type LucideIcon } from '@lucide/vue';
+import { Blocks, Coffee, Gift, Globe2, HandHeart, MapPinned, Megaphone, ShoppingBag, Tv, type LucideIcon } from '@lucide/vue';
 import Heading from '@/components/Heading.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -90,6 +91,14 @@ const sections: ServiceSection[] = [
       'Where your chat is: viewers pin themselves with !checkin City, CC. Counters for pins and countries, plus the latest pin and its distance from home.',
     icon: Globe2,
     presets: CHECKIN_PRESETS,
+  },
+  {
+    source: 'tower',
+    label: serviceLabel('tower'),
+    description:
+      'The tower your chat is stacking with !stack: how tall it stands, which way it leans, the all-time record, and who brought it down last.',
+    icon: Blocks,
+    presets: TOWER_PRESETS,
   },
 ];
 

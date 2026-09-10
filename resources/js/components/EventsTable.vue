@@ -307,6 +307,10 @@ const externalEventLabels: Record<string, Record<string, string>> = {
   checkin: {
     checkin: 'checkin',
   },
+  tower: {
+    stack: 'stacked a block',
+    topple: 'toppled the tower',
+  },
   kofi: {
     donation: 'Ko-fi tip',
     subscription: 'Ko-fi subscription',
@@ -385,7 +389,9 @@ function details(event: UnifiedEvent): string | null {
     if (amount) return currency ? `${amount} ${currency}` : amount;
     const tier = p['event.tier_name'] as string | undefined;
     if (tier) return tier;
-    // Checkin events carry a place instead of an amount.
+    // Checkin events carry a place instead of an amount; tower events a height.
+    const height = p['event.height'] as string | undefined;
+    if (height) return `${height} high`;
     return (p['event.place'] as string) || null;
   }
   const d = event.event_data ?? {};

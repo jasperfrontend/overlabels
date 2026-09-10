@@ -1,6 +1,6 @@
 # All integration controls
 
-Every control that an external integration provisions and keeps up to date, across all 7 services.
+Every control that an external integration provisions and keeps up to date, across all 8 services.
 
 ## The shared donation schema
 
@@ -26,6 +26,7 @@ Every donation integration provisions the same six keys, so a template written a
 | [[fourthwall]] | `c:fourthwall:` | 6 | nothing |
 | [[bmac]] | `c:bmac:` | 7 | `latest_support_type` |
 | [[throne]] | `c:throne:` | 9 | `latest_item_name`, `latest_item_thumbnail_url`, `latest_is_surprise_gift` |
+| [[tower]] | `c:tower:` | 11 | does not use the shared schema |
 
 ## Notes
 

@@ -189,6 +189,16 @@ test('connecting checkin provisions exactly the controls its driver declares', f
     expect(serviceControlKeys($user, 'checkin'))->toBe(expectedControlKeys('checkin'));
 });
 
+test('connecting tower provisions exactly the controls its driver declares', function () {
+    $user = connectingUser();
+
+    expect(serviceControlKeys($user, 'tower'))->toBe([]);
+
+    $this->post('/settings/integrations/tower', ['tower_lifetime' => 'per_stream'])->assertRedirect();
+
+    expect(serviceControlKeys($user, 'tower'))->toBe(expectedControlKeys('tower'));
+});
+
 /**
  * Structural guard: a sixth donation integration added with a hand-rolled
  * controller would reintroduce exactly the bug this file exists to prevent.
@@ -196,11 +206,11 @@ test('connecting checkin provisions exactly the controls its driver declares', f
  * inheritance rather than trusting the next author to remember.
  */
 test('every donation integration settings route is served by the shared base controller', function () {
-    // gps and checkin are first-party telemetry/chat integrations, not
+    // gps, checkin and tower are first-party telemetry/chat integrations, not
     // donations: no test mode, no seed, no shared donation keys. Their
     // provisioning is asserted separately below and in their own tests.
     $donationServices = collect(ExternalServiceRegistry::services())
-        ->reject(fn (string $s) => in_array($s, ['gps', 'checkin'], true))
+        ->reject(fn (string $s) => in_array($s, ['gps', 'checkin', 'tower'], true))
         ->values();
 
     expect($donationServices)->not->toBeEmpty();

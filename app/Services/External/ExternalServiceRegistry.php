@@ -10,6 +10,7 @@ use App\Services\External\Drivers\GpsServiceDriver;
 use App\Services\External\Drivers\KofiServiceDriver;
 use App\Services\External\Drivers\StreamLabsServiceDriver;
 use App\Services\External\Drivers\ThroneServiceDriver;
+use App\Services\External\Drivers\TowerServiceDriver;
 use InvalidArgumentException;
 
 class ExternalServiceRegistry
@@ -25,6 +26,7 @@ class ExternalServiceRegistry
         'fourthwall' => FourthwallServiceDriver::class,
         'bmac' => BMACServiceDriver::class,
         'throne' => ThroneServiceDriver::class,
+        'tower' => TowerServiceDriver::class,
     ];
 
     /**
@@ -72,6 +74,7 @@ class ExternalServiceRegistry
             'kofi' => 'Ko-fi',
             'gps' => 'Overlabels GPS',
             'checkin' => 'Chat Checkin',
+            'tower' => 'Chat Tower',
             'streamlabs' => 'Streamlabs',
             'throne' => 'Throne',
             'patreon' => 'Patreon',

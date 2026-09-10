@@ -11,6 +11,7 @@ use App\Models\OptionSet;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
+use App\Models\TowerBlock;
 use App\Models\User;
 use App\Models\UserFreesoundSound;
 use App\Services\HtmlSanitizationService;
@@ -860,6 +861,12 @@ class OverlayTemplateController extends Controller
                 $finalData = array_merge($finalData, $this->buildCheckinData($user));
             }
 
+            // Tower blocks, same gate: a foreach:tower block puts `tower.count`
+            // on the allowlist. Live updates arrive as tower.updated deltas.
+            if (in_array('tower.count', $allowlist, true)) {
+                $finalData = array_merge($finalData, $this->buildTowerData($user));
+            }
+
             // Preload compiled_css for every alert template owned by this user that
             // could fire on this static overlay (no targeting = fires everywhere, or
             // explicitly targets this overlay). Shipped once on overlay mount so the
@@ -958,6 +965,10 @@ class OverlayTemplateController extends Controller
                 // above is already sliced to this; the client re-applies it
                 // when trimming after each checkins.updated delta.
                 'checkins_window' => $user->foreachCaps()['checkins'],
+                // How many tower blocks the overlay keeps: the top of the
+                // tower, at the platform ceiling. Applied when trimming
+                // after each tower.updated delta.
+                'tower_window' => TowerBlock::WINDOW,
             ]);
 
         } catch (Exception $e) {
@@ -1004,6 +1015,27 @@ class OverlayTemplateController extends Controller
         foreach (Checkin::windowFor($user, $pinLifetime, $cap) as $i => $checkin) {
             foreach ($checkin->toPinArray() as $field => $value) {
                 $data["checkins.{$i}.{$field}"] = $value;
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * The tower iterable for the render payload: `tower.count` (the true
+     * height, uncapped) plus `tower.N.<field>` for the TOP TowerBlock::WINDOW
+     * blocks, index 0 = the lowest block in the window. The camera follows
+     * the top, so a taller tower only loses blocks nobody can see.
+     *
+     * @return array<string, string>
+     */
+    private function buildTowerData(User $user): array
+    {
+        $data = ['tower.count' => (string) TowerBlock::heightFor($user)];
+
+        foreach (TowerBlock::windowFor($user, TowerBlock::WINDOW) as $i => $block) {
+            foreach ($block->toBlockArray() as $field => $value) {
+                $data["tower.{$i}.{$field}"] = $value;
             }
         }
 

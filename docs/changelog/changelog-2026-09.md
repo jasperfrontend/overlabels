@@ -1,5 +1,39 @@
 # Changelog - September 2026
 
+## OL-2609-051 - September 10th, 2026 - feat(tower): the Chat Tower integration - !stack physics, blocks, controls, broadcast and settings page
+
+Product #3. Bowling is instant and individual, Checkin is permanent and individual; the gap was
+the collective game, one shared object the whole chat builds and is afraid of breaking. Chat
+Tower is that: `!stack` puts a block with your name and chat colour on top of one tower, every
+block lands a little off the one below, the tower sways more the taller it gets, and when the
+lean crosses a fall line it comes down and the viewer who placed the last block gets named. Chat
+delay is the game, not a bug: you correct a lean you saw four seconds ago, three other people do
+too, and now it leans the other way.
+
+This entry is the server half. The bot verbs, the overlay client and the product itself follow
+as their own entries.
+
+- **The physics is one file and one rule.** A block lands with an offset relative to the block
+  below: unaimed, up to a quarter block either side; aimed with `!stack left` or `right`, on
+  that side and further out than an unaimed block ever goes. That is placement, never a shove.
+  The lean is the top block's position, the sway grows with height, and the tower falls when
+  lean plus sway crosses the fall line. Deterministic from what the overlay draws; the only dice
+  is where a block lands.
+- **Only a standing tower counts.** The block that brings the tower down sets no record and
+  raises no counter; the tower has to stand after a block for it to count. The bot says "fell at
+  23" for the position of the block that did it.
+- **Nothing beyond being named.** A topple costs the viewer nothing. The record roster is the
+  all-time one, written into the `tower_record` List the product installs, one name per viewer
+  bottom to top, rewritten every time a standing tower passes the record.
+- **The bot is quiet by default.** A plain `!stack` gets no reply. It speaks on a topple, on the
+  first block past a real record, and at every tenth block. `!tower` answers height, lean, room
+  and record for the viewer who just arrived, offline too.
+- **Same shape as Checkin, on purpose.** An integration with a driver that refuses webhooks, a
+  settings page with the lifetime (per stream by default, the record carries over either way),
+  the cooldown and a reset button, eleven source-managed controls with three on the go-live
+  reset list, a one-block delta broadcast, and a `tower` iterable in the render payload capped
+  at the top fifty blocks because the camera follows the top.
+
 ## OL-2609-050 - September 9th, 2026 - fix(products): the URL hint can no longer switch product mode on after a flow has ended
 
 Found on a reinstall where everything was already set up. The finished product page's green

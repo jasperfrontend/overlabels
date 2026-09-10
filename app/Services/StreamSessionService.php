@@ -10,6 +10,8 @@ use App\Models\StreamSession;
 use App\Models\StreamState;
 use App\Models\User;
 use App\Services\External\Drivers\CheckinServiceDriver;
+use App\Services\External\Drivers\TowerServiceDriver;
+use App\Services\Tower\TowerService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -416,6 +418,7 @@ class StreamSessionService
         ]);
 
         $this->resetCheckinControls($user);
+        $this->resetTowerControls($user);
     }
 
     /**
@@ -469,6 +472,55 @@ class StreamSessionService
 
         if ($integration && (($integration->settings ?? [])['pin_lifetime'] ?? 'per_stream') === 'per_stream') {
             CheckinsUpdated::dispatch($user->twitch_id, null, 0, true);
+        }
+    }
+
+    /**
+     * The tower integration's per-stream counters, reset the same way as the
+     * checkin block above. The standing tower itself is NOT a per-stream
+     * counter: whether it survives go-live is the tower_lifetime setting, and
+     * in per_stream mode TowerService::clear() takes the blocks down, rests
+     * the standing controls without moving `_at`, and tells connected
+     * overlays to drop their blocks.
+     */
+    private function resetTowerControls(User $user): void
+    {
+        $controls = OverlayControl::where('user_id', $user->id)
+            ->where('source', 'tower')
+            ->whereIn('key', TowerServiceDriver::PER_STREAM_CONTROL_KEYS)
+            ->where('source_managed', true)
+            ->with('template')
+            ->get();
+
+        foreach ($controls as $control) {
+            $resetValue = (string) ($control->config['reset_value'] ?? 0);
+            $preservedAt = $control->resetValue($resetValue);
+
+            $overlaySlug = $control->overlay_template_id
+                ? ($control->template?->slug ?? '')
+                : '';
+
+            ControlValueUpdated::dispatch(
+                $overlaySlug,
+                $control->broadcastKey(),
+                $control->type,
+                $resetValue,
+                $user->twitch_id,
+                null,
+                null,
+                null,
+                false,
+                $preservedAt,
+            );
+        }
+
+        $integration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'tower')
+            ->where('enabled', true)
+            ->first();
+
+        if ($integration && (($integration->settings ?? [])['tower_lifetime'] ?? 'per_stream') === 'per_stream') {
+            app(TowerService::class)->clear($user);
         }
     }
 

@@ -304,4 +304,10 @@ export const PRESET_GROUPS: PresetGroupMeta[] = [
     blurb: 'Where your chat is: pins, countries and distances from !checkin.',
     requiresService: 'checkin',
   },
+  {
+    source: 'tower',
+    label: 'Chat Tower',
+    blurb: 'The tower chat is stacking with !stack: height, lean, record, who toppled it.',
+    requiresService: 'tower',
+  },
 ];

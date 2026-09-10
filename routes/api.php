@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\Internal\BotPresenceController;
 use App\Http\Controllers\Api\Internal\BotRecipeTriggerController;
 use App\Http\Controllers\Api\Internal\BotSettingsController;
 use App\Http\Controllers\Api\Internal\BotTokenController;
+use App\Http\Controllers\Api\Internal\BotTowerController;
 use App\Http\Controllers\Api\ListReadController;
 use App\Http\Controllers\ExpressionTagController;
 use App\Http\Controllers\OverlayBroadcastingAuthController;
@@ -242,6 +243,8 @@ Route::prefix('/internal/bot')
             Route::post('/chat-stats/{login}', [BotChatStatsController::class, 'store'])
                 ->where('login', '[a-z0-9_]+');
             Route::post('/checkin/{login}', [BotCheckinController::class, 'store'])
+                ->where('login', '[a-z0-9_]+');
+            Route::post('/tower/{login}', [BotTowerController::class, 'store'])
                 ->where('login', '[a-z0-9_]+');
             Route::get('/outbox', [BotOutboxController::class, 'index']);
             Route::post('/settings/{login}/controls-access', [BotSettingsController::class, 'setControlsAccess'])

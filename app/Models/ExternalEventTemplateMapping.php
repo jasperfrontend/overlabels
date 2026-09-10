@@ -118,6 +118,10 @@ class ExternalEventTemplateMapping extends Model
         'checkin' => [
             'checkin' => 'Chat Checkin',
         ],
+        'tower' => [
+            'stack' => 'Chat Tower Block Stacked',
+            'topple' => 'Chat Tower Toppled',
+        ],
         'fourthwall' => [
             'donation' => 'Fourthwall Donation',
         ],

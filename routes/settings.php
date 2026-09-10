@@ -14,6 +14,7 @@ use App\Http\Controllers\Settings\KofiIntegrationController;
 use App\Http\Controllers\Settings\LivingTitleController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Http\Controllers\Settings\ThroneIntegrationController;
+use App\Http\Controllers\Settings\TowerIntegrationController;
 use App\Http\Controllers\Settings\UsageController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -149,6 +150,11 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/checkin', [CheckinIntegrationController::class, 'show'])->name('checkin.show');
         Route::post('/checkin', [CheckinIntegrationController::class, 'save'])->name('checkin.save');
         Route::delete('/checkin', [CheckinIntegrationController::class, 'disconnect'])->name('checkin.disconnect');
+
+        Route::get('/tower', [TowerIntegrationController::class, 'show'])->name('tower.show');
+        Route::post('/tower', [TowerIntegrationController::class, 'save'])->name('tower.save');
+        Route::post('/tower/reset', [TowerIntegrationController::class, 'reset'])->name('tower.reset');
+        Route::delete('/tower', [TowerIntegrationController::class, 'disconnect'])->name('tower.disconnect');
 
         Route::get('/streamlabs', [StreamLabsIntegrationController::class, 'show'])->name('streamlabs.show');
         Route::get('/streamlabs/redirect', [StreamLabsIntegrationController::class, 'redirect'])->name('streamlabs.redirect');

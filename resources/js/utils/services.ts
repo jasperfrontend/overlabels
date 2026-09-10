@@ -15,6 +15,7 @@ export const SERVICE_LABELS: Record<string, string> = {
   throne: 'Throne',
   gps: 'Overlabels GPS',
   checkin: 'Chat Checkin',
+  tower: 'Chat Tower',
 };
 
 /**

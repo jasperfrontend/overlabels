@@ -79,7 +79,7 @@ class OverlayControl extends Model
     const array TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'expression', 'list_writer'];
 
     /** Service source names that cannot be used as control keys (to avoid namespace collisions in expressions). */
-    const array RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gps', 'alerts', 'fourthwall', 'bmac', 'throne', 'checkin'];
+    const array RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gps', 'alerts', 'fourthwall', 'bmac', 'throne', 'checkin', 'tower'];
 
     const string KEY_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 

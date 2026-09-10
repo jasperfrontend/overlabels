@@ -50,6 +50,7 @@ const SOURCE_STYLES: Record<string, { dot: string; border: string }> = {
   throne: { dot: 'text-rose-500', border: 'hover:border-l-rose-500' },
   gps: { dot: 'text-teal-500', border: 'hover:border-l-teal-500' },
   checkin: { dot: 'text-lime-500', border: 'hover:border-l-lime-500' },
+  tower: { dot: 'text-amber-500', border: 'hover:border-l-amber-500' },
 };
 
 const DEFAULT_STYLE = { dot: 'text-slate-500', border: 'hover:border-l-slate-500' };

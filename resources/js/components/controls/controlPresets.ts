@@ -118,6 +118,21 @@ export const CHECKIN_PRESETS: ServicePreset[] = [
   { key: 'latest_checkin_distance', label: 'Latest Checkin Distance', type: 'number' },
 ];
 
+// Mirrors TowerServiceDriver::getAutoProvisionedControls().
+export const TOWER_PRESETS: ServicePreset[] = [
+  { key: 'tower_height', label: 'Tower Height', type: 'number' },
+  { key: 'tower_lean', label: 'Tower Lean', type: 'number' },
+  { key: 'tower_room', label: 'Tower Room To Fall', type: 'number' },
+  { key: 'last_stacker_name', label: 'Last Stacker Name', type: 'text' },
+  { key: 'blocks_stacked_this_stream', label: 'Blocks Stacked This Stream', type: 'counter' },
+  { key: 'tallest_tower_this_stream', label: 'Tallest Tower This Stream', type: 'number' },
+  { key: 'topples_this_stream', label: 'Topples This Stream', type: 'counter' },
+  { key: 'last_topple_by', label: 'Last Topple By', type: 'text' },
+  { key: 'last_topple_height', label: 'Last Topple Height', type: 'number' },
+  { key: 'tallest_tower_record', label: 'Tallest Tower Record (all time)', type: 'number' },
+  { key: 'blocks_stacked_total', label: 'Blocks Stacked Total (all time)', type: 'number' },
+];
+
 export function getPresetsForSource(source: string): ServicePreset[] {
   switch (source) {
     case 'twitch':
@@ -130,6 +145,8 @@ export function getPresetsForSource(source: string): ServicePreset[] {
       return GPS_PRESETS;
     case 'checkin':
       return CHECKIN_PRESETS;
+    case 'tower':
+      return TOWER_PRESETS;
     case 'streamlabs':
       return STREAMLABS_PRESETS;
     case 'fourthwall':
