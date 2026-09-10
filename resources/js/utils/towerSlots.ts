@@ -78,11 +78,44 @@ export function appendBlock(blocks: TowerBlock[], block: TowerBlock, cap: number
 }
 
 /**
- * Drop every previous `tower.*` key, then write the given window and the
- * authoritative height. The drop-then-write is what stops a cleared or
- * shrunk window from resurrecting stale blocks (the withChatSlots rule).
+ * How long the fallen tower stays in the data after a topple, so a template
+ * can bring the blocks down (a CSS transition keyed on `tower.falling`)
+ * before they vanish. Long enough for a tumble, short enough that the next
+ * `!stack` never waits on it (a new block arriving inside the hold clears
+ * the rubble first).
  */
-export function withTowerSlots(data: Record<string, unknown>, blocks: TowerBlock[], height: number): Record<string, unknown> {
+export const TOPPLE_HOLD_MS = 3000;
+
+/**
+ * The extra `tower.*` slots a topple writes next to the window: who placed
+ * the last block, how tall it was, and `falling` = '1' while the hold runs.
+ */
+export function toppleSlots(toppled: unknown, falling: boolean): Record<string, string> {
+  const source = toppled && typeof toppled === 'object' ? (toppled as Record<string, unknown>) : {};
+  const text = (value: unknown): string => (typeof value === 'string' ? value : value == null ? '' : String(value));
+
+  return {
+    toppled_by: text(source.by),
+    toppled_login: text(source.login),
+    toppled_height: text(source.height),
+    toppled_record: source.record_tower ? '1' : '',
+    falling: falling ? '1' : '',
+  };
+}
+
+/**
+ * Drop every previous `tower.*` key, then write the given window, the
+ * authoritative height and any extra slots. The drop-then-write is what
+ * stops a cleared or shrunk window from resurrecting stale blocks (the
+ * withChatSlots rule), and it is also why the topple slots have to be
+ * passed back in on every write that should keep them.
+ */
+export function withTowerSlots(
+  data: Record<string, unknown>,
+  blocks: TowerBlock[],
+  height: number,
+  extras: Record<string, string> = {},
+): Record<string, unknown> {
   const next: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     if (!key.startsWith(TOWER_SLOT_PREFIX)) {
@@ -96,6 +129,19 @@ export function withTowerSlots(data: Record<string, unknown>, blocks: TowerBlock
       next[`${TOWER_SLOT_PREFIX}${i}.${field}`] = block[field];
     }
   });
+  for (const [key, value] of Object.entries(extras)) {
+    next[`${TOWER_SLOT_PREFIX}${key}`] = value;
+  }
 
   return next;
+}
+
+/** The topple slots currently in the data, so a later write can carry them forward. */
+export function toppleSlotsFromData(data: Record<string, unknown>): Record<string, string> {
+  const keep: Record<string, string> = {};
+  for (const key of ['toppled_by', 'toppled_login', 'toppled_height', 'toppled_record']) {
+    const value = data[`${TOWER_SLOT_PREFIX}${key}`];
+    if (typeof value === 'string' && value !== '') keep[key] = value;
+  }
+  return keep;
 }

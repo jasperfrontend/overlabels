@@ -45,7 +45,17 @@ import { type BadgeManifest, EMPTY_BADGE_MANIFEST, badgeImages, toBadgeManifest 
 import { toChatFilters } from '@/utils/chatFilters';
 import { withChatSlots } from '@/utils/chatSlots';
 import { DEFAULT_CHECKINS_WINDOW, clampCheckinsWindow, pinsFromData, toPin, upsertPin, withCheckinSlots } from '@/utils/checkinSlots';
-import { DEFAULT_TOWER_WINDOW, appendBlock, blocksFromData, clampTowerWindow, toBlock, withTowerSlots } from '@/utils/towerSlots';
+import {
+  DEFAULT_TOWER_WINDOW,
+  TOPPLE_HOLD_MS,
+  appendBlock,
+  blocksFromData,
+  clampTowerWindow,
+  toBlock,
+  toppleSlots,
+  toppleSlotsFromData,
+  withTowerSlots,
+} from '@/utils/towerSlots';
 import { GLOBE_SELECTOR, replaceGlobeTags, sourceUsesGlobe } from '@/globe/globeTag';
 import type { GlobeInstance } from '@/globe/checkinGlobe';
 import type { ChatMessage } from '@/utils/ircParser';
@@ -1139,15 +1149,45 @@ function handleCheckinsUpdated(event: any) {
   bump();
 }
 
+// A topple keeps the fallen blocks in the data for TOPPLE_HOLD_MS with
+// `tower.falling` = '1', so a template can tumble them with a CSS
+// transition before they vanish. The timer is the hold; anything arriving
+// inside it settles the rubble first.
+let toppleHold: ReturnType<typeof setTimeout> | null = null;
+
 function handleTowerUpdated(event: any) {
   if (!data.value || typeof data.value !== 'object') return;
 
   const height = Number.isFinite(Number(event?.height)) ? Number(event.height) : 0;
 
-  // Drop-then-write via withTowerSlots, so a topple cannot leave rubble
-  // behind. The culprit block on a topple is NOT appended: the tower it
-  // was placed on is gone, and the collapse itself is the template's to
-  // animate off the last_topple_* controls, whose `_at` moves with it.
+  if (toppleHold) {
+    clearTimeout(toppleHold);
+    toppleHold = null;
+    data.value = withTowerSlots(data.value, [], 0, { ...toppleSlotsFromData(data.value), falling: '' });
+  }
+
+  if (event?.cleared && event?.toppled) {
+    // The culprit block lands on top for the hold, so the thing that falls
+    // is the tower as chat last saw it plus the block that did it.
+    let held = blocksFromData(data.value);
+    const culprit = toBlock(event?.block);
+    if (culprit) held = appendBlock(held, culprit, towerWindow.value);
+
+    data.value = withTowerSlots(data.value, held, held.length ? Number(held[held.length - 1].position) : 0, toppleSlots(event.toppled, true));
+    bump();
+
+    toppleHold = setTimeout(() => {
+      toppleHold = null;
+      if (!data.value || typeof data.value !== 'object') return;
+      data.value = withTowerSlots(data.value, [], 0, toppleSlots(event.toppled, false));
+      bump();
+    }, TOPPLE_HOLD_MS);
+    return;
+  }
+
+  // Drop-then-write via withTowerSlots, so a cleared window cannot
+  // resurrect blocks (the withChatSlots rule). A plain clear (go-live,
+  // settings reset) also drops the last topple's slots.
   let blocks = event?.cleared ? [] : blocksFromData(data.value);
 
   const block = event?.cleared ? null : toBlock(event?.block);

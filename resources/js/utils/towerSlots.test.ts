@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { appendBlock, blocksFromData, clampTowerWindow, DEFAULT_TOWER_WINDOW, toBlock, withTowerSlots, type TowerBlock } from './towerSlots';
+import {
+  appendBlock,
+  blocksFromData,
+  clampTowerWindow,
+  DEFAULT_TOWER_WINDOW,
+  toBlock,
+  toppleSlots,
+  toppleSlotsFromData,
+  withTowerSlots,
+  type TowerBlock,
+} from './towerSlots';
 
 function block(position: number, login = `builder_${position}`): TowerBlock {
   return {
@@ -83,5 +93,28 @@ describe('withTowerSlots and blocksFromData', () => {
     expect(after['tower.0.login']).toBeUndefined();
     expect(after['tower.2.x']).toBeUndefined();
     expect(blocksFromData(after)).toEqual([]);
+  });
+
+  it('writes extras under the prefix and drops them on a write that does not pass them back', () => {
+    const held = withTowerSlots({}, [block(1)], 1, toppleSlots({ by: 'ViewerOne', login: 'viewer_one', height: 10, record_tower: true }, true));
+
+    expect(held['tower.falling']).toBe('1');
+    expect(held['tower.toppled_by']).toBe('ViewerOne');
+    expect(held['tower.toppled_height']).toBe('10');
+    expect(held['tower.toppled_record']).toBe('1');
+    expect(toppleSlotsFromData(held)).toEqual({ toppled_by: 'ViewerOne', toppled_login: 'viewer_one', toppled_height: '10', toppled_record: '1' });
+
+    const cleared = withTowerSlots(held, [], 0, toppleSlots({ by: 'ViewerOne', login: 'viewer_one', height: 10 }, false));
+    expect(cleared['tower.falling']).toBe('');
+    expect(cleared['tower.toppled_by']).toBe('ViewerOne');
+    expect(cleared['tower.toppled_record']).toBe('');
+
+    const building = withTowerSlots(cleared, [block(1)], 1);
+    expect(building['tower.toppled_by']).toBeUndefined();
+    expect(building['tower.falling']).toBeUndefined();
+  });
+
+  it('toppleSlots degrades to empty strings on a malformed payload', () => {
+    expect(toppleSlots(null, false)).toEqual({ toppled_by: '', toppled_login: '', toppled_height: '', toppled_record: '', falling: '' });
   });
 });
