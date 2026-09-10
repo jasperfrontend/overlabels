@@ -37,7 +37,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
 const form = useForm({
   enabled: props.integration.connected ? props.integration.enabled : true,
   tower_lifetime: props.integration.tower_lifetime ?? 'per_stream',
-  cooldown_seconds: props.integration.cooldown_seconds ?? 30,
+  cooldown_seconds: props.integration.cooldown_seconds ?? 5,
 });
 
 function save() {
@@ -158,7 +158,7 @@ function formatDate(iso: string | null): string {
             <p class="text-sm text-muted-foreground">
               How long a viewer waits before !stack works for them again. One person cannot build or topple it alone.
             </p>
-            <Input id="cooldown_seconds" v-model.number="form.cooldown_seconds" type="number" min="5" max="600" class="w-32" />
+            <Input id="cooldown_seconds" v-model.number="form.cooldown_seconds" type="number" min="1" max="600" class="w-32" />
             <p v-if="form.errors.cooldown_seconds" class="text-sm text-destructive">{{ form.errors.cooldown_seconds }}</p>
           </div>
 

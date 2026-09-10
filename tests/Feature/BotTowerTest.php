@@ -156,6 +156,23 @@ test('a second stack by the same viewer inside the cooldown is silently dropped'
     expect(TowerBlock::count())->toBe(2);
 });
 
+// The backstop used to floor every cooldown at 5 seconds, so a streamer who
+// asked for a faster game silently got a slower one. 1 is now the floor.
+test('a one-second cooldown lets the same viewer stack again after one second', function () {
+    connectTower($this->user, ['cooldown_seconds' => 1]);
+
+    postStack()->assertOk();
+    postStack()->assertOk()->assertJson(['reply' => null]);
+
+    expect(TowerBlock::count())->toBe(1);
+
+    $this->travel(2)->seconds();
+
+    postStack()->assertOk();
+
+    expect(TowerBlock::count())->toBe(2);
+});
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Stacking
 // ──────────────────────────────────────────────────────────────────────────────

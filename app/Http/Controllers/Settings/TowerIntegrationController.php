@@ -41,7 +41,7 @@ class TowerIntegrationController extends Controller
                 'connected' => $integration !== null,
                 'enabled' => (bool) ($integration?->enabled ?? false),
                 'tower_lifetime' => $settings['tower_lifetime'] ?? 'per_stream',
-                'cooldown_seconds' => (int) ($settings['cooldown_seconds'] ?? 30),
+                'cooldown_seconds' => (int) ($settings['cooldown_seconds'] ?? 5),
                 'last_received_at' => $integration?->last_received_at?->toIso8601String(),
                 'height' => $integration ? TowerBlock::heightFor($user) : 0,
                 'record' => $integration ? $this->tower->currentRecord($user) : 0,
@@ -56,7 +56,7 @@ class TowerIntegrationController extends Controller
         $validated = $request->validate([
             'enabled' => 'nullable|boolean',
             'tower_lifetime' => 'required|string|in:per_stream,persistent',
-            'cooldown_seconds' => 'nullable|integer|min:5|max:600',
+            'cooldown_seconds' => 'nullable|integer|min:1|max:600',
         ]);
 
         $isNew = ! ExternalIntegration::where('user_id', $user->id)
@@ -70,7 +70,7 @@ class TowerIntegrationController extends Controller
 
         $integration->settings = array_merge($integration->settings ?? [], [
             'tower_lifetime' => $validated['tower_lifetime'],
-            'cooldown_seconds' => (int) ($validated['cooldown_seconds'] ?? 30),
+            'cooldown_seconds' => (int) ($validated['cooldown_seconds'] ?? 5),
         ]);
         $integration->enabled = $isNew || (bool) ($validated['enabled'] ?? true);
         $integration->save();

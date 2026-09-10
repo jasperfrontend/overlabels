@@ -86,8 +86,12 @@ class BotTowerController extends Controller
         // Server-side cooldown backstop (the bot has its own command cooldown,
         // but this endpoint must defend itself). Silent: a cooldown reply per
         // spammed command would itself be spam.
+        //
+        // The floor is 1, not 0: the TTL here is the whole cooldown, and a
+        // zero-second Cache::add stores nothing, which would remove the
+        // backstop entirely rather than shorten it.
         $settings = $integration->settings ?? [];
-        $cooldown = max(5, (int) ($settings['cooldown_seconds'] ?? 30));
+        $cooldown = max(1, (int) ($settings['cooldown_seconds'] ?? 5));
 
         if (! Cache::add("tower:cooldown:{$user->id}:{$data['chatter_id']}", 1, $cooldown)) {
             return response()->json(['reply' => null]);

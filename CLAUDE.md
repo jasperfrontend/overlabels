@@ -409,6 +409,14 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   CSS transition can tumble the blocks; `tower.toppled_by` / `toppled_height` survive the clear
   until the next block. The window is the TOP fifty blocks (`TowerBlock::WINDOW`, no per-user cap):
   the camera follows the top. `towerSlots.ts` mirrors `checkinSlots.ts`.
+- **Two cooldowns pace `!stack`, in two repos.** The per-viewer one is the streamer's
+  `cooldown_seconds` setting, validated `min:1` and defaulting to 5 in `TowerIntegrationController`
+  and floored at 1 in `BotTowerController` (the floor is the `Cache::add` TTL, and 0 would store
+  nothing and remove the backstop). The other is the bot's, and it is per CHANNEL per command, not
+  per viewer - `createCooldown` in the bot's `src/bot.js` keys on `${channel}:${command}`, so it is
+  the ceiling on how fast a whole chat can stack, broadcaster exempt. `COMMAND_COOLDOWN_MS` is 1000
+  on the bot role in its `config/deploy.yml`; the code default stays 5000. Lowering the per-viewer
+  setting alone changes nothing a busy chat can feel.
 - The product overlay (`resources/recipes/chat_tower/tower.md`) is an `/engine` build; its inputs
   live in gitignored `docs/private/engine/chat-tower/`. Re-export from there, never hand-edit the
   recipe copy. The chat colour a block carries is `event.color` from Twurple, validated to
