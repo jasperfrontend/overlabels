@@ -383,6 +383,37 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   source-managed control with a scheduler reset at 00:00 UTC on the 1st was the leading option) and
   the name, which must not promise Twitch's number if it is a floor.
 
+### Chat Tower (Product #3, shipped Sept 10th 2026, OL-2609-051..055)
+
+- **The whole physics is `App\Services\Tower\TowerPhysics`**, pure functions, block-width units (a
+  block is 4 wide). Unaimed `!stack` lands in `[-1, 1]`, aimed `left|right` in `[0.45, 1.6]` on its
+  side. Lean = the top block's `x` (running sum of offsets). Sway = `0.055 * height`. Topples when
+  `abs(lean) + sway > 4`. Retuning is a constant there, never a rebuild; `TowerPhysicsTest` pins the
+  shape of the rule.
+- **Same shape as Checkin, deliberately**: `TowerServiceDriver` (refuses webhooks), one internal
+  door `POST /api/internal/bot/tower/{login}` (`action` stack/status), `tower_blocks` as standing
+  state (a topple deletes every row), eleven `c:tower:*` controls with three `*_this_stream` keys on
+  the go-live reset, `tower_lifetime` setting (per_stream clears the blocks at go-live), and a
+  one-block `tower.updated` delta. `TowerService` is the only writer.
+- **Only a standing tower counts.** The block that topples it sets no record and raises no
+  `tallest_*` control; `TowerBlock::record` marks record blocks so the announcement fires once per
+  tower and a topple knows it took the record tower down. `tallest_tower_record` and
+  `tallest_tower_this_stream` are written on a STRICT beat only, so their `_at` means "the record
+  moved", which the overlay's record flash keys on.
+- **His three decisions (2026-09-10)**: no cost to toppling beyond being named; the record roster is
+  ALL-TIME and lives in the `tower_record` List (rewritten with one name per viewer, bottom to top,
+  every time a standing tower passes the record; no list = the height still moves); the bot is
+  silent on a plain stack and speaks only on a topple, the first block past a real record, and
+  every tenth block.
+- **The client holds a toppled tower for `TOPPLE_HOLD_MS` (3 s) with `tower.falling = '1'`** so a
+  CSS transition can tumble the blocks; `tower.toppled_by` / `toppled_height` survive the clear
+  until the next block. The window is the TOP fifty blocks (`TowerBlock::WINDOW`, no per-user cap):
+  the camera follows the top. `towerSlots.ts` mirrors `checkinSlots.ts`.
+- The product overlay (`resources/recipes/chat_tower/tower.md`) is an `/engine` build; its inputs
+  live in gitignored `docs/private/engine/chat-tower/`. Re-export from there, never hand-edit the
+  recipe copy. The chat colour a block carries is `event.color` from Twurple, validated to
+  `#RRGGBB` server-side before it reaches a style attribute.
+
 ### Donation integration controllers (consolidated Aug 2026)
 
 - The five donation integrations (kofi, streamlabs, fourthwall, bmac, throne) all extend `DonationIntegrationController`. It owns `show()`, `setTestMode()`, `seedDonationCount()` and `disconnect()`; subclasses supply `service()` and their connect flow only. GPS deliberately does NOT extend it (telemetry, not donations - no test mode, no seed).
