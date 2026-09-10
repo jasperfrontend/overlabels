@@ -102,6 +102,8 @@ need, ignore the rest.
   per-message tag, badges and emotes, Shared Chat, the display filters, and the four chat controls.
 - [**Chat Checkin**](/help/checkin) - viewers pin themselves on a 3D globe with !checkin. The globe
   tag, the pin feed, counters, distances and alerts.
+- [**Chat Tower**](/help/chat-tower) - one shared tower your chat stacks with !stack. The fall
+  rule, the tower iterable, the controls, the record list and the settings.
 
 ### Integrations & testing
 

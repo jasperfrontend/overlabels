@@ -1,0 +1,29 @@
+{
+  "recipe_format_version": 1,
+  "slug": "chat_tower",
+  "name": "Chat Tower",
+  "version": 1,
+  "description": "One shared tower your whole chat builds with !stack. Every block lands a little off the one below, the tower sways more the taller it gets, and when it falls the viewer who placed the last block gets named. Installs the tower overlay, connects the Chat Tower integration and creates the all-time record list. You switch the bot on and put the overlay in OBS.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "Initial release. The third product, and the first to install an overlay, an integration and a List together.",
+  "min_overlabels_version": 1,
+  "requires_integrations": ["tower"],
+  "requires_bot": true,
+  "listed": true,
+  "hero": "/products/chat-tower-hero.svg",
+  "ready_message": "Your chat can type !stack right now, and the tower is waiting in OBS.",
+  "notes": [
+    "The tower falls when the top of its sway crosses a fall line. Both lines are on the overlay, so chat can see it coming. Nothing happens to the viewer who topples it beyond being named.",
+    "The tower comes down at the start of every stream by default. Settings, Integrations, Chat Tower can leave it standing between streams instead, and has a button to clear it by hand. The record carries over either way.",
+    "Everyone who had a block in the tallest tower ever lands in the Tallest tower list, bottom to top. It is a normal List: it shows on your Lists page and any overlay can loop over it."
+  ],
+  "max_instances_per_user": 1,
+  "installs": {
+    "overlays": [{ "ref": "tower", "file": "tower.md" }],
+    "integrations": ["tower"],
+    "lists": [{ "ref": "record", "slug": "tower_record", "label": "Tallest tower" }]
+  }
+}

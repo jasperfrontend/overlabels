@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="Albert Sans, sans-serif">
+<defs>
+<clipPath id="f"><rect width="1280" height="720" rx="8"></rect></clipPath>
+<linearGradient id="base" x1=".15" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#2c074b"></stop><stop offset=".7" stop-color="#120720"></stop><stop offset="1" stop-color="#120720"></stop></linearGradient>
+<radialGradient id="sv2" gradientUnits="userSpaceOnUse" cx="179" cy="648" r="768" gradientTransform="translate(0 221) scale(1 .656)"><stop offset="0" stop-color="#5b21b6" stop-opacity=".55"></stop><stop offset=".7" stop-color="#5b21b6" stop-opacity="0"></stop></radialGradient>
+<radialGradient id="sv1" gradientUnits="userSpaceOnUse" cx="1075" cy="72" r="704" gradientTransform="translate(0 20) scale(1 .716)"><stop offset="0" stop-color="#650e8f" stop-opacity=".75"></stop><stop offset=".7" stop-color="#650e8f" stop-opacity="0"></stop></radialGradient>
+<radialGradient id="so" gradientUnits="userSpaceOnUse" cx="947" cy="446" r="589" gradientTransform="translate(0 128) scale(1 .714)"><stop offset="0" stop-color="#f97316" stop-opacity=".16"></stop><stop offset=".7" stop-color="#f97316" stop-opacity="0"></stop></radialGradient>
+<linearGradient id="band" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d0b30" stop-opacity=".7"></stop><stop offset=".55" stop-color="#650e8f" stop-opacity=".35"></stop><stop offset="1" stop-color="#f97316" stop-opacity=".14"></stop></linearGradient>
+</defs>
+<g clip-path="url(#f)">
+<rect width="1280" height="720" fill="url(#base)"></rect>
+<rect width="1280" height="720" fill="url(#sv2)"></rect>
+<rect width="1280" height="720" fill="url(#sv1)"></rect>
+<rect width="1280" height="720" fill="url(#so)"></rect>
+<rect x="-120" y="474" width="1560" height="120" fill="url(#band)" transform="rotate(-15 660 534)"></rect>
+<g stroke="#a78bfa" stroke-opacity=".28" stroke-dasharray="3 3"><path d="M772.5 0V720M1147.5 0V720"></path></g>
+<g font-family="JetBrains Mono, monospace" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="central">
+<rect x="889" y="220" width="220" height="36" rx="3" fill="#000" fill-opacity=".3"></rect><rect x="889" y="216" width="220" height="36" rx="3" fill="#a855f7"></rect><text x="999" y="235" fill="#0f0a14">JasperDiscovers</text>
+<rect x="872" y="264" width="178" height="36" rx="3" fill="#000" fill-opacity=".3"></rect><rect x="872" y="260" width="178" height="36" rx="3" fill="#16a34a"></rect><text x="961" y="279" fill="#0f0a14">juniper_tv</text>
+<rect x="832" y="308" width="180" height="36" rx="3" fill="#000" fill-opacity=".3"></rect><rect x="832" y="304" width="180" height="36" rx="3" fill="#f59e0b"></rect><text x="922" y="323" fill="#0f0a14">wafflesaur</text>
+<rect x="816" y="352" width="178" height="36" rx="3" fill="#000" fill-opacity=".3"></rect><rect x="816" y="348" width="178" height="36" rx="3" fill="#f97316"></rect><text x="905" y="367" fill="#0f0a14">cactusjack</text>
+<rect x="846" y="396" width="152" height="36" rx="3" fill="#000" fill-opacity=".3"></rect><rect x="846" y="392" width="152" height="36" rx="3" fill="#84cc16"></rect><text x="922" y="411" fill="#0f0a14">pressF_</text>
+<rect x="876" y="440" width="172" height="36" rx="3" fill="#000" fill-opacity=".3"></rect><rect x="876" y="436" width="172" height="36" rx="3" fill="#14b8a6"></rect><text x="962" y="455" fill="#0f0a14">lurkerbee</text>
+<rect x="848" y="484" width="164" height="36" rx="3" fill="#000" fill-opacity=".3"></rect><rect x="848" y="480" width="164" height="36" rx="3" fill="#dc2626"></rect><text x="930" y="499" fill="#fff1f2">kettlefish</text>
+<rect x="866" y="528" width="186" height="36" rx="3" fill="#000" fill-opacity=".3"></rect><rect x="866" y="524" width="186" height="36" rx="3" fill="#8b5cf6"></rect><text x="959" y="543" fill="#0f0a14">ghostpepper</text>
+<rect x="888" y="572" width="178" height="36" rx="3" fill="#000" fill-opacity=".3"></rect><rect x="888" y="568" width="178" height="36" rx="3" fill="#22c55e"></rect><text x="977" y="587" fill="#0f0a14">overlabels</text>
+</g>
+<g text-anchor="end">
+<text x="932" y="104" font-family="JetBrains Mono, monospace" font-size="12" letter-spacing="2.2" fill="#c4b5fd">HEIGHT</text>
+<text x="932" y="170" font-size="62" font-weight="800" letter-spacing="-1.9" fill="#fafafa">9</text>
+<text x="1076" y="104" font-family="JetBrains Mono, monospace" font-size="12" letter-spacing="2.2" fill="#f9a8d4">RECORD</text>
+<text x="1076" y="170" font-size="62" font-weight="800" letter-spacing="-1.9" fill="#f472b6">44</text>
+</g>
+<text x="64" y="91" font-family="JetBrains Mono, monospace" font-size="13" letter-spacing="2.6" fill="#f97316">AN OVERLABELS.COM PRODUCT</text>
+<g font-size="118" font-weight="800" letter-spacing="-5.3" fill="#fafafa"><text x="64" y="199">CHAT</text><text x="64" y="300">TOWER</text></g>
+<g font-size="22" font-weight="500" fill="#e9d5ff"><text x="64" y="610">Chat is in control of a tower.</text><text x="64" y="655">Will they topple it or stack it high?</text></g>
+<rect x=".5" y=".5" width="1279" height="719" rx="8" fill="none" stroke="#5b3a8c"></rect>
+</g>
+</svg>

@@ -1,5 +1,29 @@
 # Changelog - September 2026
 
+## OL-2609-055 - September 10th, 2026 - feat(products): Chat Tower, the third product - the tower overlay, the manifest, the record list, the hero and the help page
+
+The product half of Chat Tower, on top of the integration (OL-2609-051), the bot verbs
+(OL-2609-052) and the overlay client (OL-2609-053, OL-2609-054). One click on `/products`
+installs the overlay, connects the integration and creates the record list; the bot and OBS are
+the two things left for the streamer, the same as Checkin.
+
+- **The overlay is an engine build.** A 560px column on the right of a 1080p canvas: a HUD with
+  height, room to fall, the record and its roster, a lean gauge with the sway drawn as a band,
+  two dashed fall lines, and the blocks themselves, each in its viewer's chat colour, swaying in
+  proportion to how high up it is. A camera slides the whole stack down once it is taller than
+  the field. Ten expression controls and one toggle for the command hints.
+- **The topple is the moment.** For three seconds after a fall the blocks stay and tumble toward
+  their own side on a CSS transition, top first; then a banner names the height and the viewer,
+  and the ground shows the `!stack` chip again. A record flash appears when the record moves.
+- **The record list is a normal List.** `tower_record` is created by the install, written by the
+  server every time a standing tower passes the record, shown on the Lists page, and loopable
+  from any overlay.
+- **Proven through the real path.** Eight stacks and a topple were sent through the bot endpoint
+  on the local account and watched land on the overlay; the CSS stayed on the fast path with four
+  bound properties. The hero's top block reads JasperDiscovers and its base reads overlabels.
+- A guide at `/help/chat-tower` covers the commands, the fall rule, the iterable, the controls,
+  the record list, the alert triggers and the settings.
+
 ## OL-2609-051 - September 10th, 2026 - feat(tower): the Chat Tower integration - !stack physics, blocks, controls, broadcast and settings page
 
 Product #3. Bowling is instant and individual, Checkin is permanent and individual; the gap was

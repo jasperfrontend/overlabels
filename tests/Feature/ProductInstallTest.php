@@ -46,7 +46,7 @@ function chatCheckinRecipe(): Recipe
 it('lists chat_checkin as a product and keeps the picker recipes unlisted', function () {
     $listed = app(RecipeCatalog::class)->listed();
 
-    expect(array_keys($listed))->toBe(['chat_checkin', 'follower_bowling'])
+    expect(array_keys($listed))->toBe(['chat_checkin', 'chat_tower', 'follower_bowling'])
         ->and(array_keys(app(RecipeCatalog::class)->all()))->toContain('coin_flip', 'dice');
 });
 
@@ -148,7 +148,7 @@ it('shows the product list to a visitor without an account', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('products/index')
-            ->has('products', 2)
+            ->has('products', 3)
             ->where('products.0.slug', 'chat_checkin')
             ->where('products.0.installed', false)
         );
