@@ -3,6 +3,8 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import CollectionFilter from '@/components/CollectionFilter.vue';
+import { useCollectionFilter } from '@/composables/useCollectionFilter';
 import { type BreadcrumbItem } from '@/types';
 import { Plus, Pencil, Trash2, CornerDownRight, ArrowRight } from '@lucide/vue';
 import { useConfirm } from '@/composables/useConfirm';
@@ -29,6 +31,14 @@ const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Integrations', href: '/settings/integrations' },
   { title: 'Bot aliases', href: '/settings/bot/aliases' },
 ];
+
+// Both sides of the rewrite are matched, so `!increment` finds the aliases
+// pointing at it as well as itself. The bang is matched rather than stripped:
+// rows print `!w`, so both `w` and `!w` hit.
+const { query, filtered } = useCollectionFilter<BotAlias>(
+  () => props.aliases,
+  (alias, q) => `!${alias.command}`.toLowerCase().includes(q) || `!${alias.target_template}`.toLowerCase().includes(q),
+);
 
 async function deleteAlias(alias: BotAlias) {
   if (!(await confirm({ message: `Delete alias "!${alias.command}"? This cannot be undone.`, confirmLabel: 'Delete' }))) return;
@@ -71,15 +81,19 @@ function formatDate(iso: string | null): string {
           </Link>
         </div>
 
+        <CollectionFilter v-if="props.aliases.length > 0" v-model="query" noun="alias" nounPlural="aliases" placeholder="Filter aliases..." />
+
         <div v-if="props.aliases.length === 0" class="border border-sidebar-border p-8 text-center">
           <CornerDownRight class="mx-auto size-10 text-foreground/40" />
           <p class="mt-4 text-foreground">You haven't authored any bot aliases yet.</p>
           <p class="mt-1 text-sm text-foreground/70">Create one to give a long command a short nickname. Aliases default to moderator-only.</p>
         </div>
 
+        <p v-else-if="filtered.length === 0" class="py-8 text-center text-sm text-muted-foreground">No aliases match "{{ query }}"</p>
+
         <div v-else class="space-y-3">
           <div
-            v-for="alias in props.aliases"
+            v-for="alias in filtered"
             :key="alias.id"
             class="flex flex-col gap-3 border border-sidebar-border p-4 sm:flex-row sm:items-start sm:justify-between"
           >

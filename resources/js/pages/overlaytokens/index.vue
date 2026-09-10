@@ -8,6 +8,8 @@ import Modal from '@/components/Modal.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import Heading from '@/components/Heading.vue';
 import CollectionList from '@/components/CollectionList.vue';
+import CollectionFilter from '@/components/CollectionFilter.vue';
+import { useCollectionFilter } from '@/composables/useCollectionFilter';
 import { type BreadcrumbItem } from '@/types';
 import { AlertTriangle, KeyRound } from '@lucide/vue';
 import { useConfirm } from '@/composables/useConfirm';
@@ -42,6 +44,17 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Overlay Access Tokens', href: '/settings/tokens' },
 ];
+
+// Matches the name and the prefix - the prefix is the only part of a token
+// ever shown again, so it is the one identifier someone can paste back in.
+const { query, filtering, filtered } = useCollectionFilter<Token>(
+  () => tokens,
+  (token, q) => token.name.toLowerCase().includes(q) || token.prefix.toLowerCase().includes(q),
+);
+
+const listEmptyMessage = computed(() =>
+  filtering.value ? `No tokens match "${query.value}"` : 'No tokens yet. Create one to put an overlay in OBS.',
+);
 
 /** Create flow */
 const showCreateModal = ref(false);
@@ -160,13 +173,15 @@ const formatDate = (date: string | null | undefined) => (date ? new Date(date).t
           </button>
         </div>
 
+        <CollectionFilter v-if="tokens.length > 0" v-model="query" noun="token" placeholder="Filter tokens by name or prefix..." class="mb-4" />
+
         <!-- Token list: same row as /triggers. Rows are not navigable - a token has no page of its own. -->
         <CollectionList
-          :items="tokens"
+          :items="filtered"
           :item-key="(t) => t.id"
           :row-class="(t) => (t.is_active ? undefined : 'border-l-amber-400')"
-          empty-message="No tokens yet. Create one to put an overlay in OBS."
-          empty-dashed
+          :empty-message="listEmptyMessage"
+          :empty-dashed="!filtering"
         >
           <template #item="{ item: token }">
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">

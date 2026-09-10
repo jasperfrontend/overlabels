@@ -5,6 +5,8 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import CollectionFilter from '@/components/CollectionFilter.vue';
+import { useCollectionFilter } from '@/composables/useCollectionFilter';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
@@ -59,6 +61,20 @@ const breadcrumbItems: BreadcrumbItem[] = [
     href: '/settings/integrations',
   },
 ];
+
+// The external services are the list of things on this page; the Twitch and
+// bot cards above them are one-of-a-kind panels, not rows, so they stay put.
+// `url_slug` is matched too - it is what the Manage links point at, so a
+// service found in the address bar is findable here by the same name.
+const {
+  query,
+  filtering,
+  filtered: filteredServices,
+} = useCollectionFilter<ServiceInfo>(
+  () => props.services,
+  (service, q) =>
+    service.name.toLowerCase().includes(q) || service.key.toLowerCase().includes(q) || (service.url_slug ?? '').toLowerCase().includes(q),
+);
 
 const eventsubLoading = ref(false);
 const eventsubMessage = ref('');
@@ -383,8 +399,14 @@ function formatDate(iso: string | null): string {
         <div>
           <HeadingSmall title="External Integrations" description="Connect external donation and support platforms to power your overlays." />
 
+          <CollectionFilter v-if="props.services.length > 0" v-model="query" noun="integration" placeholder="Filter integrations..." class="mt-4" />
+
+          <p v-if="filtering && filteredServices.length === 0" class="py-8 text-center text-sm text-muted-foreground">
+            No integrations match "{{ query }}"
+          </p>
+
           <div class="mt-4 space-y-4">
-            <div v-for="service in props.services" :key="service.key" class="flex items-center justify-between border border-sidebar-border p-4">
+            <div v-for="service in filteredServices" :key="service.key" class="flex items-center justify-between border border-sidebar-border p-4">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   <span v-if="service.connected" title="Connected"><Power class="my-1 size-5 text-green-400" /></span>

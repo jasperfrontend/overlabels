@@ -3,6 +3,8 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import CollectionFilter from '@/components/CollectionFilter.vue';
+import { useCollectionFilter } from '@/composables/useCollectionFilter';
 import { type BreadcrumbItem } from '@/types';
 import { Plus, Pencil, Trash2, MessageSquare, Clock } from '@lucide/vue';
 import { useConfirm } from '@/composables/useConfirm';
@@ -30,6 +32,14 @@ const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Integrations', href: '/settings/integrations' },
   { title: 'Bot commands', href: '/settings/bot/commands' },
 ];
+
+// Filters on the command and on the reply the bot speaks, so a word buried in
+// a long reply finds its command. The bang is matched rather than stripped:
+// rows print `!rules`, so both `rules` and `!rules` hit.
+const { query, filtered } = useCollectionFilter<BotCommand>(
+  () => props.commands,
+  (command, q) => `!${command.command}`.toLowerCase().includes(q) || command.reply.toLowerCase().includes(q),
+);
 
 async function deleteCommand(command: BotCommand) {
   if (!(await confirm({ message: `Delete "!${command.command}"? This cannot be undone.`, confirmLabel: 'Delete' }))) return;
@@ -88,15 +98,19 @@ function expiresIn(iso: string): string {
           </Link>
         </div>
 
+        <CollectionFilter v-if="props.commands.length > 0" v-model="query" noun="command" placeholder="Filter commands and replies..." />
+
         <div v-if="props.commands.length === 0" class="border border-sidebar-border p-8 text-center">
           <MessageSquare class="mx-auto size-10 text-foreground/40" />
           <p class="mt-4 text-foreground">You haven't authored any bot commands yet.</p>
           <p class="mt-1 text-sm text-foreground/70">Create one to let chatters fire a command and have the bot reply with a templated string.</p>
         </div>
 
+        <p v-else-if="filtered.length === 0" class="py-8 text-center text-sm text-muted-foreground">No commands match "{{ query }}"</p>
+
         <div v-else class="space-y-3">
           <div
-            v-for="command in props.commands"
+            v-for="command in filtered"
             :key="command.id"
             class="flex flex-col gap-3 border border-sidebar-border p-4 sm:flex-row sm:items-start sm:justify-between"
           >

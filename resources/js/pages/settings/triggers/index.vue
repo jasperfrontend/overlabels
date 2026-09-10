@@ -4,6 +4,8 @@ import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import CollectionList from '@/components/CollectionList.vue';
+import CollectionFilter from '@/components/CollectionFilter.vue';
+import { useCollectionFilter } from '@/composables/useCollectionFilter';
 import { AlertTriangle } from '@lucide/vue';
 import type { BreadcrumbItem } from '@/types';
 import { SERVICE_LABELS } from '@/utils/services';
@@ -57,6 +59,27 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const totalAssigned = computed(() => props.twitchMappings.length + props.externalMappings.length);
 
+function isExternal(row: MappingRow): row is ExternalMapping {
+  return 'service' in row;
+}
+
+/**
+ * Matches what the row actually shows: the event's name, its raw tag and the
+ * alert bound to it. So "cheer", "channel.cheer" and the alert's own name all
+ * find the same row.
+ */
+function rowMatches(row: MappingRow, q: string): boolean {
+  return row.event_label.toLowerCase().includes(q) || rowTag(row).toLowerCase().includes(q) || (row.template?.name ?? '').toLowerCase().includes(q);
+}
+
+// One filter over every row on the page; the sectioning below then groups
+// whatever survived, so a section that no longer has a row disappears rather
+// than printing its own "nothing bound here" empty state six times over.
+const { query, normalized, filtering, filtered } = useCollectionFilter<MappingRow>(
+  () => [...props.twitchMappings, ...props.externalMappings],
+  rowMatches,
+);
+
 /**
  * Twitch first, then one section per connected service. Sectioning here rather
  * than in the template keeps every trigger row rendering through one
@@ -65,17 +88,19 @@ const totalAssigned = computed(() => props.twitchMappings.length + props.externa
  */
 const sections = computed(() => {
   const byService: Record<string, ExternalMapping[]> = {};
-  for (const row of props.externalMappings) {
-    (byService[row.service] ??= []).push(row);
+  const twitchRows: MappingRow[] = [];
+  for (const row of filtered.value) {
+    if (isExternal(row)) (byService[row.service] ??= []).push(row);
+    else twitchRows.push(row);
   }
 
-  return [
+  const all = [
     {
       key: 'twitch',
       label: 'Twitch events',
       noun: 'Twitch events',
       external: false,
-      rows: props.twitchMappings as MappingRow[],
+      rows: twitchRows,
     },
     ...props.connectedServices.map((service) => ({
       key: service,
@@ -85,11 +110,22 @@ const sections = computed(() => {
       rows: (byService[service] ?? []) as MappingRow[],
     })),
   ];
+
+  // Unfiltered, an empty section still earns its place: it tells you the
+  // service is connected and bound to nothing.
+  return filtering.value ? all.filter((section) => section.rows.length > 0) : all;
 });
 
-function isExternal(row: MappingRow): row is ExternalMapping {
-  return 'service' in row;
-}
+// The informational chip list at the bottom narrows on the same query.
+const unassigned = computed(() =>
+  filtering.value
+    ? props.unassignedEventTypes.filter(
+        (row) => row.event_label.toLowerCase().includes(normalized.value) || row.event_type.toLowerCase().includes(normalized.value),
+      )
+    : props.unassignedEventTypes,
+);
+
+const nothingMatches = computed(() => filtering.value && sections.value.length === 0 && unassigned.value.length === 0);
 
 function rowKey(row: MappingRow): string {
   const scope = isExternal(row) ? `${row.service}:` : '';
@@ -146,6 +182,16 @@ function conditionLabel(row: ConditionFields): string | null {
           {{ totalAssigned }} event{{ totalAssigned !== 1 ? 's' : '' }} are firing alerts right now.
         </p>
 
+        <CollectionFilter
+          v-if="totalAssigned > 0 || unassignedEventTypes.length > 0"
+          v-model="query"
+          noun="trigger"
+          placeholder="Filter by event, tag or alert name..."
+          class="mb-6"
+        />
+
+        <p v-if="nothingMatches" class="py-8 text-center text-sm text-muted-foreground">No triggers match "{{ query }}"</p>
+
         <section v-for="section in sections" :key="section.key" class="mb-8">
           <h3 class="mb-2 flex items-center gap-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">
             {{ section.label }}
@@ -186,14 +232,14 @@ function conditionLabel(row: ConditionFields): string | null {
         </section>
 
         <!-- Unassigned twitch events (informational) -->
-        <section v-if="unassignedEventTypes.length > 0">
+        <section v-if="unassigned.length > 0">
           <h3 class="mb-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">Unassigned Twitch events</h3>
           <p class="mb-3 text-xs text-muted-foreground">
             These events are not currently bound to any alert template. Bind them from an alert template's Triggers tab.
           </p>
           <div class="flex flex-wrap gap-2">
             <span
-              v-for="row in unassignedEventTypes"
+              v-for="row in unassigned"
               :key="row.event_type"
               class="rounded-full border border-sidebar-border bg-sidebar px-3 py-1 text-xs text-muted-foreground"
               :title="row.event_type"

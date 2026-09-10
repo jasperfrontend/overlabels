@@ -15,8 +15,9 @@
  * collapsed next visit. Groups default to open.
  */
 import { computed, ref } from 'vue';
-import { Search, ChevronRight, ChevronsUpDown, ChevronsDownUp } from '@lucide/vue';
+import { ChevronRight, ChevronsUpDown, ChevronsDownUp } from '@lucide/vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import CollectionFilter from '@/components/CollectionFilter.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import type { CollectionGroup } from '@/types/collection';
 
@@ -145,13 +146,11 @@ function toggleAll(): void {
 
     <template v-else>
       <!-- Filter + toolbar -->
-      <div class="flex items-center gap-3">
-        <div class="relative flex-1">
-          <Search :size="15" class="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-          <input v-model="searchQuery" :placeholder="inputPlaceholder" class="input-border w-full py-1.5 pr-2.5 pl-8 text-sm" />
-        </div>
-        <slot name="toolbar" :items="visibleItems" />
-      </div>
+      <CollectionFilter v-model="searchQuery" :placeholder="inputPlaceholder">
+        <template #toolbar>
+          <slot name="toolbar" :items="visibleItems" />
+        </template>
+      </CollectionFilter>
 
       <!-- Count + expand/collapse all -->
       <div class="mb-3 flex items-center text-xs text-muted-foreground">
