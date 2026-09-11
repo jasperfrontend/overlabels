@@ -119,13 +119,15 @@ test('the streamlabs oauth callback provisions on connect', function () {
     $user = connectingUser();
 
     Http::fake([
-        'streamlabs.com/api/v1.0/token' => Http::response(['access_token' => 'fake-access-token']),
-        'streamlabs.com/api/v1.0/socket/token' => Http::response(['socket_token' => 'fake-socket-token']),
+        'streamlabs.com/api/v2.0/token' => Http::response(['access_token' => 'fake-access-token']),
+        'streamlabs.com/api/v2.0/socket/token' => Http::response(['socket_token' => 'fake-socket-token']),
     ]);
 
     expect(serviceControlKeys($user, 'streamlabs'))->toBe([]);
 
-    $this->get('/auth/callback/streamlabs?code=fake-code')->assertRedirect();
+    $this->withSession(['streamlabs_oauth_state' => 'fake-state'])
+        ->get('/auth/callback/streamlabs?code=fake-code&state=fake-state')
+        ->assertRedirect();
 
     expect(ExternalIntegration::where('user_id', $user->id)->where('service', 'streamlabs')->exists())->toBeTrue()
         ->and(serviceControlKeys($user, 'streamlabs'))->toBe(expectedControlKeys('streamlabs'));

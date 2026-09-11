@@ -461,9 +461,9 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
 
 ### StreamLabs Integration
 
-- OAuth-based: user clicks "Authenticate with StreamLabs" button, standard OAuth 2.0 Authorization Code flow
-- StreamLabs tokens never expire (per their docs) - no refresh logic needed
-- API version: v1.0 (NOT v2.0 - their docs are misleading, dashboard confirms v1.0)
+- OAuth-based: user clicks "Authenticate with StreamLabs" button, standard OAuth 2.0 Authorization Code flow with a `state` the session hands out and the callback checks (`StreamLabsIntegrationController::OAUTH_STATE_KEY`)
+- **API version: v2.0 since Sept 11th 2026 (OL-2609-064).** The March note that said "v1.0, NOT v2.0, their docs are misleading" was wrong the other way: dev.streamlabs.com marks v1.0 deprecated, every path is identical under `/api/v2.0`, and the access token may only travel as a Bearer header. **A v1.0 app cannot be used with v2.0 - Streamlabs requires re-registering the app** (streamlabs.com/dashboard, OAuth clients), which yields a NEW client id and secret. `STREAMLABS_CLIENT_ID` / `STREAMLABS_CLIENT_SECRET` in GitHub secrets must be the v2.0 pair or the authorize step fails before the user sees a Streamlabs page. Unapproved apps allow 10 whitelisted users; approval is requested from that same dashboard.
+- The token exchange returns a `refresh_token` too; it is stored in credentials and not used. The access token is used once, to fetch the socket token, and the listener runs on the socket token from then on. Their OAuth page still says the token never expires.
 - Scopes: `socket.token`, `donations.read`, `donations.create`
 - Only `donation` event type supported in v1
 - Uses Socket.IO (pull model) via server-side Node.js listener, NOT webhooks
