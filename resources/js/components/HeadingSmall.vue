@@ -2,6 +2,7 @@
 interface Props {
   title: string;
   description?: string;
+  descriptionClass?: string;
 }
 
 defineProps<Props>();
@@ -10,7 +11,7 @@ defineProps<Props>();
 <template>
   <header>
     <h3 class="mb-0.5 text-base font-medium">{{ title }}</h3>
-    <p v-if="description" class="text-sm text-foreground">
+    <p v-if="description" :class="descriptionClass ? descriptionClass : 'text-sm text-foreground'">
       {{ description }}
     </p>
   </header>

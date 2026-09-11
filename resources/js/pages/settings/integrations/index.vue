@@ -285,7 +285,7 @@ function formatDate(iso: string | null): string {
         <div>
           <HeadingSmall title="Twitch" description="Real-time events from Twitch for alerts, per-stream counters, and live detection." />
 
-          <div class="mt-4 border border-sidebar-border p-4">
+          <div class="mt-4 border p-4" :class="eventsub.connected && eventsub.active_count === 0 ? 'border-fuchsia-400' : 'border-sidebar-border'">
             <div class="flex items-center justify-between">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
@@ -360,6 +360,7 @@ function formatDate(iso: string | null): string {
           <HeadingSmall
             title="Overlabels bot"
             description="Let the shared @overlabels Twitch account join your chat so you can use it to manage your overlay controls."
+            description-class="text-sm text-muted-foreground"
           />
           <!-- Lit up while a product install's next step is this toggle. -->
           <div class="mt-4 border border-sidebar-border p-4" :class="{ 'product-target': botIsProductTarget }">
@@ -372,7 +373,7 @@ function formatDate(iso: string | null): string {
                 </div>
                 <p v-if="props.bot.enabled" class="text-sm">
                   Run <code class="rounded bg-muted px-1 py-0.5 text-xs">/mod overlabels</code> in your Twitch chat so the bot can post without rate
-                  limits, then try <code class="rounded bg-muted px-1 py-0.5 text-xs">!ping</code> - it should reply with pong.
+                  limits,<br />then try <code class="rounded bg-muted px-1 py-0.5 text-xs">!ping</code> - it should reply with pong.
                 </p>
                 <p v-else class="text-sm text-muted-foreground">
                   Enable to have the bot join your channel. Default
@@ -388,18 +389,18 @@ function formatDate(iso: string | null): string {
             </div>
             <div v-if="props.bot.enabled" class="mt-4 space-y-3 border-t border-sidebar-border pt-4">
               <div class="flex items-center justify-between gap-4">
-                <p class="text-sm text-foreground">
+                <p class="text-sm text-muted-foreground">
                   Bot commands: custom <code class="rounded bg-muted px-1 py-0.5 text-xs">!command</code> chat replies templated against your controls
                   and Twitch data.
                 </p>
-                <Link href="/settings/bot/commands" class="btn btn-sm btn-secondary shrink-0 cursor-pointer"> Commands </Link>
+                <Link href="/settings/bot/commands" class="btn btn-sm btn-plain shrink-0 cursor-pointer"> Commands </Link>
               </div>
               <div class="flex items-center justify-between gap-4">
-                <p class="text-sm text-foreground">
+                <p class="text-sm text-muted-foreground">
                   Bot aliases: short names that rewrite to longer commands. <code class="rounded bg-muted px-1 py-0.5 text-xs">!w 2</code> -&gt;
                   <code class="rounded bg-muted px-1 py-0.5 text-xs">!increment wins 2</code>.
                 </p>
-                <Link href="/settings/bot/aliases" class="btn btn-sm btn-secondary shrink-0 cursor-pointer"> Aliases </Link>
+                <Link href="/settings/bot/aliases" class="btn btn-sm btn-plain shrink-0 cursor-pointer"> Aliases </Link>
               </div>
             </div>
           </div>
@@ -410,6 +411,7 @@ function formatDate(iso: string | null): string {
           <HeadingSmall
             title="Overlabels products"
             description="Chat features made by Overlabels. Install one from the Products page, manage its settings here."
+            description-class="text-sm text-muted-foreground"
           />
 
           <div class="mt-4 grid gap-4 md:grid-cols-2">
@@ -452,7 +454,11 @@ function formatDate(iso: string | null): string {
 
         <!-- External Integrations -->
         <div>
-          <HeadingSmall title="External Integrations" description="Connect external donation and support platforms to power your overlays." />
+          <HeadingSmall
+            title="External Integrations"
+            description="Connect external donation and support platforms to power your overlays."
+            description-class="text-sm text-muted-foreground"
+          />
 
           <CollectionFilter v-if="externalServices.length > 0" v-model="query" noun="integration" placeholder="Filter integrations..." class="mt-4" />
 
