@@ -49,6 +49,8 @@ custom properties on `.ol-checkin-globe`:
   --globe-dot-color: #c9a227; /* land dots */
   --globe-dot-size: 2.4; /* px */
   --globe-pin-color: #bfe3e0; /* pin heads and stalks */
+  --globe-shell-color: #06121a; /* the sphere itself */
+  --globe-shell-opacity: 0.85; /* 0 - 1 */
   --globe-rotation-seconds: 45; /* one revolution; 0 = still */
   --globe-tilt-degrees: 18;
 }
@@ -61,6 +63,11 @@ custom properties on `.ol-checkin-globe`:
 The labels are ordinary HTML with the class `ol-globe-label` (plus `is-hidden` while a pin is on
 the far side), so your template's CSS owns them completely. The 3D library only downloads on
 overlays that actually contain the tag.
+
+The sphere is what makes the far side read as behind rather than floating in front, so it keeps
+hiding the dots and pins behind it whatever `--globe-shell-opacity` you give it - at `0` you get an
+invisible globe with visible near-side pins, not a see-through one. Below about `0.55` the far-side
+pin heads start showing through at full brightness.
 
 > [!TIP]
 > Every globe ships with one permanent resident: Overlabels itself, checked in at Avarua, Cook

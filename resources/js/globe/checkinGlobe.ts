@@ -12,6 +12,8 @@
  *   --globe-dot-color        land dot color            (default #8f8f8f)
  *   --globe-dot-size         land dot size in px       (default 2.2)
  *   --globe-pin-color        pin head + stalk color    (default #ffd166)
+ *   --globe-shell-color      sphere body color         (default #000000)
+ *   --globe-shell-opacity    sphere body opacity 0-1   (default 0.85)
  *   --globe-rotation-seconds seconds per revolution    (default 90, 0 = still)
  *   --globe-tilt-degrees     axis tilt toward viewer   (default 18)
  *
@@ -75,6 +77,8 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
   const dotColor = cssColor(styles, '--globe-dot-color', '#8f8f8f');
   const dotSize = cssNumber(styles, '--globe-dot-size', 2.2);
   const pinColor = cssColor(styles, '--globe-pin-color', '#ffd166');
+  const shellColor = cssColor(styles, '--globe-shell-color', '#000000');
+  const shellOpacity = cssNumber(styles, '--globe-shell-opacity', 0.85);
   const rotationSeconds = cssNumber(styles, '--globe-rotation-seconds', 90);
   const tiltDegrees = cssNumber(styles, '--globe-tilt-degrees', 18);
 
@@ -130,8 +134,11 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
 
   // An occlusion shell so far-side dots and pins read as "behind" instead of
   // floating in space. Verified visually: 0.55 let far-side pin heads punch
-  // through at full brightness.
-  const shellMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.85 });
+  // through at full brightness, so drop --globe-shell-opacity below that and
+  // the globe starts to look see-through. It keeps occluding either way - the
+  // shell writes depth whatever its opacity, so 0 is an invisible occluder
+  // rather than "no shell".
+  const shellMaterial = new THREE.MeshBasicMaterial({ color: shellColor, transparent: true, opacity: shellOpacity });
   const shell = new THREE.Mesh(new THREE.SphereGeometry(SPHERE_RADIUS * 0.98, 48, 32), shellMaterial);
   spin.add(shell);
 

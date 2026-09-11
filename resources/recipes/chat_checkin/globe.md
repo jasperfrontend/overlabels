@@ -66,6 +66,8 @@ body { background: transparent; margin: 0; }
 .globe-stage { position: relative; width: 100vw; height: 100vh; font-family: monospace; }
 .ol-checkin-globe {
   position: absolute; inset: 0;
+  --globe-shell-color: #000;
+  --globe-shell-opacity: 0.5;
   --globe-dot-color: #2dd4bf;
   --globe-pin-color: #bfe3e0;
   --globe-rotation-seconds: 30;
