@@ -6,6 +6,7 @@ heading: How to Use Controls
 lead: Learn how to create, manage, and use Controls in your Twitch overlays. Counters, timers, toggles, and more - all updated live during your stream.
 canonical: https://overlabels.com/help/controls
 context: settings.controls, controls.index
+keywords: colour, palette, dynamic styling
 ---
 
 You can also use Controls in CSS. This opens up possibilities for dynamic styling, which is incredibly
@@ -29,6 +30,7 @@ unless you explicitly import them when copying.
 | `timer` | A stopwatch, countdown, or count-to-date. Ticks in real time on the overlay. |
 | `boolean` | An on/off toggle. Outputs `1` or `0`. |
 | `datetime` | A fixed date and time value. |
+| `color` | One color, picked from a color picker instead of typed. Drops straight into your CSS. |
 | `expression` | A formula that derives its value from other controls. Evaluated live on the overlay. |
 | `list writer` | Records another control's value to a List every time it changes. Works with any control type, including Expressions. |
 
@@ -180,6 +182,48 @@ starts at" displays, event countdowns, or logging purposes.
 
 Use [formatting pipes](/help/formatting) like `|date:short` or `|date:long` to format the output. If you
 need a live countdown to a date, use a Timer in "count to" mode instead.
+
+### color
+
+One color, with a proper picker behind it so you are not typing hex codes by hand. The Control Panel
+gives you a saturation area, a hue slider, an alpha slider and a row of presets, and you can switch the
+output between HEX, RGB and HSL.
+
+The useful move is to feed a CSS custom property with it, because then one control restyles every part
+of your overlay that reads that property.
+
+```html
+<style>
+  .globe {
+    --globe-dot-color: [[[c:color_globe_dot]]];
+    --globe-pin-color: [[[c:color_globe_pin]]];
+  }
+  .globe .dot { background: var(--globe-dot-color); }
+  .globe .pin { border-color: var(--globe-pin-color); }
+</style>
+```
+
+**Anything CSS understands is allowed here, and nothing is validated.** The value you save is handed to
+your overlay exactly as you typed it. The picker itself reads hex, `rgb()`, `hsl()` and `hsb()`, so
+those are the three it can show you - but you can type anything else straight into the field next to it:
+
+```
+rebeccapurple
+rgb(170 187 204 / 50%)
+oklch(0.7 0.19 145)
+color-mix(in oklab, red 40%, blue)
+var(--brand)
+```
+
+When you do, the picker tells you it cannot preview that value and holds its last position. The swatch
+beside the field is painted with your actual string, so it still shows you the real color. And if you
+type something CSS cannot read either, CSS simply drops that one declaration and whatever fallback your
+template set stays in place - nothing breaks, and nothing on your overlay disappears.
+
+> [!TIP]
+> Color controls pair well with [Blocks](/help/blocks) and the [Builder](/help/builder). Give every
+> block its colors through custom properties and you can retheme a whole overlay mid-stream from a
+> handful of controls.
 
 ### expression
 
@@ -438,7 +482,7 @@ Twitch data tags. See the [Syntax Help](/help/conditionals) page for the full co
 ### Controls in CSS
 
 Just like Twitch data tags, control tags can appear inside `<style>` blocks, which opens up dynamic
-styling.
+styling. A [color control](#color) is the most direct version of this, but any control works.
 
 ```html
 <style>
@@ -482,6 +526,7 @@ keep it on a second monitor or phone.
 | Timer | **Start** begins counting (count up or countdown, depending on your config). The display ticks in the Control Panel and in the overlay simultaneously. **Stop** pauses at the current time. **Reset** returns to zero (or the base duration for countdowns). "Count to" timers show the target datetime and tick automatically - no start/stop needed. |
 | Boolean | A single toggle switch. Flip it on or off - the value updates immediately. Pairs well with conditionals to show/hide overlay sections. |
 | Datetime | Pick a date and time from the datetime picker and click **Save**. Useful for "Next stream: `[[[c:next_stream]]]`" display text. |
+| Color | Click the swatch to open the picker, or type a color straight into the field next to it. A pick saves itself the moment you finish dragging - there is no save button - so you can match a color to your scene and watch it land. |
 | Expression | Expressions have no input in the Control Panel - their value is always derived from the formula. The panel shows the current expression and its live-evaluated result. |
 
 ### Real-time updates
