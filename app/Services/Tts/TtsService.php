@@ -16,6 +16,10 @@ use Illuminate\Support\Facades\Storage;
  *
  * Failure is silent: returns null and logs. Alerts must still fire even when
  * ElevenLabs is down/rate-limited; TTS is best-effort.
+ *
+ * Text is put through SpeakableText first, which rewrites currency amounts
+ * into words ("€84" -> "84 euros"). That happens before the cache key is
+ * taken, so two sentences that are spoken identically share one mp3.
  */
 class TtsService
 {
@@ -34,6 +38,8 @@ class TtsService
         if ($text === '') {
             return null;
         }
+
+        $text = SpeakableText::prepare($text);
 
         $apiKey = (string) config('services.elevenlabs.api_key');
         $voiceId = (string) config('services.elevenlabs.voice_id');
