@@ -6,6 +6,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon, LockIcon, Search, ChevronRight, ChevronsUpDown, ChevronsDownUp } from '@lucide/vue';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { SERVICE_LABELS } from '@/utils/services';
 
 const props = defineProps<{
@@ -55,11 +56,14 @@ const groupedControls = computed<ControlGroup[]>(() => {
     counter: 'Counter',
     timer: 'Timer',
     boolean: 'Toggle',
+    color: 'Color',
     expression: 'Expression',
     datetime: 'Date/Time',
   };
 
-  const typeOrder = ['counter', 'timer', 'number', 'text', 'boolean', 'expression', 'datetime'];
+  // A type missing from this list is dropped from the panel entirely, so it
+  // has to grow whenever OverlayControl::TYPES does.
+  const typeOrder = ['counter', 'timer', 'number', 'text', 'color', 'boolean', 'expression', 'datetime'];
   for (const type of typeOrder) {
     if (userControls[type]?.length) {
       groups.push({ label: typeLabels[type] ?? type, controls: userControls[type] });
@@ -343,6 +347,16 @@ async function saveTextValue(ctrl: OverlayControl) {
   showMsg(`"${ctrl.label || ctrl.key}" updated.`);
 }
 
+/**
+ * A finished pick saves itself rather than waiting for the save button, so a
+ * streamer matching an overlay to a scene sees it land. Only fires on the
+ * picker's `commit`, never mid-drag - see the emits on ColorPicker.
+ */
+async function saveColorValue(ctrl: OverlayControl, value: string) {
+  localValues.value[ctrl.id] = value;
+  await postValue(ctrl, { value });
+}
+
 async function counterAction(ctrl: OverlayControl, action: 'increment' | 'decrement' | 'reset') {
   await postValue(ctrl, { action });
 }
@@ -501,6 +515,38 @@ async function toggleBoolean(ctrl: OverlayControl) {
                     <button
                       type="submit"
                       class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border bg-background p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 hover:ring-0 dark:border-violet-300/30 dark:peer-focus:border-violet-400"
+                      :disabled="saving[ctrl.id]"
+                    >
+                      <SaveIcon class="h-3.5 w-3.5" />
+                    </button>
+                  </form>
+                </template>
+
+                <!-- Color control. The text field stays the source of truth -
+                     anything CSS understands is valid here, including the
+                     colors the picker itself cannot read - and the swatch
+                     beside it opens the picker as an offer, not a gate. -->
+                <template v-else-if="ctrl.type === 'color'">
+                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="group flex gap-2">
+                    <ColorPicker
+                      :model-value="getLocalValue(ctrl)"
+                      :label="ctrl.label || ctrl.key"
+                      @update:model-value="localValues[ctrl.id] = $event"
+                      @commit="saveColorValue(ctrl, $event)"
+                    />
+                    <input
+                      type="text"
+                      :id="`cp-input-${ctrl.id}`"
+                      :name="`cp-input-${ctrl.id}`"
+                      :value="getLocalValue(ctrl)"
+                      :title="getLocalValue(ctrl) || 'Click to edit'"
+                      @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
+                      class="peer input-border min-w-0 flex-1 font-mono"
+                      placeholder="#7c3aed, rgb(...), oklch(...)"
+                    />
+                    <button
+                      type="submit"
+                      class="btn btn-sm rounded-none border border-border bg-background p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 hover:ring-0 dark:border-violet-300/30 dark:peer-focus:border-violet-400"
                       :disabled="saving[ctrl.id]"
                     >
                       <SaveIcon class="h-3.5 w-3.5" />

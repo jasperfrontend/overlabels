@@ -331,6 +331,14 @@ const controlsCounter = computed(() => controls.value.length);
             <p v-if="ctrl.description" class="text-xs whitespace-pre-line text-foreground">{{ ctrl.description }}</p>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
               <span class="font-mono">{{ snippetKey(ctrl) }}</span>
+              <!-- Painted with the stored string itself: a color CSS cannot
+                   read shows as nothing rather than as a color that is wrong. -->
+              <span
+                v-if="ctrl.type === 'color' && ctrl.value"
+                class="size-3.5 shrink-0 border border-border/60"
+                :style="{ background: ctrl.value }"
+                aria-hidden="true"
+              />
               <span v-for="(part, i) in configSummary(ctrl)" :key="i" class="max-w-64 truncate" :title="part">{{ part }}</span>
             </div>
           </div>

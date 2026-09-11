@@ -9,9 +9,10 @@ export const CONTROL_TYPE_LABELS: Record<string, string> = {
   counter: 'Counter',
   timer: 'Timer',
   boolean: 'Toggle',
+  color: 'Color',
   expression: 'Expression',
   datetime: 'Date/Time',
   list_writer: 'List writer',
 };
 
-export const CONTROL_TYPE_ORDER = ['counter', 'timer', 'number', 'text', 'boolean', 'expression', 'list_writer', 'datetime'];
+export const CONTROL_TYPE_ORDER = ['counter', 'timer', 'number', 'text', 'color', 'boolean', 'expression', 'list_writer', 'datetime'];

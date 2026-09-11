@@ -13,7 +13,7 @@ import type { OverlayControl, OverlayTemplate } from '@/types';
  *
  * Two routes sit side by side rather than behind tabs, because they answer
  * different questions and hiding either one costs a discovery. On the left,
- * the eight kinds you build yourself, each with a demo of what it looks like
+ * the nine kinds you build yourself, each with a demo of what it looks like
  * on screen. On the right, the ready-made controls that come wired up from
  * Twitch and whichever services are connected.
  *
@@ -97,7 +97,7 @@ const visibleTypes = computed(() => {
       <header class="mb-4">
         <h3 class="text-lg font-semibold text-foreground">Build your own</h3>
         <p class="mt-1 text-sm text-foreground/75">
-          Eight kinds of control. Pick the one that matches the thing you want to change while you are live.
+          Nine kinds of control. Pick the one that matches the thing you want to change while you are live.
         </p>
       </header>
 

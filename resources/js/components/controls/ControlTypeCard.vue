@@ -124,6 +124,16 @@ const demoClock = computed(() => {
         </div>
       </template>
 
+      <template v-else-if="meta.demo.kind === 'color'">
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-xs tracking-wide text-muted-foreground uppercase">{{ meta.demo.label }}</span>
+          <span class="flex items-center gap-2">
+            <code class="font-mono text-xs text-foreground">{{ meta.demo.value }}</code>
+            <span class="size-5 border border-border/60" :style="{ background: meta.demo.value }" />
+          </span>
+        </div>
+      </template>
+
       <template v-else-if="meta.demo.kind === 'formula'">
         <div class="space-y-1.5">
           <code class="block truncate font-mono text-[11px] text-muted-foreground">{{ meta.demo.expression }}</code>

@@ -1,5 +1,38 @@
 # Changelog - September 2026
 
+## OL-2609-066 - September 11th, 2026 - feat(controls): a color control, with a picker, that never rejects a value
+
+There is a ninth kind of control, and it holds one color. Point a CSS custom property at it -
+`--globe-dot-color: [[[c:color_globe_dot]]]` - and every part of your overlay reading that property
+restyles the moment you pick something new.
+
+The reason it exists is narrow and worth saying plainly: you could always do this with a Text
+control, and typing `#7c3aed` into a text box by hand is miserable. So the whole change is really
+about the input, not the data.
+
+It cost no new dependency. Reka UI, which every dialog, popover and switch in the app already sits
+on, has shipped color primitives for a while and nobody had noticed: a saturation area, sliders that
+paint their own gradients, a swatch grid, and the parsing and conversion helpers to go with them.
+They are headless, so they arrive with no opinions about how they look, which is the only reason
+they fit next to everything else here.
+
+The interesting decision was what to do when the picker cannot read your value, and the answer is
+nothing at all. The string you hold is the truth and it goes to CSS untouched. Reka's parser handles
+hex, rgb, hsl and hsb and nothing else, which leaves named colors, `rgb(0 0 0 / 50%)`,
+`color-mix()`, `var(--something)` and every oklch color outside what the sliders can show you - all
+of them perfectly good CSS. Type one in and it saves, renders and works. The picker just tells you
+it cannot preview it, and keeps its last position until you pick again. The swatch next to the input
+is painted with your raw string rather than anything parsed, so it shows you the truth either way:
+a color CSS understands renders, and one it does not falls through to the transparency
+checkerboard.
+
+Nothing validates a color, deliberately. CSS already has the right failure mode for a string it does
+not understand - it drops the declaration and whatever fallback the template set stands - and the
+only thing a validator could add is refusing colors that are valid but outside whatever list we had
+thought of.
+
+One thing that is not done: `/help/controls` still says there are eight kinds.
+
 ## OL-2609-062 - September 10th, 2026 - feat(bot): built-in commands get a switch and a tier, per channel
 
 Seventeen commands arrived with the bot, on by default, and there was no way to switch any of them

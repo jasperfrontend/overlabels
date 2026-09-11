@@ -76,7 +76,7 @@ class OverlayControl extends Model
         'source_managed' => 'boolean',
     ];
 
-    const array TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'expression', 'list_writer'];
+    const array TYPES = ['text', 'number', 'counter', 'timer', 'datetime', 'boolean', 'color', 'expression', 'list_writer'];
 
     /** Service source names that cannot be used as control keys (to avoid namespace collisions in expressions). */
     const array RESERVED_KEYS = ['kofi', 'streamlabs', 'twitch', 'gps', 'alerts', 'fourthwall', 'bmac', 'throne', 'checkin', 'tower'];
@@ -168,11 +168,18 @@ class OverlayControl extends Model
 
     /**
      * Sanitise a raw value for a given control type.
+     *
+     * `color` sanitises exactly like `text` and is deliberately NOT validated.
+     * The value is handed to CSS verbatim - typically into a custom property -
+     * and CSS already has the right failure mode for a string it cannot read:
+     * it drops the declaration and whatever fallback the template set stands.
+     * Rejecting the write instead would only mean refusing colors that are
+     * valid CSS but outside whatever list we had thought to allow.
      */
     public static function sanitizeValue(string $type, mixed $raw): string
     {
         return match ($type) {
-            'text', 'expression', 'datetime' => strip_tags((string) $raw),
+            'text', 'color', 'expression', 'datetime' => strip_tags((string) $raw),
             'number', 'counter' => is_numeric($raw) ? (string) $raw : '0',
             'boolean' => in_array($raw, ['1', 'true', true, 1], true) ? '1' : '0',
             default => '', // timer: value derived from config

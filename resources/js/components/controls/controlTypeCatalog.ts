@@ -1,5 +1,5 @@
 import type { OverlayControl } from '@/types';
-import { CalendarClock, Gauge, Hash, ListPlus, Sigma, Timer, ToggleLeft, Type } from '@lucide/vue';
+import { CalendarClock, Gauge, Hash, ListPlus, Palette, Sigma, Timer, ToggleLeft, Type } from '@lucide/vue';
 import type { Component } from 'vue';
 
 /**
@@ -8,7 +8,7 @@ import type { Component } from 'vue';
  * what it actually looks like once it is on screen.
  *
  * This lives next to `controlPresets.ts` on purpose. That file is the catalog
- * of ready-made service controls; this one is the catalog of the eight kinds
+ * of ready-made service controls; this one is the catalog of the nine kinds
  * you can build yourself. The picker renders both.
  *
  * Accent class strings are FULL LITERALS, never interpolated. Tailwind scans
@@ -38,6 +38,7 @@ export type ControlTypeDemo =
   | { kind: 'timer' }
   | { kind: 'datetime'; value: string }
   | { kind: 'boolean'; label: string }
+  | { kind: 'color'; label: string; value: string }
   | { kind: 'formula'; expression: string; result: string }
   | { kind: 'pipe'; from: string; to: string };
 
@@ -181,6 +182,29 @@ export const CONTROL_TYPES: ControlTypeMeta[] = [
     demo: { kind: 'boolean', label: 'Be right back' },
   },
   {
+    type: 'color',
+    name: 'Color',
+    tagline: 'One color, picked rather than typed, changed mid-stream.',
+    exampleName: 'Accent color',
+    blurb:
+      'A color with a proper picker behind it, so you are not typing hex codes by hand. Drop it into a CSS custom property and every part of your overlay using that property restyles the moment you pick a new one. Anything CSS understands is allowed, so you can still type a color in by hand if you would rather.',
+    goodFor: [
+      'Your overlay accent, matched to the scene',
+      'Highlight colors on a goal or progress bar',
+      'Recoloring a whole overlay from one control',
+    ],
+    icon: Palette,
+    accent: {
+      icon: 'bg-orange-500/12 text-orange-600 dark:bg-orange-400/12 dark:text-orange-300',
+      ring: 'border-orange-500/25 dark:border-orange-400/20',
+      ringHover: 'hover:border-orange-500/60 dark:hover:border-orange-400/50',
+      ringSelected: 'border-orange-500/60 dark:border-orange-400/50',
+      ringFocus: 'focus-visible:ring-orange-500/40 dark:focus-visible:ring-orange-400/30',
+      text: 'text-orange-600 dark:text-orange-300',
+    },
+    demo: { kind: 'color', label: 'Accent', value: '#7c3aed' },
+  },
+  {
     type: 'expression',
     name: 'Expression',
     tagline: 'A formula over your other controls and your live Twitch data.',
@@ -230,7 +254,7 @@ export function controlTypeMeta(type: OverlayControl['type']): ControlTypeMeta {
 
 /**
  * Neutral accent for the ready-made service controls. They are not one of the
- * eight buildable types, so they get their own identity rather than borrowing
+ * nine buildable types, so they get their own identity rather than borrowing
  * whichever type the preset happens to be.
  */
 export const SERVICE_ACCENT: ControlAccent = {

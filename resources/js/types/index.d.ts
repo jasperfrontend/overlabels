@@ -244,7 +244,7 @@ export interface OverlayControl {
   key: string;
   label: string | null;
   description: string | null;
-  type: 'text' | 'number' | 'counter' | 'timer' | 'datetime' | 'boolean' | 'expression' | 'list_writer';
+  type: 'text' | 'number' | 'counter' | 'timer' | 'datetime' | 'boolean' | 'color' | 'expression' | 'list_writer';
   value: string | null;
   config: Record<string, any> | null;
   sort_order: number;

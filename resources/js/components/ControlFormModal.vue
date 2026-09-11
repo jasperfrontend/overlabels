@@ -8,6 +8,7 @@ import ExpressionBuilder from '@/components/controls/ExpressionBuilder.vue';
 import ControlTypePicker from '@/components/controls/ControlTypePicker.vue';
 import ControlTypeCard from '@/components/controls/ControlTypeCard.vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { controlTypeMeta, PRESET_GROUPS, SERVICE_ACCENT } from '@/components/controls/controlTypeCatalog';
 import { getPresetsForSource, type ServicePreset } from '@/components/controls/controlPresets';
 import { serviceLabel } from '@/utils/services';
@@ -47,7 +48,7 @@ const labelInputRef = ref<HTMLInputElement | null>(null);
 const pickerRef = ref<InstanceType<typeof ControlTypePicker> | null>(null);
 
 /**
- * The modal is two screens, not one long scroll. `pick` sells the eight control
+ * The modal is two screens, not one long scroll. `pick` sells the nine control
  * types and the ready-made service controls side by side; `configure` fills in
  * the one you chose. Editing and duplicating skip straight to `configure`,
  * because the type is already settled in both cases.
@@ -707,7 +708,7 @@ async function save() {
 
             <template v-if="!isPresetMode">
               <!-- Starting value -->
-              <section v-if="['text', 'number', 'counter', 'datetime', 'boolean'].includes(form.type)" class="space-y-4">
+              <section v-if="['text', 'number', 'counter', 'datetime', 'boolean', 'color'].includes(form.type)" class="space-y-4">
                 <h3 class="border-b border-border/60 pb-2 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                   {{ isEditing ? 'Value' : 'Starting value' }}
                 </h3>
@@ -721,6 +722,24 @@ async function save() {
                     class="input-border w-full"
                   />
                   <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
+                </div>
+
+                <div v-if="form.type === 'color'" class="space-y-2">
+                  <div class="flex gap-2">
+                    <ColorPicker v-model="form.value" :label="form.label || 'this control'" />
+                    <input
+                      id="ctrl-value-color"
+                      v-model="form.value"
+                      type="text"
+                      placeholder="Leave blank to start empty"
+                      class="input-border w-full font-mono"
+                    />
+                  </div>
+                  <p v-if="errors.value" class="text-xs text-destructive">{{ errors.value }}</p>
+                  <p v-else class="text-xs text-muted-foreground">
+                    Anything CSS understands works here, so hex, rgb, hsl and oklch are all fine. The picker handles the first three; type the rest in
+                    yourself.
+                  </p>
                 </div>
 
                 <div v-if="form.type === 'datetime'" class="space-y-2">
