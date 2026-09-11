@@ -6,6 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import CollectionFilter from '@/components/CollectionFilter.vue';
+import ProductBadge from '@/components/ProductBadge.vue';
 import { useCollectionFilter } from '@/composables/useCollectionFilter';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
@@ -25,6 +26,8 @@ interface ServiceInfo {
   test_mode: boolean;
   url_slug: string;
   last_received_at: string | null;
+  /** The slug of the Overlabels product this integration belongs to, or null for a third-party service. */
+  product: string | null;
 }
 
 interface EventSubEvent {
@@ -62,16 +65,23 @@ const breadcrumbItems: BreadcrumbItem[] = [
   },
 ];
 
-// The external services are the list of things on this page; the Twitch and
-// bot cards above them are one-of-a-kind panels, not rows, so they stay put.
-// `url_slug` is matched too - it is what the Manage links point at, so a
-// service found in the address bar is findable here by the same name.
+// The server sends every service already ordered: not connected first, then
+// A-Z by name. Integrations that belong to an Overlabels product get their
+// own spot above the third-party list, so both halves keep that order.
+const productServices = computed(() => props.services.filter((service) => service.product !== null));
+const externalServices = computed(() => props.services.filter((service) => service.product === null));
+
+// The external services are the list of things on this page; the Twitch,
+// bot and product cards above them are one-of-a-kind panels, not rows, so
+// they stay put. `url_slug` is matched too - it is what the Manage links
+// point at, so a service found in the address bar is findable here by the
+// same name.
 const {
   query,
   filtering,
   filtered: filteredServices,
 } = useCollectionFilter<ServiceInfo>(
-  () => props.services,
+  () => externalServices.value,
   (service, q) =>
     service.name.toLowerCase().includes(q) || service.key.toLowerCase().includes(q) || (service.url_slug ?? '').toLowerCase().includes(q),
 );
@@ -395,11 +405,56 @@ function formatDate(iso: string | null): string {
           </div>
         </div>
 
+        <!-- Overlabels products: chat features made by Overlabels, installed from /products. -->
+        <div v-if="productServices.length > 0">
+          <HeadingSmall
+            title="Overlabels products"
+            description="Chat features made by Overlabels. Install one from the Products page, manage its settings here."
+          />
+
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div
+              v-for="service in productServices"
+              :key="service.key"
+              class="flex items-center justify-between gap-4 border p-4"
+              :class="service.connected ? 'border-green-500/60' : 'border-violet-400/60'"
+            >
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <ProductBadge
+                    :label="service.connected ? 'Overlabels product, connected' : 'Overlabels product, not connected'"
+                    class="my-1 size-5 shrink-0"
+                    :class="service.connected ? 'text-green-500' : 'text-violet-400'"
+                  />
+                  <span class="font-medium">{{ service.name }}</span>
+                  <span v-if="service.connected && service.test_mode" title="Test mode enabled"
+                    ><FlaskConical class="my-1 size-5 text-yellow-400"
+                  /></span>
+                </div>
+                <p v-if="service.connected" class="text-sm text-muted-foreground">Last event: {{ formatDate(service.last_received_at) }}</p>
+                <p v-else class="text-sm text-muted-foreground">
+                  Not connected.
+                  <Link :href="`/products/${service.product}`" class="underline underline-offset-2 hover:text-foreground">Install the product</Link>
+                  to connect it.
+                </p>
+              </div>
+
+              <Link
+                class="btn btn-sm shrink-0"
+                :class="service.connected ? 'btn-plain' : 'btn-primary'"
+                :href="`/settings/integrations/${service.url_slug ?? service.key}`"
+              >
+                {{ service.connected ? 'Manage' : 'Connect' }}
+              </Link>
+            </div>
+          </div>
+        </div>
+
         <!-- External Integrations -->
         <div>
           <HeadingSmall title="External Integrations" description="Connect external donation and support platforms to power your overlays." />
 
-          <CollectionFilter v-if="props.services.length > 0" v-model="query" noun="integration" placeholder="Filter integrations..." class="mt-4" />
+          <CollectionFilter v-if="externalServices.length > 0" v-model="query" noun="integration" placeholder="Filter integrations..." class="mt-4" />
 
           <p v-if="filtering && filteredServices.length === 0" class="py-8 text-center text-sm text-muted-foreground">
             No integrations match "{{ query }}"

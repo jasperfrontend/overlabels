@@ -7,6 +7,7 @@ use App\Jobs\SetupUserEventSubSubscriptions;
 use App\Models\ExternalIntegration;
 use App\Models\UserEventsubSubscription;
 use App\Services\External\ExternalServiceRegistry;
+use App\Services\Recipes\RecipeCatalog;
 use App\Services\UserEventSubManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class IntegrationController extends Controller
 {
     public function __construct(private readonly UserEventSubManager $eventSubManager) {}
 
-    public function index(): Response
+    public function index(RecipeCatalog $catalog): Response
     {
         $user = auth()->user();
 
@@ -31,19 +32,33 @@ class IntegrationController extends Controller
         // deep-link target keep working.
         $urlSlugs = ['gps' => 'overlabels-mobile'];
 
-        $services = array_map(function (string $service) use ($integrations, $urlSlugs) {
+        $productOf = $this->productIntegrations($catalog);
+
+        $services = array_map(function (string $service) use ($integrations, $urlSlugs, $productOf) {
             $integration = $integrations->get($service);
 
             return [
                 'key' => $service,
                 'url_slug' => $urlSlugs[$service] ?? $service,
                 'name' => $this->serviceName($service),
+                'product' => $productOf[$service] ?? null,
                 'connected' => (bool) $integration,
                 'enabled' => $integration?->enabled ?? false,
                 'test_mode' => $integration?->test_mode ?? false,
                 'last_received_at' => $integration?->last_received_at?->toIso8601String(),
             ];
         }, ExternalServiceRegistry::services());
+
+        // Registry order is the order drivers were added in, which is what
+        // put Chat Tower at the bottom of the page. The page wants what needs
+        // attention on top: anything not connected first, then A-Z by name.
+        usort($services, function (array $a, array $b): int {
+            if ($a['connected'] !== $b['connected']) {
+                return $a['connected'] ? 1 : -1;
+            }
+
+            return strcasecmp($a['name'], $b['name']);
+        });
 
         $subscriptions = UserEventsubSubscription::where('user_id', $user->id)->get();
         $activeCount = $subscriptions->where('status', 'enabled')->count();
@@ -97,5 +112,27 @@ class IntegrationController extends Controller
     private function serviceName(string $key): string
     {
         return ExternalServiceRegistry::displayName($key);
+    }
+
+    /**
+     * Which integrations belong to an Overlabels product, keyed by service
+     * with the product slug as the value. Read from the listed product
+     * manifests' `requires_integrations`, so a product that ships with an
+     * integration is marked on the settings page by the same file that
+     * installs it - there is no second list to keep in step.
+     *
+     * @return array<string, string>
+     */
+    private function productIntegrations(RecipeCatalog $catalog): array
+    {
+        $productOf = [];
+
+        foreach ($catalog->listed() as $slug => $manifest) {
+            foreach ($manifest['requires_integrations'] ?? [] as $service) {
+                $productOf[$service] = $slug;
+            }
+        }
+
+        return $productOf;
     }
 }
