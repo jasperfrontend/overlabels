@@ -55,7 +55,7 @@ final class WiringCatalog
             'satisfied' => 'Every event your alerts listen for is subscribed and enabled.',
             'missing' => 'You have alerts set up, but Twitch is not sending you the events they listen for, so they never fire.',
             'not_applicable' => 'You have no alerts set up, so there is nothing to subscribe to.',
-            'route' => 'settings.integrations.index',
+            'route' => 'settings.integrations.twitch.show',
             'cta' => 'Check your Twitch connection',
         ],
         'alerts.delivering' => [
@@ -87,7 +87,7 @@ final class WiringCatalog
             'satisfied' => 'Your chat commands have something listening for them.',
             'missing' => 'You have chat commands set up, but the bot is not in your channel, so none of them run.',
             'not_applicable' => 'You have no chat commands yet, so there is nothing for the bot to answer.',
-            'route' => 'settings.bot.commands.index',
+            'route' => 'settings.integrations.bot.show',
             'cta' => 'Add the bot',
         ],
         'bot.present' => [
@@ -106,7 +106,7 @@ final class WiringCatalog
             'satisfied' => 'The Overlabels bot is switched on for your channel.',
             'missing' => 'This product works through chat, and the bot is switched off for your channel, so nothing answers. Switch it on, then type /mod overlabels in your own chat.',
             'not_applicable' => 'This product does not use the bot.',
-            'route' => 'settings.integrations.index',
+            'route' => 'settings.integrations.bot.show',
             'cta' => 'Switch the bot on',
         ],
         'product.bot_hears' => [
@@ -122,7 +122,7 @@ final class WiringCatalog
             'satisfied' => 'Twitch lists your channel among the ones the Overlabels bot moderates, so its replies get through.',
             'missing' => 'The bot is switched on but it is not a moderator in your channel, and Twitch drops its replies without one. Type /mod overlabels in your own chat. This page rechecks within five minutes.',
             'not_applicable' => 'Checked once the bot is switched on and the bot account has reported which channels it moderates.',
-            'route' => 'settings.integrations.index',
+            'route' => 'settings.integrations.bot.show',
             'cta' => 'How to mod the bot',
         ],
         'product.integration' => [

@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SetupUserEventSubSubscriptions;
+use App\Models\BotAlias;
+use App\Models\BotCommand;
 use App\Models\ExternalIntegration;
+use App\Models\User;
 use App\Models\UserEventsubSubscription;
 use App\Services\External\ExternalServiceRegistry;
 use App\Services\Recipes\RecipeCatalog;
@@ -60,32 +63,62 @@ class IntegrationController extends Controller
             return strcasecmp($a['name'], $b['name']);
         });
 
-        $subscriptions = UserEventsubSubscription::where('user_id', $user->id)->get();
-        $activeCount = $subscriptions->where('status', 'enabled')->count();
-
-        $eventLabels = UserEventSubManager::getSupportedEventLabels();
+        $eventsub = $this->eventSubState($user);
 
         return Inertia::render('settings/integrations/index', [
             'services' => array_values($services),
+            // The list row needs a one-line status, not the whole event list.
             'eventsub' => [
-                'connected' => $user->eventsub_connected_at !== null,
-                'connected_at' => $user->eventsub_connected_at?->toIso8601String(),
-                'subscription_count' => $subscriptions->count(),
-                'active_count' => $activeCount,
-                'supported_events' => array_map(
-                    fn (string $label, string $key) => [
-                        'key' => $key,
-                        'label' => $label,
-                        'active' => $subscriptions->where('event_type', $key)->where('status', 'enabled')->isNotEmpty(),
-                    ],
-                    $eventLabels,
-                    array_keys($eventLabels),
-                ),
+                'connected' => $eventsub['connected'],
+                'active_count' => $eventsub['active_count'],
+                'supported_count' => count($eventsub['supported_events']),
             ],
             'bot' => [
                 'enabled' => (bool) $user->bot_enabled,
+                // Enabled-only, to match the Twitch row's active event count:
+                // both numbers answer "what will actually respond in chat".
+                // The command map filters on `enabled` too.
+                'command_count' => BotCommand::where('user_id', $user->id)->where('enabled', true)->count(),
+                'alias_count' => BotAlias::where('user_id', $user->id)->where('enabled', true)->count(),
             ],
         ]);
+    }
+
+    /**
+     * Twitch Alerts has a settings page like every other integration, so the
+     * list can stay one flat list of rows. Everything that talks to Twitch -
+     * connect, reconnect, the test cheer, the event list - lives there.
+     */
+    public function showTwitch(): Response
+    {
+        return Inertia::render('settings/integrations/twitch', [
+            'eventsub' => $this->eventSubState(auth()->user()),
+        ]);
+    }
+
+    /**
+     * @return array{connected: bool, connected_at: ?string, subscription_count: int, active_count: int, supported_events: list<array{key: string, label: string, active: bool}>}
+     */
+    private function eventSubState(User $user): array
+    {
+        $subscriptions = UserEventsubSubscription::where('user_id', $user->id)->get();
+        $eventLabels = UserEventSubManager::getSupportedEventLabels();
+
+        return [
+            'connected' => $user->eventsub_connected_at !== null,
+            'connected_at' => $user->eventsub_connected_at?->toIso8601String(),
+            'subscription_count' => $subscriptions->count(),
+            'active_count' => $subscriptions->where('status', 'enabled')->count(),
+            'supported_events' => array_map(
+                fn (string $label, string $key) => [
+                    'key' => $key,
+                    'label' => $label,
+                    'active' => $subscriptions->where('event_type', $key)->where('status', 'enabled')->isNotEmpty(),
+                ],
+                $eventLabels,
+                array_keys($eventLabels),
+            ),
+        ];
     }
 
     /**

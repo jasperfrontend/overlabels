@@ -132,9 +132,13 @@ Route::middleware('auth.redirect')->group(function () {
         return back();
     })->where('key', '[a-z0-9-]{1,64}')->name('nudges.dismiss');
 
-    // External Integrations
+    // Integrations. Twitch Alerts and the chat bot are not external services,
+    // but to the person using them they are integrations like any other -
+    // connected or not - so they get a settings page of the same shape and sit
+    // in the same list.
     Route::prefix('settings/integrations')->name('settings.integrations.')->group(function () {
         Route::get('/', [IntegrationController::class, 'index'])->name('index');
+        Route::get('/twitch', [IntegrationController::class, 'showTwitch'])->name('twitch.show');
         Route::get('/kofi', [KofiIntegrationController::class, 'show'])->name('kofi.show');
         Route::post('/kofi', [KofiIntegrationController::class, 'save'])->name('kofi.save');
         Route::patch('/kofi/test-mode', [KofiIntegrationController::class, 'setTestMode'])->name('kofi.test-mode');
@@ -181,6 +185,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::post('/throne/seed-count', [ThroneIntegrationController::class, 'seedDonationCount'])->name('throne.seed-count');
         Route::delete('/throne', [ThroneIntegrationController::class, 'disconnect'])->name('throne.disconnect');
 
+        Route::get('/bot', [BotSettingsController::class, 'show'])->name('bot.show');
         Route::patch('/bot', [BotSettingsController::class, 'setEnabled'])->name('bot.enabled');
     });
 

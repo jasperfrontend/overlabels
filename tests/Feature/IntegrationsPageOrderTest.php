@@ -55,6 +55,42 @@ test('connected services sink below the disconnected ones, each half still A-Z',
     expect($disconnected)->toBe($sortedDisconnected);
 });
 
+/**
+ * Twitch Alerts and the chat bot are not external services, but to the person
+ * using them they are integrations like any other, so they get a settings page
+ * of the same shape and a row in the same list.
+ */
+test('twitch alerts has a settings page of its own carrying the event list', function () {
+    $this->get('/settings/integrations/twitch')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('settings/integrations/twitch')
+            ->has('eventsub.supported_events')
+            ->where('eventsub.active_count', 0)
+        );
+});
+
+test('the chat bot has a settings page of its own carrying what it answers', function () {
+    $this->get('/settings/integrations/bot')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('settings/integrations/bot')
+            ->where('bot.enabled', false)
+            ->has('bot.command_count')
+            ->has('bot.alias_count')
+            ->has('bot.builtin_count')
+        );
+});
+
+test('the index carries the one-line status for the twitch and bot rows', function () {
+    $this->get('/settings/integrations')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('settings/integrations/index')
+            ->has('eventsub.active_count')
+            ->has('eventsub.supported_count')
+            ->has('bot.command_count')
+            ->has('bot.alias_count')
+        );
+});
+
 test('the checkin and tower integrations carry their product slug and the third-party services carry none', function () {
     $byKey = collect(integrationsPageServices())->keyBy('key');
 

@@ -1,57 +1,27 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Head } from '@inertiajs/vue3';
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import CollectionFilter from '@/components/CollectionFilter.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
 import { useCollectionFilter } from '@/composables/useCollectionFilter';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { type BreadcrumbItem } from '@/types';
-import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { FlaskConical, Power, PowerOff, ZapOff } from '@lucide/vue';
-import { useProductTarget } from '@/composables/useUiMode';
-
-// While a product install's next step is "switch the bot on", the bot card
-// wears the fuchsia target edge (see ProductSetup::STEPS).
-const botIsProductTarget = useProductTarget('bot-toggle');
-
-interface ServiceInfo {
-  key: string;
-  name: string;
-  connected: boolean;
-  enabled: boolean;
-  test_mode: boolean;
-  url_slug: string;
-  last_received_at: string | null;
-  /** The slug of the Overlabels product this integration belongs to, or null for a third-party service. */
-  product: string | null;
-}
-
-interface EventSubEvent {
-  key: string;
-  label: string;
-  active: boolean;
-}
-
-interface EventSubInfo {
-  connected: boolean;
-  connected_at: string | null;
-  subscription_count: number;
-  active_count: number;
-  supported_events: EventSubEvent[];
-}
-
-interface BotInfo {
-  enabled: boolean;
-}
+import {
+  buildIntegrationRows,
+  matchesIntegration,
+  type BotSummary,
+  type EventSubSummary,
+  type IntegrationRow,
+  type ServiceInfo,
+} from '@/utils/integrationRows';
 
 const props = defineProps<{
   services: ServiceInfo[];
-  eventsub: EventSubInfo;
-  bot: BotInfo;
+  eventsub: EventSubSummary;
+  bot: BotSummary;
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -65,214 +35,22 @@ const breadcrumbItems: BreadcrumbItem[] = [
   },
 ];
 
-// The server sends every service already ordered: not connected first, then
-// A-Z by name. Integrations that belong to an Overlabels product get their
-// own spot above the third-party list, so both halves keep that order.
-const productServices = computed(() => props.services.filter((service) => service.product !== null));
-const externalServices = computed(() => props.services.filter((service) => service.product === null));
-
-// The external services are the list of things on this page; the Twitch,
-// bot and product cards above them are one-of-a-kind panels, not rows, so
-// they stay put. `url_slug` is matched too - it is what the Manage links
-// point at, so a service found in the address bar is findable here by the
-// same name.
-const {
-  query,
-  filtering,
-  filtered: filteredServices,
-} = useCollectionFilter<ServiceInfo>(
-  () => externalServices.value,
-  (service, q) =>
-    service.name.toLowerCase().includes(q) || service.key.toLowerCase().includes(q) || (service.url_slug ?? '').toLowerCase().includes(q),
-);
-
-const eventsubLoading = ref(false);
-const eventsubMessage = ref('');
-
-const testCheerLoading = ref(false);
-const testCheerMessage = ref('');
-const testCheerIsWarning = ref(false);
-const testCheerCooldown = ref(0);
-let testCheerInterval: ReturnType<typeof setInterval> | null = null;
-
-const TEST_CHEER_COOLDOWN_SECONDS = 60;
-
-function startTestCheerCooldown() {
-  testCheerCooldown.value = TEST_CHEER_COOLDOWN_SECONDS;
-  if (testCheerInterval) clearInterval(testCheerInterval);
-  testCheerInterval = setInterval(() => {
-    testCheerCooldown.value--;
-    if (testCheerCooldown.value <= 0 && testCheerInterval) {
-      clearInterval(testCheerInterval);
-      testCheerInterval = null;
-    }
-  }, 1000);
-}
-
-interface EventSubSetupPayload {
-  created: string[];
-  failed: Record<string, string> | string[];
-  existing: string[];
-  skipped_missing_scope: string[];
-  success: boolean;
-}
-
-interface EventSubSetupProgressPayload {
-  phase: 'connecting' | 'verifying';
-  processed: number;
-  total: number;
-  connected: number;
-}
-
-type EchoChannel = {
-  listen: <T>(event: string, cb: (payload: T) => void) => EchoChannel;
-  stopListening: (event: string) => EchoChannel;
-};
-
-let eventsubChannel: EchoChannel | null = null;
-
-onBeforeUnmount(() => {
-  if (testCheerInterval) clearInterval(testCheerInterval);
-  eventsubChannel?.stopListening('.eventsub.setup-completed');
-  eventsubChannel?.stopListening('.eventsub.setup-progress');
-  eventsubChannel = null;
-});
-
-async function sendTestCheer() {
-  testCheerLoading.value = true;
-  testCheerMessage.value = '';
-  testCheerIsWarning.value = false;
-
-  try {
-    const response = await fetch('/twitch/test-cheer', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
-      testCheerMessage.value = data.error ?? 'Failed to fire test cheer.';
-      testCheerIsWarning.value = true;
-      return;
-    }
-
-    startTestCheerCooldown();
-
-    const parts = [
-      `Thanks for testing! Fired ${data.bits} bits from ${data.cheerer_name}.`,
-      'This event will disappear from your logs in ~60 seconds, and you can only fire one test cheer per minute to keep things tidy.',
-    ];
-    if (!data.alert_fired) {
-      parts.push('Heads up: no alert is mapped to channel.cheer, so nothing will appear on your overlays.');
-      testCheerIsWarning.value = true;
-    }
-    if (!data.controls_updated) {
-      parts.push('Controls did not update because the stream is not live. Use php artisan stream:fake-live {twitch_id} to bypass.');
-      testCheerIsWarning.value = true;
-    }
-    testCheerMessage.value = parts.join(' ');
-  } catch {
-    testCheerMessage.value = 'Failed to fire test cheer. Please try again.';
-    testCheerIsWarning.value = true;
-  } finally {
-    testCheerLoading.value = false;
-  }
-}
-
-const botLoading = ref(false);
-
-function toggleBot() {
-  botLoading.value = true;
-  router.patch(
-    '/settings/integrations/bot',
-    { enabled: !props.bot.enabled },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        botLoading.value = false;
-      },
-    },
-  );
-}
-
 const page = usePage();
 const userLocale = computed<string | undefined>(() => {
   const user = (page.props as any)?.auth?.user;
   return user?.locale || undefined;
 });
-const twitchId = computed<string | undefined>(() => {
-  const user = (page.props as any)?.auth?.user;
-  return user?.twitch_id ? String(user.twitch_id) : undefined;
-});
-
-onMounted(() => {
-  const echo = (window as any).Echo;
-  if (!echo || !twitchId.value) return;
-  eventsubChannel = echo.private(`alerts.${twitchId.value}`);
-  eventsubChannel?.listen('.eventsub.setup-progress', (payload: EventSubSetupProgressPayload) => {
-    // Also covers an F5 mid-sequence: a fresh page picks the progress back up
-    // and re-freezes the button until the completion event lands.
-    eventsubLoading.value = true;
-    if (payload.phase === 'verifying') {
-      eventsubMessage.value = `All ${payload.total} events requested. Twitch is verifying them now - about 15 more seconds...`;
-    } else {
-      eventsubMessage.value = `Connecting Twitch events: ${payload.connected} connected, ${payload.total - payload.processed} to go...`;
-    }
-  });
-  eventsubChannel?.listen('.eventsub.setup-completed', (payload: EventSubSetupPayload) => {
-    const createdCount = payload.created?.length ?? 0;
-    const existingCount = payload.existing?.length ?? 0;
-    const failedCount = Array.isArray(payload.failed) ? payload.failed.length : Object.keys(payload.failed ?? {}).length;
-    const skippedCount = payload.skipped_missing_scope?.length ?? 0;
-
-    if (payload.success) {
-      const parts = [`Connected: ${createdCount} created, ${existingCount} existing, ${failedCount} failed`];
-      if (skippedCount > 0) parts.push(`${skippedCount} skipped (missing scope)`);
-      eventsubMessage.value = parts.join(', ') + '.';
-    } else {
-      const reason = Array.isArray(payload.failed) ? payload.failed.join('; ') : Object.values(payload.failed ?? {}).join('; ');
-      eventsubMessage.value = `Setup failed: ${reason || 'unknown error'}`;
-    }
-
-    eventsubLoading.value = false;
-    router.reload({ only: ['eventsub'] });
-  });
-});
-
-async function connectEventSub() {
-  eventsubLoading.value = true;
-  eventsubMessage.value = '';
-
-  try {
-    const response = await fetch('/eventsub/connect', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-      },
-    });
-
-    const data = await response.json();
-    eventsubMessage.value = data.message;
-
-    if (!response.ok) {
-      eventsubLoading.value = false;
-    }
-  } catch {
-    eventsubMessage.value = 'Failed to connect. Please try again.';
-    eventsubLoading.value = false;
-  }
-}
 
 function formatDate(iso: string | null): string {
   if (!iso) return 'Never';
   return new Date(iso).toLocaleString(userLocale.value);
 }
+
+// Row shape and band order both live in the util, so they are unit-tested
+// rather than buried in a template.
+const rows = computed<IntegrationRow[]>(() => buildIntegrationRows(props.services, props.eventsub, props.bot, formatDate));
+
+const { query, filtering, filtered: filteredRows } = useCollectionFilter<IntegrationRow>(() => rows.value, matchesIntegration);
 </script>
 
 <template>
@@ -281,211 +59,47 @@ function formatDate(iso: string | null): string {
 
     <SettingsLayout>
       <div class="space-y-6">
-        <!-- Twitch EventSub -->
-        <div>
-          <HeadingSmall title="Twitch" description="Real-time events from Twitch for alerts, per-stream counters, and live detection." />
-
-          <div class="mt-4 border p-4" :class="eventsub.connected && eventsub.active_count === 0 ? 'border-fuchsia-400' : 'border-sidebar-border'">
-            <div class="flex items-center justify-between">
-              <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                  <span title="Connected to Twtich" v-if="eventsub.active_count > 0"><Power class="my-1 size-4 text-green-400" /></span>
-                  <span title="Not listening to any events" v-else-if="eventsub.connected"><ZapOff class="my-1 size-4 text-pink-400" /></span>
-                  <span v-else title="Disconnected from Twitch"><PowerOff class="my-1 size-4 text-orange-400" /></span>
-                  <span class="font-medium">Twitch Alerts</span>
-                </div>
-                <Dialog>
-                  <p v-if="eventsub.connected && eventsub.active_count > 0" class="text-sm text-muted-foreground">
-                    Listening to
-                    <DialogTrigger as-child>
-                      <button class="cursor-pointer text-foreground underline underline-offset-2 hover:no-underline">
-                        {{ eventsub.active_count }} events
-                      </button>
-                    </DialogTrigger>
-                  </p>
-
-                  <DialogContent class="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Active events ({{ eventsub.active_count }})</DialogTitle>
-                      <DialogDescription> These are the Twitch events your overlays can respond to. </DialogDescription>
-                    </DialogHeader>
-
-                    <ul class="space-y-2">
-                      <li v-for="event in eventsub.supported_events" :key="event.key" class="flex items-center gap-2 text-sm">
-                        <span v-if="event.active" class="text-green-500">&#10003;</span>
-                        <span v-else class="text-muted-foreground">&#10005;</span>
-                        <span :class="{ 'text-muted-foreground': !event.active }">{{ event.label }}</span>
-                      </li>
-                    </ul>
-                  </DialogContent>
-                </Dialog>
-
-                <p v-if="eventsub.connected && eventsub.active_count === 0" class="text-sm text-pink-400">
-                  Not receiving Twitch events. Click "(Re)connect".
-                </p>
-              </div>
-
-              <div class="flex gap-2">
-                <button
-                  v-if="eventsub.active_count > 0"
-                  :disabled="testCheerLoading || testCheerCooldown > 0"
-                  @click="sendTestCheer"
-                  class="btn btn-sm btn-chill"
-                >
-                  <template v-if="testCheerLoading">Firing...</template>
-                  <template v-else-if="testCheerCooldown > 0">Wait {{ testCheerCooldown }}s</template>
-                  <template v-else>Send test cheer</template>
-                </button>
-                <button class="btn btn-sm btn-primary" :disabled="eventsubLoading" @click="connectEventSub">
-                  {{ eventsub.active_count > 0 ? 'Reconnect' : 'Connect' }}
-                </button>
-              </div>
-            </div>
-
-            <p v-if="eventsubMessage" class="mt-2 text-sm text-muted-foreground">
-              {{ eventsubMessage }}
-            </p>
-            <p
-              v-if="testCheerMessage"
-              class="mt-2 text-sm"
-              :class="testCheerIsWarning ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'"
-            >
-              {{ testCheerMessage }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Overlabels Bot -->
         <div>
           <HeadingSmall
-            title="Overlabels bot"
-            description="Let the shared @overlabels Twitch account join your chat so you can use it to manage your overlay controls."
-            description-class="text-sm text-muted-foreground"
-          />
-          <!-- Lit up while a product install's next step is this toggle. -->
-          <div class="mt-4 border border-sidebar-border p-4" :class="{ 'product-target': botIsProductTarget }">
-            <div class="flex items-center justify-between">
-              <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                  <Power v-if="props.bot.enabled" class="my-1 size-5 text-green-400" />
-                  <PowerOff v-else class="my-1 size-5 text-orange-400" />
-                  <span class="font-medium">Chat bot</span>
-                </div>
-                <p v-if="props.bot.enabled" class="text-sm">
-                  Run <code class="rounded bg-muted px-1 py-0.5 text-xs">/mod overlabels</code> in your Twitch chat so the bot can post without rate
-                  limits,<br />then try <code class="rounded bg-muted px-1 py-0.5 text-xs">!ping</code> - it should reply with pong.
-                </p>
-                <p v-else class="text-sm text-muted-foreground">
-                  Enable to have the bot join your channel. Default
-                  <a :href="route('help.bot.commands')" target="_blank" class="underline hover:text-foreground">bot commands</a> are enabled
-                  automatically the first time you enable it.
-                </p>
-              </div>
-
-              <button v-if="props.bot.enabled" class="btn btn-sm btn-secondary cursor-pointer" :disabled="botLoading" @click="toggleBot">
-                Disable
-              </button>
-              <button v-else class="btn btn-sm btn-primary cursor-pointer" :disabled="botLoading" @click="toggleBot">Enable</button>
-            </div>
-            <div v-if="props.bot.enabled" class="mt-4 space-y-3 border-t border-sidebar-border pt-4">
-              <div class="flex items-center justify-between gap-4">
-                <p class="text-sm text-muted-foreground">
-                  Bot commands: custom <code class="rounded bg-muted px-1 py-0.5 text-xs">!command</code> chat replies templated against your controls
-                  and Twitch data.
-                </p>
-                <Link href="/settings/bot/commands" class="btn btn-sm btn-plain shrink-0 cursor-pointer"> Commands </Link>
-              </div>
-              <div class="flex items-center justify-between gap-4">
-                <p class="text-sm text-muted-foreground">
-                  Bot aliases: short names that rewrite to longer commands. <code class="rounded bg-muted px-1 py-0.5 text-xs">!w 2</code> -&gt;
-                  <code class="rounded bg-muted px-1 py-0.5 text-xs">!increment wins 2</code>.
-                </p>
-                <Link href="/settings/bot/aliases" class="btn btn-sm btn-plain shrink-0 cursor-pointer"> Aliases </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Overlabels products: chat features made by Overlabels, installed from /products. -->
-        <div v-if="productServices.length > 0">
-          <HeadingSmall
-            title="Overlabels products"
-            description="Chat features made by Overlabels. Install one from the Products page, manage its settings here."
+            title="Integrations"
+            description="Everything that feeds your overlays. Open one to connect it or change how it behaves."
             description-class="text-sm text-muted-foreground"
           />
 
-          <div class="mt-4 grid gap-4 md:grid-cols-2">
-            <div
-              v-for="service in productServices"
-              :key="service.key"
-              class="flex items-center justify-between gap-4 border p-4"
-              :class="service.connected ? 'border-green-500/60' : 'border-violet-400/60'"
-            >
-              <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                  <ProductBadge
-                    :label="service.connected ? 'Overlabels product, connected' : 'Overlabels product, not connected'"
-                    class="my-1 size-5 shrink-0"
-                    :class="service.connected ? 'text-green-500' : 'text-violet-400'"
-                  />
-                  <span class="font-medium">{{ service.name }}</span>
-                  <span v-if="service.connected && service.test_mode" title="Test mode enabled"
-                    ><FlaskConical class="my-1 size-5 text-yellow-400"
-                  /></span>
-                </div>
-                <p v-if="service.connected" class="text-sm text-muted-foreground">Last event: {{ formatDate(service.last_received_at) }}</p>
-                <p v-else class="text-sm text-muted-foreground">
-                  Not connected.
-                  <Link :href="`/products/${service.product}`" class="underline underline-offset-2 hover:text-foreground">Install the product</Link>
-                  to connect it.
-                </p>
-              </div>
+          <CollectionFilter v-model="query" noun="integration" placeholder="Filter integrations..." class="mt-4" />
 
-              <Link
-                class="btn btn-sm shrink-0"
-                :class="service.connected ? 'btn-plain' : 'btn-primary'"
-                :href="`/settings/integrations/${service.url_slug ?? service.key}`"
-              >
-                {{ service.connected ? 'Manage' : 'Connect' }}
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <!-- External Integrations -->
-        <div>
-          <HeadingSmall
-            title="External Integrations"
-            description="Connect external donation and support platforms to power your overlays."
-            description-class="text-sm text-muted-foreground"
-          />
-
-          <CollectionFilter v-if="externalServices.length > 0" v-model="query" noun="integration" placeholder="Filter integrations..." class="mt-4" />
-
-          <p v-if="filtering && filteredServices.length === 0" class="py-8 text-center text-sm text-muted-foreground">
+          <p v-if="filtering && filteredRows.length === 0" class="py-8 text-center text-sm text-muted-foreground">
             No integrations match "{{ query }}"
           </p>
 
           <div class="mt-4 space-y-4">
-            <div v-for="service in filteredServices" :key="service.key" class="flex items-center justify-between border border-sidebar-border p-4">
+            <div v-for="row in filteredRows" :key="row.key" class="flex items-center justify-between gap-4 border border-sidebar-border p-4">
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                  <span v-if="service.connected" title="Connected"><Power class="my-1 size-5 text-green-400" /></span>
-                  <span v-else title="Disconnected"><PowerOff class="my-1 size-5 text-orange-400" /></span>
-                  <span v-if="service.connected && service.test_mode" title="Test mode enabled"
-                    ><FlaskConical class="my-1 size-5 text-yellow-400"
-                  /></span>
-                  <span class="font-medium">{{ service.name }}</span>
+                  <ProductBadge
+                    v-if="row.product"
+                    :label="row.connected ? 'Overlabels product, connected' : 'Overlabels product, not connected'"
+                    class="my-1 size-5 shrink-0"
+                    :class="row.connected ? 'text-green-400' : 'text-orange-400'"
+                  />
+                  <span v-else-if="row.stalled" title="Connected, but listening to nothing"><ZapOff class="my-1 size-5 text-pink-400" /></span>
+                  <span v-else-if="row.connected" title="Connected"><Power class="my-1 size-5 text-green-400" /></span>
+                  <span v-else title="Not connected"><PowerOff class="my-1 size-5 text-orange-400" /></span>
+                  <span v-if="row.testMode" title="Test mode enabled"><FlaskConical class="my-1 size-5 text-yellow-400" /></span>
+                  <span class="font-medium">{{ row.name }}</span>
                 </div>
-                <p v-if="service.connected" class="text-sm text-muted-foreground">Last event: {{ formatDate(service.last_received_at) }}</p>
+                <p v-if="row.status" class="text-sm" :class="row.statusAlert ? 'text-pink-400' : 'text-muted-foreground'">
+                  {{ row.status }}
+                </p>
+                <p v-else-if="row.product" class="text-sm text-muted-foreground">
+                  Not connected.
+                  <Link :href="`/products/${row.product}`" class="underline underline-offset-2 hover:text-foreground">Install the product</Link>
+                  to connect it.
+                </p>
               </div>
 
-              <Link
-                class="btn btn-sm"
-                :class="service.connected ? 'btn-plain' : 'btn-primary'"
-                :href="`/settings/integrations/${service.url_slug ?? service.key}`"
-              >
-                {{ service.connected ? 'Manage' : 'Connect' }}
+              <Link class="btn btn-sm shrink-0" :class="row.connected ? 'btn-plain' : 'btn-primary'" :href="row.href">
+                {{ row.connected ? 'Manage' : 'Connect' }}
               </Link>
             </div>
           </div>

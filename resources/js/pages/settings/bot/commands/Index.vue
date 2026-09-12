@@ -86,9 +86,7 @@ function expiresIn(iso: string): string {
 
         <div v-if="!botEnabled" class="border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
           <p class="text-foreground">The Overlabels bot isn't enabled yet. Bot commands are saved here, but nothing fires until the bot is on.</p>
-          <Link href="/settings/integrations" class="mt-2 inline-block cursor-pointer underline hover:text-amber-400">
-            Enable it on the Integrations page →
-          </Link>
+          <Link href="/settings/integrations/bot" class="mt-2 inline-block cursor-pointer underline hover:text-amber-400"> Switch the bot on → </Link>
         </div>
 
         <div class="flex justify-end">

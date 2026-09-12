@@ -1,5 +1,40 @@
 # Changelog - September 2026
 
+## OL-2609-069 - September 12th, 2026 - refactor(settings): the integrations page is one list, and everything on it has a settings page
+
+The integrations page had three sections stacked above the search box, and between them they carried
+two headings, a paragraph of bot setup instructions, four inline code pills and a divider before you
+reached the first thing you could actually click. The bottom half of the page was six calm rows,
+each one a name, a last-event timestamp and a Manage link. The top half was the part nobody could
+read, and it was the part covering the two things every account depends on.
+
+The diagnosis that mattered was not about spacing. It was that Twitch Alerts and the chat bot were
+the only two integrations with no settings page of their own, so everything they needed to say had
+to be said on the list. Ko-fi gets a whole page to explain itself on; the bot got a card, and the
+card grew until it was three paragraphs and two sub-rows with their own buttons.
+
+So they got pages. `/settings/integrations/twitch` holds the connect and reconnect buttons, the test
+cheer, the live progress while Twitch verifies your subscriptions, and the full list of the events
+your overlays can respond to - laid out on the page now, instead of hidden behind a dialog you had
+to know to open. Its inactive events are counted underneath, because a gap there is the reason an
+alert silently never fires. `/settings/integrations/bot` holds the on/off switch, the
+`/mod overlabels` line, and a row each for your commands, aliases and built-ins with their counts.
+
+That left the list free to be a list. There is no "External Integrations" heading any more, and no
+separate grid for Overlabels products, because the distinction those headings drew is ours and not
+yours: an integration is connected or it is not. Twitch Alerts and the chat bot lead, since nothing
+below them works without them, then the products you have installed, then everything else. The
+filter box covers all of it, so typing "bot" finds the bot now.
+
+The bot card's old instructions survive on the new page, but as troubleshooting rather than
+homework: "Not replying? Run `/mod overlabels` in chat, then try `!ping`." Nothing on our side can
+tell whether you have done it - mod status lives with the bot - so the line has to stay, but it no
+longer reads like an unfinished task on a channel that has been working for months.
+
+One quieter change came with it. Every link in the app that used to say "switch the bot on" and drop
+you at the top of the integrations list now lands on the bot page itself, including the four wiring
+CTAs and the amber banner on all three bot settings pages.
+
 ## OL-2609-066 - September 11th, 2026 - feat(controls): a color control, with a picker, that never rejects a value
 
 There is a ninth kind of control, and it holds one color. Point a CSS custom property at it -
