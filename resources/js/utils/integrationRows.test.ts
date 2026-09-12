@@ -55,12 +55,24 @@ describe('band order', () => {
 });
 
 describe('the Twitch row', () => {
-  it('reports what it is listening to once events are subscribed', () => {
-    const row = buildIntegrationRows([], { connected: true, active_count: 29, supported_count: 33 }, botOff, never)[0];
+  // Not wrong until it is: one number in the ordinary case, a fraction only
+  // when part of the list is missing.
+  it('says one number when every event is subscribed', () => {
+    const row = buildIntegrationRows([], { connected: true, active_count: 29, supported_count: 29 }, botOff, never)[0];
 
     expect(row.connected).toBe(true);
-    expect(row.status).toBe('Listening to 29 of 33 events');
+    expect(row.status).toBe('Listening to 29 events');
     expect(row.statusAlert).toBe(false);
+    expect(row.stalled).toBe(false);
+  });
+
+  it('spells out the fraction and flags it when events are missing', () => {
+    const row = buildIntegrationRows([], { connected: true, active_count: 28, supported_count: 29 }, botOff, never)[0];
+
+    expect(row.connected).toBe(true);
+    expect(row.status).toBe('Listening to 28 of 29 events');
+    expect(row.statusAlert).toBe(true);
+    // Still listening to nearly everything, so not the dead-connection icon.
     expect(row.stalled).toBe(false);
   });
 

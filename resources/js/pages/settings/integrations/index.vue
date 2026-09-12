@@ -82,13 +82,14 @@ const { query, filtering, filtered: filteredRows } = useCollectionFilter<Integra
                     class="my-1 size-5 shrink-0"
                     :class="row.connected ? 'text-green-400' : 'text-orange-400'"
                   />
-                  <span v-else-if="row.stalled" title="Connected, but listening to nothing"><ZapOff class="my-1 size-5 text-pink-400" /></span>
+                  <span v-else-if="row.stalled" title="Connected, but listening to nothing"><ZapOff class="my-1 size-5 text-fuchsia-400" /></span>
                   <span v-else-if="row.connected" title="Connected"><Power class="my-1 size-5 text-green-400" /></span>
                   <span v-else title="Not connected"><PowerOff class="my-1 size-5 text-orange-400" /></span>
                   <span v-if="row.testMode" title="Test mode enabled"><FlaskConical class="my-1 size-5 text-yellow-400" /></span>
                   <span class="font-medium">{{ row.name }}</span>
                 </div>
-                <p v-if="row.status" class="text-sm" :class="row.statusAlert ? 'text-pink-400' : 'text-muted-foreground'">
+                <!-- Fuchsia is the colour of something being wrong on this page. -->
+                <p v-if="row.status" class="text-sm" :class="row.statusAlert ? 'text-fuchsia-400' : 'text-muted-foreground'">
                   {{ row.status }}
                 </p>
                 <p v-else-if="row.product" class="text-sm text-muted-foreground">

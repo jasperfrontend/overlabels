@@ -61,8 +61,15 @@ function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`;
 }
 
+/**
+ * Not wrong until it is. Every event subscribed is the ordinary case and says
+ * one number; the fraction only appears when part of the list is missing,
+ * which is the state worth reading twice. Both of the states that carry a
+ * fraction are flagged, so nothing has to count for you.
+ */
 export function twitchRow(eventsub: EventSubSummary): IntegrationRow {
   const listening = eventsub.active_count > 0;
+  const complete = listening && eventsub.active_count >= eventsub.supported_count;
   const stalled = eventsub.connected && !listening;
 
   return {
@@ -72,12 +79,14 @@ export function twitchRow(eventsub: EventSubSummary): IntegrationRow {
     connected: listening,
     testMode: false,
     product: null,
-    status: listening
-      ? `Listening to ${eventsub.active_count} of ${eventsub.supported_count} events`
-      : stalled
-        ? 'Not receiving Twitch events'
-        : null,
-    statusAlert: stalled,
+    status: complete
+      ? `Listening to ${eventsub.active_count} events`
+      : listening
+        ? `Listening to ${eventsub.active_count} of ${eventsub.supported_count} events`
+        : stalled
+          ? 'Not receiving Twitch events'
+          : null,
+    statusAlert: stalled || (listening && !complete),
     stalled,
   };
 }

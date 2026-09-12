@@ -201,6 +201,7 @@ async function connectEventSub() {
 
 const listening = computed(() => props.eventsub.active_count > 0);
 const inactiveEvents = computed(() => props.eventsub.supported_events.filter((event) => !event.active));
+const complete = computed(() => listening.value && inactiveEvents.value.length === 0);
 
 function formatDate(iso: string | null): string {
   if (!iso) return 'Never';
@@ -234,11 +235,19 @@ function formatDate(iso: string | null): string {
         </div>
 
         <div class="space-y-3">
-          <p v-if="listening" class="text-sm text-muted-foreground">
+          <!--
+            Not wrong until it is: every event subscribed says one number, and
+            the fraction only shows up when part of the list is missing.
+            Fuchsia is the colour of something being wrong here.
+          -->
+          <p v-if="complete" class="text-sm text-muted-foreground">
+            Listening to {{ eventsub.active_count }} events. Connected {{ formatDate(eventsub.connected_at) }}.
+          </p>
+          <p v-else-if="listening" class="text-sm text-fuchsia-400">
             Listening to {{ eventsub.active_count }} of {{ eventsub.supported_events.length }} events. Connected
             {{ formatDate(eventsub.connected_at) }}.
           </p>
-          <p v-else-if="eventsub.connected" class="text-sm text-pink-400">
+          <p v-else-if="eventsub.connected" class="text-sm text-fuchsia-400">
             Connected to Twitch, but not receiving any events. Reconnecting fixes this.
           </p>
 
