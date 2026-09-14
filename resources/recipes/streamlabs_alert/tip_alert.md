@@ -1,10 +1,10 @@
 ---
-name: Donation alert
+name: Streamlabs alert
 type: alert
 author: Overlabels
 ---
 
-# Donation alert
+# Streamlabs alert
 
 Who tipped and how much, with their message if they left one. Plays a sound, speaks the line after the sound, and posts it to chat through the Overlabels bot.
 
@@ -12,9 +12,7 @@ An Overlabels **alert overlay** by Overlabels.
 
 Overlabels overlays are plain HTML and CSS containing `[[[triple-bracket tags]]]` that resolve against live stream data and update over WebSockets. There is no JavaScript in an overlay - the template language does the work. The complete language specification is at <https://overlabels.com/llms.txt>; read it first if you are not already familiar with the syntax.
 
-This is an alert overlay: it renders when an event fires and is removed after its duration.
-
-The `event.*` tags it reads are the same for every donation service, so one alert serves all five: the product install writes a trigger per service, and each one waits until that service is connected. Its look lives in the Donation stage's stylesheet, because an alert renders into the DOM of the static overlay it is targeted at.
+This is an alert overlay: it renders when an event fires and is removed after its duration. It is targeted at nothing in particular, so it renders inside every static overlay you have in OBS, on top of whatever is there.
 
 ## Source
 
@@ -39,7 +37,32 @@ The markup.
 
 ### `css`
 
-Empty.
+The stylesheet. The alert renders into another overlay's DOM, so everything it needs to look like something is here.
+
+```css
+.donation-alert {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  max-width: 60%;
+  padding: 1rem 1.25rem;
+  background: #7ff3d0;
+  color: #040d16;
+  font-family: system-ui, sans-serif;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.donation-alert p {
+  margin: 0;
+}
+
+.donation-alert .donation-message {
+  margin-top: 0.5rem;
+  font-size: 1.25rem;
+  font-style: italic;
+}
+```
 
 ## Controls
 
@@ -53,4 +76,4 @@ This overlay defines no controls of its own.
 
 ## Requirements
 
-This overlay fires on a donation from any of the five donation services, Streamlabs, Ko-fi, Buy Me a Coffee, Fourthwall or Throne, once that service is connected. The product install writes the five triggers and targets the Donation stage for you.
+This overlay fires on a Streamlabs donation once Streamlabs is connected. The product install writes the trigger for you.

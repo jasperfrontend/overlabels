@@ -47,6 +47,8 @@ class FourthwallIntegrationController extends DonationIntegrationController
      */
     public function redirect(Request $request): RedirectResponse
     {
+        $this->rememberReturnTo($request);
+
         $authUrl = config('services.fourthwall.auth_url');
         $redirectUrl = config('services.fourthwall.redirect_url');
 
@@ -56,7 +58,7 @@ class FourthwallIntegrationController extends DonationIntegrationController
                 'redirect_url_present' => (bool) $redirectUrl,
             ]);
 
-            return redirect()->route('settings.integrations.fourthwall.show')
+            return $this->returnTo()
                 ->with('error', 'Fourthwall is not configured on this server. Contact the administrator.');
         }
 
@@ -78,12 +80,12 @@ class FourthwallIntegrationController extends DonationIntegrationController
         $expectedState = $request->session()->pull(self::OAUTH_STATE_SESSION_KEY);
 
         if (! $code) {
-            return redirect()->route('settings.integrations.fourthwall.show')
+            return $this->returnTo()
                 ->with('error', 'Fourthwall authorization was cancelled.');
         }
 
         if (! $expectedState || ! is_string($state) || ! hash_equals($expectedState, $state)) {
-            return redirect()->route('settings.integrations.fourthwall.show')
+            return $this->returnTo()
                 ->with('error', 'Invalid OAuth state. Please try connecting again.');
         }
 
@@ -92,7 +94,7 @@ class FourthwallIntegrationController extends DonationIntegrationController
         } catch (ConnectionException|RequestException $e) {
             Log::error('Fourthwall token exchange failed', ['error' => $e->getMessage()]);
 
-            return redirect()->route('settings.integrations.fourthwall.show')
+            return $this->returnTo()
                 ->with('error', 'Failed to connect to Fourthwall. Please try again.');
         }
 
@@ -100,7 +102,7 @@ class FourthwallIntegrationController extends DonationIntegrationController
         $refreshToken = $tokenData['refresh_token'] ?? null;
 
         if (! $accessToken) {
-            return redirect()->route('settings.integrations.fourthwall.show')
+            return $this->returnTo()
                 ->with('error', 'Fourthwall did not return an access token.');
         }
 
@@ -155,7 +157,7 @@ class FourthwallIntegrationController extends DonationIntegrationController
                 ? 'Fourthwall accepted the login but refused to register the webhook (403 Forbidden). Your app likely needs the webhook_write scope enabled - check the app settings in Fourthwall and reconnect.'
                 : 'Connected to Fourthwall, but registering the webhook failed. Please try again.';
 
-            return redirect()->route('settings.integrations.fourthwall.show')
+            return $this->returnTo()
                 ->with('error', $flashMessage);
         }
 
@@ -167,7 +169,7 @@ class FourthwallIntegrationController extends DonationIntegrationController
         $integration->setCredentialsEncrypted($credentials);
         $integration->save();
 
-        return redirect()->route('settings.integrations.fourthwall.show')
+        return $this->returnTo()
             ->with('success', 'Fourthwall connected successfully.');
     }
 

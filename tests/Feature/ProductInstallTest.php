@@ -46,7 +46,7 @@ function chatCheckinRecipe(): Recipe
 it('lists chat_checkin as a product and keeps the picker recipes unlisted', function () {
     $listed = app(RecipeCatalog::class)->listed();
 
-    expect(array_keys($listed))->toBe(['chat_checkin', 'chat_tower', 'donation_alert', 'follower_bowling'])
+    expect(array_keys($listed))->toBe(['bmac_alert', 'chat_checkin', 'chat_tower', 'follower_bowling', 'fourthwall_alert', 'kofi_alert', 'streamlabs_alert', 'throne_alert'])
         ->and(array_keys(app(RecipeCatalog::class)->all()))->toContain('coin_flip', 'dice');
 });
 
@@ -148,8 +148,8 @@ it('shows the product list to a visitor without an account', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('products/index')
-            ->has('products', 4)
-            ->where('products.0.slug', 'chat_checkin')
+            ->has('products', 8)
+            ->where('products.0.slug', 'bmac_alert')
             ->where('products.0.installed', false)
         );
 });
@@ -204,7 +204,7 @@ it('installs the product on POST and shows the page in its installed state', fun
 
     $this->actingAs($user)
         ->get('/products')
-        ->assertInertia(fn (Assert $page) => $page->where('products.0.installed', true));
+        ->assertInertia(fn (Assert $page) => $page->where('products.1.slug', 'chat_checkin')->where('products.1.installed', true));
 });
 
 it('does not install a second copy when the button is pressed again', function () {

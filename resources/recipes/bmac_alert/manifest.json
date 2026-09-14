@@ -1,0 +1,28 @@
+{
+  "recipe_format_version": 1,
+  "slug": "bmac_alert",
+  "name": "Buy Me a Coffee Alerts",
+  "version": 1,
+  "description": "A Buy Me a Coffee supporter lands on your stream as an alert: who and how much, written the way you write money, with a sound, a spoken line and a message in chat. It shows inside every overlay you have in OBS. Installs the alert and connects Buy Me a Coffee: paste the link this gives you into a webhook there, paste back the secret it shows, then send yourself a test event and watch it land.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "First release: Buy Me a Coffee alerts as a product of their own.",
+  "min_overlabels_version": 1,
+  "requires_bot": false,
+  "listed": true,
+  "ready_message": "The alert is wired and waiting. Send yourself a test event from Buy Me a Coffee and watch it land in your overlay.",
+  "notes": [
+    "A test event from the Buy Me a Coffee dashboard travels the whole way, so it proves more than anything Overlabels could fake. Press it once; pressing it again needs test mode on for Buy Me a Coffee.",
+    "The alert shows inside every static overlay of yours, on top of whatever is there. Its Targeting tab can narrow that down to particular overlays, but nothing needs it.",
+    "Buy Me a Coffee sends more than one-off support: memberships, extras, commissions and wishlist purchases too. The alert's Triggers tab switches those on for the same alert.",
+    "Once Buy Me a Coffee is connected, its counter and latest supporter are controls of yours for any overlay you write: [[[c:bmac:donations_received]]] and [[[c:bmac:latest_donor_name]]]."
+  ],
+  "max_instances_per_user": 1,
+  "installs": {
+    "overlays": [{ "ref": "tip_alert", "file": "tip_alert.md" }],
+    "integrations": ["bmac"],
+    "alert_triggers": [{ "overlay": "tip_alert", "service": "bmac", "event_type": "donation" }]
+  }
+}

@@ -555,11 +555,10 @@ class RecipeInstaller
             }
 
             if ($existing !== null) {
-                // The product may fire on events the person did not pick
-                // (Donation Alerts fires on every donation service), so the
-                // sentence names the product's rule, not their answer. And
-                // the row above is matched switched off or on, so "delete"
-                // is the only way past it.
+                // The sentence names the product's rule, not anything the
+                // person picked: a product's triggers are fixed by its
+                // manifest. And the row above is matched switched off or on,
+                // so "delete" is the only way past it.
                 throw new RuntimeException(
                     "{$manifest['name']} fires on {$label} too, and your alert '{$existing->template->name}' already does. ".
                     'Delete that trigger on its Triggers tab, switching it off is not enough, then install again.'

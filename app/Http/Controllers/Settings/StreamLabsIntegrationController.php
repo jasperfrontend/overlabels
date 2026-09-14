@@ -47,6 +47,7 @@ class StreamLabsIntegrationController extends DonationIntegrationController
         // accepts a code that arrives with the value this session handed out.
         $state = bin2hex(random_bytes(20));
         $request->session()->put(self::OAUTH_STATE_KEY, $state);
+        $this->rememberReturnTo($request);
 
         $params = http_build_query([
             'client_id' => config('services.streamlabs.client_id'),
@@ -69,7 +70,7 @@ class StreamLabsIntegrationController extends DonationIntegrationController
         $code = $request->query('code');
 
         if (! $code) {
-            return redirect()->route('settings.integrations.streamlabs.show')
+            return $this->returnTo()
                 ->with('error', 'StreamLabs authorization was cancelled.');
         }
 
@@ -79,7 +80,7 @@ class StreamLabsIntegrationController extends DonationIntegrationController
         if ($expectedState === '' || ! hash_equals($expectedState, $state)) {
             Log::warning('StreamLabs OAuth callback state mismatch');
 
-            return redirect()->route('settings.integrations.streamlabs.show')
+            return $this->returnTo()
                 ->with('error', 'StreamLabs authorization could not be verified. Please try again.');
         }
 
@@ -99,7 +100,7 @@ class StreamLabsIntegrationController extends DonationIntegrationController
                 'body' => $tokenResponse->body(),
             ]);
 
-            return redirect()->route('settings.integrations.streamlabs.show')
+            return $this->returnTo()
                 ->with('error', 'Failed to connect to StreamLabs. Please try again.');
         }
 
@@ -107,7 +108,7 @@ class StreamLabsIntegrationController extends DonationIntegrationController
         $accessToken = $tokenData['access_token'] ?? null;
 
         if (! $accessToken) {
-            return redirect()->route('settings.integrations.streamlabs.show')
+            return $this->returnTo()
                 ->with('error', 'StreamLabs did not return an access token.');
         }
 
@@ -122,7 +123,7 @@ class StreamLabsIntegrationController extends DonationIntegrationController
                 'body' => $socketResponse->body(),
             ]);
 
-            return redirect()->route('settings.integrations.streamlabs.show')
+            return $this->returnTo()
                 ->with('error', 'Connected to StreamLabs but failed to get socket token.');
         }
 
@@ -148,7 +149,7 @@ class StreamLabsIntegrationController extends DonationIntegrationController
         $integration->enabled = true;
         $integration->save();
 
-        return redirect()->route('settings.integrations.streamlabs.show')
+        return $this->returnTo()
             ->with('success', 'StreamLabs connected successfully.');
     }
 }

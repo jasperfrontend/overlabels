@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\EventTemplateMapping;
 use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
+use App\Models\ExternalIntegration;
+use App\Models\OverlayAccessLog;
+use App\Models\OverlayAccessToken;
 use App\Models\OverlayTemplate;
 use App\Models\Recipe;
 use App\Models\RecipeInstance;
@@ -15,6 +18,7 @@ use App\Services\Recipes\RecipeIngredients;
 use App\Services\Recipes\RecipeInstaller;
 use App\Support\OverlayMarkdown;
 use App\Support\ProductSetup;
+use App\Support\ServiceConnections;
 use App\Support\ServiceTestGuides;
 use App\Support\WiringFacts;
 use App\Support\WiringReport;
@@ -99,7 +103,7 @@ class ProductController extends Controller
             'url' => route('products.show', $slug),
         ]);
 
-        $installed = $instance ? $this->installedView($instance) : null;
+        $installed = $instance ? $this->installedView($instance, $slug) : null;
 
         // The page seeing nothing left is what ends the flow: the banner's
         // "Go to installed product" is just a link here.
@@ -271,9 +275,16 @@ class ProductController extends Controller
      * from the resolved manifest: which service this install actually
      * connected, not the placeholder the catalogue file carries.
      *
+     * `services` is every donation service the product's alerts fire on,
+     * each with where it stands for this person and the one thing that
+     * connects it, so the page can offer the connect for all of them right
+     * there rather than call itself done after the first. Read from the
+     * same trigger rows as `fires_on`, so a trigger deleted on the Triggers
+     * tab takes its row with it.
+     *
      * @return array<string, mixed>
      */
-    private function installedView(RecipeInstance $instance): array
+    private function installedView(RecipeInstance $instance, string $slug): array
     {
         $report = WiringReport::build(['products' => [WiringFacts::productSubject($instance)]]);
         $circuit = collect($report)->firstWhere('key', 'products');
@@ -330,15 +341,75 @@ class ProductController extends Controller
 
         $subject = $circuit['subjects'][0] ?? null;
 
+        $rows = ExternalIntegration::where('user_id', $instance->user_id)->get()->keyBy('service');
+        $returnTo = route('products.show', $slug, false);
+        $connectable = collect($firing)
+            ->pluck('service')
+            ->unique()
+            ->filter(fn (string $service) => ServiceConnections::has($service))
+            ->map(fn (string $service) => ServiceConnections::for($service, $rows->get($service), $returnTo))
+            ->values()
+            ->all();
+
         return [
             'installed_at' => $instance->created_at->toIso8601String(),
             'subject' => $subject,
             'remaining' => (int) ($subject['missing'] ?? 0),
             'overlays' => $overlays,
+            'your_overlays' => $this->yourOverlays($instance, $overlays),
             'ingredients' => $instance->ingredients ?? [],
+            'services' => $connectable,
             'test_guide' => ServiceTestGuides::firstFor($services),
             'landed' => $this->landed($instance, $firing),
             'removes' => $this->installer->removals($instance),
+        ];
+    }
+
+    /**
+     * For a product that installs an alert and no static overlay: what the
+     * OBS beat can say. The alert renders inside every static overlay the
+     * person has in OBS, and an overlay link is per account, so the only
+     * sign of which overlays OBS actually loads is the access log: the
+     * slugs a link has served lately. When that names any, the beat says
+     * the alert already shows inside them and offers nothing; otherwise it
+     * offers the five most recently edited, and says how many more there
+     * are. A product with a stage of its own gets an empty answer.
+     *
+     * @param  list<array<string, mixed>>  $overlays
+     * @return array{loaded: bool, overlays: list<array{id: int, name: string}>, total: int}
+     */
+    private function yourOverlays(RecipeInstance $instance, array $overlays): array
+    {
+        $none = ['loaded' => false, 'overlays' => [], 'total' => 0];
+
+        if (collect($overlays)->contains(fn (array $overlay) => $overlay['type'] !== 'alert')) {
+            return $none;
+        }
+
+        $statics = OverlayTemplate::where('owner_id', $instance->user_id)
+            ->where('type', 'static')
+            ->orderByDesc('updated_at')
+            ->get(['id', 'name', 'slug']);
+
+        if ($statics->isEmpty()) {
+            return $none;
+        }
+
+        $served = OverlayAccessLog::query()
+            ->whereIn('token_id', OverlayAccessToken::where('user_id', $instance->user_id)->select('id'))
+            ->where('accessed_at', '>=', now()->subDays(30))
+            ->whereNotNull('template_slug')
+            ->distinct()
+            ->pluck('template_slug')
+            ->all();
+
+        $loaded = $statics->filter(fn (OverlayTemplate $template) => in_array($template->slug, $served, true));
+        $pick = $loaded->isNotEmpty() ? $loaded : $statics->take(5);
+
+        return [
+            'loaded' => $loaded->isNotEmpty(),
+            'overlays' => $pick->map(fn (OverlayTemplate $template) => ['id' => $template->id, 'name' => $template->name])->values()->all(),
+            'total' => $statics->count(),
         ];
     }
 

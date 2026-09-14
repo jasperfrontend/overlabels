@@ -199,6 +199,48 @@ abstract class DonationIntegrationController extends Controller
     }
 
     /**
+     * A connect started somewhere other than this service's own settings
+     * page (a product page) says where to come back to with `?return_to=`.
+     * It rides in the session across the OAuth round trip, because the
+     * callback URL is the service's and carries nothing of ours but `state`.
+     * Only a path on this site is accepted, so the parameter cannot send
+     * anyone off-site; and no parameter clears whatever an abandoned round
+     * trip left behind, so the settings page's own button still lands on
+     * the settings page.
+     */
+    protected function rememberReturnTo(Request $request): void
+    {
+        $to = $request->query('return_to');
+
+        if (is_string($to) && preg_match('#^/(?![/\\\\])\S*$#', $to) === 1) {
+            $request->session()->put($this->returnToKey(), $to);
+
+            return;
+        }
+
+        $request->session()->forget($this->returnToKey());
+    }
+
+    /**
+     * Where a connect ends: the page it was started from when one was
+     * remembered, this service's settings page otherwise. Consumes the
+     * memory, so the next round trip starts clean.
+     */
+    protected function returnTo(): RedirectResponse
+    {
+        $to = session()->pull($this->returnToKey());
+
+        return is_string($to) && $to !== ''
+            ? redirect()->to($to)
+            : redirect()->route("settings.integrations.{$this->service()}.show");
+    }
+
+    private function returnToKey(): string
+    {
+        return "integration_return_to.{$this->service()}";
+    }
+
+    /**
      * This user's integration row for this service, if any.
      */
     protected function integration(?User $user = null): ?ExternalIntegration

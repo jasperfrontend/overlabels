@@ -1,0 +1,28 @@
+{
+  "recipe_format_version": 1,
+  "slug": "kofi_alert",
+  "name": "Ko-fi Alerts",
+  "version": 1,
+  "description": "A Ko-fi tip lands on your stream as an alert: who sent it and how much, written the way you write money, with a sound, a spoken line and a message in chat. It shows inside every overlay you have in OBS. Installs the alert and connects Ko-fi: paste the verification token from Ko-fi's webhooks page and the link this gives you back, then send yourself a test tip and watch it land.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "First release: Ko-fi alerts as a product of their own.",
+  "min_overlabels_version": 1,
+  "requires_bot": false,
+  "listed": true,
+  "ready_message": "The alert is wired and waiting. Send yourself a test tip from Ko-fi and watch it land in your overlay.",
+  "notes": [
+    "A test tip from Ko-fi's webhooks page travels the whole way, so it proves more than anything Overlabels could fake. Press it once; pressing it again needs test mode on for Ko-fi.",
+    "The alert shows inside every static overlay of yours, on top of whatever is there. Its Targeting tab can narrow that down to particular overlays, but nothing needs it.",
+    "Ko-fi also sends subscriptions, shop orders and commissions. The alert's Triggers tab switches those on for the same alert.",
+    "Once Ko-fi is connected, its tip counter and latest donor are controls of yours for any overlay you write: [[[c:kofi:donations_received]]] and [[[c:kofi:latest_donor_name]]]."
+  ],
+  "max_instances_per_user": 1,
+  "installs": {
+    "overlays": [{ "ref": "tip_alert", "file": "tip_alert.md" }],
+    "integrations": ["kofi"],
+    "alert_triggers": [{ "overlay": "tip_alert", "service": "kofi", "event_type": "donation" }]
+  }
+}

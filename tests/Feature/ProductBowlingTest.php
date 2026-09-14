@@ -46,7 +46,7 @@ it('is listed with its hero image', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('products.3.slug', 'follower_bowling')
             ->where('products.3.hero', '/products/follower-bowling-hero.svg')
-            ->where('products.0.hero', '/products/chat-checkin-hero.svg')
+            ->where('products.1.hero', '/products/chat-checkin-hero.svg')
         );
 
     expect(is_file(public_path('products/follower-bowling-hero.svg')))->toBeTrue()

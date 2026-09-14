@@ -1,0 +1,27 @@
+{
+  "recipe_format_version": 1,
+  "slug": "throne_alert",
+  "name": "Throne Alerts",
+  "version": 1,
+  "description": "A Throne gift lands on your stream as an alert: who sent it and what it was worth, written the way you write money, with a sound, a spoken line and a message in chat. It shows inside every overlay you have in OBS. Installs the alert and connects Throne: paste the link this gives you into Throne's webhook settings, then send yourself a test delivery and watch it land.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "First release: Throne alerts as a product of their own.",
+  "min_overlabels_version": 1,
+  "requires_bot": false,
+  "listed": true,
+  "ready_message": "The alert is wired and waiting. Send yourself a test delivery from Throne and watch it land in your overlay.",
+  "notes": [
+    "A test delivery from Throne's webhook page travels the whole way, so it proves more than anything Overlabels could fake. Press it once; pressing it again needs test mode on for Throne.",
+    "The alert shows inside every static overlay of yours, on top of whatever is there. Its Targeting tab can narrow that down to particular overlays, but nothing needs it.",
+    "Once Throne is connected, its gift counter and latest gifter are controls of yours for any overlay you write: [[[c:throne:donations_received]]] and [[[c:throne:latest_donor_name]]]."
+  ],
+  "max_instances_per_user": 1,
+  "installs": {
+    "overlays": [{ "ref": "tip_alert", "file": "tip_alert.md" }],
+    "integrations": ["throne"],
+    "alert_triggers": [{ "overlay": "tip_alert", "service": "throne", "event_type": "donation" }]
+  }
+}

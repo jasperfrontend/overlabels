@@ -1,5 +1,45 @@
 # Changelog - September 2026
 
+## OL-2609-084 - September 15th, 2026 - feat(products): one product per donation service, each connecting its service on the product page
+
+Donation Alerts, one product wrapping five services, lasted a day. It was one thing only because
+`latest()` can make five counters read as one, and that is a reason for a tutorial, not for a
+product. To a streamer they are a Streamlabs integration, a Ko-fi integration, a Buy Me a Coffee
+integration: separate things, each with one goal. And the page it produced was the giveaway. Connect
+Ko-fi and it called the product done with four services unconnected and a note at the bottom
+sending you to the Integrations page to "make it work". A product page that finishes at one and
+sends you elsewhere for the rest is not finished, whatever the plumbing says.
+
+So: five products. Streamlabs Alerts, Ko-fi Alerts, Buy Me a Coffee Alerts, Fourthwall Alerts,
+Throne Alerts. Each installs one alert with one trigger and connects its one service, and asks
+nothing at install. None of them ships a stage of its own: the alert is targeted at nothing, so it
+renders inside every static overlay you already have in OBS, on top of whatever is there. That is
+the thing Overlabels does that other tools do not, and a stage per product would have hidden it.
+The page offers your own overlays for the OBS step instead; any one of them is enough.
+
+Connecting the service happens on the product page itself. Streamlabs and Fourthwall are one click,
+their consent screen, and back to the page. Ko-fi takes its verification token in a field on the
+row and then shows the link to paste on Ko-fi's side. Throne's link is there the moment the product
+is installed, and Buy Me a Coffee shows its link and then takes the secret it hands back, in the
+same row. The row ticks itself when the service can actually reach us. Nobody leaves the page.
+
+The band itself was redesigned on the way, from the Alert Connected canvas in Claude Design. The
+solid green block is gone: the page's own dark, square cards with a numbered circle, outline pill
+buttons, and the one thing that glows green is the line that says the tip landed.
+
+- Eight products on `/products`, sorted by slug. Refuse-not-merge is back to per service: a
+  hand-made Throne alert refuses Throne Alerts and nothing else.
+- "Connected" is the wiring circuit's rule, not "a row exists": a Ko-fi row without its token or a
+  Streamlabs row that never saw the consent screen reads as not connected, with the connect right
+  there on the row.
+- A Streamlabs or Fourthwall connect started from a product page comes back to that page, also when
+  it is cancelled or fails; started from the settings page it lands on the settings page as before.
+  Only a path on this site is accepted as the way back.
+- Once a service is connected its counter and latest donor are controls of yours for any overlay you
+  write, which is where `latest()` across services belongs: the Latest donator tutorial.
+- `/products/donation_alert` is gone. If you had it installed, uninstall it from its page before
+  this lands, or delete its triggers afterwards: they refuse the new products until they go.
+
 ## OL-2609-082 - September 14th, 2026 - feat(products): Donation Alerts fires on every donation service, and its stage reads across them
 
 Yesterday's Donation Alerts asked which service your tips come in through and wired the alert to
