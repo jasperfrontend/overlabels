@@ -8,6 +8,7 @@ available on every Buy Me a Coffee event type (donation, commission, extra, memb
 - `[[[event.transaction_id]]]` :: Unique Buy Me a Coffee transaction ID (falls back to the payment-provider ID)
 - `[[[event.amount]]]` :: Amount as a string (e.g. "5")
 - `[[[event.currency]]]` :: Currency code (e.g. "USD")
+- `[[[event.formatted_amount]]]` :: Amount and currency written in your locale (e.g. "$5.00" in en-US, "€ 5,00" in nl-NL) :: derived by Overlabels from the amount and currency above, not supplied by the service
 - `[[[event.coffee_count]]]` :: Number of coffees bought (e.g. "1")
 - `[[[event.live_mode]]]` :: "1" for a real event, "0" for a test fired from the Buy Me a Coffee dashboard
 - `[[[event.url]]]` :: Always empty :: Buy Me a Coffee does not send a supporter page URL, unlike Ko-fi

@@ -133,8 +133,12 @@ class ExternalWebhookController extends Controller
             return $this->handleSettingsSync($integration, $payload);
         }
 
-        // 7. Normalize event
-        $normalizedEvent = $driver->normalizeEvent($payload, $eventType);
+        // 7. Normalize event, then derive the one tag a driver cannot: a
+        // formatted amount needs the streamer's locale, and a driver sees only
+        // a payload. Done before the row is stored, so the stored
+        // normalized_payload carries it and a replay reads the same string.
+        $normalizedEvent = $driver->normalizeEvent($payload, $eventType)
+            ->withFormattedAmount($user->locale);
 
         // 8. Store in external_events (dedup check)
 

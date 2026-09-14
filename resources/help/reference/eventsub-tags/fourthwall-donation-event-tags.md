@@ -5,6 +5,7 @@ available in alert templates triggered by Fourthwall donations.
 - `[[[event.message]]]` :: Donor's message
 - `[[[event.amount]]]` :: Donation amount (e.g. "10")
 - `[[[event.currency]]]` :: Currency code (e.g. "USD")
+- `[[[event.formatted_amount]]]` :: Amount and currency written in your locale (e.g. "$5.00" in en-US, "€ 5,00" in nl-NL) :: derived by Overlabels from the amount and currency above, not supplied by the service
 - `[[[event.type]]]` :: Always "donation"
 - `[[[event.source]]]` :: Always "Fourthwall" :: useful for reusing alert templates across donation services
 - `[[[event.status]]]` :: Donation lifecycle state (e.g. "OPEN") :: Fourthwall-specific

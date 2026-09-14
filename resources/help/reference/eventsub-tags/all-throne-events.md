@@ -8,6 +8,7 @@ available on every Throne event type (gift_purchased, contribution_purchased, gi
 - `[[[event.transaction_id]]]` :: Unique Throne event ID (used for deduplication)
 - `[[[event.amount]]]` :: Amount in whole currency units (Throne sends integer minor units; Overlabels divides by 100)
 - `[[[event.currency]]]` :: Currency code (e.g. USD)
+- `[[[event.formatted_amount]]]` :: Amount and currency written in your locale (e.g. "$5.00" in en-US, "€ 5,00" in nl-NL) :: derived by Overlabels from the amount and currency above, not supplied by the service
 - `[[[event.message]]]` :: The gifter's message (empty on crowdfunded gifts)
 - `[[[event.item_name]]]` :: Name of the gifted item (e.g. "AirPods Max")
 - `[[[event.item_thumbnail_url]]]` :: Product image URL - drop straight into an `<img src>`

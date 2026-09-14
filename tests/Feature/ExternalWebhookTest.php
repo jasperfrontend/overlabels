@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\ControlValuesBatchUpdated;
+use App\Models\ExternalEvent;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayControl;
 use App\Models\User;
@@ -569,4 +570,22 @@ test('throne ignores unsupported event types without storing an event', function
         ->assertJson(['status' => 'ignored']);
 
     Event::assertNotDispatched(ControlValuesBatchUpdated::class);
+});
+
+test('stores a derived formatted amount for a service that never sent one', function () {
+    // Ko-fi's payload carries an amount and a currency and nothing else. The
+    // formatted string used to exist only for StreamLabs, whose driver passed
+    // theirs through; it is derived for every donation service now, in the
+    // streamer's locale, before the row is written.
+    [$user, $integration] = makeKofiIntegration();
+    // locale is a preference accessor, not a column.
+    $user->setPreference('locale', 'nl-NL')->save();
+
+    postKofi($integration->webhook_token, kofiPayload(['kofi_transaction_id' => 'fmt-001']))->assertStatus(200);
+
+    $stored = ExternalEvent::where('message_id', 'fmt-001')->firstOrFail();
+    $formatted = $stored->normalized_payload['event.formatted_amount'] ?? null;
+
+    expect($formatted)->not->toBeNull()
+        ->and(preg_replace('/[\s\x{00A0}\x{202F}]+/u', ' ', $formatted))->toBe('US$ 5,00');
 });

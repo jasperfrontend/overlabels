@@ -72,7 +72,6 @@ class StreamLabsServiceDriver implements AuthenticatedExternalServiceDriver, Ext
         $message = $this->decodeHtml($msg['message'] ?? null);
         $amount = $msg['amount'] ?? null;
         $currency = $msg['currency'] ?? null;
-        $formattedAmount = $msg['formatted_amount'] ?? $msg['formattedAmount'] ?? null;
 
         $messageId = $payload['event_id']
             ?? $msg['_id']
@@ -83,7 +82,6 @@ class StreamLabsServiceDriver implements AuthenticatedExternalServiceDriver, Ext
             'event.message' => (string) ($message ?? ''),
             'event.amount' => (string) ($amount ?? ''),
             'event.currency' => (string) ($currency ?? ''),
-            'event.formatted_amount' => (string) ($formattedAmount ?? ''),
             'event.type' => $eventType,
             'event.source' => 'StreamLabs',
             'event.transaction_id' => (string) $messageId,

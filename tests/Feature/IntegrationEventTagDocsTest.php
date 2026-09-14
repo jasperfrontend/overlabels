@@ -100,3 +100,28 @@ test('reference wikilinks point at slugs that exist', function () {
     // had been rendering as plain code the whole time.
     expect($broken)->toBe([]);
 });
+
+/**
+ * `event.formatted_amount` is the one donation tag no driver emits: it is
+ * derived in NormalizedExternalEvent::withFormattedAmount() from the amount and
+ * currency, because formatting needs the streamer's locale and a driver only
+ * ever sees a payload. The guard above reads driver source, so it cannot see
+ * this one - every donation page gets checked here instead.
+ */
+test('a reference page documenting a donation amount documents the derived formatted amount too', function () {
+    $missing = [];
+
+    foreach (glob(resource_path('help/reference/eventsub-tags/*.md')) as $path) {
+        $body = file_get_contents($path);
+
+        if (! str_contains($body, '[[[event.amount]]]')) {
+            continue;
+        }
+
+        if (! str_contains($body, '[[[event.formatted_amount]]]')) {
+            $missing[] = basename($path);
+        }
+    }
+
+    expect($missing)->toBe([], 'donation pages missing the derived formatted amount: '.implode(', ', $missing));
+});

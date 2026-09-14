@@ -1,5 +1,26 @@
 # Changelog - September 2026
 
+## OL-2609-073 - September 14th, 2026 - fix(integrations): every donation service gets a formatted amount, written the way you write money
+
+`[[[event.formatted_amount]]]` was the odd one out. StreamLabs sends a formatted string in its
+payload, our driver passed it through, and the other four donation services had nothing to pass, so
+the tag existed for exactly one integration out of five. It was also somebody else's opinion about
+how money looks: "$13.37", whatever locale your account ran in. In the Netherlands that is written
+"EUR 45,00" and in France "45,00 EUR", and StreamLabs knows neither.
+
+It is derived now, from the amount and the currency that every donation driver already emits, and
+formatted in your locale. So all five services have it, and it reads the way you would write it.
+The currency stays the donation's own: a dollar tip to a Dutch streamer is still dollars, with Dutch
+punctuation, rather than being silently redrawn as euros.
+
+It is computed once, before the event row is written, which is why a replay of an old event and the
+events feed and the alert all show the same string. It could not live in the drivers: a driver is
+handed a payload and nothing else, so it cannot know whose account the donation landed in, and
+therefore cannot know the locale.
+
+There was a reason the pass-through existed. It was a workaround for the TTS voice slurring euro
+amounts, and that got fixed properly earlier this month, so the workaround had outlived its job.
+
 ## OL-2609-072 - September 14th, 2026 - feat(recipes): a recipe can wire an alert, and a product says what is actually left
 
 Onboarding from a fresh account to a firing Streamlabs alert takes eleven manual steps. Two of them

@@ -67,7 +67,6 @@ test('normalizeEvent correctly maps StreamLabs donation payload', function () {
     expect($tags['event.from_name'])->toBe('TestDonor');
     expect($tags['event.amount'])->toBe('13.37');
     expect($tags['event.currency'])->toBe('USD');
-    expect($tags['event.formatted_amount'])->toBe('$13.37');
     expect($tags['event.source'])->toBe('StreamLabs');
     expect($tags['event.transaction_id'])->toBe('evt_abc123');
 });

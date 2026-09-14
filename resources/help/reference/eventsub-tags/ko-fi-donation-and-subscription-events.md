@@ -4,6 +4,7 @@ additional tags available for Ko-fi donation and subscription events.
 - `[[[event.message]]]` :: Supporter's message
 - `[[[event.amount]]]` :: Amount as a string (e.g. "5.00")
 - `[[[event.currency]]]` :: Currency code (e.g. "USD")
+- `[[[event.formatted_amount]]]` :: Amount and currency written in your locale (e.g. "$5.00" in en-US, "€ 5,00" in nl-NL) :: derived by Overlabels from the amount and currency above, not supplied by the service
 
 example:
 ```
