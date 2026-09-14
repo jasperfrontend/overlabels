@@ -160,7 +160,7 @@ it('refuses a service that is not a choice, on the page, with nothing created', 
         ->and(ExternalIntegration::where('user_id', $user->id)->exists())->toBeFalse();
 });
 
-it('refuses to install over an alert already firing on any donation service, picked or not', function () {
+it('refuses to install over an alert already firing on any donation service, picked or not, even switched off', function () {
     $user = donationUser();
     $mine = OverlayTemplate::factory()->create(['owner_id' => $user->id, 'type' => 'alert', 'name' => 'My Throne alert']);
     ExternalEventTemplateMapping::create([
@@ -169,13 +169,13 @@ it('refuses to install over an alert already firing on any donation service, pic
         'service' => 'throne',
         'event_type' => 'donation',
         'duration_ms' => 5000,
-        'enabled' => true,
+        'enabled' => false,
     ]);
 
     $this->actingAs($user)
         ->post('/products/donation_alert/install', ['ingredients' => ['service' => 'kofi']])
         ->assertRedirect('/products/donation_alert')
-        ->assertSessionHasErrors(['install' => "Your alert 'My Throne alert' already fires on Throne Gift or Contribution. Remove that trigger, then install again."]);
+        ->assertSessionHasErrors(['install' => "Donation Alerts fires on Throne Gift or Contribution too, and your alert 'My Throne alert' already does. Delete that trigger on its Triggers tab, switching it off is not enough, then install again."]);
 
     expect(RecipeInstance::where('user_id', $user->id)->exists())->toBeFalse()
         ->and(ExternalIntegration::where('user_id', $user->id)->exists())->toBeFalse()
