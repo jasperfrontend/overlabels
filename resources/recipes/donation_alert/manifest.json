@@ -3,26 +3,27 @@
   "slug": "donation_alert",
   "name": "Donation Alerts",
   "version": 1,
-  "description": "A tip lands on your stream as an alert: who sent it and how much, written the way you write money, with a sound, a spoken line and a message in chat. Installs the alert and a small stage overlay it fires on, and connects the donation service you pick: Streamlabs, Ko-fi, Buy Me a Coffee, Fourthwall or Throne. You authorize the service and put the stage in OBS.",
+  "description": "A tip lands on your stream as an alert: who sent it and how much, written the way you write money, with a sound, a spoken line and a message in chat. The alert fires on a tip from any of the five donation services, Streamlabs, Ko-fi, Buy Me a Coffee, Fourthwall and Throne, whichever of them you connect, now or later. Installs the alert and a small stage overlay it fires on, and connects the service you pick first. You authorize the service and put the stage in OBS.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"
   },
-  "changelog": "Initial release. The first product with an ingredient: one question, which donation service, answered at install and written into the integration, the alert trigger and the stage's tags.",
+  "changelog": "Fires on every donation service rather than only the one picked at install, and the stage counts tips and names the latest donor across all of them through two expression controls of its own. The one question now asks which service to connect first.",
   "min_overlabels_version": 1,
   "requires_bot": false,
   "listed": true,
   "ready_message": "The alert is wired and waiting. Put the stage in OBS, send yourself a test tip, and watch it land.",
   "notes": [
+    "The alert fires on a tip from any of the five services, not only the one you picked. Connect another on the Integrations settings page and it joins without another install.",
     "A test tip from your donation service's own dashboard travels the whole way, so it proves more than anything Overlabels could fake. Press it once; pressing it again needs test mode on, on the service's settings page.",
     "The alert fires on the Donation stage only. The alert's Targeting tab lets it fire on other overlays of yours too.",
-    "The stage shows how many tips have arrived through the service and who sent the latest one. Both are controls on the service's settings page, so you can set them by hand."
+    "The stage counts tips across every connected service and names whoever tipped last, wherever it came from. Both are expression controls on the stage's Controls tab, the same latest() trick the Latest donator tutorial builds by hand."
   ],
   "max_instances_per_user": 1,
   "ingredients": [
     {
       "key": "service",
-      "question": "Where do your donations come in?",
+      "question": "Which service should we connect first?",
       "choices": [
         { "value": "streamlabs", "label": "Streamlabs" },
         { "value": "kofi", "label": "Ko-fi" },
@@ -39,7 +40,13 @@
       { "ref": "tip_alert", "file": "tip_alert.md" }
     ],
     "integrations": ["{{service}}"],
-    "alert_triggers": [{ "overlay": "tip_alert", "service": "{{service}}", "event_type": "donation" }],
+    "alert_triggers": [
+      { "overlay": "tip_alert", "service": "streamlabs", "event_type": "donation" },
+      { "overlay": "tip_alert", "service": "kofi", "event_type": "donation" },
+      { "overlay": "tip_alert", "service": "bmac", "event_type": "donation" },
+      { "overlay": "tip_alert", "service": "fourthwall", "event_type": "donation" },
+      { "overlay": "tip_alert", "service": "throne", "event_type": "donation" }
+    ],
     "alert_targets": [{ "alert": "tip_alert", "overlays": ["stage"] }]
   }
 }

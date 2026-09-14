@@ -1,5 +1,31 @@
 # Changelog - September 2026
 
+## OL-2609-082 - September 14th, 2026 - feat(products): Donation Alerts fires on every donation service, and its stage reads across them
+
+Yesterday's Donation Alerts asked which service your tips come in through and wired the alert to
+that one service only. One trigger, one counter, one "latest from". Which is exactly the shape the
+Latest donator tutorial exists to talk you out of: Overlabels has five donation pipes, and the
+whole point of `latest()` is that you connect several and one name on screen is always the right
+one. A product that installs the counter-example to its own tutorial is not a product.
+
+The install now writes a trigger per service, all five, each one waiting until that service is
+connected. Connect Ko-fi today and the alert fires on Ko-fi; connect Throne next month from the
+Integrations page and it fires on Throne too, with nothing to reinstall. The stage stopped reading
+any one service: it carries two expression controls of its own, `tips_total` summing every
+service's counter and `newest_donor` picking the name paired with the newest counter timestamp,
+which is the tutorial's recipe word for word. A service you have not connected has no controls, so
+it adds nothing and never wins. The one question is still there and now means what it says: which
+service should we connect first.
+
+- Five `donation` triggers on the alert, one per service, written as literal services in the
+  manifest. The finished page's "Fires on" line reads them live, so it names all five.
+- The stage's two controls sit on its Controls tab like any expression control, dependencies and
+  all, so the renderer re-evaluates them whenever any service's counter moves.
+- The "It landed" beat already matched every trigger, so a test tip from a service other than the
+  one picked flips it too. Pinned by a test.
+- Refuse-not-merge holds and now covers all five: an alert you built by hand on any donation service
+  refuses the install, naming the alert, until that trigger is removed.
+
 ## OL-2609-081 - September 14th, 2026 - fix(tts): Kaylin was not drunk, she was misinformed
 
 The very first Ko-fi test tip through the new Donation Alerts product came out of the speakers as

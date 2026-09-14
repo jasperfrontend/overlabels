@@ -6,7 +6,7 @@ author: Overlabels
 
 # Donation stage
 
-A small counter in the corner: how many tips have come in through your donation service, and who sent the latest one. The Donation alert fires on this overlay, so its look lives here too - an alert renders into the DOM of the static overlay it is targeted at.
+A small counter in the corner: how many tips have come in across every donation service you have connected, and who sent the latest one, wherever it came from. The Donation alert fires on this overlay, so its look lives here too - an alert renders into the DOM of the static overlay it is targeted at.
 
 An Overlabels **static overlay** by Overlabels.
 
@@ -14,7 +14,7 @@ Overlabels overlays are plain HTML and CSS containing `[[[triple-bracket tags]]]
 
 This is a static overlay: it stays on screen and updates continuously.
 
-The `{{service}}` in the tags below is a recipe ingredient. The install writes the donation service you picked in its place, so the account holds `c:kofi:donations_received` or `c:throne:donations_received`, never the placeholder.
+The markup names no service. Two expression controls of the overlay's own do the reading, across all five donation services, the way the Latest donator tutorial builds them by hand: `tips_total` adds up every service's `donations_received`, and `newest_donor` hands back the `latest_donor_name` paired with the newest `donations_received_at`. A service that is not connected has no controls, so it adds nothing and never wins.
 
 ## Source
 
@@ -30,9 +30,9 @@ The markup.
 
 ```html
 <div class="donation-stage">
-  <p class="donation-count"><span class="donation-number">[[[c:{{service}}:donations_received]]]</span> tips</p>
-  [[[if:c:{{service}}:latest_donor_name]]]
-  <p class="donation-latest">Latest from [[[c:{{service}}:latest_donor_name]]]</p>
+  <p class="donation-count"><span class="donation-number">[[[c:tips_total]]]</span> tips</p>
+  [[[if:c:newest_donor]]]
+  <p class="donation-latest">Latest from [[[c:newest_donor]]]</p>
   [[[endif]]]
 </div>
 ```
@@ -101,8 +101,22 @@ html, body {
 
 ## Controls
 
-This overlay defines no controls of its own.
+Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 2 are defined by the overlay itself and are recreated, with the default values shown, for anyone who installs it.
+
+| Tag | Type | Label | Default | Referenced in source |
+|---|---|---|---|---|
+| `[[[c:tips_total]]]` | expression | Tips across every service |  | yes |
+| `[[[c:newest_donor]]]` | expression | Latest donor from any service |  | yes |
+
+### Control detail
+
+- `c:tips_total` - Every connected service's tip counter added up. A service that is not connected has no counter and adds nothing.
+  - expression: `sum(c.streamlabs.donations_received, c.kofi.donations_received, c.bmac.donations_received, c.fourthwall.donations_received, c.throne.donations_received)`
+- `c:newest_donor` - The name paired with the newest tip counter timestamp, so the service that last heard from anyone wins. The counter's timestamp, not the name's: two tips in a row from the same person leave the name unchanged, the counter never.
+  - expression: `latest(c.streamlabs.donations_received_at, c.streamlabs.latest_donor_name, c.kofi.donations_received_at, c.kofi.latest_donor_name, c.bmac.donations_received_at, c.bmac.latest_donor_name, c.fourthwall.donations_received_at, c.fourthwall.latest_donor_name, c.throne.donations_received_at, c.throne.latest_donor_name)`
+
+Every control also exposes a companion `[[[c:<key>_at]]]` holding the Unix timestamp in seconds of when it last changed.
 
 ## Requirements
 
-This overlay reads live data from the donation service picked at install. The product install connects it for you; you authorize it on its settings page.
+This overlay reads live data from whichever of the five donation services you connect: **Streamlabs**, **Ko-fi**, **Buy Me a Coffee**, **Fourthwall** and **Throne**. The product install connects the one you pick first; the rest connect on the Integrations settings page and join the count the moment they do. Connecting a service provisions its controls automatically - they are not part of the install, and they are account-wide rather than per-overlay. Per service, the two expression controls above read `donations_received` and `latest_donor_name`.

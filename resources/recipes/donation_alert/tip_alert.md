@@ -14,7 +14,7 @@ Overlabels overlays are plain HTML and CSS containing `[[[triple-bracket tags]]]
 
 This is an alert overlay: it renders when an event fires and is removed after its duration.
 
-The `event.*` tags it reads are the same for every donation service, so this document carries no ingredient. Which service fires it is the trigger the product install writes, and its look lives in the Donation stage's stylesheet, because an alert renders into the DOM of the static overlay it is targeted at.
+The `event.*` tags it reads are the same for every donation service, so one alert serves all five: the product install writes a trigger per service, and each one waits until that service is connected. Its look lives in the Donation stage's stylesheet, because an alert renders into the DOM of the static overlay it is targeted at.
 
 ## Source
 
@@ -53,4 +53,4 @@ This overlay defines no controls of its own.
 
 ## Requirements
 
-This overlay fires on a donation from the service picked at install. The product install writes that trigger and targets the Donation stage for you.
+This overlay fires on a donation from any of the five donation services, Streamlabs, Ko-fi, Buy Me a Coffee, Fourthwall or Throne, once that service is connected. The product install writes the five triggers and targets the Donation stage for you.
