@@ -1,5 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { applyUiMode, elementKeyFromHash, parseUiMode, resolveUiMode } from './useUiMode';
+import { applyUiMode, elementKeyFromHash, parseUiMode, resolveUiMode, withLastMileHint } from './useUiMode';
+
+describe('withLastMileHint', () => {
+  // Alphabetical, because Laravel echoes Symfony's sorted query string back
+  // and Inertia keeps a fragment only when that echo matches the request.
+  it('writes the hint with its keys in the order Laravel echoes them back', () => {
+    expect(withLastMileHint('/templates/347', 'donation_alert')).toBe('/templates/347?product=donation_alert&state=product');
+  });
+
+  it('keeps the fragment and an existing query, all keys sorted', () => {
+    expect(withLastMileHint('/templates/347?zoom=2&a=1#tab-obs', 'chat_tower')).toBe(
+      '/templates/347?a=1&product=chat_tower&state=product&zoom=2#tab-obs',
+    );
+  });
+
+  it('replaces a hint the href already carries rather than doubling it', () => {
+    expect(withLastMileHint('/x?state=product&product=old', 'new')).toBe('/x?product=new&state=product');
+  });
+
+  it('round-trips through parseUiMode', () => {
+    expect(parseUiMode(withLastMileHint('/x', 'chat_checkin'))).toEqual({ lastMile: true, product: 'chat_checkin' });
+  });
+});
 
 describe('resolveUiMode', () => {
   it('is on while a setup flow is active, whatever the URL says', () => {

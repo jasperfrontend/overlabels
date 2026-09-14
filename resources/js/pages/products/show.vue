@@ -4,7 +4,9 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, Trash2, TriangleAlert } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
 import { serviceLabel } from '@/utils/services';
+import { urlWithTab } from '@/composables/useAddressableTabs';
 import { useConfirm } from '@/composables/useConfirm';
+import { withLastMileHint } from '@/composables/useUiMode';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
 import RekaToast from '@/components/RekaToast.vue';
@@ -241,7 +243,7 @@ async function uninstall(): Promise<void> {
           <Link
             v-for="overlay in installed.overlays"
             :key="overlay.id"
-            :href="`${route('templates.show', overlay.id)}?state=product&product=${product.slug}#tab-obs`"
+            :href="urlWithTab(withLastMileHint(route('templates.show', overlay.id), product.slug), 'obs')"
             class="inline-flex cursor-pointer items-center gap-2 border border-white/60 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
           >
             <ExternalLink class="size-4" />

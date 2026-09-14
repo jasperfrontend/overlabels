@@ -44,6 +44,35 @@ export function parseUiMode(url: string): ParsedUiMode {
   };
 }
 
+/**
+ * Pure: the same href carrying the last-mile hint, fragment intact.
+ *
+ * The query keys come out in alphabetical order, and that is load-bearing,
+ * not tidiness. An Inertia visit keeps a link's `#fragment` only when the URL
+ * the server echoes back equals the requested one byte for byte (Inertia's
+ * `setHashIfSameUrl`), and Laravel builds that echo from Symfony's normalised
+ * query string, which sorts keys. `?state=product&product=x#tab-obs` came back
+ * as `?product=x&state=product`, failed the compare, and the tab was lost on
+ * a same-tab click while a middle-click, which never goes through Inertia,
+ * kept it. Values are encoded the RFC 3986 way for the same reason.
+ */
+export function withLastMileHint(href: string, slug: string): string {
+  const hashAt = href.indexOf('#');
+  const hash = hashAt === -1 ? '' : href.slice(hashAt);
+  const beforeHash = hashAt === -1 ? href : href.slice(0, hashAt);
+  const queryAt = beforeHash.indexOf('?');
+  const path = queryAt === -1 ? beforeHash : beforeHash.slice(0, queryAt);
+  const params = new URLSearchParams(queryAt === -1 ? '' : beforeHash.slice(queryAt + 1));
+
+  params.set('product', slug);
+  params.set('state', 'product');
+  params.sort();
+
+  const query = [...params.entries()].map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join('&');
+
+  return `${path}?${query}${hash}`;
+}
+
 /** Writes the mode onto <html data-mode> so CSS can see it, or removes it. */
 export function applyUiMode(mode: UiMode | null, root: HTMLElement | null = typeof document === 'undefined' ? null : document.documentElement): void {
   if (!root) return;
