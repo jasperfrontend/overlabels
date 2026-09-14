@@ -1,5 +1,34 @@
 # Changelog - September 2026
 
+## OL-2609-077 - September 14th, 2026 - feat(products): Donation Alerts, the first product that asks which service
+
+Three days ago the walk from a fresh account to a firing Streamlabs alert was eleven steps, written
+down for an app-approval form and read back with some dismay. Today it is a product. Type
+"donation" on the products page, pick where your donations come in, press Install, authorize the
+service, put one overlay in OBS, send yourself a test tip. The alert shows, the sound plays, the line
+is spoken, chat gets a message. Five steps, and three of them happen on someone else's screens.
+
+The product is the alert from the Streamlabs proof of concept with the hard edges filed off, and a
+small stage overlay for it to land on: a tip counter in the corner and the name of whoever tipped
+last. The alert reads `event.from_name` and `event.formatted_amount`, which are the same tags for
+every donation service and, since this morning, are written the way you write money. So the alert
+itself does not care which service it is. Only three things do: the integration to connect, the event
+the trigger listens for, and the `c:<service>:` namespace the stage reads its counter from. All three
+are one word, and that word is the question the product asks.
+
+It is deliberately not "the Streamlabs product". Streamlabs, Ko-fi, Buy Me a Coffee, Fourthwall and
+Throne are all croutons: things you connected, that you own, that outlive any product you install
+on top of them. So the manifest claims none of them as its own, uninstalling it leaves your
+connection exactly where it was, and every one of the five stays on the integrations page under
+External Integrations where it has always lived.
+
+It is also the first listed product whose integration needs a human to authorize it, which means
+the setup banner's "finish connecting its integration" step finally has somewhere real to point. It
+points at the row for the service you picked, not the default, and lights it up.
+
+No artwork yet. The stage is functional and plain, by decision; design is not the priority this
+week.
+
 ## OL-2609-076 - September 14th, 2026 - feat(recipes): a recipe can ask a question, and the answer lands wherever it says {{key}}
 
 Five donation services, one alert. Every one of them sends a `donation` event, every one of them

@@ -44,8 +44,8 @@ it('is listed with its hero image', function () {
     $this->get('/products')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('products.2.slug', 'follower_bowling')
-            ->where('products.2.hero', '/products/follower-bowling-hero.svg')
+            ->where('products.3.slug', 'follower_bowling')
+            ->where('products.3.hero', '/products/follower-bowling-hero.svg')
             ->where('products.0.hero', '/products/chat-checkin-hero.svg')
         );
 
