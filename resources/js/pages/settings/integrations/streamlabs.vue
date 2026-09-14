@@ -106,16 +106,6 @@ function formatDate(iso: string | null): string {
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
 
-        <!-- Closed beta banner -->
-        <div class="space-y-2 border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
-          <p class="font-medium text-amber-600 dark:text-amber-400">Closed beta</p>
-          <p class="text-muted-foreground">
-            The Streamlabs integration is in closed beta while our application is under review by Streamlabs. During this period, only whitelisted
-            Streamlabs accounts can connect. If you'd like early access, reach out to
-            <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
-          </p>
-        </div>
-
         <!-- Not connected state -->
         <template v-if="!integration.connected">
           <div class="space-y-4">
