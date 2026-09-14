@@ -1,5 +1,32 @@
 # Changelog - September 2026
 
+## OL-2609-071 - September 14th, 2026 - refactor(dashboard): the dashboard is two columns and one tab strip
+
+The dashboard was four boxes in a 2x2 grid: My overlays, My alerts, Recent stream activity, Recent
+updates, each one five rows deep, with the What's New card sitting above the lot. Two of those boxes
+disappeared entirely when you had nothing in them, so the grid rearranged itself depending on how
+new you were, and the only way to see more than five of anything was to leave the page.
+
+It is now two columns, 60/40. The left column holds one tab strip - My overlays, My alerts, Stream
+activity - and the right column holds the updates. The tabs always exist, so an account with no
+alerts yet sees an empty alerts tab instead of a layout that quietly reflows around the gap, and
+because only one list is on screen at a time they can afford to be longer: ten overlays, ten alerts,
+twenty events. The view-all and create buttons moved into the tab strip and follow whichever tab you
+are on.
+
+The What's New card came off the top. That slot is going to hold a search box - the "what do you
+want to get done today" question that starts a recipe - and the card was in the way of finding out
+whether that works. The component is still in the tree.
+
+Underneath it, a smaller piece of housekeeping with a longer reach. The violet tab strip on
+/templates/{id} and /templates/{id}/edit had been copied by hand, and the dashboard's new one made
+three. They had already drifted into two paddings and two active-text colours, which is the normal
+fate of a widget that exists three times. It is now `TabStrip.vue`, and it owns the strip only - the
+pages keep rendering their own panels below it, because both templates pages put those panels in a
+bordered box that a tabs root would have had to swallow. Being one component, it also got the
+keyboard handling that none of the three copies had: arrow keys, Home and End, and the ARIA roles to
+go with them.
+
 ## OL-2609-069 - September 12th, 2026 - refactor(settings): the integrations page is one list, and everything on it has a settings page
 
 The integrations page had three sections stacked above the search box, and between them they carried

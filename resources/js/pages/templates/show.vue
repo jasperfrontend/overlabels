@@ -33,6 +33,7 @@ import {
   Zap,
   VideoIcon,
 } from '@lucide/vue';
+import TabStrip, { type TabStripItem } from '@/components/TabStrip.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import Heading from '@/components/Heading.vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
@@ -71,7 +72,7 @@ const editorTabs = [
 ];
 
 const mainTabs = computed(() => {
-  const tabs: Array<{ key: string; label: string; icon: any }> = [
+  const tabs: TabStripItem[] = [
     { key: 'overview', label: 'Details', icon: LightbulbIcon },
     { key: 'controls', label: 'Controls', icon: SlidersHorizontalIcon },
     { key: 'panel', label: 'Values', icon: SquarePenIcon },
@@ -86,7 +87,14 @@ const mainTabs = computed(() => {
   // Always last. The browser-source URL carries a user-scoped token, so this is
   // owner-only; blocks are Builder ingredients, not standalone overlays.
   if (props.canEdit && props.template?.type !== 'block') {
-    tabs.push({ key: 'obs', label: 'Add to OBS', icon: VideoIcon });
+    tabs.push({
+      key: 'obs',
+      label: 'Add to OBS',
+      icon: VideoIcon,
+      // In the product UI mode the Add to OBS tab is the whole point of the
+      // visit, so it is green whatever the theme says.
+      class: 'product:border-t-green-400 product:bg-green-600 product:text-white product:hover:bg-green-700',
+    });
   }
   return tabs;
 });
@@ -309,28 +317,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       </div>
 
       <!-- Main Tabs (owner only) -->
-      <div v-if="canEdit" class="bg-violet-300/20 dark:bg-violet-900/20">
-        <div class="flex max-w-full touch-pan-x overflow-auto lg:touch-none">
-          <button
-            v-for="tab in mainTabs"
-            :key="tab.key"
-            type="button"
-            @click="mainTab = tab.key"
-            :class="[
-              'flex cursor-pointer items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background',
-              mainTab === tab.key
-                ? 'dark:hover-bg-violet-500 border-t-2 border-t-violet-400 bg-white text-black dark:bg-violet-500/30 dark:text-violet-300'
-                : 'text-accent-foreground',
-              // In the product UI mode the Add to OBS tab is the whole point of
-              // the visit, so it is green whatever the theme says.
-              tab.key === 'obs' ? 'product:border-t-green-400 product:bg-green-600 product:text-white product:hover:bg-green-700' : '',
-            ]"
-          >
-            <component :is="tab.icon" class="h-4 w-4" />
-            {{ tab.label }}
-          </button>
-        </div>
-      </div>
+      <TabStrip v-if="canEdit" v-model="mainTab" :tabs="mainTabs" />
 
       <div class="mb-6 border border-sidebar-border bg-card">
         <!-- Controls Manager tab -->

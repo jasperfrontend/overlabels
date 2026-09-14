@@ -26,14 +26,14 @@ class DashboardController extends Controller
             ->alert()
             ->with('owner:id,name,avatar')
             ->latest()
-            ->limit(5)
+            ->limit(10)
             ->get();
 
         $userStaticTemplates = OverlayTemplate::where('owner_id', $user->id)
             ->static()
             ->with('owner:id,name,avatar')
             ->latest()
-            ->limit(5)
+            ->limit(10)
             ->get();
 
         $communityTemplates = OverlayTemplate::where('owner_id', '!=', $user->id)
@@ -43,7 +43,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $userRecentEvents = $this->mergeRecentEvents($user->id, 5);
+        $userRecentEvents = $this->mergeRecentEvents($user->id, 20);
 
         $recentUpdates = Update::published()
             ->orderByDesc('published_at')

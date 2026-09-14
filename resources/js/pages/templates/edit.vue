@@ -16,6 +16,7 @@ import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
+import TabStrip, { type TabStripItem } from '@/components/TabStrip.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import TriggerManager, { type TriggerData, firstAssignedEvent } from '@/components/TriggerManager.vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
@@ -220,7 +221,7 @@ const { eventTypeDotClass } = useEventColors();
 const boundEvent = computed(() => firstAssignedEvent(props.triggers));
 
 const mainTabs = computed(() => {
-  const tabs: Array<{ key: string; label: string; icon: any }> = [
+  const tabs: TabStripItem[] = [
     { key: 'code', label: 'Code', icon: Code },
     { key: 'meta', label: 'Meta', icon: InfoIcon },
     { key: 'tags', label: 'Tags', icon: Brackets },
@@ -648,25 +649,7 @@ onMounted(() => {
 
       <form @submit.prevent="submitForm">
         <!-- Tab bar -->
-        <div class="bg-violet-300/20 dark:bg-violet-900/20">
-          <div class="flex max-w-full touch-pan-x overflow-auto lg:touch-none dark:border-violet-400">
-            <button
-              v-for="tab in mainTabs"
-              :key="tab.key"
-              type="button"
-              @click="mainTab = tab.key"
-              :class="[
-                'flex cursor-pointer items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-background',
-                mainTab === tab.key
-                  ? 'dark:hover-bg-violet-500 border-t-2 border-t-violet-400 bg-white text-black dark:bg-violet-500/30 dark:text-violet-300'
-                  : 'text-accent-foreground',
-              ]"
-            >
-              <component :is="tab.icon" class="h-4 w-4" />
-              {{ tab.label }}
-            </button>
-          </div>
-        </div>
+        <TabStrip v-model="mainTab" :tabs="mainTabs" />
 
         <!-- Content box -->
         <div class="h-full overflow-auto border border-t-0 border-sidebar-border bg-card">
