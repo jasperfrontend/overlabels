@@ -111,3 +111,49 @@ test('an unlisted currency keeps its code but loses the glue', function () {
 test('empty text stays empty', function () {
     expect(SpeakableText::prepare(''))->toBe('');
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// OL-2609-073 made formatted_amount ICU-formatted for every service, and ICU
+// qualifies a foreign currency's symbol: "US$ 3,00" on Dutch settings, which
+// the voice read as "three thousand dollar". Every locale the appearance page
+// offers, against every currency the pass knows, has to come out as words.
+// The locales are the ten in resources/js/pages/settings/Account.vue.
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('the Ko-fi test tip on Dutch settings is three dollars, not three thousand', function () {
+    $formatted = (new NumberFormatter('nl-NL', NumberFormatter::CURRENCY))->formatCurrency(3, 'USD');
+
+    expect(SpeakableText::prepare('Jo Example tipped '.$formatted))->toBe('Jo Example tipped 3 dollars');
+});
+
+test('every locale the app offers speaks every currency the pass knows', function () {
+    $locales = ['en-US', 'en-GB', 'nl-NL', 'nl-BE', 'de-DE', 'fr-FR', 'es-ES', 'pt-BR', 'ja-JP', 'ko-KR'];
+    $spoken = [
+        'USD' => '13 dollars and 37 cents',
+        'EUR' => '13 euros and 37 cents',
+        'GBP' => '13 pounds and 37 pence',
+        'JPY' => '13 yen',
+        'CAD' => '13 Canadian dollars and 37 cents',
+        'AUD' => '13 Australian dollars and 37 cents',
+    ];
+
+    foreach ($locales as $locale) {
+        foreach ($spoken as $code => $words) {
+            $formatted = (new NumberFormatter($locale, NumberFormatter::CURRENCY))->formatCurrency(13.37, $code);
+
+            expect(SpeakableText::prepare('Jo tipped '.$formatted))
+                ->toBe('Jo tipped '.$words, "{$locale} {$code} formats as {$formatted}");
+        }
+    }
+});
+
+test('the French suffix forms and the full-width yen are read on their own too', function () {
+    expect(SpeakableText::prepare('13,37 $US'))->toBe('13 dollars and 37 cents')
+        ->and(SpeakableText::prepare('13,37 £GB'))->toBe('13 pounds and 37 pence')
+        ->and(SpeakableText::prepare('￥13'))->toBe('13 yen')
+        ->and(SpeakableText::prepare('CA$13.37'))->toBe('13 Canadian dollars and 37 cents');
+});
+
+test('a qualified symbol inside a word is still not a currency', function () {
+    expect(SpeakableText::prepare('BONUS$5'))->toBe('BONUS$5');
+});

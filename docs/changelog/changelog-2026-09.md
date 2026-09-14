@@ -1,5 +1,25 @@
 # Changelog - September 2026
 
+## OL-2609-081 - September 14th, 2026 - fix(tts): Kaylin was not drunk, she was misinformed
+
+The very first Ko-fi test tip through the new Donation Alerts product came out of the speakers as
+"Jo Example tipped three thousand dollar". Three dollars, on Dutch settings. This morning's change
+that writes every donation amount the way you write money had a side the voice never met: ICU
+qualifies a currency that is foreign to your locale, so a dollar tip in the Netherlands is "US$ 3,00",
+not "$3.00". The pass that turns money into words knew the bare symbols and the ISO codes, and
+refused a symbol with letters in front of it. "US$ 3,00" went through untouched, and an English voice
+reads "3,00" with the comma as a thousands separator.
+
+Euros only ever worked by luck: ICU writes them as a bare "€ 48,00" on Dutch settings, a shape the
+pass knew. Walked across every locale the appearance page offers and every currency the pass can
+speak, 22 of 60 combinations were being handed to the voice raw: "US$", "CA$", "C$", "A$", "AU$",
+"JP¥", the French "$US", "$CA", "$AU" and "£GB", and the full-width yen sign Japanese uses for its
+own currency.
+
+The pass knows all of those now, longest marker first so "US$" is read as one thing. The guard is a
+test that walks the same matrix, so a new locale on the settings page or a new currency in the list
+turns up as a red test rather than as something a viewer hears on stream.
+
 ## OL-2609-080 - September 14th, 2026 - feat(products): after install, three beats to a landed alert
 
 Installing Donation Alerts got you a stage in OBS and an alert wired to it, and then nothing

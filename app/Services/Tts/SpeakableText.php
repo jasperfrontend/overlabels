@@ -7,15 +7,24 @@ namespace App\Services\Tts;
  *
  * The problem this exists for: a donation alert's TTS line is usually written
  * as `[[[event.from_name]]] donated [[[event.formatted_amount]]] through
- * [[[event.source]]]`, and StreamLabs' `formatted_amount` is a symbol glued to
- * digits - "€84", "$13.37". The other four donation drivers expose no formatted
- * amount at all, so the common template there is
+ * [[[event.source]]]`, and StreamLabs' `formatted_amount` was a symbol glued to
+ * digits - "€84", "$13.37". The other four donation drivers exposed no formatted
+ * amount at all, so the common template there was
  * `[[[event.currency]]][[[event.amount]]]`, which renders an ISO code glued to
  * digits - "EUR84". Either way ElevenLabs is handed one token it has no reading
  * for, and the voice slurs BOTH the symbol and the number:
  *
  *   "Kevin just donated €84 through StreamLabs"
  *   -> "Kevin just donated hurrurel eigddyfour through streamlabs"
+ *
+ * Since OL-2609-073 `formatted_amount` is written by NumberFormatter::CURRENCY
+ * in the streamer's locale for every service, and ICU has shapes of its own:
+ * a foreign currency's symbol is qualified ("US$ 3,00" on Dutch settings,
+ * "CA$13.37", "JP¥ 13"), French puts the qualifier after it ("13,37 $US"),
+ * and Japanese writes its own yen full-width. A qualified symbol the pass did
+ * not know went through untouched, and an English voice reads "US$ 3,00" as
+ * three thousand dollars. Those shapes are in SYMBOLS now, and a test walks
+ * every locale the app offers against every currency listed here.
  *
  * ElevenLabs' own normalization guidance is to expand money into its spoken
  * form before synthesis rather than rely on the model:
@@ -50,12 +59,30 @@ class SpeakableText
         'AUD' => ['Australian dollar', 'Australian dollars', 'cent', 'cents'],
     ];
 
-    /** @var array<string, string> */
+    /**
+     * Symbol => ISO code. The bare four are what StreamLabs and hand-written
+     * templates glue to digits. The rest are what ICU writes for a currency
+     * that is foreign to the locale: a qualifier before the symbol in most
+     * locales, after it in French, and a full-width yen in Japanese.
+     *
+     * @var array<string, string>
+     */
     private const array SYMBOLS = [
         '€' => 'EUR',
         '$' => 'USD',
         '£' => 'GBP',
         '¥' => 'JPY',
+        '￥' => 'JPY',
+        'US$' => 'USD',
+        '$US' => 'USD',
+        'CA$' => 'CAD',
+        'C$' => 'CAD',
+        '$CA' => 'CAD',
+        'AU$' => 'AUD',
+        'A$' => 'AUD',
+        '$AU' => 'AUD',
+        'JP¥' => 'JPY',
+        '£GB' => 'GBP',
     ];
 
     /**
@@ -72,10 +99,14 @@ class SpeakableText
             return $text;
         }
 
+        // Longest marker first, so "US$" is read as one marker rather than a
+        // "$" the lookbehind then refuses for having a letter in front of it.
+        $markers = array_merge(array_keys(self::SYMBOLS), array_keys(self::CURRENCIES));
+        usort($markers, static fn (string $a, string $b): int => mb_strlen($b) <=> mb_strlen($a));
         $money = implode('|', array_map(
             static fn (string $s): string => preg_quote($s, '/'),
-            array_keys(self::SYMBOLS),
-        )).'|'.implode('|', array_keys(self::CURRENCIES));
+            $markers,
+        ));
 
         // "€84", "EUR 84.50"
         $text = (string) preg_replace_callback(
