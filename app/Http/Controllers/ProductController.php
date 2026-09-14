@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EventTemplateMapping;
+use App\Models\ExternalEventTemplateMapping;
 use App\Models\OverlayTemplate;
 use App\Models\Recipe;
 use App\Models\RecipeInstance;
@@ -250,8 +252,14 @@ class ProductController extends Controller
     }
 
     /**
-     * The installed product as the page shows it: its circuit, and a link to
-     * each overlay the install created.
+     * The installed product as the page shows it: its circuit, and each
+     * overlay the install created with what the page needs to say about it.
+     *
+     * A static overlay is the thing that goes into OBS. An alert never does:
+     * it fires on an event and renders inside the static overlays it targets,
+     * so for one the page says what it fires on and where it shows, read live
+     * from the same rows the Triggers and Targeting tabs read, and offers no
+     * OBS step at all.
      *
      * @return array<string, mixed>
      */
@@ -263,8 +271,29 @@ class ProductController extends Controller
         $overlays = collect($instance->primitive_map['overlays'] ?? [])
             ->map(function (int $id, string $ref) {
                 $template = OverlayTemplate::find($id);
+                if (! $template) {
+                    return null;
+                }
 
-                return $template ? ['ref' => $ref, 'name' => $template->name, 'slug' => $template->slug, 'id' => $template->id] : null;
+                $overlay = ['ref' => $ref, 'name' => $template->name, 'slug' => $template->slug, 'id' => $template->id, 'type' => $template->type];
+
+                if ($template->type === 'alert') {
+                    $overlay['fires_on'] = EventTemplateMapping::where('template_id', $template->id)
+                        ->where('enabled', true)
+                        ->get()
+                        ->map(fn (EventTemplateMapping $m) => $m->event_type_display)
+                        ->concat(
+                            ExternalEventTemplateMapping::where('overlay_template_id', $template->id)
+                                ->where('enabled', true)
+                                ->get()
+                                ->map(fn (ExternalEventTemplateMapping $m) => ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$m->service][$m->event_type] ?? "{$m->service} {$m->event_type}")
+                        )
+                        ->values()
+                        ->all();
+                    $overlay['targets'] = $template->targetStaticOverlays()->pluck('name')->all();
+                }
+
+                return $overlay;
             })
             ->filter()
             ->values()

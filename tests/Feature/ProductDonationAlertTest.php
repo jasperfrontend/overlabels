@@ -120,7 +120,7 @@ it('refuses a service that is not a choice, on the page, with nothing created', 
         ->and(ExternalIntegration::where('user_id', $user->id)->exists())->toBeFalse();
 });
 
-it('shows what was answered once installed', function () {
+it('shows what was answered once installed, and how the alert is wired instead of an OBS step for it', function () {
     $user = donationUser();
     $this->actingAs($user)->post('/products/donation_alert/install', ['ingredients' => ['service' => 'throne']]);
 
@@ -129,7 +129,24 @@ it('shows what was answered once installed', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.ingredients.service', 'throne')
             ->has('installed.overlays', 2)
+            ->where('installed.overlays.0.name', 'Donation stage')
+            ->where('installed.overlays.0.type', 'static')
+            ->missing('installed.overlays.0.fires_on')
+            ->where('installed.overlays.1.name', 'Donation alert')
+            ->where('installed.overlays.1.type', 'alert')
+            ->where('installed.overlays.1.fires_on', ['Throne Gift or Contribution'])
+            ->where('installed.overlays.1.targets', ['Donation stage'])
         );
+});
+
+it('reads the alert wiring live, so a trigger switched off drops out of the page', function () {
+    $user = donationUser();
+    $this->actingAs($user)->post('/products/donation_alert/install', ['ingredients' => ['service' => 'kofi']]);
+    ExternalEventTemplateMapping::where('user_id', $user->id)->update(['enabled' => false]);
+
+    $this->actingAs($user->fresh())
+        ->get('/products/donation_alert')
+        ->assertInertia(fn (Assert $page) => $page->where('installed.overlays.1.fires_on', []));
 });
 
 it('sends the setup banner to the picked service on the integrations page, lit up', function () {

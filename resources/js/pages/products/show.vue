@@ -55,10 +55,22 @@ interface Product {
   ready_message: string | null;
 }
 
+interface InstalledOverlay {
+  ref: string;
+  name: string;
+  slug: string;
+  id: number;
+  type: string;
+  /** Alerts only: the events it fires on, as the Triggers tab labels them. */
+  fires_on?: string[];
+  /** Alerts only: the static overlays it renders inside. Empty means every one. */
+  targets?: string[];
+}
+
 interface Installed {
   installed_at: string;
   subject: Subject | null;
-  overlays: { ref: string; name: string; slug: string; id: number }[];
+  overlays: InstalledOverlay[];
   ingredients: Record<string, string>;
   removes: string[];
 }
@@ -115,6 +127,16 @@ function answerLabel(ingredient: Ingredient): string {
 
 function install(): void {
   router.post(route('products.install', props.product.slug), { ingredients: answers.value });
+}
+
+// Only a static overlay goes into OBS. An alert renders inside the static
+// overlays it targets, so offering it an "Add to OBS" button sends the person
+// to a page that warns them off doing exactly that.
+const stages = computed(() => (props.installed?.overlays ?? []).filter((overlay) => overlay.type !== 'alert'));
+const alerts = computed(() => (props.installed?.overlays ?? []).filter((overlay) => overlay.type === 'alert'));
+
+function joinNames(names: string[]): string {
+  return names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
 const { confirm } = useConfirm();
@@ -241,7 +263,7 @@ async function uninstall(): Promise<void> {
         </div>
         <div class="flex flex-wrap justify-center gap-2">
           <Link
-            v-for="overlay in installed.overlays"
+            v-for="overlay in stages"
             :key="overlay.id"
             :href="urlWithTab(withLastMileHint(route('templates.show', overlay.id), product.slug), 'obs')"
             class="inline-flex cursor-pointer items-center gap-2 border border-white/60 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
@@ -250,6 +272,33 @@ async function uninstall(): Promise<void> {
             Add {{ overlay.name }} to OBS
           </Link>
         </div>
+
+        <!-- An alert is already wired and already placed: it fires on its
+             event and renders inside the stage. Said as two done steps, so
+             nobody goes looking for a third one in OBS. -->
+        <ul v-if="alerts.length" class="flex w-full max-w-md flex-col gap-3 text-left">
+          <li v-for="alert in alerts" :key="alert.id" class="flex flex-col gap-1 border border-white/40 bg-white/10 p-3 text-sm">
+            <p class="font-semibold">
+              <Link
+                :href="withLastMileHint(route('templates.show', alert.id), product.slug)"
+                class="cursor-pointer underline-offset-2 hover:underline"
+              >
+                {{ alert.name }}
+              </Link>
+              <span class="font-normal text-white/80">is an alert, so nothing to add to OBS for it.</span>
+            </p>
+            <p class="flex items-start gap-2">
+              <Check class="mt-0.5 size-4 shrink-0" stroke-width="3" />
+              <span v-if="alert.fires_on?.length">Fires on {{ joinNames(alert.fires_on) }}.</span>
+              <span v-else>Has no trigger switched on yet. Its Triggers tab is where that lives.</span>
+            </p>
+            <p class="flex items-start gap-2">
+              <Check class="mt-0.5 size-4 shrink-0" stroke-width="3" />
+              <span v-if="alert.targets?.length">Shows inside {{ joinNames(alert.targets) }}, on top of whatever is there.</span>
+              <span v-else>Shows inside every static overlay of yours.</span>
+            </p>
+          </li>
+        </ul>
       </section>
 
       <!-- Installed, steps left: the checklist as a progress piece. Everything
@@ -300,7 +349,7 @@ async function uninstall(): Promise<void> {
         </ul>
 
         <div v-if="installed.overlays.length" class="mt-2 flex flex-col gap-2">
-          <h3 class="text-sm font-medium text-foreground">Your overlay</h3>
+          <h3 class="text-sm font-medium text-foreground">{{ installed.overlays.length === 1 ? 'Your overlay' : 'Your overlays' }}</h3>
           <ul class="flex flex-col gap-2">
             <li v-for="overlay in installed.overlays" :key="overlay.id" class="collection-row relative border border-border p-3">
               <Link :href="route('templates.show', overlay.id)" class="absolute inset-0 z-0 cursor-pointer" :aria-label="overlay.name" />
