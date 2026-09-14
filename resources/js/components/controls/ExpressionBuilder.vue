@@ -264,7 +264,7 @@ const filteredGroupedControls = computed((): ControlGroup[] => {
     custom: 'Your controls',
     twitch: 'Twitch',
     kofi: 'Ko-fi',
-    streamlabs: 'StreamLabs',
+    streamlabs: 'Streamlabs',
     gps: 'Overlabels GPS',
     checkin: 'Chat Checkin',
     tower: 'Chat Tower',

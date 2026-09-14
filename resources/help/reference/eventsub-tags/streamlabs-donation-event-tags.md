@@ -1,4 +1,4 @@
-available in alert templates triggered by StreamLabs donations.
+available in alert templates triggered by Streamlabs donations.
 
 ### Event Tags
 - `[[[event.from_name]]]` :: Name of the donor
@@ -20,4 +20,4 @@ example:
 </div>
 ```
 
-note: StreamLabs is an Overlabels integration (not Twitch EventSub). Donation events are delivered via StreamLabs OAuth.
+note: Streamlabs is an Overlabels integration (not Twitch EventSub). Donation events are delivered via Streamlabs OAuth.

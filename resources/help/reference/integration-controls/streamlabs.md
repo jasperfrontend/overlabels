@@ -8,12 +8,12 @@ Reference them anywhere a tag works, using the `c:streamlabs:` prefix.
 
 | Tag | Type | Default | Holds |
 |---|---|---|---|
-| `[[[c:streamlabs:donations_received]]]` | counter | `0` | StreamLabs Donations Received |
+| `[[[c:streamlabs:donations_received]]]` | counter | `0` | Streamlabs Donations Received |
 | `[[[c:streamlabs:latest_donor_name]]]` | text | empty | Latest Donor Name |
 | `[[[c:streamlabs:latest_donation_amount]]]` | number | `0` | Latest Donation Amount |
 | `[[[c:streamlabs:latest_donation_message]]]` | text | empty | Latest Donation Message |
 | `[[[c:streamlabs:latest_donation_currency]]]` | text | empty | Latest Currency |
-| `[[[c:streamlabs:total_received]]]` | number | `0` | Total StreamLabs Amount (session) |
+| `[[[c:streamlabs:total_received]]]` | number | `0` | Total Streamlabs Amount (session) |
 
 ## Events that update them
 

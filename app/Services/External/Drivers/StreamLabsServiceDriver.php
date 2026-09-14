@@ -127,12 +127,12 @@ class StreamLabsServiceDriver implements AuthenticatedExternalServiceDriver, Ext
     public function getAutoProvisionedControls(): array
     {
         return [
-            ['key' => 'donations_received', 'type' => 'counter', 'label' => 'StreamLabs Donations Received', 'value' => '0'],
+            ['key' => 'donations_received', 'type' => 'counter', 'label' => 'Streamlabs Donations Received', 'value' => '0'],
             ['key' => 'latest_donor_name', 'type' => 'text', 'label' => 'Latest Donor Name', 'value' => ''],
             ['key' => 'latest_donation_amount', 'type' => 'number', 'label' => 'Latest Donation Amount', 'value' => '0'],
             ['key' => 'latest_donation_message', 'type' => 'text', 'label' => 'Latest Donation Message', 'value' => ''],
             ['key' => 'latest_donation_currency', 'type' => 'text', 'label' => 'Latest Currency', 'value' => ''],
-            ['key' => 'total_received', 'type' => 'number', 'label' => 'Total StreamLabs Amount (session)', 'value' => '0'],
+            ['key' => 'total_received', 'type' => 'number', 'label' => 'Total Streamlabs Amount (session)', 'value' => '0'],
         ];
     }
 

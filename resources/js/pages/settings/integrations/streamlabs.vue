@@ -31,7 +31,7 @@ const props = defineProps<{
 const breadcrumbItems: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Integrations', href: '/settings/integrations' },
-  { title: 'StreamLabs', href: '/settings/integrations/streamlabs' },
+  { title: 'Streamlabs', href: '/settings/integrations/streamlabs' },
 ];
 
 // Starting donation total - one-time seed, locked after setting.
@@ -74,7 +74,7 @@ async function setSeedCount() {
 async function disconnect() {
   if (
     await confirm({
-      message: 'Disconnect StreamLabs? This will remove all StreamLabs-managed controls from your overlays.',
+      message: 'Disconnect Streamlabs? This will remove all Streamlabs-managed controls from your overlays.',
       confirmLabel: 'Disconnect',
     })
   ) {
@@ -96,12 +96,12 @@ function formatDate(iso: string | null): string {
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbItems">
-    <Head title="StreamLabs Integration" />
+    <Head title="Streamlabs Integration" />
 
     <SettingsLayout>
       <div class="space-y-6">
         <div class="flex items-center justify-between gap-2">
-          <HeadingSmall title="StreamLabs" description="Receive donation alerts and update overlay controls from StreamLabs." />
+          <HeadingSmall title="Streamlabs" description="Receive donation alerts and update overlay controls from Streamlabs." />
           <Badge v-if="integration.connected" variant="success">Connected</Badge>
           <Badge v-else variant="secondary">Not connected</Badge>
         </div>
@@ -110,8 +110,8 @@ function formatDate(iso: string | null): string {
         <div class="space-y-2 border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
           <p class="font-medium text-amber-600 dark:text-amber-400">Closed beta</p>
           <p class="text-muted-foreground">
-            The StreamLabs integration is in closed beta while our application is under review by StreamLabs. During this period, only whitelisted
-            StreamLabs accounts can connect. If you'd like early access, reach out to
+            The Streamlabs integration is in closed beta while our application is under review by Streamlabs. During this period, only whitelisted
+            Streamlabs accounts can connect. If you'd like early access, reach out to
             <a href="mailto:jasper@emailjasper.com" class="text-violet-400 hover:underline">jasper@emailjasper.com</a>.
           </p>
         </div>
@@ -120,9 +120,9 @@ function formatDate(iso: string | null): string {
         <template v-if="!integration.connected">
           <div class="space-y-4">
             <p class="text-sm text-muted-foreground">
-              Connect your StreamLabs account to receive donation alerts and live-updating controls in your overlays.
+              Connect your Streamlabs account to receive donation alerts and live-updating controls in your overlays.
             </p>
-            <a href="/settings/integrations/streamlabs/redirect" class="btn btn-primary">Authenticate with StreamLabs</a>
+            <a href="/settings/integrations/streamlabs/redirect" class="btn btn-primary">Authenticate with Streamlabs</a>
           </div>
         </template>
 
@@ -133,11 +133,11 @@ function formatDate(iso: string | null): string {
             <ol class="list-decimal space-y-1 pl-4">
               <li>
                 Go to <a href="/triggers" class="font-medium text-violet-400 hover:underline">Triggers</a>
-                to configure which alert template fires for StreamLabs donations.
+                to configure which alert template fires for Streamlabs donations.
               </li>
               <li>
                 Open any <strong>static</strong> overlay template &rarr; <strong>Controls</strong> tab &rarr; <strong>Add control</strong>
-                to add StreamLabs data controls (donation count, latest donor name, etc.) that update live.
+                to add Streamlabs data controls (donation count, latest donor name, etc.) that update live.
               </li>
               <li>
                 Enable test mode below, then visit
@@ -157,8 +157,8 @@ function formatDate(iso: string | null): string {
           <Separator />
           <TestModeToggle
             service="streamlabs"
-            service-label="StreamLabs"
-            how-to-fire="send a test donation from StreamLabs"
+            service-label="Streamlabs"
+            how-to-fire="send a test donation from Streamlabs"
             total-label="donation total"
             :initial="integration.test_mode"
             :seed-value="donationsSeedValue"
@@ -202,7 +202,7 @@ function formatDate(iso: string | null): string {
             <!-- Not seeded yet -->
             <template v-else>
               <p class="text-sm text-muted-foreground">
-                Had StreamLabs donations before joining? Set the total you already raised so your overlay doesn't begin at zero. Decimals are fine, in
+                Had Streamlabs donations before joining? Set the total you already raised so your overlay doesn't begin at zero. Decimals are fine, in
                 whichever notation you write money. All your <code class="rounded bg-black/10 px-1 dark:bg-white/10">total_received</code>
                 controls update immediately.
               </p>
@@ -235,9 +235,9 @@ function formatDate(iso: string | null): string {
           <div class="space-y-2">
             <p class="text-sm font-medium">Danger zone</p>
             <p class="text-sm text-muted-foreground">
-              Disconnecting StreamLabs will remove all StreamLabs-managed controls (donation counts, latest donor, etc.) from your overlays.
+              Disconnecting Streamlabs will remove all Streamlabs-managed controls (donation counts, latest donor, etc.) from your overlays.
             </p>
-            <button type="button" @click="disconnect" class="btn btn-danger">Disconnect StreamLabs</button>
+            <button type="button" @click="disconnect" class="btn btn-danger">Disconnect Streamlabs</button>
           </div>
         </template>
       </div>

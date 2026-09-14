@@ -462,7 +462,7 @@ dashboard, from chat via `!list <slug> disable`, or implicitly through whole-lis
 
 ### Donation tally - List of amounts, :sum as the goal driver
 
-When you don't want to wire a full Ko-fi or StreamLabs integration but you do want a quick tally:
+When you don't want to wire a full Ko-fi or Streamlabs integration but you do want a quick tally:
 
 1. Create a List `tips`.
 2. Create a chat appender: command `tip`, value template `[[[bot:args]]]`, permission `moderator` (so

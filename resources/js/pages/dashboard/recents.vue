@@ -197,7 +197,7 @@ function sourceLabel(source: string): string {
   const map: Record<string, string> = {
     twitch: 'Twitch',
     kofi: 'Ko-fi',
-    streamlabs: 'StreamLabs',
+    streamlabs: 'Streamlabs',
     bmac: 'Buy Me a Coffee',
     fourthwall: 'Fourthwall',
   };

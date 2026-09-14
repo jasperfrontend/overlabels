@@ -51,7 +51,7 @@ need, ignore the rest.
 ### Tags & syntax
 
 - [**Conditional and Event Tags**](/help/conditionals) - if/else logic, comparisons, event data tags, and
-  integration tags for Ko-fi and StreamLabs.
+  integration tags for Ko-fi and Streamlabs.
 - [**Formatting Pipes**](/help/formatting) - format numbers, durations, currencies, and dates with pipe
   syntax. Locale-aware, zero dependencies.
 - [**Math Engine**](/help/math) - waves, modulo wheels, pseudo-random one-liners, timestamp racing - the

@@ -296,7 +296,7 @@ and renders nothing in your overlay - the row exists purely as a binding between
 list.
 
 The source can be **any control type**: a counter you bump from chat, a service-managed control (Ko-fi
-donor name, StreamLabs tip amount, Twitch cheer count), or even an Expression Control. Yes, even an
+donor name, Streamlabs tip amount, Twitch cheer count), or even an Expression Control. Yes, even an
 Expression Control - the server evaluates the same formula your overlay does, then writes the result to
 the list. So an expression that combines values from multiple services can have its history persisted
 automatically.
@@ -368,7 +368,7 @@ HTML and it resolves the same way.
 
 ### The shared donation family
 
-Every donation service (Ko-fi, StreamLabs, Fourthwall, Buy Me a Coffee, Throne) exposes
+Every donation service (Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee, Throne) exposes
 the same six-key shape, so you can swap services - or combine them - without relearning the keys:
 
 ```
@@ -390,7 +390,7 @@ and surprise-gift flag; Buy Me a Coffee adds the latest support type.
 |---|---|
 | Twitch | Per-stream counters (follows, subs, raids, cheers, bits) that reset when you go live. Available the moment you connect Twitch. |
 | Ko-fi | Donation, subscription, and shop-sale data from your connected Ko-fi account. |
-| StreamLabs | Live donation data delivered through the StreamLabs listener. |
+| Streamlabs | Live donation data delivered through the Streamlabs listener. |
 | Fourthwall | Donation and tip data for creators using Fourthwall for merch and supporter tiers. |
 | Buy Me a Coffee | Supporter and membership data, including the latest support type. |
 | Throne | Gift data plus Throne-only extras: item name, product thumbnail URL, and a surprise-gift flag. |

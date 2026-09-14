@@ -27,7 +27,7 @@ of the `score` control - the pipe only affects how it is displayed.
 
 ### Works with all tag types
 
-Pipes work on any template tag - controls, Twitch data, Ko-fi data, StreamLabs data, event data. Anything
+Pipes work on any template tag - controls, Twitch data, Ko-fi data, Streamlabs data, event data. Anything
 between `[[[` and `]]]` can have a pipe.
 
 ```

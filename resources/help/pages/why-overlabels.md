@@ -11,7 +11,7 @@ If that sentence excited you, you're in the right place. Strap in.
 
 ## Why being third-party matters a lot
 
-Overlabels doesn't care where your donation came from. StreamLabs, Ko-fi, Fourthwall,
+Overlabels doesn't care where your donation came from. Streamlabs, Ko-fi, Fourthwall,
 Twitch Bits - they're all just *money that showed up*. We normalize every payload into a common shape and
 expose it as a Control you can reference anywhere in your template.
 
@@ -71,7 +71,7 @@ you can reference anywhere in your template. Seven types:
 - **Random** - picks a new value every N ms within a range
 - **Expression** - the big one. Math over every other value in the system.
 
-Service-managed Controls (Ko-fi, StreamLabs, Fourthwall, Overlabels Mobile...)
+Service-managed Controls (Ko-fi, Streamlabs, Fourthwall, Overlabels Mobile...)
 auto-update from their source and cannot be manually edited - the data is *real*. User Controls are yours
 to fiddle with. Either way, every Control can be read by any Expression and targeted by any conditional.
 

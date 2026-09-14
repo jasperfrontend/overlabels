@@ -96,7 +96,7 @@ their overlay automatically, with your defaults - the block arrives batteries in
 - If a control with the same key already exists on the overlay, it's **shared**, not duplicated.
   Blocks that agree on a key stay in sync - deliberate, and worth designing for: a generic key like
   `donation_total` invites sharing, a specific one like `subathon_end_at` keeps to itself.
-- Integration-managed controls (Ko-fi, StreamLabs, and friends) are account-wide already and don't
+- Integration-managed controls (Ko-fi, Streamlabs, and friends) are account-wide already and don't
   travel with blocks - only your own custom controls do.
 
 ## Snapshots: placing copies your code

@@ -214,7 +214,7 @@ function fmtCurrency(amount: number, currency: string | null): string {
 const SERVICE_LABELS: Record<string, string> = {
   twitch: 'Twitch',
   kofi: 'Ko-fi',
-  streamlabs: 'StreamLabs',
+  streamlabs: 'Streamlabs',
   bmac: 'Buy Me a Coffee',
   fourthwall: 'Fourthwall',
 };
@@ -656,7 +656,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
             <!-- Income -->
             <div v-else-if="activeTab === 'income'" class="space-y-6">
               <p v-if="selected.stats.income.count === 0" class="text-sm text-foreground/60">
-                No donations from connected services were recorded for this stream. Ko-fi, StreamLabs, Buy Me a Coffee and Fourthwall donations show
+                No donations from connected services were recorded for this stream. Ko-fi, Streamlabs, Buy Me a Coffee and Fourthwall donations show
                 up here once they fire during a live stream.
               </p>
 

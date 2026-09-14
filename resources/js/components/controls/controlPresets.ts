@@ -16,12 +16,12 @@ export const KOFI_PRESETS: ServicePreset[] = [
 ];
 
 export const STREAMLABS_PRESETS: ServicePreset[] = [
-  { key: 'donations_received', label: 'StreamLabs Donations Received', type: 'counter' },
-  { key: 'latest_donor_name', label: 'StreamLabs Latest Donor Name', type: 'text' },
-  { key: 'latest_donation_amount', label: 'StreamLabs Latest Donation Amount', type: 'number' },
-  { key: 'latest_donation_message', label: 'StreamLabs Latest Donation Message', type: 'text' },
-  { key: 'latest_donation_currency', label: 'StreamLabs Latest Currency', type: 'text' },
-  { key: 'total_received', label: 'StreamLabs Total Received (session)', type: 'number' },
+  { key: 'donations_received', label: 'Streamlabs Donations Received', type: 'counter' },
+  { key: 'latest_donor_name', label: 'Streamlabs Latest Donor Name', type: 'text' },
+  { key: 'latest_donation_amount', label: 'Streamlabs Latest Donation Amount', type: 'number' },
+  { key: 'latest_donation_message', label: 'Streamlabs Latest Donation Message', type: 'text' },
+  { key: 'latest_donation_currency', label: 'Streamlabs Latest Currency', type: 'text' },
+  { key: 'total_received', label: 'Streamlabs Total Received (session)', type: 'number' },
 ];
 
 export const FOURTHWALL_PRESETS: ServicePreset[] = [

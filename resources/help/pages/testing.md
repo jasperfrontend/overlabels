@@ -87,7 +87,7 @@ twenty cheers in it.
 
 ## Testing things that are not Twitch
 
-The Twitch CLI only speaks Twitch. For the donation integrations - Ko-fi, StreamLabs, Fourthwall, Buy Me a
+The Twitch CLI only speaks Twitch. For the donation integrations - Ko-fi, Streamlabs, Fourthwall, Buy Me a
 Coffee, Throne - each service has its own test facility, and Overlabels can replay any external event it
 has already received from your events feed. Replay is usually the faster loop: get one real donation, then
 replay it as often as you like while you build the alert.
