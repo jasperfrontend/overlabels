@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import TabStrip, { type TabStripItem } from '@/components/TabStrip.vue';
+import { useAddressableTabs, tabKeysOf } from '@/composables/useAddressableTabs';
 import TemplateCollection from '@/components/TemplateCollection.vue';
 import UpdatesList from '@/components/UpdatesList.vue';
 import EventsTable from '@/components/EventsTable.vue';
@@ -35,13 +36,18 @@ const props = defineProps<{
 
 const isAdmin = computed(() => page.props.isAdmin);
 
-const activeTab = ref('overlays');
-
 const mainTabs: TabStripItem[] = [
   { key: 'overlays', label: 'My overlays', icon: Layers },
   { key: 'alerts', label: 'My alerts', icon: Bell },
   { key: 'activity', label: 'Stream activity', icon: Newspaper },
 ];
+
+// After mainTabs, not before: the fragment is read at setup, so the keys have
+// to exist by then.
+const activeTab = useAddressableTabs(
+  tabKeysOf(() => mainTabs),
+  'overlays',
+);
 
 /**
  * The view-all and create links live next to the tab strip instead of above

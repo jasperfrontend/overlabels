@@ -128,7 +128,12 @@ final class WiringCatalog
         'product.integration' => [
             'label' => 'Its integration is connected',
             'satisfied' => 'The integration this product reads from is connected and enabled.',
-            'missing' => 'The integration this product reads from has been disconnected or disabled, so nothing reaches the overlay. Installing again reconnects it.',
+            // True whether the connection was never finished, was switched
+            // off, or was disconnected - one wire, so one sentence that covers
+            // all three. "Installing again reconnects it" was only ever true
+            // of the last one, and reads as nonsense to someone who has not
+            // yet been through an authorize screen.
+            'missing' => 'The integration this product reads from is not ready, so nothing reaches the overlay. Open it and finish connecting it.',
             'not_applicable' => 'This product has no integration to connect.',
             'route' => 'settings.integrations.index',
             'cta' => 'Open integrations',

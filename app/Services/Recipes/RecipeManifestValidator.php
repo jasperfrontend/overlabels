@@ -2,6 +2,9 @@
 
 namespace App\Services\Recipes;
 
+use App\Models\EventTemplateMapping;
+use App\Models\ExternalEventTemplateMapping;
+use App\Services\External\ExternalServiceRegistry;
 use JsonException;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Errors\ValidationError;
@@ -125,6 +128,8 @@ class RecipeManifestValidator
      *   - control_export.from references a declared picker
      *   - trigger.fires references a declared picker
      *   - manifest-local refs are unique within their list
+     *   - installs.alert_triggers / alert_targets reference a declared
+     *     overlay, and name an event type the platform actually has
      *
      * @param  array<string, mixed>  $manifest
      * @return list<array{pointer: string, message: string}>
@@ -216,6 +221,121 @@ class RecipeManifestValidator
                     'pointer' => "/triggers/{$i}/fires",
                     'message' => "Trigger references unknown picker \"{$m[1]}\".",
                 ];
+            }
+        }
+
+        return array_merge($errors, $this->installsErrors($manifest));
+    }
+
+    /**
+     * Cross-reference checks for the `installs` section. Overlay refs are the
+     * currency here: alert_triggers and alert_targets both address overlays by
+     * ref, so a duplicate ref stopped being a harmless typo the moment it
+     * started deciding which template a trigger lands on.
+     *
+     * Event types are checked against the platform's own catalogues rather
+     * than a pattern, because a manifest naming an event that does not exist
+     * installs a row nothing will ever match and nothing downstream complains.
+     * install() re-validates before it writes, so these are the install's
+     * guard as much as the catalogue's.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return list<array{pointer: string, message: string}>
+     */
+    private function installsErrors(array $manifest): array
+    {
+        $errors = [];
+        $installs = $manifest['installs'] ?? [];
+
+        $overlayRefs = [];
+        foreach ($installs['overlays'] ?? [] as $i => $overlay) {
+            $ref = $overlay['ref'] ?? null;
+            if (! is_string($ref)) {
+                continue;
+            }
+            if (in_array($ref, $overlayRefs, true)) {
+                $errors[] = [
+                    'pointer' => "/installs/overlays/{$i}/ref",
+                    'message' => "Duplicate overlay ref \"{$ref}\".",
+                ];
+            }
+            $overlayRefs[] = $ref;
+        }
+
+        $claimed = [];
+        foreach ($installs['alert_triggers'] ?? [] as $i => $trigger) {
+            $ref = $trigger['overlay'] ?? null;
+            if (is_string($ref) && ! in_array($ref, $overlayRefs, true)) {
+                $errors[] = [
+                    'pointer' => "/installs/alert_triggers/{$i}/overlay",
+                    'message' => "Alert trigger references unknown overlay \"{$ref}\".",
+                ];
+            }
+
+            $service = $trigger['service'] ?? null;
+            $eventType = $trigger['event_type'] ?? null;
+            if (! is_string($service) || ! is_string($eventType)) {
+                continue;
+            }
+
+            if ($service === 'twitch') {
+                if (! array_key_exists($eventType, EventTemplateMapping::EVENT_TYPES)) {
+                    $errors[] = [
+                        'pointer' => "/installs/alert_triggers/{$i}/event_type",
+                        'message' => "Unknown Twitch event type \"{$eventType}\".",
+                    ];
+                }
+            } elseif (! ExternalServiceRegistry::has($service)) {
+                $errors[] = [
+                    'pointer' => "/installs/alert_triggers/{$i}/service",
+                    'message' => "Unknown external service \"{$service}\".",
+                ];
+            } elseif (! array_key_exists($eventType, ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$service] ?? [])) {
+                $errors[] = [
+                    'pointer' => "/installs/alert_triggers/{$i}/event_type",
+                    'message' => "Service \"{$service}\" has no event type \"{$eventType}\".",
+                ];
+            }
+
+            // Two triggers on one event are two alerts racing for it, and the
+            // ladder in resolveForEvent would quietly pick one of them.
+            $key = $service.':'.$eventType;
+            if (in_array($key, $claimed, true)) {
+                $errors[] = [
+                    'pointer' => "/installs/alert_triggers/{$i}/event_type",
+                    'message' => "Duplicate alert trigger for \"{$key}\".",
+                ];
+            }
+            $claimed[] = $key;
+        }
+
+        $targeted = [];
+        foreach ($installs['alert_targets'] ?? [] as $i => $target) {
+            $alert = $target['alert'] ?? null;
+            if (is_string($alert)) {
+                if (! in_array($alert, $overlayRefs, true)) {
+                    $errors[] = [
+                        'pointer' => "/installs/alert_targets/{$i}/alert",
+                        'message' => "Alert target references unknown overlay \"{$alert}\".",
+                    ];
+                }
+                // sync() replaces, so a second entry would erase the first.
+                if (in_array($alert, $targeted, true)) {
+                    $errors[] = [
+                        'pointer' => "/installs/alert_targets/{$i}/alert",
+                        'message' => "Duplicate alert target for \"{$alert}\".",
+                    ];
+                }
+                $targeted[] = $alert;
+            }
+
+            foreach ($target['overlays'] ?? [] as $j => $overlayRef) {
+                if (is_string($overlayRef) && ! in_array($overlayRef, $overlayRefs, true)) {
+                    $errors[] = [
+                        'pointer' => "/installs/alert_targets/{$i}/overlays/{$j}",
+                        'message' => "Alert target references unknown overlay \"{$overlayRef}\".",
+                    ];
+                }
             }
         }
 

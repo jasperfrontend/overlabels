@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Contracts\AuthenticatedExternalServiceDriver;
+use App\Services\External\ExternalServiceRegistry;
 use Database\Factories\ExternalIntegrationFactory;
 use Eloquent;
 use Exception;
@@ -81,6 +83,41 @@ class ExternalIntegration extends Model
                 $model->webhook_token = (string) Str::uuid();
             }
         });
+    }
+
+    /**
+     * Whether this connection could actually accept an inbound event yet.
+     *
+     * A row existing is not the same fact as a row working: an install can
+     * create the connection, but only the streamer can come back from an
+     * OAuth screen or paste a verification token. Services with nothing to
+     * require per integration answer true as soon as the row is there.
+     *
+     * Read by the product wiring circuit, which would otherwise call an
+     * unauthorized Streamlabs connection done and skip the one step between
+     * the streamer and a working alert.
+     */
+    public function isAuthenticated(): bool
+    {
+        if (! ExternalServiceRegistry::has($this->service)) {
+            return false;
+        }
+
+        $driver = ExternalServiceRegistry::driver($this->service);
+
+        if (! $driver instanceof AuthenticatedExternalServiceDriver) {
+            return true;
+        }
+
+        $credentials = $this->getCredentialsDecrypted();
+
+        foreach ($driver->requiredCredentials() as $key) {
+            if (empty($credentials[$key])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

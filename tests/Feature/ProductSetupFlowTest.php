@@ -174,3 +174,34 @@ it('keeps the steps in checklist order so the banner names the first missing one
         ->and($labels)->toContain('Its list still exists', 'You have an overlay link for OBS')
         ->and($labels)->not->toContain('Its integration is connected');
 });
+
+it('sends the next step to the page its control is on, with the fragment that finds it', function () {
+    $user = flowUser(['bot_enabled' => false]);
+    $catalog = app(RecipeCatalog::class);
+    app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat_checkin')), $user, 'chat_checkin');
+    ProductSetup::start($user, 'chat_checkin');
+
+    $banner = ProductSetup::banner($user->fresh(), app(RecipeCatalog::class));
+
+    // The bot toggle is the first thing missing, and it lives on the bot
+    // settings page - not on the product page the banner button returns to.
+    expect($banner['next']['target'])->toBe('bot-toggle')
+        ->and($banner['next']['url'])->toBe(route('settings.integrations.bot.show').'#el-bot-toggle')
+        ->and($banner['url'])->toBe(route('products.show', 'chat_checkin'));
+});
+
+it('omits the fragment for a step with no single control to point at', function () {
+    $user = flowUser(['bot_enabled' => true]);
+    $catalog = app(RecipeCatalog::class);
+    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower_bowling')), $user, 'follower_bowling');
+    ProductSetup::start($user, 'follower_bowling');
+
+    // Delete the list so its wire, which names no control, is what is missing.
+    OptionSet::find($instance->primitive_map['lists']['lane'])->delete();
+
+    $banner = ProductSetup::banner($user->fresh(), app(RecipeCatalog::class));
+
+    expect($banner['next']['label'])->toBe('Its list still exists')
+        ->and($banner['next']['target'])->toBeNull()
+        ->and($banner['next']['url'])->toBe(route('lists.index'));
+});

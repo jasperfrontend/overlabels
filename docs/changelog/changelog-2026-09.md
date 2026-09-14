@@ -1,5 +1,52 @@
 # Changelog - September 2026
 
+## OL-2609-072 - September 14th, 2026 - feat(recipes): a recipe can wire an alert, and a product says what is actually left
+
+Onboarding from a fresh account to a firing Streamlabs alert takes eleven manual steps. Two of them
+are the Triggers tab and the Targeting tab: after the install has made your overlay and your alert,
+you still have to tell the platform which event fires the alert and which overlay it fires on. A
+recipe could not write either, so it handed you two-thirds of a working thing and a pair of forms.
+
+It can now. `installs.alert_triggers` names the event that fires an installed alert, and
+`installs.alert_targets` names the static overlays it fires on, both inside the same transaction as
+everything else the install creates. Twitch events and external ones go to their own tables, so the
+two catalogues never mix, and a manifest naming an event that does not exist is refused when the
+catalogue is read rather than discovered by a streamer at install time.
+
+Where the Triggers tab settles a collision by deleting the other alert's row, an install refuses.
+The row it would delete is the streamer's own alert and nobody asked for that, and letting the two
+coexist is no better: the resolver would quietly pick the lower template id, so the product's alert
+would sit there never firing.
+
+The second half is about telling the truth. A product's wiring circuit counted integration rows, and
+an install creates the row - so the moment you installed anything with a Streamlabs or Ko-fi
+connection, the circuit called it done while the one step that makes a donation arrive had not
+happened. A row existing was never the same fact as a row working. Each driver that needs credentials
+now says which ones, next to the code that enforces them, and the circuit asks.
+
+That change makes a second one necessary. If the install creates the connection, does uninstalling
+the product take it away? For an Overlabels-internal channel like Chat Checkin's, yes - it means
+nothing without the product. For a Streamlabs account you authorized, absolutely not. It has its own
+settings page and its own credentials, and it outlives every product the way your overlay tokens and
+your bot toggle already do. The old rule asked who created the row; the new one also asks what kind
+of thing it is.
+
+And the banner that guides you through the rest now goes to the control instead of the lobby. Every
+step already knew which page it lived on - that route had been sitting in the catalogue unread - so
+"Next: finish connecting its integration" is a link that lands on the right page, scrolls to the
+right row and lights it up. The integration step works out which service is the unfinished one, so a
+product with two connections points at whichever one you still owe.
+
+Underneath that, a small piece of plumbing with a much wider reach: tabs are linkable. The old
+arrangement had /templates/{id} asking "am I in a product install?" and hard-coding "then open Add to
+OBS", which meant every future step wanting a tab opened would teach another page about product
+mode. Now a page declares its tabs are addressable, `#tab-obs` opens one, and the product flow is
+one caller among many. Clicking a tab rewrites the fragment, so you can link someone straight to the
+Triggers tab of an overlay, or to the Stream activity tab of the dashboard, and the back button still
+takes them out of the page rather than undoing tab clicks one at a time.
+
+Nothing ships using the two new manifest keys yet. The Streamlabs product they exist for is next.
+
 ## OL-2609-071 - September 14th, 2026 - refactor(dashboard): the dashboard is two columns and one tab strip
 
 The dashboard was four boxes in a 2x2 grid: My overlays, My alerts, Recent stream activity, Recent

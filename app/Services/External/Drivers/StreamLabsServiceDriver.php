@@ -2,17 +2,30 @@
 
 namespace App\Services\External\Drivers;
 
+use App\Contracts\AuthenticatedExternalServiceDriver;
 use App\Contracts\ExternalServiceDriver;
 use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class StreamLabsServiceDriver implements ExternalServiceDriver
+class StreamLabsServiceDriver implements AuthenticatedExternalServiceDriver, ExternalServiceDriver
 {
     public function getServiceKey(): string
     {
         return 'streamlabs';
+    }
+
+    /**
+     * Both halves of the OAuth result: the socket token the listener connects
+     * with, and the secret it signs its relayed posts with. Neither exists
+     * until the streamer has been through the Streamlabs authorize screen.
+     *
+     * @return list<string>
+     */
+    public function requiredCredentials(): array
+    {
+        return ['socket_token', 'listener_secret'];
     }
 
     /**

@@ -17,6 +17,7 @@ import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import IntegrationSuggestionModal from '@/components/IntegrationSuggestionModal.vue';
 import TabStrip, { type TabStripItem } from '@/components/TabStrip.vue';
+import { useAddressableTabs, tabKeysOf } from '@/composables/useAddressableTabs';
 import TemplateMeta from '@/components/TemplateMeta.vue';
 import TriggerManager, { type TriggerData, firstAssignedEvent } from '@/components/TriggerManager.vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
@@ -242,7 +243,7 @@ const mainTabs = computed(() => {
   return tabs;
 });
 
-const mainTab = ref<string>('code');
+const mainTab = useAddressableTabs(tabKeysOf(mainTabs), 'code');
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 
 // Previews resolve control tags the same way the live overlay does, so the bag

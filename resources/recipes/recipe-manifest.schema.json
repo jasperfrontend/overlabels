@@ -147,6 +147,60 @@
           },
           "uniqueItems": true
         },
+        "alert_triggers": {
+          "type": "array",
+          "description": "Which events make an installed alert overlay fire, exactly as the Triggers tab saves them: one event_template_mappings row for Twitch, one external_event_template_mappings row otherwise. The install refuses if the account already has an alert on the same event, because claiming it would silently stop the streamer's own alert firing.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["overlay", "service", "event_type"],
+            "properties": {
+              "overlay": {
+                "$ref": "#/$defs/primitiveRef",
+                "description": "The ref of an overlay declared in installs.overlays. Its document must be type: alert."
+              },
+              "service": {
+                "type": "string",
+                "description": "\"twitch\" for an EventSub event, otherwise an external service key registered in ExternalServiceRegistry.",
+                "pattern": "^[a-z][a-z0-9_]{0,29}$"
+              },
+              "event_type": {
+                "type": "string",
+                "description": "An event type from EventTemplateMapping::EVENT_TYPES when service is twitch, otherwise one from ExternalEventTemplateMapping::SERVICE_EVENT_TYPES for that service.",
+                "pattern": "^[a-z][a-z0-9_.]{0,79}$"
+              },
+              "duration_ms": {
+                "type": "integer",
+                "description": "How long the alert stays on screen. Matches the column default when omitted.",
+                "minimum": 100,
+                "maximum": 600000,
+                "default": 5000
+              }
+            }
+          }
+        },
+        "alert_targets": {
+          "type": "array",
+          "description": "Which installed static overlays an installed alert fires on, the alert_template_static_overlays pivot the Targeting tab writes. Declaring nothing leaves the alert firing on every static overlay, which is the platform default.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["alert", "overlays"],
+            "properties": {
+              "alert": {
+                "$ref": "#/$defs/primitiveRef",
+                "description": "The ref of an overlay declared in installs.overlays. Its document must be type: alert."
+              },
+              "overlays": {
+                "type": "array",
+                "description": "Refs of overlays declared in installs.overlays. Each document must be type: static.",
+                "minItems": 1,
+                "items": { "$ref": "#/$defs/primitiveRef" },
+                "uniqueItems": true
+              }
+            }
+          }
+        },
         "lists": {
           "type": "array",
           "description": "User Lists to create, empty, exactly as /dashboard/lists creates one. The slug is what the overlay's [[[c:list:<slug>]]] tags and the !list command name, so it is fixed by the manifest, not per instance. The install refuses if the account already has a list with that slug.",

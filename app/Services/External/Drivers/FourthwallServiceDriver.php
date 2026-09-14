@@ -2,6 +2,7 @@
 
 namespace App\Services\External\Drivers;
 
+use App\Contracts\AuthenticatedExternalServiceDriver;
 use App\Contracts\ExternalServiceDriver;
 use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
@@ -9,11 +10,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class FourthwallServiceDriver implements ExternalServiceDriver
+class FourthwallServiceDriver implements AuthenticatedExternalServiceDriver, ExternalServiceDriver
 {
     public function getServiceKey(): string
     {
         return 'fourthwall';
+    }
+
+    /**
+     * The OAuth access token. Verification uses the app-level FW_HMAC, but
+     * without a grant there is no registered webhook and nothing is ever sent.
+     *
+     * @return list<string>
+     */
+    public function requiredCredentials(): array
+    {
+        return ['access_token'];
     }
 
     /**

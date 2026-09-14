@@ -13,12 +13,15 @@ import type { AppPageProps } from '@/types';
 const page = usePage<AppPageProps>();
 const setup = computed(() => page.props.productSetup);
 
+// Split from the next step so the step can be a link. The banner used to
+// name what was left and then leave you to find it; it now goes there, to the
+// exact control, because the step carries its own URL.
 const summary = computed(() => {
   const s = setup.value;
   if (!s) return '';
   if (s.ready) return `${s.name} is ready.`;
   const left = s.remaining === 1 ? 'one thing left' : `${s.remaining} things left`;
-  return s.next ? `Setting up ${s.name}, ${left}. Next: ${s.next.todo}.` : `Setting up ${s.name}, ${left}.`;
+  return `Setting up ${s.name}, ${left}.`;
 });
 
 function dismiss(): void {
@@ -36,7 +39,14 @@ function dismiss(): void {
     <span class="inline-flex items-center gap-2">
       <Check v-if="setup.ready" class="size-4 shrink-0" />
       <ProductBadge v-else class="size-4 shrink-0" />
-      {{ summary }}
+      <span>
+        {{ summary }}
+        <template v-if="setup.next">
+          Next:
+          <Link :href="setup.next.url" class="underline underline-offset-2 hover:no-underline">{{ setup.next.todo }}</Link
+          >.
+        </template>
+      </span>
     </span>
     <span class="flex items-center gap-2">
       <Link

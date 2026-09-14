@@ -73,7 +73,12 @@ const { query, filtering, filtered: filteredRows } = useCollectionFilter<Integra
           </p>
 
           <div class="mt-4 space-y-4">
-            <div v-for="row in filteredRows" :key="row.key" class="flex items-center justify-between gap-4 border border-sidebar-border p-4">
+            <div
+              v-for="row in filteredRows"
+              :key="row.key"
+              :data-product-target="`integration-${row.key}`"
+              class="flex items-center justify-between gap-4 border border-sidebar-border p-4"
+            >
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   <ProductBadge

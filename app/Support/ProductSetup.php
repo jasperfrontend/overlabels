@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\ExternalIntegration;
 use App\Models\Recipe;
 use App\Models\RecipeInstance;
 use App\Models\User;
@@ -26,8 +27,10 @@ final class ProductSetup
      * instruction, and which control on the destination page is the one to
      * touch. A wire's label is a state ("The bot is switched on") and reads
      * wrong after "Next:"; this is the imperative. The target is a key the
-     * destination page matches with useProductTarget() to light up the exact
-     * element, so the ruthless mode does not end at the page's front door.
+     * destination page carries as data-product-target, to light up the exact
+     * element so the ruthless mode does not end at the page's front door. A
+     * null target here is either a step with no single control or, for the
+     * integration wire, one worked out per install in targetFor().
      *
      * @var array<string, array{todo: string, target: ?string}>
      */
@@ -35,7 +38,7 @@ final class ProductSetup
         'product.bot_on' => ['todo' => 'make sure the bot is switched on', 'target' => 'bot-toggle'],
         'product.bot_hears' => ['todo' => 'check the bot can hear your chat', 'target' => 'bot-toggle'],
         'product.bot_modded' => ['todo' => 'type /mod overlabels in your own chat', 'target' => 'bot-toggle'],
-        'product.integration' => ['todo' => 'reconnect its integration', 'target' => null],
+        'product.integration' => ['todo' => 'finish connecting its integration', 'target' => null],
         'product.overlay' => ['todo' => 'get its overlay back by installing again', 'target' => null],
         'product.list' => ['todo' => 'get its list back by installing again', 'target' => null],
         'product.command' => ['todo' => 'switch its chat commands back on', 'target' => null],
@@ -68,7 +71,7 @@ final class ProductSetup
      * is no longer installed (an uninstall ends the flow, but a deleted
      * instance from anywhere else must not leave a banner about nothing).
      *
-     * @return array{slug: string, name: string, url: string, remaining: int, next: ?array{label: string, message: string}, ready: bool}|null
+     * @return array{slug: string, name: string, url: string, remaining: int, next: ?array{label: string, message: string, todo: string, target: ?string, url: string}, ready: bool}|null
      */
     public static function banner(User $user, RecipeCatalog $catalog): ?array
     {
@@ -92,14 +95,68 @@ final class ProductSetup
             'name' => $manifest['name'],
             'url' => route('products.show', $slug),
             'remaining' => count($missing),
-            'next' => $next ? [
-                'label' => $next['label'],
-                'message' => $next['message'],
-                'todo' => self::STEPS[$next['key']]['todo'] ?? strtolower($next['label']),
-                'target' => self::STEPS[$next['key']]['target'] ?? null,
-            ] : null,
+            'next' => $next ? self::step($next, $instance) : null,
             'ready' => $missing === [],
         ];
+    }
+
+    /**
+     * One step, ready to render: what to do, where to do it, and which control
+     * to light up when the reader gets there.
+     *
+     * The URL is the wire's own route plus an `el-` fragment, which the client
+     * resolves against the matching `data-product-target`. The banner used to
+     * hand back only the product page, so every step ended at the front door
+     * of somewhere and left the reader to find the button.
+     *
+     * @param  array<string, mixed>  $wire
+     * @return array<string, mixed>
+     */
+    private static function step(array $wire, RecipeInstance $instance): array
+    {
+        $target = self::targetFor($wire['key'], $instance);
+        $url = route(WiringCatalog::wire($wire['key'])['route']);
+
+        return [
+            'label' => $wire['label'],
+            'message' => $wire['message'],
+            'todo' => self::STEPS[$wire['key']]['todo'] ?? strtolower($wire['label']),
+            'target' => $target,
+            'url' => $target === null ? $url : $url.'#el-'.$target,
+        ];
+    }
+
+    /**
+     * Which control this step is about.
+     *
+     * Fixed per wire, except the integration one: that is a single wire however
+     * many services a product declares, so the element it points at can only be
+     * worked out here, from the first one still unfinished. The candidate set
+     * is closed - one key per registered service - so nothing arbitrary is ever
+     * emitted into a URL.
+     *
+     * Read off the INSTANCE's recipe rather than the catalogue file, because
+     * that is the manifest this install was actually made from. A version
+     * bumped on disk since would otherwise send the streamer after a service
+     * their install never connected.
+     */
+    private static function targetFor(string $key, RecipeInstance $instance): ?string
+    {
+        if ($key !== 'product.integration') {
+            return self::STEPS[$key]['target'] ?? null;
+        }
+
+        foreach ($instance->recipe?->manifest['installs']['integrations'] ?? [] as $service) {
+            $integration = ExternalIntegration::where('user_id', $instance->user_id)
+                ->where('service', $service)
+                ->first();
+
+            if ($integration === null || ! $integration->enabled || ! $integration->isAuthenticated()) {
+                return 'integration-'.$service;
+            }
+        }
+
+        return null;
     }
 
     /**

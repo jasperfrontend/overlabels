@@ -7,12 +7,10 @@ import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { type BreadcrumbItem } from '@/types';
-import { useProductTarget } from '@/composables/useUiMode';
 
 // While a product install's next step is "switch the bot on", the toggle
 // wears the fuchsia target edge (see ProductSetup::STEPS). The target moved
 // here with the toggle itself.
-const botIsProductTarget = useProductTarget('bot-toggle');
 
 interface BotInfo {
   enabled: boolean;
@@ -81,7 +79,7 @@ function toggleBot() {
         </div>
 
         <!-- Lit up while a product install's next step is this toggle. -->
-        <div class="border border-sidebar-border p-4" :class="{ 'product-target': botIsProductTarget }">
+        <div class="border border-sidebar-border p-4" data-product-target="bot-toggle">
           <div class="flex items-center justify-between gap-4">
             <div class="space-y-1">
               <p class="text-sm font-medium">{{ bot.enabled ? 'The bot is in your chat' : 'The bot is switched off' }}</p>

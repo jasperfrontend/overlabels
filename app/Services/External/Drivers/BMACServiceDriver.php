@@ -2,17 +2,29 @@
 
 namespace App\Services\External\Drivers;
 
+use App\Contracts\AuthenticatedExternalServiceDriver;
 use App\Contracts\ExternalServiceDriver;
 use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class BMACServiceDriver implements ExternalServiceDriver
+class BMACServiceDriver implements AuthenticatedExternalServiceDriver, ExternalServiceDriver
 {
     public function getServiceKey(): string
     {
         return 'bmac';
+    }
+
+    /**
+     * The shared secret from studio.buymeacoffee.com/webhooks. Without it
+     * verifyRequest() rejects every delivery.
+     *
+     * @return list<string>
+     */
+    public function requiredCredentials(): array
+    {
+        return ['webhook_secret'];
     }
 
     /**

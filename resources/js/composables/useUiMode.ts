@@ -1,6 +1,6 @@
 import type { AppPageProps } from '@/types';
 import { usePage } from '@inertiajs/vue3';
-import { computed, watchEffect } from 'vue';
+import { computed, onMounted, watch, watchEffect } from 'vue';
 
 /**
  * Product UI mode. ON while a product setup flow is active on the account,
@@ -10,9 +10,11 @@ import { computed, watchEffect } from 'vue';
  *
  * The URL can still carry a last-mile hint, `?state=product&product=<slug>`,
  * which the green band on a finished product page attaches to its OBS
- * button. The hint opens the Add to OBS tab first and shows the callout with
- * the way back. It never turns the mode on: the frame, the banner and the
- * `product:` styling come from the flow alone.
+ * button, and which shows the callout with the way back. Which TAB opens is
+ * not its business: the same link carries `#tab-obs`, and any addressable
+ * strip obeys that whether a flow is running or not. The hint never turns the
+ * mode on either - the frame, the banner and the `product:` styling come from
+ * the flow alone.
  *
  * One fact feeds two things: `data-mode` on the document root, so a Tailwind
  * variant (`product:`) can restyle an element in any component, and the
@@ -65,7 +67,7 @@ export interface ResolvedUiMode extends ParsedUiMode {
   mode: UiMode | null;
   /** True when the flow the mode belongs to has nothing left to do. */
   ready: boolean;
-  /** The control the next step points at, matched by useProductTarget(). */
+  /** The control the next step points at, matched by its data-product-target. */
   target: string | null;
 }
 
@@ -105,13 +107,90 @@ export function useUiMode(options: { apply?: boolean } = {}) {
 }
 
 /**
- * True when the flow's next step points at this control. A page binds it as
- * `:class="{ 'product-target': isTarget }"` on the one element the step is
- * about, so the ruthless mode reaches the exact toggle or button rather than
- * stopping at the page's front door. Keys live in ProductSetup::STEPS.
+ * The control a step is about marks itself `data-product-target="<key>"` and
+ * is done. No import, no composable call, no per-page opt-in - which is why
+ * only two pages ever supported the old `useProductTarget` binding.
+ *
+ * An attribute rather than an id or a class: ids are a page-global namespace
+ * and `streamlabs` is a word that will appear again, and a class is styling,
+ * so a restyle deletes it without anyone noticing it was load-bearing. This
+ * one names its own purpose, and a single grep finds every participant.
+ *
+ * `el-` prefixed in the fragment so it shares a namespace with `tab-` (see
+ * useAddressableTabs) without either ever matching the other.
  */
-export function useProductTarget(key: string) {
-  const { mode, target } = useUiMode();
+const EL_PREFIX = 'el-';
 
-  return computed(() => mode.value === 'product' && target.value === key);
+/** Pure: the element key a fragment names, or null when it names none. */
+export function elementKeyFromHash(hash: string): string | null {
+  const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+
+  if (!raw.startsWith(EL_PREFIX)) return null;
+
+  const key = raw.slice(EL_PREFIX.length);
+
+  // The key reaches an attribute selector, so it is checked rather than
+  // escaped. Everything the server emits is snake or kebab case.
+  return /^[a-z0-9_-]+$/i.test(key) ? key : null;
+}
+
+/** An element may be behind a fetch or a v-if, so look again for about a second. */
+function whenPresent(selector: string, found: (el: Element) => void, frames = 60): void {
+  if (typeof document === 'undefined') return;
+
+  const el = document.querySelector(selector);
+  if (el) {
+    found(el);
+
+    return;
+  }
+
+  if (frames <= 0) return;
+
+  requestAnimationFrame(() => whenPresent(selector, found, frames - 1));
+}
+
+/**
+ * Lights up the control the flow's next step is about, and scrolls to it when
+ * the reader arrived by following a link that named it.
+ *
+ * Two different kinds of thing, deliberately driven by two different sources.
+ * The glow is a STATE - this is what you need, whenever you happen to be
+ * looking at this page - so it follows the flow. The scroll is an EVENT, so it
+ * follows the fragment: driven by state it would yank the viewport every time
+ * someone opened that page while a flow happened to be active.
+ *
+ * Mounted once by AppLayout; components only mark themselves.
+ */
+export function useProductFocus(): void {
+  const { mode, target } = useUiMode();
+  const page = usePage<AppPageProps>();
+
+  let lit: Element | null = null;
+
+  const apply = () => {
+    if (typeof window === 'undefined') return;
+
+    if (lit) {
+      lit.removeAttribute('data-product-focus');
+      lit = null;
+    }
+
+    const key = mode.value === 'product' ? target.value : null;
+    if (!key || !/^[a-z0-9_-]+$/i.test(key)) return;
+
+    whenPresent(`[data-product-target="${key}"]`, (el) => {
+      el.setAttribute('data-product-focus', '');
+      lit = el;
+
+      if (elementKeyFromHash(window.location.hash) !== key) return;
+
+      const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+      el.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+    });
+  };
+
+  onMounted(apply);
+  watch(() => page.url, apply);
+  watch(target, apply);
 }

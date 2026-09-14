@@ -5,6 +5,8 @@ namespace App\Services\Recipes;
 use App\Models\BotAlias;
 use App\Models\BotBuiltin;
 use App\Models\BotCommand;
+use App\Models\EventTemplateMapping;
+use App\Models\ExternalEventTemplateMapping;
 use App\Models\ExternalIntegration;
 use App\Models\ListAppender;
 use App\Models\OptionSet;
@@ -41,9 +43,20 @@ use RuntimeException;
  * the same parser the import button uses, and integrations are connected
  * the way their settings page connects them (row enabled, controls
  * provisioned). Created overlay ids land in `primitive_map.overlays`.
+ *
+ * `alert_triggers` and `alert_targets` finish the wiring off: which event
+ * makes an installed alert fire, and which installed static overlays it
+ * fires on. They are the halves a streamer otherwise has to set by hand on
+ * the Triggers and Targeting tabs after an install.
  */
 class RecipeInstaller
 {
+    /**
+     * What an alert trigger gets when the manifest does not say, matching the
+     * column default on both mapping tables.
+     */
+    private const int DEFAULT_ALERT_DURATION_MS = 5000;
+
     public function __construct(
         private readonly RecipeManifestValidator $validator,
         private readonly ExternalControlService $controlService,
@@ -102,6 +115,7 @@ class RecipeInstaller
         }
 
         $this->assertNoChatCommandCollisions($recipe->manifest, $user);
+        $this->assertNoAlertTriggerCollisions($recipe->manifest, $user);
 
         // Aliases and commands go through the same validators the settings
         // forms use, BEFORE the transaction: a reply the form would refuse
@@ -187,16 +201,30 @@ class RecipeInstaller
                 ]);
             }
 
+            // Kept as models, not just ids: alert triggers and targets address
+            // overlays by ref and have to know each one's type, which lives in
+            // the markdown document rather than the manifest.
+            $overlayTemplates = [];
+
             foreach ($manifest['installs']['overlays'] ?? [] as $overlay) {
                 $template = $this->installOverlay($recipe, $user, $overlay['file']);
                 $primitiveMap['overlays'][$overlay['ref']] = $template->id;
+                $overlayTemplates[$overlay['ref']] = $template;
             }
 
             foreach ($manifest['installs']['integrations'] ?? [] as $service) {
-                // Whether the install CREATED the connection or found one the
-                // streamer already had decides what uninstall may disconnect.
+                // Half of what an uninstall needs: whether this install created
+                // the connection. The other half is what kind of service it is.
+                // See productOwnedIntegrations().
                 $primitiveMap['integrations'][$service] = ['created' => $this->connectIntegration($user, $service)];
             }
+
+            $triggers = $this->installAlertTriggers($manifest, $user, $overlayTemplates);
+            if ($triggers !== []) {
+                $primitiveMap['alert_triggers'] = $triggers;
+            }
+
+            $this->installAlertTargets($manifest, $overlayTemplates);
 
             foreach ($manifest['installs']['lists'] ?? [] as $list) {
                 $row = $this->installList($user, $instance, $list);
@@ -374,9 +402,193 @@ class RecipeInstaller
     }
 
     /**
+     * The alert triggers a product declares: one mapping row per event,
+     * pointing at the alert overlay this install just created, exactly as the
+     * Triggers tab writes one. Twitch events and external events live in
+     * separate tables feeding separate broadcast pipelines, so `service:
+     * twitch` picks the table and the two catalogues never mix.
+     *
+     * Collisions with the streamer's own alerts were refused before the
+     * transaction opened, in assertNoAlertTriggerCollisions(). No condition is
+     * written: an amount variant needs one overlay per threshold, which is a
+     * manifest question nobody has asked yet.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @param  array<string, OverlayTemplate>  $overlayTemplates
+     * @return array<string, array<string, int>>
+     */
+    private function installAlertTriggers(array $manifest, User $user, array $overlayTemplates): array
+    {
+        $map = [];
+
+        foreach ($manifest['installs']['alert_triggers'] ?? [] as $trigger) {
+            $template = $this->overlayOfType($overlayTemplates, $trigger['overlay'], 'alert', 'Alert trigger');
+            $duration = $trigger['duration_ms'] ?? self::DEFAULT_ALERT_DURATION_MS;
+
+            if ($trigger['service'] === 'twitch') {
+                $row = EventTemplateMapping::create([
+                    'user_id' => $user->id,
+                    'template_id' => $template->id,
+                    'event_type' => $trigger['event_type'],
+                    'duration_ms' => $duration,
+                    'enabled' => true,
+                ]);
+                $map['twitch'][$trigger['event_type']] = $row->id;
+
+                continue;
+            }
+
+            $row = ExternalEventTemplateMapping::create([
+                'user_id' => $user->id,
+                'overlay_template_id' => $template->id,
+                'service' => $trigger['service'],
+                'event_type' => $trigger['event_type'],
+                'duration_ms' => $duration,
+                'enabled' => true,
+            ]);
+            $map['external'][$trigger['service'].':'.$trigger['event_type']] = $row->id;
+        }
+
+        return $map;
+    }
+
+    /**
+     * Which installed static overlays an installed alert fires on: the same
+     * pivot the Targeting tab syncs. Both sides are overlays this install
+     * created, so the sync only ever adds. An alert the manifest says nothing
+     * about keeps the platform default, an empty pivot meaning every static
+     * overlay.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @param  array<string, OverlayTemplate>  $overlayTemplates
+     */
+    private function installAlertTargets(array $manifest, array $overlayTemplates): void
+    {
+        foreach ($manifest['installs']['alert_targets'] ?? [] as $target) {
+            $alert = $this->overlayOfType($overlayTemplates, $target['alert'], 'alert', 'Alert target');
+
+            $ids = [];
+            foreach ($target['overlays'] as $ref) {
+                $ids[] = $this->overlayOfType($overlayTemplates, $ref, 'static', 'Alert target')->id;
+            }
+
+            $alert->targetStaticOverlays()->sync($ids);
+        }
+    }
+
+    /**
+     * Resolve a manifest overlay ref to the template the install just made,
+     * insisting on its type. The type is declared in the markdown document,
+     * not in the manifest, so the validator cannot see it and this is the only
+     * place that can: a trigger on a static overlay would write a mapping row
+     * that renders nothing, with no error anywhere.
+     *
+     * @param  array<string, OverlayTemplate>  $overlayTemplates
+     */
+    private function overlayOfType(array $overlayTemplates, string $ref, string $type, string $subject): OverlayTemplate
+    {
+        $template = $overlayTemplates[$ref] ?? null;
+
+        if ($template === null) {
+            throw new RuntimeException("{$subject} references unknown overlay '{$ref}'.");
+        }
+
+        if ($template->type !== $type) {
+            throw new RuntimeException(
+                "{$subject} names overlay '{$ref}', which the product ships as {$template->type}, not {$type}."
+            );
+        }
+
+        return $template;
+    }
+
+    /**
+     * Refuse an install that would claim an event the account already has an
+     * alert on. The Triggers tab settles that collision by deleting the other
+     * template's row; an install must not, because the row it would delete is
+     * the streamer's own alert and nobody asked for that. Coexisting is no
+     * better: two base rows on one event make resolveForEvent pick the lower
+     * template id, so the product's alert would sit there never firing.
+     *
+     * Rows whose template has since been deleted are ignored. They are already
+     * inert, and refusing on one would name an alert that no longer exists.
+     *
+     * @param  array<string, mixed>  $manifest
+     */
+    private function assertNoAlertTriggerCollisions(array $manifest, User $user): void
+    {
+        foreach ($manifest['installs']['alert_triggers'] ?? [] as $trigger) {
+            $service = (string) $trigger['service'];
+            $eventType = (string) $trigger['event_type'];
+
+            if ($service === 'twitch') {
+                $existing = EventTemplateMapping::with('template')
+                    ->where('user_id', $user->id)
+                    ->where('event_type', $eventType)
+                    ->get()
+                    ->first(fn (EventTemplateMapping $m) => $m->template !== null);
+                $label = EventTemplateMapping::EVENT_TYPES[$eventType] ?? $eventType;
+            } else {
+                $existing = ExternalEventTemplateMapping::with('template')
+                    ->where('user_id', $user->id)
+                    ->where('service', $service)
+                    ->where('event_type', $eventType)
+                    ->get()
+                    ->first(fn (ExternalEventTemplateMapping $m) => $m->template !== null);
+                $label = ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$service][$eventType] ?? "{$service} {$eventType}";
+            }
+
+            if ($existing !== null) {
+                throw new RuntimeException(
+                    "Your alert '{$existing->template->name}' already fires on {$label}. ".
+                    'Remove that trigger, then install again.'
+                );
+            }
+        }
+    }
+
+    /**
+     * The integrations an uninstall is allowed to take. Two questions, and it
+     * takes a yes to both.
+     *
+     * KIND: a service the manifest names in `requires_integrations` is the
+     * product's own event channel - checkin, tower - and means nothing once
+     * the product is gone. Everything else is a third-party account the
+     * streamer connected to Overlabels, with its own settings page and its own
+     * credentials, and it outlives every product the way an overlay token and
+     * the bot toggle already do. Install a product, authorize Streamlabs, use
+     * it for months, uninstall the product: the connection is still yours.
+     * Asking only who created the row missed this, because for a fresh account
+     * the install creates it and then feels entitled to take it back.
+     *
+     * PROVENANCE: `created` still decides whether the product's own channel
+     * was actually this install's to begin with. A checkin integration the
+     * streamer set up before products existed carries their own settings, so
+     * kind alone would throw those away.
+     *
+     * A missing recipe row yields an empty list, so the failure direction is
+     * always "keep the streamer's connection".
+     *
+     * @return list<string>
+     */
+    private function productOwnedIntegrations(RecipeInstance $instance): array
+    {
+        $declared = $instance->recipe?->manifest['requires_integrations'] ?? [];
+        $services = [];
+
+        foreach ($instance->primitive_map['integrations'] ?? [] as $service => $info) {
+            if (($info['created'] ?? false) && in_array($service, $declared, true)) {
+                $services[] = $service;
+            }
+        }
+
+        return $services;
+    }
+
+    /**
      * Everything an uninstall would remove, in the words the confirm dialog
      * uses. Rows the streamer already deleted by hand are not listed, and
-     * an integration the install only found (not created) is never listed.
+     * a third-party integration is never listed, because it is never taken.
      *
      * @return list<string>
      */
@@ -387,6 +599,16 @@ class RecipeInstaller
 
         foreach (OverlayTemplate::whereIn('id', array_values($map['overlays'] ?? []))->get() as $template) {
             $lines[] = 'The overlay '.$template->name;
+        }
+        // Worth its own line: the overlay going is obvious, but the event
+        // quietly going back to firing nothing is the part that surprises.
+        foreach (EventTemplateMapping::whereIn('id', array_values($map['alert_triggers']['twitch'] ?? []))->get() as $mapping) {
+            $lines[] = 'The '.$mapping->event_type_display.' alert trigger';
+        }
+        foreach (ExternalEventTemplateMapping::whereIn('id', array_values($map['alert_triggers']['external'] ?? []))->get() as $mapping) {
+            $label = ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$mapping->service][$mapping->event_type]
+                ?? "{$mapping->service} {$mapping->event_type}";
+            $lines[] = 'The '.$label.' alert trigger';
         }
         foreach (OptionSet::whereIn('id', array_values($map['lists'] ?? []))->get() as $list) {
             $lines[] = 'The list '.($list->label ?: $list->slug).' and everything in it';
@@ -400,8 +622,8 @@ class RecipeInstaller
         foreach (BotCommand::whereIn('id', array_values($map['bot_commands'] ?? []))->get() as $command) {
             $lines[] = 'The !'.$command->command.' chat command';
         }
-        foreach ($map['integrations'] ?? [] as $service => $info) {
-            if (($info['created'] ?? false) && ExternalIntegration::where('user_id', $instance->user_id)->where('service', $service)->exists()) {
+        foreach ($this->productOwnedIntegrations($instance) as $service) {
+            if (ExternalIntegration::where('user_id', $instance->user_id)->where('service', $service)->exists()) {
                 $lines[] = 'The '.$service.' integration connection and its controls';
             }
         }
@@ -436,6 +658,13 @@ class RecipeInstaller
         }
 
         DB::transaction(function () use ($map, $user, $overlays, $instance) {
+            // Before the overlays: the mapping FKs are nullOnDelete, so an
+            // overlay deleted first leaves the row behind pointing at nothing
+            // instead of taking it along. The targeting pivot needs no line
+            // here - it cascades from either overlay.
+            EventTemplateMapping::whereIn('id', array_values($map['alert_triggers']['twitch'] ?? []))->delete();
+            ExternalEventTemplateMapping::whereIn('id', array_values($map['alert_triggers']['external'] ?? []))->delete();
+
             foreach ($overlays as $template) {
                 $screenshotUrl = $template->screenshot_url;
                 $template->delete();
@@ -447,10 +676,7 @@ class RecipeInstaller
             ListAppender::whereIn('id', array_values($map['list_appenders'] ?? []))->delete();
             OptionSet::whereIn('id', array_values($map['lists'] ?? []))->delete();
 
-            foreach ($map['integrations'] ?? [] as $service => $info) {
-                if (! ($info['created'] ?? false)) {
-                    continue;
-                }
+            foreach ($this->productOwnedIntegrations($instance) as $service) {
                 $integration = ExternalIntegration::where('user_id', $user->id)->where('service', $service)->first();
                 if ($integration) {
                     $this->controlService->deprovision($user, $service);

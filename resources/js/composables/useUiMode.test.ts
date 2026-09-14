@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyUiMode, parseUiMode, resolveUiMode } from './useUiMode';
+import { applyUiMode, elementKeyFromHash, parseUiMode, resolveUiMode } from './useUiMode';
 
 describe('resolveUiMode', () => {
   it('is on while a setup flow is active, whatever the URL says', () => {
@@ -71,5 +71,23 @@ describe('applyUiMode', () => {
 
   it('does nothing without a root', () => {
     expect(() => applyUiMode('product', null)).not.toThrow();
+  });
+});
+
+describe('elementKeyFromHash', () => {
+  it('reads the control a step links to', () => {
+    expect(elementKeyFromHash('#el-integration-streamlabs')).toBe('integration-streamlabs');
+    expect(elementKeyFromHash('el-token-create')).toBe('token-create');
+  });
+
+  it('ignores a fragment that names a tab, so the two namespaces never cross', () => {
+    expect(elementKeyFromHash('#tab-obs')).toBeNull();
+  });
+
+  it('ignores anything that could not be an attribute value', () => {
+    // The key reaches a querySelector, so it is checked rather than escaped.
+    expect(elementKeyFromHash('#el-"]/*')).toBeNull();
+    expect(elementKeyFromHash('#el-')).toBeNull();
+    expect(elementKeyFromHash('')).toBeNull();
   });
 });

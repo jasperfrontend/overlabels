@@ -71,8 +71,12 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     name: string;
     url: string;
     remaining: number;
-    /** `todo` is the instruction after "Next:"; `target` names the control on the destination page. */
-    next: { label: string; message: string; todo: string; target: string | null } | null;
+    /**
+     * `todo` is the instruction after "Next:"; `url` goes straight to the page
+     * that step is on, with the fragment that scrolls to the control; `target`
+     * names that control, and lights it up wherever the reader meets it.
+     */
+    next: { label: string; message: string; todo: string; target: string | null; url: string } | null;
     ready: boolean;
   } | null;
 };

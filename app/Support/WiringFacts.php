@@ -391,12 +391,22 @@ final class WiringFacts
             },
         };
 
+        // Enabled is not the same fact as usable. An install creates the row,
+        // but a Streamlabs or Fourthwall connection does nothing until the
+        // streamer has been through its authorize screen, and a Ko-fi or BMAC
+        // one does nothing until they paste its token. Counting rows alone
+        // reported this wire done while the only remaining step was the one
+        // that makes events arrive at all.
+        $ready = ExternalIntegration::where('user_id', $user->id)
+            ->whereIn('service', $services)
+            ->where('enabled', true)
+            ->get()
+            ->filter(fn (ExternalIntegration $integration) => $integration->isAuthenticated())
+            ->count();
+
         $integration = match (true) {
             $services === [] => WiringCatalog::NOT_APPLICABLE,
-            ExternalIntegration::where('user_id', $user->id)
-                ->whereIn('service', $services)
-                ->where('enabled', true)
-                ->count() === count($services) => WiringCatalog::SATISFIED,
+            $ready === count($services) => WiringCatalog::SATISFIED,
             default => WiringCatalog::MISSING,
         };
 

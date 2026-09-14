@@ -12,6 +12,7 @@ import ControlPanel from '@/components/ControlPanel.vue';
 import ForkImportWizard from '@/components/ForkImportWizard.vue';
 import CopyTypeDialog from '@/components/templates/CopyTypeDialog.vue';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import { useAddressableTabs, tabKeysOf } from '@/composables/useAddressableTabs';
 import { useUiMode } from '@/composables/useUiMode';
 import ProductLastStep from '@/components/ProductLastStep.vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -101,13 +102,16 @@ const mainTabs = computed(() => {
 
 const activeTab = ref('html');
 
-// A product install's last mile: while the flow is on, or when the URL
-// carries the last-mile hint from a finished product page, this visit exists
-// to add the overlay to OBS, so that tab opens first and the callout with the
-// way back exists. The green on the tab comes from the flow alone.
+// A product install's last mile: the URL carries the hint from a finished
+// product page, so the callout with the way back exists. The green on the tab
+// comes from the flow alone.
 const { mode: uiMode, lastMile: uiLastMile, product: uiProduct } = useUiMode();
-const obsFirst = uiMode.value === 'product' || uiLastMile.value;
-const mainTab = ref<string>(obsFirst ? 'obs' : 'overview');
+
+// Which tab opens is the fragment's business now, not the flow's. The product
+// page's OBS button links to #tab-obs, which gets the same result without this
+// page having to know a product install exists - and gives everyone else a
+// linkable Triggers and Targeting tab in the same stroke.
+const mainTab = useAddressableTabs(tabKeysOf(mainTabs), 'overview');
 
 const { eventTypeDotClass } = useEventColors();
 

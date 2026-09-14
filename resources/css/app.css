@@ -14,9 +14,11 @@
 @custom-variant product (&:is([data-mode='product'] *));
 
 /* The one control a product install's next step points at, while the flow is
-   on (see useProductTarget). A thin fuchsia edge with a soft glow: the 10px
-   frame says "you are in the flow", this says "and this is the button". */
-.product-target {
+   on. The element marks itself data-product-target="<key>"; useProductFocus
+   sets data-product-focus on whichever one the flow currently names. A thin
+   fuchsia edge with a soft glow: the 10px frame says "you are in the flow",
+   this says "and this is the button". */
+[data-product-focus] {
   outline: 2px solid var(--color-fuchsia-500);
   outline-offset: 3px;
   box-shadow:
@@ -40,7 +42,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .product-target {
+  [data-product-focus] {
     animation: none;
   }
 }

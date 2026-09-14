@@ -2,17 +2,29 @@
 
 namespace App\Services\External\Drivers;
 
+use App\Contracts\AuthenticatedExternalServiceDriver;
 use App\Contracts\ExternalServiceDriver;
 use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class KofiServiceDriver implements ExternalServiceDriver
+class KofiServiceDriver implements AuthenticatedExternalServiceDriver, ExternalServiceDriver
 {
     public function getServiceKey(): string
     {
         return 'kofi';
+    }
+
+    /**
+     * The token the streamer pastes from ko-fi.com/manage/webhooks. Without
+     * it verifyRequest() rejects every delivery.
+     *
+     * @return list<string>
+     */
+    public function requiredCredentials(): array
+    {
+        return ['verification_token'];
     }
 
     /**
