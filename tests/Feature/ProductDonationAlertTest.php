@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\ExternalIntegration;
 use App\Models\OverlayTemplate;
@@ -137,6 +138,87 @@ it('shows what was answered once installed, and how the alert is wired instead o
             ->where('installed.overlays.1.fires_on', ['Throne Gift or Contribution'])
             ->where('installed.overlays.1.targets', ['Donation stage'])
         );
+});
+
+it('hands the finished page the test guide for the picked service, and what the service can also send', function () {
+    $user = donationUser();
+    $this->actingAs($user)->post('/products/donation_alert/install', ['ingredients' => ['service' => 'kofi']]);
+
+    $this->actingAs($user->fresh())
+        ->get('/products/donation_alert')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('installed.test_guide.service', 'kofi')
+            ->where('installed.test_guide.service_label', 'Ko-fi')
+            ->where('installed.test_guide.url', 'https://ko-fi.com/manage/webhooks')
+            ->where('installed.test_guide.settings_url', route('settings.integrations.kofi.show'))
+            ->has('installed.test_guide.steps', 3)
+            ->where('installed.landed', null)
+            ->where('installed.overlays.1.more_events', ['Ko-fi Subscription', 'Ko-fi Shop Order', 'Ko-fi Commission'])
+        );
+});
+
+it('has nothing more to offer for a service with one event type', function () {
+    $user = donationUser();
+    $this->actingAs($user)->post('/products/donation_alert/install', ['ingredients' => ['service' => 'streamlabs']]);
+
+    $this->actingAs($user->fresh())
+        ->get('/products/donation_alert')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('installed.test_guide.service', 'streamlabs')
+            ->where('installed.overlays.1.more_events', [])
+        );
+});
+
+it('says the tip landed once an event the alert fires on has arrived since the install', function () {
+    $user = donationUser();
+    $this->actingAs($user)->post('/products/donation_alert/install', ['ingredients' => ['service' => 'kofi']]);
+
+    // A Ko-fi subscription is not what the alert fires on, so it is not a landing.
+    ExternalEvent::create([
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'subscription',
+        'message_id' => 'sub-1',
+        'raw_payload' => [],
+        'normalized_payload' => ['event.from_name' => 'Sam', 'event.formatted_amount' => 'EUR 3,00'],
+    ]);
+    $this->actingAs($user->fresh())
+        ->get('/products/donation_alert')
+        ->assertInertia(fn (Assert $page) => $page->where('installed.landed', null));
+
+    ExternalEvent::create([
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'donation',
+        'message_id' => 'tip-1',
+        'raw_payload' => [],
+        'normalized_payload' => ['event.from_name' => 'Jo', 'event.formatted_amount' => 'EUR 5,00'],
+    ]);
+    $this->actingAs($user->fresh())
+        ->get('/products/donation_alert')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('installed.landed.from_name', 'Jo')
+            ->where('installed.landed.formatted_amount', 'EUR 5,00')
+        );
+});
+
+it('does not count a tip that arrived before the install', function () {
+    $user = donationUser();
+    $before = ExternalEvent::create([
+        'user_id' => $user->id,
+        'service' => 'kofi',
+        'event_type' => 'donation',
+        'message_id' => 'old-1',
+        'raw_payload' => [],
+        'normalized_payload' => ['event.from_name' => 'Old', 'event.formatted_amount' => 'EUR 1,00'],
+    ]);
+    $before->forceFill(['created_at' => now()->subDay()])->saveQuietly();
+
+    $this->actingAs($user)->post('/products/donation_alert/install', ['ingredients' => ['service' => 'kofi']]);
+
+    $this->actingAs($user->fresh())
+        ->get('/products/donation_alert')
+        ->assertInertia(fn (Assert $page) => $page->where('installed.landed', null));
 });
 
 it('reads the alert wiring live, so a trigger switched off drops out of the page', function () {

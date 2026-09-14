@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\EventTemplateMapping;
+use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\OverlayTemplate;
 use App\Models\Recipe;
@@ -14,6 +15,7 @@ use App\Services\Recipes\RecipeIngredients;
 use App\Services\Recipes\RecipeInstaller;
 use App\Support\OverlayMarkdown;
 use App\Support\ProductSetup;
+use App\Support\ServiceTestGuides;
 use App\Support\WiringFacts;
 use App\Support\WiringReport;
 use Illuminate\Http\RedirectResponse;
@@ -259,7 +261,15 @@ class ProductController extends Controller
      * it fires on an event and renders inside the static overlays it targets,
      * so for one the page says what it fires on and where it shows, read live
      * from the same rows the Triggers and Targeting tabs read, and offers no
-     * OBS step at all.
+     * OBS step at all. `more_events` is what else the connected service can
+     * send that the alert does not yet fire on, for the line that points at
+     * the Triggers tab.
+     *
+     * `test_guide` is how to make the picked service send a test event, and
+     * `landed` is the latest such event since the install, so the page can
+     * say the alert fired rather than leave the person guessing. Both come
+     * from the resolved manifest: which service this install actually
+     * connected, not the placeholder the catalogue file carries.
      *
      * @return array<string, mixed>
      */
@@ -267,9 +277,14 @@ class ProductController extends Controller
     {
         $report = WiringReport::build(['products' => [WiringFacts::productSubject($instance)]]);
         $circuit = collect($report)->firstWhere('key', 'products');
+        $services = array_values($instance->resolvedManifest()['installs']['integrations'] ?? []);
+
+        // Every (service, event_type) pair an installed alert fires on, for
+        // the "did it land" lookup below.
+        $firing = [];
 
         $overlays = collect($instance->primitive_map['overlays'] ?? [])
-            ->map(function (int $id, string $ref) {
+            ->map(function (int $id, string $ref) use ($services, &$firing) {
                 $template = OverlayTemplate::find($id);
                 if (! $template) {
                     return null;
@@ -278,19 +293,33 @@ class ProductController extends Controller
                 $overlay = ['ref' => $ref, 'name' => $template->name, 'slug' => $template->slug, 'id' => $template->id, 'type' => $template->type];
 
                 if ($template->type === 'alert') {
+                    $external = ExternalEventTemplateMapping::where('overlay_template_id', $template->id)
+                        ->where('enabled', true)
+                        ->get();
+
                     $overlay['fires_on'] = EventTemplateMapping::where('template_id', $template->id)
                         ->where('enabled', true)
                         ->get()
                         ->map(fn (EventTemplateMapping $m) => $m->event_type_display)
-                        ->concat(
-                            ExternalEventTemplateMapping::where('overlay_template_id', $template->id)
-                                ->where('enabled', true)
-                                ->get()
-                                ->map(fn (ExternalEventTemplateMapping $m) => ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$m->service][$m->event_type] ?? "{$m->service} {$m->event_type}")
-                        )
+                        ->concat($external->map(fn (ExternalEventTemplateMapping $m) => ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$m->service][$m->event_type] ?? "{$m->service} {$m->event_type}"))
                         ->values()
                         ->all();
                     $overlay['targets'] = $template->targetStaticOverlays()->pluck('name')->all();
+
+                    $more = [];
+                    foreach ($services as $service) {
+                        $firingTypes = $external->where('service', $service)->pluck('event_type')->all();
+                        foreach (ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$service] ?? [] as $eventType => $label) {
+                            if (! in_array($eventType, $firingTypes, true)) {
+                                $more[] = $label;
+                            }
+                        }
+                    }
+                    $overlay['more_events'] = $more;
+
+                    foreach ($external as $m) {
+                        $firing[] = ['service' => $m->service, 'event_type' => $m->event_type];
+                    }
                 }
 
                 return $overlay;
@@ -307,7 +336,47 @@ class ProductController extends Controller
             'remaining' => (int) ($subject['missing'] ?? 0),
             'overlays' => $overlays,
             'ingredients' => $instance->ingredients ?? [],
+            'test_guide' => ServiceTestGuides::firstFor($services),
+            'landed' => $this->landed($instance, $firing),
             'removes' => $this->installer->removals($instance),
+        ];
+    }
+
+    /**
+     * The latest event since the install that one of its alerts fires on, as
+     * the sentence the finished band says: who, and how much. Null until one
+     * arrives. Read from the stored event rather than remembered by the page,
+     * so a reload after the test tip still says it landed.
+     *
+     * @param  list<array{service: string, event_type: string}>  $firing
+     * @return array{from_name: string, formatted_amount: string, at: ?string}|null
+     */
+    private function landed(RecipeInstance $instance, array $firing): ?array
+    {
+        if ($firing === []) {
+            return null;
+        }
+
+        $event = ExternalEvent::where('user_id', $instance->user_id)
+            ->where('created_at', '>=', $instance->created_at)
+            ->where(function ($query) use ($firing) {
+                foreach ($firing as $pair) {
+                    $query->orWhere(fn ($q) => $q->where('service', $pair['service'])->where('event_type', $pair['event_type']));
+                }
+            })
+            ->latest()
+            ->first();
+
+        if (! $event) {
+            return null;
+        }
+
+        $tags = $event->normalized_payload ?? [];
+
+        return [
+            'from_name' => (string) ($tags['event.from_name'] ?? ''),
+            'formatted_amount' => (string) ($tags['event.formatted_amount'] ?? ''),
+            'at' => $event->created_at?->toIso8601String(),
         ];
     }
 }

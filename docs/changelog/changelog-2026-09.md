@@ -1,5 +1,31 @@
 # Changelog - September 2026
 
+## OL-2609-080 - September 14th, 2026 - feat(products): after install, three beats to a landed alert
+
+Installing Donation Alerts got you a stage in OBS and an alert wired to it, and then nothing
+happened, because nothing had been sent. A stage sitting in OBS with nothing on it is not a payoff.
+An alert landing on it is. The finished band on the product page now walks the three beats that get
+you there, numbered, in the green.
+
+One: put the stage in OBS. The button you had, with a line saying what the OBS tab will do for you.
+Two: send yourself a test tip, from the service you picked. Every one of the five has a test button
+somewhere on its own dashboard, and "somewhere" was the whole problem, so the beat opens the exact
+page in a new tab and lists what to press once you are there, three or four lines per service,
+walked by hand this evening. The steps belong to the service, not to the product, so they live in
+one table any future product can read. Three: watch it land. The page listens for the alert to fire
+and flips to "It landed: Jo tipped EUR 5,00" the moment it does. Reload the page later and it still
+says so, because it asks the server rather than remembering.
+
+Under the last beat the alert says what it fires on and where it shows, and, for a service that
+sends more than tips, what else it could fire on. Ko-fi has four event types and Buy Me a Coffee
+six; the install wires one. One line names the others and points at the Triggers tab, where the
+same alert can be switched on for them. Different alerts per event type is a copy-and-retarget job
+today and is written down as the gap it is, not half built.
+
+One thing to know: the first test press lands without any switch flipped. The second identical press
+is dropped as a retry, which is what the test-mode switch on the service's settings page exists for.
+The beat says so, in one sentence, with the link.
+
 ## OL-2609-077 - September 14th, 2026 - feat(products): Donation Alerts, the first product that asks which service
 
 Three days ago the walk from a fresh account to a firing Streamlabs alert was eleven steps, written

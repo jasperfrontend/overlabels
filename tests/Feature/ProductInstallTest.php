@@ -196,6 +196,8 @@ it('installs the product on POST and shows the page in its installed state', fun
         ->assertInertia(fn (Assert $page) => $page
             ->component('products/show')
             ->where('installed.overlays.0.name', 'Chat Checkin globe')
+            ->where('installed.test_guide', null)
+            ->where('installed.landed', null)
             ->where('installed.subject.key', 'product:'.$instance->id)
             ->has('installed.subject.wires', 8)
         );

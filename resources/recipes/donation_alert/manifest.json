@@ -12,9 +12,9 @@
   "min_overlabels_version": 1,
   "requires_bot": false,
   "listed": true,
-  "ready_message": "Send yourself a test tip from your donation service and watch it land on the stage.",
+  "ready_message": "The alert is wired and waiting. Put the stage in OBS, send yourself a test tip, and watch it land.",
   "notes": [
-    "Your donation service has a test button on its own dashboard. A test tip from there travels the whole way, so it proves more than anything Overlabels could fake.",
+    "A test tip from your donation service's own dashboard travels the whole way, so it proves more than anything Overlabels could fake. Press it once; pressing it again needs test mode on, on the service's settings page.",
     "The alert fires on the Donation stage only. The alert's Targeting tab lets it fire on other overlays of yours too.",
     "The stage shows how many tips have arrived through the service and who sent the latest one. Both are controls on the service's settings page, so you can set them by hand."
   ],
