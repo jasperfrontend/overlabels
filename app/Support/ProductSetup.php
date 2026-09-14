@@ -135,10 +135,12 @@ final class ProductSetup
      * is closed - one key per registered service - so nothing arbitrary is ever
      * emitted into a URL.
      *
-     * Read off the INSTANCE's recipe rather than the catalogue file, because
-     * that is the manifest this install was actually made from. A version
-     * bumped on disk since would otherwise send the streamer after a service
-     * their install never connected.
+     * Read off the INSTANCE's resolved manifest rather than the catalogue
+     * file, because that is the manifest this install was actually made from,
+     * with its ingredient answers written in. A version bumped on disk since
+     * would otherwise send the streamer after a service their install never
+     * connected, and the catalogue file still says {{service}} where the
+     * install said kofi.
      */
     private static function targetFor(string $key, RecipeInstance $instance): ?string
     {
@@ -146,7 +148,7 @@ final class ProductSetup
             return self::STEPS[$key]['target'] ?? null;
         }
 
-        foreach ($instance->recipe?->manifest['installs']['integrations'] ?? [] as $service) {
+        foreach ($instance->resolvedManifest()['installs']['integrations'] ?? [] as $service) {
             $integration = ExternalIntegration::where('user_id', $instance->user_id)
                 ->where('service', $service)
                 ->first();

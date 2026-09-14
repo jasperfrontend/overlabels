@@ -35,7 +35,7 @@ class RecipeInstanceController extends Controller
             ->orderByDesc('created_at')
             ->get()
             ->map(function (RecipeInstance $instance) {
-                $manifest = $instance->recipe?->manifest ?? [];
+                $manifest = $instance->resolvedManifest();
 
                 $buttonsByPickerRef = [];
                 foreach ($manifest['triggers'] ?? [] as $trigger) {
@@ -110,7 +110,7 @@ class RecipeInstanceController extends Controller
         ]);
 
         $pickerRef = $data['picker_ref'];
-        $manifest = $instance->recipe->manifest ?? [];
+        $manifest = $instance->resolvedManifest();
 
         $hasButton = false;
         foreach ($manifest['triggers'] ?? [] as $trigger) {

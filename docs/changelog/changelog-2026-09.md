@@ -1,5 +1,40 @@
 # Changelog - September 2026
 
+## OL-2609-076 - September 14th, 2026 - feat(recipes): a recipe can ask a question, and the answer lands wherever it says {{key}}
+
+Five donation services, one alert. Every one of them sends a `donation` event, every one of them
+provisions the same six controls, and the alert reads `event.*` tags that are identical across the
+lot. So a "donation alert" product is the same product five times over, except for one word: the
+service. Until today a manifest could not say "ask". It could only pour, and it poured the same thing
+for everyone.
+
+A recipe is a form now, not a tree. It declares ingredients: each one is a question with fixed
+choices and a default, and the answer is written wherever the manifest or an overlay document says
+`{{key}}`. The first ingredient is "Where do your donations come in?", and its one answer feeds three
+places at once: which integration to connect, which service the alert trigger listens to, and the
+`c:<service>:` namespace in the overlay's tags. Nothing branches. An answer is a word, and the word
+goes where the placeholder was.
+
+That makes an installed overlay differ from its shipped document for the first time, which is exactly
+the thing a later surface will need to reason about when it offers to swap the look of an overlay
+while keeping its wiring. So the answers are recorded on the install. Shipped files plus answers
+always reproduce what was installed, and every fact derived from an install - which service it
+connected, which control the setup banner should light up, whether an uninstall may take a
+connection - reads the manifest with the answers written in. The catalogue file still says
+`{{service}}`; the install says `kofi`.
+
+The validator got stricter to match. Every choice is resolved and checked the way the install will
+read it: the service has to exist and serve the event, and every overlay document carrying a
+placeholder has to come out, once filled, reading only controls that service actually provisions,
+conditions included. A question nothing uses is refused too, because a question whose answer changes
+nothing is a lie to the person answering it. A bad choice is a red test at catalogue read, never a
+streamer's install.
+
+On the product page the question is a select above the Install button with the default picked, and
+the list of what the click gives you follows the pick. Once installed, the page says what was
+answered. Nothing in the catalogue declares an ingredient yet; the donation alert product it exists
+for is next.
+
 ## OL-2609-073 - September 14th, 2026 - fix(integrations): every donation service gets a formatted amount, written the way you write money
 
 `[[[event.formatted_amount]]]` was the odd one out. StreamLabs sends a formatted string in its

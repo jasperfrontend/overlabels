@@ -8,6 +8,7 @@ use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Services\BotModeratedChannels;
 use App\Services\Recipes\RecipeCatalog;
+use App\Services\Recipes\RecipeIngredients;
 use App\Services\Recipes\RecipeInstaller;
 use App\Support\OverlayMarkdown;
 use App\Support\ProductSetup;
@@ -109,6 +110,11 @@ class ProductController extends Controller
                 'description' => $manifest['description'],
                 'requires_bot' => (bool) ($manifest['requires_bot'] ?? false),
                 'hero' => $manifest['hero'] ?? null,
+                // The questions the install asks. Integrations are handed over
+                // as written, placeholders and all: the page fills them from
+                // whatever is currently picked, so the list of what the click
+                // gives you follows the pick.
+                'ingredients' => RecipeIngredients::declared($manifest),
                 'integrations' => $manifest['installs']['integrations'] ?? [],
                 'overlays' => $overlays,
                 'lists' => collect($manifest['installs']['lists'] ?? [])
@@ -153,10 +159,18 @@ class ProductController extends Controller
             return redirect()->route('products.show', $slug);
         }
 
+        // The answers to the product's questions, keyed by ingredient key.
+        // Whether each one is a choice the recipe offers is the installer's
+        // call, and its refusal lands on the page like any other.
+        $ingredients = $request->validate([
+            'ingredients' => ['sometimes', 'array'],
+            'ingredients.*' => ['string', 'max:50'],
+        ])['ingredients'] ?? [];
+
         $recipe = $this->catalog->sync($manifest);
 
         try {
-            $this->installer->install($recipe, $user, $slug);
+            $this->installer->install($recipe, $user, $slug, null, $ingredients);
         } catch (RuntimeException $e) {
             return redirect()->route('products.show', $slug)->withErrors(['install' => $e->getMessage()]);
         }
@@ -263,6 +277,7 @@ class ProductController extends Controller
             'subject' => $subject,
             'remaining' => (int) ($subject['missing'] ?? 0),
             'overlays' => $overlays,
+            'ingredients' => $instance->ingredients ?? [],
             'removes' => $this->installer->removals($instance),
         ];
     }

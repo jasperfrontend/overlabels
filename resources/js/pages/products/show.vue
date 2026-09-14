@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, Trash2, TriangleAlert } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
+import { serviceLabel } from '@/utils/services';
 import { useConfirm } from '@/composables/useConfirm';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
@@ -30,12 +31,20 @@ interface Subject {
   needsAttention: boolean;
 }
 
+interface Ingredient {
+  key: string;
+  question: string;
+  choices: { value: string; label: string }[];
+  default: string;
+}
+
 interface Product {
   slug: string;
   name: string;
   description: string;
   requires_bot: boolean;
   hero: string | null;
+  ingredients: Ingredient[];
   integrations: string[];
   overlays: { ref: string; name: string; type: string; description: string | null }[];
   lists: { slug: string; label: string }[];
@@ -48,6 +57,7 @@ interface Installed {
   installed_at: string;
   subject: Subject | null;
   overlays: { ref: string; name: string; slug: string; id: number }[];
+  ingredients: Record<string, string>;
   removes: string[];
 }
 
@@ -86,16 +96,23 @@ const remaining = computed(() => steps.value.filter((wire) => wire.state === 'mi
 const done = computed(() => steps.value.length - remaining.value);
 const progress = computed(() => (steps.value.length ? Math.round((done.value / steps.value.length) * 100) : 100));
 
-const integrationLabels: Record<string, string> = {
-  checkin: 'Chat Checkin',
-};
+// The product's questions, answered with their defaults until the person
+// picks otherwise. Whatever the manifest wrote as {{key}} reads as the
+// current answer here, so the list of what the click gives you follows
+// the pick rather than showing a placeholder.
+const answers = ref<Record<string, string>>(Object.fromEntries(props.product.ingredients.map((ingredient) => [ingredient.key, ingredient.default])));
 
-function integrationLabel(key: string): string {
-  return integrationLabels[key] ?? key;
+function fill(text: string): string {
+  return text.replace(/\{\{([a-z][a-z0-9_]*)\}\}/g, (whole, key: string) => answers.value[key] ?? whole);
+}
+
+function answerLabel(ingredient: Ingredient): string {
+  const value = props.installed?.ingredients[ingredient.key];
+  return ingredient.choices.find((choice) => choice.value === value)?.label ?? value ?? '';
 }
 
 function install(): void {
-  router.post(route('products.install', props.product.slug));
+  router.post(route('products.install', props.product.slug), { ingredients: answers.value });
 }
 
 const { confirm } = useConfirm();
@@ -186,6 +203,23 @@ async function uninstall(): Promise<void> {
         </div>
 
         <p class="max-w-prose text-foreground">{{ product.description }}</p>
+
+        <!-- The product's questions. Before the install they are a form the
+             button reads; after it they are a record of what was answered. -->
+        <div v-if="!installed && product.ingredients.length" class="flex flex-col gap-3">
+          <label v-for="ingredient in product.ingredients" :key="ingredient.key" class="flex flex-col gap-1 text-sm">
+            <span class="font-medium text-foreground">{{ ingredient.question }}</span>
+            <select v-model="answers[ingredient.key]" class="input-border w-full max-w-xs cursor-pointer">
+              <option v-for="choice in ingredient.choices" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
+            </select>
+          </label>
+        </div>
+        <dl v-else-if="installed && product.ingredients.length" class="flex flex-col gap-1 text-sm">
+          <div v-for="ingredient in product.ingredients" :key="ingredient.key" class="flex flex-wrap gap-x-2">
+            <dt class="text-muted-foreground">{{ ingredient.question }}</dt>
+            <dd class="font-medium text-foreground">{{ answerLabel(ingredient) }}</dd>
+          </div>
+        </dl>
 
         <p v-if="installError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ installError }}</p>
         <p v-if="uninstallError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ uninstallError }}</p>
@@ -299,7 +333,7 @@ async function uninstall(): Promise<void> {
             <li v-for="integration in product.integrations" :key="integration" class="collection-row border border-border p-3">
               <p class="inline-flex items-center gap-2 font-medium text-foreground">
                 <PlugZap class="size-4 text-violet-400" />
-                {{ integrationLabel(integration) }} connected
+                {{ serviceLabel(fill(integration)) }} connected
               </p>
               <p class="mt-1 text-sm text-foreground">The integration and its controls, ready before you open the overlay.</p>
             </li>

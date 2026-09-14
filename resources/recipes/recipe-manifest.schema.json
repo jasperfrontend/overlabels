@@ -116,6 +116,54 @@
         "maxLength": 300
       }
     },
+    "ingredients": {
+      "type": "array",
+      "description": "The questions the install asks, in order. A recipe is a form, not a tree: each ingredient has fixed choices and a default, and an answer is written wherever the manifest or an overlay document says {{key}}. The answers are recorded on the instance, so the shipped files plus the answers always reproduce what was installed. Nothing here is an option set; those are Lists.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "question", "choices", "default"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "What a placeholder names: {{service}} is answered by the ingredient whose key is service.",
+            "pattern": "^[a-z][a-z0-9_]{0,49}$"
+          },
+          "question": {
+            "type": "string",
+            "description": "The question as the install page asks it.",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "choices": {
+            "type": "array",
+            "description": "The answers on offer. A value is what gets written into the placeholder; a label is what the person reads.",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["value", "label"],
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]{0,49}$"
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                }
+              }
+            }
+          },
+          "default": {
+            "type": "string",
+            "description": "The value preselected on the install page and used when no answer is given. Must be one of the choices.",
+            "pattern": "^[a-z][a-z0-9_]{0,49}$"
+          }
+        }
+      }
+    },
     "installs": {
       "type": "object",
       "description": "Rows the installer creates in the account beyond the picker primitives: overlays from markdown files shipped next to the manifest, and integration connections. Everything here is idempotent per install and belongs to the instance.",
@@ -140,10 +188,10 @@
         },
         "integrations": {
           "type": "array",
-          "description": "External service keys to connect on install, exactly as the service's settings page would: the integration row is created enabled and its controls are provisioned.",
+          "description": "External service keys to connect on install, exactly as the service's settings page would: the integration row is created enabled and its controls are provisioned. An entry may be an ingredient placeholder, {{key}}, answered at install.",
           "items": {
             "type": "string",
-            "pattern": "^[a-z][a-z0-9_]{0,29}$"
+            "pattern": "^([a-z][a-z0-9_]{0,29}|\\{\\{[a-z][a-z0-9_]{0,49}\\}\\})$"
           },
           "uniqueItems": true
         },
@@ -161,8 +209,8 @@
               },
               "service": {
                 "type": "string",
-                "description": "\"twitch\" for an EventSub event, otherwise an external service key registered in ExternalServiceRegistry.",
-                "pattern": "^[a-z][a-z0-9_]{0,29}$"
+                "description": "\"twitch\" for an EventSub event, otherwise an external service key registered in ExternalServiceRegistry. May be an ingredient placeholder, {{key}}, answered at install.",
+                "pattern": "^([a-z][a-z0-9_]{0,29}|\\{\\{[a-z][a-z0-9_]{0,49}\\}\\})$"
               },
               "event_type": {
                 "type": "string",

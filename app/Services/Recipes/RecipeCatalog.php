@@ -100,7 +100,10 @@ class RecipeCatalog
             throw new RuntimeException("Manifest not readable at {$path}");
         }
 
-        $result = $this->validator->validate($json);
+        // With the directory, so the overlay documents next to the manifest
+        // are checked too: a choice that leaves one reading a control its
+        // service never provisions fails here, not on a streamer's install.
+        $result = $this->validator->validate($json, dirname($path));
         if (! $result['valid']) {
             throw new RuntimeException(
                 "First-party manifest at {$path} failed validation: ".json_encode($result['errors'])

@@ -360,7 +360,7 @@ final class WiringFacts
     public static function productSubject(RecipeInstance $instance): array
     {
         $user = $instance->user;
-        $manifest = $instance->recipe?->manifest ?? [];
+        $manifest = $instance->resolvedManifest();
         $requiresBot = (bool) ($manifest['requires_bot'] ?? false);
         $services = $manifest['installs']['integrations'] ?? [];
         $overlayIds = array_values($instance->primitive_map['overlays'] ?? []);

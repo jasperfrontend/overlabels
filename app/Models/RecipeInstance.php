@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Recipes\RecipeIngredients;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string $instance_slug
  * @property string|null $label
  * @property array{option_sets?: array<string, int>, pickers?: array<string, int>} $primitive_map
+ * @property array<string, string> $ingredients
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Recipe|null $recipe
@@ -36,15 +38,31 @@ class RecipeInstance extends Model
         'instance_slug',
         'label',
         'primitive_map',
+        'ingredients',
     ];
 
     protected $casts = [
         'primitive_map' => 'array',
+        'ingredients' => 'array',
     ];
 
     public function recipe(): BelongsTo
     {
         return $this->belongsTo(Recipe::class);
+    }
+
+    /**
+     * The manifest this install was made from, with the answers it gave
+     * written in. Anything deriving a fact about an install - which service
+     * it connected, which event its alert fires on - reads this, never the
+     * catalogue row, because the row still says {{service}} where the
+     * install said streamlabs.
+     *
+     * @return array<string, mixed>
+     */
+    public function resolvedManifest(): array
+    {
+        return RecipeIngredients::resolve($this->recipe?->manifest ?? [], $this->ingredients ?? []);
     }
 
     public function user(): BelongsTo

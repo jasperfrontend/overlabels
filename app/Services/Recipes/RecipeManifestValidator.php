@@ -4,7 +4,11 @@ namespace App\Services\Recipes;
 
 use App\Models\EventTemplateMapping;
 use App\Models\ExternalEventTemplateMapping;
+use App\Models\OverlayTemplate;
 use App\Services\External\ExternalServiceRegistry;
+use App\Support\Dsl;
+use App\Support\OverlayMarkdown;
+use InvalidArgumentException;
 use JsonException;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Errors\ValidationError;
@@ -30,11 +34,17 @@ class RecipeManifestValidator
     /**
      * Validate a manifest given as a decoded array or JSON string.
      *
+     * `$directory` is where the manifest's overlay documents live. With it,
+     * the ingredient checks read those documents too: a placeholder in one
+     * must name a declared ingredient, an ingredient must be used somewhere,
+     * and every choice must leave each document reading controls its service
+     * provisions. Without it, only the manifest itself is checked.
+     *
      * @return array{valid: bool, errors: list<array{pointer: string, message: string}>}
      *
      * @throws JsonException
      */
-    public function validate(array|string $manifest): array
+    public function validate(array|string $manifest, ?string $directory = null): array
     {
         $data = is_string($manifest)
             ? json_decode($manifest, false, 512, JSON_THROW_ON_ERROR)
@@ -61,7 +71,7 @@ class RecipeManifestValidator
         // structurally workable enough to introspect.
         if (is_object($data)) {
             $manifestArray = json_decode(json_encode($data, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
-            foreach ($this->semanticErrors($manifestArray) as $err) {
+            foreach ($this->semanticErrors($manifestArray, $directory) as $err) {
                 $errors[] = $err;
             }
         }
@@ -86,7 +96,7 @@ class RecipeManifestValidator
             throw new RuntimeException("Manifest file not readable at {$path}");
         }
 
-        return $this->validate($contents);
+        return $this->validate($contents, dirname($path));
     }
 
     /**
@@ -130,11 +140,13 @@ class RecipeManifestValidator
      *   - manifest-local refs are unique within their list
      *   - installs.alert_triggers / alert_targets reference a declared
      *     overlay, and name an event type the platform actually has
+     *   - ingredients are well-formed, every placeholder names one, and
+     *     every choice resolves to something the installer can pour
      *
      * @param  array<string, mixed>  $manifest
      * @return list<array{pointer: string, message: string}>
      */
-    private function semanticErrors(array $manifest): array
+    private function semanticErrors(array $manifest, ?string $directory): array
     {
         $errors = [];
 
@@ -224,7 +236,7 @@ class RecipeManifestValidator
             }
         }
 
-        return array_merge($errors, $this->installsErrors($manifest));
+        return array_merge($errors, $this->installsErrors($manifest), $this->ingredientErrors($manifest, $directory));
     }
 
     /**
@@ -275,6 +287,11 @@ class RecipeManifestValidator
             $service = $trigger['service'] ?? null;
             $eventType = $trigger['event_type'] ?? null;
             if (! is_string($service) || ! is_string($eventType)) {
+                continue;
+            }
+
+            // A placeholder is checked once per choice, in ingredientErrors().
+            if (RecipeIngredients::isPlaceholder($service)) {
                 continue;
             }
 
@@ -340,5 +357,225 @@ class RecipeManifestValidator
         }
 
         return $errors;
+    }
+
+    /**
+     * The ingredients a manifest asks, and whether every answer it can get
+     * installs. Shape first: unique keys, unique choice values, a default
+     * that is one of them. Then references, both ways: every {{placeholder}}
+     * in the manifest or an overlay document names a declared ingredient, and
+     * every declared ingredient is used somewhere, because a question whose
+     * answer changes nothing is a lie to the person answering it.
+     *
+     * Then every combination of choices is resolved and checked the way the
+     * install will read it: a placeholder in `installs.integrations` or an
+     * alert trigger's `service` must be a registered service with that event
+     * type, and every overlay document carrying a placeholder must, once
+     * filled, read only `c:<service>:<key>` controls that service provisions.
+     * A choice that fails here fails the catalogue read, so it is a red test,
+     * never a streamer's install.
+     *
+     * The document checks need `$directory`; without one only the manifest
+     * is read and the "is used" check is skipped, since the use may be in a
+     * document this call cannot see.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return list<array{pointer: string, message: string}>
+     */
+    private function ingredientErrors(array $manifest, ?string $directory): array
+    {
+        $errors = [];
+        $ingredients = $manifest['ingredients'] ?? [];
+        if (! is_array($ingredients)) {
+            return [];
+        }
+
+        $keys = [];
+        foreach ($ingredients as $i => $ingredient) {
+            if (! is_array($ingredient)) {
+                continue;
+            }
+
+            $key = $ingredient['key'] ?? null;
+            if (is_string($key)) {
+                if (in_array($key, $keys, true)) {
+                    $errors[] = ['pointer' => "/ingredients/{$i}/key", 'message' => "Duplicate ingredient key \"{$key}\"."];
+                }
+                $keys[] = $key;
+            }
+
+            $values = [];
+            foreach ($ingredient['choices'] ?? [] as $j => $choice) {
+                $value = $choice['value'] ?? null;
+                if (! is_string($value)) {
+                    continue;
+                }
+                if (in_array($value, $values, true)) {
+                    $errors[] = ['pointer' => "/ingredients/{$i}/choices/{$j}/value", 'message' => "Duplicate choice \"{$value}\"."];
+                }
+                $values[] = $value;
+            }
+
+            $default = $ingredient['default'] ?? null;
+            if (is_string($default) && ! in_array($default, $values, true)) {
+                $errors[] = ['pointer' => "/ingredients/{$i}/default", 'message' => "Default \"{$default}\" is not one of the choices."];
+            }
+        }
+
+        // References, manifest side. The ingredients section itself is
+        // skipped: a question may legitimately mention braces.
+        $used = [];
+        foreach (RecipeIngredients::strings($manifest) as $pointer => $string) {
+            if (str_starts_with($pointer, '/ingredients/')) {
+                continue;
+            }
+            foreach (RecipeIngredients::referenced($string) as $ref) {
+                if (! in_array($ref, $keys, true)) {
+                    $errors[] = ['pointer' => $pointer, 'message' => "Placeholder {{{$ref}}} names no ingredient."];
+                }
+                $used[] = $ref;
+            }
+        }
+
+        // References, document side.
+        $documents = $this->overlayDocuments($manifest, $directory);
+        foreach ($documents as $i => $document) {
+            foreach (RecipeIngredients::referenced($document['text']) as $ref) {
+                if (! in_array($ref, $keys, true)) {
+                    $errors[] = [
+                        'pointer' => "/installs/overlays/{$i}/file",
+                        'message' => "{$document['file']} says {{{$ref}}}, which names no ingredient.",
+                    ];
+                }
+                $used[] = $ref;
+            }
+        }
+
+        if ($directory !== null) {
+            foreach ($ingredients as $i => $ingredient) {
+                $key = is_array($ingredient) ? ($ingredient['key'] ?? null) : null;
+                if (is_string($key) && ! in_array($key, $used, true)) {
+                    $errors[] = ['pointer' => "/ingredients/{$i}/key", 'message' => "Ingredient \"{$key}\" is asked but nothing uses its answer."];
+                }
+            }
+        }
+
+        if ($keys === []) {
+            return $errors;
+        }
+
+        foreach (RecipeIngredients::combinations($manifest) as $answers) {
+            $with = 'With '.implode(', ', array_map(fn (string $k, string $v) => "{$k} = {$v}", array_keys($answers), $answers)).': ';
+            $resolved = RecipeIngredients::resolve($manifest, $answers);
+
+            foreach ($manifest['installs']['integrations'] ?? [] as $i => $service) {
+                if (! RecipeIngredients::isPlaceholder($service)) {
+                    continue;
+                }
+                $chosen = (string) $resolved['installs']['integrations'][$i];
+                if (! ExternalServiceRegistry::has($chosen)) {
+                    $errors[] = ['pointer' => "/installs/integrations/{$i}", 'message' => $with."unknown external service \"{$chosen}\"."];
+                }
+            }
+
+            foreach ($manifest['installs']['alert_triggers'] ?? [] as $i => $trigger) {
+                $service = $trigger['service'] ?? null;
+                $eventType = $trigger['event_type'] ?? null;
+                if (! RecipeIngredients::isPlaceholder($service) || ! is_string($eventType)) {
+                    continue;
+                }
+                $chosen = (string) $resolved['installs']['alert_triggers'][$i]['service'];
+                if ($chosen === 'twitch') {
+                    if (! array_key_exists($eventType, EventTemplateMapping::EVENT_TYPES)) {
+                        $errors[] = ['pointer' => "/installs/alert_triggers/{$i}/event_type", 'message' => $with."unknown Twitch event type \"{$eventType}\"."];
+                    }
+                } elseif (! ExternalServiceRegistry::has($chosen)) {
+                    $errors[] = ['pointer' => "/installs/alert_triggers/{$i}/service", 'message' => $with."unknown external service \"{$chosen}\"."];
+                } elseif (! array_key_exists($eventType, ExternalEventTemplateMapping::SERVICE_EVENT_TYPES[$chosen] ?? [])) {
+                    $errors[] = ['pointer' => "/installs/alert_triggers/{$i}/event_type", 'message' => $with."service \"{$chosen}\" has no event type \"{$eventType}\"."];
+                }
+            }
+
+            foreach ($documents as $i => $document) {
+                if (RecipeIngredients::referenced($document['text']) === []) {
+                    continue;
+                }
+                foreach ($this->unprovisionedControlTags(RecipeIngredients::fill($document['text'], $answers)) as $problem) {
+                    $errors[] = ['pointer' => "/installs/overlays/{$i}/file", 'message' => $with.$document['file'].' '.$problem];
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * The overlay documents next to the manifest that exist, keyed by their
+     * index in `installs.overlays`. A missing file is the installer's refusal,
+     * not this one's.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return array<int, array{file: string, text: string}>
+     */
+    private function overlayDocuments(array $manifest, ?string $directory): array
+    {
+        if ($directory === null || ! is_dir($directory)) {
+            return [];
+        }
+
+        $documents = [];
+        foreach ($manifest['installs']['overlays'] ?? [] as $i => $overlay) {
+            $file = $overlay['file'] ?? null;
+            if (! is_string($file)) {
+                continue;
+            }
+            $path = $directory.DIRECTORY_SEPARATOR.basename($file);
+            if (! is_file($path)) {
+                continue;
+            }
+            $documents[$i] = ['file' => $file, 'text' => (string) file_get_contents($path)];
+        }
+
+        return $documents;
+    }
+
+    /**
+     * Every `c:<service>:<key>` tag a filled document reads that its service
+     * does not provision, as one sentence each. Tags are extracted the way
+     * the render allowlist extracts them, conditions included, so a control
+     * read only inside an `[[[if:...]]]` is checked too. A document that
+     * does not parse is one sentence as well: an install would refuse it.
+     *
+     * @return list<string>
+     */
+    private function unprovisionedControlTags(string $markdown): array
+    {
+        try {
+            $doc = OverlayMarkdown::parse($markdown);
+        } catch (InvalidArgumentException $e) {
+            return ['does not parse once filled: '.$e->getMessage()];
+        }
+
+        $template = new OverlayTemplate([
+            'head' => $doc['head'],
+            'html' => $doc['html'],
+            'css' => $doc['css'],
+            'tts_message' => $doc['tts_message'],
+            'chat_message' => $doc['chat_message'],
+        ]);
+
+        $problems = [];
+        foreach ($template->extractTemplateTags([]) as $tag) {
+            $segments = Dsl::segments($tag);
+            if (count($segments) < 3 || $segments[0] !== 'c' || ! ExternalServiceRegistry::has($segments[1])) {
+                continue;
+            }
+            $provisioned = array_column(ExternalServiceRegistry::driver($segments[1])->getAutoProvisionedControls(), 'key');
+            if (! in_array($segments[2], $provisioned, true)) {
+                $problems[] = "reads [[[{$tag}]]], which ".ExternalServiceRegistry::displayName($segments[1]).' does not provision.';
+            }
+        }
+
+        return $problems;
     }
 }

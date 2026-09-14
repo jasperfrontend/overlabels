@@ -69,10 +69,18 @@ class RecipeInstaller
     /**
      * Install a Recipe for a User under the given instance slug.
      *
+     * `$ingredients` is the install's answers to the manifest's questions,
+     * keyed by ingredient key. A question with no answer takes its default;
+     * an answer that is not a choice refuses the install. Every read of the
+     * manifest below is of the RESOLVED one, with the answers written in,
+     * and the answers are recorded on the instance.
+     *
+     * @param  array<string, mixed>  $ingredients
+     *
      * @throws InvalidArgumentException when inputs are malformed
      * @throws RuntimeException when install constraints are violated
      */
-    public function install(Recipe $recipe, User $user, string $instanceSlug, ?string $label = null): RecipeInstance
+    public function install(Recipe $recipe, User $user, string $instanceSlug, ?string $label = null, array $ingredients = []): RecipeInstance
     {
         if (! preg_match(RecipeInstance::SLUG_PATTERN, $instanceSlug)) {
             throw new InvalidArgumentException(
@@ -84,13 +92,16 @@ class RecipeInstaller
         // re-running validation catches any catalogue row hand-edited via
         // tinker, a stale seeded copy, or future migrations that mutated
         // the manifest in place.
-        $result = $this->validator->validate($recipe->manifest);
+        $result = $this->validator->validate($recipe->manifest, self::directoryFor($recipe->slug));
         if (! $result['valid']) {
             throw new RuntimeException(
                 "Recipe '{$recipe->slug}' v{$recipe->version} manifest is invalid: ".
                 json_encode($result['errors'])
             );
         }
+
+        $answers = RecipeIngredients::answers($recipe->manifest, $ingredients);
+        $manifest = RecipeIngredients::resolve($recipe->manifest, $answers);
 
         $duplicate = RecipeInstance::where('user_id', $user->id)
             ->where('recipe_id', $recipe->id)
@@ -114,23 +125,22 @@ class RecipeInstaller
             }
         }
 
-        $this->assertNoChatCommandCollisions($recipe->manifest, $user);
-        $this->assertNoAlertTriggerCollisions($recipe->manifest, $user);
+        $this->assertNoChatCommandCollisions($manifest, $user);
+        $this->assertNoAlertTriggerCollisions($manifest, $user);
 
         // Aliases and commands go through the same validators the settings
         // forms use, BEFORE the transaction: a reply the form would refuse
         // refuses the whole install, with nothing created.
-        $aliases = $this->validatedAliases($recipe->manifest, $user);
-        $commands = $this->validatedCommands($recipe->manifest, $user);
+        $aliases = $this->validatedAliases($manifest, $user);
+        $commands = $this->validatedCommands($manifest, $user);
 
-        return DB::transaction(function () use ($recipe, $user, $instanceSlug, $label, $aliases, $commands) {
-            $manifest = $recipe->manifest;
-
+        return DB::transaction(function () use ($recipe, $manifest, $answers, $user, $instanceSlug, $label, $aliases, $commands) {
             $instance = RecipeInstance::create([
                 'recipe_id' => $recipe->id,
                 'user_id' => $user->id,
                 'instance_slug' => $instanceSlug,
                 'label' => $label ?? $manifest['name'],
+                'ingredients' => $answers,
             ]);
 
             $primitiveMap = ['option_sets' => [], 'pickers' => []];
@@ -207,7 +217,7 @@ class RecipeInstaller
             $overlayTemplates = [];
 
             foreach ($manifest['installs']['overlays'] ?? [] as $overlay) {
-                $template = $this->installOverlay($recipe, $user, $overlay['file']);
+                $template = $this->installOverlay($recipe, $user, $overlay['file'], $answers);
                 $primitiveMap['overlays'][$overlay['ref']] = $template->id;
                 $overlayTemplates[$overlay['ref']] = $template;
             }
@@ -310,8 +320,14 @@ class RecipeInstaller
      * the same control rows. The document is repo content, validated by test
      * rather than per request, so a parse failure here is a broken product,
      * not bad user input.
+     *
+     * The ingredient answers are written into the document's text before it
+     * is parsed, so `[[[c:{{service}}:total_received]]]` lands in the account
+     * as `[[[c:kofi:total_received]]]`. The document on disk is never changed.
+     *
+     * @param  array<string, string>  $answers
      */
-    private function installOverlay(Recipe $recipe, User $user, string $file): OverlayTemplate
+    private function installOverlay(Recipe $recipe, User $user, string $file, array $answers): OverlayTemplate
     {
         $path = self::directoryFor($recipe->slug).DIRECTORY_SEPARATOR.basename($file);
         $markdown = is_file($path) ? file_get_contents($path) : false;
@@ -320,7 +336,7 @@ class RecipeInstaller
             throw new RuntimeException("Recipe '{$recipe->slug}' names an overlay file that does not exist: {$file}");
         }
 
-        $doc = OverlayMarkdown::parse($markdown);
+        $doc = OverlayMarkdown::parse(RecipeIngredients::fill($markdown, $answers));
 
         $fields = array_filter(
             HtmlSanitizationService::sanitizeTemplateFields([
@@ -573,7 +589,7 @@ class RecipeInstaller
      */
     private function productOwnedIntegrations(RecipeInstance $instance): array
     {
-        $declared = $instance->recipe?->manifest['requires_integrations'] ?? [];
+        $declared = $instance->resolvedManifest()['requires_integrations'] ?? [];
         $services = [];
 
         foreach ($instance->primitive_map['integrations'] ?? [] as $service => $info) {
