@@ -188,6 +188,23 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Installing a product is a single recipe install, already guarded
+        // idempotent by ProductController - unlike kit-fork this has no
+        // per-request amplification, so it does not need kit-fork's tight
+        // bucket. Sized off the products page itself: up to 8 products, a
+        // person could plausibly click install/retry a handful of times on
+        // each while connecting a service, with headroom for a slow OAuth
+        // round trip. 20/min is a backstop against a tight script loop; the
+        // hourly bucket is the one that actually bounds a session.
+        RateLimiter::for('product-install', function (Request $request) {
+            $key = $request->user()?->id ?: $request->ip();
+
+            return [
+                Limit::perMinute(20)->by('product-install:'.$key),
+                Limit::perHour(60)->by('product-install:'.$key),
+            ];
+        });
+
         // The living title's settings endpoints each end in a Helix call, and
         // three of them in a WRITE to the streamer's channel: save and resume
         // render at once and PATCH the title, the category picker PATCHes

@@ -691,7 +691,7 @@ Route::middleware('auth.redirect')->group(function () {
 
     // Installing a product. The read side is public, above.
     Route::post('/products/{slug}/install', [ProductController::class, 'install'])
-        ->middleware('throttle:kit-fork')
+        ->middleware('throttle:product-install')
         ->name('products.install')
         ->where('slug', '[a-z][a-z0-9_]*');
     Route::post('/products/{slug}/uninstall', [ProductController::class, 'uninstall'])
