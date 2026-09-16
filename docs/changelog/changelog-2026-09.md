@@ -1,5 +1,35 @@
 # Changelog - September 2026
 
+## OL-2609-089 - September 17th, 2026 - feat(products): Twitch Chat, a fourth product that installs one overlay whose look is twelve controls
+
+Three months of Search Console say the only non-brand thing anyone searched for and found
+Overlabels with was "twitch chat overlay", in six spellings and one Japanese, and nobody clicked,
+because there was nothing to click into: chat on screen existed as a `foreach` loop on a help page,
+which is a fine primitive and a terrible product. Today it is a product. `/products/twitch_chat`
+installs one static overlay and nothing else - no integration, no list, no bot, no mod command - so
+the page goes from Install to "Everything is in place" in one click, and the last step is the OBS
+link. The overlay reads chat straight from Twitch over the anonymous connection the chat feature
+has always used, so it works whether or not Overlabels is having a good day.
+
+The decision that shapes everything after it: the look is controls, not code. Twelve template-scoped
+controls - layout, font, size, name and text colour, Twitch colours on or off, accent, background
+style and colour, lifetime, badges, emote size - each land in one CSS custom property on the root,
+and the layout and background land as class names. Nothing else in the CSS reads a tag, so the
+compiled-bindings fast path handles every write, and a change on the Controls tab reaches OBS the
+same way a Ko-fi total does: in milliseconds, no reload. That is the substrate the chat designer
+will sit on. A designer that compiles HTML would have needed a compiler and a save per change;
+this one only needs a form that writes controls next to a live demo, and the demo and OBS are
+literally the same page.
+
+Two things Chrome taught the document before it shipped. The bindings compiler rewrites a tag in
+CSS to a `var()` reference, so `--font: "[[[c:font]]]"` produced a font family that was the literal
+string `"var(--ol-c-font)"`; the tag has to stand bare. And a flex column that packs toward the
+wrong edge puts the newest message off screen once the window is full: `column-reverse` with
+`flex-start` looked right with four messages and hid the fiftieth at y = -2360. Each layout now
+packs toward the edge the newest message belongs on and lets the overflow spill off the other.
+Presets, the designer and the landing page for that search query are the next three slices, in
+that order.
+
 ## OL-2609-088 - September 16th, 2026 - feat(products): a category per listed recipe, and /products becomes shelves with a sidebar filter
 
 `/products` is the page a first-timer lands on, and until today it was one grid of eight cards in

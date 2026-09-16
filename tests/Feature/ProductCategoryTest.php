@@ -49,7 +49,7 @@ it('gives every listed manifest exactly one category from the taxonomy', functio
     }
 });
 
-it('files the three chat products and the five alerts on the expected shelves', function () {
+it('files the four products and the five alerts on the expected shelves', function () {
     $byCategory = collect(app(RecipeCatalog::class)->listed())
         ->groupBy('category', true)
         ->map(fn ($manifests) => $manifests->keys()->sort()->values()->all())
@@ -57,7 +57,7 @@ it('files the three chat products and the five alerts on the expected shelves', 
 
     expect($byCategory)->toBe([
         'alert' => ['bmac_alert', 'fourthwall_alert', 'kofi_alert', 'streamlabs_alert', 'throne_alert'],
-        'product' => ['chat_checkin', 'chat_tower', 'follower_bowling'],
+        'product' => ['chat_checkin', 'chat_tower', 'follower_bowling', 'twitch_chat'],
     ]);
 });
 
@@ -88,10 +88,10 @@ it('sorts Show all with products first, then alerts, slug order within a shelf',
                 ->where('category', null)
                 ->where('shelf', null)
                 ->where('installed_count', null)
-                ->has('products', 8);
+                ->has('products', 9);
 
             expect(shelfSlugs($page))->toBe([
-                'chat_checkin', 'chat_tower', 'follower_bowling',
+                'chat_checkin', 'chat_tower', 'follower_bowling', 'twitch_chat',
                 'bmac_alert', 'fourthwall_alert', 'kofi_alert', 'streamlabs_alert', 'throne_alert',
             ]);
         });
@@ -104,7 +104,7 @@ it('publishes the shelves with their labels, leads and counts', function () {
             ->where('categories.0.key', 'product')
             ->where('categories.0.label', 'Products')
             ->where('categories.0.lead', RecipeCatalog::CATEGORIES['product']['lead'])
-            ->where('categories.0.count', 3)
+            ->where('categories.0.count', 4)
             ->where('categories.1.key', 'alert')
             ->where('categories.1.label', 'Alerts')
             ->where('categories.1.count', 5)
@@ -125,9 +125,9 @@ it('filters to one shelf through the URL', function () {
 
     $this->get('/products?category=product')
         ->assertInertia(function (Assert $page) {
-            $page->where('category', 'product')->where('shelf.label', 'Products')->has('products', 3);
+            $page->where('category', 'product')->where('shelf.label', 'Products')->has('products', 4);
 
-            expect(shelfSlugs($page))->toBe(['chat_checkin', 'chat_tower', 'follower_bowling']);
+            expect(shelfSlugs($page))->toBe(['chat_checkin', 'chat_tower', 'follower_bowling', 'twitch_chat']);
         });
 });
 
@@ -137,12 +137,12 @@ it('shows all for a category it does not know', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('category', null)
             ->where('shelf', null)
-            ->has('products', 8)
+            ->has('products', 9)
         );
 
     $this->get('/products?category[]=alert')
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('category', null)->has('products', 8));
+        ->assertInertia(fn (Assert $page) => $page->where('category', null)->has('products', 9));
 });
 
 it('carries each product\'s category, service and install chips onto the card', function () {
@@ -157,11 +157,11 @@ it('carries each product\'s category, service and install chips onto the card', 
             ->where('products.2.slug', 'follower_bowling')
             ->where('products.2.service', null)
             ->where('products.2.installs', ['Overlay', 'List', 'Chat command'])
-            ->where('products.5.slug', 'kofi_alert')
-            ->where('products.5.category', 'alert')
-            ->where('products.5.service', 'kofi')
-            ->where('products.5.hero', null)
-            ->where('products.5.installs', ['Alert', 'Integration'])
+            ->where('products.6.slug', 'kofi_alert')
+            ->where('products.6.category', 'alert')
+            ->where('products.6.service', 'kofi')
+            ->where('products.6.hero', null)
+            ->where('products.6.installs', ['Alert', 'Integration'])
         );
 });
 
@@ -171,7 +171,7 @@ it('offers Installed only to an account, and shows what it installed', function 
         ->assertInertia(fn (Assert $page) => $page
             ->where('category', null)
             ->where('installed_count', null)
-            ->has('products', 8)
+            ->has('products', 9)
         );
 
     $user = categoryProductUser();
@@ -216,7 +216,7 @@ it('hands a product page the same sidebar, with its own category marked', functi
             ->where('product.category', 'alert')
             ->has('categories', 2)
             ->where('categories.0.key', 'product')
-            ->where('categories.0.count', 3)
+            ->where('categories.0.count', 4)
             ->where('categories.1.key', 'alert')
             ->where('categories.1.count', 5)
             ->where('installed_count', null)

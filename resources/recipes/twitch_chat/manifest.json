@@ -1,0 +1,28 @@
+{
+  "recipe_format_version": 1,
+  "slug": "twitch_chat",
+  "name": "Twitch Chat",
+  "version": 1,
+  "description": "Your chat on stream, with badges and emotes, read straight from Twitch. Nothing to connect and no bot to add: it works the moment the overlay is in OBS. Twelve controls set the font, the colours, the layout and how long a message stays on screen, and every change lands in OBS as you make it.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "Initial release. The fourth product, and the first that needs nothing beyond the overlay itself: no integration, no list, no bot.",
+  "min_overlabels_version": 1,
+  "requires_integrations": [],
+  "requires_bot": false,
+  "listed": true,
+  "category": "product",
+  "hero": "/products/twitch-chat-hero.svg",
+  "ready_message": "Your chat is on screen. How it looks is twelve controls on the overlay, and every change shows in OBS as you make it.",
+  "notes": [
+    "Every message comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so chat keeps flowing even when Overlabels is having a bad day.",
+    "Size the OBS browser source to size the chat: the feed fills whatever box you give it. 500 by 800 is a good start for a stacked feed, 1920 by 80 for the ticker.",
+    "The feed keeps the most recent 50 messages, which is more than fits on screen. The Chat messages loop limit under Settings, Account shortens it; reload the browser source in OBS after changing it."
+  ],
+  "max_instances_per_user": 1,
+  "installs": {
+    "overlays": [{ "ref": "chat", "file": "chat.md" }]
+  }
+}

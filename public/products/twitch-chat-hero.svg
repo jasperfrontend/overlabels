@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="Albert Sans, sans-serif">
+<defs>
+<clipPath id="f"><rect width="1280" height="720" rx="8"></rect></clipPath>
+<linearGradient id="base" x1=".15" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#2c074b"></stop><stop offset=".7" stop-color="#120720"></stop><stop offset="1" stop-color="#120720"></stop></linearGradient>
+<radialGradient id="sv2" gradientUnits="userSpaceOnUse" cx="179" cy="648" r="768" gradientTransform="translate(0 223) scale(1 .656)"><stop offset="0" stop-color="#5b21b6" stop-opacity=".55"></stop><stop offset=".7" stop-color="#5b21b6" stop-opacity="0"></stop></radialGradient>
+<radialGradient id="sv1" gradientUnits="userSpaceOnUse" cx="1075" cy="86" r="704" gradientTransform="translate(0 25) scale(1 .716)"><stop offset="0" stop-color="#650e8f" stop-opacity=".75"></stop><stop offset=".7" stop-color="#650e8f" stop-opacity="0"></stop></radialGradient>
+<radialGradient id="sa" gradientUnits="userSpaceOnUse" cx="998" cy="245" r="614" gradientTransform="translate(0 67) scale(1 .727)"><stop offset="0" stop-color="#8b5cf6" stop-opacity=".2"></stop><stop offset=".7" stop-color="#8b5cf6" stop-opacity="0"></stop></radialGradient>
+<linearGradient id="band" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d0b30" stop-opacity=".7"></stop><stop offset=".55" stop-color="#650e8f" stop-opacity=".35"></stop><stop offset="1" stop-color="#a78bfa" stop-opacity=".16"></stop></linearGradient>
+</defs>
+<g clip-path="url(#f)">
+<rect width="1280" height="720" fill="url(#base)"></rect>
+<rect width="1280" height="720" fill="url(#sv2)"></rect>
+<rect width="1280" height="720" fill="url(#sv1)"></rect>
+<rect width="1280" height="720" fill="url(#sa)"></rect>
+<rect x="-120" y="474" width="1560" height="120" fill="url(#band)" transform="rotate(-15 660 534)"></rect>
+
+
+<rect x="596" y="96" width="361" height="54" rx="10" fill="#0a0512" fill-opacity=".86"></rect>
+<rect x="614" y="112" width="22" height="22" rx="5" fill="#8b5cf6"></rect>
+<text x="650" y="123" font-size="20" font-weight="700" fill="#3b82f6" dominant-baseline="central">rivermoss</text>
+<text x="756" y="123" font-size="20" font-weight="500" fill="#fafafa" dominant-baseline="central">that jump was clean</text>
+
+
+<rect x="596" y="166" width="509" height="54" rx="10" fill="#0a0512" fill-opacity=".86"></rect>
+<rect x="614" y="182" width="22" height="22" rx="5" fill="#2dd4bf"></rect>
+<rect x="642" y="182" width="22" height="22" rx="5" fill="#8b5cf6"></rect>
+<text x="678" y="193" font-size="20" font-weight="700" fill="#f97316" dominant-baseline="central">pixel_kat</text>
+<text x="777" y="193" font-size="20" font-weight="500" fill="#fafafa" dominant-baseline="central">hello from the night shift</text>
+<rect x="1025" y="180" width="26" height="26" rx="6" fill="#facc15"></rect>
+<rect x="1061" y="180" width="26" height="26" rx="6" fill="#f472b6"></rect>
+
+
+<rect x="596" y="236" width="661" height="54" rx="10" fill="#0a0512" fill-opacity=".86"></rect>
+<rect x="614" y="252" width="22" height="22" rx="5" fill="#8b5cf6"></rect>
+<text x="650" y="263" font-size="20" font-weight="700" fill="#a3e635" dominant-baseline="central">lena_streams</text>
+<rect x="787" y="248" width="134" height="30" rx="15" fill="#7c3aed"></rect>
+<text x="799" y="263" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" letter-spacing="1.3" fill="#fafafa" dominant-baseline="central">FIRST MESSAGE</text>
+<text x="935" y="263" font-size="20" font-weight="500" fill="#fafafa" dominant-baseline="central">found you through a raid, staying</text>
+
+
+<rect x="596" y="306" width="342" height="54" rx="10" fill="#7c3aed" fill-opacity=".2"></rect>
+<path d="M600 306h-4a10 10 0 0 0-10 10v34a10 10 0 0 0 10 10h4z" fill="#a78bfa" transform="translate(10 0)"></path>
+<rect x="618" y="322" width="22" height="22" rx="5" fill="#ef4444"></rect>
+<text x="654" y="333" font-size="20" font-weight="700" fill="#c4b5fd" dominant-baseline="central">you</text>
+<text x="702" y="333" font-size="20" font-weight="500" fill="#fafafa" dominant-baseline="central">welcome in, grab a seat</text>
+
+
+<rect x="596" y="376" width="451" height="54" rx="10" fill="#0a0512" fill-opacity=".86"></rect>
+<text x="614" y="403" font-size="20" font-weight="700" fill="#22c55e" dominant-baseline="central">quietdan</text>
+<text x="709" y="403" font-size="20" font-weight="500" fill="#fafafa" dominant-baseline="central">chat looks so good on stream</text>
+<rect x="1003" y="390" width="26" height="26" rx="6" fill="#2dd4bf"></rect>
+
+
+<text x="64" y="86" font-family="JetBrains Mono, monospace" font-size="13" letter-spacing="2.6" fill="#a78bfa" dominant-baseline="central">AN OVERLABELS.COM PRODUCT</text>
+<text x="64" y="153" font-size="92" font-weight="800" letter-spacing="-3.68" fill="#ffffff" dominant-baseline="central">TWITCH</text>
+<text x="64" y="234" font-size="92" font-weight="800" letter-spacing="-3.68" fill="#ffffff" dominant-baseline="central">CHAT</text>
+<text x="64" y="315" font-size="92" font-weight="800" letter-spacing="-3.68" fill="#ffffff" dominant-baseline="central">OVERLAY</text>
+
+
+<text x="64" y="620" font-size="22" font-weight="500" fill="#e9d5ff" dominant-baseline="central">Your Twitch chat in an overlay, anyway you like.</text>
+<text x="64" y="649" font-size="22" font-weight="500" fill="#e9d5ff" dominant-baseline="central">Choose your own style!</text>
+</g>
+</svg>
