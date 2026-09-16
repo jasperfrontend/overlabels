@@ -17,6 +17,10 @@ const props = defineProps<{
   tokenName: string;
   // Path the fragment is appended to, e.g. `/overlay/my-slug/` or `/events/feed`.
   urlBase: string;
+  // Origin the URL is built on. Omitted = the current origin. AddToObsButton
+  // passes the hosted-overlay origin (overlabels.net on prod); the events feed
+  // deliberately does not, it lives on the app's own origin.
+  origin?: string;
   // Abilities for the minted token; omitted = unrestricted (legacy behavior).
   abilities?: string[];
   // Shown by the pre-open link warning (the "don't show this on stream" gate).
@@ -89,7 +93,7 @@ function generate() {
       }
 
       const data = await response.json();
-      generatedUrl.value = `${window.location.origin}${props.urlBase}#${data.plain_token}`;
+      generatedUrl.value = `${props.origin ?? window.location.origin}${props.urlBase}#${data.plain_token}`;
     } catch (e) {
       console.error('[Token URL]', e);
       error.value = 'Failed to generate a token. Please try again.';

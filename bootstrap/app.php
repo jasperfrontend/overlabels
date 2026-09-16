@@ -9,6 +9,7 @@ use App\Http\Middleware\HandleImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RateLimitOverlayAccess;
 use App\Http\Middleware\RedirectIfUnauthenticated;
+use App\Http\Middleware\RestrictOverlayHost;
 use App\Http\Middleware\ValidateOverlayToken;
 use App\Http\Middleware\VerifyBotListenerSecret;
 use Illuminate\Foundation\Application;
@@ -49,6 +50,16 @@ return Application::configure(basePath: dirname(__DIR__))
             fn ($request) => $request->is('dashboard/lists', 'dashboard/lists/*'),
         ]);
 
+        // The overlay host (overlabels.net) answers the hosted overlay and its
+        // API only; everything else there is a 404. Prepended to both groups
+        // so the 404 lands before a session is started for it. Group rather
+        // than global middleware because the route is matched by then, which
+        // is what lets the allowlist be route names. Inert unless OVERLAY_URL
+        // is set. See RestrictOverlayHost.
+        $middleware->web(prepend: [
+            RestrictOverlayHost::class,
+        ]);
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
@@ -59,6 +70,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Add Sanctum's stateful middleware to API routes
         $middleware->api(prepend: [
+            RestrictOverlayHost::class,
             EnsureFrontendRequestsAreStateful::class,
             CheckBanned::class,
         ]);

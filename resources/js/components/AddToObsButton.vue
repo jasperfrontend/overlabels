@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import TokenUrlDialog from '@/components/TokenUrlDialog.vue';
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from 'reka-ui';
+import type { AppPageProps } from '@/types';
 
 const props = defineProps<{
   template: { id: number; name: string; slug: string };
 }>();
+
+// Hosted overlays get their own origin (overlabels.net on prod) so Chrome's
+// per-origin zoom on the dashboard stops zooming an overlay tab with it.
+// Null locally, which means the current origin.
+const page = usePage<AppPageProps>();
+const overlayOrigin = page.props.overlayOrigin ?? undefined;
 
 const dialogRef = ref<InstanceType<typeof TokenUrlDialog> | null>(null);
 const showObsScreenshot = ref(false);
@@ -40,6 +48,7 @@ defineExpose({ generateOBSUrl });
     title="Add this overlay to OBS"
     :token-name="`OBS - ${props.template?.name ?? 'Overlay'}`"
     :url-base="`/overlay/${props.template?.slug}/`"
+    :origin="overlayOrigin"
     :warning="obsWarning"
     copy-hint='Easy: Just drag the box below in your OBS and click "Yes" to confirm.'
     qr-hint="Scan with your phone to open this overlay. This code contains your secret token, so do not show it on stream."

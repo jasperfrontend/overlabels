@@ -11,8 +11,11 @@ context: tokens.index
 Your overlay URL looks like this:
 
 ```
-https://overlabels.com/overlay/my-overlay#7f3a9c...  <- 64 hex characters
+https://overlabels.net/overlay/my-overlay/#7f3a9c...  <- 64 hex characters
 ```
+
+Hosted overlays live on `overlabels.net`, a separate domain from the dashboard, so a zoomed dashboard
+tab in Chrome does not zoom your overlay with it. An older URL on `overlabels.com` keeps working as is.
 
 Everything before the `#` is public and boring. Everything after it is the credential. This page explains
 what that credential is and how it is handled, because "paste this URL into OBS" deserves a better answer

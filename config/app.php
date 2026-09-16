@@ -56,6 +56,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hosted Overlay URL
+    |--------------------------------------------------------------------------
+    |
+    | A second origin that serves ONLY the hosted overlay (the OBS browser
+    | source URL) and its API, so Chrome's per-origin zoom on the dashboard
+    | stops zooming an overlay tab with it. Prod sets https://overlabels.net.
+    | Unset: "Add to OBS" mints URLs on the current origin and
+    | RestrictOverlayHost does nothing. See that middleware for the gating.
+    |
+    */
+
+    'overlay_url' => env('OVERLAY_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

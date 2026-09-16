@@ -78,6 +78,13 @@ class HandleInertiaRequests extends Middleware
             // this stays empty until a page claims the route.
             'help' => fn () => HelpContext::forRequest($request),
             'isAdmin' => fn () => $request->user()?->isAdmin() ?? false,
+            // The origin "Add to OBS" mints hosted-overlay URLs on
+            // (https://overlabels.net on prod). Null = use the current origin.
+            // Only the OBS dialog reads it; the events-feed link stays on the
+            // app's own origin. See config/app.php `overlay_url`.
+            'overlayOrigin' => fn () => is_string(config('app.overlay_url')) && config('app.overlay_url') !== ''
+                ? rtrim(config('app.overlay_url'), '/')
+                : null,
             // One-off nudges this user has already clicked away. Shared rather
             // than passed per page, because a NudgeBar can sit on any of them.
             'dismissedNudges' => fn () => $request->user()?->preference('dismissed_nudges', []) ?? [],

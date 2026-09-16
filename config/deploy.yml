@@ -28,6 +28,19 @@ servers:
       hosts:
         - overlabels.com
         - www.overlabels.com
+        # The hosted-overlay origin (see OVERLAY_URL below). Same container,
+        # same app; RestrictOverlayHost 404s everything on it except the
+        # overlay page and /api/overlay/*. Its Let's Encrypt challenge runs
+        # over plain HTTP at /.well-known/acme-challenge/, so the Cloudflare
+        # zone must let that path through un-redirected, as the .com zone
+        # does - a blanket HTTP->HTTPS redirect rule there leaves this name
+        # with no cert and every request answering 525.
+        #
+        # www.overlabels.net is deliberately NOT here: Cloudflare redirects it
+        # to the apex at the edge, so the origin never sees that hostname and
+        # a cert for it could never be validated anyway. Unlike www.overlabels.com,
+        # which the Caddyfile redirects and therefore needs a cert.
+        - overlabels.net
       app_port: 80
       # Required for the app to see real client IPs now that overlabels.com is
       # proxied by Cloudflare. kamal-proxy defaults this to FALSE whenever
@@ -161,6 +174,12 @@ env:
     APP_ENV: production
     APP_DEBUG: "false"
     APP_URL: https://overlabels.com
+    # Second origin for the hosted overlay (OBS browser-source URL) only, so
+    # Chrome's per-origin zoom on the dashboard stops zooming an overlay tab
+    # with it. Drives both RestrictOverlayHost (what that host may serve) and
+    # the origin "Add to OBS" mints. .com keeps serving every existing OBS
+    # URL unchanged. Must also be in the web role's proxy hosts above.
+    OVERLAY_URL: https://overlabels.net
     APP_NAME: Overlabels
     APP_FORCE_HTTPS: "true"
     LOG_CHANNEL: stderr

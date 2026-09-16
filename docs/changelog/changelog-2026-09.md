@@ -1,5 +1,39 @@
 # Changelog - September 2026
 
+## OL-2609-087 - September 16th, 2026 - feat(overlay): hosted overlays answer on overlabels.net, and only the hosted overlay does
+
+Chrome remembers zoom per origin. Zoom the dashboard a notch and every other tab on
+`overlabels.com` zooms with it, including the hosted overlay open next to it for a look at the
+real thing. There is no per-tab switch for that in Chrome, so the fix is to give the overlay an
+origin of its own: `https://overlabels.net/overlay/{slug}/#token` is what "Add to OBS" hands out
+from today, and it is the same app, the same container, the same token in the same fragment.
+Every OBS browser source already pointed at `.com` keeps working unchanged; nothing redirects and
+nothing deprecates. The second domain is additive.
+
+What made it a small change is that the overlay pipeline never cared what host it was on. The
+token lives in the URL fragment and travels to the server in a POST body, not a cookie; the API
+and Reverb already answered any origin; the Caddyfile only knows one hostname, `www`, and sends it
+to the apex. So the app-side work is one middleware, `RestrictOverlayHost`, which on the overlay
+host 404s everything that is not the overlay page or `/api/overlay/*`. That allowlist is short on
+purpose and the reason is the public share pages. `/overlay/{slug}/public` and its `.md` twin are
+what search engines and language models have spent weeks learning to associate with
+`overlabels.com`, and a second copy on a second domain is the one thing this must not create.
+So they are not reachable on `.net` at all, and a test pins that in both directions.
+
+One env var, `OVERLAY_URL`, drives the whole thing: the middleware reads its host from it and the
+OBS dialog reads its origin from it. Unset, which is every local install, and both are inert. The
+events-feed link deliberately stays on the app's own origin; only the OBS dialog moved.
+
+The infrastructure half is where the day went. The `.net` zone was already proxied by Cloudflare,
+but kamal-proxy proves ownership to Let's Encrypt over plain HTTP at
+`/.well-known/acme-challenge/`, and a Redirect Rule on the new zone was bouncing that path to
+HTTPS, where the origin had no certificate yet to answer with. On `.com` that path passes straight
+through, and its certificate was issued on August 20th, after the zone went proxied, so issuance
+behind Cloudflare is proven; the rule was the difference. `www.overlabels.net` is redirected at the
+Cloudflare edge rather than by the Caddyfile like its `.com` sibling, which means the origin never
+sees that hostname and does not ask for a certificate it could never validate. That asymmetry is
+recorded in `config/deploy.yml` next to the hosts list.
+
 ## OL-2609-084 - September 15th, 2026 - feat(products): one product per donation service, each connecting its service on the product page
 
 Donation Alerts, one product wrapping five services, lasted a day. It was one thing only because

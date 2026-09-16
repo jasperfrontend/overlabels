@@ -57,6 +57,8 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
   help: HelpLink[];
   flash: FlashMessage;
   isAdmin: boolean;
+  /** Origin the "Add to OBS" dialog mints hosted-overlay URLs on; null = the current origin. */
+  overlayOrigin: string | null;
   /** Keys of one-off NudgeBars this user has already clicked away. */
   dismissedNudges: string[];
   impersonating: { real_admin_id: number; target_user_id: number; target_name: string | null } | null;
