@@ -1,5 +1,32 @@
 # Changelog - September 2026
 
+## OL-2609-090 - September 17th, 2026 - feat(products): ten looks for Twitch Chat, a skin control and one-click presets on the product page
+
+Yesterday's Twitch Chat product had twelve controls and one look. Twelve colour and size knobs
+can produce a hundred variations of the same row, and that is the mediocrity every chat overlay
+on Twitch already ships. What makes a chat look like a thing is shape and behaviour: a speech
+bubble with the name above it, a terminal prompt with a cursor blinking on the last line, a card
+with the name as a header bar in the chatter's own colour. That lives in CSS, so the overlay
+gained a thirteenth control, `skin`, and ten blocks of rules keyed off it. A preset is now a skin
+plus a palette, and the two are separable: Terminal in pink is one control away.
+
+The ten, each an answer to "what is chat doing on this stream" rather than a palette: Clean (the
+default), Terminal, Bubbles, Neon, Paper (the light one, because every chat overlay is dark and
+art streams are not), Broadcast (a continuous news bar), Caption (big centred subtitles that fade
+after twelve seconds, for IRL), Pixel (Silkscreen, stepped borders), Cards and Vapor. They live in
+`ChatPresets`, a PHP constant versioned with the overlay document, and the product page grows a
+"Pick a look" row of ten cards, each drawn in its own font. Apply is one POST that writes the
+thirteen controls and broadcasts each one, the same path the controls tab takes, so OBS changes
+as the page comes back. Which preset is active is never stored: it is read off the controls, so
+a streamer who nudges one value after applying a preset is shown no preset, which is the truth.
+
+The recipe is version 2. Nobody had installed version 1 on prod, so this is a new row in the
+catalogue rather than a migration. Every look was applied to a local install and checked in Chrome
+with generated chat, which corrected three skins before they shipped: bubbles stretched to full
+width with the badges on their own line, the broadcast bar had gaps between tiles, and neon and
+pixel rows did not hug their text. The designer, with its speed-controlled demo chat, is the next
+slice, and it sits on exactly this: a form that writes controls, next to the real renderer.
+
 ## OL-2609-089 - September 17th, 2026 - feat(products): Twitch Chat, a fourth product that installs one overlay whose look is twelve controls
 
 Three months of Search Console say the only non-brand thing anyone searched for and found

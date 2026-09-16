@@ -697,6 +697,11 @@ Route::middleware('auth.redirect')->group(function () {
     Route::post('/products/{slug}/uninstall', [ProductController::class, 'uninstall'])
         ->name('products.uninstall')
         ->where('slug', '[a-z][a-z0-9_]*');
+    // A preset: one click writes every look control on the product's overlay.
+    // Only a product that declares presets (ChatPresets) answers here.
+    Route::post('/products/{slug}/presets/{preset}', [ProductController::class, 'applyPreset'])
+        ->name('products.preset')
+        ->where(['slug' => '[a-z][a-z0-9_]*', 'preset' => '[a-z][a-z0-9_]*']);
     // "Not now" on the setup banner. Declared before the slug routes would
     // not matter (different method and path), kept next to them for reading.
     Route::post('/products/setup/dismiss', [ProductController::class, 'dismissSetup'])

@@ -20,7 +20,7 @@ uses(DatabaseTransactions::class);
 /**
  * Twitch Chat is the fourth product and the first that installs nothing but
  * an overlay: no integration, no list, no bot. The overlay reads chat from
- * Twitch directly, and its whole look is twelve template-scoped controls
+ * Twitch directly, and its whole look is thirteen template-scoped controls
  * that land in CSS custom properties, so a designer can drive it later by
  * writing controls alone.
  */
@@ -71,7 +71,7 @@ it('shows one overlay and nothing else to connect', function () {
         );
 });
 
-it('installs the chat overlay with its twelve controls and no other rows', function () {
+it('installs the chat overlay with its thirteen controls and no other rows', function () {
     $user = twitchChatUser();
 
     $instance = app(RecipeInstaller::class)->install(twitchChatRecipe(), $user, 'twitch_chat');
@@ -86,11 +86,12 @@ it('installs the chat overlay with its twelve controls and no other rows', funct
 
     $controls = OverlayControl::where('overlay_template_id', $template->id)->orderBy('sort_order')->get();
     expect($controls->pluck('key')->all())->toBe([
-        'layout', 'font', 'font_size', 'twitch_colors', 'name_color', 'text_color',
+        'skin', 'layout', 'font', 'font_size', 'twitch_colors', 'name_color', 'text_color',
         'accent', 'background', 'background_color', 'lifetime', 'show_badges', 'emote_size',
     ])
         ->and($controls->where('type', 'expression')->count())->toBe(0)
         ->and($controls->where('source_managed', true)->count())->toBe(0)
+        ->and($controls->firstWhere('key', 'skin')->value)->toBe('clean')
         ->and($controls->firstWhere('key', 'layout')->value)->toBe('bottom')
         ->and($controls->firstWhere('key', 'lifetime')->value)->toBe('0')
         ->and($controls->firstWhere('key', 'accent')->value)->toBe('#9146ff');
@@ -108,7 +109,7 @@ it('reads every control it declares, and every control it reads is declared', fu
     $read = collect($m[1])->unique()->sort()->values()->all();
 
     expect($read)->toBe($declared)
-        ->and(count($declared))->toBe(12);
+        ->and(count($declared))->toBe(13);
 });
 
 it('keeps the CSS on the compiled-bindings fast path: no if or foreach blocks in it', function () {
@@ -123,6 +124,7 @@ it('only carries the fading class when the lifetime control is above zero', func
     $html = twitchChatDocument()['html'];
 
     expect($html)->toContain('[[[if:c:lifetime > 0]]] fading[[[endif]]]')
+        ->and($html)->toContain('skin-[[[c:skin]]]')
         ->and($html)->toContain('layout-[[[c:layout]]]')
         ->and($html)->toContain('bg-[[[c:background]]]');
 });

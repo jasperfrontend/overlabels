@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ControlValueUpdated;
 use App\Models\EventTemplateMapping;
 use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
@@ -16,6 +17,7 @@ use App\Services\BotModeratedChannels;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeIngredients;
 use App\Services\Recipes\RecipeInstaller;
+use App\Support\ChatPresets;
 use App\Support\OverlayMarkdown;
 use App\Support\ProductSetup;
 use App\Support\ServiceConnections;
@@ -273,6 +275,9 @@ class ProductController extends Controller
                     ->all(),
                 'notes' => $manifest['notes'] ?? [],
                 'ready_message' => $manifest['ready_message'] ?? null,
+                // The product's fixed looks, with the one its overlay currently
+                // holds marked. Empty for every product but Twitch Chat.
+                'presets' => ChatPresets::forProduct($slug, $instance),
             ],
             'installed' => $installed,
             'categories' => $this->categories(),
@@ -312,6 +317,37 @@ class ProductController extends Controller
         ProductSetup::start($user, $slug);
 
         return redirect()->route('products.show', $slug)->with('success', $manifest['name'].' is installed.');
+    }
+
+    /**
+     * One click, thirteen controls. Writes the preset onto the product's
+     * overlay and broadcasts every control the way the controls tab does,
+     * so OBS changes as the page reloads. The result is the card turning
+     * to Applied and the overlay itself; no toast.
+     */
+    public function applyPreset(Request $request, string $slug, string $preset): RedirectResponse
+    {
+        abort_unless(ChatPresets::has($slug) && isset(ChatPresets::PRESETS[$preset]), 404);
+
+        $user = $request->user();
+        $instance = $this->instanceFor($user, $slug);
+        $template = $instance ? ChatPresets::overlayFor($instance) : null;
+        abort_if($template === null || $template->owner_id !== $user->id, 404);
+
+        foreach (ChatPresets::apply($template, $preset) as $control) {
+            ControlValueUpdated::dispatch(
+                $template->slug,
+                $control->broadcastKey(),
+                $control->type,
+                (string) $control->value,
+                $user->twitch_id,
+                null,
+                null,
+                null
+            );
+        }
+
+        return redirect()->route('products.show', $slug);
     }
 
     public function dismissSetup(Request $request): RedirectResponse

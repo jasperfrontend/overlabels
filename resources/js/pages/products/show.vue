@@ -59,6 +59,25 @@ interface Product {
   commands: { command: string; kind: 'appender' | 'alias' | 'command'; detail: string }[];
   notes: string[];
   ready_message: string | null;
+  presets: Preset[];
+}
+/** A fixed look for the product's overlay: a skin plus a palette, applied in one click. */
+interface Preset {
+  key: string;
+  label: string;
+  blurb: string;
+  active: boolean;
+  preview: {
+    skin: string;
+    font: string;
+    name_color: string;
+    text_color: string;
+    accent: string;
+    background: string;
+    background_color: string;
+    twitch_colors: string;
+    layout: string;
+  };
 }
 
 interface InstalledOverlay {
@@ -168,6 +187,30 @@ function install(): void {
 // Only a static overlay goes into OBS. An alert renders inside the static
 // overlays it targets, so offering it an "Add to OBS" button sends the person
 // to a page that warns them off doing exactly that.
+// The looks. Applying one is a POST; the page comes back with that card
+// marked Applied and the overlay in OBS already changed, so nothing else
+// needs saying. The swatch on each card is drawn in the preset's own font,
+// which is why the page pulls the overlay's font families in while a
+// product has presets.
+const presets = computed(() => props.product.presets ?? []);
+const applying = ref<string | null>(null);
+function applyPreset(key: string) {
+  applying.value = key;
+  router.post(route('products.preset', [props.product.slug, key]), {}, { preserveScroll: true, onFinish: () => (applying.value = null) });
+}
+const PRESET_FONTS =
+  'https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;700&family=Inter:wght@400;700&family=Space+Grotesk:wght@400;700&family=Fredoka:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Silkscreen:wght@400;700&display=swap';
+function swatchStyle(preset: Preset) {
+  const p = preset.preview;
+  return {
+    fontFamily: `"${p.font}", "Albert Sans", sans-serif`,
+    color: p.text_color,
+    background: p.background === 'none' ? 'transparent' : p.background_color,
+    borderColor: p.background === 'none' ? p.accent : 'transparent',
+    textShadow: p.background === 'none' ? '0 1px 2px rgba(0,0,0,.85)' : 'none',
+  };
+}
+
 const stages = computed(() => (props.installed?.overlays ?? []).filter((overlay) => overlay.type !== 'alert'));
 const alerts = computed(() => (props.installed?.overlays ?? []).filter((overlay) => overlay.type === 'alert'));
 
@@ -271,6 +314,7 @@ async function uninstall(): Promise<void> {
 <template>
   <Head>
     <title>{{ product.name }}</title>
+    <link v-if="presets.length" rel="stylesheet" :href="PRESET_FONTS" />
     <meta name="description" :content="product.description" />
   </Head>
 
@@ -611,6 +655,69 @@ async function uninstall(): Promise<void> {
       <!-- Installed, steps left: the checklist as a progress piece. Everything
            the installer did is already a tick; each remaining line has one
            button; the bar fills as they go. -->
+      <!-- The looks. Only a product with presets (Twitch Chat) has any, and only
+           an install can apply one: the click writes the overlay's controls and
+           OBS follows. The card is the whole feedback: it turns to Applied. -->
+      <section v-if="installed && presets.length" class="mt-8 flex flex-col gap-3">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 class="text-lg font-semibold text-foreground">Pick a look</h2>
+          <p class="text-sm text-muted-foreground">One click. Your overlay changes as it lands, in OBS too.</p>
+        </div>
+        <ul class="grid gap-3 sm:grid-cols-2">
+          <li
+            v-for="preset in presets"
+            :key="preset.key"
+            class="collection-row flex flex-col gap-3 border p-3"
+            :class="preset.active ? 'border-green-500/60' : 'border-border'"
+            :data-preset="preset.key"
+          >
+            <div
+              class="flex flex-col gap-1 rounded-sm border px-3 py-2.5 text-[15px] leading-snug"
+              :class="preset.preview.background === 'none' ? 'bg-zinc-800 dark:bg-zinc-900' : ''"
+              :style="swatchStyle(preset)"
+              aria-hidden="true"
+            >
+              <p class="truncate">
+                <span class="font-bold" :style="{ color: preset.preview.twitch_colors === '1' ? '#1e90ff' : preset.preview.name_color }"
+                  >rivermoss</span
+                ><span class="opacity-70">:</span>
+                that jump was clean
+              </p>
+              <p class="truncate">
+                <span class="font-bold" :style="{ color: preset.preview.twitch_colors === '1' ? '#ff7f50' : preset.preview.name_color }"
+                  >pixel_kat</span
+                ><span class="opacity-70">:</span>
+                <span
+                  class="mr-1 inline-block rounded-full px-1.5 align-[0.1em] text-[9px] font-bold tracking-wide text-white uppercase"
+                  :style="{ background: preset.preview.accent }"
+                  >first message</span
+                >
+                hello from the night shift
+              </p>
+            </div>
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-medium text-foreground">{{ preset.label }}</p>
+                <p class="text-sm text-foreground">{{ preset.blurb }}</p>
+              </div>
+              <span v-if="preset.active" class="inline-flex shrink-0 items-center gap-1 text-sm text-green-600 dark:text-green-400">
+                <Check class="size-4" />
+                Applied
+              </span>
+              <button
+                v-else
+                type="button"
+                class="btn btn-sm btn-primary shrink-0 cursor-pointer"
+                :disabled="applying !== null"
+                @click="applyPreset(preset.key)"
+              >
+                {{ applying === preset.key ? 'Applying' : 'Apply' }}
+              </button>
+            </div>
+          </li>
+        </ul>
+      </section>
+
       <section v-if="installed && installed.subject" class="mt-8 flex flex-col gap-3">
         <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 class="text-lg font-semibold text-foreground">{{ remaining ? 'Finish setting up' : 'Your setup' }}</h2>
