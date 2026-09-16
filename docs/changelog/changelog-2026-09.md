@@ -1,5 +1,25 @@
 # Changelog - September 2026
 
+## OL-2609-088 - September 16th, 2026 - feat(products): a category per listed recipe, and /products becomes shelves with a sidebar filter
+
+`/products` is the page a first-timer lands on, and until today it was one grid of eight cards in
+slug order: Buy Me a Coffee first, the three chat products scattered among five alerts, nothing to
+say which was which. Every listed recipe now carries a `category` in its manifest, at most one,
+`product` or `alert`, and the page is built from it. A sidebar on the left holds Products, Alerts
+and Show all, each a real link with the filter in the URL (`?category=alert`), so a shelf can be
+shared and the back button brings it back. Show all stacks the shelves in that order, each with its
+own heading and a line saying what the shelf is for. An account also gets an Installed link.
+
+A chat game and a donation alert are not the same weight, and the page now says so with its
+layout rather than its words. The Products shelf keeps the full card with the hero artwork and
+small chips saying what an install puts in the account (Overlay, Integration, List, Chat command),
+derived from the manifest's `installs` block. The Alerts shelf is a quieter row of five tiles:
+the service's icon in its colour, the same 4x4 glyph the events feed uses, the name, and which
+service it connects. The full description waits on the product page. Each shelf has its own
+lead in its own register, and the page lead only frames: free, made by Overlabels, one click. A category the page does
+not know shows everything rather than a 404. The taxonomy is one constant, `RecipeCatalog::CATEGORIES`,
+and a test keeps the manifest schema's enum identical to it.
+
 ## OL-2609-087 - September 16th, 2026 - feat(overlay): hosted overlays answer on overlabels.net, and only the hosted overlay does
 
 Chrome remembers zoom per origin. Zoom the dashboard a notch and every other tab on

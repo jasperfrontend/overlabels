@@ -13,6 +13,7 @@
   "requires_integrations": ["checkin"],
   "requires_bot": true,
   "listed": true,
+  "category": "product",
   "hero": "/products/chat-checkin-hero.svg",
   "ready_message": "Your chat can type !checkin right now, and the globe is waiting in OBS.",
   "notes": [

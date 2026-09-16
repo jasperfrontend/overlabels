@@ -85,6 +85,11 @@
       "description": "Whether the recipe is shown on the public /products page as an installable product. Unlisted recipes can still be installed by a seeder or tinker.",
       "default": false
     },
+    "category": {
+      "type": "string",
+      "description": "Which shelf of the /products page a listed recipe sits on. At most one, not hierarchical: `product` is something viewers do in chat and see on stream, `alert` is a service the streamer already uses landing on their stream. A listed recipe without one is shown after both shelves under Show all and under no filter. Optional.",
+      "enum": ["product", "alert"]
+    },
     "requires_bot": {
       "type": "boolean",
       "description": "Whether the installed result only works with the Overlabels bot in the streamer's chat. Drives the human steps on the product page: it is not something the installer can do.",

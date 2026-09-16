@@ -13,6 +13,7 @@
   "requires_integrations": [],
   "requires_bot": true,
   "listed": true,
+  "category": "product",
   "hero": "/products/follower-bowling-hero.svg",
   "follower_pins": 10,
   "ready_message": "Your chat can type !bowl right now. Switch on gobowl when you want the lane on screen.",

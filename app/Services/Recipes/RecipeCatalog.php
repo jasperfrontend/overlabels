@@ -13,6 +13,23 @@ use RuntimeException;
  */
 class RecipeCatalog
 {
+    /**
+     * The shelves of /products, in the order Show all stacks them. A listed
+     * manifest carries at most one `category`, and the schema's enum is
+     * exactly these keys (pinned by ProductCategoryTest). `label` is the
+     * sidebar link and the shelf heading; `lead` is the line under it.
+     */
+    public const CATEGORIES = [
+        'product' => [
+            'label' => 'Products',
+            'lead' => 'Small games your chat plays together, live, on your stream. No other overlay pack has these.',
+        ],
+        'alert' => [
+            'label' => 'Alerts',
+            'lead' => 'Connect Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee or Throne, and every tip, order or gift lands on your stream with a sound, a spoken line and a message in chat.',
+        ],
+    ];
+
     public function __construct(
         private readonly RecipeManifestValidator $validator = new RecipeManifestValidator,
     ) {}

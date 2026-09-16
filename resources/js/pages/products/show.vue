@@ -9,6 +9,9 @@ import { useConfirm } from '@/composables/useConfirm';
 import { withLastMileHint } from '@/composables/useUiMode';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
+import ServiceLogo from '@/components/ServiceLogo.vue';
+import { useEventColors } from '@/composables/useEventColors';
+import ProductsLayout, { type ProductCategory } from '@/layouts/ProductsLayout.vue';
 import ProductServices from '@/components/ProductServices.vue';
 import type { ProductService } from '@/components/ProductServices.vue';
 import RekaToast from '@/components/RekaToast.vue';
@@ -46,6 +49,7 @@ interface Product {
   slug: string;
   name: string;
   description: string;
+  category: string | null;
   requires_bot: boolean;
   hero: string | null;
   ingredients: Ingredient[];
@@ -107,10 +111,13 @@ interface Installed {
 const props = defineProps<{
   product: Product;
   installed: Installed | null;
+  categories: ProductCategory[];
+  installed_count: number | null;
 }>();
 
 const page = usePage<AppPageProps>();
 const isAuthed = computed(() => !!page.props.auth?.user);
+const { eventTypeDotClass } = useEventColors();
 const installError = computed(() => (page.props.errors as Record<string, string> | undefined)?.install);
 
 // Same flash-to-toast wiring as AppLayout. This page renders outside it, so
@@ -271,20 +278,10 @@ async function uninstall(): Promise<void> {
        normally lives, so the uninstall confirm needs its own mount. -->
   <ConfirmDialog />
   <RekaToast v-if="flashMessage" :key="flashKey" :message="flashMessage" :type="flashType" @dismiss="flashMessage = null" />
-  <div class="min-h-screen bg-background text-foreground">
-    <div class="mx-auto max-w-4xl p-4 lg:p-6">
-      <div class="mb-6 flex items-center justify-between">
-        <a href="/" class="flex cursor-pointer items-center gap-2 text-sm font-bold tracking-tight text-foreground hover:text-violet-400">
-          <img src="/favicon-light.svg" alt="" class="h-6 w-6 dark:hidden" />
-          <img src="/favicon.png" alt="" class="hidden h-6 w-6 dark:block" />
-          Overlabels
-        </a>
-        <div class="flex items-center gap-4 text-sm">
-          <Link href="/products" class="text-violet-400 hover:underline">All products</Link>
-          <Link v-if="isAuthed" :href="route('dashboard.index')" class="text-violet-400 hover:underline">Dashboard</Link>
-        </div>
-      </div>
-
+  <ProductsLayout :categories="categories" :category="product.category" :installed-count="installed_count" :crumb="product.name">
+    <!-- The product's own column keeps the measure it was written for; the
+         layout's grid is wider than a page of prose wants to be. -->
+    <div class="max-w-4xl">
       <!-- The same artwork as the listing card, full width, as the page's hero. -->
       <img v-if="product.hero" :src="product.hero" alt="" class="mb-4 block aspect-video w-full object-cover" />
 
@@ -294,17 +291,27 @@ async function uninstall(): Promise<void> {
            job is to make that feel like it counted. -->
       <header
         class="flex flex-col gap-3 border p-5"
-        :class="installed ? 'border-green-500/60 bg-green-950/40 dark:bg-green-950/40' : 'border-sidebar-border bg-sidebar'"
+        :class="installed ? 'border-green-600/60 bg-green-50 dark:border-green-500/60 dark:bg-green-950/40' : 'border-sidebar-border bg-sidebar'"
       >
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div class="flex min-w-0 items-start gap-3">
+            <!-- The badge is only ever "an official Overlabels product" in
+                 one colour; the green header and the Installed line above the
+                 name carry the installed state. An alert shows its service's
+                 icon instead: it is that service's API inside Overlabels. -->
             <ProductBadge
+              v-if="product.category === 'product'"
               label="An official Overlabels product"
-              class="mt-0.5 size-9 shrink-0"
-              :class="installed ? 'text-green-500' : 'text-violet-400'"
+              class="mt-0.5 size-9 shrink-0 text-violet-400"
+            />
+            <ServiceLogo
+              v-else-if="product.integrations[0]"
+              :source="product.integrations[0]"
+              class="mt-1 size-8 shrink-0"
+              :class="eventTypeDotClass('product', product.integrations[0])"
             />
             <div class="min-w-0">
-              <p v-if="installed" class="text-xs font-semibold tracking-wide text-green-500 uppercase">Installed</p>
+              <p v-if="installed" class="text-xs font-semibold tracking-wide text-green-700 uppercase dark:text-green-400">Installed</p>
               <h1 class="text-2xl font-semibold text-foreground">{{ product.name }}</h1>
               <p v-if="product.requires_bot" class="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Bot class="size-3.5" />
@@ -725,7 +732,7 @@ async function uninstall(): Promise<void> {
         </div>
       </section>
     </div>
-  </div>
+  </ProductsLayout>
 </template>
 
 <style scoped>

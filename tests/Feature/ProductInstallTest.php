@@ -149,7 +149,7 @@ it('shows the product list to a visitor without an account', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('products/index')
             ->has('products', 8)
-            ->where('products.0.slug', 'bmac_alert')
+            ->where('products.0.slug', 'chat_checkin')
             ->where('products.0.installed', false)
         );
 });
@@ -204,7 +204,7 @@ it('installs the product on POST and shows the page in its installed state', fun
 
     $this->actingAs($user)
         ->get('/products')
-        ->assertInertia(fn (Assert $page) => $page->where('products.1.slug', 'chat_checkin')->where('products.1.installed', true));
+        ->assertInertia(fn (Assert $page) => $page->where('products.0.slug', 'chat_checkin')->where('products.0.installed', true));
 });
 
 it('does not install a second copy when the button is pressed again', function () {

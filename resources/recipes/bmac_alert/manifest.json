@@ -12,6 +12,7 @@
   "min_overlabels_version": 1,
   "requires_bot": false,
   "listed": true,
+  "category": "alert",
   "ready_message": "The alert is wired and waiting. Send yourself a test event from Buy Me a Coffee and watch it land in your overlay.",
   "notes": [
     "A test event from the Buy Me a Coffee dashboard travels the whole way, so it proves more than anything Overlabels could fake. Press it once; pressing it again needs test mode on for Buy Me a Coffee.",

@@ -44,32 +44,153 @@ class ProductController extends Controller
         private readonly RecipeInstaller $installer,
     ) {}
 
+    /**
+     * The sidebar filter for what this account has installed. Not a manifest
+     * category - it is per account and hidden from a visitor - so it lives
+     * beside CATEGORIES rather than in it.
+     */
+    private const INSTALLED_FILTER = 'installed';
+
     public function index(Request $request): Response
     {
         $user = $request->user();
         $installed = $user ? $this->installedSlugs($user) : [];
 
-        $products = collect($this->catalog->listed())
+        $all = collect($this->catalog->listed())
             ->map(fn (array $manifest) => [
                 'slug' => $manifest['slug'],
                 'name' => $manifest['name'],
                 'description' => $manifest['description'],
+                'category' => $manifest['category'] ?? null,
                 'requires_bot' => (bool) ($manifest['requires_bot'] ?? false),
                 'hero' => $manifest['hero'] ?? null,
+                // The one service a product connects, for the card's icon
+                // and its "Connects Ko-fi" line. A product connecting two
+                // would need a second visual; none does.
+                'service' => $manifest['installs']['integrations'][0] ?? null,
+                'installs' => $this->installChips($manifest),
                 'installed' => in_array($manifest['slug'], $installed, true),
             ])
+            // Show all is one shelf per category in CATEGORIES order, then
+            // anything uncategorised; slug order within a shelf, as before.
+            ->sortBy(fn (array $product) => $this->categoryRank($product['category']), SORT_NUMERIC, false)
+            ->values();
+
+        // A category the page does not know, or Installed for a visitor, is
+        // Show all: a first-timer arriving on a stale link sees the page,
+        // not a 404.
+        $category = $request->query('category');
+        $category = is_string($category) && $this->isFilter($category, $user !== null) ? $category : null;
+
+        $products = $all
+            ->filter(fn (array $product) => match ($category) {
+                null => true,
+                self::INSTALLED_FILTER => $product['installed'],
+                default => $product['category'] === $category,
+            })
             ->values()
             ->all();
 
+        $shelf = $category === null ? null : $this->shelfFor($category);
+
         view()->share('og', [
-            'title' => 'Products - Overlabels',
-            'description' => 'Things viewers can do in your chat and see on your stream. Installed in one click, set up from one page.',
-            'url' => route('products.index'),
+            'title' => ($shelf ? $shelf['label'].' - ' : '').'Products - Overlabels',
+            'description' => $shelf['lead'] ?? 'Everything here is free, made by Overlabels, and installed with one click. Pick something for your chat to play, or connect a service you already use so its support lands on your stream.',
+            'url' => $category === null ? route('products.index') : route('products.index', ['category' => $category]),
         ]);
 
         return Inertia::render('products/index', [
             'products' => $products,
+            'categories' => $this->categories(),
+            'category' => $category,
+            'shelf' => $shelf,
+            'installed_count' => $user ? $this->installedCount($user) : null,
         ]);
+    }
+
+    /**
+     * The sidebar's shelves with their counts, the same on every /products
+     * page: the listing filters by them, a product page marks its own.
+     *
+     * @return list<array{key: string, label: string, lead: string, count: int}>
+     */
+    private function categories(): array
+    {
+        $listed = collect($this->catalog->listed());
+
+        return collect(RecipeCatalog::CATEGORIES)
+            ->map(fn (array $shelf, string $key) => [
+                'key' => $key,
+                'label' => $shelf['label'],
+                'lead' => $shelf['lead'],
+                'count' => $listed->where('category', $key)->count(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function isFilter(string $category, bool $authed): bool
+    {
+        if ($category === self::INSTALLED_FILTER) {
+            return $authed;
+        }
+
+        return array_key_exists($category, RecipeCatalog::CATEGORIES);
+    }
+
+    /**
+     * @return array{label: string, lead: string}
+     */
+    private function shelfFor(string $category): array
+    {
+        if ($category === self::INSTALLED_FILTER) {
+            return ['label' => 'Installed', 'lead' => 'What this account has installed. Each one opens on its own page.'];
+        }
+
+        return RecipeCatalog::CATEGORIES[$category];
+    }
+
+    private function categoryRank(?string $category): int
+    {
+        $rank = array_search($category, array_keys(RecipeCatalog::CATEGORIES), true);
+
+        return $rank === false ? count(RecipeCatalog::CATEGORIES) : $rank;
+    }
+
+    /**
+     * What an install puts in the account, as card chips: one per kind, in
+     * the order a streamer meets them. An alert-type overlay says "Alert",
+     * since that is what the person sees on stream, and a chat command is
+     * a list appender or a bot alias - both put a `!word` in chat.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return list<string>
+     */
+    private function installChips(array $manifest): array
+    {
+        $installs = $manifest['installs'] ?? [];
+        $chips = [];
+
+        foreach ($installs['overlays'] ?? [] as $overlay) {
+            $doc = OverlayMarkdown::parse(
+                (string) file_get_contents(RecipeInstaller::directoryFor($manifest['slug']).DIRECTORY_SEPARATOR.basename($overlay['file']))
+            );
+            $chips[] = $doc['type'] === 'alert' ? 'Alert' : 'Overlay';
+        }
+
+        if (($installs['integrations'] ?? []) !== []) {
+            $chips[] = 'Integration';
+        }
+
+        if (($installs['lists'] ?? []) !== []) {
+            $chips[] = 'List';
+        }
+
+        if (($installs['list_appenders'] ?? []) !== [] || ($installs['bot_aliases'] ?? []) !== []) {
+            $chips[] = 'Chat command';
+        }
+
+        return array_values(array_unique($chips));
     }
 
     public function show(Request $request, string $slug): Response
@@ -116,6 +237,7 @@ class ProductController extends Controller
                 'slug' => $manifest['slug'],
                 'name' => $manifest['name'],
                 'description' => $manifest['description'],
+                'category' => $manifest['category'] ?? null,
                 'requires_bot' => (bool) ($manifest['requires_bot'] ?? false),
                 'hero' => $manifest['hero'] ?? null,
                 // The questions the install asks. Integrations are handed over
@@ -153,6 +275,8 @@ class ProductController extends Controller
                 'ready_message' => $manifest['ready_message'] ?? null,
             ],
             'installed' => $installed,
+            'categories' => $this->categories(),
+            'installed_count' => $user ? $this->installedCount($user) : null,
         ]);
     }
 
@@ -237,6 +361,17 @@ class ProductController extends Controller
     /**
      * @return list<string>
      */
+    /**
+     * How many LISTED products the account has installed: the number the
+     * sidebar's Installed link shows, and the number of cards that filter
+     * lists. An instance of an unlisted recipe (the picker recipes a seeder
+     * or tinker installs) is not a product and must not count.
+     */
+    private function installedCount(User $user): int
+    {
+        return count(array_intersect($this->installedSlugs($user), array_keys($this->catalog->listed())));
+    }
+
     private function installedSlugs(User $user): array
     {
         return RecipeInstance::query()

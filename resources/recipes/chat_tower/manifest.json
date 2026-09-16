@@ -13,6 +13,7 @@
   "requires_integrations": ["tower"],
   "requires_bot": true,
   "listed": true,
+  "category": "product",
   "hero": "/products/chat-tower-hero.svg",
   "ready_message": "Your chat can type !stack right now, and the tower is waiting in OBS.",
   "notes": [

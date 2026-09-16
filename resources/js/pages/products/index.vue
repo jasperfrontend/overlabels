@@ -1,88 +1,198 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { Bot, Check, Ellipsis } from '@lucide/vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { Bot, Check, Ellipsis, Plug } from '@lucide/vue';
 import EmptyState from '@/components/EmptyState.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
-import type { AppPageProps } from '@/types';
+import ProviderIcon from '@/components/ProviderIcon.vue';
+import ServiceLogo from '@/components/ServiceLogo.vue';
+import ProductsLayout, { type ProductCategory } from '@/layouts/ProductsLayout.vue';
+import { useEventColors } from '@/composables/useEventColors';
+import { serviceLabel } from '@/utils/services';
 
 interface ProductSummary {
   slug: string;
   name: string;
   description: string;
+  category: string | null;
   requires_bot: boolean;
   hero: string | null;
+  service: string | null;
+  installs: string[];
   installed: boolean;
+}
+
+interface Shelf {
+  key: string;
+  label: string;
+  lead: string;
+  products: ProductSummary[];
 }
 
 const props = defineProps<{
   products: ProductSummary[];
+  categories: ProductCategory[];
+  // The active filter: a category key, 'installed', or null for Show all.
+  category: string | null;
+  // The heading and lead for that filter, null for Show all.
+  shelf: { label: string; lead: string } | null;
+  // Null for a visitor, who has no Installed link.
+  installed_count: number | null;
 }>();
 
-const page = usePage<AppPageProps>();
-const isAuthed = computed(() => !!page.props.auth?.user);
+const { eventTypeDotClass } = useEventColors();
+
+// The service's brand colour, for the icon that stands in for a hero. The
+// event-type argument is only there to miss EVENT_STYLES (those are Twitch
+// event names) so the lookup falls through to the source colour.
+const serviceColor = (service: string) => eventTypeDotClass('product', service);
+
+// Show all is one shelf per category, in the order the server sorted them,
+// plus one for anything uncategorised. A filter is a single shelf with the
+// server's heading. Either way the page renders shelves, never a bare grid.
+const shelves = computed<Shelf[]>(() => {
+  if (props.category !== null && props.shelf) {
+    return [{ key: props.category, label: props.shelf.label, lead: props.shelf.lead, products: props.products }];
+  }
+
+  const byCategory = props.categories
+    .map((category) => ({
+      key: category.key,
+      label: category.label,
+      lead: category.lead,
+      products: props.products.filter((product) => product.category === category.key),
+    }))
+    .filter((shelf) => shelf.products.length > 0 || shelf.key === 'product');
+
+  const uncategorised = props.products.filter((product) => product.category === null);
+  if (uncategorised.length > 0) {
+    byCategory.push({ key: 'other', label: 'More', lead: 'Everything else you can install in one click.', products: uncategorised });
+  }
+
+  return byCategory;
+});
+
+const title = computed(() => (props.shelf ? `${props.shelf.label} - Products` : 'Products'));
+const description = computed(
+  () =>
+    props.shelf?.lead ??
+    'Everything here is free, made by Overlabels, and installed with one click. Pick something for your chat to play, or connect a service you already use so its support lands on your stream.',
+);
 </script>
 
 <template>
   <Head>
-    <title>Products</title>
-    <meta name="description" content="Things viewers can do in your chat and see on your stream. Installed in one click, set up from one page." />
+    <title>{{ title }}</title>
+    <meta name="description" :content="description" />
   </Head>
 
-  <!-- Public page: renders outside AppLayout like the public overlay preview,
-       so a visitor without an account can read it. -->
-  <div class="min-h-screen bg-background text-foreground">
-    <div class="mx-auto max-w-7xl p-4 lg:p-6">
-      <div class="mb-6 flex items-center justify-between">
-        <a href="/" class="flex cursor-pointer items-center gap-2 text-sm font-bold tracking-tight text-foreground hover:text-violet-400">
-          <img src="/favicon-light.svg" alt="" class="h-6 w-6 dark:hidden" />
-          <img src="/favicon.png" alt="" class="hidden h-6 w-6 dark:block" />
-          Overlabels
-        </a>
-        <Link v-if="isAuthed" :href="route('dashboard.index')" class="text-sm text-violet-400 hover:underline">Dashboard</Link>
-        <a v-else href="/login?redirect_to=/products" class="text-sm text-violet-400 hover:underline">Log in</a>
-      </div>
+  <ProductsLayout :categories="categories" :category="category" :installed-count="installed_count">
+    <section v-for="shelf in shelves" :key="shelf.key" class="mb-12 last:mb-0">
+      <h2 class="text-lg font-semibold text-foreground">{{ shelf.label }}</h2>
+      <p class="mt-1 mb-4 max-w-prose text-sm text-foreground">{{ shelf.lead }}</p>
 
-      <header class="mb-8 flex flex-col gap-2">
-        <div class="flex items-center gap-2">
-          <ProductBadge label="Official Overlabels products" class="size-6 text-violet-400" />
-          <h1 class="text-2xl font-semibold text-foreground">Products</h1>
-        </div>
-        <p class="max-w-prose text-foreground">
-          Things viewers can do in your chat and see on your stream. Each one installs in one click and tells you the few things left to do on the
-          same page. No code, and nothing to configure that you do not want to.
-        </p>
-      </header>
-
-      <ul class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <li v-for="product in props.products" :key="product.slug" class="collection-row relative border border-border p-4">
+      <!-- The Alerts shelf is the quieter one on purpose. An alert is a
+           plain thing (connect a service, its support lands on stream), so
+           its tile is the service icon, the name and one line, five to a
+           row, and the full description waits on the product page. Giving
+           it the Products card would tell the reader both shelves weigh
+           the same, and they do not. -->
+      <ul v-if="shelf.key === 'alert' && shelf.products.length > 0" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <li v-for="product in shelf.products" :key="product.slug" class="collection-row relative flex flex-col gap-2 border border-border p-3">
           <Link :href="`/products/${product.slug}`" class="absolute inset-0 z-0 cursor-pointer" :aria-label="product.name" />
-          <!-- A hero is the product's own artwork, 16:9, sitting above the copy
-               inside the same card so the whole thing stays one link. -->
-          <img v-if="product.hero" :src="product.hero" alt="" class="mb-4 block aspect-video w-full object-cover" />
-          <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <h2 class="inline-flex items-center gap-2 text-lg font-medium text-foreground">
-              <ProductBadge class="size-5 shrink-0" :class="product.installed ? 'text-green-500' : 'text-violet-400'" />
-              {{ product.name }}
-            </h2>
-            <span v-if="product.installed" class="inline-flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
-              <Check class="size-4" />
+          <div class="flex items-center justify-between gap-2">
+            <ServiceLogo v-if="product.service" :source="product.service" class="size-7 shrink-0" :class="serviceColor(product.service)" />
+            <span
+              v-if="product.installed"
+              class="inline-flex items-center gap-1 border border-green-500/60 px-1.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400"
+            >
+              <Check class="size-3.5" />
               Installed
             </span>
           </div>
-          <p class="mt-1 max-w-prose text-sm text-foreground">{{ product.description }}</p>
-          <p v-if="product.requires_bot" class="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Bot class="size-3.5" />
-            Works through the Overlabels bot in your chat
+          <h3 class="text-base font-medium text-foreground">{{ product.name }}</h3>
+          <p v-if="product.service" class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Plug class="size-3.5" />
+            Connects {{ serviceLabel(product.service) }}
           </p>
         </li>
-        <!-- The third slot is empty on purpose. A grid with two cards and a
-             hole reads as unfinished; a grid with two cards and a labelled
-             placeholder reads as a shelf with room on it. -->
-        <li class="flex">
+      </ul>
+
+      <ul v-else-if="shelf.products.length > 0 || shelf.key === 'product'" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <li v-for="product in shelf.products" :key="product.slug" class="collection-row relative flex flex-col border border-border p-4">
+          <Link :href="`/products/${product.slug}`" class="absolute inset-0 z-0 cursor-pointer" :aria-label="product.name" />
+          <!-- A hero is the product's own artwork, 16:9, sitting above the
+               copy inside the same card so the whole thing stays one link.
+               Without one, the service's icon in its brand colour fills the
+               same box, so the two shelves line up. -->
+          <!-- Not positioned on purpose: a positioned box later in the DOM
+               would paint over the card's stretched link and swallow clicks
+               on the artwork. The tag anchors to the card instead. -->
+          <div class="mb-4">
+            <img v-if="product.hero" :src="product.hero" alt="" class="block aspect-video w-full object-cover" />
+            <div
+              v-else-if="product.service"
+              class="flex aspect-video w-full items-center justify-center border border-border bg-muted/30"
+              :class="serviceColor(product.service)"
+            >
+              <ProviderIcon :source="product.service" class="size-16" />
+            </div>
+            <!-- The installed state lives here and nowhere else on the card:
+                 one tag on the artwork, so the title row never has to make
+                 room for it and the badge below stays what it is. -->
+            <span
+              v-if="product.installed"
+              class="pointer-events-none absolute top-6 right-6 z-10 inline-flex items-center gap-1 border border-green-500/60 bg-background/90 px-1.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400"
+            >
+              <Check class="size-3.5" />
+              Installed
+            </span>
+          </div>
+          <h3 class="inline-flex items-center gap-2 text-lg font-medium text-foreground">
+            <!-- The badge means "an official Overlabels product", so only the
+                 Products shelf gets it, and it is always the same colour. An
+                 alert is a service's API inside Overlabels, not one of ours. -->
+            <ProductBadge
+              v-if="product.category === 'product'"
+              label="An official Overlabels product"
+              class="relative z-10 size-5 shrink-0 text-violet-400"
+            />
+            {{ product.name }}
+          </h3>
+          <p class="mt-1 max-w-prose text-sm text-foreground">{{ product.description }}</p>
+          <ul v-if="product.installs.length > 0" class="mt-3 flex flex-wrap gap-1.5" aria-label="What it installs">
+            <li v-for="chip in product.installs" :key="chip" class="border border-border px-1.5 py-0.5 text-xs text-muted-foreground">
+              {{ chip }}
+            </li>
+          </ul>
+          <div class="mt-auto flex flex-col gap-1 pt-2">
+            <p v-if="product.category === 'alert' && product.service" class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Plug class="size-3.5" />
+              Connects {{ serviceLabel(product.service) }}
+            </p>
+            <p v-if="product.requires_bot" class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Bot class="size-3.5" />
+              Works through the Overlabels bot in your chat
+            </p>
+          </div>
+        </li>
+        <!-- The Products shelf always ends with a labelled placeholder. A
+             grid with a hole reads as unfinished; a shelf with room on it
+             reads as a shelf. Alerts get none: five is a full row. -->
+        <li v-if="shelf.key === 'product'" class="flex">
           <EmptyState dashed class="w-full" :icon="Ellipsis" message="More to come!" />
         </li>
       </ul>
-    </div>
-  </div>
+
+      <EmptyState
+        v-else
+        dashed
+        :message="shelf.key === 'installed' ? 'Nothing installed yet. Everything here installs in one click.' : 'Nothing here yet.'"
+      >
+        <template #action>
+          <Link href="/products" class="text-sm text-violet-400 hover:underline">Show all</Link>
+        </template>
+      </EmptyState>
+    </section>
+  </ProductsLayout>
 </template>
