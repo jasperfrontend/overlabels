@@ -88,7 +88,7 @@
                     @endunless
                     <a href="/help/reference" @class(['hidden cursor-pointer text-sm md:inline', 'text-foreground' => ($helpSection ?? '') === 'reference', 'text-muted-foreground hover:text-foreground' => ($helpSection ?? '') !== 'reference'])>Reference</a>
                     <a href="/updates" class="hidden cursor-pointer text-sm text-muted-foreground hover:text-foreground md:inline">Updates</a>
-                    <a href="/#kits" class="hidden cursor-pointer text-sm text-muted-foreground hover:text-foreground lg:inline">Kits</a>
+                    @include('welcome.theme-toggle')
                     <a href="/dashboard" class="help-btn shrink-0">Open the dashboard</a>
                 </div>
             </nav>

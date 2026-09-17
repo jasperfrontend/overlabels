@@ -1,5 +1,6 @@
 import '../../css/app.css';
 import { buildHelpSearch, docLabel, type HelpDoc, type HelpSearch } from '../utils/helpSearch';
+import { wireThemeMenus } from '../utils/themeMenu';
 
 /**
  * The one script for every help page.
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   addCodeBlockCopyButtons();
   void renderMath();
   wireSearch(input);
+  wireThemeMenus();
 });
 
 /**

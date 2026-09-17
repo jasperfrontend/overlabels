@@ -12,7 +12,8 @@ const { updateAppearance } = useAppearance();
     <DropdownMenuTrigger as-child>
       <Button variant="ghost" size="icon" class="h-9 w-9 cursor-pointer">
         <Sun class="size-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-        <Moon class="absolute size-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+        <Moon class="absolute size-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0 sepia:scale-0 sepia:rotate-90" />
+        <Coffee class="absolute size-4 scale-0 rotate-90 transition-all sepia:scale-100 sepia:rotate-0" />
         <span class="sr-only">Toggle theme</span>
       </Button>
     </DropdownMenuTrigger>
