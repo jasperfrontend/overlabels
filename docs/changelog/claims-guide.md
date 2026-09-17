@@ -1,6 +1,9 @@
 # Claims Guide
 
-Every change that ships gets a claim file: a short, hard, checkable account of what it did.
+A change that touches logic gets a claim file: a short, hard, checkable account of what it did.
+Which changes qualify is a path rule, below. From 2026-09-01 to 2026-09-17 every change got one,
+icon swaps included; 91 folders in 17 days showed that most of them recorded nothing a diff did not
+already say, so the bar moved.
 
 This exists so an agent can read a claim, resolve the commit it describes, and **scrutinize it** -
 confirm each statement against the tree, catch anything in the diff that was not disclosed, and say
@@ -37,6 +40,23 @@ file that new entries get inserted into at the top, and entries have landed out 
 than once. A folder per change has no order to get wrong, no merge conflict at the top of the file,
 and lets an agent read exactly one change without loading the month.
 
+## When a claim is required
+
+The rule is path-based so `/ship` can apply it without judgment. Run `git diff --cached
+--name-only`; a claim is required if ANY path matches:
+
+- `app/**`, `database/**`, `routes/**`, `config/**`, `bootstrap/**`
+- `resources/recipes/**` (products), `resources/js/overlay/**`, any `OverlayRenderer.vue`
+- `resources/js/**/*.ts`, `*.mts`, `*.mjs`, `*.js` - except `*.test.ts`
+- `.github/**`, `docker/**`, `Dockerfile`, `vite.config.mts`, `package.json`, `composer.json`
+
+A diff made only of `.vue`, `.css`, `.blade.php`, `resources/help/**`, `docs/**`, `public/**`,
+`tests/**` or `.md` files needs no claim. A `.vue` file can hold real logic, and that is a known
+edge accepted for the sake of a rule with no judgment in it; when it matters, write one anyway.
+
+Two overrides: a change that earns a prose changelog entry always gets a claim, and Jasper can ask
+for one on anything. Nothing forbids a claim on an exempt change.
+
 ## Allocating an ID
 
 `OL-<YY><MM>-<NNN>`, sequence resetting each month. The next one is the last line of:
@@ -58,7 +78,7 @@ The agent then resolves the exact diff with `git log --grep=OL-2609-004`.
 ## The file
 
 `Surface` and `Claims` are mandatory. `Unchanged` and `Risk` are omitted when there is nothing to
-say. An icon swap is four lines and should be:
+say. A small change is four lines and should be (this one would be exempt today; it shows the shape):
 
 ```markdown
 ## OL-2609-012 - style(controls): swap the Wrench icon for Toolbox
@@ -177,22 +197,47 @@ the honest tag always costs less than the flattering one.
 
 ## What /ship checks
 
-Three mechanical checks, no judgment, red gate = no push:
+Four mechanical checks, no judgment, red gate = no push:
 
-1. A new folder exists under `docs/changelog/claims/YYYY/MM/` containing `claim.md`.
-2. That folder's ID is in the commit trailer as `Changelog: <ID>`.
-3. Surface covers every path in the diff.
+1. Whether the staged paths match the rule above. If not, steps 2 to 4 are skipped.
+2. A new folder exists under `docs/changelog/claims/YYYY/MM/` containing `claim.md`.
+3. That folder's ID is in the commit trailer as `Changelog: <ID>`.
+4. Surface covers every path in the diff.
 
 `/ship` never assesses whether a claim is **true**. That is the audit agent's job, and it happens
 after the push.
 
 ## What the audit agent does
 
-It does not exist yet. When it does, it reads one `claim.md`, resolves the commit, and writes
-`audit.md` beside it with a verdict per claim - CONFIRMED, CONTRADICTED or UNVERIFIABLE - plus
-findings for anything in the diff that Surface omitted, tests named but absent or failing, scope
-beyond what the entry describes, and anything that contradicts a decision recorded in `CLAUDE.md` or
-in an earlier claim.
+**Scrutinize Sally is advisory. She never gates a deploy** (decided 2026-09-17). A gate would block
+prod on an LLM verdict, an API outage or a rate limit, to guard against a failure the diff review
+already catches; and the claims she can actually check, `[code]` and `[test]`, are the mechanical
+half. She inspects the building and files a report. The sale goes through regardless.
 
-Write claims as though that has already happened, because the whole value of the format is that a
-false line is findable.
+When she runs, she reads one `claim.md` cold - no session, no memory - resolves the commit from the
+trailer, and writes `audit.md` beside the claim with a verdict per claim (CONFIRMED, CONTRADICTED,
+UNVERIFIABLE) plus findings for anything in the diff that Surface omitted, tests named but absent
+or failing, scope beyond what the entry describes, and anything contradicting a decision recorded in
+`CLAUDE.md` or an earlier claim. Folders with a `claim.md` and no `audit.md` are her queue; there is
+no other state.
+
+### Bringing her to life, in order
+
+1. **A local `/scrutinize <ID>` skill first.** It spawns a fresh subagent with only the claim and
+   the checkout, and commits `audit.md`. Never run it in the session that wrote the claim. Run it on
+   four or five real September claims that carried weight (a product, an integration migration, a
+   cross-repo rename) and read the audits: the prompt is calibrated against real entries, not the
+   worked example above.
+2. **Fix the prompt until a finding is worth reading.** The interesting output is Surface omissions,
+   named tests that do not exist, and `[unverified]` used as an escape hatch. If five audits produce
+   nothing but CONFIRMED, tighten what she is asked to look for before spending on automation.
+3. **Move her to GitHub as her own workflow**, `scrutinize.yml`, on push to `main`, separate from
+   `deploy.yml` and never a `needs:` of it. It runs the official Claude Code action on every commit
+   in the push range that carries a `Changelog:` trailer, commits `audit.md` with `[skip ci]` (the
+   `lint.yml` auto-commit loop is the lesson), and opens an issue titled with the ID only when a
+   claim is CONTRADICTED or Surface missed a path. Quiet otherwise.
+4. **After a month, read the issues.** If one of them would have stopped a real regression, that is
+   the evidence to discuss a gate. Until then she stays advisory.
+
+Write claims as though she already exists, because the whole value of the format is that a false
+line is findable.

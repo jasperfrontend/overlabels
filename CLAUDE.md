@@ -792,13 +792,21 @@ clobbered by a checkout, a stash, or a branch switch that a later step needs to 
   npm run typecheck && npm run build && php artisan test` (build before pest - two tests inspect
   the built assets). Red gate = no push. `/ship` runs exactly this.
 - "Ship it" means gate, commit, push - one shot, no confirmation pause.
-- **From September 2026, EVERY change that ships gets a claim file** - an icon swap included.
-  `docs/changelog/claims/YYYY/MM/OL-YYMM-NNN/claim.md`, same commit as the change. It is a hard,
-  checkable record written for an agent to scrutinize against the diff, not a nice read: Surface
-  (every path in the diff, complete), Claims (one tagged assertion each, naming a symbol), plus
-  Unchanged and Risk when they apply. The ID goes in the commit as a `Changelog: OL-2609-004`
-  trailer, which is how the agent resolves the diff without an amend. `/ship` gates on all three
-  mechanically. **Full format and rules: `docs/changelog/claims-guide.md`.**
+- **A claim file is required when a change touches logic, and only then** (rule tightened
+  2026-09-17 after 91 claims in 17 days, most of them CONFIRMED-in-advance paperwork). The test is
+  path-based so `/ship` can check it: any staged path under `app/`, `database/`, `routes/`,
+  `config/`, `bootstrap/`, `resources/recipes/`, `resources/js/overlay/`, `.github/`, or `docker/`;
+  any `.ts`/`.mts`/`.mjs`/`.js` under `resources/js/` that is not a `*.test.ts`; `OverlayRenderer.vue`;
+  `Dockerfile`, `vite.config.mts`, `package.json` or `composer.json`. A diff made ONLY of `.vue`,
+  `.css`, `.blade.php`, `resources/help/`, `docs/`, `public/`, `tests/` or markdown needs none.
+  Two overrides: a change that earns a prose changelog entry always gets one, and Jasper can ask
+  for one. When required: `docs/changelog/claims/YYYY/MM/OL-YYMM-NNN/claim.md`, same commit as the
+  change, ID in the commit as a `Changelog: OL-2609-004` trailer, Surface complete. It is a hard,
+  checkable record written for a cold agent, not a nice read. **Full format and rules:
+  `docs/changelog/claims-guide.md`.**
+- **Scrutinize Sally, the claims auditor, is ADVISORY, never a deploy gate** (decided 2026-09-17).
+  She inspects the building and files a report; she does not block the sale. Not built yet; the
+  build order is in the guide's audit section.
 - **The prose changelog is separate and keeps its higher bar: only a real feature, a big refactor
   or a substantial functionality change** (removing StreamElements, adding `channel_avatar`, a
   settings-page revamp), or when asked. Never for tiny or visual iterations: button borders, prose,
