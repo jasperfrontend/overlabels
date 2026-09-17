@@ -186,6 +186,8 @@ class ExpressionControlHydrator
         }
 
         $evaluated[$identifier] = $value;
-        $data['c:'.$control->broadcastKey()] = $value;
+        // tagIdentifier(), not broadcastKey(): the map is keyed the way
+        // ExpressionDataContext keys it, which is what a `c.` reference reads.
+        $data['c:'.$control->tagIdentifier()] = $value;
     }
 }

@@ -156,7 +156,7 @@ class RecomputeExpressionControls
             }
 
             $expr->forceFill(['value' => $newValue])->save();
-            $data['c:'.$expr->broadcastKey()] = $newValue;
+            $data['c:'.$expr->tagIdentifier()] = $newValue;
 
             // Dispatch the cascade event with the recomputed flag so this
             // listener doesn't re-walk, but other listeners (list_writer,
@@ -176,7 +176,8 @@ class RecomputeExpressionControls
 
             // Walk the next layer in-process; the dispatched event won't
             // re-trigger us (alreadyRecomputed), we own the walk explicitly.
-            $this->walk($expr->broadcastKey(), $overlaySlug, $user, $data, $depth + 1, $visited);
+            // By tagIdentifier(): `config->dependencies` holds what `c.` names.
+            $this->walk($expr->tagIdentifier(), $overlaySlug, $user, $data, $depth + 1, $visited);
         }
     }
 }

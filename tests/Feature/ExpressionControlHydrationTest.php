@@ -1,5 +1,7 @@
 <?php
 
+use App\Events\ControlValueUpdated;
+use App\Listeners\RecomputeExpressionControls;
 use App\Models\OverlayControl;
 use App\Models\User;
 use App\Services\Bot\BotCommandResolver;
@@ -275,4 +277,90 @@ test('a service-managed control is still named by its namespaced key', function 
     ]);
 
     expect($control->tagIdentifier())->toBe('kofi:donations_received');
+});
+
+/**
+ * A sourced, non-managed expression control: broadcastKey() says `user:mid`,
+ * tagIdentifier() says `mid`, and the data map is keyed by the latter. Found by
+ * the OL-2609-060 audit (C7): the resolved value went in under the former, so
+ * a dependent expression read the stale stored value under `c:mid`.
+ */
+function sourcedExpressionControl(User $user, string $key, string $expression, ?string $value = null): OverlayControl
+{
+    return OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => $key,
+        'label' => $key,
+        'type' => 'expression',
+        'value' => $value,
+        'config' => [
+            'expression' => $expression,
+            'dependencies' => OverlayControl::extractExpressionDependencies($expression),
+        ],
+        'sort_order' => 0,
+        'source' => 'user',
+        'source_managed' => false,
+    ]);
+}
+
+test('a resolved dependency lands under the key its dependents read, not the broadcast key', function () {
+    $user = hydrationUser();
+    $mid = sourcedExpressionControl($user, 'mid', 't.subscribers_total + 1', '1');
+    expect($mid->broadcastKey())->toBe('user:mid');
+    expressionControl($user, 'top', 'c.mid + 1');
+
+    $seenByTop = null;
+    Http::fake(function ($request) use (&$seenByTop) {
+        $body = json_decode($request->body(), true);
+        if ($body['expression'] === 't.subscribers_total + 1') {
+            return Http::response(['ok' => true, 'value' => '5']);
+        }
+        $seenByTop = $body['data'] ?? [];
+
+        return Http::response(['ok' => true, 'value' => '6']);
+    });
+
+    app(BotCommandResolver::class)->resolve($user, '[[[c:top]]]');
+
+    expect($seenByTop)->not->toBeNull()
+        ->and($seenByTop['c:mid'])->toBe('5')
+        ->and($seenByTop)->not->toHaveKey('c:user:mid');
+});
+
+test('a cascaded recompute lands under the key its dependents read, not the broadcast key', function () {
+    $user = hydrationUser();
+    OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => 'seed',
+        'label' => 'seed',
+        'type' => 'counter',
+        'value' => '4',
+        'config' => [],
+        'sort_order' => 0,
+        'source' => null,
+        'source_managed' => false,
+    ]);
+    sourcedExpressionControl($user, 'mid', 'c.seed + 1', '1');
+    expressionControl($user, 'top', 'c.mid + 1', '2');
+
+    $seenByTop = null;
+    Http::fake(function ($request) use (&$seenByTop) {
+        $body = json_decode($request->body(), true);
+        if ($body['expression'] === 'c.seed + 1') {
+            return Http::response(['ok' => true, 'value' => '5']);
+        }
+        $seenByTop = $body['data'] ?? [];
+
+        return Http::response(['ok' => true, 'value' => '6']);
+    });
+
+    app(RecomputeExpressionControls::class)->handle(
+        new ControlValueUpdated('', 'seed', 'counter', '4', $user->twitch_id),
+    );
+
+    expect($seenByTop)->not->toBeNull()
+        ->and($seenByTop['c:mid'])->toBe('5')
+        ->and($seenByTop)->not->toHaveKey('c:user:mid');
 });
