@@ -17,7 +17,8 @@ _ide_helper_models.php
 /docs/zombie
 /docs/*.*
 /docs/private
-.claude
+.claude/*
+!.claude/agents/
 .env
 .env.local
 .kamal/secrets
