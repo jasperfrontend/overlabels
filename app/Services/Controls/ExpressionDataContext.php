@@ -12,7 +12,7 @@ use Throwable;
 /**
  * The flat key->value map the expression sidecar evaluates against.
  *
- * Keyed "c:<broadcastKey>" for every control the user owns, plus "t:<tag>"
+ * Keyed "c:<tagIdentifier>" for every control the user owns, plus "t:<tag>"
  * for every Twitch template tag, so an expression can mix Helix data into
  * its formula the same way the overlay's local jsep evaluator can.
  *
