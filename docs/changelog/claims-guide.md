@@ -223,8 +223,8 @@ no other state.
 
 ### Bringing her to life, in order
 
-1. **A local `/scrutinize <ID>` skill first.** It spawns a fresh subagent with only the claim and
-   the checkout, and commits `audit.md`. Never run it in the session that wrote the claim. Run it on
+1. **A local `/sally <ID>` skill first** (built 2026-09-17, `~/.claude/skills/sally`). It spawns a
+   fresh subagent with only the claim and the checkout, and commits `audit.md`. Never run it in the session that wrote the claim. Run it on
    four or five real September claims that carried weight (a product, an integration migration, a
    cross-repo rename) and read the audits: the prompt is calibrated against real entries, not the
    worked example above.
