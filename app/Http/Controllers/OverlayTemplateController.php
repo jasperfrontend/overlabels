@@ -686,9 +686,7 @@ class OverlayTemplateController extends Controller
                 if ($control->isRandom()) {
                     $cfg = $control->config ?? [];
                     $randomControls[] = [
-                        'key' => $control->source_managed
-                            ? $control->broadcastKey()
-                            : $control->key,
+                        'key' => $control->tagIdentifier(),
                         'min' => (int) ($cfg['min'] ?? 0),
                         'max' => (int) ($cfg['max'] ?? 100),
                         'interval' => max(100, (int) ($cfg['random_interval'] ?? 1000)),

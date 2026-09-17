@@ -197,7 +197,7 @@ class BotCommandsController extends Controller
     {
         return OverlayControl::where('user_id', $userId)
             ->get()
-            ->map(fn (OverlayControl $c) => $c->source_managed ? $c->broadcastKey() : $c->key)
+            ->map(fn (OverlayControl $c) => $c->tagIdentifier())
             ->unique()
             ->sort()
             ->values()
