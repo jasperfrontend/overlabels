@@ -805,8 +805,13 @@ clobbered by a checkout, a stash, or a branch switch that a later step needs to 
   checkable record written for a cold agent, not a nice read. **Full format and rules:
   `docs/changelog/claims-guide.md`.**
 - **Scrutinize Sally, the claims auditor, is ADVISORY, never a deploy gate** (decided 2026-09-17).
-  She inspects the building and files a report; she does not block the sale. Not built yet; the
-  build order is in the guide's audit section.
+  She inspects the building and files a report; she does not block the sale. She is the `sally`
+  agent in `.claude/agents/`, run cold through `/sally <ID>`; `audit.md` lands beside the claim.
+- **Remy fixes what Sally finds** (2026-09-18): the `remy` agent, run cold through `/remy <ID>`,
+  resolves each finding to FIXED (test red then green), RECORD (a new claim restates the truth) or
+  SKIPPED (with the reason), writes `remedy.md` beside the audit and a NEW claim. Shipped `claim.md`
+  and `audit.md` are never edited; every correction is a new claim citing the old one inline. Remy
+  commits locally and never pushes; his claim is unaudited until `/sally` runs on it.
 - **The prose changelog is separate and keeps its higher bar: only a real feature, a big refactor
   or a substantial functionality change** (removing StreamElements, adding `channel_avatar`, a
   settings-page revamp), or when asked. Never for tiny or visual iterations: button borders, prose,

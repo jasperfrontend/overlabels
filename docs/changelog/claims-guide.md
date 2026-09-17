@@ -29,8 +29,9 @@ purpose: one string - `OL-2609-004` - is the folder, the commit trailer, the pro
 grep. Nothing to reconstruct.
 
 It is a folder rather than a bare file because **the audit lands next to the claim**, as `audit.md`
-in the same directory. The claim and its scrutiny stay together, and an unaudited change is a folder
-with one file in it.
+in the same directory, and the remedy of that audit as `remedy.md` beside it. The claim, its scrutiny
+and what was done about it stay together: an unaudited change is a folder with one file in it, an
+audit with open findings is a folder with two.
 
 **No index and no manifest.** `ls docs/changelog/claims/2026/09/` is the index. A second source of
 truth would drift, which is the thing this whole arrangement exists to prevent.
@@ -136,7 +137,8 @@ to find the diff.
 
 **Surface** - **must be complete.** Every path in `git show --stat` appears, each with a few words on
 what it does. A path in the diff that is not listed is scope creep, and catching it is most of the
-point. Two implicit exceptions, never listed: the claim file itself, and the prose changelog file.
+point. Two implicit exceptions, never listed: the claim file itself, and the prose changelog file. A
+`remedy.md` written into an EARLIER ID's folder is a path like any other and IS listed.
 
 **Claims** - numbered `C1`, `C2`, ... so a report can cite them. One assertion each, one tag each.
 
@@ -242,3 +244,17 @@ no other state.
 
 Write claims as though she already exists, because the whole value of the format is that a false
 line is findable.
+
+## What the remedy agent does
+
+**Remy** (`.claude/agents/remy.md`, run through `/remy <ID>`) reads Sally's `audit.md` cold and
+resolves each finding to one of three outcomes, recorded in `remedy.md` beside the audit:
+
+- **FIXED** - code or tests changed, always with a test that failed before the fix and passed after.
+- **RECORD** - the code was right and the record was wrong; the truth is restated in the new claim.
+- **SKIPPED** - could not or must not be resolved, with the reason in one sentence.
+
+**Shipped `claim.md` and `audit.md` files are never edited.** Every correction is a NEW claim whose
+lines cite the old one inline (`corrects OL-2609-060 C7, audit F1`), so the record only grows. The
+spawning session commits his work locally; it reaches prod only through `/ship`, and his new claim
+is unaudited until `/sally <NEW-ID>` runs in a fresh session. Sally, Remy, Sally: that is the loop.

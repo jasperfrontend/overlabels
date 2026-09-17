@@ -23,7 +23,8 @@ trailer, audit them as one diff and say so.
 
 a) **Surface.** `git show --stat --format= <hash>` is the actual set of paths. Every
    path in the diff must appear in Surface, except the claim file itself and
-   `docs/changelog/changelog-*.md`. A path in the diff that Surface does not list is a
+   `docs/changelog/changelog-*.md`. A `remedy.md` in an earlier ID's folder is NOT
+   exempt; a remedy claim lists it. A path in the diff that Surface does not list is a
    finding: "undisclosed path". A path in Surface that is not in the diff is a finding:
    "phantom path". Only lines under the `### Surface` heading are Surface; backticked
    symbols under Unchanged are not paths.
@@ -130,3 +131,6 @@ When done, reply with the Verdict line and the Findings section only.
   runs as `@sally`, and so tuning her is editing one file that is nothing but her.
   Surface counting clarified after OL-2609-004 (backticked Unchanged symbols are not
   paths - a wrong prediction by the skill's own session, not by Sally).
+- 2026-09-18: Remy exists (`.claude/agents/remy.md`). A remedy claim cites the audited
+  ID inline and lists `remedy.md`; when auditing a remedy claim, read the audit it
+  answers so a RECORD line is judged against the finding, not against the old claim.
