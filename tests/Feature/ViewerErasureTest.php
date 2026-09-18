@@ -3,6 +3,8 @@
 use App\Models\BotBuiltin;
 use App\Models\Checkin;
 use App\Models\ExternalEvent;
+use App\Models\ListAppender;
+use App\Models\ListAppendHistory;
 use App\Models\OverlayControl;
 use App\Models\TowerBlock;
 use App\Models\TwitchEvent;
@@ -77,12 +79,25 @@ it('deletes the viewer from every table that is keyed to them', function () {
         'normalized_payload' => [],
     ]);
 
+    $appender = ListAppender::factory()->create(['user_id' => $user->id]);
+
+    ListAppendHistory::create([
+        'list_appender_id' => $appender->id,
+        'target_list_id' => $appender->target_list_id,
+        'chatter_id' => '555000',
+        'chatter_login' => 'alice',
+        'value' => 'Alice',
+        'stream_session_id' => null,
+        'fired_at' => now(),
+    ]);
+
     forgetMe()->assertOk();
 
     expect(Checkin::where('chatter_twitch_id', '555000')->count())->toBe(0)
         ->and(TowerBlock::where('chatter_twitch_id', '555000')->count())->toBe(0)
         ->and(TwitchEvent::whereRaw("event_data->>'user_id' = '555000'")->count())->toBe(0)
-        ->and(ExternalEvent::whereRaw("raw_payload->>'chatter_id' = '555000'")->count())->toBe(0);
+        ->and(ExternalEvent::whereRaw("raw_payload->>'chatter_id' = '555000'")->count())->toBe(0)
+        ->and(ListAppendHistory::where('chatter_id', '555000')->count())->toBe(0);
 });
 
 it('leaves other viewers alone', function () {
