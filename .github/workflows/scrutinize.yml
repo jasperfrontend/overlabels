@@ -1,0 +1,317 @@
+name: scrutinize
+
+# Scrutinize Sally, on every push to main that ships a claim.
+#
+# She is ADVISORY and must stay that way. This workflow is deliberately NOT a
+# `needs:` of deploy.yml and never blocks it: the two run side by side, and a
+# red audit does not stop a release. She inspects the building; she does not
+# block the sale. Gating prod on an LLM verdict (or on Anthropic having a good
+# afternoon) is the thing this arrangement exists to avoid.
+#
+# The case for a gate is evidence, not argument: after a month, read the issues
+# this opens. If one of them would have stopped a real regression, that is when
+# to discuss it. See docs/changelog/claims-guide.md, "Bringing her to life".
+
+on:
+  push:
+    branches: [main]
+
+# contents: write is for the audit.md commit and nothing else. See the
+# commit-back note at the bottom, and why this is not the thing lint.yml
+# refuses to do.
+permissions:
+  contents: write
+  issues: write
+
+# One at a time. Two pushes in quick succession would otherwise race to commit
+# their audits onto the same branch.
+concurrency:
+  group: scrutinize
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Which claims did this push ship, and which of them are still unaudited?
+  # ---------------------------------------------------------------------------
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      ids: ${{ steps.find.outputs.ids }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history: the range walk needs the commits before this push, and
+          # Sally resolves her own commit with `git log --all --grep=`.
+          fetch-depth: 0
+
+      - name: Find unaudited claim IDs in the push range
+        id: find
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+        run: |
+          set -euo pipefail
+
+          # A brand-new branch, a force push, or a squashed history leaves
+          # `before` as all-zeros or unreachable. Fall back to the tip commit
+          # rather than walking the entire history and re-auditing everything.
+          if [ -z "${BEFORE//0/}" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            RANGE="$AFTER~1..$AFTER"
+          else
+            RANGE="$BEFORE..$AFTER"
+          fi
+          echo "range: $RANGE"
+
+          # The trailer is the anchor, exactly as the guide says: one string is
+          # the folder, the trailer, the prose heading and the grep.
+          IDS=$(git log --format=%B "$RANGE" \
+            | grep -oE 'Changelog: OL-[0-9]{4}-[0-9]{3}' \
+            | sed 's/^Changelog: //' \
+            | sort -u || true)
+
+          PENDING=()
+          for id in $IDS; do
+            # OL-2609-104 -> docs/changelog/claims/2026/09/OL-2609-104
+            yy="${id:3:2}"
+            mm="${id:5:2}"
+            dir="docs/changelog/claims/20${yy}/${mm}/${id}"
+
+            if [ ! -f "$dir/claim.md" ]; then
+              echo "$id: no claim file at $dir, skipping"
+              continue
+            fi
+            if [ -f "$dir/audit.md" ]; then
+              echo "$id: already audited, skipping"
+              continue
+            fi
+            PENDING+=("$id")
+          done
+
+          if [ ${#PENDING[@]} -eq 0 ]; then
+            echo "nothing to audit"
+            echo 'ids=[]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          printf 'auditing: %s\n' "${PENDING[*]}"
+          printf -v JSON '"%s",' "${PENDING[@]}"
+          echo "ids=[${JSON%,}]" >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------------------
+  # One claim per job, on purpose.
+  #
+  # A single run handed several IDs would carry claim A's context into claim B's
+  # audit, which is the one thing that makes an audit worthless: confirmation
+  # from context looks identical to a real check. A matrix gives each claim its
+  # own cold process. max-parallel 1 keeps the commits from racing.
+  # ---------------------------------------------------------------------------
+  audit:
+    needs: discover
+    if: needs.discover.outputs.ids != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        id: ${{ fromJSON(needs.discover.outputs.ids) }}
+
+    # Sally RUNS the tests a [test] claim names, so she needs a working app,
+    # not just a checkout. Mirrors tests.yml; the container is created fresh and
+    # destroyed with the job.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: laravel_foxes_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: laravel_foxes_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          extensions: pdo, pdo_pgsql, pgsql
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          composer install --no-interaction --prefer-dist --optimize-autoloader
+          npm ci
+
+      - name: Prepare Application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan ziggy:generate
+          php artisan migrate --force
+
+      # Two [test] claims in September asserted things about the BUILT assets
+      # (the minified emote chunk, the chat-hose exclusion). Those tests skip
+      # when public/build is absent, which would let Sally record a pass that
+      # never ran.
+      - name: Build Assets
+        run: npm run build
+
+      - name: Audit ${{ matrix.id }}
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Her definition lives in the repo and is the single place she is
+          # tuned. Pointing at it rather than restating it here means the
+          # workflow never drifts from the agent the local /sally skill runs.
+          prompt: |
+            Read `.claude/agents/sally.md` in this repository in full and act as
+            that agent, exactly as written, for this claim ID and nothing else:
+
+            ${{ matrix.id }}
+
+            The repository is already checked out at the current directory, with
+            full history. PHP, composer, node and a migrated test database are
+            available, so a `[test]` claim must actually be run, not assumed.
+
+            Write `audit.md` beside the claim, as her definition specifies. Do
+            not commit it and do not stage it; this workflow commits.
+          claude_args: |
+            --max-turns 40
+            --allowedTools Read,Grep,Glob,Bash,Write
+
+      - name: Commit the audit
+        id: commit
+        env:
+          ID: ${{ matrix.id }}
+        run: |
+          set -euo pipefail
+          yy="${ID:3:2}"; mm="${ID:5:2}"
+          path="docs/changelog/claims/20${yy}/${mm}/${ID}/audit.md"
+
+          if [ ! -f "$path" ]; then
+            echo "::warning::$ID produced no audit.md"
+            echo "wrote=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          verdict=$(grep -m1 '^\*\*Verdict:\*\*' "$path" | sed 's/^\*\*Verdict:\*\* *//' || echo UNKNOWN)
+          echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          echo "wrote=true" >> "$GITHUB_OUTPUT"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$path"
+
+          # Nothing to do if she rewrote an identical file.
+          if git diff --cached --quiet; then
+            echo "no change to commit"
+            exit 0
+          fi
+
+          # [skip ci] is load-bearing, twice over: deploy.yml fires on every
+          # push to main, so without it every audit would redeploy prod, and
+          # this workflow would retrigger itself on its own commit.
+          git commit -m "docs(sally): audit of $ID - $verdict [skip ci]"
+
+          # Rebase rather than force: another push may have landed while the
+          # audit ran, and this commit is never worth losing one over.
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      # The guide's bar for interrupting anyone: a claim that is actually false,
+      # or a path the change touched and did not disclose. FINDINGS on its own
+      # is not enough - a mistagged [unverified] is worth reading, not worth an
+      # issue. Quiet otherwise is the whole design.
+      - name: Open an issue for a contradicted claim or a missed path
+        if: steps.commit.outputs.wrote == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ID: ${{ matrix.id }}
+          AUDIT: ${{ steps.commit.outputs.path }}
+          VERDICT: ${{ steps.commit.outputs.verdict }}
+        run: |
+          set -euo pipefail
+
+          contradicted=$(grep -c 'CONTRADICTED' "$AUDIT" || true)
+          # Surface is one line: "Complete." or "Undisclosed: ..." / "Phantom: ...".
+          missed=$(sed -n '/^### Surface/,/^### /p' "$AUDIT" | grep -cE 'Undisclosed:|Phantom:' || true)
+
+          if [ "$contradicted" -eq 0 ] && [ "$missed" -eq 0 ]; then
+            echo "$ID: $VERDICT, nothing worth an issue"
+            exit 0
+          fi
+
+          {
+            echo "Sally audited \`$ID\` and found something a reader should act on."
+            echo
+            echo "- contradicted claims: $contradicted"
+            echo "- surface omissions: $missed"
+            echo
+            echo "Full audit: [\`$AUDIT\`]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/main/$AUDIT)"
+            echo
+            echo "She is advisory. This is a report, not a gate, and prod has already deployed."
+            echo "The fix path is \`/remy $ID\` in a fresh session."
+            echo
+            echo '### Findings'
+            echo
+            sed -n '/^### Findings/,/^### Notes/p' "$AUDIT" | sed '1d;/^### Notes/d'
+          } > issue-body.md
+
+          # Idempotent, and tolerated if it fails: the label is a convenience,
+          # the issue is the point. Creating the issue must not depend on it.
+          gh label create scrutinize \
+            --color BFD4F2 \
+            --description 'Opened by Scrutinize Sally. Advisory.' 2>/dev/null || true
+
+          gh issue create \
+            --title "$ID - audit findings" \
+            --body-file issue-body.md \
+            --label scrutinize \
+            || gh issue create --title "$ID - audit findings" --body-file issue-body.md \
+            || echo "::warning::could not open an issue for $ID"
+
+# Why this one commits back when lint.yml refuses to.
+#
+# lint.yml's note is about a job that REWRITES your source and pushes the
+# result. Every objection there still stands, and none of them applies here:
+#
+#   - it writes one new file, docs/changelog/claims/**/audit.md, and never
+#     touches source. Sally's own definition forbids her modifying anything else
+#   - it runs only on push to main, never on a pull request, so the fork case
+#     that makes a write token unavailable never arises
+#   - [skip ci] stops the retrigger, which is the failure mode that actually
+#     bit this repo
+#
+# And the audit has to land in the repo to be worth anything: the claim, its
+# scrutiny and the remedy live in one folder, and an audit that existed only in
+# a job log would be an audit nobody reads.
