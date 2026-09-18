@@ -40,7 +40,10 @@ class SynthesizeAlertTts implements ShouldQueue
 
     public function handle(TtsService $tts): void
     {
-        $audioUrl = $tts->synthesize($this->text);
+        // Scoped to the broadcaster so one channel's audio file is never
+        // reachable from another's, and the path cannot be derived from the
+        // sentence alone.
+        $audioUrl = $tts->synthesize($this->text, $this->broadcasterId);
 
         if ($audioUrl === null) {
             Log::info('SynthesizeAlertTts: synthesis returned null, skipping broadcast', [

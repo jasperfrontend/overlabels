@@ -25,6 +25,8 @@
 - `config/ban.php` - `block_by_country` hardcoded `false`
 - `app/Providers/TelescopeServiceProvider.php` - donation/viewer parameter names and internal secret headers hidden
 - `app/Http/Controllers/Settings/StreamLabsIntegrationController.php` - `donations.create` dropped from the requested OAuth scope
+- `app/Services/Tts/TtsService.php` - `synthesize()` takes a `$scope`; `cacheKey()` is an HMAC over the app key including that scope
+- `app/Jobs/SynthesizeAlertTts.php` - passes `broadcasterId` as the scope
 - `routes/console.php` - new prunes for `checkins` (90d), `list_append_history` (90d), `admin_audit_logs` (730d); three model imports
 - `resources/js/composables/useNormalizeEvent.ts` - `channel.cheer` tests `is_anonymous` first
 - `resources/js/pages/admin/sessions/index.vue` - IP lookup dialog, handler, `IpLocation` interface and `Dialog` imports removed
@@ -62,7 +64,9 @@
 - **C23** [code] `routes/console.php` schedules daily prunes deleting `Checkin` rows with `checked_in_at` older than 90 days, `ListAppendHistory` rows with `fired_at` older than 90 days, and `AdminAuditLog` rows with `created_at` older than 730 days. None of these three tables had any sweep before.
 - **C24** [code] `TwitchEventSubController` contains no `Cache::put('last_webhook_activity', ...)` call and no `$webhookLog` variable, and the JSON-parse failure log carries `bytes`, not `body`.
 - **C25** [code] The Streamlabs authorize URL requests `socket.token donations.read`. No code in `app/` calls a Streamlabs donation-creation endpoint.
-- **C26** [unverified] Production `external_events` were inspected by key name only on 2026-09-18: all 21 Ko-fi rows carried a non-empty `email` and `verification_token`, 6 carried `discord_username`, and `shipping` was present on all 21 and JSON-null on all 21.
+- **C26** [code] `TtsService::cacheKey()` is `hash_hmac('sha256', text|voice|model|scope, config('app.key'))`, and `SynthesizeAlertTts` passes the broadcaster id as the scope. The mp3 path is therefore no longer derivable from the alert sentence, which it was when voice and model were app-wide constants and the hash was a bare sha256.
+- **C27** [code] The TTS path is still deterministic for the same broadcaster and sentence, so the existing dedup that avoids paying ElevenLabs twice is unchanged.
+- **C28** [unverified] Production `external_events` were inspected by key name only on 2026-09-18: all 21 Ko-fi rows carried a non-empty `email` and `verification_token`, 6 carried `discord_username`, and `shipping` was present on all 21 and JSON-null on all 21.
 
 ### Unchanged
 - `BMACServiceDriver`'s explicit `unset()` of `supporter_email`, `shipping_address`, `total_amount_charged` and `commission.shipping_address` stays as it was. It predates `PayloadScrubber`, is test-pinned, and removing it in favour of the shared scrubber would be a refactor of working code inside a security change.
@@ -74,6 +78,9 @@
 - `users.twitch_data` still holds the login-time snapshot of followers, subscribers and goals. It is the streamer's own channel data, refreshed on each login and deleted with the account.
 
 ### Risk
+Existing cached TTS mp3s become unreachable and are regenerated on next use, then swept by the
+existing 7-day job. No alert breaks; the first repeat of each sentence costs one API call again.
+
 Two migrations rewrite data and neither is reversible. Existing users' tokens are encrypted in place;
 the columns are widened first, and the cast is lenient, so the worst case for a row written as
 plaintext during the rolling deploy is that the user re-authorizes. `external_events` loses two

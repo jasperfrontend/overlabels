@@ -56,6 +56,12 @@ donation webhook that 500s was capturing a donor's details for 48 hours; the par
 hidden now. And the Streamlabs connection stopped asking for permission to create donations, which
 it has never once used.
 
+One more, found on the way out: the mp3 an alert speaks was cached at a path derived from the
+sentence alone, because the voice and model are app-wide constants. Anyone who could guess what your
+follower alert says could build the URL and check whether the file was there, which is a slow way of
+reading somebody's follower list off a public bucket. The path is an HMAC now, scoped to the channel,
+still deterministic so we do not pay to say the same sentence twice.
+
 The privacy policy said we collect email addresses, usage analytics and tracking cookies. We collect
 none of those. It says so now, and [Your data on Overlabels](/help/your-data) is the long version.
 

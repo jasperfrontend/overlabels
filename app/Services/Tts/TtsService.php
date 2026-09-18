@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\Storage;
  * Thin wrapper around ElevenLabs Flash 2.5 TTS.
  *
  * synthesize() is the only call site for alert TTS. Result is a public URL to
- * an mp3 cached on the `public` disk under `tts/{sha256}.mp3`. The hash keys
- * on text + voice + model, so repeat sentences ("New follower: Frank!") only
- * hit the API once. Cleanup is handled by a scheduled command.
+ * an mp3 cached on the `public` disk under `tts/{hmac}.mp3`. The key covers
+ * text + voice + model + the broadcaster, under the app key, so repeat
+ * sentences ("New follower: Frank!") only hit the API once while the URL stays
+ * unguessable. Cleanup is handled by a scheduled command.
  *
  * Failure is silent: returns null and logs. Alerts must still fire even when
  * ElevenLabs is down/rate-limited; TTS is best-effort.
@@ -32,7 +33,7 @@ class TtsService
      * Returns null when credentials are missing, the input is empty, or the
      * upstream call fails.
      */
-    public function synthesize(string $text): ?string
+    public function synthesize(string $text, string $scope = ''): ?string
     {
         $text = trim($text);
         if ($text === '') {
@@ -52,7 +53,7 @@ class TtsService
         }
 
         $disk = Storage::disk('public');
-        $path = self::TTS_DIR.'/'.$this->cacheKey($text, $voiceId, $modelId).'.mp3';
+        $path = self::TTS_DIR.'/'.$this->cacheKey($text, $voiceId, $modelId, $scope).'.mp3';
 
         if ($disk->exists($path)) {
             return $disk->url($path);
@@ -129,8 +130,27 @@ class TtsService
         return is_array($voices) ? $voices : null;
     }
 
-    private function cacheKey(string $text, string $voiceId, string $modelId): string
+    /**
+     * Keyed with an HMAC over the app key, and scoped to the broadcaster.
+     *
+     * This used to be a plain sha256 of text + voice + model, with voice and
+     * model being app-wide constants. That made the URL a pure function of the
+     * sentence: anyone who could guess what an alert says - "New follower:
+     * Frank!" is not a hard guess - could construct the URL and confirm the
+     * file existed, turning a public bucket path into an oracle over somebody's
+     * follower list. It also meant two streamers with the same alert text
+     * shared one mp3.
+     *
+     * Still deterministic, so the dedup that stops us paying ElevenLabs twice
+     * for the same sentence is unaffected. Just not reproducible by anyone who
+     * does not hold the app key.
+     */
+    private function cacheKey(string $text, string $voiceId, string $modelId, string $scope = ''): string
     {
-        return hash('sha256', $text.'|'.$voiceId.'|'.$modelId);
+        return hash_hmac(
+            'sha256',
+            $text.'|'.$voiceId.'|'.$modelId.'|'.$scope,
+            (string) config('app.key'),
+        );
     }
 }
