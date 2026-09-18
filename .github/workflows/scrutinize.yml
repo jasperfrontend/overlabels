@@ -15,6 +15,18 @@ name: scrutinize
 on:
   push:
     branches: [main]
+  # Re-run her by hand on one id. Needed because a claim can reach main without
+  # this workflow seeing it: GitHub scans the WHOLE commit message for the
+  # skip-CI token, so a commit that merely writes that token in its body - a
+  # commit explaining this workflow, for instance - silently runs nothing at
+  # all. OL-2609-105 landed that way. It is also the way to audit a claim
+  # pushed before this workflow existed.
+  workflow_dispatch:
+    inputs:
+      id:
+        description: 'Claim ID to audit, e.g. OL-2609-105'
+        required: true
+        type: string
 
 # contents: write is for the audit.md commit and nothing else. See the
 # commit-back note at the bottom, and why this is not the thing lint.yml
@@ -50,25 +62,33 @@ jobs:
         env:
           BEFORE: ${{ github.event.before }}
           AFTER: ${{ github.event.after }}
+          MANUAL_ID: ${{ inputs.id }}
         run: |
           set -euo pipefail
 
-          # A brand-new branch, a force push, or a squashed history leaves
-          # `before` as all-zeros or unreachable. Fall back to the tip commit
-          # rather than walking the entire history and re-auditing everything.
-          if [ -z "${BEFORE//0/}" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            RANGE="$AFTER~1..$AFTER"
+          if [ -n "${MANUAL_ID:-}" ]; then
+            # Hand-dispatched: one id, no range walk. The audit.md guard below
+            # still applies, so a manual run cannot overwrite a shipped audit.
+            echo "manual: $MANUAL_ID"
+            IDS="$MANUAL_ID"
           else
-            RANGE="$BEFORE..$AFTER"
-          fi
-          echo "range: $RANGE"
+            # A brand-new branch, a force push, or a squashed history leaves
+            # `before` as all-zeros or unreachable. Fall back to the tip commit
+            # rather than walking the entire history and re-auditing everything.
+            if [ -z "${BEFORE//0/}" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+              RANGE="$AFTER~1..$AFTER"
+            else
+              RANGE="$BEFORE..$AFTER"
+            fi
+            echo "range: $RANGE"
 
-          # The trailer is the anchor, exactly as the guide says: one string is
-          # the folder, the trailer, the prose heading and the grep.
-          IDS=$(git log --format=%B "$RANGE" \
-            | grep -oE 'Changelog: OL-[0-9]{4}-[0-9]{3}' \
-            | sed 's/^Changelog: //' \
-            | sort -u || true)
+            # The trailer is the anchor, exactly as the guide says: one string
+            # is the folder, the trailer, the prose heading and the grep.
+            IDS=$(git log --format=%B "$RANGE" \
+              | grep -oE 'Changelog: OL-[0-9]{4}-[0-9]{3}' \
+              | sed 's/^Changelog: //' \
+              | sort -u || true)
+          fi
 
           PENDING=()
           for id in $IDS; do
