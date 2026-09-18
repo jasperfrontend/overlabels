@@ -228,12 +228,12 @@ it('seeds forgetme for an account that opts into the bot', function () {
 // sub or cheer re-created a twitch_events row carrying their id and display
 // name, and the bot's chat summary rewrote latest_chatter_name with them.
 
-function postErasureNotification(string $messageId, array $event): TestResponse
+function postErasureNotification(string $messageId, array $event, string $type = 'channel.follow'): TestResponse
 {
     config(['app.twitch_webhook_secret' => 'test-webhook-secret']);
 
     $body = json_encode([
-        'subscription' => ['id' => 'sub-1', 'type' => 'channel.follow', 'version' => '2'],
+        'subscription' => ['id' => 'sub-1', 'type' => $type, 'version' => '2'],
         'event' => $event,
     ]);
     $timestamp = now()->toIso8601String();
@@ -307,6 +307,132 @@ it('leaves a webhook from a viewer who has not asked completely alone', function
     ])->assertOk();
 
     expect(TwitchEvent::latest('id')->first()->event_data['user_name'])->toBe('Bob');
+});
+
+// Twitch does not call the acting viewer `user_*` in every payload shape. A
+// raid names the raider `from_broadcaster_user_*` and a chat notification names
+// the chatter `chatter_user_*`, so a suppression check that only reads
+// `user_id` writes those two straight back.
+
+it('deletes the events that name the viewer under Twitch other payload names', function () {
+    $user = User::factory()->create();
+
+    $raid = TwitchEvent::create([
+        'user_id' => $user->id,
+        'event_type' => 'channel.raid',
+        'event_data' => ['from_broadcaster_user_id' => '555000', 'from_broadcaster_user_name' => 'Alice'],
+        'twitch_timestamp' => now(),
+        'processed' => true,
+    ]);
+
+    $notice = TwitchEvent::create([
+        'user_id' => $user->id,
+        'event_type' => 'channel.chat.notification',
+        'event_data' => ['chatter_user_id' => '555000', 'chatter_user_name' => 'Alice'],
+        'twitch_timestamp' => now(),
+        'processed' => true,
+    ]);
+
+    $someoneElse = TwitchEvent::create([
+        'user_id' => $user->id,
+        'event_type' => 'channel.raid',
+        'event_data' => ['from_broadcaster_user_id' => '999999', 'from_broadcaster_user_name' => 'Bob'],
+        'twitch_timestamp' => now(),
+        'processed' => true,
+    ]);
+
+    forgetMe()->assertOk();
+
+    expect(TwitchEvent::find($raid->id))->toBeNull()
+        ->and(TwitchEvent::find($notice->id))->toBeNull()
+        ->and(TwitchEvent::find($someoneElse->id))->not->toBeNull();
+});
+
+it('anonymises a raid from a viewer who asked to be forgotten', function () {
+    $this->mock(TwitchApiService::class, function ($mock) {
+        $mock->shouldReceive('enrichEventWithUserAvatars')->andReturnUsing(fn ($token, $event) => $event);
+    });
+
+    $streamer = User::factory()->create(['access_token' => 'token']);
+
+    forgetMe()->assertOk();
+
+    postErasureNotification('msg-raid-erased', [
+        'to_broadcaster_user_id' => $streamer->twitch_id,
+        'to_broadcaster_user_login' => 'streamer',
+        'to_broadcaster_user_name' => 'Streamer',
+        'from_broadcaster_user_id' => '555000',
+        'from_broadcaster_user_login' => 'alice',
+        'from_broadcaster_user_name' => 'Alice',
+        'viewers' => 42,
+    ], 'channel.raid')->assertOk();
+
+    $stored = TwitchEvent::latest('id')->first();
+
+    // The raid still arrives, and still carries the number of viewers it
+    // brought. What nobody gets is a name.
+    expect($stored)->not->toBeNull()
+        ->and($stored->event_data['from_broadcaster_user_id'])->toBeNull()
+        ->and($stored->event_data['from_broadcaster_user_login'])->toBeNull()
+        ->and($stored->event_data['from_broadcaster_user_name'])->toBeNull()
+        ->and($stored->event_data['to_broadcaster_user_id'])->toBe($streamer->twitch_id)
+        ->and($stored->event_data['viewers'])->toBe(42);
+
+    expect(json_encode($stored->event_data))->not->toContain('Alice');
+});
+
+it('leaves a raid from a viewer who has not asked completely alone', function () {
+    $this->mock(TwitchApiService::class, function ($mock) {
+        $mock->shouldReceive('enrichEventWithUserAvatars')->andReturnUsing(fn ($token, $event) => $event);
+    });
+
+    $streamer = User::factory()->create(['access_token' => 'token']);
+
+    forgetMe()->assertOk();
+
+    postErasureNotification('msg-raid-kept', [
+        'to_broadcaster_user_id' => $streamer->twitch_id,
+        'from_broadcaster_user_id' => '999999',
+        'from_broadcaster_user_login' => 'bob',
+        'from_broadcaster_user_name' => 'Bob',
+        'viewers' => 7,
+    ], 'channel.raid')->assertOk();
+
+    expect(TwitchEvent::latest('id')->first()->event_data['from_broadcaster_user_name'])->toBe('Bob');
+});
+
+it('anonymises a chat notification from a viewer who asked to be forgotten', function () {
+    $this->mock(TwitchApiService::class, function ($mock) {
+        $mock->shouldReceive('enrichEventWithUserAvatars')->andReturnUsing(fn ($token, $event) => $event);
+    });
+
+    $streamer = User::factory()->create(['access_token' => 'token']);
+
+    forgetMe()->assertOk();
+
+    postErasureNotification('msg-notice-erased', [
+        'broadcaster_user_id' => $streamer->twitch_id,
+        'chatter_user_id' => '555000',
+        'chatter_user_login' => 'alice',
+        'chatter_user_name' => 'Alice',
+        'chatter_is_anonymous' => false,
+        'notice_type' => 'sub',
+        'system_message' => 'Alice subscribed at Tier 1.',
+        'sub' => ['sub_tier' => '1000', 'is_prime' => false, 'duration_months' => 1],
+    ], 'channel.chat.notification')->assertOk();
+
+    $stored = TwitchEvent::latest('id')->first();
+
+    // The ledger row survives - it is what a Plus Points count is built from.
+    // The person named in it does not.
+    expect($stored)->not->toBeNull()
+        ->and($stored->event_data['chatter_user_id'])->toBeNull()
+        ->and($stored->event_data['chatter_user_login'])->toBeNull()
+        ->and($stored->event_data['chatter_user_name'])->toBeNull()
+        ->and($stored->event_data['notice_type'])->toBe('sub')
+        ->and($stored->event_data['sub']['is_prime'])->toBeFalse();
+
+    expect(json_encode($stored->event_data))->not->toContain('Alice');
 });
 
 it('keeps an erased viewer out of latest_chatter_name while still counting them', function () {

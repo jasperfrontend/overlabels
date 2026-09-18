@@ -533,7 +533,7 @@ class TwitchEventSubController extends Controller
             $event = TwitchPayloadScrubber::scrub(
                 $event,
                 forceAnonymous: $this->erasures->isSuppressed(
-                    isset($event['user_id']) ? (string) $event['user_id'] : null
+                    TwitchPayloadScrubber::actingViewerId($event)
                 ),
             );
             $data['event'] = $event;

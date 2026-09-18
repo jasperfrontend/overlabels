@@ -72,9 +72,17 @@ class ViewerErasureService
         $removed['tower_blocks'] = TowerBlock::where('chatter_twitch_id', $twitchId)->delete();
         $removed['list_history'] = ListAppendHistory::where('chatter_id', $twitchId)->delete();
 
-        // Twitch's own events: follows, subs, cheers, raids, redemptions. The
-        // acting user is `user_id` in every payload shape we store.
-        $removed['twitch_events'] = TwitchEvent::whereRaw("event_data->>'user_id' = ?", [$twitchId])->delete();
+        // Twitch's own events: follows, subs, cheers, raids, redemptions, chat
+        // notices. Twitch names the acting viewer differently per payload shape
+        // - a raider is `from_broadcaster_user_id`, a chat notice's subscriber
+        // is `chatter_user_id` - so match every place the id can sit, from the
+        // same list the scrubber anonymises by. Field names are constants, never
+        // input.
+        $events = TwitchEvent::query();
+        foreach (TwitchPayloadScrubber::ACTING_VIEWER_ID_FIELDS as $field) {
+            $events->orWhereRaw("event_data->>'$field' = ?", [$twitchId]);
+        }
+        $removed['twitch_events'] = $events->delete();
 
         // Checkin and Tower write their own history here, keyed by chatter_id.
         $removed['external_events'] = ExternalEvent::whereRaw("raw_payload->>'chatter_id' = ?", [$twitchId])->delete();

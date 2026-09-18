@@ -46,6 +46,56 @@ class TwitchPayloadScrubber
     ];
 
     /**
+     * The other names Twitch gives the acting viewer, nulled only for a viewer
+     * who asked to be forgotten. `channel.raid` calls the raider
+     * `from_broadcaster_user_*`; `channel.chat.notification` calls the chatter
+     * `chatter_user_*` and repeats their display name in `system_message`, the
+     * sentence Twitch composed for chat. None of them is covered by
+     * `is_anonymous`, which is a cheer's own flag and says nothing about either.
+     */
+    private const SUPPRESSED_FIELDS = [
+        'from_broadcaster_user_id',
+        'from_broadcaster_user_login',
+        'from_broadcaster_user_name',
+        'from_broadcaster_user_avatar',
+        'chatter_user_id',
+        'chatter_user_login',
+        'chatter_user_name',
+        'chatter_user_avatar',
+        'system_message',
+    ];
+
+    /**
+     * Where the acting viewer's Twitch id lives, in the order it is looked for.
+     * One list rather than a per-event-type map: no payload shape carries two
+     * of these, and a new shape is one entry here beside its identity fields.
+     */
+    public const ACTING_VIEWER_ID_FIELDS = [
+        'user_id',
+        'from_broadcaster_user_id',
+        'chatter_user_id',
+    ];
+
+    /**
+     * The id of the viewer who caused this event, or null if the payload names
+     * nobody. This is what a suppression check is asked about.
+     *
+     * @param  array<array-key, mixed>  $event
+     */
+    public static function actingViewerId(array $event): ?string
+    {
+        foreach (self::ACTING_VIEWER_ID_FIELDS as $field) {
+            $id = $event[$field] ?? null;
+
+            if (is_scalar($id) && (string) $id !== '') {
+                return (string) $id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @param  array<array-key, mixed>  $event
      * @param  bool  $forceAnonymous  True when the acting viewer has asked to be
      *                                forgotten. Their identity is removed from
@@ -62,6 +112,14 @@ class TwitchPayloadScrubber
 
         if ($forceAnonymous || ! empty($clean['is_anonymous'])) {
             foreach (self::ANONYMOUS_FIELDS as $field) {
+                if (array_key_exists($field, $clean)) {
+                    $clean[$field] = null;
+                }
+            }
+        }
+
+        if ($forceAnonymous) {
+            foreach (self::SUPPRESSED_FIELDS as $field) {
                 if (array_key_exists($field, $clean)) {
                     $clean[$field] = null;
                 }
