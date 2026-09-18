@@ -6,6 +6,7 @@ use App\Contracts\AuthenticatedExternalServiceDriver;
 use App\Contracts\ExternalServiceDriver;
 use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
+use App\Services\External\PayloadScrubber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -96,7 +97,7 @@ class StreamLabsServiceDriver implements AuthenticatedExternalServiceDriver, Ext
             amount: $amount,
             currency: $currency,
             templateTags: $tags,
-            raw: $payload,
+            raw: PayloadScrubber::scrub($payload),
         );
     }
 

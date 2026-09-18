@@ -5,6 +5,7 @@ namespace App\Services\External\Drivers;
 use App\Contracts\ExternalServiceDriver;
 use App\Models\ExternalIntegration;
 use App\Services\External\NormalizedExternalEvent;
+use App\Services\External\PayloadScrubber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -141,7 +142,7 @@ class ThroneServiceDriver implements ExternalServiceDriver
             amount: $amount,
             currency: $currency,
             templateTags: $tags,
-            raw: $payload,
+            raw: PayloadScrubber::scrub($payload),
         );
     }
 

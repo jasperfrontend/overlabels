@@ -1,5 +1,62 @@
 # Changelog - September 2026
 
+## OL-2609-096 - September 18th, 2026 - fix(privacy): stop storing supporters' email and postal addresses, and write down the whole data tree
+
+This started as a help page. The idea was to tell people plainly what Overlabels holds about them,
+because a privacy policy written for lawyers is not an answer to "what do you actually keep?". Three
+passes over the codebase later, the page had turned up two things that had to be fixed before it
+could be published, which is the best possible outcome for a page like this and not a comfortable
+one.
+
+`NormalizedExternalEvent::$raw` has carried the comment "payload-as-stored: PII already stripped by
+the driver" since the day it was written. Exactly one driver did that. Buy Me a Coffee stripped the
+supporter email, the shipping address and the gross charged amount, hashed the email and put the
+plaintext in the encrypted column. Ko-fi, Fourthwall, Streamlabs and Throne passed the service's
+message straight through into `external_events.raw_payload`, which is plain readable jsonb.
+
+Checking production settled it, by key name only and never by value: every one of the 21 stored
+Ko-fi events carried the donor's email address, six carried their Discord username, and all 21
+carried our own Ko-fi verification token, the same secret the integration row goes to the trouble of
+encrypting. `shipping` was present as a key on every row and empty on every row, for the only reason
+that matters: nobody had ordered anything yet. A Ko-fi shop order or commission fills it with the
+buyer's full postal address and telephone number, and a commission is precisely the donation a
+streamer is most likely to take.
+
+So `PayloadScrubber` now removes a list of key names from a payload before it is stored, at any depth,
+and the four drivers run their payload through it. The match is on the name rather than a list of
+known paths, which is deliberate: the payloads that carry an address are by definition the ones we
+have not seen yet. A migration does the same to rows already written, because the alternative was
+waiting ninety days for the prune to reach them. Nothing downstream reads any of those keys, which is
+why none of it was ever visible on an overlay in the first place.
+
+The second fix is smaller and worse. Account deletion threw for anyone whose kit had been copied by
+another user, because the guard that stops you deleting a kit other people built on fired inside the
+deletion transaction. The controller logged the user out before running the delete, so the result was
+being signed out, shown an error, and still having an account. That is now the other way round: erase
+first, tear the session down after, and the kit guard is lifted for erasure only. Copies are
+untouched; they just stop pointing at a parent that is gone.
+
+The page itself is at `/help/your-data` and it is long, on purpose. It says what is held and what is
+thrown away, what the 90-day and 30-day and 7-day sweeps cover, where the server physically is, that
+the database is not published to any public address, that one dump goes to two providers daily, and
+that the Twitch tokens in it are not separately encrypted. It says that deleting an account leaves
+uploaded images in the bucket, leaves a Fourthwall webhook registered, and lives on in backups for up
+to thirty days. It says what an administrator can see. None of that is flattering and all of it is
+true, which is the only version of this page worth publishing.
+
+## OL-2609-095 - September 18th, 2026 - fix(account): deleting your account no longer fails if someone copied one of your kits
+
+Found while tracing what account deletion actually removes, for the data page. `Kit`'s deleting hook
+throws when `fork_count > 0`, which is right for the kits page and wrong inside an erasure: one
+copied kit aborted the entire transaction. `AccountController::destroy` logged the user out first, so
+the failure mode was a signed-out user staring at an error with their account still intact and no
+obvious way back to the button.
+
+The delete now runs before the session teardown, and `Kit::withoutForkGuard()` lifts the guard for
+that one path. Everything interactive keeps it: the kits page still checks `canBeDeleted()` and still
+refuses. Nobody's copy is harmed, because a copy was always an independent row and the parent link is
+`ON DELETE SET NULL`.
+
 ## OL-2609-090 - September 17th, 2026 - feat(products): ten looks for Twitch Chat, a skin control and one-click presets on the product page
 
 Yesterday's Twitch Chat product had twelve controls and one look. Twelve colour and size knobs

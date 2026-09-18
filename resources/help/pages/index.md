@@ -42,6 +42,8 @@ need, ignore the rest.
   surfaces, the unknown-background problem, variable-length content, fluid layout, CSS animation, and a
   deliverables checklist.
 - [**Manifesto**](/help/manifesto) - what Overlabels is, why it exists, and the principles behind it.
+- [**Your data on Overlabels**](/help/your-data) - a full inventory of what we hold, what we throw away,
+  how long the rest is kept, and exactly what deleting your account does and does not remove.
 - [**Overlays vs Alerts**](/help/overlays-vs-alerts) - the two kinds of overlay and how they fit
   together: why alerts are most powerful rendered inside a static overlay's DOM, plus Targeting vs
   Triggers.
