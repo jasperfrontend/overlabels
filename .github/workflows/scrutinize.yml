@@ -37,9 +37,16 @@ on:
 # contents: write is for the audit.md commit and nothing else. See the
 # commit-back note at the bottom, and why this is not the thing lint.yml
 # refuses to do.
+#
+# id-token: write is not optional and not about writing anything: the action
+# exchanges a GitHub OIDC token for its own credentials and fails the job with
+# "Could not fetch an OIDC token" without it. actions: read lets it read the
+# workflow_run context it was triggered by.
 permissions:
   contents: write
   issues: write
+  id-token: write
+  actions: read
 
 # One at a time. Two runs in quick succession would otherwise race to commit
 # their audits onto the same branch.
