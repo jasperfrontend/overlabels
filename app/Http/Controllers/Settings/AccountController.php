@@ -41,7 +41,10 @@ class AccountController extends Controller
         // Erase first, then tear the session down. The other order means any
         // failure in eraseAccount leaves the user logged out, looking at an
         // error, with the account still there and no way back to the button.
-        $deletion->eraseAccount($user);
+        // redactAuditTrail: this is the user asking to be erased, so their name
+        // comes out of admin audit rows about them. An admin-initiated deletion
+        // keeps them; see UserDeletionService::eraseAccount().
+        $deletion->eraseAccount($user, redactAuditTrail: true);
 
         Auth::guard('web')->logout();
         $request->session()->invalidate();

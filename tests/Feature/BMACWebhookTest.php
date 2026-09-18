@@ -7,6 +7,7 @@ use App\Models\OverlayControl;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Testing\TestResponse;
 
@@ -122,9 +123,15 @@ test('stores event with PII stripped from raw_payload and email captured into pr
     expect($raw['data'])->not()->toHaveKey('total_amount_charged');
     expect($raw['data'])->not()->toHaveKey('shipping_address');
 
-    // Backend-only metadata holds the plaintext email (encrypted at rest)
-    expect($event->private_metadata)->toBe(['supporter_email' => 'john@example.com']);
-    expect($event->supporter_email_hash)->toBe(hash('sha256', 'john@example.com'));
+    // The supporter's email is not retained in any form. It was previously kept
+    // as a sha256 in supporter_email_hash and in plaintext inside the encrypted
+    // private_metadata column; nothing read either back, and the decrypted
+    // value was reaching the admin events page. Both columns are gone.
+    $stored = DB::table('external_events')->where('id', $event->id)->first();
+    expect((array) $stored)->not()->toHaveKey('private_metadata');
+    expect((array) $stored)->not()->toHaveKey('supporter_email_hash');
+    expect(json_encode($stored))->not()->toContain('john@example.com');
+    expect(json_encode($stored))->not()->toContain(hash('sha256', 'john@example.com'));
 });
 
 test('updates last_received_at on successful webhook', function () {

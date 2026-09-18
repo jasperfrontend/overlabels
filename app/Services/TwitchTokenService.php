@@ -17,6 +17,8 @@ class TwitchTokenService
 
     private string $validateUrl = 'https://id.twitch.tv/oauth2/validate';
 
+    private string $revokeUrl = 'https://id.twitch.tv/oauth2/revoke';
+
     public function __construct()
     {
         $this->clientId = config('services.twitch.client_id');
@@ -36,6 +38,42 @@ class TwitchTokenService
             return $response->successful();
         } catch (Exception $e) {
             Log::error('Token validation failed: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Hand an access token back to Twitch, which invalidates it and the refresh
+     * token issued alongside it, and drops Overlabels off the user's connections
+     * list at twitch.tv/settings/connections.
+     *
+     * Called when an account is erased. Until this existed, deleting an
+     * Overlabels account left a live grant pointing at nothing, and only the
+     * user could clear it.
+     *
+     * Twitch answers 200 for a token it revoked and 400 for one it does not
+     * recognise. Both mean the token is not usable, so both count as done.
+     */
+    public function revokeToken(string $accessToken): bool
+    {
+        try {
+            $response = Http::asForm()->post($this->revokeUrl, [
+                'client_id' => $this->clientId,
+                'token' => $accessToken,
+            ]);
+
+            if ($response->successful() || $response->status() === 400) {
+                return true;
+            }
+
+            Log::warning('Twitch token revocation returned an unexpected status', [
+                'status' => $response->status(),
+            ]);
+
+            return false;
+        } catch (Exception $e) {
+            Log::warning('Twitch token revocation failed: '.$e->getMessage());
 
             return false;
         }
@@ -85,6 +123,16 @@ class TwitchTokenService
     {
         // Check if token is expired based on timestamp
         if ($user->token_expires_at && $user->token_expires_at->isPast()) {
+            return $this->refreshUserToken($user);
+        }
+
+        // No readable access token: either the account never had one, or the
+        // stored value could not be decrypted (see App\Casts\EncryptedOrNull).
+        // Either way the refresh token is the only way back, and if that is
+        // unreadable too refreshUserToken() reports failure and the user is
+        // sent to re-authorize. Previously this passed null straight into
+        // validateToken(string) and raised a TypeError.
+        if (! $user->access_token) {
             return $this->refreshUserToken($user);
         }
 

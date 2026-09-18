@@ -67,7 +67,12 @@ return [
     |
     */
 
-    'block_by_country' => env('BANHAMMER_BLOCK_BY_COUNTRY', false),
+    // Stays false. Turning this on sends every visitor's IP address to
+    // ip-api.com, a third party with no agreement in place, on up to 45
+    // requests a minute. Overlabels removed its only other IP-geolocation call
+    // for the same reason. If country blocking is ever wanted, it needs a
+    // provider decision first, not an env var.
+    'block_by_country' => false,
 
     /*
     |--------------------------------------------------------------------------

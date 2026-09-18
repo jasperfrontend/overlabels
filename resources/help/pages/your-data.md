@@ -54,13 +54,9 @@ What is kept about you:
 | A per-account webhook secret | Used to verify that a Twitch webhook really came from Twitch |
 | Your settings | Locale, loop limits, chat filters, living title, bot toggles |
 
-> [!NOTE]
-> **Your Twitch tokens are stored in the database as plain text.** They are hidden from every API
-> response and never written to a log, and the database is not reachable from outside the server, but
-> they are not separately encrypted at rest the way integration credentials are. If that matters to
-> you, the mitigation is in your hands: revoking Overlabels at
-> [twitch.tv/settings/connections](https://www.twitch.tv/settings/connections) invalidates both tokens
-> immediately.
+Your Twitch tokens are **encrypted at rest**, like every other credential on the platform. They are
+also hidden from every API response, never written to a log, and never sent to your browser. A copy
+of the database without the application's encryption key contains no usable Twitch credentials.
 
 Overlabels holds **one** write permission on your Twitch account: the one that sets your stream title
 and category, used only by [Living Twitch title](/help/living-title). Every other scope is read-only.
@@ -90,6 +86,12 @@ Twitch user the event mentions and attach it, so your alert can show a face with
 That means an event row contains the other person's Twitch ID, login, display name and avatar URL,
 plus whatever that event type carries: a bit count, a sub tier, the text someone typed into a channel
 point redemption, the message attached to a resub.
+
+Two things are taken out before an event is stored at all. Twitch's prediction events name every
+viewer who bet, with how many channel points they staked and won; that list is dropped, because a
+progress bar does not need to know who gambled what. And if a cheer is marked anonymous, the
+identifying fields are cleared on our side rather than trusting them to already be empty, so an
+anonymous cheerer cannot end up on screen through a replayed or hand-built event.
 
 **Twitch events are deleted after 90 days.** There is no archive and no export of them.
 
@@ -172,23 +174,27 @@ donation data ever travels outward.
 
 ## Your viewers
 
-Some features exist to put viewers on screen, so they necessarily remember viewers.
+Some features exist to put viewers on screen, so they necessarily remember viewers. The rule we hold
+ourselves to here is narrow: a viewer never signed up for Overlabels, so we keep only what they chose
+to put on your stream, and we keep it on a clock.
 
 **Chat Checkin** stores, for each viewer who checks in, their Twitch ID, login, display name, the city
 they named, its country and its coordinates. Cities only, never a precise location, and the lookup runs
 against a gazetteer stored on our own server, so a viewer's city is never sent to a third-party
 geocoder. Each viewer has one current pin, and the history of every checkin lives in the event log
-under the same 90-day expiry. Pins are kept when you disconnect the integration, on purpose, so
-disconnecting and reconnecting does not wipe your globe.
+under the same 90-day expiry. **A pin is deleted 90 days after the viewer last checked in**, so a
+regular stays on your globe and someone who passed through once in March does not stay forever.
+Pins survive you disconnecting the integration, on purpose, so disconnecting and reconnecting does
+not wipe your globe.
 
 **Chat Tower** stores, for each block standing in the tower, the stacker's Twitch ID, login, display
 name and their Twitch chat colour. A topple deletes every block. As with Checkin, the event log keeps
 the history for 90 days.
 
-**Lists** are the one place with no expiry. If you run a command that lets chat add to a list, the
-append history keeps who added what, by login, so you can answer "what did that person actually
-submit?". That history is deleted when the list or the command is deleted, and when your account is
-deleted, but nothing sweeps it on a timer.
+**Lists**: if you run a command that lets chat add to a list, the append history keeps who added what,
+by login, so you can answer "what did that person actually submit?". That history is deleted after 90
+days, and immediately when the list or the command is deleted. The list contents themselves are yours
+and stay until you clear them.
 
 **GPS**, if you use it, records your own precise location: latitude, longitude, altitude, speed,
 bearing, accuracy and phone battery, one row per ping. This is the most sensitive data on the platform
@@ -204,13 +210,12 @@ We do record IP addresses, in four specific places. None of them is analytics.
 |-------|-----|----------|
 | Your login sessions | Standard session security | Until the session expires |
 | Overlay access logs | So you can see what is using each overlay token, and so we can tell which overlays are live in OBS | 90 days |
-| Admin action log | So every administrative action is attributable | Indefinitely |
+| Admin action log | So every administrative action is attributable | 2 years |
 | Overlay reports | To spot one person filing dozens of reports | 180 days after the report is handled |
 
-> [!NOTE]
-> When an Overlabels administrator opens the sessions page, the IP addresses on it are sent to a
-> third-party lookup service to turn them into a city name. This happens only on that page, only for an
-> administrator, and only with the IP address.
+Your IP address is never sent anywhere else. There was, until recently, a button on an internal page
+that resolved an address to a city through an outside service; it has been removed, along with the
+code behind it.
 
 ## What we do not collect
 
@@ -279,6 +284,9 @@ Every high-volume table expires on a schedule:
 | List snapshots | 30 days, unless you pin one |
 | Uploaded images nobody claimed | 30 minutes |
 | Handled overlay reports | 180 days |
+| Check-in pins | 90 days after that viewer last checked in |
+| List append history | 90 days |
+| Admin action log | 2 years |
 | Database backups | 30 days |
 
 ## Who at Overlabels can see your data
@@ -314,24 +322,23 @@ credentials, and every donation and integration event ever received for you.
 
 Your overlay tokens stop working immediately, so anything in OBS goes blank.
 
+It also reaches outside the database. Your uploaded screenshots and kit thumbnails are deleted from
+the image bucket, your Twitch grant is handed back so Overlabels disappears from your connections
+list, your EventSub subscriptions are cancelled at Twitch, and a Fourthwall webhook, if you had one,
+is removed from your shop. Any of those can fail if the other service is unreachable; none of them
+can stop the deletion.
+
+Your login sessions go, and your event history is deleted rather than merely unlinked.
+
 ### What deleting does not remove
 
-- **Your Twitch connection.** Overlabels cannot revoke its own access from Twitch's side. Remove it at
-  [twitch.tv/settings/connections](https://www.twitch.tv/settings/connections). The account page says
-  this too.
-- **Uploaded images.** Overlay screenshots and kit thumbnails stay in the image bucket and their public
-  URLs keep working.
-- **Your event history's leftovers.** Twitch event rows are detached from you rather than deleted, so
-  the account link is gone but the rows remain until their 90-day expiry.
-- **A Fourthwall webhook**, if you connected Fourthwall. Disconnecting the integration first removes it
-  properly; deleting the account outright leaves it registered on your shop, where it will send to an
-  address that no longer answers. Disconnect Fourthwall before deleting if you want it cleaned up.
-- **Twitch's own event subscriptions**, briefly. They are removed from our database immediately and
-  cleaned up on Twitch's side by a job that runs every hour.
-- **Backups**, for up to 30 days, as described above.
-- **Administrative records.** If an administrator ever took an action on your account, the audit entry
-  naming you survives, because an append-only log that can be edited is not a log.
-- **Login sessions**, whose rows are not linked to your account and clear on their own schedule.
+- **Backups**, for up to 30 days. The nightly dump your data was in has to age out on its own; nothing
+  reads it in the meantime.
+- **The fact that an administrator acted on your account**, if one ever did. The entry stays, because
+  an append-only log that entries can vanish from is not a log. Your name and Twitch ID are taken out
+  of it, and the entry itself is deleted after two years.
+- **Anything you put somewhere public**, such as an overlay you shared or a kit someone copied. A copy
+  belongs to whoever made it.
 
 ### Disconnecting Twitch is not deleting your account
 

@@ -148,25 +148,19 @@ class ExternalWebhookController extends Controller
             ? $normalizedEvent->getMessageId().'_test_'.microtime(true)
             : $normalizedEvent->getMessageId();
 
-        $privateMetadata = $normalizedEvent->getPrivateMetadata() ?? [];
-        if ($normalizedEvent->getSupporterEmail() !== null) {
-            $privateMetadata['supporter_email'] = $normalizedEvent->getSupporterEmail();
-        }
-
         try {
             $storedEvent = ExternalEvent::create([
                 'user_id' => $user->id,
                 'service' => $service,
                 'event_type' => $eventType,
                 'message_id' => $messageId,
-                // Drivers may strip PII (e.g. BMAC removes supporter_email,
-                // shipping_address, total_amount_charged) before exposing the
-                // payload via getRaw(); fall back to the parsed body for
-                // drivers that don't override.
+                // Drivers strip personal data before exposing the payload via
+                // getRaw(): the donation drivers run it through
+                // PayloadScrubber, and BMAC additionally unsets the fields it
+                // knows by name. The fallback is for a driver that returns
+                // nothing, which no current driver does.
                 'raw_payload' => $normalizedEvent->getRaw() ?: $payload,
                 'normalized_payload' => $normalizedEvent->getTemplateTags(),
-                'supporter_email_hash' => $normalizedEvent->getSupporterEmailHash(),
-                'private_metadata' => empty($privateMetadata) ? null : $privateMetadata,
             ]);
         } catch (UniqueConstraintViolationException) {
             Log::info('Duplicate external event ignored', [

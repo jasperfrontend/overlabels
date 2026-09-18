@@ -51,8 +51,6 @@ class ExternalEvent extends Model
         'message_id',
         'raw_payload',
         'normalized_payload',
-        'supporter_email_hash',
-        'private_metadata',
         'controls_updated',
         'alert_dispatched',
         'alert_id',
@@ -65,7 +63,6 @@ class ExternalEvent extends Model
     protected $casts = [
         'raw_payload' => 'array',
         'normalized_payload' => 'array',
-        'private_metadata' => 'encrypted:array',
         'controls_updated' => 'boolean',
         'alert_dispatched' => 'boolean',
         'outcome' => DeliveryOutcome::class,

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EncryptedOrNull;
 use Database\Factories\UserFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
@@ -218,6 +219,12 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            // Encrypted at rest, same as BotToken's tokens. EncryptedOrNull
+            // rather than Laravel's `encrypted` so a value written as plaintext
+            // by an old container mid-deploy reads as "no token" and sends the
+            // user through re-authorization, instead of throwing on every read.
+            'access_token' => EncryptedOrNull::class,
+            'refresh_token' => EncryptedOrNull::class,
             'token_expires_at' => 'datetime',
             'eventsub_connected_at' => 'datetime',
             'eventsub_auto_connect' => 'boolean',

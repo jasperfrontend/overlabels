@@ -24,6 +24,7 @@ use App\Services\StreamStateMachineService;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
+use App\Services\TwitchPayloadScrubber;
 use App\Services\TwitchTokenService;
 use Exception;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -245,9 +246,13 @@ class TwitchEventSubController extends Controller
             $jsonError = json_last_error();
 
             if ($jsonError !== JSON_ERROR_NONE) {
+                // Deliberately does not log $body. An unparseable webhook body
+                // is still a webhook body: viewer names, cheer messages and
+                // redemption text, written verbatim into a plaintext log file
+                // that nothing sweeps.
                 Log::error('JSON parsing failed', [
                     'error' => json_last_error_msg(),
-                    'body' => $body,
+                    'bytes' => strlen($body),
                 ]);
 
                 return response('Invalid JSON', 400);
@@ -259,26 +264,16 @@ class TwitchEventSubController extends Controller
             // Step 4: Check if it's a challenge
             $isChallenge = $messageType === 'webhook_callback_verification' && isset($data['challenge']);
 
-            // Step 5: Store webhook activity
-            $webhookLog = [
-                'timestamp' => now()->toISOString(),
-                'message_type' => $messageType,
-                'has_challenge' => isset($data['challenge']),
-                'challenge' => $data['challenge'] ?? null,
-                'event_type' => $data['subscription']['type'] ?? null,
-                'status' => 'received',
-                'debug' => true,
-            ];
-
-            Cache::put('last_webhook_activity', $webhookLog, 300);
+            // Step 5 used to mirror every inbound webhook into a
+            // `last_webhook_activity` cache key, upgraded on notification to
+            // carry the whole event payload. It was a single global key shared
+            // by every account, so one streamer's viewer data sat in it until
+            // the next streamer's event replaced it, and nothing anywhere ever
+            // read it. Removed rather than scoped: dead debug code does not
+            // need a tenancy model.
 
             // Step 6: Handle challenge if present
             if ($isChallenge) {
-
-                // Update webhook log
-                $webhookLog['status'] = 'challenge_responded';
-                Cache::put('last_webhook_activity', $webhookLog, 300);
-                Cache::put('webhook_challenge_received', true, 300);
 
                 $challenge = $data['challenge'];
                 $subscriptionId = $data['subscription']['id'] ?? null;
@@ -326,11 +321,6 @@ class TwitchEventSubController extends Controller
             // Handle actual events (notifications)
             if ($messageType === 'notification' && isset($data['event'])) {
                 $this->handleTwitchEvent($data, $request->header('Twitch-Eventsub-Message-Id'));
-
-                // Update webhook log
-                $webhookLog['status'] = 'event_processed';
-                $webhookLog['event_data'] = $data['event'];
-                Cache::put('last_webhook_activity', $webhookLog, 300);
             }
 
             // Handle revocations
@@ -348,10 +338,6 @@ class TwitchEventSubController extends Controller
                     UserEventsubSubscription::where('twitch_subscription_id', $revokedId)
                         ->update(['status' => $revokedStatus, 'last_verified_at' => now()]);
                 }
-
-                // Update webhook log
-                $webhookLog['status'] = 'subscription_revoked';
-                Cache::put('last_webhook_activity', $webhookLog, 300);
             }
 
             return response('OK', 200);
@@ -363,13 +349,6 @@ class TwitchEventSubController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
-
-            Cache::put('webhook_error', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'timestamp' => now()->toISOString(),
-            ], 300);
 
             return response('Error: '.$e->getMessage(), 500);
         }
@@ -536,6 +515,14 @@ class TwitchEventSubController extends Controller
                 $event['winners'] = $this->computePollWinners($event['choices'] ?? []);
                 $data['event'] = $event;
             }
+
+            // Take out what is not ours to keep, BEFORE enrichment: an avatar
+            // must not be fetched for a viewer we are about to drop, and an
+            // anonymous cheerer must not be given one at all. Everything
+            // downstream - persist, alert render, broadcast, TTS - reads the
+            // scrubbed payload.
+            $event = TwitchPayloadScrubber::scrub($event);
+            $data['event'] = $event;
 
             // Decorate the payload with profile_image_url for every user the
             // event references (acting user, broadcaster, raid source, hype

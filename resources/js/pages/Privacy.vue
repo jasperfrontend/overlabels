@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from '@lucide/vue';
 
-const lastUpdated = 'August 4, 2026';
+const lastUpdated = 'September 18, 2026';
 </script>
 
 <template>
@@ -60,7 +60,10 @@ const lastUpdated = 'August 4, 2026';
             <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">2. Information We Collect</h2>
             <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">Information You Provide</h3>
             <ul class="mb-4 list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
-              <li>Twitch account information (username, user ID, email address)</li>
+              <li>
+                Twitch account information (display name and Twitch user ID). We do not store your email address: it is stripped from the Twitch login
+                response before anything is saved, and there is no column to hold it
+              </li>
               <li>Overlay templates and configurations you create</li>
               <li>
                 Lists you create through the dashboard or chat commands, including the values your viewers contribute (chatter display names, custom
@@ -72,11 +75,21 @@ const lastUpdated = 'August 4, 2026';
 
             <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">Information Collected Automatically</h3>
             <ul class="mb-4 list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
-              <li>Usage data and analytics (page views, feature usage)</li>
-              <li>Device information (browser type, operating system)</li>
-              <li>IP address and approximate location</li>
-              <li>Cookies and similar tracking technologies</li>
+              <li>
+                Your IP address and browser user agent, recorded against your login sessions and against each use of an overlay access token. Overlay
+                access logs are deleted after 90 days
+              </li>
+              <li>Events Twitch sends us about your channel, which are deleted after 90 days</li>
             </ul>
+            <p class="mb-4 text-gray-600 dark:text-gray-400">
+              We do not run analytics or tracking of any kind. There is no Google Analytics, no Plausible, no Fathom, no PostHog, no Mixpanel, no
+              Hotjar, no Matomo and no advertising pixel, and we do not use tracking cookies. The only cookie we set is the one that keeps you logged
+              in. We do not geolocate your IP address or send it to any third party.
+            </p>
+            <p class="mb-4 text-gray-600 dark:text-gray-400">
+              For a complete, plain-language inventory of every table and how long each thing is kept, see
+              <a href="/help/your-data" class="text-purple-600 hover:underline dark:text-purple-400">Your data on Overlabels</a>.
+            </p>
 
             <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">Information from Twitch</h3>
             <ul class="list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
@@ -104,7 +117,11 @@ const lastUpdated = 'August 4, 2026';
             <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">4. Data Sharing and Disclosure</h2>
             <p class="mb-4 text-gray-600 dark:text-gray-400">We do not sell your personal information. We may share your data with:</p>
             <ul class="list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
-              <li><strong>Service Providers:</strong> Third-party services that help us operate our platform (hosting, analytics)</li>
+              <li>
+                <strong>Service providers we actually use:</strong> Linode (hosting, Frankfurt), Cloudflare (network and object storage, EU), Scaleway
+                (backup storage, Paris), Twitch, the donation service you connect, ElevenLabs (only the text of an alert you configured to be spoken)
+                and Freesound (only your search terms). There is no analytics provider
+              </li>
               <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
               <li><strong>Business Transfers:</strong> In connection with a merger, sale, or acquisition</li>
               <li><strong>Your Consent:</strong> With your explicit permission</li>
@@ -117,7 +134,7 @@ const lastUpdated = 'August 4, 2026';
               We implement appropriate technical and organizational measures to protect your personal information, including:
             </p>
             <ul class="list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
-              <li>Encryption of data in transit and at rest</li>
+              <li>TLS in transit, and encryption at rest for every credential we hold: your Twitch tokens and every integration credential</li>
               <li>Regular security audits and updates</li>
               <li>Access controls and authentication</li>
               <li>Secure API token management</li>
@@ -176,12 +193,11 @@ const lastUpdated = 'August 4, 2026';
           </section>
 
           <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">8. Cookies and Tracking</h2>
-            <p class="mb-4 text-gray-600 dark:text-gray-400">We use cookies and similar technologies to:</p>
+            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">8. Cookies</h2>
+            <p class="mb-4 text-gray-600 dark:text-gray-400">We use cookies only to:</p>
             <ul class="list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
               <li>Keep you logged in</li>
               <li>Remember your preferences</li>
-              <li>Analyze usage patterns</li>
               <li>Improve service performance</li>
             </ul>
             <p class="mt-4 text-gray-600 dark:text-gray-400">

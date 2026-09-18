@@ -19,9 +19,6 @@ final readonly class NormalizedExternalEvent
         public ?string $currency,
         public array $templateTags,  // ['event.from_name' => ..., 'event.amount' => ...]
         public array $raw,           // payload-as-stored: PII already stripped by the driver
-        public ?string $supporterEmail = null,      // backend-only plaintext, encrypted at rest
-        public ?string $supporterEmailHash = null,  // sha256 hex, indexed for analytics
-        public ?array $privateMetadata = null,      // any other backend-only fields
     ) {}
 
     public function getService(): string
@@ -67,21 +64,6 @@ final readonly class NormalizedExternalEvent
     public function getRaw(): array
     {
         return $this->raw;
-    }
-
-    public function getSupporterEmail(): ?string
-    {
-        return $this->supporterEmail;
-    }
-
-    public function getSupporterEmailHash(): ?string
-    {
-        return $this->supporterEmailHash;
-    }
-
-    public function getPrivateMetadata(): ?array
-    {
-        return $this->privateMetadata;
     }
 
     /**
@@ -134,9 +116,6 @@ final readonly class NormalizedExternalEvent
             currency: $this->currency,
             templateTags: array_merge($this->templateTags, ['event.formatted_amount' => $formatted]),
             raw: $this->raw,
-            supporterEmail: $this->supporterEmail,
-            supporterEmailHash: $this->supporterEmailHash,
-            privateMetadata: $this->privateMetadata,
         );
     }
 }

@@ -35,7 +35,19 @@ class AdminTwitchEventController extends Controller
                 $query->where('created_at', '<=', $to);
             }
 
-            $events = $query->latest()->paginate(50)->withQueryString();
+            // Projected, not serialized whole. Paginating full models put fifty
+            // raw payloads into the page HTML on every load, where the list only
+            // ever renders these six fields. The detail page is where a payload
+            // is meant to be looked at, one at a time and on purpose.
+            $events = $query->latest()->paginate(50)->withQueryString()->through(fn (ExternalEvent $event) => [
+                'id' => $event->id,
+                'service' => $event->service,
+                'event_type' => $event->event_type,
+                'controls_updated' => $event->controls_updated,
+                'alert_dispatched' => $event->alert_dispatched,
+                'created_at' => $event->created_at,
+                'user' => $event->user,
+            ]);
             $eventTypes = ExternalEvent::distinct()->pluck('event_type')->sort()->values();
 
             return Inertia::render('admin/events/index', [
@@ -68,7 +80,15 @@ class AdminTwitchEventController extends Controller
             $query->where('created_at', '<=', $to);
         }
 
-        $events = $query->latest()->paginate(50)->withQueryString();
+        // Same reason as the external branch above: fifty verbatim EventSub
+        // payloads per page load, to render five fields.
+        $events = $query->latest()->paginate(50)->withQueryString()->through(fn (TwitchEvent $event) => [
+            'id' => $event->id,
+            'event_type' => $event->event_type,
+            'processed' => $event->processed,
+            'created_at' => $event->created_at,
+            'user' => $event->user,
+        ]);
 
         $eventTypes = TwitchEvent::distinct()->pluck('event_type')->sort()->values();
 

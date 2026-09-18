@@ -53,7 +53,12 @@ class StreamLabsIntegrationController extends DonationIntegrationController
             'client_id' => config('services.streamlabs.client_id'),
             'redirect_uri' => url('/auth/callback/streamlabs'),
             'response_type' => 'code',
-            'scope' => 'socket.token donations.read donations.create',
+            // socket.token is what the listener runs on. donations.create was
+            // requested from the start and never called - Overlabels has no code
+            // that creates a donation and no reason to. Asking a streamer to
+            // grant a write permission we do not use is the kind of thing that
+            // makes a consent screen meaningless.
+            'scope' => 'socket.token donations.read',
             'state' => $state,
         ]);
 

@@ -1,9 +1,12 @@
 <?php
 
 use App\Jobs\VerifyStreamState;
+use App\Models\AdminAuditLog;
 use App\Models\BotChatOutbox;
+use App\Models\Checkin;
 use App\Models\ExternalEvent;
 use App\Models\ImageUpload;
+use App\Models\ListAppendHistory;
 use App\Models\ListSnapshot;
 use App\Models\OverlayAccessLog;
 use App\Models\OverlayReport;
@@ -195,6 +198,32 @@ Schedule::call(fn () => OverlayReport::where('status', OverlayReport::STATUS_REA
     ->where('reviewed_at', '<', now()->subDays(180))
     ->delete()
 )->daily()->name('prune:overlay-reports')->withoutOverlapping();
+
+// Auto-prune check-in pins after 90 days of not being touched. This table had
+// no sweep at all: a viewer who typed !checkin once had their self-declared
+// city, its coordinates and their Twitch identity held indefinitely, and
+// `pin_lifetime = per_stream` only filters what is DISPLAYED, it never deletes
+// a row. A city is not publicly retrievable about a Twitch viewer, so this is
+// the one piece of third-party data on the platform that most needed a clock.
+// Checking in again refreshes the pin, so an active viewer never ages out.
+Schedule::call(fn () => Checkin::where('checked_in_at', '<', now()->subDays(90))->delete())
+    ->daily()->name('prune:checkins')->withoutOverlapping();
+
+// Auto-prune list append history after 90 days. The row records which viewer
+// submitted which value, and its only mechanical use is same-stream dedup, so
+// nothing needs it beyond the stream it was written in. It was append-only with
+// no sweep, which for a long-lived raffle command meant a permanent ledger of
+// viewer names against free text they typed.
+Schedule::call(fn () => ListAppendHistory::where('fired_at', '<', now()->subDays(90))->delete())
+    ->daily()->name('prune:list-append-history')->withoutOverlapping();
+
+// Auto-prune admin audit rows after two years. This table had no sweep at all,
+// and its metadata names the user an action was taken against - including rows
+// about accounts that no longer exist, since target_id has no foreign key to
+// cascade from. Two years is long enough to answer "why was this account
+// removed" and short enough that it is not a permanent record of a person.
+Schedule::call(fn () => AdminAuditLog::where('created_at', '<', now()->subDays(730))->delete())
+    ->daily()->name('prune:admin-audit-logs')->withoutOverlapping();
 
 // Auto-prune list snapshots older than 30 days. Pinned snapshots are
 // exempt - streamers explicitly opt into keeping those forever. Runs

@@ -493,6 +493,68 @@ the Socket.IO listener + its Dockerfile + Kamal accessory, the internal integrat
 Donation services are now five: Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee, Throne. Copy that
 counts them ("five donation services", "five pipes") lives in `resources/views/welcome/`.
 
+## Privacy and data retention (swept Sept 18th 2026, OL-2609-097)
+
+**The governing rule: Overlabels does not store personal data about THIRD PARTIES beyond what is
+publicly retrievable about them anyway.** A viewer's public display name, login, Twitch id and
+avatar are defensible - putting them on stream is the product. Their email, postal address, phone
+number, Discord identity, or what they wagered on a prediction are not. No donor ever agreed to
+Overlabels holding anything; they gave it to Ko-fi. Jasper is EU-based and treats this as a hard
+constraint, not a preference.
+
+- **Two scrubbers, one on each side, both matching by KEY NAME at any depth rather than by known
+  path.** `App\Services\External\PayloadScrubber` runs in the four donation drivers (Ko-fi,
+  Fourthwall, Streamlabs, Throne - BMAC does its own explicit `unset()`s and is not in it), and
+  `App\Services\TwitchPayloadScrubber` runs in `TwitchEventSubController` **before enrichment**, so
+  no avatar is fetched for a viewer about to be dropped. Name-matching is deliberate: the payloads
+  that carry an address are the ones nobody has seen yet. A Ko-fi commission carries a full postal
+  address in `shipping`; prod had that key on all 21 stored rows, empty only because no commission
+  had arrived.
+- **Ko-fi echoes our own `verification_token` back in every payload**, and it was being stored next
+  to the event while the integration row carefully encrypted it. It is in `DENIED_KEYS` for that
+  reason. If a service ever echoes a secret, the fix is the denylist, not a new column.
+- **`is_anonymous` is enforced by us, not trusted to Twitch.** `TwitchPayloadScrubber` nulls the
+  user trigram itself. The frontend guard in `useNormalizeEvent.ts` must test `is_anonymous` FIRST -
+  it was written as `e?.user_name ?? (e?.is_anonymous ? 'Anonymous' : ...)`, where `??`
+  short-circuits on a present name, so it looked like a guard and was not.
+- **`outcomes[].top_predictors[]` is dropped.** Nothing reads it; the mapper only surfaces aggregate
+  `outcomes.N.users` / `channel_points`. Hype train `top_contributions[]` is KEPT - that is a public
+  leaderboard Twitch puts on stream itself. The scrubber is narrow on purpose.
+- **`external_events.supporter_email_hash` and `private_metadata` are GONE** (dropped, not
+  deprecated). `encrypted:array` sounds safe and is not: the cast decrypts on attribute access, and
+  the admin events page paginated whole models into an Inertia prop, so fifty donors' addresses at a
+  time were being serialised into page HTML. **Admin list pages project with `->through()`; never
+  paginate a whole model that holds a payload.** A sha256 of an email is still personal data.
+- **User Twitch tokens are encrypted at rest** via `App\Casts\EncryptedOrNull`, NOT Laravel's
+  `encrypted`. The lenient cast returns null on an undecryptable value so a plaintext row written by
+  an old container mid-deploy degrades to a re-auth instead of throwing on every read forever. The
+  columns were `varchar(255)` on prod and had to be widened first: **Postgres rejects an over-length
+  varchar rather than truncating**, so encrypting without the `ALTER` would have broken every login
+  at once. `ensureValidToken()` null-guards before `validateToken(string)`.
+- **Account erasure finishes the job.** `UserDeletionService` runs in three phases: read what the
+  external cleanup needs, delete in one transaction, then release external resources best-effort.
+  It revokes the Twitch grant (`TwitchTokenService::revokeToken()`, the first write that endpoint
+  ever had), hands EventSub subscriptions back, deregisters the Fourthwall webhook, deletes R2
+  images, and deletes `twitch_events` and `sessions` rows that no cascade reaches. **An unreachable
+  third party must never leave a user with an account they asked to destroy** - every external step
+  is wrapped in `attempt()` and logged, never re-raised.
+- **Audit rows are redacted, not deleted, and only on self-serve erasure.** `eraseAccount($user,
+  redactAuditTrail: true)` blanks the identity keys; the admin path keeps them, because the record of
+  who was removed and why is the point. Bounded by a 2-year prune instead.
+- **Retention now covers everything.** Added Sept 2026: `checkins` 90 days from last check-in (a
+  self-declared city tied to a name was held forever; `pin_lifetime = per_stream` only filters the
+  DISPLAY, it never deleted a row), `list_append_history` 90 days, `admin_audit_logs` 2 years.
+- **No IP geolocation anywhere.** The admin sessions page's ip-api.com lookup is removed along with
+  `stevebauman/location`, `config/location.php` and the `ExtendedIpApi`/`ExtendedPosition` drivers.
+  `config/ban.php`'s `block_by_country` is hardcoded false, not an env var, for the same reason.
+  `App\Services\Location\GeoMath` is ours and stays.
+- **Never log a request body.** `TwitchEventSubController` logged the whole body on a JSON parse
+  failure; it logs `strlen($body)` now. Telescope hides the donation/viewer parameter names and the
+  internal secret headers, because its production filter still captures failed requests in full.
+- **`last_webhook_activity` is gone and must not come back.** It mirrored every inbound webhook,
+  including the full event payload, into ONE global cache key shared by every account, and nothing
+  read it. Dead debug code does not need a tenancy model.
+
 ## Database Backups (Implemented Aug 2026)
 
 - Daily `pg_dump` at 16:00 UTC from the scheduler role to Cloudflare R2 and Scaleway. Moved off 03:00 on 2026-08-14: the dump is ~1.5 MB and takes seconds, so there was no load window to hide in, and the only thing 03:00 reliably achieved was timing the failure alert to arrive while the one person who can act on it was asleep. 16:00 UTC puts the alert at ~16:30, early evening in Amsterdam. Pinned by `BackupDatabaseTest`. See `docs/deploy/database-backups.md` - it is the restore procedure too.

@@ -259,10 +259,15 @@ the `overlabels` role, so it lands cleanly as `postgres`.
 
 ### 3. Expect these to be broken, and leave them broken
 
-- **`APP_KEY` mismatch.** Encrypted columns (integration credentials via
-  `Crypt::encryptString`) are unreadable unless your local `APP_KEY` matches
-  production's. Do not copy the prod key to your machine to "fix" this. Any
-  integration you need locally, reconnect locally.
+- **`APP_KEY` mismatch.** Encrypted columns are unreadable unless your local
+  `APP_KEY` matches production's. As of 2026-09-18 that covers **every user's
+  Twitch access and refresh token** (`App\Casts\EncryptedOrNull` on
+  `users.access_token` / `users.refresh_token`), not just integration
+  credentials and `bot_tokens`. So a restored prod dump on a laptop has no
+  working Twitch auth for any account, which is the intended outcome: the dump
+  is no longer a file full of live grants. The cast returns null rather than
+  throwing, so the app degrades to "re-authorize" instead of erroring. Do not
+  copy the prod key to your machine to "fix" this. Log in locally instead.
 - **External integrations.** Ko-fi, Fourthwall, BMAC, Throne and Streamlabs
   webhooks all point at `overlabels.com`, so they will not reach localhost.
   Expected.

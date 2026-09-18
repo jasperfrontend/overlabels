@@ -63,10 +63,23 @@ export function normalizeEvent(raw: any): NormalizedEvent {
       break;
 
     case 'channel.cheer':
-      user_id = e?.user_id ?? (e?.is_anonymous ? null : e?.user_id);
-      user_login = e?.user_login ?? (e?.is_anonymous ? null : e?.user_login);
-      user_name = e?.user_name ?? (e?.is_anonymous ? 'Anonymous' : e?.user_name);
-      user_avatar = e?.user_avatar ?? null;
+      // Test is_anonymous FIRST. This used to read
+      // `e?.user_name ?? (e?.is_anonymous ? 'Anonymous' : e?.user_name)`, where
+      // `??` short-circuits on a present value, so the anonymity branch was only
+      // reachable when the name was already nullish. It looked like a guard and
+      // was not: a payload carrying both a name and is_anonymous would have put
+      // that name on stream.
+      if (e?.is_anonymous) {
+        user_id = null;
+        user_login = null;
+        user_name = 'Anonymous';
+        user_avatar = null;
+      } else {
+        user_id = e?.user_id;
+        user_login = e?.user_login;
+        user_name = e?.user_name;
+        user_avatar = e?.user_avatar ?? null;
+      }
       break;
 
     default:

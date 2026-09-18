@@ -75,13 +75,12 @@ class BMACServiceDriver implements AuthenticatedExternalServiceDriver, ExternalS
         $rawType = (string) ($payload['type'] ?? '');
         $data = $payload['data'] ?? [];
 
-        // Capture PII before stripping it out of $rawForStorage.
-        $email = isset($data['supporter_email']) && is_string($data['supporter_email'])
-            ? $data['supporter_email']
-            : null;
-        $emailHash = $email !== null ? hash('sha256', strtolower(trim($email))) : null;
-
         // Build the storage-safe payload: drop email, address, and gross-charged amount.
+        // The supporter's email is not captured at all. It used to be kept as a
+        // sha256 in supporter_email_hash and in plaintext inside the encrypted
+        // private_metadata column; nothing ever read either one back, and the
+        // decrypted value was reaching the admin events page in the Inertia
+        // payload. Both columns are gone.
         $rawForStorage = $payload;
         if (isset($rawForStorage['data']) && is_array($rawForStorage['data'])) {
             unset(
@@ -144,8 +143,6 @@ class BMACServiceDriver implements AuthenticatedExternalServiceDriver, ExternalS
             currency: $currency,
             templateTags: $tags,
             raw: $rawForStorage,
-            supporterEmail: $email,
-            supporterEmailHash: $emailHash,
         );
     }
 

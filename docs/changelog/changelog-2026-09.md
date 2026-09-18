@@ -1,5 +1,64 @@
 # Changelog - September 2026
 
+## OL-2609-097 - September 18th, 2026 - fix(privacy): the rest of the sweep, from encrypted tokens to a clock on every viewer table
+
+The donation-payload fix earlier today was the loose thread. Pulling it produced a list, and the
+list got worked through rather than filed.
+
+**The governing rule, written down now because it decides all of this:** Overlabels does not store
+personal data about third parties beyond what is publicly retrievable about them anyway. A viewer's
+display name, login and avatar are the product working as intended. Their email, their postal
+address, their Discord handle, or how many channel points they staked on a prediction are not.
+Nobody who donates to a streamer agrees to anything with us.
+
+So there is now a second scrubber on the Twitch side, matching the one on the donations side. It
+drops `top_predictors` from prediction events, which names every viewer who bet and what they won,
+and which nothing here has ever read. And it enforces anonymous cheers itself instead of trusting
+Twitch to send an empty name - the frontend had a guard for that which could not fire, because it
+was written with `??` in front of the condition, so it only checked anonymity when there was no name
+to hide. Hype train contributor lists stay: that is a leaderboard Twitch puts on stream itself.
+
+`external_events` had two columns holding a donor's email, one hashed and one in plaintext behind an
+`encrypted:array` cast. Nothing read either. The cast decrypts on attribute access, and the admin
+events page was paginating whole models into an Inertia prop, so fifty donors' email addresses at a
+time were being written into page HTML. Both columns are dropped, the admin lists project to the
+fields they render, and a sha256 of an email is not a clever compromise, it is still the person.
+
+Twitch access and refresh tokens are encrypted at rest, which makes them the last credential on the
+platform to get there. That one nearly went wrong: the columns were `varchar(255)` on production,
+an encrypted token is longer than that, and Postgres rejects an over-length value rather than
+trimming it. Encrypting without widening first would have broken every login at once. The cast is a
+lenient one rather than Laravel's, so a row written as plaintext by an old container mid-deploy
+degrades to "please log in again" instead of throwing forever.
+
+Deleting an account now actually finishes. It hands the Twitch grant back, so Overlabels disappears
+from your connections page without you going to find it; cancels the EventSub subscriptions at
+Twitch; removes the Fourthwall webhook from your shop; deletes your screenshots from the image
+bucket, which used to keep resolving publicly forever; and deletes the event and session rows that
+no cascade reached. Every one of those is best effort and wrapped, because a third party being down
+must never leave someone holding an account they asked to destroy. Admin audit rows about you have
+your name taken out when you are the one who asked; when an administrator removed you, they keep it,
+and age out after two years instead.
+
+Three tables that had no expiry now have one. Check-in pins were the worst of them: a viewer who
+typed `!checkin` once had their self-declared city, its coordinates and their Twitch identity held
+indefinitely, and the per-stream setting only ever filtered what was drawn, it never deleted a row.
+Ninety days from their last check-in now, so a regular stays on the globe and a passer-by does not.
+List append history the same, and the admin action log at two years.
+
+Smaller things, all of them removed rather than tidied: the admin sessions page sent IP addresses to
+ip-api.com over plain HTTP to turn them into city names, so that page, its route, its two driver
+classes, its config and the package behind it are gone, and country-blocking is hardcoded off for
+the same reason. A cache key mirrored every inbound webhook payload, including viewer data, into one
+global slot shared by every account, read by nothing. A parse failure logged the entire request body
+into a plaintext log file. Telescope's production filter captures failed requests in full, so a
+donation webhook that 500s was capturing a donor's details for 48 hours; the parameter names are
+hidden now. And the Streamlabs connection stopped asking for permission to create donations, which
+it has never once used.
+
+The privacy policy said we collect email addresses, usage analytics and tracking cookies. We collect
+none of those. It says so now, and [Your data on Overlabels](/help/your-data) is the long version.
+
 ## OL-2609-096 - September 18th, 2026 - fix(privacy): stop storing supporters' email and postal addresses, and write down the whole data tree
 
 This started as a help page. The idea was to tell people plainly what Overlabels holds about them,

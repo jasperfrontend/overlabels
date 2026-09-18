@@ -119,7 +119,6 @@ export type NormalizedEvent = {
 };
 
 export interface User {
-  access_token: any;
   description: any;
   twitch_data: any;
   id: number;

@@ -3,8 +3,18 @@
 use App\Models\Kit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 uses(DatabaseTransactions::class);
+
+// Erasing an account now talks to Twitch (revoke the grant, cancel the EventSub
+// subscriptions) and to the images bucket. Unfaked, those are real network
+// calls: the suite hangs rather than fails, which is the worse of the two.
+beforeEach(function () {
+    Http::fake(['*' => Http::response(['data' => []], 200)]);
+    Storage::fake('images');
+});
 
 // Kit::boot()'s deleting hook refuses to delete a kit that has been copied, so
 // that nobody destroys something other people built on. That guard is right for

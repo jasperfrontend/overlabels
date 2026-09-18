@@ -239,7 +239,7 @@ test('normalizeEvent for wishlist payment with string note_hidden false renders 
 // PII: email captured into private metadata, raw payload sanitized
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('normalizeEvent captures supporter email into hash + plaintext, strips from raw', function () {
+test('normalizeEvent discards the supporter email entirely and strips it from raw', function () {
     $payload = [
         'type' => 'donation.created',
         'data' => [
@@ -255,9 +255,10 @@ test('normalizeEvent captures supporter email into hash + plaintext, strips from
 
     $event = $this->driver->normalizeEvent($payload, 'donation');
 
-    expect($event->getSupporterEmail())->toBe('JOHN@example.com');
-    expect($event->getSupporterEmailHash())->toBe(hash('sha256', 'john@example.com'));
-
+    // The email is not captured in any form - not plaintext, not hashed. It
+    // used to travel on the DTO into supporter_email_hash and private_metadata;
+    // nothing read either back, and the decrypted value was reaching the admin
+    // events page.
     $raw = $event->getRaw();
     expect($raw['data'])->not()->toHaveKey('supporter_email');
     expect($raw['data'])->not()->toHaveKey('total_amount_charged');
@@ -266,9 +267,13 @@ test('normalizeEvent captures supporter email into hash + plaintext, strips from
     foreach ($event->getTemplateTags() as $value) {
         expect($value)->not()->toContain('john@example.com');
     }
+
+    // and it must not survive anywhere else on the DTO either
+    expect(json_encode($event->getRaw()))->not()->toContain('JOHN@example.com');
+    expect(json_encode($event->getTemplateTags()))->not()->toContain('JOHN@example.com');
 });
 
-test('normalizeEvent leaves email/hash null when supporter_email missing', function () {
+test('normalizeEvent is unbothered when supporter_email is missing', function () {
     $payload = [
         'type' => 'donation.created',
         'data' => [
@@ -281,8 +286,8 @@ test('normalizeEvent leaves email/hash null when supporter_email missing', funct
 
     $event = $this->driver->normalizeEvent($payload, 'donation');
 
-    expect($event->getSupporterEmail())->toBeNull();
-    expect($event->getSupporterEmailHash())->toBeNull();
+    expect($event->getFromName())->toBe('Anonymous');
+    expect($event->getRaw()['data'])->not()->toHaveKey('supporter_email');
 });
 
 // ──────────────────────────────────────────────────────────────────────────────

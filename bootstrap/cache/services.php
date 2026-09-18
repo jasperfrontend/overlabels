@@ -39,10 +39,9 @@
     35 => 'Termwind\\Laravel\\TermwindServiceProvider',
     36 => 'Pest\\Laravel\\PestServiceProvider',
     37 => 'SocialiteProviders\\Manager\\ServiceProvider',
-    38 => 'Stevebauman\\Location\\LocationServiceProvider',
-    39 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
-    40 => 'App\\Providers\\AppServiceProvider',
-    41 => 'SocialiteProviders\\Manager\\ServiceProvider',
+    38 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
+    39 => 'App\\Providers\\AppServiceProvider',
+    40 => 'SocialiteProviders\\Manager\\ServiceProvider',
   ),
   'eager' => 
   array (
@@ -64,9 +63,8 @@
     15 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
     16 => 'Termwind\\Laravel\\TermwindServiceProvider',
     17 => 'Pest\\Laravel\\PestServiceProvider',
-    18 => 'Stevebauman\\Location\\LocationServiceProvider',
-    19 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
-    20 => 'App\\Providers\\AppServiceProvider',
+    18 => 'Tighten\\Ziggy\\ZiggyServiceProvider',
+    19 => 'App\\Providers\\AppServiceProvider',
   ),
   'deferred' => 
   array (
