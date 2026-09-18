@@ -20,9 +20,14 @@ class UserDeletionService
     public function eraseAccount(User $user): void
     {
         DB::transaction(function () use ($user) {
-            Kit::where('owner_id', $user->id)->each(function ($kit) {
-                $kit->templates()->detach();
-                $kit->delete();
+            // The fork guard is lifted here on purpose: a kit someone else had
+            // copied used to throw out of this transaction and abort the whole
+            // erasure. See Kit::withoutForkGuard().
+            Kit::withoutForkGuard(function () use ($user) {
+                Kit::where('owner_id', $user->id)->each(function ($kit) {
+                    $kit->templates()->detach();
+                    $kit->delete();
+                });
             });
 
             OverlayTemplate::where('owner_id', $user->id)->each(function ($template) {

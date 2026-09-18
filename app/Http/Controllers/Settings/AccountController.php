@@ -38,11 +38,14 @@ class AccountController extends Controller
             ]);
         }
 
+        // Erase first, then tear the session down. The other order means any
+        // failure in eraseAccount leaves the user logged out, looking at an
+        // error, with the account still there and no way back to the button.
+        $deletion->eraseAccount($user);
+
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
-        $deletion->eraseAccount($user);
 
         return Inertia::location(route('home'));
     }

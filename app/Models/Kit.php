@@ -97,6 +97,36 @@ class Kit extends Model
     ];
 
     /**
+     * Set only for the duration of an account erasure. See withoutForkGuard().
+     */
+    protected static bool $forkGuardDisabled = false;
+
+    /**
+     * Run a callback with the "this kit has copies" delete guard lifted.
+     *
+     * The guard stops someone destroying a kit other people have built on, and
+     * every interactive path keeps it: KitController::destroy checks
+     * canBeDeleted() and shows an error. But it must not be able to strand an
+     * account that has asked to be erased, which is what it did - a single
+     * copied kit made the whole deletion throw, after the user had already been
+     * logged out.
+     *
+     * Nothing of the copier's is lost. A copy is an independent row and
+     * kits.forked_from_id is ON DELETE SET NULL, so it simply stops pointing at
+     * a parent that no longer exists.
+     */
+    public static function withoutForkGuard(callable $callback): mixed
+    {
+        self::$forkGuardDisabled = true;
+
+        try {
+            return $callback();
+        } finally {
+            self::$forkGuardDisabled = false;
+        }
+    }
+
+    /**
      * Boot method
      */
     protected static function boot(): void
@@ -105,7 +135,7 @@ class Kit extends Model
 
         static::deleting(function ($kit) {
             // Prevent deletion if kit has been forked
-            if ($kit->fork_count > 0) {
+            if (! self::$forkGuardDisabled && $kit->fork_count > 0) {
                 throw new Exception('Cannot delete a kit that has been forked.');
             }
 
