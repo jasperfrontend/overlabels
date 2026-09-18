@@ -1,5 +1,30 @@
 # Changelog - September 2026
 
+## OL-2609-098 - September 18th, 2026 - feat(help): /viewers, a page for the people whose data we hold
+
+Every page on this site is written for streamers. This one is not.
+
+A viewer types `!checkin Amsterdam`, their name and their city appear on a stream, and they have no
+idea any of that touched a company called Overlabels. That was the sharpest thing in a day spent
+going through the data tree: not that we held too much, after today's sweep, but that we held it
+about people who had never heard of us and had no route to ask.
+
+`overlabels.com/viewers` is that route. It opens by saying we are not Twitch and not the streamer,
+we are the tool in between. Then: your chat messages never reach our servers, here is the short list
+of things that do and how long each one lasts, the coordinates we store are the city's and not yours,
+we have never had your email address, and if you cheered anonymously you stay anonymous. It ends with
+an address to write to, the explicit note that you do not need to give a reason or quote a law, and
+an honest list of what we cannot reach: the VOD, our backups for thirty days, anything a streamer
+already copied out.
+
+The short URL exists because the point is for it to be typed into a Twitch chat. The page itself is
+an ordinary help page, so it costs a markdown file and one redirect line.
+
+The rest of that design is not built yet: the bot noticing a viewer's first interaction and replying
+with the link, and a `!forgetme` they can type instead of writing an email. The page went first
+because a streamer needs somewhere to send someone the moment they are asked, and today there was
+nowhere.
+
 ## OL-2609-097 - September 18th, 2026 - fix(privacy): the rest of the sweep, from encrypted tokens to a clock on every viewer table
 
 The donation-payload fix earlier today was the loose thread. Pulling it produced a list, and the

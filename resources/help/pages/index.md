@@ -44,6 +44,8 @@ need, ignore the rest.
 - [**Manifesto**](/help/manifesto) - what Overlabels is, why it exists, and the principles behind it.
 - [**Your data on Overlabels**](/help/your-data) - a full inventory of what we hold, what we throw away,
   how long the rest is kept, and exactly what deleting your account does and does not remove.
+- [**For viewers**](/help/viewers) - the page to send someone who asks why their name is on your
+  stream. Written for them, not for you: what is kept, for how long, and how to have it removed.
 - [**Overlays vs Alerts**](/help/overlays-vs-alerts) - the two kinds of overlay and how they fit
   together: why alerts are most powerful rendered inside a static overlay's DOM, plus Targeting vs
   Triggers.

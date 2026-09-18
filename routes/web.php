@@ -104,6 +104,11 @@ Route::redirect('/help/bot/expressions.md', '/help/bot/commands.md', 301);
 // Google still has the old URL and reported it as a 404.
 Route::redirect('/manifesto', '/help/manifesto', 301);
 
+// The viewer notice is linked from Twitch chat by the bot, so it needs a URL
+// short enough to read out and type. The page itself lives in the help corpus
+// like everything else; this is the front door.
+Route::redirect('/viewers', '/help/viewers', 301);
+
 // The hand-written per-service control pages were replaced by the generated
 // `integration-controls` category. They were filed under eventsub-tags despite
 // documenting controls, and they had gone stale - each claimed the shared
