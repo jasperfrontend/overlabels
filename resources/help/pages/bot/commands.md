@@ -81,8 +81,13 @@ The one command in the bot that belongs to your viewers rather than to you.
 | `!forgetme` | Everyone | Deletes everything Overlabels holds about that viewer, across every channel, and stops storing them in future. |
 
 A viewer who types it has their check-ins, their blocks in any chat game, the record of anything they
-added to a list and the Twitch events about them deleted, everywhere, not only in your channel. From
-then on `!checkin` and `!stack` quietly do nothing for them.
+added to a list and the Twitch events about them deleted, everywhere, not only in your channel.
+
+From then on they are invisible rather than absent. `!checkin` and `!stack` quietly do nothing for
+them. If they follow, subscribe, cheer or raid, **you still get the event, the alert and the
+counter** - it simply arrives without a name, the same way an anonymous cheer does. They can keep
+chatting and still count towards your chat totals; their name and message just never reach
+`[[[c:latest_chatter_name]]]` or `[[[c:latest_chat_message]]]`.
 
 It deliberately does **not** touch your Lists. A name sitting in your raffle pool is your content, and
 a viewer's request to us is not a licence to edit your dashboard. If they want out of a list, they ask

@@ -26,6 +26,7 @@ use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
 use App\Services\TwitchPayloadScrubber;
 use App\Services\TwitchTokenService;
+use App\Services\ViewerErasureService;
 use Exception;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
@@ -67,7 +68,8 @@ class TwitchEventSubController extends Controller
         TwitchApiService $twitchService,
         TemplateDataMapperService $mapper,
         StreamSessionService $streamSessionService,
-        StreamStateMachineService $streamStateMachine
+        StreamStateMachineService $streamStateMachine,
+        private readonly ViewerErasureService $erasures,
     ) {
         $this->eventSubService = $eventSubService;
         $this->twitchService = $twitchService;
@@ -521,7 +523,19 @@ class TwitchEventSubController extends Controller
             // anonymous cheerer must not be given one at all. Everything
             // downstream - persist, alert render, broadcast, TTS - reads the
             // scrubbed payload.
-            $event = TwitchPayloadScrubber::scrub($event);
+            //
+            // A viewer who used !forgetme is anonymised here too. !forgetme
+            // promises "we won't store you again", and without this the next
+            // follow, sub or cheer from them writes their id and display name
+            // straight back into twitch_events for another 90 days. The
+            // streamer still gets the event, the alert and the counter; what
+            // they do not get is a name, exactly as with an anonymous cheer.
+            $event = TwitchPayloadScrubber::scrub(
+                $event,
+                forceAnonymous: $this->erasures->isSuppressed(
+                    isset($event['user_id']) ? (string) $event['user_id'] : null
+                ),
+            );
             $data['event'] = $event;
 
             // Decorate the payload with profile_image_url for every user the

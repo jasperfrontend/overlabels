@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Api\Internal;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\StreamSessionService;
+use App\Services\ViewerErasureService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BotChatStatsController extends Controller
 {
-    public function __construct(private readonly StreamSessionService $sessions) {}
+    public function __construct(
+        private readonly StreamSessionService $sessions,
+        private readonly ViewerErasureService $erasures,
+    ) {}
 
     /**
      * Accept one aggregated chat summary for a channel and apply it to the
@@ -40,6 +44,9 @@ class BotChatStatsController extends Controller
             // Twitch caps a chat message at 500 characters.
             'latest_chatter_name' => 'nullable|string|max:64',
             'latest_chat_message' => 'nullable|string|max:500',
+            // Optional, and only used to honour !forgetme. An older bot does
+            // not send it, in which case the pair below is written as before.
+            'latest_chatter_id' => 'nullable|string|max:32',
         ]);
 
         $user = $this->resolveUser($login);
@@ -48,12 +55,18 @@ class BotChatStatsController extends Controller
             return response()->json(['error' => 'channel not found'], 404);
         }
 
+        // A viewer who used !forgetme keeps chatting - nothing about erasure
+        // removes them from a channel - but their name and their message must
+        // not be written into a control that puts them back on screen. The
+        // count still moves: it is a number, not a person.
+        $erased = $this->erasures->isSuppressed($data['latest_chatter_id'] ?? null);
+
         $result = $this->sessions->applyChatSummary(
             $user,
             $data['message_count'],
             $data['chatters'] ?? [],
-            $data['latest_chatter_name'] ?? null,
-            $data['latest_chat_message'] ?? null,
+            $erased ? null : ($data['latest_chatter_name'] ?? null),
+            $erased ? null : ($data['latest_chat_message'] ?? null),
         );
 
         // 200 with applied=false when the channel is not confidently live. The

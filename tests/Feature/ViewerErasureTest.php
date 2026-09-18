@@ -6,9 +6,11 @@ use App\Models\ExternalEvent;
 use App\Models\ListAppender;
 use App\Models\ListAppendHistory;
 use App\Models\OverlayControl;
+use App\Models\StreamState;
 use App\Models\TowerBlock;
 use App\Models\TwitchEvent;
 use App\Models\User;
+use App\Services\TwitchApiService;
 use App\Services\ViewerErasureService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
@@ -217,4 +219,156 @@ it('seeds forgetme for an account that opts into the bot', function () {
     $user->update(['bot_enabled' => true]);
 
     expect(BotBuiltin::where('user_id', $user->id)->where('command', 'forgetme')->exists())->toBeTrue();
+});
+
+// ── The promise "we won't store you again" ──────────────────────────────────
+//
+// Erasing rows is only half of it. Sally's audit of OL-2609-099 found the other
+// half missing: two surfaces wrote an erased viewer straight back. A follow,
+// sub or cheer re-created a twitch_events row carrying their id and display
+// name, and the bot's chat summary rewrote latest_chatter_name with them.
+
+function postErasureNotification(string $messageId, array $event): TestResponse
+{
+    config(['app.twitch_webhook_secret' => 'test-webhook-secret']);
+
+    $body = json_encode([
+        'subscription' => ['id' => 'sub-1', 'type' => 'channel.follow', 'version' => '2'],
+        'event' => $event,
+    ]);
+    $timestamp = now()->toIso8601String();
+
+    return test()->call('POST', '/api/twitch/webhook', [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_TWITCH_EVENTSUB_MESSAGE_TYPE' => 'notification',
+        'HTTP_TWITCH_EVENTSUB_MESSAGE_ID' => $messageId,
+        'HTTP_TWITCH_EVENTSUB_MESSAGE_TIMESTAMP' => $timestamp,
+        'HTTP_TWITCH_EVENTSUB_MESSAGE_SIGNATURE' => 'sha256='.hash_hmac('sha256', $messageId.$timestamp.$body, 'test-webhook-secret'),
+    ], $body);
+}
+
+function erasureChatControl(User $user, string $key, string $type, string $value): OverlayControl
+{
+    return OverlayControl::create([
+        'user_id' => $user->id,
+        'overlay_template_id' => null,
+        'key' => $key,
+        'label' => $key,
+        'type' => $type,
+        'value' => $value,
+        'source' => 'twitch',
+        'source_managed' => true,
+    ]);
+}
+
+it('anonymises a real twitch webhook from a viewer who asked to be forgotten', function () {
+    $this->mock(TwitchApiService::class, function ($mock) {
+        $mock->shouldReceive('enrichEventWithUserAvatars')->andReturnUsing(fn ($token, $event) => $event);
+    });
+
+    $streamer = User::factory()->create(['access_token' => 'token']);
+
+    forgetMe()->assertOk();
+
+    postErasureNotification('msg-erased', [
+        'broadcaster_user_id' => $streamer->twitch_id,
+        'user_id' => '555000',
+        'user_login' => 'alice',
+        'user_name' => 'Alice',
+    ])->assertOk();
+
+    $stored = TwitchEvent::latest('id')->first();
+
+    // The streamer still gets the event and the counter that follows from it.
+    // What nobody gets is a name.
+    expect($stored)->not->toBeNull()
+        ->and($stored->event_data['user_id'])->toBeNull()
+        ->and($stored->event_data['user_name'])->toBeNull()
+        ->and($stored->event_data['user_login'])->toBeNull()
+        ->and($stored->event_data['broadcaster_user_id'])->toBe($streamer->twitch_id);
+
+    expect(json_encode($stored->event_data))->not->toContain('Alice');
+});
+
+it('leaves a webhook from a viewer who has not asked completely alone', function () {
+    $this->mock(TwitchApiService::class, function ($mock) {
+        $mock->shouldReceive('enrichEventWithUserAvatars')->andReturnUsing(fn ($token, $event) => $event);
+    });
+
+    $streamer = User::factory()->create(['access_token' => 'token']);
+
+    forgetMe()->assertOk();
+
+    postErasureNotification('msg-kept', [
+        'broadcaster_user_id' => $streamer->twitch_id,
+        'user_id' => '999999',
+        'user_login' => 'bob',
+        'user_name' => 'Bob',
+    ])->assertOk();
+
+    expect(TwitchEvent::latest('id')->first()->event_data['user_name'])->toBe('Bob');
+});
+
+it('keeps an erased viewer out of latest_chatter_name while still counting them', function () {
+    $user = User::factory()->create([
+        'twitch_id' => '4242',
+        'bot_enabled' => true,
+        'twitch_data' => ['login' => 'streamer'],
+    ]);
+
+    StreamState::updateOrCreate(
+        ['user_id' => $user->id],
+        ['state' => StreamState::STATE_LIVE, 'confidence' => 1.0],
+    );
+
+    erasureChatControl($user, 'latest_chatter_name', 'text', '');
+    erasureChatControl($user, 'latest_chat_message', 'text', '');
+    erasureChatControl($user, 'chat_messages_this_stream', 'counter', '0');
+
+    forgetMe()->assertOk();
+
+    $this->withHeaders(['X-Internal-Secret' => 'test-bot-secret'])
+        ->postJson('/api/internal/bot/chat-stats/streamer', [
+            'message_count' => 3,
+            'chatters' => ['alice'],
+            'latest_chatter_name' => 'Alice',
+            'latest_chat_message' => 'hello',
+            'latest_chatter_id' => '555000',
+        ])->assertOk();
+
+    $name = OverlayControl::where('user_id', $user->id)->where('key', 'latest_chatter_name')->first();
+    $message = OverlayControl::where('user_id', $user->id)->where('key', 'latest_chat_message')->first();
+    $count = OverlayControl::where('user_id', $user->id)->where('key', 'chat_messages_this_stream')->first();
+
+    expect($name?->value)->not->toBe('Alice')
+        ->and($message?->value)->not->toBe('hello')
+        // The count is a number, not a person, so it still moves.
+        ->and((int) $count?->value)->toBe(3);
+});
+
+it('still writes latest_chatter_name for a viewer who has not asked', function () {
+    $user = User::factory()->create([
+        'twitch_id' => '4343',
+        'bot_enabled' => true,
+        'twitch_data' => ['login' => 'otherstreamer'],
+    ]);
+
+    StreamState::updateOrCreate(
+        ['user_id' => $user->id],
+        ['state' => StreamState::STATE_LIVE, 'confidence' => 1.0],
+    );
+
+    erasureChatControl($user, 'latest_chatter_name', 'text', '');
+
+    $this->withHeaders(['X-Internal-Secret' => 'test-bot-secret'])
+        ->postJson('/api/internal/bot/chat-stats/otherstreamer', [
+            'message_count' => 1,
+            'chatters' => ['bob'],
+            'latest_chatter_name' => 'Bob',
+            'latest_chat_message' => 'hi',
+            'latest_chatter_id' => '999999',
+        ])->assertOk();
+
+    expect(OverlayControl::where('user_id', $user->id)->where('key', 'latest_chatter_name')->first()?->value)
+        ->toBe('Bob');
 });

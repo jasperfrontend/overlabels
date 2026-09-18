@@ -78,10 +78,17 @@ You can also just ask the streamer. Things like their lists and their overlays a
 their content, not ours to quietly delete.
 
 > [!NOTE]
-> **It also stops it happening again.** After `!forgetme`, using a chat command does not put you back:
-> check-ins and chat games quietly do nothing for you from then on. To do that we keep one thing, and
-> only this: your Twitch ID and the date, so we know to keep ignoring you. No name, no channel, no
-> reason. Remembering that we were asked to forget you is the only way to actually do it.
+> **It also stops it happening again.** After `!forgetme`:
+>
+> - Check-ins and chat games quietly do nothing for you.
+> - Following, subscribing, cheering or raiding still reaches the streamer, and still counts, but it
+>   arrives without your name attached. The same treatment an anonymous cheer gets.
+> - You can keep chatting, and your messages still count towards the channel's totals, but your name
+>   and your text are not written to anything that shows them on screen.
+>
+> To do that we keep one thing, and only this: your Twitch ID and the date, so we know to keep
+> ignoring you. No name, no channel, no reason. Remembering that we were asked to forget you is the
+> only way to actually do it.
 
 ## What we cannot remove
 

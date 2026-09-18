@@ -47,13 +47,20 @@ class TwitchPayloadScrubber
 
     /**
      * @param  array<array-key, mixed>  $event
+     * @param  bool  $forceAnonymous  True when the acting viewer has asked to be
+     *                                forgotten. Their identity is removed from
+     *                                the payload exactly as an anonymous cheer's
+     *                                is, so the streamer still gets the event and
+     *                                the counter while we store nobody. Without
+     *                                this, the next follow from an erased viewer
+     *                                writes them straight back into twitch_events.
      * @return array<array-key, mixed>
      */
-    public static function scrub(array $event): array
+    public static function scrub(array $event, bool $forceAnonymous = false): array
     {
         $clean = self::stripDeniedKeys($event);
 
-        if (! empty($clean['is_anonymous'])) {
+        if ($forceAnonymous || ! empty($clean['is_anonymous'])) {
             foreach (self::ANONYMOUS_FIELDS as $field) {
                 if (array_key_exists($field, $clean)) {
                     $clean[$field] = null;

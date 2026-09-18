@@ -102,10 +102,10 @@ test('returns 403 when HMAC signature is wrong', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Happy path: stores event, strips PII, persists email metadata
+// Happy path: stores event, strips PII, retains no email anywhere
 // ──────────────────────────────────────────────────────────────────────────────
 
-test('stores event with PII stripped from raw_payload and email captured into private metadata', function () {
+test('stores event with PII stripped from raw_payload and the email retained nowhere', function () {
     [$user, $integration] = makeBmacIntegration();
 
     postBmac($integration->webhook_token, bmacDonationPayload(58))
