@@ -60,20 +60,28 @@ to a text-to-speech service to be turned into audio. That audio file is deleted 
 
 ## How to have your data removed
 
-Email **privacy@overlabels.com** and tell us your Twitch username. That is the whole requirement. You
-do not need to give a reason, quote a law, or explain yourself.
+**Type `!forgetme` in any chat where the Overlabels bot is present.** That is the whole thing. It
+deletes what we hold about you, everywhere, not only in that channel, and it tells us not to store you
+again. You do not need to give a reason, quote a law, or explain yourself.
 
-We will remove what we hold about you and reply to tell you what was there. If we need to be sure it
-is really your account, we will ask you to send the request from the email on your Twitch account, or
-to confirm from the account in chat.
+It works for everyone, and a streamer cannot switch it off or restrict it to subscribers or mods. It
+is the one command on the platform that belongs to you rather than to the channel.
+
+If you would rather not type it in public, email **privacy@overlabels.com** with your Twitch
+username instead.
+
+Either way, your check-ins, your blocks in any chat game, the record of anything you added to a list,
+and the events Twitch sent us about you all go.
 
 You can also just ask the streamer. Things like their lists and their overlays are theirs to edit, and
-they can clear you out of them without involving us.
+`!forgetme` deliberately does not reach into them: a raffle entry sitting on somebody's dashboard is
+their content, not ours to quietly delete.
 
 > [!NOTE]
-> Removing your data does not stop it happening again. If you use a chat command tomorrow, the same
-> thing gets stored again. Tell us in your email if you want us to remember not to store you at all,
-> and we will keep a note of your Twitch ID for that purpose and nothing else.
+> **It also stops it happening again.** After `!forgetme`, using a chat command does not put you back:
+> check-ins and chat games quietly do nothing for you from then on. To do that we keep one thing, and
+> only this: your Twitch ID and the date, so we know to keep ignoring you. No name, no channel, no
+> reason. Remembering that we were asked to forget you is the only way to actually do it.
 
 ## What we cannot remove
 

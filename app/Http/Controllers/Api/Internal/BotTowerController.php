@@ -15,6 +15,8 @@ use App\Services\External\ExternalServiceRegistry;
 use App\Services\StreamSessionService;
 use App\Services\Tower\TowerPhysics;
 use App\Services\Tower\TowerService;
+use App\Services\ViewerErasureService;
+use App\Services\ViewerNoticeService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,6 +32,8 @@ class BotTowerController extends Controller
         private readonly TowerService $tower,
         private readonly ExternalControlService $controlService,
         private readonly ExternalAlertService $alertService,
+        private readonly ViewerErasureService $erasures,
+        private readonly ViewerNoticeService $notices,
     ) {}
 
     /**
@@ -83,6 +87,12 @@ class BotTowerController extends Controller
             return response()->json(['reply' => $this->tower->status($user)]);
         }
 
+        // A viewer who asked to be forgotten is not stored again. Silent, for
+        // the same reason the cooldown is. See ViewerErasureService.
+        if ($this->erasures->isSuppressed($data['chatter_id'])) {
+            return response()->json(['reply' => null]);
+        }
+
         // Server-side cooldown backstop (the bot has its own command cooldown,
         // but this endpoint must defend itself). Silent: a cooldown reply per
         // spammed command would itself be spam.
@@ -116,7 +126,14 @@ class BotTowerController extends Controller
 
         $this->runPipeline($user, $integration, $facts);
 
-        return response()->json(['reply' => $this->replyFor($facts)]);
+        $reply = $this->replyFor($facts);
+
+        return response()->json([
+            // The tower is deliberately quiet on an ordinary block, so there is
+            // usually no reply to hang the notice on. It rides the topple and
+            // record lines instead, which is where a viewer is named anyway.
+            'reply' => $reply === null ? null : $this->notices->decorate($reply, $data['chatter_id']),
+        ]);
     }
 
     /**

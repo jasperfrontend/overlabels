@@ -72,6 +72,27 @@ chat to drive your overlay state for one stream and not the next.
 | `!enablecontrols` | Broadcaster | Open the controls surface on this channel. Default is closed. |
 | `!disablecontrols` | Broadcaster | Close the controls surface again. Chat can no longer touch your controls. |
 
+## `!forgetme`
+
+The one command in the bot that belongs to your viewers rather than to you.
+
+| Command | Tier | What it does |
+|---|---|---|
+| `!forgetme` | Everyone | Deletes everything Overlabels holds about that viewer, across every channel, and stops storing them in future. |
+
+A viewer who types it has their check-ins, their blocks in any chat game, the record of anything they
+added to a list and the Twitch events about them deleted, everywhere, not only in your channel. From
+then on `!checkin` and `!stack` quietly do nothing for them.
+
+It deliberately does **not** touch your Lists. A name sitting in your raffle pool is your content, and
+a viewer's request to us is not a licence to edit your dashboard. If they want out of a list, they ask
+you, and the command's own reply tells them so.
+
+You cannot switch it off, and you cannot raise its tier. A viewer has no account here and most have
+never heard of Overlabels, so this is their only route to us from the place their data was collected;
+a channel being able to close that route would defeat the point of having it. Everything a viewer needs
+to know is at [overlabels.com/viewers](/help/viewers), which is also where the bot points them.
+
 ## `!ol` chat-admin
 
 Manage your custom commands and aliases without leaving Twitch. `!ol` is namespaced this way so it
@@ -240,3 +261,5 @@ Two kinds stay as they are. A command a product installed - `!stack` and `!tower
 cooldown included; switching it off from somewhere else would quietly break the thing you installed.
 And `!enablecontrols` / `!disablecontrols` are always on, because they are the switch for every
 chat control command and turning them off would leave you no way to turn controls back on from chat.
+`!forgetme` is always on for the same structural reason, from the other direction: it is your viewers'
+only way to reach us.

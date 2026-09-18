@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Internal\BotCommandController;
 use App\Http\Controllers\Api\Internal\BotCommandMapController;
 use App\Http\Controllers\Api\Internal\BotControlController;
 use App\Http\Controllers\Api\Internal\BotFollowageController;
+use App\Http\Controllers\Api\Internal\BotForgetMeController;
 use App\Http\Controllers\Api\Internal\BotListActionController;
 use App\Http\Controllers\Api\Internal\BotListAppenderController;
 use App\Http\Controllers\Api\Internal\BotOutboxController;
@@ -236,6 +237,9 @@ Route::prefix('/internal/bot')
             Route::post('/manage', [BotChatAdminController::class, 'handle']);
             Route::post('/followage', [BotFollowageController::class, 'handle']);
             Route::post('/accountage', [BotAccountageController::class, 'handle']);
+            // No {login}: a viewer asking to be forgotten is asking the
+            // platform, not one channel. See BotForgetMeController.
+            Route::post('/forgetme', [BotForgetMeController::class, 'handle']);
             Route::get('/controls/{login}/{key}', [BotControlController::class, 'show'])
                 ->where(['login' => '[a-z0-9_]+', 'key' => '[a-z][a-z0-9_]{0,49}']);
             Route::post('/controls/{login}/{key}', [BotControlController::class, 'update'])

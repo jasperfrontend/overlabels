@@ -1,5 +1,45 @@
 # Changelog - September 2026
 
+## OL-2609-099 - September 18th, 2026 - feat(bot): !forgetme, and telling a viewer once that they exist in a database
+
+The `/viewers` page shipped a few hours ago with an email address on it. This is the rest of the
+design, and the interesting part is what it is not.
+
+The obvious build was a consent gate: first time a viewer interacts, the bot asks them to type
+`!accept`, nothing is stored until they do. It sounds like the careful option and it is the opposite.
+To know it is their first time anywhere you need a platform-wide registry of viewers keyed by Twitch
+ID, and to avoid nagging the ones who ignored you it has to include them too. So the gate ends with a
+permanent cross-channel identity table for every viewer who has ever typed in an Overlabels channel,
+including everyone who wanted nothing to do with us. It would also swap a strong "they explicitly
+asked to be on screen" basis for consent, which is a higher bar and cannot be walked back once you
+have claimed it.
+
+So: notice, not gate, and opt-out rather than opt-in. The first time a viewer triggers anything, the
+reply they were getting anyway gains ` · your data: overlabels.com/viewers`. That is the whole
+mechanism. It is remembered in a cache key that expires on the same 90-day cadence the underlying data
+does, because a table of who has been told would be that same registry under another name, and a
+viewer who comes back a year later should be told again anyway.
+
+`!forgetme` is the other half, and it is the first command in the bot that belongs to the viewer
+rather than the channel. It deletes their check-ins, their tower blocks, the record of what they
+added to any list, and the Twitch events about them, and it does that everywhere rather than only in
+the channel they typed it in, because they are addressing Overlabels and not the streamer whose chat
+they happened to be in. Its endpoint is the only one in the internal bot API with no `{login}` in the
+path. Afterwards they are inert: `!checkin` and `!stack` quietly do nothing for them, which needs one
+row holding a Twitch ID and a date, and that paradox is the honest cost of actually forgetting
+someone.
+
+It is platform-owned, so a streamer cannot switch it off or raise it above everyone tier, for the
+same structural reason `!enablecontrols` cannot be disabled: it is the only route a viewer has to us
+from the place their data was collected, and a channel closing that route defeats the point of having
+one. It also deliberately does not reach into a streamer's Lists. A name in a raffle pool is the
+streamer's content sitting on their dashboard, and a viewer's request to us is not a licence to edit
+it, so the command's reply tells them to ask the streamer for that.
+
+Two edits, as always for a builtin: the `DEFAULTS` entry for everyone who opts in from now on, and a
+backfill migration for everyone who already had. The bot side is a handler, an API call and five
+tests, and needs no change to the command map shape at all.
+
 ## OL-2609-098 - September 18th, 2026 - feat(help): /viewers, a page for the people whose data we hold
 
 Every page on this site is written for streamers. This one is not.

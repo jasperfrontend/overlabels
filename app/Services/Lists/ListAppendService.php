@@ -10,6 +10,7 @@ use App\Models\OptionSet;
 use App\Models\User;
 use App\Services\Bot\BotCommandResolver;
 use App\Services\Bot\BotCommandService;
+use App\Services\ViewerErasureService;
 use App\Support\BotChatGate;
 use App\Support\ControlSnapshot;
 use App\Support\ListItems;
@@ -34,6 +35,7 @@ readonly class ListAppendService
     public function __construct(
         private BotCommandResolver $resolver,
         private BotCommandService $commandService,
+        private ViewerErasureService $erasures,
     ) {}
 
     /**
@@ -123,6 +125,15 @@ readonly class ListAppendService
 
             $chatterId = (string) ($context['from_user_id'] ?? '');
             $streamSessionId = $user->streamState?->current_session_id;
+
+            // A viewer who asked to be forgotten does not get written into a
+            // list, because the default value_template is [[[bot:from_user]]]
+            // and the history row records their login and what they typed.
+            // Reported as a refusal rather than a silent success so the caller
+            // does not tell them it worked.
+            if ($this->erasures->isSuppressed($chatterId)) {
+                return ['fired' => false, 'reason' => 'viewer_erased'];
+            }
 
             if (! $this->passesDedup($appender, $chatterId, $streamSessionId)) {
                 return ['fired' => false, 'reason' => 'already_in_list'];

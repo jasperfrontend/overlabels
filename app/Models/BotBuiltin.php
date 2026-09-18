@@ -70,6 +70,10 @@ class BotBuiltin extends Model
         ['command' => 'toggle', 'permission_level' => 'moderator', 'owner' => self::OWNER_USER],
         ['command' => 'enablecontrols', 'permission_level' => 'broadcaster', 'owner' => self::OWNER_PLATFORM],
         ['command' => 'disablecontrols', 'permission_level' => 'broadcaster', 'owner' => self::OWNER_PLATFORM],
+        // Platform-owned and everyone-tier, both deliberately. This is the only
+        // chat route a viewer has to ask Overlabels to delete them, so a channel
+        // must not be able to switch it off or raise it above their tier.
+        ['command' => 'forgetme', 'permission_level' => 'everyone', 'owner' => self::OWNER_PLATFORM],
         ['command' => 'ol', 'permission_level' => 'moderator', 'owner' => self::OWNER_USER],
         ['command' => 'followage', 'permission_level' => 'everyone', 'owner' => self::OWNER_USER],
         ['command' => 'accountage', 'permission_level' => 'everyone', 'owner' => self::OWNER_USER],

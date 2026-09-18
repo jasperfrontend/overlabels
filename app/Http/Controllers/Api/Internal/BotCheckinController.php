@@ -19,6 +19,8 @@ use App\Services\Geo\PlaceResolverService;
 use App\Services\Geo\ResolvedPlace;
 use App\Services\Location\GeoMath;
 use App\Services\StreamSessionService;
+use App\Services\ViewerErasureService;
+use App\Services\ViewerNoticeService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,6 +33,8 @@ class BotCheckinController extends Controller
         private readonly PlaceResolverService $resolver,
         private readonly ExternalControlService $controlService,
         private readonly ExternalAlertService $alertService,
+        private readonly ViewerErasureService $erasures,
+        private readonly ViewerNoticeService $notices,
     ) {}
 
     /**
@@ -69,6 +73,14 @@ class BotCheckinController extends Controller
             ->first();
 
         if (! $integration) {
+            return response()->json(['reply' => null]);
+        }
+
+        // A viewer who asked to be forgotten is not stored again. Silent
+        // rather than an explanatory reply: they asked us to stop, and a bot
+        // answering them by name every time would be its own kind of ignoring
+        // that. See ViewerErasureService.
+        if ($this->erasures->isSuppressed($data['chatter_id'])) {
             return response()->json(['reply' => null]);
         }
 
@@ -120,7 +132,7 @@ class BotCheckinController extends Controller
             $reply .= " That is {$km} km away.";
         }
 
-        return response()->json(['reply' => $reply]);
+        return response()->json(['reply' => $this->notices->decorate($reply, $data['chatter_id'])]);
     }
 
     /**
