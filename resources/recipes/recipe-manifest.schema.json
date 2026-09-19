@@ -14,8 +14,8 @@
     },
     "slug": {
       "type": "string",
-      "description": "Globally unique identifier for the recipe. Becomes part of [[[c:<slug>:<instance>:<name>]]] tag namespace; snake_case only.",
-      "pattern": "^[a-z][a-z0-9_]{0,49}$"
+      "description": "Globally unique identifier for the recipe, and the public URL at /products/<slug>. Hyphens for a listed product, so the URL reads as words. A recipe with control_exports must stay snake_case: its slug becomes part of the [[[c:<slug>:<instance>:<name>]]] tag namespace, and a control identifier never carries a dash.",
+      "pattern": "^[a-z][a-z0-9_-]{0,49}$"
     },
     "name": {
       "type": "string",
@@ -79,6 +79,13 @@
       "type": "integer",
       "description": "Per-user install cap for this recipe. Defaults to platform-wide admin setting if omitted.",
       "minimum": 1
+    },
+    "url_aliases": {
+      "type": "array",
+      "description": "Slugs this product used to live at. /products/<alias> answers 301 to the current slug, so a link written before a rename still lands. Never reused by another recipe.",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,49}$" },
+      "uniqueItems": true,
+      "default": []
     },
     "listed": {
       "type": "boolean",

@@ -49,16 +49,16 @@ beforeEach(function () {
 it('starts the flow on install and shares the banner on an app page', function () {
     $user = flowUser();
 
-    $this->actingAs($user)->post('/products/chat_checkin/install')->assertRedirect('/products/chat_checkin');
+    $this->actingAs($user)->post('/products/chat-checkin/install')->assertRedirect('/products/chat-checkin');
 
-    expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat_checkin');
+    expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat-checkin');
 
     $this->actingAs($user->fresh())
         ->get('/dashboard')
         ->assertInertia(fn (Assert $page) => $page
-            ->where('productSetup.slug', 'chat_checkin')
+            ->where('productSetup.slug', 'chat-checkin')
             ->where('productSetup.name', 'Chat Checkin')
-            ->where('productSetup.url', route('products.show', 'chat_checkin'))
+            ->where('productSetup.url', route('products.show', 'chat-checkin'))
             ->where('productSetup.ready', false)
             ->where('productSetup.remaining', 2)
             ->where('productSetup.next.label', 'The bot is switched on')
@@ -80,14 +80,14 @@ it('does not start a flow when the install is refused', function () {
         'min_items' => 0, 'max_items' => null, 'user_editable' => true,
     ]);
 
-    $this->actingAs($user)->post('/products/follower_bowling/install')->assertSessionHasErrors('install');
+    $this->actingAs($user)->post('/products/follower-bowling/install')->assertSessionHasErrors('install');
 
     expect(ProductSetup::activeSlug($user->fresh()))->toBeNull();
 });
 
 it('turns ready and ends when the product page sees nothing left', function () {
     $user = flowUser();
-    $this->actingAs($user)->post('/products/chat_checkin/install');
+    $this->actingAs($user)->post('/products/chat-checkin/install');
     $user = $user->fresh();
 
     // Finish the human steps: bot on, a token, and the bot lookups answering.
@@ -105,21 +105,21 @@ it('turns ready and ends when the product page sees nothing left', function () {
     $this->actingAs($user)
         ->get('/dashboard')
         ->assertInertia(fn (Assert $page) => $page->where('productSetup.ready', true)->where('productSetup.remaining', 0));
-    expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat_checkin');
+    expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat-checkin');
 
     // The product page is what ends it.
     $this->actingAs($user)
-        ->get('/products/chat_checkin')
+        ->get('/products/chat-checkin')
         ->assertInertia(fn (Assert $page) => $page->where('installed.remaining', 0));
     expect(ProductSetup::activeSlug($user->fresh()))->toBeNull();
 });
 
 it('refreshes the mod lookup when the product page loads mid-setup', function () {
     $user = flowUser(['bot_enabled' => true]);
-    $this->actingAs($user)->post('/products/chat_checkin/install');
+    $this->actingAs($user)->post('/products/chat-checkin/install');
     Cache::put('bot:moderated_channels', 'unknown', now()->addMinutes(5));
 
-    $this->actingAs($user->fresh())->get('/products/chat_checkin')->assertOk();
+    $this->actingAs($user->fresh())->get('/products/chat-checkin')->assertOk();
 
     // Forgotten on load, then re-asked: with no bot token the fresh answer is
     // unknown again, but it is a fresh answer, written after the page ran.
@@ -127,13 +127,13 @@ it('refreshes the mod lookup when the product page loads mid-setup', function ()
 
     ProductSetup::end($user->fresh());
     Cache::put('bot:moderated_channels', ['keep'], now()->addMinutes(5));
-    $this->actingAs($user->fresh())->get('/products/chat_checkin')->assertOk();
+    $this->actingAs($user->fresh())->get('/products/chat-checkin')->assertOk();
     expect(Cache::get('bot:moderated_channels'))->toBe(['keep']);
 });
 
 it('ends on Not now', function () {
     $user = flowUser();
-    $this->actingAs($user)->post('/products/chat_checkin/install');
+    $this->actingAs($user)->post('/products/chat-checkin/install');
 
     $this->actingAs($user->fresh())->post('/products/setup/dismiss')->assertRedirect();
 
@@ -142,21 +142,21 @@ it('ends on Not now', function () {
 
 it('ends on uninstall of the same product only', function () {
     $user = flowUser();
-    $this->actingAs($user)->post('/products/follower_bowling/install');
-    $this->actingAs($user->fresh())->post('/products/chat_checkin/install');
-    expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat_checkin');
+    $this->actingAs($user)->post('/products/follower-bowling/install');
+    $this->actingAs($user->fresh())->post('/products/chat-checkin/install');
+    expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat-checkin');
 
-    $this->actingAs($user->fresh())->post('/products/follower_bowling/uninstall');
-    expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat_checkin');
+    $this->actingAs($user->fresh())->post('/products/follower-bowling/uninstall');
+    expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat-checkin');
 
-    $this->actingAs($user->fresh())->post('/products/chat_checkin/uninstall');
+    $this->actingAs($user->fresh())->post('/products/chat-checkin/uninstall');
     expect(ProductSetup::activeSlug($user->fresh()))->toBeNull();
 });
 
 it('shares nothing when the instance is gone by another road', function () {
     $user = flowUser();
-    $this->actingAs($user)->post('/products/chat_checkin/install');
-    $instance = ProductSetup::instanceFor($user->fresh(), 'chat_checkin');
+    $this->actingAs($user)->post('/products/chat-checkin/install');
+    $instance = ProductSetup::instanceFor($user->fresh(), 'chat-checkin');
     $instance->delete();
 
     $this->actingAs($user->fresh())->get('/dashboard')->assertInertia(fn (Assert $page) => $page->where('productSetup', null));
@@ -165,7 +165,7 @@ it('shares nothing when the instance is gone by another road', function () {
 it('keeps the steps in checklist order so the banner names the first missing one', function () {
     $user = flowUser(['bot_enabled' => true]);
     $catalog = app(RecipeCatalog::class);
-    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower_bowling')), $user, 'follower_bowling');
+    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower-bowling')), $user, 'follower_bowling');
     Kit::create(['owner_id' => $user->id, 'title' => 'k', 'is_public' => false]);
 
     $labels = array_column(ProductSetup::steps($instance), 'label');
@@ -178,8 +178,8 @@ it('keeps the steps in checklist order so the banner names the first missing one
 it('sends the next step to the page its control is on, with the fragment that finds it', function () {
     $user = flowUser(['bot_enabled' => false]);
     $catalog = app(RecipeCatalog::class);
-    app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat_checkin')), $user, 'chat_checkin');
-    ProductSetup::start($user, 'chat_checkin');
+    app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat-checkin')), $user, 'chat_checkin');
+    ProductSetup::start($user, 'chat-checkin');
 
     $banner = ProductSetup::banner($user->fresh(), app(RecipeCatalog::class));
 
@@ -187,14 +187,14 @@ it('sends the next step to the page its control is on, with the fragment that fi
     // settings page - not on the product page the banner button returns to.
     expect($banner['next']['target'])->toBe('bot-toggle')
         ->and($banner['next']['url'])->toBe(route('settings.integrations.bot.show').'#el-bot-toggle')
-        ->and($banner['url'])->toBe(route('products.show', 'chat_checkin'));
+        ->and($banner['url'])->toBe(route('products.show', 'chat-checkin'));
 });
 
 it('omits the fragment for a step with no single control to point at', function () {
     $user = flowUser(['bot_enabled' => true]);
     $catalog = app(RecipeCatalog::class);
-    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower_bowling')), $user, 'follower_bowling');
-    ProductSetup::start($user, 'follower_bowling');
+    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower-bowling')), $user, 'follower_bowling');
+    ProductSetup::start($user, 'follower-bowling');
 
     // Delete the list so its wire, which names no control, is what is missing.
     OptionSet::find($instance->primitive_map['lists']['lane'])->delete();

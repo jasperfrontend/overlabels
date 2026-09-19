@@ -1,6 +1,7 @@
 {
   "recipe_format_version": 1,
-  "slug": "chat_checkin",
+  "slug": "chat-checkin",
+  "url_aliases": ["chat_checkin"],
   "name": "Chat Checkin",
   "version": 1,
   "description": "Viewers type !checkin and their city lands as a pin on a spinning globe in your overlay, with a count of checkins and countries and who checked in from farthest away. Installs the globe overlay and connects the Chat Checkin integration. You switch the bot on and put the overlay in OBS.",

@@ -34,7 +34,7 @@ describe('tabKeyFromHash', () => {
 
 describe('urlWithTab', () => {
   it('keeps the query string the flow needs', () => {
-    expect(urlWithTab('/templates/42?state=product&product=chat_checkin', 'obs')).toBe('/templates/42?state=product&product=chat_checkin#tab-obs');
+    expect(urlWithTab('/templates/42?state=product&product=chat-checkin', 'obs')).toBe('/templates/42?state=product&product=chat-checkin#tab-obs');
   });
 
   it('replaces a fragment rather than stacking one', () => {

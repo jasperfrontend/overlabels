@@ -94,8 +94,8 @@ test('the index carries the one-line status for the twitch and bot rows', functi
 test('the checkin and tower integrations carry their product slug and the third-party services carry none', function () {
     $byKey = collect(integrationsPageServices())->keyBy('key');
 
-    expect($byKey['checkin']['product'])->toBe('chat_checkin')
-        ->and($byKey['tower']['product'])->toBe('chat_tower');
+    expect($byKey['checkin']['product'])->toBe('chat-checkin')
+        ->and($byKey['tower']['product'])->toBe('chat-tower');
 
     foreach (['kofi', 'streamlabs', 'fourthwall', 'bmac', 'throne', 'gps'] as $service) {
         expect($byKey[$service]['product'])->toBeNull($service.' is not a product integration');

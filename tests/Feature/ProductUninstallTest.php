@@ -34,12 +34,12 @@ function installProduct(User $user, string $slug): RecipeInstance
 {
     $catalog = app(RecipeCatalog::class);
 
-    return app(RecipeInstaller::class)->install($catalog->sync($catalog->find($slug)), $user, $slug);
+    return app(RecipeInstaller::class)->install($catalog->sync($catalog->find($slug)), $user, RecipeInstance::instanceSlugFrom($slug));
 }
 
 it('removes everything Follower Bowling created, and the instance', function () {
     $user = uninstallUser();
-    $instance = installProduct($user, 'follower_bowling');
+    $instance = installProduct($user, 'follower-bowling');
     $map = $instance->primitive_map;
 
     app(RecipeInstaller::class)->uninstall($instance);
@@ -54,7 +54,7 @@ it('removes everything Follower Bowling created, and the instance', function () 
 
 it('disconnects the checkin integration it created, controls included', function () {
     $user = uninstallUser();
-    $instance = installProduct($user, 'chat_checkin');
+    $instance = installProduct($user, 'chat-checkin');
 
     expect($instance->primitive_map['integrations']['checkin']['created'])->toBeTrue();
 
@@ -68,7 +68,7 @@ it('disconnects the checkin integration it created, controls included', function
 it('leaves an integration the streamer connected before the install', function () {
     $user = uninstallUser();
     ExternalIntegration::create(['user_id' => $user->id, 'service' => 'checkin', 'enabled' => true, 'settings' => ['pin_lifetime' => 'persistent']]);
-    $instance = installProduct($user, 'chat_checkin');
+    $instance = installProduct($user, 'chat-checkin');
 
     expect($instance->primitive_map['integrations']['checkin']['created'])->toBeFalse()
         ->and(app(RecipeInstaller::class)->removals($instance))->not->toContain('The checkin integration connection and its controls');
@@ -83,7 +83,7 @@ it('leaves an integration the streamer connected before the install', function (
 
 it('names what it will remove, and skips what the streamer already deleted', function () {
     $user = uninstallUser();
-    $instance = installProduct($user, 'follower_bowling');
+    $instance = installProduct($user, 'follower-bowling');
 
     $before = app(RecipeInstaller::class)->removals($instance);
     expect($before)->toContain('The overlay Follower bowling lane', 'The list Bowling lane and everything in it', 'The !bowl chat command', 'The !fbfirst alias', 'The !fbdraw alias');
@@ -102,7 +102,7 @@ it('names what it will remove, and skips what the streamer already deleted', fun
 
 it('refuses when the overlay is in a kit, and removes nothing', function () {
     $user = uninstallUser();
-    $instance = installProduct($user, 'follower_bowling');
+    $instance = installProduct($user, 'follower-bowling');
     $kit = Kit::create(['owner_id' => $user->id, 'title' => 'My bowling kit', 'is_public' => false]);
     $kit->templates()->attach($instance->primitive_map['overlays']['lane']);
 
@@ -116,10 +116,10 @@ it('refuses when the overlay is in a kit, and removes nothing', function () {
 
 it('installs again cleanly after an uninstall', function () {
     $user = uninstallUser();
-    $first = installProduct($user, 'follower_bowling');
+    $first = installProduct($user, 'follower-bowling');
     app(RecipeInstaller::class)->uninstall($first);
 
-    $second = installProduct($user, 'follower_bowling');
+    $second = installProduct($user, 'follower-bowling');
 
     expect($second->id)->not->toBe($first->id)
         ->and(OptionSet::where('user_id', $user->id)->where('slug', 'lane')->count())->toBe(1)
@@ -128,44 +128,44 @@ it('installs again cleanly after an uninstall', function () {
 
 it('uninstalls from the product page and shows the page uninstalled', function () {
     $user = uninstallUser();
-    installProduct($user, 'follower_bowling');
+    installProduct($user, 'follower-bowling');
 
     $this->actingAs($user)
-        ->get('/products/follower_bowling')
+        ->get('/products/follower-bowling')
         ->assertInertia(fn (Assert $page) => $page->has('installed.removes', 5));
 
     $this->actingAs($user)
-        ->post('/products/follower_bowling/uninstall')
-        ->assertRedirect('/products/follower_bowling')
+        ->post('/products/follower-bowling/uninstall')
+        ->assertRedirect('/products/follower-bowling')
         ->assertSessionHas('success', 'Follower Bowling is uninstalled.');
 
     expect(RecipeInstance::where('user_id', $user->id)->count())->toBe(0);
 
     $this->actingAs($user)
-        ->get('/products/follower_bowling')
+        ->get('/products/follower-bowling')
         ->assertInertia(fn (Assert $page) => $page->where('installed', null));
 });
 
 it('surfaces the kit refusal on the product page', function () {
     $user = uninstallUser();
-    $instance = installProduct($user, 'follower_bowling');
+    $instance = installProduct($user, 'follower-bowling');
     $kit = Kit::create(['owner_id' => $user->id, 'title' => 'Keep', 'is_public' => false]);
     $kit->templates()->attach($instance->primitive_map['overlays']['lane']);
 
     $this->actingAs($user)
-        ->post('/products/follower_bowling/uninstall')
-        ->assertRedirect('/products/follower_bowling')
+        ->post('/products/follower-bowling/uninstall')
+        ->assertRedirect('/products/follower-bowling')
         ->assertSessionHasErrors('uninstall');
 
     expect(RecipeInstance::find($instance->id))->not->toBeNull();
 });
 
 it('is a no-op when nothing is installed, and needs a login', function () {
-    $this->post('/products/follower_bowling/uninstall')->assertRedirect();
+    $this->post('/products/follower-bowling/uninstall')->assertRedirect();
 
     $user = uninstallUser();
     $this->actingAs($user)
-        ->post('/products/follower_bowling/uninstall')
-        ->assertRedirect('/products/follower_bowling')
+        ->post('/products/follower-bowling/uninstall')
+        ->assertRedirect('/products/follower-bowling')
         ->assertSessionHasNoErrors();
 });

@@ -36,19 +36,19 @@ function twitchChatRecipe(): Recipe
 {
     $catalog = app(RecipeCatalog::class);
 
-    return $catalog->sync($catalog->find('twitch_chat'));
+    return $catalog->sync($catalog->find('twitch-chat-overlay'));
 }
 
 function twitchChatDocument(): array
 {
-    return OverlayMarkdown::parse(file_get_contents(RecipeInstaller::directoryFor('twitch_chat').DIRECTORY_SEPARATOR.'chat.md'));
+    return OverlayMarkdown::parse(file_get_contents(RecipeInstaller::directoryFor('twitch-chat-overlay').DIRECTORY_SEPARATOR.'chat.md'));
 }
 
 it('is listed on the products shelf with its hero image, after bowling', function () {
     $this->get('/products')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('products.3.slug', 'twitch_chat')
+            ->where('products.3.slug', 'twitch-chat-overlay')
             ->where('products.3.category', 'product')
             ->where('products.3.hero', '/products/twitch-chat-hero.svg')
             ->where('products.3.installs', ['Overlay'])
@@ -60,7 +60,7 @@ it('is listed on the products shelf with its hero image, after bowling', functio
 });
 
 it('shows one overlay and nothing else to connect', function () {
-    $this->get('/products/twitch_chat')
+    $this->get('/products/twitch-chat-overlay')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('product.overlays.0.name', 'Twitch Chat')
@@ -74,7 +74,7 @@ it('shows one overlay and nothing else to connect', function () {
 it('installs the chat overlay with its thirteen controls and no other rows', function () {
     $user = twitchChatUser();
 
-    $instance = app(RecipeInstaller::class)->install(twitchChatRecipe(), $user, 'twitch_chat');
+    $instance = app(RecipeInstaller::class)->install(twitchChatRecipe(), $user, 'twitch_chat_overlay');
 
     $template = OverlayTemplate::find($instance->primitive_map['overlays']['chat']);
     expect($template)->not->toBeNull()
@@ -131,7 +131,7 @@ it('only carries the fading class when the lifetime control is above zero', func
 
 it('has no wires beyond the overlay and its OBS link', function () {
     $user = twitchChatUser();
-    $instance = app(RecipeInstaller::class)->install(twitchChatRecipe(), $user, 'twitch_chat');
+    $instance = app(RecipeInstaller::class)->install(twitchChatRecipe(), $user, 'twitch_chat_overlay');
 
     $states = WiringFacts::productSubject($instance)['states'];
     expect($states['product.overlay'])->toBe(WiringCatalog::SATISFIED)
@@ -144,7 +144,7 @@ it('has no wires beyond the overlay and its OBS link', function () {
 
 it('uninstalls the overlay and its controls together', function () {
     $user = twitchChatUser();
-    $instance = app(RecipeInstaller::class)->install(twitchChatRecipe(), $user, 'twitch_chat');
+    $instance = app(RecipeInstaller::class)->install(twitchChatRecipe(), $user, 'twitch_chat_overlay');
     $templateId = $instance->primitive_map['overlays']['chat'];
 
     app(RecipeInstaller::class)->uninstall($instance);

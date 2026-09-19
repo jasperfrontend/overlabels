@@ -1,6 +1,7 @@
 {
   "recipe_format_version": 1,
-  "slug": "kofi_alert",
+  "slug": "ko-fi-alerts",
+  "url_aliases": ["kofi_alert"],
   "name": "Ko-fi Alerts",
   "version": 1,
   "description": "A Ko-fi tip lands on your stream as an alert: who sent it and how much, written the way you write money, with a sound, a spoken line and a message in chat. It shows inside every overlay you have in OBS. Installs the alert and connects Ko-fi: paste the verification token from Ko-fi's webhooks page and the link this gives you back, then send yourself a test tip and watch it land.",

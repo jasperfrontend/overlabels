@@ -36,17 +36,17 @@ function chatCheckinRecipe(): Recipe
 {
     $catalog = app(RecipeCatalog::class);
 
-    return $catalog->sync($catalog->find('chat_checkin'));
+    return $catalog->sync($catalog->find('chat-checkin'));
 }
 
 // ---------------------------------------------------------------------------
 // The catalogue
 // ---------------------------------------------------------------------------
 
-it('lists chat_checkin as a product and keeps the picker recipes unlisted', function () {
+it('lists chat-checkin as a product and keeps the picker recipes unlisted', function () {
     $listed = app(RecipeCatalog::class)->listed();
 
-    expect(array_keys($listed))->toBe(['bmac_alert', 'chat_checkin', 'chat_tower', 'follower_bowling', 'fourthwall_alert', 'kofi_alert', 'streamlabs_alert', 'throne_alert', 'twitch_chat'])
+    expect(array_keys($listed))->toBe(['buy-me-a-coffee-alerts', 'chat-checkin', 'chat-tower', 'follower-bowling', 'fourthwall-alerts', 'ko-fi-alerts', 'streamlabs-alerts', 'throne-alerts', 'twitch-chat-overlay'])
         ->and(array_keys(app(RecipeCatalog::class)->all()))->toContain('coin_flip', 'dice');
 });
 
@@ -69,7 +69,7 @@ it('parses every overlay document a listed product ships', function () {
 });
 
 it('rejects an overlay file name with a path separator', function () {
-    $manifest = app(RecipeCatalog::class)->find('chat_checkin');
+    $manifest = app(RecipeCatalog::class)->find('chat-checkin');
     $manifest['installs']['overlays'][0]['file'] = '../globe.md';
 
     $result = app(RecipeManifestValidator::class)->validate($manifest);
@@ -149,13 +149,13 @@ it('shows the product list to a visitor without an account', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('products/index')
             ->has('products', 9)
-            ->where('products.0.slug', 'chat_checkin')
+            ->where('products.0.slug', 'chat-checkin')
             ->where('products.0.installed', false)
         );
 });
 
 it('shows a product page to a visitor without an account', function () {
-    $this->get('/products/chat_checkin')
+    $this->get('/products/chat-checkin')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('products/show')
@@ -173,7 +173,7 @@ it('404s an unlisted recipe and an unknown slug on the product page', function (
 });
 
 it('sends a visitor to the login page when they try to install', function () {
-    $this->post('/products/chat_checkin/install')->assertRedirect();
+    $this->post('/products/chat-checkin/install')->assertRedirect();
 
     expect(RecipeInstance::count())->toBe(0);
 });
@@ -182,16 +182,16 @@ it('installs the product on POST and shows the page in its installed state', fun
     $user = productUser();
 
     $this->actingAs($user)
-        ->post('/products/chat_checkin/install')
-        ->assertRedirect('/products/chat_checkin')
+        ->post('/products/chat-checkin/install')
+        ->assertRedirect('/products/chat-checkin')
         ->assertSessionHas('success', 'Chat Checkin is installed.');
 
     $instance = RecipeInstance::where('user_id', $user->id)->first();
     expect($instance)->not->toBeNull()
-        ->and($instance->recipe->slug)->toBe('chat_checkin');
+        ->and($instance->recipe->slug)->toBe('chat-checkin');
 
     $this->actingAs($user)
-        ->get('/products/chat_checkin')
+        ->get('/products/chat-checkin')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('products/show')
@@ -204,14 +204,14 @@ it('installs the product on POST and shows the page in its installed state', fun
 
     $this->actingAs($user)
         ->get('/products')
-        ->assertInertia(fn (Assert $page) => $page->where('products.0.slug', 'chat_checkin')->where('products.0.installed', true));
+        ->assertInertia(fn (Assert $page) => $page->where('products.0.slug', 'chat-checkin')->where('products.0.installed', true));
 });
 
 it('does not install a second copy when the button is pressed again', function () {
     $user = productUser();
 
-    $this->actingAs($user)->post('/products/chat_checkin/install');
-    $this->actingAs($user)->post('/products/chat_checkin/install')->assertRedirect('/products/chat_checkin');
+    $this->actingAs($user)->post('/products/chat-checkin/install');
+    $this->actingAs($user)->post('/products/chat-checkin/install')->assertRedirect('/products/chat-checkin');
 
     expect(RecipeInstance::where('user_id', $user->id)->count())->toBe(1)
         ->and(OverlayTemplate::where('owner_id', $user->id)->count())->toBe(1);

@@ -27,14 +27,14 @@ function ratelimitUser(): User
 test('installing products is limited to 20 per minute', function () {
     $this->actingAs(ratelimitUser());
 
-    // The first call installs kofi_alert; the rest redirect straight back
+    // The first call installs ko-fi-alerts; the rest redirect straight back
     // (already installed) but still spend the bucket - the limiter runs
     // before the controller's idempotency check does.
     foreach (range(1, 20) as $i) {
-        $this->post('/products/kofi_alert/install')->assertRedirect();
+        $this->post('/products/ko-fi-alerts/install')->assertRedirect();
     }
 
-    $this->post('/products/kofi_alert/install')->assertStatus(429);
+    $this->post('/products/ko-fi-alerts/install')->assertStatus(429);
 });
 
 test('installing products is limited to 60 per hour even spread across minutes', function () {
@@ -46,20 +46,20 @@ test('installing products is limited to 60 per hour even spread across minutes',
     foreach (range(1, 3) as $minute) {
         $this->travel(61)->seconds();
         foreach (range(1, 20) as $i) {
-            $this->post('/products/kofi_alert/install')->assertRedirect();
+            $this->post('/products/ko-fi-alerts/install')->assertRedirect();
         }
     }
 
-    $this->post('/products/kofi_alert/install')->assertStatus(429);
+    $this->post('/products/ko-fi-alerts/install')->assertStatus(429);
 });
 
 test('installing products has its own bucket, separate from kit-fork and template-write', function () {
     $this->actingAs(ratelimitUser());
 
     foreach (range(1, 20) as $i) {
-        $this->post('/products/kofi_alert/install')->assertRedirect();
+        $this->post('/products/ko-fi-alerts/install')->assertRedirect();
     }
-    $this->post('/products/kofi_alert/install')->assertStatus(429);
+    $this->post('/products/ko-fi-alerts/install')->assertStatus(429);
 
     // Exhausting product-install must not lock someone out of ordinary
     // authoring - the two routes used to share kit-fork's bucket.

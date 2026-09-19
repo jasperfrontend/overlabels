@@ -28,6 +28,12 @@ const props = defineProps<{
   installedCount: number | null;
   // The page after Products in the breadcrumb: a product's name. Omitted on the listing.
   crumb?: string;
+  // A product's page wears the product at the top: its own name and its own
+  // description, in place of the catalogue's heading and lead. The listing
+  // passes neither, so the shelf copy below is what it keeps. The name is
+  // not a link back to /products - the breadcrumb under it already is one.
+  heading?: string;
+  lead?: string;
 }>();
 
 const page = usePage<AppPageProps>();
@@ -105,14 +111,20 @@ const isActive = (key: string) => (props.category === null ? key === 'all' : key
 
       <header class="mb-6 flex flex-col gap-2">
         <div class="flex items-center gap-2">
-          <ProductBadge label="Official Overlabels products" class="size-6 text-violet-400" />
+          <ProductBadge
+            :label="heading ? 'An official Overlabels product' : 'Official Overlabels products'"
+            class="size-6 shrink-0 text-violet-400"
+          />
           <h1 class="text-2xl font-semibold text-foreground">
-            <Link href="/products" class="hover:text-violet-400">Products</Link>
+            <template v-if="heading">{{ heading }}</template>
+            <Link v-else href="/products" class="hover:text-violet-400">Products</Link>
           </h1>
         </div>
         <p class="w-full text-foreground lg:max-w-2/3">
-          Everything here is free, made by Overlabels, and installed with one click. Pick something for your chat to play, or connect a service you
-          already use so its support lands on your stream.
+          {{
+            lead ??
+            'Everything here is free, made by Overlabels, and installed with one click. Pick something for your chat to play, or connect a service you already use so its support lands on your stream.'
+          }}
         </p>
       </header>
 

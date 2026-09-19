@@ -77,12 +77,12 @@ it('names only skins the overlay CSS defines, layouts and backgrounds it styles,
 it('publishes the presets on the product page with clean active right after an install', function () {
     $user = presetUser();
 
-    $this->actingAs($user)->get('/products/twitch_chat')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay')
         ->assertInertia(fn (Assert $page) => $page->has('product.presets', 10)->where('product.presets.0.active', false));
 
-    app(RecipeInstaller::class)->install(presetRecipe(), $user, 'twitch_chat');
+    app(RecipeInstaller::class)->install(presetRecipe(), $user, 'twitch_chat_overlay');
 
-    $this->actingAs($user)->get('/products/twitch_chat')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay')
         ->assertInertia(fn (Assert $page) => $page
             ->has('product.presets', 10)
             ->where('product.presets.0.key', 'clean')
@@ -94,18 +94,18 @@ it('publishes the presets on the product page with clean active right after an i
 });
 
 it('publishes no presets for another product', function () {
-    $this->get('/products/chat_tower')
+    $this->get('/products/chat-tower')
         ->assertInertia(fn (Assert $page) => $page->where('product.presets', []));
 });
 
 it('applies a preset: every control written, every control broadcast, the card turns active', function () {
     Event::fake([ControlValueUpdated::class]);
     $user = presetUser();
-    $instance = app(RecipeInstaller::class)->install(presetRecipe(), $user, 'twitch_chat');
+    $instance = app(RecipeInstaller::class)->install(presetRecipe(), $user, 'twitch_chat_overlay');
     $template = ChatPresets::overlayFor($instance);
 
-    $this->actingAs($user)->post('/products/twitch_chat/presets/terminal')
-        ->assertRedirect('/products/twitch_chat');
+    $this->actingAs($user)->post('/products/twitch-chat-overlay/presets/terminal')
+        ->assertRedirect('/products/twitch-chat-overlay');
 
     $values = OverlayControl::where('overlay_template_id', $template->id)->pluck('value', 'key')->all();
     foreach (ChatPresets::PRESETS['terminal']['values'] as $key => $value) {
@@ -115,7 +115,7 @@ it('applies a preset: every control written, every control broadcast, the card t
     Event::assertDispatchedTimes(ControlValueUpdated::class, 13);
     Event::assertDispatched(ControlValueUpdated::class, fn (ControlValueUpdated $e) => $e->overlaySlug === $template->slug && $e->key === 'skin' && $e->value === 'terminal');
 
-    $this->actingAs($user)->get('/products/twitch_chat')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay')
         ->assertInertia(fn (Assert $page) => $page
             ->where('product.presets.0.active', false)
             ->where('product.presets.1.active', true)
@@ -124,27 +124,27 @@ it('applies a preset: every control written, every control broadcast, the card t
 
 it('shows no preset as active once a value has drifted from the bundle', function () {
     $user = presetUser();
-    $instance = app(RecipeInstaller::class)->install(presetRecipe(), $user, 'twitch_chat');
+    $instance = app(RecipeInstaller::class)->install(presetRecipe(), $user, 'twitch_chat_overlay');
     ChatPresets::overlayFor($instance)->controls()->where('key', 'accent')->first()->writeValue('#123456');
 
-    $this->actingAs($user)->get('/products/twitch_chat')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay')
         ->assertInertia(fn (Assert $page) => $page->where('product.presets', fn ($presets) => collect($presets)->every(fn ($p) => $p['active'] === false)));
 });
 
 it('refuses an unknown preset, a product without presets, and an account that has not installed', function () {
     $user = presetUser();
 
-    $this->actingAs($user)->post('/products/twitch_chat/presets/neon')->assertNotFound();
+    $this->actingAs($user)->post('/products/twitch-chat-overlay/presets/neon')->assertNotFound();
 
-    app(RecipeInstaller::class)->install(presetRecipe(), $user, 'twitch_chat');
-    $this->actingAs($user)->post('/products/twitch_chat/presets/glitter')->assertNotFound();
-    $this->actingAs($user)->post('/products/chat_tower/presets/clean')->assertNotFound();
+    app(RecipeInstaller::class)->install(presetRecipe(), $user, 'twitch_chat_overlay');
+    $this->actingAs($user)->post('/products/twitch-chat-overlay/presets/glitter')->assertNotFound();
+    $this->actingAs($user)->post('/products/chat-tower/presets/clean')->assertNotFound();
 
     $other = presetUser();
-    $this->actingAs($other)->post('/products/twitch_chat/presets/neon')->assertNotFound();
+    $this->actingAs($other)->post('/products/twitch-chat-overlay/presets/neon')->assertNotFound();
     expect(OverlayControl::where('user_id', $user->id)->where('key', 'skin')->value('value'))->toBe('clean');
 });
 
 it('requires a login', function () {
-    $this->post('/products/twitch_chat/presets/neon')->assertRedirect();
+    $this->post('/products/twitch-chat-overlay/presets/neon')->assertRedirect();
 });

@@ -23,7 +23,7 @@ The three fields below are the entire overlay. Nothing else is rendered.
 Fonts and `<style>` blocks. No scripts - they are stripped on save.
 
 ```html
-<meta name="generator" content="Overlabels twitch_chat">
+<meta name="generator" content="Overlabels twitch-chat-overlay">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;700&family=Inter:wght@400;700&family=Space+Grotesk:wght@400;700&family=Fredoka:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
@@ -270,4 +270,4 @@ Beyond its controls, this overlay reads the chat loop. Every message comes from 
 
 ## Copying this overlay
 
-Installed by the Twitch Chat product at <https://overlabels.com/products/twitch_chat>. The install creates your own editable copy of the source above, along with the thirteen controls listed under Controls.
+Installed by the Twitch Chat product at <https://overlabels.com/products/twitch-chat-overlay>. The install creates your own editable copy of the source above, along with the thirteen controls listed under Controls.

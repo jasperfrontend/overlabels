@@ -32,6 +32,22 @@ class RecipeInstance extends Model
 
     public const string SLUG_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 
+    /**
+     * A legal instance slug from a product's slug.
+     *
+     * A product slug is a public URL and carries hyphens; an instance slug is
+     * not one. It is the middle segment of [[[c:<recipe>:<instance>:<key>]]]
+     * and what RecipeInstaller builds an overlay's own slug from, so it has to
+     * satisfy SLUG_PATTERN above: a control identifier never carries a dash.
+     *
+     * Nothing looks an install up by this - ProductController matches on the
+     * recipe row - so it only has to be stable and legal.
+     */
+    public static function instanceSlugFrom(string $productSlug): string
+    {
+        return str_replace('-', '_', $productSlug);
+    }
+
     protected $fillable = [
         'recipe_id',
         'user_id',

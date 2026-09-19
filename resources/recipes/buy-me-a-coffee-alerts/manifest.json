@@ -1,6 +1,7 @@
 {
   "recipe_format_version": 1,
-  "slug": "bmac_alert",
+  "slug": "buy-me-a-coffee-alerts",
+  "url_aliases": ["bmac_alert"],
   "name": "Buy Me a Coffee Alerts",
   "version": 1,
   "description": "A Buy Me a Coffee supporter lands on your stream as an alert: who and how much, written the way you write money, with a sound, a spoken line and a message in chat. It shows inside every overlay you have in OBS. Installs the alert and connects Buy Me a Coffee: paste the link this gives you into a webhook there, paste back the secret it shows, then send yourself a test event and watch it land.",

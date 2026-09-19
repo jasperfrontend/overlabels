@@ -29,7 +29,7 @@ export interface ParsedUiMode {
   product: string | null;
 }
 
-const SLUG = /^[a-z][a-z0-9_]{0,49}$/;
+const SLUG = /^[a-z][a-z0-9_-]{0,49}$/;
 
 /** Pure: reads the last-mile hint out of a URL or path-with-query. Unknown values are no hint. */
 export function parseUiMode(url: string): ParsedUiMode {

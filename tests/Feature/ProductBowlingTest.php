@@ -37,14 +37,14 @@ function bowlingRecipe(): Recipe
 {
     $catalog = app(RecipeCatalog::class);
 
-    return $catalog->sync($catalog->find('follower_bowling'));
+    return $catalog->sync($catalog->find('follower-bowling'));
 }
 
 it('is listed with its hero image', function () {
     $this->get('/products')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('products.2.slug', 'follower_bowling')
+            ->where('products.2.slug', 'follower-bowling')
             ->where('products.2.hero', '/products/follower-bowling-hero.svg')
             ->where('products.0.hero', '/products/chat-checkin-hero.svg')
         );
@@ -54,7 +54,7 @@ it('is listed with its hero image', function () {
 });
 
 it('shows the list and the command it will create', function () {
-    $this->get('/products/follower_bowling')
+    $this->get('/products/follower-bowling')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('product.lists.0.slug', 'lane')
@@ -133,8 +133,8 @@ it('surfaces the refusal on the product page instead of a 500', function () {
     ]);
 
     $this->actingAs($user)
-        ->post('/products/follower_bowling/install')
-        ->assertRedirect('/products/follower_bowling')
+        ->post('/products/follower-bowling/install')
+        ->assertRedirect('/products/follower-bowling')
         ->assertSessionHasErrors('install');
 
     expect(RecipeInstance::where('user_id', $user->id)->count())->toBe(0);
@@ -157,7 +157,7 @@ it('reports the list and command wires and leaves the integration wire out', fun
 });
 
 it('pads the rack with stand-in pins for the followers a channel does not have', function () {
-    $doc = OverlayMarkdown::parse(file_get_contents(base_path('resources/recipes/follower_bowling/lane.md')));
+    $doc = OverlayMarkdown::parse(file_get_contents(base_path('resources/recipes/follower-bowling/lane.md')));
 
     // One gated stand-in per slot, each carrying its slot's fall flag, so the
     // physics and the strike logic see ten pins whatever the follower count.
@@ -172,7 +172,7 @@ it('pads the rack with stand-in pins for the followers a channel does not have',
 
 it('tells a small channel how many pins are real, and says nothing when Twitch cannot be asked', function () {
     $user = bowlingUser(['access_token' => 'streamer-token']);
-    $instance = installProduct($user, 'follower_bowling');
+    $instance = installProduct($user, 'follower-bowling');
 
     $this->mock(TwitchApiService::class)
         ->shouldReceive('getCachedFollowersTotal')->with('streamer-token', (string) $user->twitch_id)->andReturn(1, 25, null);
@@ -186,7 +186,7 @@ it('tells a small channel how many pins are real, and says nothing when Twitch c
 it('keeps the checkin product free of list and command wires', function () {
     $user = bowlingUser();
     $catalog = app(RecipeCatalog::class);
-    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat_checkin')), $user, 'chat_checkin');
+    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat-checkin')), $user, 'chat_checkin');
 
     $states = WiringFacts::productSubject($instance)['states'];
     expect($states['product.list'])->toBe(WiringCatalog::NOT_APPLICABLE)

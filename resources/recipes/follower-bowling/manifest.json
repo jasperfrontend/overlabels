@@ -1,6 +1,7 @@
 {
   "recipe_format_version": 1,
-  "slug": "follower_bowling",
+  "slug": "follower-bowling",
+  "url_aliases": ["follower_bowling"],
   "name": "Follower Bowling",
   "version": 1,
   "description": "Your ten newest followers get racked as pins. Chat types !bowl to get in line, a mod sends the next bowler down the lane, and the ball, the pins and the score play out on your overlay. Installs the lane overlay, the queue List and the !bowl command. You switch the bot on and put the overlay in OBS.",

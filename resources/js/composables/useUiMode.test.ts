@@ -9,8 +9,8 @@ describe('withLastMileHint', () => {
   });
 
   it('keeps the fragment and an existing query, all keys sorted', () => {
-    expect(withLastMileHint('/templates/347?zoom=2&a=1#tab-obs', 'chat_tower')).toBe(
-      '/templates/347?a=1&product=chat_tower&state=product&zoom=2#tab-obs',
+    expect(withLastMileHint('/templates/347?zoom=2&a=1#tab-obs', 'chat-tower')).toBe(
+      '/templates/347?a=1&product=chat-tower&state=product&zoom=2#tab-obs',
     );
   });
 
@@ -19,33 +19,33 @@ describe('withLastMileHint', () => {
   });
 
   it('round-trips through parseUiMode', () => {
-    expect(parseUiMode(withLastMileHint('/x', 'chat_checkin'))).toEqual({ lastMile: true, product: 'chat_checkin' });
+    expect(parseUiMode(withLastMileHint('/x', 'chat-checkin'))).toEqual({ lastMile: true, product: 'chat-checkin' });
   });
 });
 
 describe('resolveUiMode', () => {
   it('is on while a setup flow is active, whatever the URL says', () => {
-    expect(resolveUiMode(parseUiMode('/dashboard'), { slug: 'chat_checkin', ready: false, next: { target: 'bot-toggle' } })).toEqual({
+    expect(resolveUiMode(parseUiMode('/dashboard'), { slug: 'chat-checkin', ready: false, next: { target: 'bot-toggle' } })).toEqual({
       mode: 'product',
       lastMile: false,
-      product: 'chat_checkin',
+      product: 'chat-checkin',
       ready: false,
       target: 'bot-toggle',
     });
-    expect(resolveUiMode(parseUiMode('/settings/integrations'), { slug: 'follower_bowling', ready: true, next: null })).toEqual({
+    expect(resolveUiMode(parseUiMode('/settings/integrations'), { slug: 'follower-bowling', ready: true, next: null })).toEqual({
       mode: 'product',
       lastMile: false,
-      product: 'follower_bowling',
+      product: 'follower-bowling',
       ready: true,
       target: null,
     });
   });
 
   it('never turns the mode on from the URL alone: a finished flow stays finished', () => {
-    expect(resolveUiMode(parseUiMode('/templates/337?product=follower_bowling&state=product'), null)).toEqual({
+    expect(resolveUiMode(parseUiMode('/templates/337?product=follower-bowling&state=product'), null)).toEqual({
       mode: null,
       lastMile: true,
-      product: 'follower_bowling',
+      product: 'follower-bowling',
       ready: false,
       target: null,
     });
@@ -53,27 +53,27 @@ describe('resolveUiMode', () => {
   });
 
   it('lets the URL name the product when both do, and the flow fill in when the URL does not', () => {
-    expect(resolveUiMode(parseUiMode('/t?state=product&product=follower_bowling'), { slug: 'chat_checkin', ready: false }).product).toBe(
-      'follower_bowling',
+    expect(resolveUiMode(parseUiMode('/t?state=product&product=follower-bowling'), { slug: 'chat-checkin', ready: false }).product).toBe(
+      'follower-bowling',
     );
-    expect(resolveUiMode(parseUiMode('/t?state=product'), { slug: 'chat_checkin', ready: false }).product).toBe('chat_checkin');
-    expect(resolveUiMode(parseUiMode('/t?state=product'), { slug: 'chat_checkin', ready: false }).lastMile).toBe(true);
+    expect(resolveUiMode(parseUiMode('/t?state=product'), { slug: 'chat-checkin', ready: false }).product).toBe('chat-checkin');
+    expect(resolveUiMode(parseUiMode('/t?state=product'), { slug: 'chat-checkin', ready: false }).lastMile).toBe(true);
   });
 });
 
 describe('parseUiMode', () => {
   it('reads the last-mile hint and its slug from a URL', () => {
-    expect(parseUiMode('/templates/328?state=product&product=chat_checkin')).toEqual({ lastMile: true, product: 'chat_checkin' });
-    expect(parseUiMode('https://overlabels.com/templates/328?product=follower_bowling&state=product#obs')).toEqual({
+    expect(parseUiMode('/templates/328?state=product&product=chat-checkin')).toEqual({ lastMile: true, product: 'chat-checkin' });
+    expect(parseUiMode('https://overlabels.com/templates/328?product=follower-bowling&state=product#obs')).toEqual({
       lastMile: true,
-      product: 'follower_bowling',
+      product: 'follower-bowling',
     });
   });
 
   it('is no hint without the parameter, or with a value it does not know', () => {
     expect(parseUiMode('/templates/328')).toEqual({ lastMile: false, product: null });
     expect(parseUiMode('/templates/328?state=party')).toEqual({ lastMile: false, product: null });
-    expect(parseUiMode('/templates/328?product=chat_checkin')).toEqual({ lastMile: false, product: null });
+    expect(parseUiMode('/templates/328?product=chat-checkin')).toEqual({ lastMile: false, product: null });
   });
 
   it('drops a product slug that is not a slug', () => {

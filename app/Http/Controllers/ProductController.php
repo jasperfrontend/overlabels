@@ -103,6 +103,17 @@ class ProductController extends Controller
             'url' => $category === null ? route('products.index') : route('products.index', ['category' => $category]),
         ]);
 
+        // Installed is this account's shelf, not the catalogue's: it renders a
+        // different set for every reader and nothing for a crawler, so it must
+        // not compete with the listing for the same words. A real shelf is real
+        // content and stays indexable, pointing at itself.
+        if ($category === self::INSTALLED_FILTER) {
+            view()->share('robots', 'noindex, follow');
+            view()->share('canonical', route('products.index'));
+        } else {
+            view()->share('canonical', $category === null ? route('products.index') : route('products.index', ['category' => $category]));
+        }
+
         return Inertia::render('products/index', [
             'products' => $products,
             'categories' => $this->categories(),
@@ -197,8 +208,12 @@ class ProductController extends Controller
         return array_values(array_unique($chips));
     }
 
-    public function show(Request $request, string $slug): Response
+    public function show(Request $request, string $slug): Response|RedirectResponse
     {
+        if ($moved = $this->movedPermanently($slug, 'products.show')) {
+            return $moved;
+        }
+
         $manifest = $this->listedManifest($slug);
         $user = $request->user();
         $instance = $user ? $this->instanceFor($user, $slug) : null;
@@ -222,10 +237,58 @@ class ProductController extends Controller
             ->values()
             ->all();
 
+        $canonical = route('products.show', $slug);
+
         view()->share('og', [
             'title' => $manifest['name'].' - Overlabels product',
             'description' => $manifest['description'],
-            'url' => route('products.show', $slug),
+            'url' => $canonical,
+        ]);
+
+        view()->share('canonical', $canonical);
+
+        /*
+         * A product IS free installable software, so SoftwareApplication is
+         * the honest type: a free Offer is how schema.org says "costs
+         * nothing", and it is the one thing on this page a search engine can
+         * show without us claiming a rating nobody has given.
+         *
+         * A @graph rather than a bare node so the breadcrumb rides along in
+         * the same block. The root template json_encodes whatever is shared,
+         * and an assoc array is what its array_filter expects - a top-level
+         * list would break the moment one entry were null.
+         */
+        view()->share('jsonLd', [
+            '@context' => 'https://schema.org',
+            '@graph' => [
+                [
+                    '@type' => 'SoftwareApplication',
+                    '@id' => $canonical.'#product',
+                    'name' => $manifest['name'],
+                    'description' => $manifest['description'],
+                    'url' => $canonical,
+                    'applicationCategory' => 'MultimediaApplication',
+                    'operatingSystem' => 'Any',
+                    'softwareVersion' => (string) $manifest['version'],
+                    'isAccessibleForFree' => true,
+                    'image' => url($manifest['hero'] ?? '/ogimage.jpg'),
+                    'offers' => [
+                        '@type' => 'Offer',
+                        'price' => '0',
+                        'priceCurrency' => 'EUR',
+                        'availability' => 'https://schema.org/InStock',
+                    ],
+                    'author' => $this->publisher(),
+                    'publisher' => $this->publisher(),
+                ],
+                [
+                    '@type' => 'BreadcrumbList',
+                    'itemListElement' => [
+                        ['@type' => 'ListItem', 'position' => 1, 'name' => 'Products', 'item' => route('products.index')],
+                        ['@type' => 'ListItem', 'position' => 2, 'name' => $manifest['name'], 'item' => $canonical],
+                    ],
+                ],
+            ],
         ]);
 
         $installed = $instance ? $this->installedView($instance, $slug) : null;
@@ -289,6 +352,7 @@ class ProductController extends Controller
 
     public function install(Request $request, string $slug): RedirectResponse
     {
+        $slug = $this->canonical($slug);
         $manifest = $this->listedManifest($slug);
         $user = $request->user();
 
@@ -309,7 +373,7 @@ class ProductController extends Controller
         $recipe = $this->catalog->sync($manifest);
 
         try {
-            $this->installer->install($recipe, $user, $slug, null, $ingredients);
+            $this->installer->install($recipe, $user, RecipeInstance::instanceSlugFrom($slug), null, $ingredients);
         } catch (RuntimeException $e) {
             return redirect()->route('products.show', $slug)->withErrors(['install' => $e->getMessage()]);
         }
@@ -329,6 +393,8 @@ class ProductController extends Controller
      */
     public function applyPreset(Request $request, string $slug, string $preset): RedirectResponse|JsonResponse
     {
+        $slug = $this->canonical($slug);
+
         abort_unless(ChatPresets::has($slug) && isset(ChatPresets::PRESETS[$preset]), 404);
 
         $user = $request->user();
@@ -374,8 +440,12 @@ class ProductController extends Controller
      * 404 for any product but Twitch Chat, and for an account with no install:
      * there is nothing to design until there is an overlay to design.
      */
-    public function design(Request $request, string $slug): Response
+    public function design(Request $request, string $slug): Response|RedirectResponse
     {
+        if ($moved = $this->movedPermanently($slug, 'products.design')) {
+            return $moved;
+        }
+
         abort_unless(ChatPresets::has($slug), 404);
 
         $user = $request->user();
@@ -418,6 +488,7 @@ class ProductController extends Controller
 
     public function uninstall(Request $request, string $slug): RedirectResponse
     {
+        $slug = $this->canonical($slug);
         $manifest = $this->listedManifest($slug);
         $instance = $this->instanceFor($request->user(), $slug);
 
@@ -437,6 +508,56 @@ class ProductController extends Controller
         }
 
         return redirect()->route('products.show', $slug)->with('success', $manifest['name'].' is uninstalled.');
+    }
+
+    /**
+     * The Organization behind every product, for the structured data above.
+     * Same shape as UpdateController's, which is the only other page that
+     * publishes any; a third caller is when it becomes worth extracting.
+     *
+     * @return array<string, mixed>
+     */
+    private function publisher(): array
+    {
+        return [
+            '@type' => 'Organization',
+            'name' => 'Overlabels',
+            'url' => url('/'),
+            'logo' => [
+                '@type' => 'ImageObject',
+                'url' => url('/favicon.png'),
+            ],
+        ];
+    }
+
+    /**
+     * A 301 to where the product lives now, when $slug is one it used to live
+     * at. Null when the slug is current or simply unknown, which 404s below
+     * exactly as it did before.
+     *
+     * Only the two GET routes redirect. A search engine must be told the page
+     * moved, and it must be told once, so the old URL never competes with the
+     * new one for the same words.
+     */
+    private function movedPermanently(string $slug, string $route): ?RedirectResponse
+    {
+        $canonical = $this->catalog->canonicalSlugFor($slug);
+
+        return $canonical === null ? null : redirect()->route($route, $canonical, 301);
+    }
+
+    /**
+     * The current slug for one taken off a URL, which may be a slug the
+     * product used to live at.
+     *
+     * The write actions run every lookup through this. They are form posts,
+     * and a page left open across a rename would otherwise submit the old
+     * slug, match no `recipes` row, read as "not installed" and build the
+     * account a second copy of something it already has.
+     */
+    private function canonical(string $slug): string
+    {
+        return $this->catalog->canonicalSlugFor($slug) ?? $slug;
     }
 
     /**

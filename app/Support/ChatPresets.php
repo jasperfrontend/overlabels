@@ -24,7 +24,7 @@ use App\Models\RecipeInstance;
  */
 class ChatPresets
 {
-    public const PRODUCT = 'twitch_chat';
+    public const PRODUCT = 'twitch-chat-overlay';
 
     public const OVERLAY_REF = 'chat';
 

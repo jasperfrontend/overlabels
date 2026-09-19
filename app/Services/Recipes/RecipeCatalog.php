@@ -64,11 +64,31 @@ class RecipeCatalog
     }
 
     /**
+     * The product a legacy URL slug belongs to now, or null when the slug is
+     * current, unknown, or was never renamed.
+     *
+     * Scanned rather than mapped: `url_aliases` sits in the manifest beside
+     * the slug that replaced it, so a rename is one file's business and there
+     * is no central table to fall out of step with the catalogue. Only ever
+     * reached on a miss, so the glob costs nothing on the path people take.
+     */
+    public function canonicalSlugFor(string $legacy): ?string
+    {
+        foreach ($this->all() as $slug => $manifest) {
+            if (in_array($legacy, $manifest['url_aliases'] ?? [], true)) {
+                return $slug;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     public function find(string $slug): ?array
     {
-        if (! preg_match('/^[a-z][a-z0-9_]{0,49}$/', $slug)) {
+        if (! preg_match('/^[a-z][a-z0-9_-]{0,49}$/', $slug)) {
             return null;
         }
 

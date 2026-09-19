@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Update;
+use App\Services\Recipes\RecipeCatalog;
 use App\Support\HelpCorpus;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
 {
+    public function __construct(
+        private readonly RecipeCatalog $catalog,
+    ) {}
+
     private const BASE_URL = 'https://overlabels.com';
 
     /**
@@ -28,6 +33,10 @@ class SitemapController extends Controller
         // /help/llms-txt is what actually links to it.
         ['path' => '/llms.txt', 'priority' => '0.9', 'changefreq' => 'monthly'],
         ['path' => '/updates', 'priority' => '0.8', 'changefreq' => 'weekly'],
+        // The catalogue itself. Each listed product gets its own row below,
+        // derived the same way /help is: adding a manifest is the whole job
+        // of getting its page indexed.
+        ['path' => '/products', 'priority' => '0.9', 'changefreq' => 'weekly'],
         ['path' => '/privacy', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/terms', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/help/reference', 'priority' => '0.8', 'changefreq' => 'weekly'],
@@ -57,6 +66,27 @@ class SitemapController extends Controller
                 'loc' => self::BASE_URL.$row['path'],
                 'changefreq' => $row['changefreq'],
                 'priority' => $row['priority'],
+            ];
+        }
+
+        /*
+         * Every listed product. These were missing entirely: /products and
+         * every product page under it have been public, and linked from the
+         * marketing navbar, since the products chapter shipped, and none of
+         * them has ever been in the sitemap.
+         *
+         * Listed only, and read from the manifests rather than the recipes
+         * table: an unlisted recipe has no public page, and the catalogue on
+         * disk is what /products renders from.
+         *
+         * No lastmod. A manifest's mtime is the deploy's checkout time, not
+         * the day the product changed, and a made-up date is worse than none.
+         */
+        foreach (array_keys($this->catalog->listed()) as $slug) {
+            $urls[] = [
+                'loc' => self::BASE_URL.'/products/'.$slug,
+                'changefreq' => 'monthly',
+                'priority' => '0.8',
             ];
         }
 

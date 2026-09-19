@@ -1,5 +1,47 @@
 # Changelog - September 2026
 
+## OL-2609-114 - September 20th, 2026 - feat(products): product URLs that read like words
+
+The products chapter shipped with snake_case slugs, which is the shape an internal identifier takes
+and not the shape a URL does. Every other public route on the site was already hyphenated. Products
+were the one family that was not, and the reason is that they were named late at night and nobody
+looked again.
+
+So all nine moved. `/products/bmac_alert` is `/products/buy-me-a-coffee-alerts`, which matters more
+than the punctuation does: `bmac` is an abbreviation that exists inside this repo and nowhere in the
+world, and nobody has ever typed it into a search box. `kofi_alert` became `ko-fi-alerts`, matching
+how Ko-fi spells its own name. `twitch_chat` became `twitch-chat-overlay`. The rule for all of them
+is the same and is worth keeping: the slug is the product's name, kebab-cased, so there is never a
+second decision to make.
+
+The old URLs answer 301. The map lives in each manifest as `url_aliases`, next to the slug that
+replaced it, rather than in a table somewhere central, because a central table is a thing that falls
+out of step with the catalogue it describes. A rename stays one file's business.
+
+The part that nearly went wrong is worth writing down. A product's slug is now a URL and carries
+hyphens, but the slug an install is created under is not a URL at all: it is the middle segment of
+`[[[c:<recipe>:<instance>:<key>]]]`, and a control identifier has never carried a dash. Passing the
+product slug straight through made every single install throw, which is the good version of that
+mistake, because thirty-three tests said so at once instead of one streamer discovering it. The two
+ideas are separate now, `RecipeInstance::instanceSlugFrom()` converts between them, and the manifest
+validator refuses a hyphenated slug on any recipe that exports control tags at all, so the next
+person to try this is told before they ship it rather than after. Coin Flip and Dice, which are the
+two recipes that do export control tags, were left exactly where they were.
+
+Looking at the URLs turned up something better than the URLs. `/products` has been public and linked
+from the marketing navbar since the day it shipped, and it has never once been in `sitemap.xml`.
+Neither has any product page. The sitemap now derives them from the catalogue, the same way it
+derives `/help` from the corpus, so adding a manifest is the whole job of getting its page indexed.
+That is also what made this the right week to rename anything: there is no accumulated search
+standing behind the old URLs to protect, because nothing ever told a search engine they existed.
+
+While in there, the product pages got the rest of a head. A canonical link, which they had no version
+of. A `SoftwareApplication` with a free offer and a breadcrumb, which is the honest description of a
+thing you install in one click for nothing. And the page's heading is now the product itself rather
+than the word "Products" and a paragraph about the catalogue, which means the one `h1` on
+`/products/twitch-chat-overlay` reads "Twitch Chat Overlay". The card below it kept the badge, the
+state and the buttons and gave up repeating the title, because it was saying it twice.
+
 ## OL-2609-109 - September 19th, 2026 - feat(products): a chat designer, with the real overlay in the frame and invented chat in it
 
 Twitch Chat shipped with ten looks and a one-click Apply. This is the rest of it: a page where every

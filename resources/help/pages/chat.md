@@ -6,6 +6,7 @@ heading: Twitch Chat in an Overlay
 lead: Render live Twitch chat with one foreach loop. Every per-message tag, badges and emotes, what happens during a collab, and the settings that decide what gets drawn.
 canonical: https://overlabels.com/help/chat
 context: templates.show?type=static, settings.chat
+keywords: chat overlay, twitch chat overlay, chat box, chat widget, chat feed
 ---
 
 Chat works in a **static overlay**. Drop this in and you have a chat feed:
@@ -20,6 +21,11 @@ Chat works in a **static overlay**. Drop this in and you have a chat feed:
 ```
 
 That is the whole feature. No setup, no connecting anything, no extra permissions.
+
+> [!TIP]
+> Would rather not write one? **[Twitch Chat Overlay](/products/twitch-chat-overlay)** is this same feature
+> as a product: one click to install, ten looks to pick from, and a designer that changes the font,
+> the colours and the layout while you watch it in OBS. This page is for building your own.
 
 ## Where the messages come from
 
@@ -211,3 +217,5 @@ feed updates a few times a second at most, so animations have room to finish.
 - [Conditional Tags](/help/conditionals) - `[[[if:...]]]` and `[[[foreach:...]]]` in full
 - [Controls](/help/controls) - what the `[[[c:...]]]` tags above are
 - [Overlays vs Alerts](/help/overlays-vs-alerts) - why chat lives in a static overlay
+- [Twitch Chat Overlay](/products/twitch-chat-overlay) - the ready-made one, if you would rather pick a look
+  than write the markup

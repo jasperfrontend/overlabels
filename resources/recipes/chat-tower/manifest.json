@@ -1,6 +1,7 @@
 {
   "recipe_format_version": 1,
-  "slug": "chat_tower",
+  "slug": "chat-tower",
+  "url_aliases": ["chat_tower"],
   "name": "Chat Tower",
   "version": 1,
   "description": "One shared tower your whole chat builds with !stack. Every block lands a little off the one below, the tower sways more the taller it gets, and when it falls the viewer who placed the last block gets named. Installs the tower overlay, connects the Chat Tower integration and creates the all-time record list. You switch the bot on and put the overlay in OBS.",

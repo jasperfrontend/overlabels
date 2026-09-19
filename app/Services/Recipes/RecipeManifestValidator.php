@@ -150,6 +150,21 @@ class RecipeManifestValidator
     {
         $errors = [];
 
+        /*
+         * A slug is the public URL at /products/<slug>, so a listed product
+         * wants hyphens. But a recipe with control_exports also spends its
+         * slug as the first segment of [[[c:<slug>:<instance>:<name>]]], and
+         * a control identifier never carries a dash. The schema cannot say
+         * "hyphens unless this other key is present", so it is said here.
+         */
+        $slug = $manifest['slug'] ?? null;
+        if (is_string($slug) && str_contains($slug, '-') && ($manifest['control_exports'] ?? []) !== []) {
+            $errors[] = [
+                'pointer' => '/slug',
+                'message' => "Slug \"{$slug}\" has a hyphen, but this recipe has control_exports, whose tags would become [[[c:{$slug}:...]]]. Control identifiers use underscores.",
+            ];
+        }
+
         $optionSets = $manifest['primitives']['option_sets'] ?? [];
         $pickers = $manifest['primitives']['pickers'] ?? [];
 

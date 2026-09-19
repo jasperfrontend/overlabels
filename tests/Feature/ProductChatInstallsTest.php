@@ -53,7 +53,7 @@ it('installs the bowling aliases pointing at the list commands, for moderators',
     $user = chatUser();
     $catalog = app(RecipeCatalog::class);
 
-    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower_bowling')), $user, 'follower_bowling');
+    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower-bowling')), $user, 'follower_bowling');
 
     $first = BotAlias::find($instance->primitive_map['bot_aliases']['fbfirst']);
     $draw = BotAlias::find($instance->primitive_map['bot_aliases']['fbdraw']);
@@ -72,7 +72,7 @@ it('refuses the bowling install when the account already has an alias called fbf
     BotAlias::create(['user_id' => $user->id, 'command' => 'fbfirst', 'target_template' => 'ping', 'permission_level' => 'everyone']);
     $catalog = app(RecipeCatalog::class);
 
-    expect(fn () => app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower_bowling')), $user, 'follower_bowling'))
+    expect(fn () => app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower-bowling')), $user, 'follower_bowling'))
         ->toThrow(RuntimeException::class, '!fbfirst');
 
     expect(RecipeInstance::where('user_id', $user->id)->count())->toBe(0);

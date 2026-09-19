@@ -283,7 +283,7 @@ Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePu
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])
     ->name('products.show')
-    ->where('slug', '[a-z][a-z0-9_]*');
+    ->where('slug', '[a-z][a-z0-9_-]*');
 
 // A public kit as plain markdown: the kit, then every overlay in it described
 // exactly as its own `.md` describes it.
@@ -698,21 +698,21 @@ Route::middleware('auth.redirect')->group(function () {
     Route::post('/products/{slug}/install', [ProductController::class, 'install'])
         ->middleware('throttle:product-install')
         ->name('products.install')
-        ->where('slug', '[a-z][a-z0-9_]*');
+        ->where('slug', '[a-z][a-z0-9_-]*');
     Route::post('/products/{slug}/uninstall', [ProductController::class, 'uninstall'])
         ->name('products.uninstall')
-        ->where('slug', '[a-z][a-z0-9_]*');
+        ->where('slug', '[a-z][a-z0-9_-]*');
     // The designer: knobs on the left, the product's own overlay on the right.
     // Authenticated and install-gated, so it sits here rather than with the
     // public read side. Only a product that declares presets answers.
     Route::get('/products/{slug}/design', [ProductController::class, 'design'])
         ->name('products.design')
-        ->where('slug', '[a-z][a-z0-9_]*');
+        ->where('slug', '[a-z][a-z0-9_-]*');
     // A preset: one click writes every look control on the product's overlay.
     // Only a product that declares presets (ChatPresets) answers here.
     Route::post('/products/{slug}/presets/{preset}', [ProductController::class, 'applyPreset'])
         ->name('products.preset')
-        ->where(['slug' => '[a-z][a-z0-9_]*', 'preset' => '[a-z][a-z0-9_]*']);
+        ->where(['slug' => '[a-z][a-z0-9_-]*', 'preset' => '[a-z][a-z0-9_]*']);
     // "Not now" on the setup banner. Declared before the slug routes would
     // not matter (different method and path), kept next to them for reading.
     Route::post('/products/setup/dismiss', [ProductController::class, 'dismissSetup'])

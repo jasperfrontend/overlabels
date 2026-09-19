@@ -22,8 +22,8 @@ describe('band order', () => {
   it('leads with Twitch and the bot, then installed products, then the rest in server order', () => {
     const services = [
       service({ key: 'bmac', name: 'Buy Me a Coffee' }),
-      service({ key: 'checkin', name: 'Chat Checkin', product: 'chat_checkin', connected: true }),
-      service({ key: 'tower', name: 'Chat Tower', product: 'chat_tower' }),
+      service({ key: 'checkin', name: 'Chat Checkin', product: 'chat-checkin', connected: true }),
+      service({ key: 'tower', name: 'Chat Tower', product: 'chat-tower' }),
       service({ key: 'kofi', name: 'Ko-fi', connected: true }),
     ];
 
@@ -33,7 +33,7 @@ describe('band order', () => {
   });
 
   it('drops an uninstalled product back into the main band rather than pinning it', () => {
-    const services = [service({ key: 'tower', name: 'Chat Tower', product: 'chat_tower' })];
+    const services = [service({ key: 'tower', name: 'Chat Tower', product: 'chat-tower' })];
 
     const keys = buildIntegrationRows(services, offline, botOff, never).map((row) => row.key);
 
@@ -42,8 +42,8 @@ describe('band order', () => {
 
   it('keeps the server order within each band', () => {
     const services = [
-      service({ key: 'tower', name: 'Chat Tower', product: 'chat_tower', connected: true }),
-      service({ key: 'checkin', name: 'Chat Checkin', product: 'chat_checkin', connected: true }),
+      service({ key: 'tower', name: 'Chat Tower', product: 'chat-tower', connected: true }),
+      service({ key: 'checkin', name: 'Chat Checkin', product: 'chat-checkin', connected: true }),
       service({ key: 'throne', name: 'Throne' }),
       service({ key: 'bmac', name: 'Buy Me a Coffee' }),
     ];

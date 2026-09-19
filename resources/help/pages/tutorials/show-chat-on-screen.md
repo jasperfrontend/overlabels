@@ -145,5 +145,7 @@ window, so someone spamming commands cannot push real conversation off your scre
 
 - [Twitch Chat in an Overlay](/help/chat) - the full guide: every per-message tag, Shared Chat, emotes,
   and the four chat controls
+- [Twitch Chat Overlay](/products/twitch-chat-overlay) - the same feed as a one-click product, with ten looks
+  and a designer, if you would rather not keep the markup yourself
 - [Show your latest follower](/help/tutorials/latest-follower) - the same idea with a single value
   instead of a list

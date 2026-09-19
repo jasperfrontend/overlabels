@@ -53,12 +53,12 @@ function readinessIntegration(User $user, string $service, array $credentials = 
 /**
  * Chat Checkin's manifest with a THIRD-PARTY service in place of its own: the
  * install connects streamlabs, but nothing declares streamlabs as the
- * product's. The slug stays chat_checkin so the overlay document beside the
+ * product's. The slug stays chat-checkin so the overlay document beside the
  * manifest still resolves.
  */
 function readinessThirdPartyProduct(): Recipe
 {
-    $manifest = app(RecipeCatalog::class)->find('chat_checkin');
+    $manifest = app(RecipeCatalog::class)->find('chat-checkin');
     $manifest['requires_integrations'] = [];
     $manifest['installs']['integrations'] = ['streamlabs'];
     // A donation product needs no bot, and leaving the bot wires in would put
@@ -142,7 +142,7 @@ it('still reports the wire satisfied for a product whose own channel needs nothi
     $user = readinessUser();
     $catalog = app(RecipeCatalog::class);
 
-    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat_checkin')), $user, 'chat_checkin');
+    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat-checkin')), $user, 'chat_checkin');
 
     expect(WiringFacts::productSubject($instance)['states']['product.integration'])->toBe(WiringCatalog::SATISFIED);
 });
@@ -182,7 +182,7 @@ it('never offers to remove a third-party connection in the confirmation', functi
 it('still takes the product its own channel back', function () {
     $user = readinessUser();
     $catalog = app(RecipeCatalog::class);
-    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat_checkin')), $user, 'chat_checkin');
+    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat-checkin')), $user, 'chat_checkin');
 
     expect(app(RecipeInstaller::class)->removals($instance))
         ->toContain('The checkin integration connection and its controls');
@@ -195,7 +195,7 @@ it('still takes the product its own channel back', function () {
 it('points the banner at the one service still unfinished', function () {
     $user = readinessUser();
     app(RecipeInstaller::class)->install(readinessThirdPartyProduct(), $user, 'main');
-    ProductSetup::start($user, 'chat_checkin');
+    ProductSetup::start($user, 'chat-checkin');
 
     $banner = ProductSetup::banner($user->fresh(), app(RecipeCatalog::class));
 

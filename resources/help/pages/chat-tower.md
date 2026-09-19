@@ -7,7 +7,7 @@ lead: Viewers type !stack and a block with their name lands on top of one shared
 keywords: tower, stack, jenga, blocks, chat game, minigame, topple, collapse, record, tallest tower, stack left, stack right
 ---
 
-Install [Chat Tower from Products](/products/chat_tower) and you get the overlay, the integration
+Install [Chat Tower from Products](/products/chat-tower) and you get the overlay, the integration
 and the record list in one click. Or connect it by hand at
 [Settings - Integrations - Chat Tower](/settings/integrations/tower) (the Overlabels bot must be
 enabled in your channel) and build your own overlay from the tags below.

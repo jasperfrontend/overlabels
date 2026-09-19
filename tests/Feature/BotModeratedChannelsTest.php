@@ -45,7 +45,7 @@ function installCheckin(User $user)
 {
     $catalog = app(RecipeCatalog::class);
 
-    return app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat_checkin')), $user, 'chat_checkin');
+    return app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat-checkin')), $user, 'chat_checkin');
 }
 
 beforeEach(function () {

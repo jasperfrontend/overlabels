@@ -322,42 +322,48 @@ async function uninstall(): Promise<void> {
        normally lives, so the uninstall confirm needs its own mount. -->
   <ConfirmDialog />
   <RekaToast v-if="flashMessage" :key="flashKey" :message="flashMessage" :type="flashType" @dismiss="flashMessage = null" />
-  <ProductsLayout :categories="categories" :category="product.category" :installed-count="installed_count" :crumb="product.name">
+  <ProductsLayout
+    :categories="categories"
+    :category="product.category"
+    :installed-count="installed_count"
+    :crumb="product.name"
+    :heading="product.name"
+    :lead="product.description"
+  >
     <!-- The product's own column keeps the measure it was written for; the
          layout's grid is wider than a page of prose wants to be. -->
     <div class="max-w-4xl">
       <!-- The same artwork as the listing card, full width, as the page's hero. -->
       <img v-if="product.hero" :src="product.hero" alt="" class="mb-4 block aspect-video w-full object-cover" />
 
-      <!-- Installed, the header turns green and carries the badge large. This
-           is the one page in the app that is allowed to celebrate: the person
-           did nothing but press a button and follow a few lines, and the page's
-           job is to make that feel like it counted. -->
+      <!-- The state band. The product's name and description are the page's
+           own heading and lead now, above the breadcrumb, so this carries
+           what is true of THIS account: whether it is installed, the button
+           that changes that, and the questions the install asks. Installed,
+           it turns green and carries the badge large. This is the one page in
+           the app that is allowed to celebrate: the person did nothing but
+           press a button and follow a few lines, and the page's job is to
+           make that feel like it counted. -->
       <header
         class="flex flex-col gap-3 border p-5"
         :class="installed ? 'border-green-600/60 bg-green-50 dark:border-green-500/60 dark:bg-green-950/40' : 'border-sidebar-border bg-sidebar'"
       >
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <div class="flex min-w-0 items-start gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex min-w-0 items-center gap-3">
             <!-- The badge is only ever "an official Overlabels product" in
-                 one colour; the green header and the Installed line above the
-                 name carry the installed state. An alert shows its service's
-                 icon instead: it is that service's API inside Overlabels. -->
-            <ProductBadge
-              v-if="product.category === 'product'"
-              label="An official Overlabels product"
-              class="mt-0.5 size-9 shrink-0 text-violet-400"
-            />
+                 one colour; the green band and the Installed line carry the
+                 installed state. An alert shows its service's icon instead:
+                 it is that service's API inside Overlabels. -->
+            <ProductBadge v-if="product.category === 'product'" label="An official Overlabels product" class="size-9 shrink-0 text-violet-400" />
             <ServiceLogo
               v-else-if="product.integrations[0]"
               :source="product.integrations[0]"
-              class="mt-1 size-8 shrink-0"
+              class="size-8 shrink-0"
               :class="eventTypeDotClass('product', product.integrations[0])"
             />
-            <div class="min-w-0">
+            <div v-if="installed || product.requires_bot" class="flex min-w-0 flex-col gap-1">
               <p v-if="installed" class="text-xs font-semibold tracking-wide text-green-700 uppercase dark:text-green-400">Installed</p>
-              <h1 class="text-2xl font-semibold text-foreground">{{ product.name }}</h1>
-              <p v-if="product.requires_bot" class="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <p v-if="product.requires_bot" class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Bot class="size-3.5" />
                 Works through the Overlabels bot in your chat
               </p>
@@ -379,8 +385,6 @@ async function uninstall(): Promise<void> {
             </a>
           </div>
         </div>
-
-        <p class="max-w-prose text-foreground">{{ product.description }}</p>
 
         <!-- The product's questions. Before the install they are a form the
              button reads; after it they are a record of what was answered. -->

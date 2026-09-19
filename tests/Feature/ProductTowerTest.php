@@ -35,14 +35,14 @@ function towerRecipe(): Recipe
 {
     $catalog = app(RecipeCatalog::class);
 
-    return $catalog->sync($catalog->find('chat_tower'));
+    return $catalog->sync($catalog->find('chat-tower'));
 }
 
 it('is listed with its hero image, between checkin and bowling', function () {
     $this->get('/products')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('products.1.slug', 'chat_tower')
+            ->where('products.1.slug', 'chat-tower')
             ->where('products.1.hero', '/products/chat-tower-hero.svg')
         );
 
@@ -51,7 +51,7 @@ it('is listed with its hero image, between checkin and bowling', function () {
 });
 
 it('shows the integration, the list and the overlay it will create, and no chat commands', function () {
-    $this->get('/products/chat_tower')
+    $this->get('/products/chat-tower')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('product.integrations.0', 'tower')

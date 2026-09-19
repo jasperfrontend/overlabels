@@ -3,6 +3,7 @@
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayTemplate;
 use App\Models\Recipe;
+use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
@@ -47,7 +48,7 @@ function designerDocument(): array
 
 function designerInstall(User $user): OverlayTemplate
 {
-    return ChatPresets::overlayFor(app(RecipeInstaller::class)->install(designerRecipe(), $user, ChatPresets::PRODUCT));
+    return ChatPresets::overlayFor(app(RecipeInstaller::class)->install(designerRecipe(), $user, RecipeInstance::instanceSlugFrom(ChatPresets::PRODUCT)));
 }
 
 it('offers only skins the overlay defines, and one per preset', function () {
@@ -118,11 +119,11 @@ it('hands the page every control the overlay has, with the presets and the windo
     $user = designerUser();
     $template = designerInstall($user);
 
-    $this->actingAs($user)->get('/products/twitch_chat/design')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/design')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('products/design')
-            ->where('product.slug', 'twitch_chat')
+            ->where('product.slug', 'twitch-chat-overlay')
             ->where('overlay.id', $template->id)
             ->where('overlay.slug', $template->slug)
             ->has('controls', 13)
@@ -144,7 +145,7 @@ it('frames the real overlay, reading sample chat, on this origin', function () {
     $user = designerUser();
     $template = designerInstall($user);
 
-    $url = $this->actingAs($user)->get('/products/twitch_chat/design')
+    $url = $this->actingAs($user)->get('/products/twitch-chat-overlay/design')
         ->viewData('page')['props']['preview_url'];
 
     // Relative on purpose: the hosted-overlay origin (overlabels.net on prod)
@@ -162,8 +163,8 @@ it('keeps one preview token, marked and short-lived, across renders', function (
     $user = designerUser();
     designerInstall($user);
 
-    $first = $this->actingAs($user)->get('/products/twitch_chat/design')->viewData('page')['props']['preview_url'];
-    $second = $this->actingAs($user)->get('/products/twitch_chat/design')->viewData('page')['props']['preview_url'];
+    $first = $this->actingAs($user)->get('/products/twitch-chat-overlay/design')->viewData('page')['props']['preview_url'];
+    $second = $this->actingAs($user)->get('/products/twitch-chat-overlay/design')->viewData('page')['props']['preview_url'];
 
     // Minting per render would swap the frame's src and reload the preview
     // mid-design, and would invalidate the token the frame on screen is using.
@@ -183,14 +184,14 @@ it('mints a fresh one, and drops the stale one, when the held token is gone', fu
     $user = designerUser();
     designerInstall($user);
 
-    $first = $this->actingAs($user)->get('/products/twitch_chat/design')->viewData('page')['props']['preview_url'];
+    $first = $this->actingAs($user)->get('/products/twitch-chat-overlay/design')->viewData('page')['props']['preview_url'];
 
     // Whatever ends a token - expiry, a revoke, a new browser - the next open
     // gets a working one rather than a frame that cannot render.
     OverlayAccessToken::where('user_id', $user->id)->update(['expires_at' => now()->subMinute()]);
     $this->flushSession();
 
-    $second = $this->actingAs($user)->get('/products/twitch_chat/design')->viewData('page')['props']['preview_url'];
+    $second = $this->actingAs($user)->get('/products/twitch-chat-overlay/design')->viewData('page')['props']['preview_url'];
 
     expect($second)->not->toBe($first)
         ->and(OverlayAccessToken::where('user_id', $user->id)->count())->toBe(1);
@@ -199,18 +200,18 @@ it('mints a fresh one, and drops the stale one, when the held token is gone', fu
 it('refuses another product and an account with no install', function () {
     $user = designerUser();
 
-    $this->actingAs($user)->get('/products/twitch_chat/design')->assertNotFound();
-    $this->actingAs($user)->get('/products/chat_tower/design')->assertNotFound();
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/design')->assertNotFound();
+    $this->actingAs($user)->get('/products/chat-tower/design')->assertNotFound();
 
     designerInstall($user);
-    $this->actingAs($user)->get('/products/twitch_chat/design')->assertOk();
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/design')->assertOk();
 
     // Someone else's install is not a designer for this account.
-    $this->actingAs(designerUser())->get('/products/twitch_chat/design')->assertNotFound();
+    $this->actingAs(designerUser())->get('/products/twitch-chat-overlay/design')->assertNotFound();
 });
 
 it('requires a login', function () {
-    $this->get('/products/twitch_chat/design')->assertRedirect();
+    $this->get('/products/twitch-chat-overlay/design')->assertRedirect();
 });
 
 it('applies a preset without leaving the page when the designer asks for JSON', function () {
@@ -219,7 +220,7 @@ it('applies a preset without leaving the page when the designer asks for JSON', 
 
     // Navigating would reload the frame and throw away the chat in it, so the
     // designer takes the values back instead of a redirect.
-    $this->actingAs($user)->postJson('/products/twitch_chat/presets/terminal')
+    $this->actingAs($user)->postJson('/products/twitch-chat-overlay/presets/terminal')
         ->assertOk()
         ->assertJsonPath('values.skin', 'terminal')
         ->assertJsonPath('values.font', 'JetBrains Mono');
@@ -234,7 +235,7 @@ it('hands over the account chat filters, which are not appended to a serialised 
     $user->setPreference('chat_filters.hidden_logins', ['spambot', 'anotherbot']);
     $user->save();
 
-    $this->actingAs($user)->get('/products/twitch_chat/design')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/design')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('chat_filters.hide_commands', true)
@@ -260,7 +261,7 @@ it('writes both chat filters from the designer and answers JSON with the normali
 
     expect($user->fresh()->chatFilters())->toBe(['hide_commands' => true, 'hidden_logins' => ['spambot', 'anotherbot']]);
 
-    $this->actingAs($user)->get('/products/twitch_chat/design')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/design')
         ->assertInertia(fn (Assert $page) => $page
             ->where('chat_filters.hide_commands', true)
             ->where('chat_filters.hidden_logins', ['spambot', 'anotherbot'])
@@ -287,6 +288,6 @@ it('writes the chat window as a preference and answers JSON', function () {
 
     expect($user->fresh()->foreachCaps()['chat'])->toBe(12);
 
-    $this->actingAs($user)->get('/products/twitch_chat/design')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/design')
         ->assertInertia(fn (Assert $page) => $page->where('chat_window', 12));
 });

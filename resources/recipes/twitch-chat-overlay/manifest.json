@@ -1,7 +1,8 @@
 {
   "recipe_format_version": 1,
-  "slug": "twitch_chat",
-  "name": "Twitch Chat",
+  "slug": "twitch-chat-overlay",
+  "url_aliases": ["twitch_chat"],
+  "name": "Twitch Chat Overlay",
   "version": 2,
   "description": "Your chat on stream, with badges and emotes, read straight from Twitch. Nothing to connect and no bot to add: it works the moment the overlay is in OBS. Ten looks to pick from, from a terminal to speech bubbles to a news ticker, and thirteen controls behind them for the font, the colours, the layout and how long a message stays. Every change lands in OBS as you make it.",
   "author": {
