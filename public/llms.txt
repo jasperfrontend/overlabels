@@ -470,6 +470,10 @@ The lexical grammar, the formatter table, block keywords, operators and limits l
 - `resources/dsl/dsl.json` - the shared spec
 - `docs/design/overlabels-dsl-spec.md` - the full specification, including the formal grammar and the record of eight historical divergences between implementations
 
+For recipes rather than templates, the manifest schema is published and fetchable:
+
+- `https://overlabels.com/schemas/recipe-manifest/v1.json` - JSON Schema 2020-12, served from the same file the server validates against. See §12.
+
 If you are extending Overlabels rather than authoring a template: never hand-roll a tag regex. Add the shape to `dsl.json` so both runtimes get it at once.
 
 ---
@@ -515,7 +519,67 @@ Only public overlays have a `.md`. A private one returns 404, the same as its pr
 
 ---
 
-## 12. Links
+## 12. Products - the ready-made overlays
+
+Everything above teaches you to write a template. Some of the most-asked-for overlays already exist
+as **products**: free, made by Overlabels, installed into an account in one click. If the user wants
+one of the things on this list, installing it is a better first answer than writing a template from
+scratch, and they can edit the result afterwards - an install creates their own copy of the source,
+not a locked component.
+
+The catalogue is `https://overlabels.com/products`, and each product has a page at
+`/products/<slug>`.
+
+| Product | URL | What it is |
+|---|---|---|
+| Twitch Chat Overlay | `/products/twitch-chat-overlay` | Live chat on stream with badges and emotes. Ten built-in looks, thirteen controls, a live designer. Needs nothing connected. |
+| Chat Tower | `/products/chat-tower` | Chat stacks blocks with `!stack` until the tower topples. Needs the bot. |
+| Chat Checkin | `/products/chat-checkin` | Viewers `!checkin` from their city and appear on a globe. Needs the bot. |
+| Follower Bowling | `/products/follower-bowling` | A new follower rolls a bowling ball. Needs the bot. |
+| Ko-fi Alerts | `/products/ko-fi-alerts` | Ko-fi tips on stream, with a sound, a spoken line and a chat message. |
+| Streamlabs Alerts | `/products/streamlabs-alerts` | The same, for Streamlabs donations. |
+| Fourthwall Alerts | `/products/fourthwall-alerts` | The same, for Fourthwall orders and gifts. |
+| Buy Me a Coffee Alerts | `/products/buy-me-a-coffee-alerts` | The same, for Buy Me a Coffee. |
+| Throne Alerts | `/products/throne-alerts` | The same, for Throne. |
+
+**Twitch Chat Overlay is the ready-made version of the `foreach:chat` loop in §4.5.** If someone asks
+how to put chat on their stream, both answers are valid: point them at the product if they want it
+working now, and at §4.5 if they want to build and style their own.
+
+The five alert products are one product per service, not one product with a picker. Each installs an
+alert overlay and connects that one service. An alert renders inside whatever static overlays the
+person already has in OBS, so installing one does not mean adding another browser source.
+
+**A caveat before you fetch a product page.** Unlike `/help` and the `.md` endpoints in §11, product
+pages are application-rendered: the title, description and structured data are in the head and are
+real, but the body arrives as client-side state rather than prose. There is no `.md` twin. The table
+above is the summary worth having; for detail, read this file and `/help.md`.
+
+### Recipe manifests
+
+A product is a **recipe**: one declarative JSON manifest describing what an install creates - the
+overlays, the integration it connects, the Lists, the chat commands, the controls it exports and the
+triggers that fire them. There is no executable code in a manifest, by design, so one can be audited
+before it is trusted.
+
+The JSON Schema is published and is the same file the server validates against:
+
+```
+https://overlabels.com/schemas/recipe-manifest/v1.json
+```
+
+Two things in it are worth knowing before you write one:
+
+- `slug` is the public URL at `/products/<slug>` and is the product's name kebab-cased. It admits
+  hyphens, **except** on a recipe that declares `control_exports`: those spend the slug as the first
+  segment of a `[[[c:<recipe>:<instance>:<key>]]]` tag, and a control identifier never carries a
+  dash. The validator refuses that combination rather than letting it reach a tag.
+- `url_aliases` holds slugs the product used to live at. Each one answers a 301 to the current URL,
+  which is how a rename keeps old links working.
+
+---
+
+## 13. Links
 
 **Start at `https://overlabels.com/help.md`.** That is the help index as plain markdown, and it links to
 every other page. If you want to crawl the documentation, that one URL is the entry point.
@@ -573,3 +637,5 @@ generated from the drivers:
 - Help index (human): https://overlabels.com/help
 - This file, explained: https://overlabels.com/help/llms-txt
 - Full tag catalogue as JSON: https://overlabels.com/help-reference-index.json
+- Products: https://overlabels.com/products
+- Recipe manifest schema: https://overlabels.com/schemas/recipe-manifest/v1.json

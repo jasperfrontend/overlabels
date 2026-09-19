@@ -165,6 +165,32 @@ Route::prefix('updates')->name('updates.')->group(function () {
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
+/*
+ * The recipe manifest schema, served from the one copy the validator reads.
+ *
+ * The path is not a choice: the schema declares
+ * `"$id": "https://overlabels.com/schemas/recipe-manifest/v1.json"`, and a JSON
+ * Schema's $id is where the document claims to live. It claimed that for months
+ * while the URL 404'd, which makes every `$ref` against it unresolvable and the
+ * declaration a lie. RecipeManifestSchemaTest pins the two together, so moving
+ * one without the other fails rather than quietly going stale.
+ *
+ * Read at request time rather than copied into public/ for the same reason the
+ * help sitemap is derived rather than listed: a second copy is a copy that drifts,
+ * and this one already had a drifted twin.
+ */
+Route::get('/schemas/recipe-manifest/v1.json', function () {
+    return response(
+        (string) file_get_contents(base_path('resources/recipes/recipe-manifest.schema.json')),
+        200,
+        [
+            'Content-Type' => 'application/schema+json',
+            'Cache-Control' => 'public, max-age=3600',
+            'Access-Control-Allow-Origin' => '*',
+        ],
+    );
+})->name('schemas.recipe-manifest');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.index');

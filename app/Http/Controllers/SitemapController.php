@@ -32,6 +32,10 @@ class SitemapController extends Controller
         // nothing here matters more to a machine reader. Its explainer page at
         // /help/llms-txt is what actually links to it.
         ['path' => '/llms.txt', 'priority' => '0.9', 'changefreq' => 'monthly'],
+        // Not an HTML page either, and listed for the same reason llms.txt is:
+        // it is a document we want a machine to find without being handed the
+        // link. Its $id names this exact URL - see the route.
+        ['path' => '/schemas/recipe-manifest/v1.json', 'priority' => '0.4', 'changefreq' => 'monthly'],
         ['path' => '/updates', 'priority' => '0.8', 'changefreq' => 'weekly'],
         // The catalogue itself. Each listed product gets its own row below,
         // derived the same way /help is: adding a manifest is the whole job

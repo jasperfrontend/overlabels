@@ -52,6 +52,9 @@ please fetch it once and keep it, rather than re-fetching it per request.
 - **Three complete worked examples** - a follower goal bar, a multi-branch alert, and a chat block,
   each with all three fields filled in.
 - **A table of the mistakes people actually make**, with what happens for each one.
+- **The products**, so an assistant asked for a chat overlay or a donation alert can offer the
+  ready-made one instead of writing a template, and the recipe manifest schema for anyone
+  building their own.
 
 ## Why this page exists
 
@@ -70,3 +73,5 @@ The other machine-readable surfaces are documented in
   to crawl the documentation rather than read a single primer.
 - `https://overlabels.com/sitemap.xml` - lists every public URL, including `/llms.txt`.
 - `https://overlabels.com/robots.txt` - allows everything, and names `/llms.txt` in a comment.
+- `https://overlabels.com/schemas/recipe-manifest/v1.json` - the recipe manifest schema, served
+  from the same file the server validates against.
