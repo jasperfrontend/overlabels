@@ -234,21 +234,25 @@ no other state.
 2. **Fix the prompt until a finding is worth reading.** The interesting output is Surface omissions,
    named tests that do not exist, and `[unverified]` used as an escape hatch. If five audits produce
    nothing but CONFIRMED, tighten what she is asked to look for before spending on automation.
-3. **Move her to GitHub as her own workflow**, `scrutinize.yml`, on push to `main`, separate from
-   `deploy.yml` and never a `needs:` of it. (Built 2026-09-18, OL-2609-105.) It runs the official Claude Code action on every commit
-   in the push range that carries a `Changelog:` trailer, commits `audit.md` with `[skip ci]` (the
-   `lint.yml` auto-commit loop is the lesson), and opens an issue titled with the ID only when a
-   claim is CONTRADICTED or Surface missed a path. Quiet otherwise.
-4. **After a month, read the issues.** If one of them would have stopped a real regression, that is
-   the evidence to discuss a gate. Until then she stays advisory.
+3. ~~**Move her to GitHub as her own workflow.**~~ **Built 2026-09-18 as `scrutinize.yml`
+   (OL-2609-105..112) and removed on 2026-09-19 (OL-2609-113). Do not build it again.** The case for
+   it was that CI would be colder and would run without anyone remembering. Half of that was simply
+   false: `/sally` already spawns a fresh subagent that never sees the calling conversation and is
+   handed an ID and nothing else, so a workflow is no colder than the skill. The other half was
+   real and too expensive - a CI audit bills the Anthropic API at roughly $2, every push to `main`
+   is a deploy here, and pushes are frequent. The ~100 claims in her queue would have cost more to
+   audit in CI than the project spends on everything else in a year.
+4. **Read the audits.** They are files in the repo, which is the point of writing them there. If one
+   of them would have stopped a real regression, that is the evidence to discuss a gate. Until then
+   she stays advisory and local.
 
 **Never write the literal skip-CI token in a commit message, not even while explaining it.** GitHub
 scans the entire message, body included, so a commit that only mentions the token in prose runs no
 workflows at all: no deploy, no tests, no linter, no audit, and no error anywhere to say so. The
 commit that introduced `scrutinize.yml` did exactly that and silently skipped its own first run.
-Write it as "the skip token" and keep the literal string in the workflow file, which is the only
-place it belongs. `scrutinize.yml` has a `workflow_dispatch` input for re-running Sally on an id by
-hand, which is the way back from this and the way to audit anything shipped before she existed.
+Write it as "the skip token" and keep the literal string in a workflow file, which is the only place
+it belongs. The way back is a manual re-run from the Actions tab; the lesson outlives the workflow
+that taught it, because `deploy.yml` and `tests.yml` are skipped by the same token in the same way.
 
 Write claims as though she already exists, because the whole value of the format is that a false
 line is findable.

@@ -869,6 +869,21 @@ clobbered by a checkout, a stash, or a branch switch that a later step needs to 
 - **Scrutinize Sally, the claims auditor, is ADVISORY, never a deploy gate** (decided 2026-09-17).
   She inspects the building and files a report; she does not block the sale. She is the `sally`
   agent in `.claude/agents/`, run cold through `/sally <ID>`; `audit.md` lands beside the claim.
+- **She runs LOCALLY and only locally. There is no CI for her, and a new one must not be built**
+  (removed 2026-09-19, OL-2609-113). `.github/workflows/scrutinize.yml` existed for one day and is
+  gone. It was never the cheaper path and the reason is arithmetic, not disappointment: a CI audit
+  bills the Anthropic API at roughly $2 a run, on a repo where every push to `main` is a deploy and
+  pushes are frequent, while `/sally` costs nothing at the margin. Auditing the ~100 unaudited
+  claims that way would have cost more than a year of everything else the project spends.
+  **CI bought no coldness either** - that was the case for it, and it was wrong. `/sally` spawns a
+  fresh subagent that never sees the calling conversation and is handed an ID and nothing else, so
+  the two are equally cold. What CI actually added was running unattended and a pristine checkout,
+  and neither is worth per-commit dollars. The eight claims OL-2609-105..112 are the whole attempt:
+  five walls in a row (the action refuses a `push` event, OIDC permissions, the GitHub App, API
+  credit, then a revoked git credential), and the wall it died on is the honest one - `main` is a
+  protected branch requiring `ci` and `quality`, the audit commit carries the skip token so those
+  checks can never run on it, and classic branch protection has no per-actor bypass. Finishing it
+  meant loosening branch protection to buy something that costs money per commit.
 - **Remy fixes what Sally finds** (2026-09-18): the `remy` agent, run cold through `/remy <ID>`,
   resolves each finding to FIXED (test red then green), RECORD (a new claim restates the truth) or
   SKIPPED (with the reason), writes `remedy.md` beside the audit and a NEW claim. Shipped `claim.md`
