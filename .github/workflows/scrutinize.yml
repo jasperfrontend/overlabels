@@ -245,6 +245,8 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           ID: ${{ matrix.id }}
+          # The push needs this. See the remote rewrite below.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           yy="${ID:3:2}"; mm="${ID:5:2}"
@@ -288,12 +290,27 @@ jobs:
           # starts, so it is never clean by now.
           echo "working tree:"; git status --porcelain || true
 
+          # Push with the job's own token rather than with whatever credential
+          # is left in the git config by the time this runs. The one the
+          # checkout persisted is not usable here: the OL-2609-111 audit was
+          # committed and then rejected twice with "Invalid username or token",
+          # while an anonymous fetch of this public repo in the same step
+          # succeeded. The audit step mints its own GitHub token from OIDC and
+          # revokes it as its last act, which is the likely reason, though
+          # which of the two credentials is in the config is not established.
+          # It does not need to be: `github.token` is independent of both and
+          # is the same token the issue step below already uses successfully,
+          # in this job, moments later.
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
           # Push first. A rebase is only needed when something else landed
           # while the audit ran, which is the rare case - and a plain
           # `git pull --rebase` ABORTS on a dirty tree ("cannot pull with
           # rebase: You have unstaged changes"), which is exactly how the
-          # OL-2609-108 audit was lost after being committed. --autostash
-          # moves the build artifacts aside for the rebase and puts them back.
+          # OL-2609-108 audit was lost after being committed. The tree is dirty
+          # because `composer install` rewrites the tracked
+          # bootstrap/cache/packages.php and services.php; --autostash moves
+          # them aside for the rebase and puts them back.
           git push origin HEAD:main || {
             git pull --rebase --autostash origin main
             git push origin HEAD:main
