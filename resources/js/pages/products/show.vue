@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, Trash2, TriangleAlert } from '@lucide/vue';
+import { Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, Sliders, Trash2, TriangleAlert } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
 import { serviceLabel } from '@/utils/services';
 import { urlWithTab } from '@/composables/useAddressableTabs';
@@ -663,6 +663,21 @@ async function uninstall(): Promise<void> {
           <h2 class="text-lg font-semibold text-foreground">Pick a look</h2>
           <p class="text-sm text-muted-foreground">One click. Your overlay changes as it lands, in OBS too.</p>
         </div>
+        <!-- The designer is the same ten looks plus every knob under them,
+             next to the overlay itself. A preset here is still the fastest
+             way in, so both stay. -->
+        <Link
+          :href="withLastMileHint(route('products.design', product.slug), product.slug)"
+          class="collection-row flex items-center justify-between gap-3 border border-border p-3"
+        >
+          <span class="min-w-0">
+            <span class="block font-medium text-foreground">Design it yourself</span>
+            <span class="block text-sm text-foreground"
+              >Start from a look, then change the skin, the font, the colours and the layout next to your own overlay.</span
+            >
+          </span>
+          <Sliders class="size-4 shrink-0 text-muted-foreground" />
+        </Link>
         <ul class="grid gap-3 sm:grid-cols-2">
           <li
             v-for="preset in presets"

@@ -17,6 +17,7 @@ use App\Services\BotModeratedChannels;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeIngredients;
 use App\Services\Recipes\RecipeInstaller;
+use App\Support\ChatDesigner;
 use App\Support\ChatPresets;
 use App\Support\OverlayMarkdown;
 use App\Support\ProductSetup;
@@ -24,6 +25,7 @@ use App\Support\ServiceConnections;
 use App\Support\ServiceTestGuides;
 use App\Support\WiringFacts;
 use App\Support\WiringReport;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -325,7 +327,7 @@ class ProductController extends Controller
      * so OBS changes as the page reloads. The result is the card turning
      * to Applied and the overlay itself; no toast.
      */
-    public function applyPreset(Request $request, string $slug, string $preset): RedirectResponse
+    public function applyPreset(Request $request, string $slug, string $preset): RedirectResponse|JsonResponse
     {
         abort_unless(ChatPresets::has($slug) && isset(ChatPresets::PRESETS[$preset]), 404);
 
@@ -347,7 +349,58 @@ class ProductController extends Controller
             );
         }
 
+        // The designer asks for JSON: it applies a preset without leaving the
+        // page, because navigating would reload the preview frame and throw
+        // away the chat that is in it. The values come back so the knobs move
+        // to match in the same beat the overlay does.
+        if ($request->wantsJson()) {
+            return response()->json(['values' => ChatPresets::PRESETS[$preset]['values']]);
+        }
+
         return redirect()->route('products.show', $slug);
+    }
+
+    /**
+     * The chat designer: every knob on the left, the real overlay on the right.
+     *
+     * The preview frame is the overlay itself, on this origin, with generated
+     * chat instead of the channel's own. That is deliberate on both counts. It
+     * is the real renderer, so nothing here can drift from what OBS shows; and
+     * a knob writes its control through the ordinary value endpoint, whose
+     * broadcast the frame is already listening on - the same broadcast that
+     * reaches OBS. There is no preview pipeline to keep in step, because there
+     * is no preview: it is the overlay.
+     *
+     * 404 for any product but Twitch Chat, and for an account with no install:
+     * there is nothing to design until there is an overlay to design.
+     */
+    public function design(Request $request, string $slug): Response
+    {
+        abort_unless(ChatPresets::has($slug), 404);
+
+        $user = $request->user();
+        $instance = $this->instanceFor($user, $slug);
+        $template = $instance ? ChatPresets::overlayFor($instance) : null;
+        abort_if($template === null || $template->owner_id !== $user->id, 404);
+
+        $manifest = $this->listedManifest($slug);
+
+        return Inertia::render('products/design', [
+            'product' => ['slug' => $manifest['slug'], 'name' => $manifest['name']],
+            'overlay' => ['id' => $template->id, 'name' => $template->name, 'slug' => $template->slug],
+            'preview_url' => ChatDesigner::previewUrl($template, ChatDesigner::previewToken($user)),
+            'presets' => ChatDesigner::presets(),
+            'skins' => ChatDesigner::skins(),
+            'choices' => ChatDesigner::CHOICES,
+            'groups' => ChatDesigner::GROUPS,
+            'controls' => ChatDesigner::controls($template),
+            // The chat window is a foreach cap, not a control: it is "how many
+            // items does this loop expand to", the same question the other four
+            // caps answer, and it is written on /settings/account. The designer
+            // writes the same preference through the same endpoint.
+            'chat_window' => $user->foreachCaps()['chat'],
+            'chat_window_max' => User::FOREACH_CAP_MAX,
+        ]);
     }
 
     public function dismissSetup(Request $request): RedirectResponse

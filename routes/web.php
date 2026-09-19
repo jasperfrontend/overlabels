@@ -702,6 +702,12 @@ Route::middleware('auth.redirect')->group(function () {
     Route::post('/products/{slug}/uninstall', [ProductController::class, 'uninstall'])
         ->name('products.uninstall')
         ->where('slug', '[a-z][a-z0-9_]*');
+    // The designer: knobs on the left, the product's own overlay on the right.
+    // Authenticated and install-gated, so it sits here rather than with the
+    // public read side. Only a product that declares presets answers.
+    Route::get('/products/{slug}/design', [ProductController::class, 'design'])
+        ->name('products.design')
+        ->where('slug', '[a-z][a-z0-9_]*');
     // A preset: one click writes every look control on the product's overlay.
     // Only a product that declares presets (ChatPresets) answers here.
     Route::post('/products/{slug}/presets/{preset}', [ProductController::class, 'applyPreset'])

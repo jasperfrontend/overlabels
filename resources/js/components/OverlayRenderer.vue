@@ -43,6 +43,7 @@ import { useEmoteParser } from '@/composables/useEmoteParser';
 import { useTwitchChat } from '@/composables/useTwitchChat';
 import { type BadgeManifest, EMPTY_BADGE_MANIFEST, badgeImages, toBadgeManifest } from '@/utils/badgeRenderer';
 import { toChatFilters } from '@/utils/chatFilters';
+import type { ChatSampleFeed } from '@/utils/chatSample';
 import { withChatSlots } from '@/utils/chatSlots';
 import { DEFAULT_CHECKINS_WINDOW, clampCheckinsWindow, pinsFromData, toPin, upsertPin, withCheckinSlots } from '@/utils/checkinSlots';
 import {
@@ -102,6 +103,9 @@ function bump() {
 const props = defineProps<{
   slug: string;
   token: string;
+  // Generated chat instead of the channel's own, for the chat designer. See
+  // startSampleChat() - the socket is never opened in this mode.
+  sample?: boolean;
 }>();
 
 const head = ref<string | null>(null);
@@ -172,6 +176,59 @@ const templateUsesBadgeArt = computed(() => {
  * same source-gating discipline as chat and badge art above.
  */
 const templateUsesGlobe = computed(() => sourceUsesGlobe(rawHtml.value ?? ''));
+
+/**
+ * The chat designer's sample feed.
+ *
+ * Non-null only when the overlay was loaded with `?chat=sample`, and the module
+ * it comes from is imported dynamically, so an ordinary overlay in OBS neither
+ * downloads the fixtures nor installs the listener. Same discipline as the
+ * emote library and the badge manifest: an overlay pays for nothing it does not
+ * show.
+ *
+ * Lines go in through `injectRawLine`, the same door the dev hose uses, so a
+ * preview exercises the real parser, the real filters and the real window.
+ */
+let sampleFeed: ChatSampleFeed | null = null;
+
+/** Enough messages that a look can be judged the instant the designer opens. */
+const SAMPLE_BURST = 14;
+
+/**
+ * Rate, burst and clear, driven by the page that framed us.
+ *
+ * Only the framing window is listened to. There is nothing here worth reaching
+ * for regardless - the feed is invented chat in one browser that never leaves
+ * it - but a listener that answers anyone is a habit worth not forming.
+ */
+function handleSampleMessage(event: MessageEvent): void {
+  if (event.source !== window.parent || !sampleFeed) return;
+
+  const payload = event.data as { ol?: string; rate?: number; burst?: number; clear?: boolean } | null;
+  if (!payload || payload.ol !== 'chat-sample') return;
+
+  if (payload.clear) sampleFeed.clear();
+  if (typeof payload.burst === 'number') sampleFeed.burst(payload.burst);
+  if (typeof payload.rate === 'number') sampleFeed.setRate(payload.rate);
+}
+
+async function startSampleChat(): Promise<void> {
+  const { createChatSampleFeed } = await import('@/utils/chatSample');
+
+  sampleFeed = createChatSampleFeed(twitchChat);
+  // A burst before any rate is set, so the designer opens onto a full feed
+  // rather than an empty box filling up one message at a time.
+  sampleFeed.burst(SAMPLE_BURST);
+  window.addEventListener('message', handleSampleMessage);
+
+  // The feed only exists after the render payload and a dynamic import, which
+  // is well after the frame fired `load`. Without this the designer would have
+  // to guess when its first message would be heard; instead it waits to be
+  // told, and replies with whatever the rate is by then.
+  if (window.parent !== window) {
+    window.parent.postMessage({ ol: 'chat-sample', ready: true }, '*');
+  }
+}
 
 /**
  * Render one chat message to safe HTML for the `chat.N.html` slot.
@@ -883,7 +940,7 @@ onMounted(async () => {
     // Same discipline as the emote library: an overlay that never shows chat
     // should not hold a WebSocket open for hours in an OBS source.
     const chatChannel = String(json.data?.user_login ?? '');
-    if (chatChannel && templateUsesChat.value) {
+    if ((chatChannel || props.sample) && templateUsesChat.value) {
       // Set before connecting, so the first messages through the socket are
       // already filtered rather than flashing on screen and being excluded
       // only from the second batch onward.
@@ -891,7 +948,15 @@ onMounted(async () => {
       // The chat foreach cap. Set before connecting so the very first messages
       // land in a correctly sized window.
       twitchChat.setWindowSize(Number(json.chat_window));
-      twitchChat.connect(chatChannel);
+
+      // Sample mode never opens the socket. A streamer choosing a look is
+      // often sharing a screen or is mid-stream, and a preview is the last
+      // place their real chat should turn up unasked.
+      if (props.sample) {
+        void startSampleChat();
+      } else {
+        twitchChat.connect(chatChannel);
+      }
 
       // Badge art is keyed by the numeric broadcaster id, not the login.
       if (templateUsesBadgeArt.value && userId.value) {
@@ -1001,6 +1066,11 @@ onUnmounted(() => {
   // flush. Without this an OBS source that reloads leaks a connection per
   // reload, and the backoff timer keeps reopening one after the component dies.
   twitchChat.disconnect();
+  if (sampleFeed) {
+    sampleFeed.stop();
+    window.removeEventListener('message', handleSampleMessage);
+    sampleFeed = null;
+  }
   for (const key of Object.keys(timerIntervals)) {
     stopTimerTick(key);
   }

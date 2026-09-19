@@ -1,5 +1,50 @@
 # Changelog - September 2026
 
+## OL-2609-109 - September 19th, 2026 - feat(products): a chat designer, with the real overlay in the frame and invented chat in it
+
+Twitch Chat shipped with ten looks and a one-click Apply. This is the rest of it: a page where every
+knob is on the left and the overlay is on the right, running.
+
+The thing worth saying about the right-hand side is that it is not a preview. It is the overlay, in
+an iframe, fetched through the same render endpoint OBS uses and drawn by the same renderer. There is
+no second pipeline to keep in step, which is the failure mode every design surface in this project
+has had to avoid: a preview that agrees with OBS on the day it is written and quietly stops agreeing
+three changes later. It also means the knobs needed no new machinery at all. A knob POSTs to the
+control value endpoint the Controls tab already uses, that endpoint broadcasts, and the frame is
+listening on the same channel OBS is. Turn the accent colour and it moves in both places at once.
+
+The chat in the frame is invented, and that is a product decision rather than a shortcut. A streamer
+choosing a look is frequently not live, or is live with a quiet chat, or is sharing their screen. Any
+of those turns "we use your real chat" into an empty box or an audience watching a stranger design an
+overlay around their messages. So the designer synthesizes chat instead, at a rate on a slider, with
+a Clear and a More next to it. The lines are real tagged IRC, fed through the same parser the overlay
+uses on Twitch's own socket, so the badges are real badges, the emotes resolve through 7TV and BTTV
+and FFZ like they will on stream, and a first-ever-message chip turns up often enough to pick a
+colour for. That generator already existed as half of the dev-only chat firehose, the load-testing
+instrument from August; this splits it, ships the line synthesis and leaves the rate dial, the frame
+sampler and the console handle behind the build flag they were always behind.
+
+The overlay learns one query parameter, `?chat=sample`, and in that mode it never opens the Twitch
+socket at all. The alternative considered was a door that only a framed overlay answers, which needs
+no URL anyone could paste - but a framed overlay would still have connected first and been told to
+stop, and a beat of somebody's real chat flashing into a preview is exactly what this was avoiding.
+
+Two small things sit underneath. The frame renders at the browser source size the chosen layout wants
+- 500x800 stacked, 1920x80 for the ticker - and is scaled down to fit, so 22px type looks like 22px
+type relative to the source rather than relative to whatever room the column happens to have; switch
+to Ticker and the frame changes shape in front of you, which is the size guidance saying itself
+instead of being written down. And the preview holds one access token, in the session, reused while
+it lives. Minting one per render would have swapped the frame's src and reloaded the preview every
+time anything on the page re-rendered, which is the sort of bug that takes an afternoon to find
+because it looks like a flicker.
+
+The presets did not move. They are still on the product page as ten cards, still the fastest way in,
+and the designer offers them as "start from" with the skin split out beside them: a skin is the shape
+of a message and a preset is a skin plus a palette, so Terminal in pink is now one click rather than
+a thing you could describe but not do. Which preset is active is still derived by comparing the
+controls to the bundles - it is just derived in the browser now, on every knob turn, so the strip
+lets go of the preset the moment you change anything. That is the truth, and it was already the rule.
+
 ## OL-2609-099 - September 18th, 2026 - feat(bot): !forgetme, and telling a viewer once that they exist in a database
 
 The `/viewers` page shipped a few hours ago with an email address on it. This is the rest of the

@@ -15,7 +15,7 @@
   "listed": true,
   "category": "product",
   "hero": "/products/twitch-chat-hero.svg",
-  "ready_message": "Your chat is on screen. Pick a look below, and every change shows in OBS as you make it.",
+  "ready_message": "Your chat is on screen. Pick a look below or design your own, and every change shows in OBS as you make it.",
   "notes": [
     "Every message comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so chat keeps flowing even when Overlabels is having a bad day.",
     "Size the OBS browser source to size the chat: the feed fills whatever box you give it. 500 by 800 is a good start for a stacked feed, 1920 by 80 for the ticker.",

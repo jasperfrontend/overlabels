@@ -6,6 +6,11 @@
  * import site and this module never enters the graph. There is no runtime flag
  * and nothing to leave switched on by accident.
  *
+ * The lines themselves come from `utils/chatSample.ts`, which DOES ship - the
+ * chat designer previews a look with the same fixtures at a human rate. What
+ * stays here is the load-testing driver: the rate dial, the moderation roll,
+ * the frame sampler and the console handle. None of that is product code.
+ *
  * WHY FAKE RATHER THAN POINT AT A BUSY CHANNEL:
  *
  * - Reproducible. A real channel's rate swings minute to minute, so you cannot
@@ -28,91 +33,20 @@
  *   __olChatHose.stop()          // prints a report
  */
 
-/**
- * Real global Twitch emote ids, so images actually load and cost real bytes.
- *
- * Every id here must return 200 from the CDN. A dead one still costs a request
- * but never paints, which quietly understates the render load - exactly the
- * kind of fixture rot that makes a load test lie in the flattering direction.
- *
- * This list WILL rot: Twitch retires global emotes. `BibleThump` (86) was here
- * until Twitch dropped it, and it 404s. Re-check before trusting a run whose
- * numbers look suspiciously good.
- *
- * Note it may still render in a real overlay - FFZ carries BibleThump as a
- * global - but that resolves through the token path, whereas anything listed
- * here goes out as an emote POSITION and is therefore fetched from Twitch's CDN
- * regardless of what the third-party sets have.
- *
- *   curl -o /dev/null -w "%{http_code}" \
- *     https://static-cdn.jtvnw.net/emoticons/v2/<id>/default/dark/1.0
- */
-const TWITCH_EMOTES: Array<[code: string, id: string]> = [
-  ['Kappa', '25'],
-  ['DansGame', '33'],
-  ['Kreygasm', '41'],
-  ['4Head', '354'],
-  ['LUL', '425618'],
-  ['WutFace', '28087'],
-  ['NotLikeThis', '58765'],
-  ['PogChamp', '305954156'],
-];
+import { CHAT_SAMPLE_DEFAULTS, type ChatSampleOptions, clearchatLine, clearmsgLine, privmsgLine } from '@/utils/chatSample';
 
-/**
- * Codes commonly present in 7TV/BTTV/FFZ channel sets. These exercise the
- * token-matching path rather than the position path; whether they resolve
- * depends on the channel's own sets, which is realistic.
- */
-const THIRD_PARTY_CODES = ['Sadge', 'Madge', 'Pepega', 'monkaS', 'KEKW', 'Pog', 'widepeepoHappy', 'catJAM'];
-
-const WORDS = [
-  'hello',
-  'chat',
-  'that was insane',
-  'gg',
-  'no way',
-  'first time here',
-  'lets go',
-  'what happened',
-  'nice one',
-  'o7',
-  'this is the best stream',
-  'im crying',
-  'clip it',
-];
-
-const BADGE_SETS = ['', 'subscriber/12', 'moderator/1', 'vip/1', 'subscriber/3,moderator/1', 'broadcaster/1,subscriber/12'];
-
-const COLORS = ['#1E90FF', '#FF69B4', '#00FF7F', '#FF4500', '#9146FF', ''];
-
-export interface ChatHoseOptions {
+export interface ChatHoseOptions extends ChatSampleOptions {
   /** Messages per second. */
   rate: number;
-  /** Probability a message carries Twitch emotes (position-based path). */
-  emoteChance: number;
-  /** Probability a message carries third-party emote codes (token path). */
-  thirdPartyChance: number;
   /** Probability per second that a moderation action fires. */
   moderationChance: number;
-  /** Size of the synthetic chatter pool. Drives unique-chatter behaviour. */
-  chatters: number;
-  /** Channel name in the PRIVMSG target. Cosmetic. */
-  channel: string;
-  /** room-id tag. Only matters if you are testing Shared Chat. */
-  roomId: string;
-  /** Probability a message is a Shared Chat message from another channel. */
-  foreignChance: number;
 }
 
 const DEFAULTS: ChatHoseOptions = {
-  rate: 20,
-  emoteChance: 0.35,
-  thirdPartyChance: 0.35,
-  moderationChance: 0.05,
-  chatters: 400,
+  ...CHAT_SAMPLE_DEFAULTS,
   channel: 'loadtest',
-  roomId: '1',
-  foreignChance: 0,
+  rate: 20,
+  moderationChance: 0.05,
 };
 
 interface ChatSink {
@@ -125,93 +59,6 @@ function pick<T>(list: readonly T[]): T {
 
 function chance(p: number): boolean {
   return Math.random() < p;
-}
-
-let messageCounter = 0;
-
-/**
- * Build one PRIVMSG line, tags and all.
- *
- * Emote positions are computed against the assembled text rather than guessed,
- * because the renderer slices the string by those indices. Getting them wrong
- * would mean debugging the hose instead of the overlay.
- */
-export function privmsgLine(options: ChatHoseOptions, seed = messageCounter++): string {
-  const n = seed % options.chatters;
-  const login = `chatter${n}`;
-  const display = `Chatter${n}`;
-
-  const parts: string[] = [];
-  const emotePositions: string[] = [];
-  let cursor = 0;
-
-  const push = (chunk: string) => {
-    if (parts.length > 0) {
-      cursor += 1; // the joining space
-    }
-    parts.push(chunk);
-    const begin = cursor;
-    cursor += chunk.length;
-    return { begin, end: cursor - 1 };
-  };
-
-  if (chance(options.emoteChance)) {
-    const [code, id] = pick(TWITCH_EMOTES);
-    const { begin, end } = push(code);
-    emotePositions.push(`${id}:${begin}-${end}`);
-  }
-
-  push(pick(WORDS));
-
-  if (chance(options.thirdPartyChance)) {
-    push(pick(THIRD_PARTY_CODES));
-  }
-
-  if (chance(options.emoteChance)) {
-    const [code, id] = pick(TWITCH_EMOTES);
-    const { begin, end } = push(code);
-    emotePositions.push(`${id}:${begin}-${end}`);
-  }
-
-  const text = parts.join(' ');
-  const badges = pick(BADGE_SETS);
-  const foreign = chance(options.foreignChance);
-
-  const tags = [
-    `badge-info=`,
-    `badges=${badges}`,
-    `color=${pick(COLORS)}`,
-    `display-name=${display}`,
-    `emotes=${emotePositions.join('/')}`,
-    `first-msg=${chance(0.02) ? '1' : '0'}`,
-    `id=${crypto.randomUUID()}`,
-    `mod=${badges.includes('moderator') ? '1' : '0'}`,
-    `room-id=${options.roomId}`,
-    `subscriber=${badges.includes('subscriber') ? '1' : '0'}`,
-    `tmi-sent-ts=${Date.now()}`,
-    `user-id=${1000 + n}`,
-  ];
-
-  if (foreign) {
-    // source-room-id differing from room-id is Twitch's own discriminator.
-    tags.push('source-room-id=999999', `source-badges=${badges}`);
-  }
-
-  return `@${tags.join(';')} :${login}!${login}@${login}.tmi.twitch.tv PRIVMSG #${options.channel} :${text}`;
-}
-
-/** CLEARMSG removes exactly one message. */
-export function clearmsgLine(options: ChatHoseOptions, targetId: string): string {
-  return `@login=someone;room-id=${options.roomId};target-msg-id=${targetId} :tmi.twitch.tv CLEARMSG #${options.channel} :gone`;
-}
-
-/** CLEARCHAT with a target purges one user; without one it clears the room. */
-export function clearchatLine(options: ChatHoseOptions, login?: string): string {
-  if (!login) {
-    return `@room-id=${options.roomId} :tmi.twitch.tv CLEARCHAT #${options.channel}`;
-  }
-
-  return `@ban-duration=600;room-id=${options.roomId};target-user-id=${1000 + Number(login.replace(/\D/g, '') || 0)} :tmi.twitch.tv CLEARCHAT #${options.channel} :${login}`;
 }
 
 interface FrameSampler {

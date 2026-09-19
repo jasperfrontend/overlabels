@@ -108,6 +108,13 @@ Route::middleware('auth.redirect')->group(function () {
         }
         $user->save();
 
+        // The chat designer writes the chat cap from a page whose preview
+        // frame must not reload, so it asks for JSON rather than take the
+        // redirect back into a full re-render.
+        if ($request->wantsJson()) {
+            return response()->json(['foreach_caps' => $user->foreachCaps()]);
+        }
+
         return back();
     })->name('settings.foreach-caps');
 

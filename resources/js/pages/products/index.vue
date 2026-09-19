@@ -196,7 +196,9 @@ const description = computed(
     </section>
 
     <div class="pt-20 text-sm text-neutral-400" v-if="category === 'alert'">
-      Overlabels is an independent product and is not affiliated with, endorsed by, sponsored by, or otherwise associated with Twitch, Fourthwall, Buy Me a Coffee, Ko-fi, Throne, or Streamlabs. All product names, logos, and trademarks are the property of their respective owners and are used solely for identification purposes.
+      Overlabels is an independent product and is not affiliated with, endorsed by, sponsored by, or otherwise associated with Twitch, Fourthwall, Buy
+      Me a Coffee, Ko-fi, Throne, or Streamlabs. All product names, logos, and trademarks are the property of their respective owners and are used
+      solely for identification purposes.
     </div>
   </ProductsLayout>
 </template>

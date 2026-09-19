@@ -69,5 +69,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const { slug, token } = window.__OVERLAY__;
 
-  createApp(OverlayRenderer, { slug, token }).use(pinia).mount(mount);
+  // `?chat=sample` swaps the Twitch chat connection for generated messages.
+  // The chat designer frames the overlay with it so a streamer can choose a
+  // look whether or not they are live and whether or not anyone is talking -
+  // and so a preview on a shared screen never shows their real chat. Nothing
+  // mints this URL except the designer; an OBS source never carries it.
+  const sample = new URLSearchParams(window.location.search).get('chat') === 'sample';
+
+  createApp(OverlayRenderer, { slug, token, sample }).use(pinia).mount(mount);
 });
