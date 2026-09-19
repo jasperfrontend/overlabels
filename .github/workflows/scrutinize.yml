@@ -99,10 +99,16 @@ jobs:
 
             PENDING+=("$id")
 
-            # Newest first, capped. A backlog is not worth a runner-hour each
-            # and an API bill in one go; the rest are still in the queue and get
-            # taken by the next push.
-            [ ${#PENDING[@]} -ge 3 ] && break
+            # Newest first, one per run. A backlog is not worth a runner-hour
+            # each and an API bill in one go; the rest are still in the queue
+            # and get taken by the next push.
+            #
+            # Was 3. One run of three cost $5 and landed nothing, because both
+            # audits that finished were lost after the fact - see the commit
+            # step below. Until a run completes end to end, a push buys one
+            # audit, not three. Raising it again is a one-character change and
+            # the queue drains either way; there is no state to migrate.
+            [ ${#PENDING[@]} -ge 1 ] && break
           done
 
           if [ ${#PENDING[@]} -eq 0 ]; then
@@ -222,11 +228,21 @@ jobs:
             Write `audit.md` beside the claim, as her definition specifies. Do
             not commit it and do not stage it; this workflow commits.
           claude_args: |
-            --max-turns 40
+            --max-turns 80
             --allowedTools Read,Grep,Glob,Bash,Write
 
+      # Runs even when the audit step failed, which is the whole point of the
+      # `if`. The audit is the expensive part of this job - one run of three
+      # cost $5 - and twice a FINISHED audit was thrown away by something that
+      # went wrong after she wrote it: OL-2609-109's result was rejected for
+      # running 41 turns against a limit of 40, and OL-2609-108's commit was
+      # made and then lost to the rebase below. Neither is worth re-buying.
+      #
+      # The job still goes red on either, because the failed step is what marks
+      # it. This only stops the output going in the bin with it.
       - name: Commit the audit
         id: commit
+        if: ${{ !cancelled() }}
         env:
           ID: ${{ matrix.id }}
         run: |
@@ -234,13 +250,19 @@ jobs:
           yy="${ID:3:2}"; mm="${ID:5:2}"
           path="docs/changelog/claims/20${yy}/${mm}/${ID}/audit.md"
 
-          if [ ! -f "$path" ]; then
-            echo "::warning::$ID produced no audit.md"
+          # The verdict line is what makes the file an audit rather than a
+          # fragment. Gating on it rather than on the file existing is what
+          # makes running after a failed audit step safe: a run cut off
+          # mid-write leaves something on disk, and that must not be committed
+          # as though it were her finding.
+          verdict=$(grep -m1 '^\*\*Verdict:\*\*' "$path" 2>/dev/null | sed 's/^\*\*Verdict:\*\* *//' || true)
+
+          if [ -z "$verdict" ]; then
+            echo "::warning::$ID produced no finished audit.md"
             echo "wrote=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          verdict=$(grep -m1 '^\*\*Verdict:\*\*' "$path" | sed 's/^\*\*Verdict:\*\* *//' || echo UNKNOWN)
           echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
           echo "path=$path" >> "$GITHUB_OUTPUT"
           echo "wrote=true" >> "$GITHUB_OUTPUT"
@@ -260,17 +282,32 @@ jobs:
           # this workflow would retrigger itself on its own commit.
           git commit -m "docs(sally): audit of $ID - $verdict [skip ci]"
 
-          # Rebase rather than force: another push may have landed while the
-          # audit ran, and this commit is never worth losing one over.
-          git pull --rebase origin main
-          git push origin HEAD:main
+          # What the job left in its own working tree, recorded because the
+          # next failure here should name the file rather than be guessed at.
+          # This job installs, generates and builds before the audit even
+          # starts, so it is never clean by now.
+          echo "working tree:"; git status --porcelain || true
+
+          # Push first. A rebase is only needed when something else landed
+          # while the audit ran, which is the rare case - and a plain
+          # `git pull --rebase` ABORTS on a dirty tree ("cannot pull with
+          # rebase: You have unstaged changes"), which is exactly how the
+          # OL-2609-108 audit was lost after being committed. --autostash
+          # moves the build artifacts aside for the rebase and puts them back.
+          git push origin HEAD:main || {
+            git pull --rebase --autostash origin main
+            git push origin HEAD:main
+          }
 
       # The guide's bar for interrupting anyone: a claim that is actually false,
       # or a path the change touched and did not disclose. FINDINGS on its own
       # is not enough - a mistagged [unverified] is worth reading, not worth an
       # issue. Quiet otherwise is the whole design.
+      # Same reasoning as the commit step: a finished audit that found something
+      # worth acting on should say so even when the job around it went red, or
+      # the one finding that mattered is buried in a failed run nobody reopens.
       - name: Open an issue for a contradicted claim or a missed path
-        if: steps.commit.outputs.wrote == 'true'
+        if: ${{ !cancelled() && steps.commit.outputs.wrote == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           ID: ${{ matrix.id }}
