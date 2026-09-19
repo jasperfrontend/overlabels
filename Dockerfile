@@ -52,8 +52,15 @@ RUN composer install \
 # ---------- Stage 3: Runtime ----------
 FROM dunglas/frankenphp:1-php8.4 AS runtime
 
-# install-php-extensions handles compilation, deps, and config in one shot
-ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+# install-php-extensions handles compilation, deps, and config in one shot.
+#
+# Pinned to a tagged release rather than /latest/download/. `latest` re-resolves
+# on every build, so BuildKit cannot cache the layer and every deploy re-fetches
+# from GitHub's release CDN - which reset the connection mid-build on
+# 2026-09-19 and failed the deploy with nothing in the diff to blame. A fixed
+# URL is cacheable and pulls the same bytes forever. Bumping it is deliberate.
+ARG PHP_EXT_INSTALLER_VERSION=2.11.27
+ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/download/${PHP_EXT_INSTALLER_VERSION}/install-php-extensions /usr/local/bin/
 
 # postgresql-client-16 supplies pg_dump for the daily `backup:database` job
 # (scheduler role). pg_dump refuses to run against a server newer than itself,
