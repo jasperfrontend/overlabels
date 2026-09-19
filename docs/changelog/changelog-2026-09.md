@@ -1,5 +1,32 @@
 # Changelog - September 2026
 
+## OL-2609-117 - September 20th, 2026 - fix(products): every slider and color picker in the chat designer saves
+
+Half the chat designer was a demo of itself. The skin buttons worked, the layout and font menus
+worked, the badge and Twitch-colors switches worked. Font size, emote size, the three colors and the
+background color did not: the slider moved, the number next to it counted up, the color swatch
+changed, and nothing was ever sent to the server. Reload the page and it was all back where it
+started.
+
+The cause is small and worth naming, because it is the kind of bug a careful pattern makes. Every
+knob writes its value locally the moment it moves, because a slider that waits for a round trip does
+not feel like a slider. The knobs that fire continuously, which is exactly the sliders and the color
+pickers, then debounce the actual save by 250 milliseconds. And the save began with a guard that
+skipped a write when the value had not changed, measured against the local value. Which the knob had
+already set. So the guard was always true, and the POST never happened for any of them.
+
+What the guard wanted to know was whether the server already holds this value, and the page was
+asking whether the person is still holding the mouse where they left it. The designer now tracks
+what the server last confirmed, separately from what the knobs display, and compares against that.
+The presets keep it in step when one is applied, since a preset is written server-side and is a
+confirmed value the moment it lands.
+
+The same pass put the chat surfaces into American English. "Name colour", "Text colour", "Background
+colour" and "Names in their Twitch colours" are the labels a streamer reads on their own controls,
+and a label is copied into the account's own control rows at install time, so a migration rewrites
+the four on installs that already exist. It matches on the key and the exact old label, so a control
+somebody renamed by hand keeps the name they gave it.
+
 ## OL-2609-114 - September 20th, 2026 - feat(products): product URLs that read like words
 
 The products chapter shipped with snake_case slugs, which is the shape an internal identifier takes

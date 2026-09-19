@@ -63,6 +63,14 @@ const frame = ref<HTMLIFrameElement | null>(null);
 // A local copy, because every knob writes its own control and reads its own
 // value back. The server's prop is the state at page load and nothing more.
 const controls = reactive<Record<string, Control>>(JSON.parse(JSON.stringify(props.controls)));
+
+// What the server last confirmed, key by key, tracked apart from `controls`.
+// A knob writes its own value the moment it moves, so the local value is what
+// was ASKED for, not what was saved. Comparing a write against the local value
+// is what made every debounced knob a silent no-op: writeControlSoon had
+// already assigned it, so writeControl saw no change and never posted, and
+// every slider and color picker on the page moved without saving anything.
+const saved = reactive<Record<string, string>>(Object.fromEntries(Object.entries(props.controls).map(([key, control]) => [key, control.value])));
 const windowSize = ref(props.chat_window);
 
 // Only failures are said out loud. Every successful change is visible in the
@@ -98,25 +106,30 @@ const debounces: Record<string, ReturnType<typeof setTimeout>> = {};
  */
 async function writeControl(key: string, value: string): Promise<void> {
   const control = controls[key];
-  if (!control || control.value === value) return;
+  if (!control || saved[key] === value) return;
 
-  const previous = control.value;
+  const previous = saved[key] ?? control.value;
   // Moved before the request, so a slider feels immediate and the preset
   // strip re-derives as you drag rather than a beat later.
   control.value = value;
+  saved[key] = value;
 
   try {
     const { data } = await axios.post(`/templates/${props.overlay.id}/controls/${control.id}/value`, { value });
     // The server clamps numbers to the control's own min/max, so its answer
     // wins over what the input sent.
-    if (typeof data?.value === 'string') control.value = data.value;
+    if (typeof data?.value === 'string') {
+      control.value = data.value;
+      saved[key] = data.value;
+    }
   } catch (error: unknown) {
     control.value = previous;
+    saved[key] = previous;
     fail(axios.isAxiosError(error) ? (error.response?.data?.message ?? 'That control did not save.') : 'That control did not save.');
   }
 }
 
-/** For inputs that fire continuously: colour pickers and range sliders. */
+/** For inputs that fire continuously: color pickers and range sliders. */
 function writeControlSoon(key: string, value: string): void {
   if (controls[key]) controls[key].value = value;
   clearTimeout(debounces[key]);
@@ -143,7 +156,12 @@ async function applyPreset(key: string): Promise<void> {
   try {
     const { data } = await axios.post(`/products/${props.product.slug}/presets/${key}`);
     for (const [controlKey, value] of Object.entries((data?.values ?? {}) as Record<string, string>)) {
-      if (controls[controlKey]) controls[controlKey].value = value;
+      if (!controls[controlKey]) continue;
+      // The preset was written server-side, so this IS the saved value now.
+      // Leaving `saved` stale here would make the next knob that lands back on
+      // a pre-preset value a no-op again.
+      controls[controlKey].value = value;
+      saved[controlKey] = value;
     }
   } catch {
     fail('That look did not apply.');
@@ -419,7 +437,7 @@ function keysIn(group: { keys: string[] }): string[] {
                 </label>
               </template>
 
-              <!-- A colour. -->
+              <!-- A color. -->
               <template v-else-if="controls[key].type === 'color'">
                 <label class="text-sm text-foreground" :for="`knob-${key}`">{{ controls[key].label }}</label>
                 <div class="flex items-center gap-2">
