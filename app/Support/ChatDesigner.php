@@ -54,7 +54,7 @@ class ChatDesigner
         ],
         'background' => [
             ['value' => 'none', 'label' => 'None', 'hint' => 'Text straight over the game, with a shadow.'],
-            ['value' => 'solid', 'label' => 'Solid', 'hint' => 'The background colour, flat.'],
+            ['value' => 'solid', 'label' => 'Solid', 'hint' => 'The background color, flat.'],
             ['value' => 'glass', 'label' => 'Glass', 'hint' => 'Translucent and blurred.'],
         ],
         // Every one of these is in the overlay's Google Fonts <link>. Adding a
@@ -82,7 +82,7 @@ class ChatDesigner
     public const GROUPS = [
         ['title' => 'Layout', 'keys' => ['layout', 'lifetime']],
         ['title' => 'Type', 'keys' => ['font', 'font_size', 'emote_size']],
-        ['title' => 'Colours', 'keys' => ['twitch_colors', 'name_color', 'text_color', 'accent']],
+        ['title' => 'Colors', 'keys' => ['twitch_colors', 'name_color', 'text_color', 'accent']],
         ['title' => 'Background', 'keys' => ['background', 'background_color']],
         ['title' => 'Badges', 'keys' => ['show_badges']],
     ];

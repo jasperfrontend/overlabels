@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, Sliders, Trash2, TriangleAlert } from '@lucide/vue';
+import { ArrowRight, Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, Sliders, Trash2, TriangleAlert } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
 import { serviceLabel } from '@/utils/services';
 import { urlWithTab } from '@/composables/useAddressableTabs';
@@ -61,23 +61,14 @@ interface Product {
   ready_message: string | null;
   presets: Preset[];
 }
-/** A fixed look for the product's overlay: a skin plus a palette, applied in one click. */
+/**
+ * A fixed look for the product's overlay. Picking one happens in the designer,
+ * not here, so this page reads nothing from a preset but its existence: a
+ * product with looks is a product with a designer, and how many there are is
+ * the one number the designer's card quotes.
+ */
 interface Preset {
   key: string;
-  label: string;
-  blurb: string;
-  active: boolean;
-  preview: {
-    skin: string;
-    font: string;
-    name_color: string;
-    text_color: string;
-    accent: string;
-    background: string;
-    background_color: string;
-    twitch_colors: string;
-    layout: string;
-  };
 }
 
 interface InstalledOverlay {
@@ -187,32 +178,14 @@ function install(): void {
 // Only a static overlay goes into OBS. An alert renders inside the static
 // overlays it targets, so offering it an "Add to OBS" button sends the person
 // to a page that warns them off doing exactly that.
-// The looks. Applying one is a POST; the page comes back with that card
-// marked Applied and the overlay in OBS already changed, so nothing else
-// needs saying. The swatch on each card is drawn in the preset's own font,
-// which is why the page pulls the overlay's font families in while a
-// product has presets.
-const presets = computed(() => props.product.presets ?? []);
-const applying = ref<string | null>(null);
-function applyPreset(key: string) {
-  applying.value = key;
-  router.post(route('products.preset', [props.product.slug, key]), {}, { preserveScroll: true, onFinish: () => (applying.value = null) });
-}
-const PRESET_FONTS =
-  'https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;700&family=Inter:wght@400;700&family=Space+Grotesk:wght@400;700&family=Fredoka:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Silkscreen:wght@400;700&display=swap';
-function swatchStyle(preset: Preset) {
-  const p = preset.preview;
-  return {
-    fontFamily: `"${p.font}", "Albert Sans", sans-serif`,
-    color: p.text_color,
-    background: p.background === 'none' ? 'transparent' : p.background_color,
-    borderColor: p.background === 'none' ? p.accent : 'transparent',
-    textShadow: p.background === 'none' ? '0 1px 2px rgba(0,0,0,.85)' : 'none',
-  };
-}
-
 const stages = computed(() => (props.installed?.overlays ?? []).filter((overlay) => overlay.type !== 'alert'));
 const alerts = computed(() => (props.installed?.overlays ?? []).filter((overlay) => overlay.type === 'alert'));
+
+// The looks. They are the designer's opening move, not a row of cards here:
+// ten previews of someone else's chat asked the streamer to choose before
+// they could see their own in it. All this page does with the presets now is
+// count them and point at the one door that has them.
+const presets = computed(() => props.product.presets ?? []);
 
 function joinNames(names: string[]): string {
   return names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
@@ -314,7 +287,6 @@ async function uninstall(): Promise<void> {
 <template>
   <Head>
     <title>{{ product.name }}</title>
-    <link v-if="presets.length" rel="stylesheet" :href="PRESET_FONTS" />
     <meta name="description" :content="product.description" />
   </Head>
 
@@ -351,7 +323,7 @@ async function uninstall(): Promise<void> {
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="flex min-w-0 items-center gap-3">
             <!-- The badge is only ever "an official Overlabels product" in
-                 one colour; the green band and the Installed line carry the
+                 one color; the green band and the Installed line carry the
                  installed state. An alert shows its service's icon instead:
                  it is that service's API inside Overlabels. -->
             <ProductBadge v-if="product.category === 'product'" label="An official Overlabels product" class="size-9 shrink-0 text-violet-400" />
@@ -659,83 +631,35 @@ async function uninstall(): Promise<void> {
       <!-- Installed, steps left: the checklist as a progress piece. Everything
            the installer did is already a tick; each remaining line has one
            button; the bar fills as they go. -->
-      <!-- The looks. Only a product with presets (Twitch Chat) has any, and only
-           an install can apply one: the click writes the overlay's controls and
-           OBS follows. The card is the whole feedback: it turns to Applied. -->
-      <section v-if="installed && presets.length" class="mt-8 flex flex-col gap-3">
-        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 class="text-lg font-semibold text-foreground">Pick a look</h2>
-          <p class="text-sm text-muted-foreground">One click. Your overlay changes as it lands, in OBS too.</p>
-        </div>
-        <!-- The designer is the same ten looks plus every knob under them,
-             next to the overlay itself. A preset here is still the fastest
-             way in, so both stay. -->
-        <Link
-          :href="withLastMileHint(route('products.design', product.slug), product.slug)"
-          class="collection-row flex items-center justify-between gap-3 border border-border p-3"
+      <!-- The looks, as one door rather than a wall of cards. Only a product
+           with presets (Twitch Chat) has a designer, and only an install can
+           open it. This is the loudest thing on an installed page for a
+           reason: everything above it is setup the person has already done,
+           and this is the part that is theirs. -->
+      <Link
+        v-if="installed && presets.length"
+        :href="withLastMileHint(route('products.design', product.slug), product.slug)"
+        class="product-design mt-8 flex cursor-pointer flex-col gap-4 border border-violet-500 p-5 transition-colors hover:bg-violet-500/[0.08] sm:flex-row sm:items-center sm:gap-5 dark:border-violet-400 dark:hover:bg-violet-400/[0.09]"
+      >
+        <span
+          class="flex size-12 shrink-0 items-center justify-center bg-violet-500 text-white dark:bg-violet-400 dark:text-sidebar"
+          aria-hidden="true"
         >
-          <span class="min-w-0">
-            <span class="block font-medium text-foreground">Design it yourself</span>
-            <span class="block text-sm text-foreground"
-              >Start from a look, then change the skin, the font, the colours and the layout next to your own overlay.</span
-            >
+          <Sliders class="size-6" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-lg leading-[1.3] font-semibold text-foreground">Design it yourself</span>
+          <span class="block text-sm leading-relaxed text-pretty text-foreground">
+            Start from one of {{ presets.length }} looks, then change the skin, the font, the colors and the layout next to your own overlay.
           </span>
-          <Sliders class="size-4 shrink-0 text-muted-foreground" />
-        </Link>
-        <ul class="grid gap-3 sm:grid-cols-2">
-          <li
-            v-for="preset in presets"
-            :key="preset.key"
-            class="collection-row flex flex-col gap-3 border p-3"
-            :class="preset.active ? 'border-green-500/60' : 'border-border'"
-            :data-preset="preset.key"
-          >
-            <div
-              class="flex flex-col gap-1 rounded-sm border px-3 py-2.5 text-[15px] leading-snug"
-              :class="preset.preview.background === 'none' ? 'bg-zinc-800 dark:bg-zinc-900' : ''"
-              :style="swatchStyle(preset)"
-              aria-hidden="true"
-            >
-              <p class="truncate">
-                <span class="font-bold" :style="{ color: preset.preview.twitch_colors === '1' ? '#1e90ff' : preset.preview.name_color }"
-                  >rivermoss</span
-                ><span class="opacity-70">:</span>
-                that jump was clean
-              </p>
-              <p class="truncate">
-                <span class="font-bold" :style="{ color: preset.preview.twitch_colors === '1' ? '#ff7f50' : preset.preview.name_color }"
-                  >pixel_kat</span
-                ><span class="opacity-70">:</span>
-                <span
-                  class="mr-1 inline-block rounded-full px-1.5 align-[0.1em] text-[9px] font-bold tracking-wide text-white uppercase"
-                  :style="{ background: preset.preview.accent }"
-                  >first message</span
-                >
-                hello from the night shift
-              </p>
-            </div>
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <p class="font-medium text-foreground">{{ preset.label }}</p>
-                <p class="text-sm text-foreground">{{ preset.blurb }}</p>
-              </div>
-              <span v-if="preset.active" class="inline-flex shrink-0 items-center gap-1 text-sm text-green-600 dark:text-green-400">
-                <Check class="size-4" />
-                Applied
-              </span>
-              <button
-                v-else
-                type="button"
-                class="btn btn-sm btn-primary shrink-0 cursor-pointer"
-                :disabled="applying !== null"
-                @click="applyPreset(preset.key)"
-              >
-                {{ applying === preset.key ? 'Applying' : 'Apply' }}
-              </button>
-            </div>
-          </li>
-        </ul>
-      </section>
+        </span>
+        <!-- A span, not a button: this whole card is one link, and a button
+             inside an anchor is invalid and navigates twice. -->
+        <span class="btn btn-primary shrink-0 self-start sm:self-auto">
+          Open the designer
+          <ArrowRight class="product-design-arrow ml-2 size-4" />
+        </span>
+      </Link>
 
       <section v-if="installed && installed.subject" class="mt-8 flex flex-col gap-3">
         <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -882,6 +806,47 @@ async function uninstall(): Promise<void> {
   box-shadow: inset 0 0 12px 0 rgb(34 197 94 / 0.18);
 }
 
+/* The designer card, the loudest thing on an installed page. Same device as
+   the green pills - a glow, a border and an icon, never a gradient wash - in
+   the app's violet: a halo outside, a wash inside, both breathing slowly so
+   the card catches the eye on a page that is otherwise done. Hover holds it
+   at its brightest. */
+.product-design {
+  box-shadow:
+    0 0 20px -4px rgb(139 92 246 / 0.35),
+    inset 0 0 24px 0 rgb(139 92 246 / 0.12);
+  animation: product-design-breathe 5s ease-in-out infinite;
+}
+
+.product-design:hover {
+  animation: none;
+  box-shadow:
+    0 0 30px -2px rgb(139 92 246 / 0.55),
+    inset 0 0 34px 0 rgb(139 92 246 / 0.2);
+}
+
+.product-design-arrow {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.product-design:hover .product-design-arrow {
+  transform: translateX(4px);
+}
+
+@keyframes product-design-breathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 16px -6px rgb(139 92 246 / 0.28),
+      inset 0 0 20px 0 rgb(139 92 246 / 0.09);
+  }
+  50% {
+    box-shadow:
+      0 0 28px -2px rgb(139 92 246 / 0.5),
+      inset 0 0 30px 0 rgb(139 92 246 / 0.18);
+  }
+}
+
 /* The only motion on the page: the bar fills, a completed tick lands, the
    waiting dot breathes, the landed line arrives. All gone under reduced
    motion. */
@@ -925,12 +890,17 @@ async function uninstall(): Promise<void> {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .product-progress {
+  .product-progress,
+  .product-design-arrow {
     transition: none;
+  }
+  .product-design:hover .product-design-arrow {
+    transform: none;
   }
   .product-tick,
   .product-pulse,
-  .product-landed {
+  .product-landed,
+  .product-design {
     animation: none;
   }
 }

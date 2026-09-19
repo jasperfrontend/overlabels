@@ -12,7 +12,7 @@ use App\Models\RecipeInstance;
  * A preset is nothing but a bundle of values for the overlay's thirteen
  * look controls: a `skin` (a block of rules in the overlay's own CSS, so
  * the shape and behaviour of a message) and twelve values for the font,
- * the colours, the layout and the lifetime. Applying one writes those
+ * the colors, the layout and the lifetime. Applying one writes those
  * controls through the same path the controls tab uses, so the overlay in
  * OBS changes as the click lands. Nothing is stored about which preset is
  * active: it is derived by comparing the controls to the bundles, so a
@@ -42,7 +42,7 @@ class ChatPresets
     public const PRESETS = [
         'clean' => [
             'label' => 'Clean',
-            'blurb' => 'Glass rows, everyone in their own Twitch colour. The one you never regret.',
+            'blurb' => 'Glass rows, everyone in their own Twitch color. The one you never regret.',
             'values' => [
                 'skin' => 'clean', 'layout' => 'bottom', 'font' => 'Albert Sans', 'font_size' => '22',
                 'twitch_colors' => '1', 'name_color' => '#ffffff', 'text_color' => '#ffffff', 'accent' => '#9146ff',
@@ -114,7 +114,7 @@ class ChatPresets
         ],
         'cards' => [
             'label' => 'Cards',
-            'blurb' => 'Each message its own card, the name as a header bar in the chatter\'s colour, emotes big. Room for slow chats.',
+            'blurb' => 'Each message its own card, the name as a header bar in the chatter\'s color, emotes big. Room for slow chats.',
             'values' => [
                 'skin' => 'cards', 'layout' => 'bottom', 'font' => 'Albert Sans', 'font_size' => '21',
                 'twitch_colors' => '1', 'name_color' => '#ffffff', 'text_color' => '#f4f4f5', 'accent' => '#9146ff',

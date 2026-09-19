@@ -4,19 +4,19 @@
   "url_aliases": ["twitch_chat"],
   "name": "Twitch Chat Overlay",
   "version": 2,
-  "description": "Your chat on stream, with badges and emotes, read straight from Twitch. Nothing to connect and no bot to add: it works the moment the overlay is in OBS. Ten looks to pick from, from a terminal to speech bubbles to a news ticker, and thirteen controls behind them for the font, the colours, the layout and how long a message stays. Every change lands in OBS as you make it.",
+  "description": "Your chat on stream, with badges and emotes, read straight from Twitch. Nothing to connect and no bot to add: it works the moment the overlay is in OBS. Ten looks to pick from, from a terminal to speech bubbles to a news ticker, and thirteen controls behind them for the font, the colors, the layout and how long a message stays. Every change lands in OBS as you make it.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"
   },
-  "changelog": "Version 2: a skin control and ten built-in skins, so a preset can change the shape of a message and not only its colours. Version 1 was the initial release: the fourth product, and the first that needs nothing beyond the overlay itself.",
+  "changelog": "Version 2: a skin control and ten built-in skins, so a preset can change the shape of a message and not only its colors. Version 1 was the initial release: the fourth product, and the first that needs nothing beyond the overlay itself.",
   "min_overlabels_version": 1,
   "requires_integrations": [],
   "requires_bot": false,
   "listed": true,
   "category": "product",
   "hero": "/products/twitch-chat-hero.svg",
-  "ready_message": "Your chat is on screen. Pick a look below or design your own, and every change shows in OBS as you make it.",
+  "ready_message": "Your chat is on screen. Design it below to get the look you want, and every change shows in OBS as you make it.",
   "notes": [
     "Every message comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so chat keeps flowing even when Overlabels is having a bad day.",
     "Size the OBS browser source to size the chat: the feed fills whatever box you give it. 500 by 800 is a good start for a stacked feed, 1920 by 80 for the ticker.",

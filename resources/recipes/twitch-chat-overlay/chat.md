@@ -6,7 +6,7 @@ author: Overlabels
 
 # Twitch Chat
 
-Your chat on stream, read straight from Twitch: names in their Twitch colours, badges, Twitch and third-party emotes, a chip on a viewer's first ever message. Thirteen controls set the skin, the font, the colours, the layout and how long a message stays, and every change lands in OBS the moment it is made. Ten skins are built in; a preset picks one and a palette to go with it.
+Your chat on stream, read straight from Twitch: names in their Twitch colors, badges, Twitch and third-party emotes, a chip on a viewer's first ever message. Thirteen controls set the skin, the font, the colors, the layout and how long a message stays, and every change lands in OBS the moment it is made. Ten skins are built in; a preset picks one and a palette to go with it.
 
 An Overlabels **static overlay** by Overlabels.
 
@@ -220,12 +220,12 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 | `[[[c:layout]]]` | text | Layout | `bottom` | yes |
 | `[[[c:font]]]` | text | Font | `Albert Sans` | yes |
 | `[[[c:font_size]]]` | number | Font size | `22` | yes |
-| `[[[c:twitch_colors]]]` | boolean | Names in their Twitch colours | `1` | yes |
-| `[[[c:name_color]]]` | color | Name colour | `#ffffff` | yes |
-| `[[[c:text_color]]]` | color | Text colour | `#ffffff` | yes |
+| `[[[c:twitch_colors]]]` | boolean | Names in their Twitch colors | `1` | yes |
+| `[[[c:name_color]]]` | color | Name color | `#ffffff` | yes |
+| `[[[c:text_color]]]` | color | Text color | `#ffffff` | yes |
 | `[[[c:accent]]]` | color | Accent | `#9146ff` | yes |
 | `[[[c:background]]]` | text | Background | `glass` | yes |
-| `[[[c:background_color]]]` | color | Background colour | `#0f0f14` | yes |
+| `[[[c:background_color]]]` | color | Background color | `#0f0f14` | yes |
 | `[[[c:lifetime]]]` | number | Seconds a message stays | `0` | yes |
 | `[[[c:show_badges]]]` | boolean | Show badges | `1` | yes |
 | `[[[c:emote_size]]]` | number | Emote size | `28` | yes |
@@ -237,13 +237,13 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 - `c:font` - The font family. One of Albert Sans, Inter, Space Grotesk, Fredoka, JetBrains Mono or Silkscreen; all six are loaded by the overlay.
 - `c:font_size` - Text size in pixels. Badges scale with it; emotes have their own size.
   - min=10, max=72, step=1, reset_value=22, random=false, random_interval=null
-- `c:twitch_colors` - Colour each name the way the chatter chose it on Twitch. Off, every name uses the Name colour control.
+- `c:twitch_colors` - Color each name the way the chatter chose it on Twitch. Off, every name uses the Name color control.
   - min=null, max=null, step=1, reset_value=1, random=false, random_interval=null
-- `c:name_color` - The name colour when Twitch colours are off, and the fallback for a chatter who never picked one.
-- `c:text_color` - The message text colour.
+- `c:name_color` - The name color when Twitch colors are off, and the fallback for a chatter who never picked one.
+- `c:text_color` - The message text color.
 - `c:accent` - The chip on a viewer's first ever message, and the stripe on your own messages.
-- `c:background` - What sits behind each message. `none` for text over the game with a shadow, `solid` for the Background colour, `glass` for a translucent, blurred version of it.
-- `c:background_color` - The colour behind each message for the solid and glass backgrounds.
+- `c:background` - What sits behind each message. `none` for text over the game with a shadow, `solid` for the Background color, `glass` for a translucent, blurred version of it.
+- `c:background_color` - The color behind each message for the solid and glass backgrounds.
 - `c:lifetime` - How many seconds a message stays before fading out. 0 keeps every message until it scrolls off.
   - min=0, max=600, step=1, reset_value=0, random=false, random_interval=null
 - `c:show_badges` - Draw the Twitch badges in front of a name.
