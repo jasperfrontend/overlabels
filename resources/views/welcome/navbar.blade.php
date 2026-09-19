@@ -6,6 +6,7 @@
         <span class="text-lg font-bold tracking-tight">Overlabels</span>
       </a>
       <div class="hidden text-foreground items-center gap-6 lg:flex">
+        <a href="{{ route('products.index') }}" class="text-sm hover:text-sky-500 cursor-pointer">Products</a>
         <a href="#tags" class="text-sm hover:text-sky-500 cursor-pointer">Tags</a>
         <a href="#controls" class="text-sm hover:text-sky-500 cursor-pointer">Controls</a>
         <a href="#conditionals" class="text-sm hover:text-sky-500 cursor-pointer">Conditionals</a>

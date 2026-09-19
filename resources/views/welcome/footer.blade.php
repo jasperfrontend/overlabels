@@ -46,6 +46,7 @@
     <div class="border-t border-sidebar-accent pt-8 text-center flex flex-col gap-1 text-xs">
       <p>Made by <a href="https://twitch.tv/JasperDiscovers" class="text-sky-500 hover:underline cursor-pointer" target="_blank" rel="noopener">JasperDiscovers</a> for the Twitch streaming community.</p>
       <p><strong>FAQ</strong>: Will you ever support StreamElements and/or Kick.com? <strong>No</strong>.</p>
+        <p>&copy; <?php $year = Date("Y"); echo $year; ?>. Overlabels is a product by studio twee.</p>
     </div>
   </div>
 </footer>
