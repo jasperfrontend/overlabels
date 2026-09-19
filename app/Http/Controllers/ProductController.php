@@ -400,6 +400,12 @@ class ProductController extends Controller
             // writes the same preference through the same endpoint.
             'chat_window' => $user->foreachCaps()['chat'],
             'chat_window_max' => User::FOREACH_CAP_MAX,
+            // Asked for explicitly, because chatFilters() is deliberately not
+            // appended to a serialised User. Here for the same reason the
+            // window cap is: a streamer deciding what their chat looks like
+            // should not have to find a settings page to say "not the bot".
+            'chat_filters' => $user->chatFilters(),
+            'max_hidden_logins' => User::MAX_HIDDEN_LOGINS,
         ]);
     }
 

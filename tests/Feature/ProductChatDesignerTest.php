@@ -227,6 +227,54 @@ it('applies a preset without leaving the page when the designer asks for JSON', 
     expect($template->controls()->where('key', 'skin')->value('value'))->toBe('terminal');
 });
 
+it('hands over the account chat filters, which are not appended to a serialised user', function () {
+    $user = designerUser();
+    designerInstall($user);
+    $user->setPreference('chat_filters.hide_commands', true);
+    $user->setPreference('chat_filters.hidden_logins', ['spambot', 'anotherbot']);
+    $user->save();
+
+    $this->actingAs($user)->get('/products/twitch_chat/design')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('chat_filters.hide_commands', true)
+            ->where('chat_filters.hidden_logins', ['spambot', 'anotherbot'])
+            ->where('max_hidden_logins', User::MAX_HIDDEN_LOGINS)
+        );
+});
+
+it('writes both chat filters from the designer and answers JSON with the normalised list', function () {
+    $user = designerUser();
+    designerInstall($user);
+
+    // What is typed and what is kept differ: the endpoint lowercases, strips a
+    // leading @, drops anything that is not a Twitch login and dedupes. The
+    // designer shows the count that comes back rather than the one it counted.
+    $this->actingAs($user)->patchJson('/settings/chat', [
+        'hide_commands' => true,
+        'hidden_logins' => "@SpamBot\nspambot\nnot a login!\nanotherbot",
+    ])
+        ->assertOk()
+        ->assertJsonPath('chat_filters.hide_commands', true)
+        ->assertJsonPath('chat_filters.hidden_logins', ['spambot', 'anotherbot']);
+
+    expect($user->fresh()->chatFilters())->toBe(['hide_commands' => true, 'hidden_logins' => ['spambot', 'anotherbot']]);
+
+    $this->actingAs($user)->get('/products/twitch_chat/design')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('chat_filters.hide_commands', true)
+            ->where('chat_filters.hidden_logins', ['spambot', 'anotherbot'])
+        );
+});
+
+it('still redirects the chat settings page, which asks for no JSON', function () {
+    $user = designerUser();
+
+    $this->actingAs($user)->patch('/settings/chat', ['hide_commands' => false, 'hidden_logins' => 'spambot'])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+});
+
 it('writes the chat window as a preference and answers JSON', function () {
     $user = designerUser();
     designerInstall($user);

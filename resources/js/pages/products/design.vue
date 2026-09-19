@@ -42,6 +42,8 @@ const props = defineProps<{
   controls: Record<string, Control>;
   chat_window: number;
   chat_window_max: number;
+  chat_filters: { hide_commands: boolean; hidden_logins: string[] };
+  max_hidden_logins: number;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -152,18 +154,32 @@ async function applyPreset(key: string): Promise<void> {
 
 /* ----------------------------------------------------------- chat window */
 
-/**
- * The window is a foreach cap, not a control, so it is written as a preference
- * and takes effect when the overlay next loads. The UI says so, because a
- * setting that looks like the others but behaves differently is worse than one
- * that admits it.
+/*
+ * The window cap and the two display filters are account preferences, not
+ * controls on this overlay. They do not ride the control broadcast, and none of
+ * them changes anything visible in the preview: the sample chat has no commands
+ * in it and no real logins, so there is nothing for either filter to catch.
+ *
+ * That is why this trio confirms itself. Every other knob on the page is its
+ * own receipt - you see the overlay move - and these three would otherwise
+ * write silently into a page where everything else answers instantly.
  */
+const feedSaved = ref(false);
+let savedFlash: ReturnType<typeof setTimeout>;
+
+function confirmSaved(): void {
+  feedSaved.value = true;
+  clearTimeout(savedFlash);
+  savedFlash = setTimeout(() => (feedSaved.value = false), 2000);
+}
+
 async function writeWindow(size: number): Promise<void> {
   const caps: ForeachCaps = { ...(page.props.auth.user.foreach_caps as ForeachCaps), chat: size };
 
   try {
     await axios.patch('/settings/foreach-caps', caps);
     page.props.auth.user.foreach_caps = caps;
+    confirmSaved();
   } catch {
     fail('That window size did not save.');
   }
@@ -175,6 +191,57 @@ function writeWindowSoon(size: number): void {
   windowSize.value = size;
   clearTimeout(windowDebounce);
   windowDebounce = setTimeout(() => void writeWindow(size), 250);
+}
+
+/* ------------------------------------------------------------ chat filters */
+
+const hideCommands = ref(props.chat_filters.hide_commands);
+const hiddenLoginsText = ref(props.chat_filters.hidden_logins.join('\n'));
+const savedLoginCount = ref(props.chat_filters.hidden_logins.length);
+
+// What the endpoint keeps after normalising: it lowercases, strips a leading
+// @, drops anything that is not a Twitch login and dedupes. So the typed count
+// is only ever used for the over-cap warning, and the saved count comes back
+// from the server.
+const typedLoginCount = computed(
+  () =>
+    hiddenLoginsText.value
+      .split(/[\r\n,]+/)
+      .map((line) => line.trim())
+      .filter((line) => line !== '').length,
+);
+
+const overHiddenCap = computed(() => typedLoginCount.value > props.max_hidden_logins);
+
+/**
+ * Both filters go in one request, because the endpoint takes both and
+ * `hide_commands` is required. The textarea is never rewritten from the
+ * response: normalising what someone is still typing would fight them.
+ */
+async function writeChatFilters(): Promise<void> {
+  try {
+    const { data } = await axios.patch('/settings/chat', {
+      hide_commands: hideCommands.value,
+      hidden_logins: hiddenLoginsText.value,
+    });
+    savedLoginCount.value = (data?.chat_filters?.hidden_logins ?? []).length;
+    confirmSaved();
+  } catch {
+    fail('Those chat settings did not save.');
+  }
+}
+
+function writeHideCommands(on: boolean): void {
+  hideCommands.value = on;
+  void writeChatFilters();
+}
+
+let filtersDebounce: ReturnType<typeof setTimeout>;
+
+/** Longer than the knobs: this one is typed into, not dragged. */
+function writeHiddenLoginsSoon(): void {
+  clearTimeout(filtersDebounce);
+  filtersDebounce = setTimeout(() => void writeChatFilters(), 800);
 }
 
 /* ---------------------------------------------------------------- preview */
@@ -239,6 +306,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('message', onFrameMessage);
   observer?.disconnect();
   clearTimeout(windowDebounce);
+  clearTimeout(filtersDebounce);
+  clearTimeout(savedFlash);
   for (const timer of Object.values(debounces)) clearTimeout(timer);
 });
 
@@ -391,26 +460,72 @@ function keysIn(group: { keys: string[] }): string[] {
             </div>
           </section>
 
-          <!-- The window size is the account's chat foreach cap, not a control
-               on this overlay, so it does not ride the broadcast. -->
-          <section class="flex flex-col gap-1.5">
-            <h2 class="text-sm font-semibold text-foreground">Messages on screen</h2>
-            <label class="flex items-baseline justify-between text-sm text-foreground" for="knob-window">
-              How many at once
-              <span class="text-xs text-muted-foreground tabular-nums">{{ windowSize }}</span>
+          <!-- The last three are account preferences rather than controls on
+               this overlay: the chat foreach cap and the two display filters.
+               None of them rides the control broadcast, and none of them shows
+               in the preview either, since the sample chat has no commands in
+               it and no real logins. So they say what they do and when. -->
+          <section class="flex flex-col gap-4">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+              <h2 class="text-sm font-semibold text-foreground">What the feed shows</h2>
+              <span v-if="feedSaved" class="text-xs text-green-600 dark:text-green-400">Saved</span>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="flex items-baseline justify-between text-sm text-foreground" for="knob-window">
+                How many messages at once
+                <span class="text-xs text-muted-foreground tabular-nums">{{ windowSize }}</span>
+              </label>
+              <input
+                id="knob-window"
+                type="range"
+                class="w-full cursor-pointer"
+                min="1"
+                :max="chat_window_max"
+                :value="windowSize"
+                @input="writeWindowSoon(Number(($event.target as HTMLInputElement).value))"
+              />
+            </div>
+
+            <label class="flex cursor-pointer items-start gap-2.5">
+              <input
+                type="checkbox"
+                class="mt-0.5"
+                :checked="hideCommands"
+                @change="writeHideCommands(($event.target as HTMLInputElement).checked)"
+              />
+              <span class="text-sm">
+                <span class="text-foreground">Hide messages starting with <code class="font-mono">!</code></span>
+                <span class="block text-xs text-muted-foreground">
+                  Keeps bot commands off the overlay. Every message starting with an exclamation mark goes, so
+                  <code class="font-mono">!!!</code> and <code class="font-mono">!what a play</code> go too.
+                </span>
+              </span>
             </label>
-            <input
-              id="knob-window"
-              type="range"
-              class="w-full cursor-pointer"
-              min="1"
-              :max="chat_window_max"
-              :value="windowSize"
-              @input="writeWindowSoon(Number(($event.target as HTMLInputElement).value))"
-            />
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm text-foreground" for="knob-hidden-logins">Hidden chatters</label>
+              <textarea
+                id="knob-hidden-logins"
+                v-model="hiddenLoginsText"
+                rows="5"
+                class="input-border w-full font-mono text-sm"
+                placeholder="somebot&#10;anotherbot"
+                @input="writeHiddenLoginsSoon"
+              ></textarea>
+              <p v-if="overHiddenCap" class="text-xs text-destructive">
+                {{ typedLoginCount }} names typed. Only the first {{ max_hidden_logins }} are saved.
+              </p>
+              <p v-else class="text-xs text-muted-foreground">
+                One Twitch username per line, up to {{ max_hidden_logins }}.
+                <template v-if="savedLoginCount">{{ savedLoginCount }} {{ savedLoginCount === 1 ? 'name is' : 'names are' }} hidden.</template>
+              </p>
+            </div>
+
             <p class="text-xs text-muted-foreground">
-              This one is an account setting rather than an overlay control, so OBS picks it up when the browser source next loads. The preview here
-              follows on reload too.
+              These three are account settings rather than overlay controls, so OBS picks them up when the browser source next loads, and the preview
+              here follows on reload. Hiding a chatter or a command changes your overlay only: the message is still in chat, still in the VOD, and
+              everyone watching still sees it.
             </p>
           </section>
 

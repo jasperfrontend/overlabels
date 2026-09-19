@@ -71,6 +71,15 @@ Route::middleware('auth.redirect')->group(function () {
         $user->setPreference('chat_filters.hidden_logins', $logins);
         $user->save();
 
+        // The chat designer writes these from a page whose preview frame must
+        // not reload, so it asks for JSON rather than take the redirect back
+        // into a full re-render. The normalised list goes back with it: the
+        // filter above lowercases, dedupes and drops anything that is not a
+        // Twitch login, so what was typed and what was saved can differ.
+        if ($request->wantsJson()) {
+            return response()->json(['chat_filters' => $user->chatFilters()]);
+        }
+
         return back()->with('success', 'Chat display settings saved. Reload your overlay in OBS to apply them.');
     })->name('settings.chat.update');
 

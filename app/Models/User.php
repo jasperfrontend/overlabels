@@ -311,8 +311,8 @@ class User extends Authenticatable
      * Deliberately NOT in $appends, unlike locale and foreach_caps. Those are
      * harmless anywhere a User gets serialised; a list of logins the streamer
      * has chosen to hide is not, and appending it would leak it into every
-     * incidental serialisation. Callers ask for it explicitly: the settings
-     * page and the overlay render payload, and nowhere else.
+     * incidental serialisation. Callers ask for it explicitly: the chat
+     * settings page, the chat designer, and the overlay render payload.
      *
      * @return array{hide_commands: bool, hidden_logins: list<string>}
      */
