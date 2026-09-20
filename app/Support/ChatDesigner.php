@@ -13,11 +13,14 @@ use App\Models\User;
  * The thirteen controls carry their own label, type and (for the numbers)
  * min/max/step, so the designer reads those from the rows rather than
  * restating them. What a row cannot say is which VALUES a text control may
- * take: `skin`, `layout`, `background` and `font` are each a small closed
- * vocabulary that only the overlay's own CSS and its font <link> know about.
- * That vocabulary is here, and a test holds it against the recipe so a skin
- * added to the CSS without a choice here, or a choice here naming a font the
- * overlay never loads, fails rather than quietly rendering wrong.
+ * take: `skin`, `layout` and `background` are each a small closed vocabulary
+ * that only the overlay's own CSS knows about. That vocabulary is here, and a
+ * test holds it against the recipe so a skin added to the CSS without a choice
+ * here fails rather than quietly rendering wrong.
+ *
+ * `font` is the exception, and has SUGGESTED_FONTS instead: its vocabulary is
+ * open - every family Bunny Fonts serves - because the overlay loads whichever
+ * family the control holds rather than picking from a <link> in its head.
  *
  * The skins are NOT declared: a skin is a preset key, one to one, by the same
  * rule ChatPresets already keeps (`values['skin']` equals the entry key). So
@@ -57,16 +60,30 @@ class ChatDesigner
             ['value' => 'solid', 'label' => 'Solid', 'hint' => 'The background color, flat.'],
             ['value' => 'glass', 'label' => 'Glass', 'hint' => 'Translucent and blurred.'],
         ],
-        // Every one of these is in the overlay's Google Fonts <link>. Adding a
-        // seventh means editing the recipe's head block in the same commit.
-        'font' => [
-            ['value' => 'Albert Sans', 'label' => 'Albert Sans', 'hint' => 'The default. Plain and wide.'],
-            ['value' => 'Inter', 'label' => 'Inter', 'hint' => 'Neutral, reads small.'],
-            ['value' => 'Space Grotesk', 'label' => 'Space Grotesk', 'hint' => 'Squarer, a little technical.'],
-            ['value' => 'Fredoka', 'label' => 'Fredoka', 'hint' => 'Round and friendly.'],
-            ['value' => 'JetBrains Mono', 'label' => 'JetBrains Mono', 'hint' => 'Monospaced.'],
-            ['value' => 'Silkscreen', 'label' => 'Silkscreen', 'hint' => 'Pixel type. Best large.'],
-        ],
+    ];
+
+    /**
+     * Fonts worth putting in front of someone before they search.
+     *
+     * `font` is deliberately NOT in CHOICES: it is the one knob with an open
+     * vocabulary, every family Bunny Fonts serves, and the overlay loads
+     * whichever it is given rather than choosing from a list baked into its
+     * head. These six are the shortlist the picker shows first - the ten
+     * presets between them use exactly these, so the list is what a streamer
+     * lands on anyway, and the search is there when they want out of it.
+     *
+     * A name here that Bunny does not serve is a row that writes a value the
+     * value endpoint refuses, so a test holds this against the catalogue.
+     *
+     * @var list<array{value: string, hint: string}>
+     */
+    public const SUGGESTED_FONTS = [
+        ['value' => 'Albert Sans', 'hint' => 'The default. Plain and wide.'],
+        ['value' => 'Inter', 'hint' => 'Neutral, reads small.'],
+        ['value' => 'Space Grotesk', 'hint' => 'Squarer, a little technical.'],
+        ['value' => 'Fredoka', 'hint' => 'Round and friendly.'],
+        ['value' => 'JetBrains Mono', 'hint' => 'Monospaced.'],
+        ['value' => 'Silkscreen', 'hint' => 'Pixel type. Best large.'],
     ];
 
     /**

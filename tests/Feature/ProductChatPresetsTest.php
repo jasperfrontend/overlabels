@@ -6,6 +6,7 @@ use App\Models\Recipe;
 use App\Models\User;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
+use App\Support\BunnyFonts;
 use App\Support\ChatPresets;
 use App\Support\OverlayMarkdown;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -54,7 +55,7 @@ it('has ten presets, each writing exactly the thirteen controls the overlay decl
     }
 });
 
-it('names only skins the overlay CSS defines, layouts and backgrounds it styles, and fonts it loads', function () {
+it('names only skins the overlay CSS defines, layouts and backgrounds it styles, and fonts Bunny serves', function () {
     $doc = presetDocument();
     preg_match_all('/\.skin-([a-z]+)/', $doc['css'], $m);
     $skins = array_unique($m[1]);
@@ -66,7 +67,11 @@ it('names only skins the overlay CSS defines, layouts and backgrounds it styles,
         }
         expect($doc['css'])->toContain('.layout-'.$v['layout'].' ')
             ->and($doc['css'])->toContain('.bg-'.$v['background'].' ')
-            ->and($doc['head'])->toContain('family='.str_replace(' ', '+', $v['font']).':');
+            // A preset writes its font straight through writeValue(), which
+            // does not go past the value endpoint's allowlist - so a preset
+            // naming a family Bunny does not serve is the one way to get an
+            // unloadable font onto an overlay. Hence the check here.
+            ->and(BunnyFonts::canonical($v['font']))->toBe($v['font']);
         expect($v['name_color'])->toMatch('/^#[0-9a-f]{6}$/')
             ->and($v['text_color'])->toMatch('/^#[0-9a-f]{6}$/')
             ->and($v['accent'])->toMatch('/^#[0-9a-f]{6}$/')

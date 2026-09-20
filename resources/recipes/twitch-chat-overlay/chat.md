@@ -20,13 +20,11 @@ The three fields below are the entire overlay. Nothing else is rendered.
 
 ### `head`
 
-Fonts and `<style>` blocks. No scripts - they are stripped on save.
+Fonts and `<style>` blocks. No scripts - they are stripped on save. No font `<link>` here on purpose: `c:font` is declared `webfont=true`, so the overlay loads whichever family that control holds and swaps it live when the control changes. A fixed list in the head is what used to make the font a choice of six.
 
 ```html
 <meta name="generator" content="Overlabels twitch-chat-overlay">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;700&family=Inter:wght@400;700&family=Space+Grotesk:wght@400;700&family=Fredoka:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
 ```
 
 ### `html`
@@ -234,7 +232,8 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 
 - `c:skin` - The shape and behaviour of a message. One of `clean`, `terminal`, `bubbles`, `neon`, `paper`, `broadcast`, `caption`, `pixel`, `cards` or `vapor`; each is a block of rules in the CSS, and a preset pairs one with a palette.
 - `c:layout` - Where new messages go. `bottom` stacks upward with the newest at the bottom, `top` stacks downward with the newest at the top, `ticker` is one horizontal line with the newest at the right.
-- `c:font` - The font family. One of Albert Sans, Inter, Space Grotesk, Fredoka, JetBrains Mono or Silkscreen; all six are loaded by the overlay.
+- `c:font` - The font family, any of the ~1970 families Bunny Fonts serves. The overlay loads it itself, so the name has to be one Bunny knows, spelled its way.
+  - webfont=true
 - `c:font_size` - Text size in pixels. Badges scale with it; emotes have their own size.
   - min=10, max=72, step=1, reset_value=22, random=false, random_interval=null
 - `c:twitch_colors` - Color each name the way the chatter chose it on Twitch. Off, every name uses the Name color control.

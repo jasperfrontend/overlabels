@@ -7,6 +7,7 @@ use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
+use App\Support\BunnyFonts;
 use App\Support\ChatDesigner;
 use App\Support\ChatPresets;
 use App\Support\OverlayMarkdown;
@@ -72,7 +73,7 @@ it('offers only skins the overlay defines, and one per preset', function () {
     expect($defined)->not->toContain('clean');
 });
 
-it('offers only layouts and backgrounds the overlay styles, and fonts it loads', function () {
+it('offers only layouts and backgrounds the overlay styles', function () {
     $doc = designerDocument();
 
     foreach (ChatDesigner::CHOICES['layout'] as $choice) {
@@ -83,18 +84,51 @@ it('offers only layouts and backgrounds the overlay styles, and fonts it loads',
         expect($doc['css'])->toContain('.bg-'.$choice['value'].' ');
     }
 
-    // A font the overlay never pulls in renders as the fallback, which reads
-    // as the picker being broken rather than as a missing <link>.
-    foreach (ChatDesigner::CHOICES['font'] as $choice) {
-        expect($doc['head'])->toContain('family='.str_replace(' ', '+', $choice['value']).':');
-    }
-
     foreach (ChatDesigner::CHOICES as $choices) {
         foreach ($choices as $choice) {
             expect($choice['label'])->not->toBe('')
                 ->and($choice['hint'])->not->toBe('');
         }
     }
+
+    // The font row is not one of these. Its vocabulary is open, so it has its
+    // own test below rather than a list held against the overlay's head.
+    expect(ChatDesigner::CHOICES)->not->toHaveKey('font');
+});
+
+it('suggests only fonts Bunny actually serves, and loads them from the control not the head', function () {
+    $doc = designerDocument();
+
+    // A suggested family Bunny does not serve is a row that writes a value the
+    // value endpoint refuses - a picker that looks fine and does nothing.
+    foreach (ChatDesigner::SUGGESTED_FONTS as $suggestion) {
+        expect(BunnyFonts::has($suggestion['value']))->toBeTrue()
+            ->and(BunnyFonts::canonical($suggestion['value']))->toBe($suggestion['value'])
+            ->and($suggestion['hint'])->not->toBe('');
+    }
+
+    // The head must NOT carry a font link. One there is what caps the overlay
+    // at the families it shipped with, which is the whole thing this replaced.
+    expect($doc['head'])->not->toContain('fonts.googleapis.com')
+        ->and($doc['head'])->not->toContain('/css?family=')
+        ->and($doc['head'])->not->toContain('/css2?family=');
+
+    // ...because the control is declared a webfont, which is what puts its key
+    // in the render payload and makes the overlay load the family itself.
+    $font = collect($doc['controls'])->firstWhere('key', 'font');
+    expect($font['config']['webfont'] ?? null)->toBeTrue()
+        ->and(BunnyFonts::has($font['value']))->toBeTrue();
+});
+
+it('installs the font control with the webfont declaration actually on the row', function () {
+    // The declaration being right in the recipe is not the same as it reaching
+    // the database. When it did not, the head had already lost its font link
+    // and the control was not allowed to load one, so the designer wrote a
+    // value that changed nothing on the overlay and nothing anywhere errored.
+    $control = designerInstall(designerUser())->controls()->where('key', 'font')->first();
+
+    expect($control->config['webfont'] ?? null)->toBeTrue()
+        ->and(BunnyFonts::has($control->value))->toBeTrue();
 });
 
 it('gives every look control exactly one home on the page', function () {
@@ -134,7 +168,10 @@ it('hands the page every control the overlay has, with the presets and the windo
             ->where('presets.1.key', 'terminal')
             ->where('presets.1.values.font', 'JetBrains Mono')
             ->has('skins', 10)
-            ->has('choices.font', 6)
+            // The font row is a search over the catalogue, so the page ships
+            // the shortlist and the URL to fetch the rest from, not a vocabulary.
+            ->has('suggested_fonts', 6)
+            ->where('fonts_url', asset(BunnyFonts::CATALOGUE_PATH))
             ->has('groups', 5)
             ->where('chat_window', 50)
             ->where('chat_window_max', User::FOREACH_CAP_MAX)

@@ -7,6 +7,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
+import FontPicker from '@/components/products/FontPicker.vue';
 import type { AppPageProps, BreadcrumbItem, ForeachCaps } from '@/types';
 
 interface Choice {
@@ -44,6 +45,8 @@ const props = defineProps<{
   chat_window_max: number;
   chat_filters: { hide_commands: boolean; hidden_logins: string[] };
   max_hidden_logins: number;
+  suggested_fonts: { value: string; hint: string }[];
+  fonts_url: string;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -411,8 +414,20 @@ function keysIn(group: { keys: string[] }): string[] {
             <h2 class="text-sm font-semibold text-foreground">{{ group.title }}</h2>
 
             <div v-for="key in keysIn(group)" :key="key" class="flex flex-col gap-1.5">
-              <!-- A closed vocabulary: layout, background, font. -->
-              <template v-if="choices[key]">
+              <!-- An open vocabulary: every family Bunny Fonts serves. -->
+              <template v-if="key === 'font'">
+                <label class="text-sm text-foreground" :for="`knob-${key}`">{{ controls[key].label }}</label>
+                <FontPicker
+                  :id="`knob-${key}`"
+                  :model-value="valueOf(key)"
+                  :suggested="suggested_fonts"
+                  :catalogue-url="fonts_url"
+                  @update:model-value="writeControl(key, $event)"
+                />
+              </template>
+
+              <!-- A closed vocabulary: layout, background. -->
+              <template v-else-if="choices[key]">
                 <label class="text-sm text-foreground" :for="`knob-${key}`">{{ controls[key].label }}</label>
                 <select
                   :id="`knob-${key}`"

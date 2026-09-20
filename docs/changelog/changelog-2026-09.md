@@ -1,5 +1,36 @@
 # Changelog - September 2026
 
+## OL-2609-119 - September 20th, 2026 - feat(chat): every font Bunny serves, and none of them from Google
+
+The chat overlay offered six fonts. Not because six is a good number, but because the overlay's
+`<head>` carried one stylesheet link naming six families, and the font control could only ever pick
+a name off that list. Anything else rendered as the fallback and looked like a broken picker.
+
+The reason that link was fixed is worth stating, because it is the thing that actually changed here.
+An overlay's head is injected once, when the overlay loads, and never again. Every other knob on the
+chat designer works by writing a control and letting the broadcast repaint the overlay in place -
+that is the whole conceit of the page, the real overlay on the right changing as you click. A font
+could not work that way, because a font is not a value, it is a file that has to be fetched.
+
+So a control can now declare itself a webfont. The chat overlay's `c:font` does, which means the
+overlay loads whichever family that control holds and swaps it the moment the control changes, with
+no reload and no link in the head at all. Picking `Cinzel Decorative` from the designer now does
+what picking `Terminal` always did. The picker is a search box over the whole catalogue - 1969
+families - with a category filter, and the old six still sit at the top of the list, because the ten
+presets use exactly those and most people will never want anything else.
+
+The catalogue is Bunny Fonts, not Google Fonts. Same library, mirrored, free, and no request to
+Google from a streamer's machine every time their overlay loads. This site has served its own type
+from Bunny for as long as it has had type; the overlays were the part that never got the memo.
+The two `/engine` overlays that hardcode a font, Chat Tower and Follower Bowling, moved over in the
+same change - Bunny answers the identical query, so that part was only a hostname. Overlays that are
+already installed are rewritten by a migration rather than left behind.
+
+A font name written by the designer is now checked against the catalogue before it is stored,
+and stored the way Bunny spells it. That is not politeness about capitalisation: the name becomes
+part of a URL the overlay fetches, so the list of families is also the list of things that may end
+up there.
+
 ## OL-2609-117 - September 20th, 2026 - fix(products): every slider and color picker in the chat designer saves
 
 Half the chat designer was a demo of itself. The skin buttons worked, the layout and font menus

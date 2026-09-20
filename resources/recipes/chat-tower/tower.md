@@ -25,9 +25,8 @@ Fonts and `<style>` blocks. No scripts - they are stripped on save.
 ```html
 <meta name="generator" content="Overlabels /engine">
 <meta name="overlabels:engine" content="v1 2026-09-10 controls:11 sha256:76be735a970d">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+<link href="https://fonts.bunny.net/css2?family=Albert+Sans:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 ```
 
 ### `html`

@@ -715,6 +715,64 @@ function injectHead(headString: string | null) {
   });
 }
 
+// Controls whose value is a font family the overlay loads itself, from the
+// render payload. See syncWebfontLink().
+const webfontControls = ref<string[]>([]);
+
+// Bunny Fonts, not Google: same catalogue, no third-party tracking, and the
+// app itself already serves its own type from there.
+const WEBFONT_HOST = 'https://fonts.bunny.net';
+
+// Regular and bold. Bunny serves whichever of the two a family has and ignores
+// the other, and the catalogue drops the two families that have neither, so
+// this pair is valid for every family the picker can offer.
+const WEBFONT_WEIGHTS = '400,700';
+
+/**
+ * Keep one <link> per font control in step with that control's value.
+ *
+ * The head is injected once at load and never again, so an overlay whose font
+ * is a control cannot get its family from a <link> written into the head - that
+ * is what used to cap the chat overlay at the six families it shipped with.
+ * This owns a link per control key instead, rewriting it whenever the value
+ * changes, which is what makes a font change land in OBS like every other knob.
+ *
+ * The URL is derived here rather than sent, because the slug is the family name
+ * lowercased with spaces hyphenated for every family in the catalogue - a rule
+ * `fonts:sync-bunny` refuses to write a catalogue that breaks. So the payload
+ * carries keys only and control.updated needs no new field.
+ *
+ * The value reaching a URL is why the write side validates against the
+ * catalogue; belt and braces, anything but letters, digits and single spaces is
+ * refused here too, since family names contain nothing else.
+ */
+function syncWebfontLink(key: string, family: unknown) {
+  const id = `ol-webfont-${key}`;
+  const existing = document.getElementById(id);
+  const name = typeof family === 'string' ? family.trim() : '';
+
+  if (!name || !/^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$/.test(name)) {
+    existing?.remove();
+    return;
+  }
+
+  const href = `${WEBFONT_HOST}/css?family=${name.toLowerCase().replace(/ /g, '-')}:${WEBFONT_WEIGHTS}&display=swap`;
+
+  if (existing instanceof HTMLLinkElement) {
+    // Rewriting href on the existing element rather than swapping elements:
+    // the old face stays painted until the new one arrives, so a font change
+    // never flashes the fallback on stream.
+    if (existing.href !== href) existing.href = href;
+    return;
+  }
+
+  const link = document.createElement('link');
+  link.id = id;
+  link.rel = 'stylesheet';
+  link.href = href;
+  document.head.appendChild(link);
+}
+
 // Fields whose values arrive as already-safe HTML (encoded user text + parser-
 // generated <img> emote tags from useEmoteParser). Pre-substituted before the
 // regular tag pass so they are NOT re-encoded; the emote parser is responsible
@@ -1016,6 +1074,8 @@ onMounted(async () => {
     injectStyle(compiledCss.value);
     injectCompiledStyle(compiledCssRaw.value);
     injectHead(head.value);
+    webfontControls.value = Array.isArray(json.webfont_controls) ? json.webfont_controls : [];
+    for (const key of webfontControls.value) syncWebfontLink(key, data.value?.[`c:${key}`]);
 
     document.title = json.meta?.name || 'Overlay';
     document.getElementById('loading')?.remove();
@@ -1198,6 +1258,12 @@ function applyControlUpdate(event: any) {
       [`c:${event.key}`]: event.value,
       [atKey]: timestamp,
     };
+
+    // A font control changing means a different family has to be fetched; the
+    // CSS variable alone would just name a face nothing has loaded.
+    if (webfontControls.value.includes(event.key)) {
+      syncWebfontLink(event.key, event.value);
+    }
   }
 }
 

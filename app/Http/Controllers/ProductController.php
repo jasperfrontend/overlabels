@@ -17,6 +17,7 @@ use App\Services\BotModeratedChannels;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeIngredients;
 use App\Services\Recipes\RecipeInstaller;
+use App\Support\BunnyFonts;
 use App\Support\ChatDesigner;
 use App\Support\ChatPresets;
 use App\Support\OverlayMarkdown;
@@ -462,6 +463,13 @@ class ProductController extends Controller
             'presets' => ChatDesigner::presets(),
             'skins' => ChatDesigner::skins(),
             'choices' => ChatDesigner::CHOICES,
+            // The font row is a search, not a select: its vocabulary is the
+            // whole Bunny Fonts catalogue. The catalogue is 118 KB, so it is
+            // fetched by the picker when it opens rather than serialised into
+            // this page - these six are what the row shows until then, and
+            // what it falls back to if the fetch fails.
+            'suggested_fonts' => ChatDesigner::SUGGESTED_FONTS,
+            'fonts_url' => asset(BunnyFonts::CATALOGUE_PATH),
             'groups' => ChatDesigner::GROUPS,
             'controls' => ChatDesigner::controls($template),
             // The chat window is a foreach cap, not a control: it is "how many

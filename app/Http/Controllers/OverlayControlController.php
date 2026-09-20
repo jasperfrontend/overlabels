@@ -9,6 +9,7 @@ use App\Models\OverlayTemplate;
 use App\Services\AlertMuteService;
 use App\Services\External\ExternalServiceRegistry;
 use App\Services\StreamSessionService;
+use App\Support\BunnyFonts;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -411,6 +412,25 @@ class OverlayControlController extends Controller
                     $num = min($max, $num);
                 }
                 $sanitized = (string) $num;
+            }
+
+            // A webfont control's value becomes a URL the overlay fetches, so
+            // it is an allowlist rather than a free string: only a family the
+            // vendored catalogue names, stored the catalogue's way so the CSS
+            // gets the family name Bunny actually serves. An unknown family
+            // would return a stylesheet with no @font-face at all, which reads
+            // on stream as the picker being broken rather than as a typo.
+            if (! empty($config['webfont'])) {
+                $canonical = BunnyFonts::canonical($sanitized);
+
+                if ($canonical === null) {
+                    return response()->json([
+                        'message' => "\"{$sanitized}\" is not a font Bunny Fonts serves.",
+                        'errors' => ['value' => ["\"{$sanitized}\" is not a font Bunny Fonts serves."]],
+                    ], 422);
+                }
+
+                $sanitized = $canonical;
             }
         }
 

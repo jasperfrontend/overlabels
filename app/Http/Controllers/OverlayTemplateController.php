@@ -657,6 +657,7 @@ class OverlayTemplateController extends Controller
             $timerStates = [];
             $expressionsByKey = [];
             $randomControls = [];
+            $webfonts = [];
             foreach ($controls as $control) {
                 // Service-managed controls use namespaced broadcast key (e.g. "kofi:donations_received")
                 // matching the [[[c:kofi:donations_received]]] template tag syntax.
@@ -691,6 +692,15 @@ class OverlayTemplateController extends Controller
                         'max' => (int) ($cfg['max'] ?? 100),
                         'interval' => max(100, (int) ($cfg['random_interval'] ?? 1000)),
                     ];
+                }
+                // A control declared `webfont=true` holds a font family name,
+                // and the overlay loads that family rather than relying on a
+                // <link> in the head. The head is injected once at load, so a
+                // fixed link is exactly what limits an overlay to the fonts it
+                // shipped with; this list is what the renderer keeps <link>
+                // elements in step with, on load and on every value change.
+                if (! empty(($control->config ?? [])['webfont'])) {
+                    $webfonts[] = $control->tagIdentifier();
                 }
             }
 
@@ -942,6 +952,11 @@ class OverlayTemplateController extends Controller
                 'timer_states' => $timerStates,
                 'expression_controls' => $expressionControls,
                 'random_controls' => $randomControls,
+                // Keys whose value is a font family the overlay loads itself.
+                // Only the keys travel: the URL is derived from the family
+                // name on the client, by the rule BunnyFonts documents, so a
+                // control.updated broadcast needs nothing added to it.
+                'webfont_controls' => $webfonts,
                 'stream_live' => StreamSessionService::isLive($user),
                 'locale' => $user->locale ?? 'en-US',
                 // Chat display filters. They have to reach the client because
