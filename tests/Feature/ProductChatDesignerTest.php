@@ -234,6 +234,32 @@ it('mints a fresh one, and drops the stale one, when the held token is gone', fu
         ->and(OverlayAccessToken::where('user_id', $user->id)->count())->toBe(1);
 });
 
+it('lets a second session mint its own token without killing the first one', function () {
+    $user = designerUser();
+    designerInstall($user);
+
+    $first = $this->actingAs($user)->get('/products/twitch-chat-overlay/design')->viewData('page')['props']['preview_url'];
+    $firstToken = substr($first, strpos($first, '#') + 1);
+
+    // A second browser: same account, no held token in its session, and the
+    // first session's frame still open on the first token. Until 2026-09-22
+    // this mint swept the first token and that frame died mid-design.
+    $this->flushSession();
+    $second = $this->actingAs($user)->get('/products/twitch-chat-overlay/design')->viewData('page')['props']['preview_url'];
+
+    expect($second)->not->toBe($first)
+        ->and(OverlayAccessToken::findByToken($firstToken))->not->toBeNull()
+        ->and(OverlayAccessToken::where('user_id', $user->id)->where('metadata->purpose', ChatDesigner::TOKEN_PURPOSE)->count())->toBe(2);
+
+    // Once the first one runs out, the next mint from anywhere clears it.
+    OverlayAccessToken::where('token_hash', hash('sha256', $firstToken))->update(['expires_at' => now()->subMinute()]);
+    $this->flushSession();
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/design');
+
+    expect(OverlayAccessToken::findByToken($firstToken))->toBeNull()
+        ->and(OverlayAccessToken::where('user_id', $user->id)->where('metadata->purpose', ChatDesigner::TOKEN_PURPOSE)->count())->toBe(2);
+});
+
 it('refuses another product and an account with no install', function () {
     $user = designerUser();
 

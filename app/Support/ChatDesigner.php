@@ -205,15 +205,21 @@ class ChatDesigner
      * the only place the plaintext can be kept - the row stores sha256 of it -
      * and it is the user's own token for their own overlay.
      *
-     * One at a time, and a day at most. Minting a new one takes the account's
-     * stale preview tokens and their access rows with it, so the tokens page
-     * never fills up with them.
+     * One per session, and a day at most. Minting a new one takes the account's
+     * EXPIRED preview tokens and their access rows with it, so the tokens page
+     * never fills up with them - and only the expired ones. Until 2026-09-22 it
+     * swept every preview token the account had, live or not, which made the
+     * designer open in two browsers a fight: each page load killed the other
+     * session's frame. A token that is still valid belongs to a session that
+     * may still be looking at it; it goes when it expires, a day at most.
      */
     public static function previewToken(User $user): string
     {
         $held = session(self::TOKEN_SESSION_KEY);
 
         if (is_string($held) && strlen($held) === 64) {
+            // findByToken() already refuses an expired or inactive row, so a
+            // held token that has run out falls through to a fresh mint.
             $token = OverlayAccessToken::findByToken($held);
 
             if ($token && $token->user_id === $user->id && ($token->metadata['purpose'] ?? null) === self::TOKEN_PURPOSE) {
@@ -223,6 +229,7 @@ class ChatDesigner
 
         $stale = OverlayAccessToken::where('user_id', $user->id)
             ->where('metadata->purpose', self::TOKEN_PURPOSE)
+            ->where(fn ($query) => $query->where('expires_at', '<=', now())->orWhere('is_active', false))
             ->get();
 
         foreach ($stale as $token) {
