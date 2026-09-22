@@ -287,6 +287,7 @@ export function useOverlayHealth() {
     fetchWithRetry,
     startHealthChecks,
     startPusherMonitoring,
+    cancelAutoReload,
     destroy,
   };
 }

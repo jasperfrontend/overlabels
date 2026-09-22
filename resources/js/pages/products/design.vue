@@ -550,17 +550,54 @@ function appliedInFrame(key: string): void {
 }
 
 /**
+ * The frame's token has stopped working: mint another and reload the frame.
+ *
+ * The preview token lives in the URL fragment the frame was loaded with, so
+ * the frame reloading ITSELF can only ever retry the dead token - that loop
+ * ran forever on 2026-09-22 after a second browser session opened the
+ * designer and previewToken() swept this session's token as stale. Only a
+ * render of this page mints a fresh one, so the frame hands the 401 up here
+ * and this asks the server for just `preview_url` again, then swaps the src.
+ *
+ * One attempt per window: if the fresh token is dead too, something else is
+ * wrong and a reload every few seconds would not fix it.
+ */
+const RECOVERY_WINDOW_MS = 15_000;
+let lastRecoveryAt = 0;
+
+function recoverPreview(): void {
+  const now = Date.now();
+  if (now - lastRecoveryAt < RECOVERY_WINDOW_MS) return;
+  lastRecoveryAt = now;
+
+  router.reload({
+    only: ['preview_url'],
+    onSuccess: () => {
+      pendingKeys.clear();
+      clearTimeout(veilBackstop);
+      // The fresh URL differs from the dead one only in its fragment, and a
+      // fragment-only change to an iframe's src does not load a new document
+      // - the frame keeps its dead one and merely gains a hash. A nonce in the
+      // query string makes it a real navigation; the overlay ignores it.
+      const [path, token] = props.preview_url.split('#');
+      frameSrc.value = `${path}${path.includes('?') ? '&' : '?'}reload=${now}#${token}`;
+    },
+  });
+}
+
+/**
  * What the frame says: that its feed exists (until then a message would be
- * lost), and which control it has just applied.
+ * lost), which control it has just applied, and that its token has expired.
  */
 function onFrameMessage(event: MessageEvent): void {
   if (event.source !== frame.value?.contentWindow) return;
 
-  const payload = event.data as { ol?: string; ready?: boolean; applied?: string } | null;
+  const payload = event.data as { ol?: string; ready?: boolean; applied?: string; expired?: boolean } | null;
   if (payload?.ol !== 'chat-sample') return;
 
   if (payload.ready) postToFrame({ rate: rate.value });
   if (typeof payload.applied === 'string') appliedInFrame(payload.applied);
+  if (payload.expired) recoverPreview();
 }
 
 onMounted(() => {

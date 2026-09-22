@@ -212,6 +212,24 @@ function handleSampleMessage(event: MessageEvent): void {
   if (typeof payload.rate === 'number') sampleFeed.setRate(payload.rate);
 }
 
+/**
+ * A dead token in sample mode is the designer's to fix, not this frame's.
+ *
+ * The token is in the URL fragment this frame was loaded with, so reloading
+ * ourselves retries the same dead token forever - which is what happened when
+ * a second browser session opened the designer and its previewToken() swept
+ * this one. Only a render of the designer page mints a fresh token, so the
+ * frame cancels the auto-reload the health composable scheduled and tells the
+ * page instead (design.vue recoverPreview). An overlay in OBS keeps the reload:
+ * there is nobody above it to ask.
+ */
+watch(health.status, (status) => {
+  if (status !== 'auth_error' || !props.sample || window.parent === window) return;
+
+  health.cancelAutoReload();
+  window.parent.postMessage({ ol: 'chat-sample', expired: true }, '*');
+});
+
 async function startSampleChat(): Promise<void> {
   const { createChatSampleFeed } = await import('@/utils/chatSample');
 
