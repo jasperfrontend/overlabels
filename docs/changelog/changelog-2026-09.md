@@ -1,5 +1,39 @@
 # Changelog - September 2026
 
+## OL-2609-121 - September 22nd, 2026 - feat(products): save your own chat looks by name
+
+The chat designer had ten looks and a hole. You could start from Terminal, swap the font, push the
+emotes up, pick your own accent, and land on something that was yours - and the moment you clicked
+Bubbles to see what that was like, yours was gone. Nothing stored it. The ten built-in looks are a
+constant in the code, "which one is active" was worked out by comparing the overlay's controls to
+those ten bundles, and a bundle that was not one of the ten existed only as long as you did not
+touch anything.
+
+Now there is a "Your looks" section at the top of the designer. Type a name, press Save, and the
+look as it stands right now - the skin, the font, the colors, the layout, the lifetime, all thirteen
+knobs - is kept under that name. Pick it from the dropdown to apply it, which writes the controls and
+lands in OBS the same way the built-ins do. Turn a knob afterwards and the page says "with changes";
+Update keeps them. Rename and Delete do what they say. Twenty per account, which is enough for every
+category a person streams and few enough for one dropdown.
+
+Two things were decided on purpose. The page never sends the values: Save and Update read the
+overlay's controls on the server, so a saved look can only ever hold what the control endpoint
+already accepted. And which saved look is active is still never stored - it is derived by the same
+comparison the built-ins get, on every knob turn, so the dropdown tells the truth about whether what
+is on screen is the look you saved or a departure from it.
+
+Names are yours to choose. `🔥|name:thing` is a name. So is forty emoji. The limit counts
+characters, not bytes, the name never becomes a URL or an identifier, and the input has no
+`maxlength` attribute because HTML counts UTF-16 units and would have refused an emoji name well
+short of what the server allows.
+
+Two smaller fixes to the designer went out just before this. Back and then Forward used to restore
+the knobs from Inertia's history snapshot while the preview reloaded from the database, and the two
+disagreed - the knob said ticker, the frame drew a stacked feed in an 80px strip. Every confirmed
+write now rewrites that snapshot. And the preview is veiled from the moment a write is confirmed
+until the frame has reported every key it applied, so a preset's thirteen broadcasts no longer
+restructure the overlay in front of you piece by piece (OL-2609-120).
+
 ## OL-2609-119 - September 20th, 2026 - feat(chat): every font Bunny serves, and none of them from Google
 
 The chat overlay offered six fonts. Not because six is a good number, but because the overlay's
@@ -130,13 +164,14 @@ no URL anyone could paste - but a framed overlay would still have connected firs
 stop, and a beat of somebody's real chat flashing into a preview is exactly what this was avoiding.
 
 Two small things sit underneath. The frame renders at the browser source size the chosen layout wants
+
 - 500x800 stacked, 1920x80 for the ticker - and is scaled down to fit, so 22px type looks like 22px
-type relative to the source rather than relative to whatever room the column happens to have; switch
-to Ticker and the frame changes shape in front of you, which is the size guidance saying itself
-instead of being written down. And the preview holds one access token, in the session, reused while
-it lives. Minting one per render would have swapped the frame's src and reloaded the preview every
-time anything on the page re-rendered, which is the sort of bug that takes an afternoon to find
-because it looks like a flicker.
+  type relative to the source rather than relative to whatever room the column happens to have; switch
+  to Ticker and the frame changes shape in front of you, which is the size guidance saying itself
+  instead of being written down. And the preview holds one access token, in the session, reused while
+  it lives. Minting one per render would have swapped the frame's src and reloaded the preview every
+  time anything on the page re-rendered, which is the sort of bug that takes an afternoon to find
+  because it looks like a flicker.
 
 The presets did not move. They are still on the product page as ten cards, still the fastest way in,
 and the designer offers them as "start from" with the skin split out beside them: a skin is the shape
@@ -822,7 +857,7 @@ title and it rendered nothing at all. Same for a bot command, same for an alert'
 An Expression Control has no value of its own. The overlay evaluates the formula in the browser
 on every tick, so an overlay is always live. PHP never evaluated anything: it read a scalar
 cached on the row, and that cache was only ever refreshed when a control the expression
-*depends on* changed. An expression over Twitch data, `t.subscribers_total + 1`, depends on no
+_depends on_ changed. An expression over Twitch data, `t.subscribers_total + 1`, depends on no
 control at all, so nothing ever refreshed it and the row kept the null it was created with.
 Forever. Even a control-dependent expression was null until its first dependency update.
 
@@ -1084,7 +1119,7 @@ answer to that: one page, one button, and the page keeps count of what is left.
   aliases and commands go through the same validators the settings forms use, before anything is
   created, so a reply the form would refuse refuses the install. Chat Checkin uses the first two,
   Follower Bowling adds a list, `!bowl`, and two moderator aliases: `!fbfirst` for `!list lane
-  pop first` and `!fbdraw` for `!list lane draw`, both renameable afterwards. Nothing ships a
+pop first` and `!fbdraw` for `!list lane draw`, both renameable afterwards. Nothing ships a
   custom command yet. The picker sections became optional so a manifest can be a product without
   being a dice roll.
 - **Follower Bowling refuses rather than merges.** Its list is called `lane` and its command is

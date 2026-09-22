@@ -24,6 +24,7 @@ use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipeInstanceController;
+use App\Http\Controllers\SavedChatPresetController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
@@ -739,6 +740,20 @@ Route::middleware('auth.redirect')->group(function () {
     Route::post('/products/{slug}/presets/{preset}', [ProductController::class, 'applyPreset'])
         ->name('products.preset')
         ->where(['slug' => '[a-z][a-z0-9_-]*', 'preset' => '[a-z][a-z0-9_]*']);
+    // The streamer's own looks, saved from the designer. A separate segment
+    // from the built-in presets above, whose {preset} pattern would otherwise
+    // swallow the first segment of these. All JSON, all install-gated.
+    Route::prefix('/products/{slug}/saved-presets')
+        ->name('products.saved-presets.')
+        ->where(['slug' => '[a-z][a-z0-9_-]*'])
+        ->controller(SavedChatPresetController::class)
+        ->group(function () {
+            Route::post('/', 'store')->name('store');
+            Route::post('/{preset}/apply', 'apply')->name('apply');
+            Route::post('/{preset}/overwrite', 'overwrite')->name('overwrite');
+            Route::patch('/{preset}', 'rename')->name('rename');
+            Route::delete('/{preset}', 'destroy')->name('destroy');
+        });
     // "Not now" on the setup banner. Declared before the slug routes would
     // not matter (different method and path), kept next to them for reading.
     Route::post('/products/setup/dismiss', [ProductController::class, 'dismissSetup'])

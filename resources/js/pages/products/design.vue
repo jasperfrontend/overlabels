@@ -32,6 +32,13 @@ interface Control {
   config: Record<string, unknown>;
 }
 
+/** A look the streamer saved, under a name of their own. */
+interface SavedPreset {
+  id: number;
+  name: string;
+  values: Record<string, string>;
+}
+
 const props = defineProps<{
   product: { slug: string; name: string };
   overlay: { id: number; name: string; slug: string };
@@ -47,6 +54,8 @@ const props = defineProps<{
   max_hidden_logins: number;
   suggested_fonts: { value: string; hint: string }[];
   fonts_url: string;
+  saved_presets: SavedPreset[];
+  saved_presets_max: number;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -162,46 +171,203 @@ function writeControlSoon(key: string, value: string): void {
 
 /* ---------------------------------------------------------------- presets */
 
+/** Does the overlay currently hold every value in this bundle? */
+function holds(values: Record<string, string>): boolean {
+  return Object.entries(values).every(([key, value]) => valueOf(key) === value);
+}
+
 /**
  * Which preset the overlay currently holds, derived here on every keystroke.
  *
  * Same rule as the product page: one drifted value means no preset is active,
  * because that is the truth. Nothing is stored either side.
  */
-const activePreset = computed(
-  () => props.presets.find((preset) => Object.entries(preset.values).every(([key, value]) => valueOf(key) === value))?.key ?? null,
-);
+const activePreset = computed(() => props.presets.find((preset) => holds(preset.values))?.key ?? null);
 
 const applying = ref<string | null>(null);
+
+/**
+ * A bundle the server has just written onto the controls, built-in or saved:
+ * move the knobs, expect it in the frame, and rewrite the history entry once
+ * for the whole bundle rather than thirteen times.
+ */
+function adoptValues(values: Record<string, string>): void {
+  for (const [controlKey, value] of Object.entries(values)) {
+    if (!controls[controlKey]) continue;
+    // The bundle was written server-side, so this IS the saved value now.
+    // Leaving `saved` stale here would make the next knob that lands back on
+    // a pre-preset value a no-op again.
+    controls[controlKey].value = value;
+    saved[controlKey] = value;
+  }
+  expectInFrame(Object.keys(values).filter((controlKey) => !!controls[controlKey]));
+  remember('controls', (current: Record<string, Control>) =>
+    Object.fromEntries(
+      Object.entries(current).map(([controlKey, control]) => [
+        controlKey,
+        controlKey in values ? { ...control, value: values[controlKey] } : control,
+      ]),
+    ),
+  );
+}
 
 async function applyPreset(key: string): Promise<void> {
   applying.value = key;
 
   try {
     const { data } = await axios.post(`/products/${props.product.slug}/presets/${key}`);
-    const values = (data?.values ?? {}) as Record<string, string>;
-    for (const [controlKey, value] of Object.entries(values)) {
-      if (!controls[controlKey]) continue;
-      // The preset was written server-side, so this IS the saved value now.
-      // Leaving `saved` stale here would make the next knob that lands back on
-      // a pre-preset value a no-op again.
-      controls[controlKey].value = value;
-      saved[controlKey] = value;
-    }
-    expectInFrame(Object.keys(values).filter((controlKey) => !!controls[controlKey]));
-    // One rewrite of the entry for the whole bundle, not thirteen.
-    remember('controls', (current: Record<string, Control>) =>
-      Object.fromEntries(
-        Object.entries(current).map(([controlKey, control]) => [
-          controlKey,
-          controlKey in values ? { ...control, value: values[controlKey] } : control,
-        ]),
-      ),
-    );
+    adoptValues((data?.values ?? {}) as Record<string, string>);
   } catch {
     fail('That look did not apply.');
   } finally {
     applying.value = null;
+  }
+}
+
+/* ------------------------------------------------------------ saved looks */
+
+/*
+ * The streamer's own looks. A row holds the thirteen look values as they were
+ * when it was saved, and "active" is derived by the same comparison the
+ * built-ins get - so a look you tuned after applying is shown as "with
+ * changes", which is the truth, and Update is how you keep them.
+ *
+ * `selectedSavedId` is the dropdown's own state, kept apart from which one is
+ * active: apply, tweak, update is the whole use of the thing, and a dropdown
+ * that snapped back to "nothing" the moment a knob moved would have nothing
+ * to update.
+ *
+ * Only the name ever goes to the server; the values are captured from the
+ * controls there. Any name works - the server counts characters, not bytes,
+ * and the name never becomes a URL or a key - so there is no maxlength here:
+ * HTML counts UTF-16 units and would refuse an emoji name well short of what
+ * the server allows.
+ */
+const savedPresets = ref<SavedPreset[]>(props.saved_presets.map((preset) => ({ ...preset, values: { ...preset.values } })));
+const activeSaved = computed(() => savedPresets.value.find((preset) => holds(preset.values))?.id ?? null);
+const selectedSavedId = ref<number | null>(activeSaved.value);
+const selectedSaved = computed(() => savedPresets.value.find((preset) => preset.id === selectedSavedId.value) ?? null);
+const selectedDrifted = computed(() => selectedSaved.value !== null && activeSaved.value !== selectedSaved.value.id);
+const atSavedCap = computed(() => savedPresets.value.length >= props.saved_presets_max);
+const savedBusy = ref(false);
+const newName = ref('');
+const renaming = ref(false);
+const renameText = ref('');
+const confirmingDelete = ref(false);
+
+function savedFailure(error: unknown, fallback: string): string {
+  return axios.isAxiosError(error) ? (error.response?.data?.message ?? fallback) : fallback;
+}
+
+function sortSaved(): void {
+  savedPresets.value.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function rememberSaved(): void {
+  remember(
+    'saved_presets',
+    savedPresets.value.map((preset) => ({ ...preset, values: { ...preset.values } })),
+  );
+}
+
+function replaceSaved(preset: SavedPreset): void {
+  const index = savedPresets.value.findIndex((row) => row.id === preset.id);
+  if (index === -1) savedPresets.value.push(preset);
+  else savedPresets.value[index] = preset;
+  sortSaved();
+  rememberSaved();
+}
+
+function onSavedSelect(raw: string): void {
+  renaming.value = false;
+  confirmingDelete.value = false;
+  const id = raw === '' ? null : Number(raw);
+  selectedSavedId.value = id;
+  if (id !== null) void applySaved(id);
+}
+
+async function saveCurrentLook(): Promise<void> {
+  const name = newName.value.trim();
+  if (!name || savedBusy.value) return;
+  savedBusy.value = true;
+
+  try {
+    const { data } = await axios.post(`/products/${props.product.slug}/saved-presets`, { name });
+    replaceSaved(data.preset as SavedPreset);
+    selectedSavedId.value = (data.preset as SavedPreset).id;
+    newName.value = '';
+  } catch (error: unknown) {
+    fail(savedFailure(error, 'That look did not save.'));
+  } finally {
+    savedBusy.value = false;
+  }
+}
+
+async function applySaved(id: number): Promise<void> {
+  savedBusy.value = true;
+
+  try {
+    const { data } = await axios.post(`/products/${props.product.slug}/saved-presets/${id}/apply`);
+    adoptValues((data?.values ?? {}) as Record<string, string>);
+  } catch (error: unknown) {
+    fail(savedFailure(error, 'That look did not apply.'));
+  } finally {
+    savedBusy.value = false;
+  }
+}
+
+async function overwriteSaved(): Promise<void> {
+  if (!selectedSaved.value || savedBusy.value) return;
+  savedBusy.value = true;
+
+  try {
+    const { data } = await axios.post(`/products/${props.product.slug}/saved-presets/${selectedSaved.value.id}/overwrite`);
+    replaceSaved(data.preset as SavedPreset);
+  } catch (error: unknown) {
+    fail(savedFailure(error, 'That look did not update.'));
+  } finally {
+    savedBusy.value = false;
+  }
+}
+
+function startRename(): void {
+  if (!selectedSaved.value) return;
+  confirmingDelete.value = false;
+  renameText.value = selectedSaved.value.name;
+  renaming.value = true;
+}
+
+async function renameSaved(): Promise<void> {
+  const name = renameText.value.trim();
+  if (!selectedSaved.value || !name || savedBusy.value) return;
+  savedBusy.value = true;
+
+  try {
+    const { data } = await axios.patch(`/products/${props.product.slug}/saved-presets/${selectedSaved.value.id}`, { name });
+    replaceSaved(data.preset as SavedPreset);
+    renaming.value = false;
+  } catch (error: unknown) {
+    fail(savedFailure(error, 'That look did not rename.'));
+  } finally {
+    savedBusy.value = false;
+  }
+}
+
+async function deleteSaved(): Promise<void> {
+  if (!selectedSaved.value || savedBusy.value) return;
+  savedBusy.value = true;
+  const id = selectedSaved.value.id;
+
+  try {
+    await axios.delete(`/products/${props.product.slug}/saved-presets/${id}`);
+    savedPresets.value = savedPresets.value.filter((preset) => preset.id !== id);
+    selectedSavedId.value = null;
+    confirmingDelete.value = false;
+    rememberSaved();
+  } catch (error: unknown) {
+    fail(savedFailure(error, 'That look did not delete.'));
+  } finally {
+    savedBusy.value = false;
   }
 }
 
@@ -444,6 +610,81 @@ function keysIn(group: { keys: string[] }): string[] {
       <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
         <!-- Knobs -->
         <div class="flex flex-col gap-5">
+          <!-- Your looks. Above the built-ins on purpose: once someone has
+               saved one, that is the thing they came back for. -->
+          <section class="flex flex-col gap-2">
+            <h2 class="text-sm font-semibold text-foreground">Your looks</h2>
+
+            <template v-if="savedPresets.length">
+              <select
+                id="saved-look"
+                class="w-full cursor-pointer rounded-sm border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+                :value="selectedSavedId ?? ''"
+                :disabled="savedBusy"
+                aria-label="Your saved looks"
+                @change="onSavedSelect(($event.target as HTMLSelectElement).value)"
+              >
+                <option value="">Pick a saved look</option>
+                <option v-for="preset in savedPresets" :key="preset.id" :value="preset.id">{{ preset.name }}</option>
+              </select>
+
+              <template v-if="selectedSaved">
+                <p class="text-sm text-muted-foreground">
+                  <template v-if="selectedDrifted">{{ selectedSaved.name }}, with changes. Update it to keep them.</template>
+                  <template v-else>{{ selectedSaved.name }}, as saved.</template>
+                </p>
+
+                <form v-if="renaming" class="flex gap-1.5" @submit.prevent="renameSaved">
+                  <input
+                    v-model="renameText"
+                    type="text"
+                    class="input-border min-w-0 flex-1 text-sm"
+                    aria-label="New name"
+                    autofocus
+                    @keydown.esc="renaming = false"
+                  />
+                  <button type="submit" class="btn btn-sm btn-primary" :disabled="!renameText.trim() || savedBusy">Rename</button>
+                  <button type="button" class="btn btn-sm btn-cancel" @click="renaming = false">Cancel</button>
+                </form>
+
+                <div v-else class="flex flex-wrap gap-1.5">
+                  <button type="button" class="btn btn-sm btn-cancel" :disabled="!selectedDrifted || savedBusy" @click="overwriteSaved">
+                    Update with current look
+                  </button>
+                  <button type="button" class="btn btn-sm btn-cancel" :disabled="savedBusy" @click="startRename">Rename</button>
+                  <template v-if="confirmingDelete">
+                    <button type="button" class="btn btn-sm btn-danger" :disabled="savedBusy" @click="deleteSaved">
+                      Delete {{ selectedSaved.name }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-cancel" @click="confirmingDelete = false">Keep</button>
+                  </template>
+                  <button v-else type="button" class="btn btn-sm btn-cancel" :disabled="savedBusy" @click="confirmingDelete = true">Delete</button>
+                </div>
+              </template>
+            </template>
+
+            <form class="flex gap-1.5" @submit.prevent="saveCurrentLook">
+              <input
+                v-model="newName"
+                type="text"
+                class="input-border min-w-0 flex-1 text-sm"
+                placeholder="Name this look"
+                aria-label="Name for the current look"
+                :disabled="atSavedCap || savedBusy"
+              />
+              <button type="submit" class="btn btn-sm btn-primary" :disabled="!newName.trim() || atSavedCap || savedBusy">Save</button>
+            </form>
+            <p class="text-xs text-muted-foreground">
+              <template v-if="atSavedCap"
+                >{{ saved_presets_max }} looks saved, which is the most there is room for. Delete one to save another.</template
+              >
+              <template v-else>
+                Saves the skin, font, colors, layout and lifetime as they are right now, under any name you like.
+                <template v-if="savedPresets.length">{{ savedPresets.length }} of {{ saved_presets_max }} saved.</template>
+              </template>
+            </p>
+          </section>
+
           <!-- Start from. The presets are a starting point here, not the
                finished choice they are on the product page: the skin picker
                and every knob below stay live after one is applied. -->

@@ -200,19 +200,57 @@ class ChatPresets
      */
     public static function apply(OverlayTemplate $template, string $key): array
     {
+        return self::applyValues($template, self::PRESETS[$key]['values']);
+    }
+
+    /**
+     * Write any bundle onto the overlay's controls - a built-in preset's or a
+     * saved one's (UserChatPreset). Same skip rule as apply(): a key the
+     * overlay has no control for is passed over, and a control the bundle does
+     * not name is left as it is.
+     *
+     * @param  array<string, string>  $values
+     * @return list<OverlayControl>
+     */
+    public static function applyValues(OverlayTemplate $template, array $values): array
+    {
         $written = [];
 
-        foreach (self::PRESETS[$key]['values'] as $controlKey => $value) {
+        foreach ($values as $controlKey => $value) {
             $control = $template->controls()->where('key', $controlKey)->first();
             if (! $control) {
                 continue;
             }
 
-            $control->writeValue($value);
+            $control->writeValue((string) $value);
             $written[] = $control;
         }
 
         return $written;
+    }
+
+    /**
+     * The overlay's look as it stands, in the shape a preset bundle holds it:
+     * keyed by control key, in KEYS order, only the keys the overlay has. This
+     * is what a saved preset captures.
+     *
+     * @return array<string, string>
+     */
+    public static function currentValues(OverlayTemplate $template): array
+    {
+        $current = $template->controls()
+            ->whereIn('key', self::KEYS)
+            ->pluck('value', 'key')
+            ->all();
+
+        $values = [];
+        foreach (self::KEYS as $key) {
+            if (array_key_exists($key, $current)) {
+                $values[$key] = (string) $current[$key];
+            }
+        }
+
+        return $values;
     }
 
     /**

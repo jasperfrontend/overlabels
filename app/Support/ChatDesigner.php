@@ -6,6 +6,7 @@ use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Models\User;
+use App\Models\UserChatPreset;
 
 /**
  * Everything the chat designer needs that the database does not already say.
@@ -145,6 +146,20 @@ class ChatDesigner
         }
 
         return $presets;
+    }
+
+    /**
+     * The streamer's own saved looks, by name.
+     *
+     * @return list<array{id: int, name: string, values: array<string, string>}>
+     */
+    public static function savedPresets(User $user): array
+    {
+        return UserChatPreset::where('user_id', $user->id)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (UserChatPreset $preset) => $preset->toDesigner())
+            ->all();
     }
 
     /**

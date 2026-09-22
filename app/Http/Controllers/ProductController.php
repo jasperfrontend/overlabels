@@ -13,6 +13,7 @@ use App\Models\OverlayTemplate;
 use App\Models\Recipe;
 use App\Models\RecipeInstance;
 use App\Models\User;
+use App\Models\UserChatPreset;
 use App\Services\BotModeratedChannels;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeIngredients;
@@ -472,6 +473,11 @@ class ProductController extends Controller
             'fonts_url' => asset(BunnyFonts::CATALOGUE_PATH),
             'groups' => ChatDesigner::GROUPS,
             'controls' => ChatDesigner::controls($template),
+            // The streamer's own looks, with their values, so the page can
+            // derive which one is active the same way it does for the ten
+            // built-in ones - by comparison, on every knob turn, nothing stored.
+            'saved_presets' => ChatDesigner::savedPresets($user),
+            'saved_presets_max' => UserChatPreset::MAX_PER_USER,
             // The chat window is a foreach cap, not a control: it is "how many
             // items does this loop expand to", the same question the other four
             // caps answer, and it is written on /settings/account. The designer
