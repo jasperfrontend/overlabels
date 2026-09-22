@@ -746,14 +746,14 @@ const WEBFONT_WEIGHTS = '400,700';
  * catalogue; belt and braces, anything but letters, digits and single spaces is
  * refused here too, since family names contain nothing else.
  */
-function syncWebfontLink(key: string, family: unknown) {
+function syncWebfontLink(key: string, family: unknown): HTMLLinkElement | null {
   const id = `ol-webfont-${key}`;
   const existing = document.getElementById(id);
   const name = typeof family === 'string' ? family.trim() : '';
 
   if (!name || !/^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$/.test(name)) {
     existing?.remove();
-    return;
+    return null;
   }
 
   const href = `${WEBFONT_HOST}/css?family=${name.toLowerCase().replace(/ /g, '-')}:${WEBFONT_WEIGHTS}&display=swap`;
@@ -762,8 +762,9 @@ function syncWebfontLink(key: string, family: unknown) {
     // Rewriting href on the existing element rather than swapping elements:
     // the old face stays painted until the new one arrives, so a font change
     // never flashes the fallback on stream.
-    if (existing.href !== href) existing.href = href;
-    return;
+    if (existing.href === href) return null;
+    existing.href = href;
+    return existing;
   }
 
   const link = document.createElement('link');
@@ -771,6 +772,32 @@ function syncWebfontLink(key: string, family: unknown) {
   link.rel = 'stylesheet';
   link.href = href;
   document.head.appendChild(link);
+  return link;
+}
+
+/**
+ * Tell the chat designer a control has landed in the frame.
+ *
+ * Only in sample mode and only when framed, so an overlay in OBS posts
+ * nothing. The designer veils the preview from the moment a write is confirmed
+ * until every key it wrote has been reported here: thirteen broadcasts from one
+ * preset arrive staggered over a few seconds, and watching a look restructure
+ * itself piece by piece reads as broken. A font change is reported once its
+ * stylesheet has loaded or failed, because the family name landing in the CSS
+ * variable is not the face being painted.
+ */
+function reportApplied(key: string, fontLink: HTMLLinkElement | null): void {
+  if (!props.sample || window.parent === window) return;
+
+  const post = () => window.parent.postMessage({ ol: 'chat-sample', applied: key }, '*');
+
+  if (!fontLink) {
+    post();
+    return;
+  }
+
+  fontLink.addEventListener('load', post, { once: true });
+  fontLink.addEventListener('error', post, { once: true });
 }
 
 // Fields whose values arrive as already-safe HTML (encoded user text + parser-
@@ -1234,6 +1261,7 @@ function applyControlUpdate(event: any) {
   // Store companion _at timestamp (Unix epoch seconds) for every control update
   const atKey = `c:${event.key}_at`;
   const timestamp = event.updated_at ? String(event.updated_at) : String(Math.floor(Date.now() / 1000));
+  let fontLink: HTMLLinkElement | null = null;
 
   if (event.type === 'expression' && event.expression) {
     // Re-register the expression with the updated formula
@@ -1262,9 +1290,11 @@ function applyControlUpdate(event: any) {
     // A font control changing means a different family has to be fetched; the
     // CSS variable alone would just name a face nothing has loaded.
     if (webfontControls.value.includes(event.key)) {
-      syncWebfontLink(event.key, event.value);
+      fontLink = syncWebfontLink(event.key, event.value);
     }
   }
+
+  reportApplied(event.key, fontLink);
 }
 
 function handleCheckinsUpdated(event: any) {

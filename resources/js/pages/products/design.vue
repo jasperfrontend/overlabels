@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Eraser, MessageSquarePlus } from '@lucide/vue';
+import { Eraser, Loader2, MessageSquarePlus } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
 import Heading from '@/components/Heading.vue';
@@ -145,6 +145,7 @@ async function writeControl(key: string, value: string): Promise<void> {
       saved[key] = data.value;
     }
     remember(`controls.${key}.value`, saved[key]);
+    expectInFrame([key]);
   } catch (error: unknown) {
     control.value = previous;
     saved[key] = previous;
@@ -187,6 +188,7 @@ async function applyPreset(key: string): Promise<void> {
       controls[controlKey].value = value;
       saved[controlKey] = value;
     }
+    expectInFrame(Object.keys(values).filter((controlKey) => !!controls[controlKey]));
     // One rewrite of the entry for the whole bundle, not thirteen.
     remember('controls', (current: Record<string, Control>) =>
       Object.fromEntries(
@@ -339,11 +341,60 @@ function setRate(perMinute: number): void {
   postToFrame({ rate: perMinute });
 }
 
-/** The overlay says when its feed exists; until then a message would be lost. */
+/* ------------------------------------------------------------------ veil */
+
+/**
+ * The preview is veiled from a confirmed write until the frame has applied it.
+ *
+ * A knob's write lands in the frame over the same broadcast OBS listens on, a
+ * few seconds after the server answers, and a preset is thirteen of those
+ * arriving staggered. Watching the overlay restructure itself piece by piece
+ * with nothing saying "this is in progress" reads as broken. So the stage is
+ * covered from the moment a write is confirmed until every key written has
+ * been reported back by the frame (OverlayRenderer's reportApplied), which
+ * also covers the font stylesheet landing.
+ *
+ * The backstop is for a broadcast that never arrives - Reverb down, a frame
+ * that reloaded mid-write - so the veil can never stick. It measures SILENCE,
+ * restarting on every key the frame reports, rather than the whole wait: a
+ * queue that is slow but alive (local `queue:listen` boots a process per job,
+ * so a preset's thirteen land about a second apart) must not have the veil
+ * lifted from under it with keys still arriving.
+ */
+const pendingKeys = reactive(new Set<string>());
+const applyingLook = computed(() => pendingKeys.size > 0);
+const VEIL_SILENCE_MS = 8000;
+let veilBackstop: ReturnType<typeof setTimeout>;
+
+function armVeilBackstop(): void {
+  clearTimeout(veilBackstop);
+  veilBackstop = setTimeout(() => pendingKeys.clear(), VEIL_SILENCE_MS);
+}
+
+function expectInFrame(keys: string[]): void {
+  if (keys.length === 0) return;
+  for (const key of keys) pendingKeys.add(key);
+  armVeilBackstop();
+}
+
+function appliedInFrame(key: string): void {
+  pendingKeys.delete(key);
+  if (pendingKeys.size === 0) clearTimeout(veilBackstop);
+  else armVeilBackstop();
+}
+
+/**
+ * What the frame says: that its feed exists (until then a message would be
+ * lost), and which control it has just applied.
+ */
 function onFrameMessage(event: MessageEvent): void {
   if (event.source !== frame.value?.contentWindow) return;
-  if ((event.data as { ol?: string; ready?: boolean } | null)?.ol !== 'chat-sample') return;
-  if ((event.data as { ready?: boolean }).ready) postToFrame({ rate: rate.value });
+
+  const payload = event.data as { ol?: string; ready?: boolean; applied?: string } | null;
+  if (payload?.ol !== 'chat-sample') return;
+
+  if (payload.ready) postToFrame({ rate: rate.value });
+  if (typeof payload.applied === 'string') appliedInFrame(payload.applied);
 }
 
 onMounted(() => {
@@ -364,6 +415,7 @@ onBeforeUnmount(() => {
   clearTimeout(windowDebounce);
   clearTimeout(filtersDebounce);
   clearTimeout(savedFlash);
+  clearTimeout(veilBackstop);
   for (const timer of Object.values(debounces)) clearTimeout(timer);
 });
 
@@ -633,7 +685,7 @@ function keysIn(group: { keys: string[] }): string[] {
 
           <div
             ref="stage"
-            class="ol-design-stage flex h-[min(72vh,820px)] items-center justify-center overflow-hidden rounded-sm border border-border p-2"
+            class="ol-design-stage relative flex h-[min(72vh,820px)] items-center justify-center overflow-hidden rounded-sm border border-border p-2"
           >
             <div :style="{ width: `${sourceSize.w * scale}px`, height: `${sourceSize.h * scale}px` }" class="relative shrink-0">
               <iframe
@@ -643,6 +695,19 @@ function keysIn(group: { keys: string[] }): string[] {
                 class="absolute top-0 left-0 origin-top-left border-0"
                 :style="{ width: `${sourceSize.w}px`, height: `${sourceSize.h}px`, transform: `scale(${scale})` }"
               />
+            </div>
+
+            <!-- Covers the whole stage, not just the frame: a layout change
+                 resizes the frame under the veil, and the veil must not
+                 jump with it. -->
+            <div
+              v-if="applyingLook"
+              class="absolute inset-0 flex items-center justify-center gap-3 bg-black/70 text-sm text-white"
+              role="status"
+              aria-live="polite"
+            >
+              <Loader2 class="size-5 animate-spin text-violet-400" />
+              Applying settings
             </div>
           </div>
 
