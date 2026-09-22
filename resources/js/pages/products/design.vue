@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Eraser, MessageSquarePlus } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -86,6 +86,25 @@ function fail(message: string) {
   problemKey.value += 1;
 }
 
+/**
+ * Keep the history entry as current as the database.
+ *
+ * Every write on this page goes straight to the server and never through
+ * Inertia, so the props Inertia keeps in `history.state` stay what they were at
+ * page load. Back and then Forward restores the page from that entry rather
+ * than the server: the knobs mount showing the load-time values while the
+ * preview frame reloads from the database and draws the real ones. Reproduced
+ * on 2026-09-22 - the knob said ticker, the stage sized itself 1920x80, and the
+ * frame drew a bottom-stacked feed inside the strip, one message visible.
+ *
+ * replaceProp rewrites the current entry in place (same trick the What's New
+ * card uses), so a restored page agrees with the frame. Called only after the
+ * server has confirmed, never on the optimistic assignment.
+ */
+function remember(prop: string, value: unknown): void {
+  router.replaceProp(prop, value);
+}
+
 /* ------------------------------------------------------------------ knobs */
 
 function valueOf(key: string): string {
@@ -125,6 +144,7 @@ async function writeControl(key: string, value: string): Promise<void> {
       control.value = data.value;
       saved[key] = data.value;
     }
+    remember(`controls.${key}.value`, saved[key]);
   } catch (error: unknown) {
     control.value = previous;
     saved[key] = previous;
@@ -158,7 +178,8 @@ async function applyPreset(key: string): Promise<void> {
 
   try {
     const { data } = await axios.post(`/products/${props.product.slug}/presets/${key}`);
-    for (const [controlKey, value] of Object.entries((data?.values ?? {}) as Record<string, string>)) {
+    const values = (data?.values ?? {}) as Record<string, string>;
+    for (const [controlKey, value] of Object.entries(values)) {
       if (!controls[controlKey]) continue;
       // The preset was written server-side, so this IS the saved value now.
       // Leaving `saved` stale here would make the next knob that lands back on
@@ -166,6 +187,15 @@ async function applyPreset(key: string): Promise<void> {
       controls[controlKey].value = value;
       saved[controlKey] = value;
     }
+    // One rewrite of the entry for the whole bundle, not thirteen.
+    remember('controls', (current: Record<string, Control>) =>
+      Object.fromEntries(
+        Object.entries(current).map(([controlKey, control]) => [
+          controlKey,
+          controlKey in values ? { ...control, value: values[controlKey] } : control,
+        ]),
+      ),
+    );
   } catch {
     fail('That look did not apply.');
   } finally {
@@ -200,6 +230,7 @@ async function writeWindow(size: number): Promise<void> {
   try {
     await axios.patch('/settings/foreach-caps', caps);
     page.props.auth.user.foreach_caps = caps;
+    remember('chat_window', size);
     confirmSaved();
   } catch {
     fail('That window size did not save.');
@@ -245,7 +276,11 @@ async function writeChatFilters(): Promise<void> {
       hide_commands: hideCommands.value,
       hidden_logins: hiddenLoginsText.value,
     });
-    savedLoginCount.value = (data?.chat_filters?.hidden_logins ?? []).length;
+    const hiddenLogins: string[] = data?.chat_filters?.hidden_logins ?? [];
+    savedLoginCount.value = hiddenLogins.length;
+    // The entry gets the normalised list, so a restored page shows what is
+    // actually hidden. The textarea on screen is still left alone.
+    remember('chat_filters', { hide_commands: hideCommands.value, hidden_logins: hiddenLogins });
     confirmSaved();
   } catch {
     fail('Those chat settings did not save.');
