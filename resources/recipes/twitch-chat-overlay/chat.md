@@ -92,7 +92,13 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: trans
   overflow-wrap: anywhere;
   animation: ol-chat-in 0.28s ease-out both;
 }
-.layout-ticker .msg { white-space: nowrap; overflow-wrap: normal; }
+.layout-ticker .msg { display: inline-flex; align-items: baseline; column-gap: 0.25em; white-space: nowrap; overflow-wrap: normal; }
+/* Twitch allows 500 characters and a ticker is one line, so a wall of text would walk
+   off the edge and under every message behind it. The body gets about 200 characters
+   of the current font and an ellipsis, and no more room than that on purpose. The row
+   is flex so the body can be clipped; the gap stands in for the space between spans
+   that inline flow gave every skin, which Bubbles - no colon, no margin - relied on. */
+.layout-ticker .body { min-width: 0; max-width: 200ch; overflow: hidden; text-overflow: ellipsis; }
 
 /* Backgrounds. */
 .bg-none .msg { background: transparent; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85); }
