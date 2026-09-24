@@ -157,6 +157,24 @@ it('store strips NUL bytes but preserves everything else verbatim', function () 
 // Update
 // ──────────────────────────────────────────────────────────────────────────────
 
+it('update preserves exactly what was sent, so the lists/* middleware exemption holds too', function () {
+    Event::fake([ListUpdated::class]);
+
+    $user = User::factory()->create(['twitch_id' => '889']);
+    $list = OptionSet::create(['user_id' => $user->id, 'slug' => 'pizza', 'items' => ['Pepperoni']]);
+
+    // The store path is covered above; this is the PUT /lists/{list} path,
+    // which the second pattern of the TrimStrings / ConvertEmptyStringsToNull
+    // exemptions in bootstrap/app.php exists for. Without it, '' becomes null
+    // and ' ' becomes '' before the controller ever sees them.
+    $this->actingAs($user)->put("/lists/{$list->id}", [
+        'items' => ['Pepperoni', 'Mushroom', '', 'Mushroom', ' '],
+    ])->assertRedirect();
+
+    $list->refresh();
+    expect(ListItems::values($list->items))->toBe(['Pepperoni', 'Mushroom', '', 'Mushroom', ' ']);
+});
+
 it('update accepts chat_permissions PATCH and drops default-level entries', function () {
     $user = User::factory()->create(['twitch_id' => '888']);
     $list = OptionSet::create(['user_id' => $user->id, 'slug' => 'q', 'items' => []]);
