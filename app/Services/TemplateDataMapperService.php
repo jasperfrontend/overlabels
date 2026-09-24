@@ -247,6 +247,7 @@ class TemplateDataMapperService
     private const array COMPUTED_TAGS = [
         'overlay_name' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Overlay Name', 'desc' => 'Name of the overlay', 'sample' => 'My Awesome Overlay'],
         'timestamp' => ['category' => 'overlay', 'type' => 'datetime', 'label' => 'Timestamp', 'desc' => 'Current timestamp', 'sample' => '2026-08-20 12:00:00'],
+        'checkin_globe' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Check-in Globe', 'desc' => 'A spinning globe with a pin per !checkin. Drawn by the overlay itself, style it with CSS', 'sample' => ''],
     ];
 
     /**
@@ -324,6 +325,9 @@ class TemplateDataMapperService
         $templateData = [
             'overlay_name' => $overlayName,
             'timestamp' => now()->format('Y-m-d H:i:s'),
+            // The overlay swaps [[[checkin_globe]]] for the globe before the
+            // tag pass runs (globeTag.ts), so this value is never rendered.
+            'checkin_globe' => '',
         ];
 
         // Apply all mappings with error handling
