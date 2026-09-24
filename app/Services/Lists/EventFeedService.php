@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * The orchestration layer behind "recent events -> list" feeds. Lists opt in
- * via their `event_feed` config (set from /dashboard/recents). Two entry
+ * via their `event_feed` config (set from /recents). Two entry
  * points:
  *
  *   - handleEvent(): called by EventFeedAppender for every incoming Twitch /

@@ -329,7 +329,7 @@ const breadcrumbs = [
   },
   {
     title: 'Recent events',
-    href: '/dashboard/recents',
+    href: '/recents',
   },
 ];
 </script>

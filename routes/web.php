@@ -204,15 +204,16 @@ Route::post('/recipes/instances/{instance}/fire-button', [RecipeInstanceControll
     ->middleware(['auth.redirect'])
     ->name('recipes.instances.fire-button');
 
-Route::get('/dashboard/recents', [DashboardController::class, 'recentActivity'])
+Route::get('/recents', [DashboardController::class, 'recentActivity'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.recents');
 
-// The Lists pages left the /dashboard prefix on 2026-09-24. Links written
-// before then (help pages already read, bot replies in chat logs, bookmarks,
-// exported overlays' notes) land on the new address.
+// The Lists and Recent pages left the /dashboard prefix on 2026-09-24. Links
+// written before then (help pages already read, bot replies in chat logs,
+// bookmarks, exported overlays' notes) land on the new address.
 Route::permanentRedirect('/dashboard/lists', '/lists');
 Route::permanentRedirect('/dashboard/lists/{slug}', '/lists/{slug}');
+Route::permanentRedirect('/dashboard/recents', '/recents');
 
 Route::get('/dashboard/gps-sessions', [GpsSessionController::class, 'index'])
     ->middleware(['auth.redirect'])

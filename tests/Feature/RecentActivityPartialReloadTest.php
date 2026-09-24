@@ -58,6 +58,12 @@ it('serves every prop on a full page load', function () {
         );
 });
 
+it('answers at /recents and sends the old /dashboard/recents address there permanently', function () {
+    expect(route('dashboard.recents', absolute: false))->toBe('/recents');
+
+    $this->get('/dashboard/recents')->assertRedirect('/recents')->assertStatus(301);
+});
+
 // The search box reloads on every keystroke batch, so the props a filter cannot
 // change are deferred behind closures. If they ever stop being deferred this
 // test fails and the keystroke cost comes back silently.

@@ -58,7 +58,7 @@ const toastMessage = ref<string | null>(null);
 const toastType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Search - the same URL-backed filter bar as /templates and /dashboard/recents.
+// Search - the same URL-backed filter bar as /templates and /recents.
 // The server matches slug, label, AND item contents; the query string is the
 // state, so a filtered view deep-links and survives back/forward.
 // ──────────────────────────────────────────────────────────────────────────────

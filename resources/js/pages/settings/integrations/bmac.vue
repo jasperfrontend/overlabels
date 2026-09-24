@@ -202,7 +202,7 @@ function formatDate(iso: string | null): string {
               <li>BMAC will reveal a <strong>Secret</strong>. Click it to copy, paste it into the field below, then save.</li>
               <li>
                 Use BMAC's <strong>Send Test</strong> button to confirm everything works - the event will appear in
-                <a href="/dashboard/recents" class="cursor-pointer text-violet-400 hover:underline">Recent Events</a>.
+                <a href="/recents" class="cursor-pointer text-violet-400 hover:underline">Recent Events</a>.
               </li>
             </ol>
           </div>
