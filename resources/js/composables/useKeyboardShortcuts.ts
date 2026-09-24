@@ -3,12 +3,30 @@ import { onMounted, onUnmounted, ref } from 'vue';
 
 type ShortcutCallback = (event: KeyboardEvent) => void;
 
-interface Shortcut {
-  keys: string[];
+export interface Shortcut {
+  // One entry per keystroke. A plain shortcut like Ctrl+S is one step; a chord
+  // like "G then O" is two. Every step is a modifier list plus one key.
+  steps: string[][];
   callback: ShortcutCallback;
   description?: string;
+  // Heading the Ctrl+K dialog files this under. Ungrouped shortcuts share one section.
+  group?: string;
   preventDefault?: boolean;
 }
+
+export interface ShortcutListing {
+  id: string;
+  keys: string;
+  description?: string;
+  group?: string;
+}
+
+// How long a chord prefix stays armed. Gmail and GitHub both give roughly this
+// much; long enough to find the second key, short enough that a stray G does
+// not swallow a keystroke seconds later.
+export const CHORD_TIMEOUT_MS = 1500;
+
+const MODIFIER_KEYS = ['ctrl', 'alt', 'shift', 'meta'];
 
 // Global registry shared across all composable instances.
 // Each entry is added/removed by the component that owns it.
@@ -16,19 +34,76 @@ const registry: Map<string, Shortcut> = new Map();
 const version = ref(0);
 let listenerCount = 0;
 
-function matchesKeyCombination(event: KeyboardEvent, keyCombination: string[]): boolean {
-  const pressedKeys: string[] = [];
-  if (event.ctrlKey) pressedKeys.push('ctrl');
-  if (event.altKey) pressedKeys.push('alt');
-  if (event.shiftKey) pressedKeys.push('shift');
-  if (event.metaKey) pressedKeys.push('meta');
-  pressedKeys.push(event.key.toLowerCase());
+// The chord steps pressed so far, as normalised key lists. Empty when no
+// prefix is armed.
+let pending: string[][] = [];
+let pendingTimer: ReturnType<typeof setTimeout> | null = null;
 
-  if (pressedKeys.length !== keyCombination.length) return false;
-  return keyCombination.every((key, index) => pressedKeys[index] === key.toLowerCase());
+export function pressedKeys(event: Pick<KeyboardEvent, 'ctrlKey' | 'altKey' | 'shiftKey' | 'metaKey' | 'key'>): string[] {
+  const keys: string[] = [];
+  if (event.ctrlKey) keys.push('ctrl');
+  if (event.altKey) keys.push('alt');
+  if (event.shiftKey) keys.push('shift');
+  if (event.metaKey) keys.push('meta');
+  keys.push(event.key.toLowerCase());
+  return keys;
+}
+
+function sameStep(pressed: string[], step: string[]): boolean {
+  if (pressed.length !== step.length) return false;
+  return step.every((key, index) => pressed[index] === key.toLowerCase());
+}
+
+function hasModifier(shortcut: Shortcut): boolean {
+  return shortcut.steps.some((step) => step.some((k) => ['ctrl', 'alt', 'meta'].includes(k.toLowerCase())));
+}
+
+export type Resolution = { kind: 'fire'; shortcut: Shortcut } | { kind: 'prefix' } | { kind: 'none' };
+
+/**
+ * Decide what one keystroke means given the chord steps already pressed.
+ *
+ * A shortcut whose steps are exactly `prefix + pressed` fires. If none does
+ * but some shortcut continues past this step, the keystroke arms (or extends)
+ * the prefix. Otherwise it is nothing. A complete match wins over a longer
+ * chord sharing the same start, so a single-key shortcut can never be shadowed
+ * by a chord registered later.
+ */
+export function resolveKeystroke(shortcuts: Iterable<Shortcut>, prefix: string[][], pressed: string[]): Resolution {
+  const depth = prefix.length;
+  let continues = false;
+
+  for (const shortcut of shortcuts) {
+    if (shortcut.steps.length <= depth) continue;
+    const prefixMatches = prefix.every((step, index) => sameStep(step, shortcut.steps[index]));
+    if (!prefixMatches || !sameStep(pressed, shortcut.steps[depth])) continue;
+
+    if (shortcut.steps.length === depth + 1) return { kind: 'fire', shortcut };
+    continues = true;
+  }
+
+  return continues ? { kind: 'prefix' } : { kind: 'none' };
+}
+
+function clearPending(): void {
+  pending = [];
+  if (pendingTimer !== null) {
+    clearTimeout(pendingTimer);
+    pendingTimer = null;
+  }
+}
+
+function armPending(step: string[]): void {
+  pending = [...pending, step];
+  if (pendingTimer !== null) clearTimeout(pendingTimer);
+  pendingTimer = setTimeout(clearPending, CHORD_TIMEOUT_MS);
 }
 
 function handleKeyDown(event: KeyboardEvent): void {
+  // A bare modifier press is not a step. Ignoring it keeps an armed prefix
+  // alive while the user reaches for Shift, and never fires anything.
+  if (['Control', 'Alt', 'Shift', 'Meta'].includes(event.key)) return;
+
   const inInput = isTextEntryTarget(event.target);
 
   // A modal owns the keyboard while it's open: single-key page shortcuts must
@@ -36,40 +111,66 @@ function handleKeyDown(event: KeyboardEvent): void {
   // firing "Add to OBS" from a button inside the dialog).
   const inDialog = event.target instanceof Element && event.target.closest('[role="dialog"]') !== null;
 
-  for (const shortcut of registry.values()) {
-    if (matchesKeyCombination(event, shortcut.keys)) {
-      // Inside inputs or an open dialog, only fire shortcuts that use a modifier key
-      const hasModifier = shortcut.keys.some((k) => ['ctrl', 'alt', 'meta'].includes(k.toLowerCase()));
-      if ((inInput || inDialog) && !hasModifier) break;
+  // Typing never continues a chord: a G pressed on the page and an O typed
+  // into a search box are unrelated keystrokes.
+  if (inInput || inDialog) clearPending();
 
-      if (shortcut.preventDefault !== false) {
-        event.preventDefault();
-      }
-      shortcut.callback(event);
-      break;
+  const pressed = pressedKeys(event);
+  const wasPending = pending.length > 0;
+  const resolution = resolveKeystroke(registry.values(), pending, pressed);
+
+  if (resolution.kind === 'fire') {
+    clearPending();
+    // Inside inputs or an open dialog, only fire shortcuts that use a modifier key
+    if ((inInput || inDialog) && !hasModifier(resolution.shortcut)) return;
+
+    if (resolution.shortcut.preventDefault !== false) {
+      event.preventDefault();
     }
+    resolution.shortcut.callback(event);
+    return;
+  }
+
+  if (resolution.kind === 'prefix') {
+    // A chord never carries a modifier, so it has no business starting inside
+    // an input or a dialog.
+    if (inInput || inDialog) return;
+    armPending(pressed);
+    event.preventDefault();
+    return;
+  }
+
+  // An armed prefix followed by a key that completes nothing is a miss: the
+  // chord is dropped, and the key is swallowed so 'G then E' cannot fall
+  // through to a page's bare 'E' shortcut.
+  if (wasPending) {
+    clearPending();
+    event.preventDefault();
   }
 }
 
-function formatKeyCombination(keys: string[]): string {
-  return keys
-    .map((key) => {
-      if (key === ' ') return 'Space';
-      if (['ctrl', 'alt', 'shift', 'meta'].includes(key.toLowerCase())) {
-        return key.charAt(0).toUpperCase() + key.slice(1);
-      }
-      return key.length === 1 ? key.toUpperCase() : key;
-    })
-    .join('+');
+function formatKey(key: string): string {
+  if (key === ' ') return 'Space';
+  if (MODIFIER_KEYS.includes(key.toLowerCase())) {
+    return key.charAt(0).toUpperCase() + key.slice(1);
+  }
+  return key.length === 1 ? key.toUpperCase() : key;
 }
 
-function parseKeyCombination(combination: string): string[] {
-  // Split on '+' but preserve 'space' as a key name
+export function formatKeyCombination(steps: string[][]): string {
+  return steps.map((step) => step.map(formatKey).join('+')).join(' then ');
+}
+
+/**
+ * 'ctrl+s' is one step; 'g o' is a chord of two, one per whitespace-separated
+ * token. 'space' names the space bar inside a step ('ctrl+space').
+ */
+export function parseKeyCombination(combination: string): string[][] {
   return combination
+    .trim()
     .toLowerCase()
-    .replace(/\bspace\b/g, ' ')
-    .split('+')
-    .map((key) => key.trim() || ' ');
+    .split(/\s+/)
+    .map((step) => step.split('+').map((key) => (key === 'space' ? ' ' : key)));
 }
 
 export function useKeyboardShortcuts() {
@@ -80,14 +181,16 @@ export function useKeyboardShortcuts() {
     id: string,
     combination: string | string[],
     callback: ShortcutCallback,
-    options: Partial<Pick<Shortcut, 'description' | 'preventDefault'>> = {},
+    options: Partial<Pick<Shortcut, 'description' | 'group' | 'preventDefault'>> = {},
   ) {
-    const keys = Array.isArray(combination) ? combination : parseKeyCombination(combination);
+    // An array is one step spelled out ('ctrl', 's'); a string may be a chord.
+    const steps = Array.isArray(combination) ? [combination] : parseKeyCombination(combination);
 
     registry.set(id, {
-      keys,
+      steps,
       callback,
       description: options.description,
+      group: options.group,
       preventDefault: options.preventDefault !== false,
     });
     ownedIds.add(id);
@@ -100,13 +203,14 @@ export function useKeyboardShortcuts() {
     version.value++;
   }
 
-  function getAllShortcuts(): { id: string; keys: string; description?: string }[] {
+  function getAllShortcuts(): ShortcutListing[] {
     // Read version so Vue tracks this as a reactive dependency
     void version.value;
     return Array.from(registry.entries()).map(([id, shortcut]) => ({
       id,
-      keys: formatKeyCombination(shortcut.keys),
+      keys: formatKeyCombination(shortcut.steps),
       description: shortcut.description,
+      group: shortcut.group,
     }));
   }
 
@@ -127,6 +231,7 @@ export function useKeyboardShortcuts() {
     listenerCount--;
     if (listenerCount === 0) {
       window.removeEventListener('keydown', handleKeyDown);
+      clearPending();
     }
   });
 

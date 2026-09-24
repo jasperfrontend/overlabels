@@ -1,12 +1,34 @@
 <script setup lang="ts">
-import { onBeforeUnmount, watch } from 'vue';
+import { computed, onBeforeUnmount, watch } from 'vue';
+import type { ShortcutListing } from '@/composables/useKeyboardShortcuts';
 
 const props = defineProps<{
   show: boolean;
-  shortcuts: Array<{ id: string; description?: string; keys: string }>;
+  shortcuts: ShortcutListing[];
 }>();
 
 const emit = defineEmits<{ close: [] }>();
+
+// One section per group, in the order groups were first registered. Shortcuts
+// with no group (the app-wide ones and whatever the current page adds) share
+// the first section, so a page with no chords still reads as one plain grid.
+const sections = computed(() => {
+  const ordered: { name: string; shortcuts: ShortcutListing[] }[] = [];
+  const byName = new Map<string, ShortcutListing[]>();
+
+  for (const shortcut of props.shortcuts) {
+    const name = shortcut.group ?? '';
+    let list = byName.get(name);
+    if (!list) {
+      list = [];
+      byName.set(name, list);
+      ordered.push({ name, shortcuts: list });
+    }
+    list.push(shortcut);
+  }
+
+  return ordered.sort((a, b) => (a.name === '' ? -1 : b.name === '' ? 1 : 0));
+});
 
 function handleEsc(event: KeyboardEvent) {
   if (event.key === 'Escape') {
@@ -51,10 +73,19 @@ onBeforeUnmount(() => {
         </button>
       </div>
       <div class="flex-1 overflow-y-auto px-6 py-4">
-        <div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-          <div v-for="shortcut in shortcuts" :key="shortcut.id" class="flex items-center justify-between gap-3 rounded-md border p-2 text-sm">
-            <span class="truncate">{{ shortcut.description ?? shortcut.id }}</span>
-            <kbd class="shrink-0 rounded bg-sidebar px-2 py-1 font-mono text-xs">{{ shortcut.keys }}</kbd>
+        <div v-for="section in sections" :key="section.name" class="not-first:mt-5">
+          <h4 v-if="sections.length > 1" class="mb-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            {{ section.name || 'Shortcuts' }}
+          </h4>
+          <div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+            <div
+              v-for="shortcut in section.shortcuts"
+              :key="shortcut.id"
+              class="flex items-center justify-between gap-3 rounded-md border p-2 text-sm"
+            >
+              <span class="truncate">{{ shortcut.description ?? shortcut.id }}</span>
+              <kbd class="shrink-0 rounded bg-sidebar px-2 py-1 font-mono text-xs">{{ shortcut.keys }}</kbd>
+            </div>
           </div>
         </div>
         <p class="mt-4 text-xs text-muted-foreground">Press <kbd class="rounded bg-sidebar px-1">Ctrl+K</kbd> to toggle this dialog.</p>

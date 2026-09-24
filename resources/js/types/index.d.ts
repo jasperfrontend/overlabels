@@ -16,6 +16,8 @@ export interface NavItem {
   icon?: LucideIcon;
   isActive?: boolean;
   target?: string;
+  // Second key of the "G then <key>" chord that navigates here, when it has one.
+  shortcut?: string;
 }
 
 export interface FlashMessage {

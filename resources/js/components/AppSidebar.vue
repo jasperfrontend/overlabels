@@ -2,8 +2,8 @@
 import NavMain from '@/components/NavMain.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { usePage } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import {
   Activity,
   Bell,
@@ -33,7 +33,7 @@ import {
   SlidersHorizontal,
   Users,
 } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import AppLogo from './AppLogo.vue';
 import type { AppPageProps } from '@/types';
 
@@ -49,21 +49,23 @@ const commitHash = __COMMIT_HASH__;
 const mainNavItems = computed<NavItem[]>(() =>
   user.value
     ? [
-        { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers },
-        { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell },
-        { title: 'Blocks', href: '/templates?filter=mine&type=block', icon: Blocks },
-        { title: 'Lists', href: route('lists.index'), icon: ListIcon },
-        { title: 'Kits', href: route('kits.index'), icon: LayoutGrid },
-        { title: 'Products', href: '/products', icon: Package },
+        { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers, shortcut: 'o' },
+        { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell, shortcut: 'a' },
+        { title: 'Blocks', href: '/templates?filter=mine&type=block', icon: Blocks, shortcut: 'b' },
+        { title: 'Lists', href: route('lists.index'), icon: ListIcon, shortcut: 'l' },
+        { title: 'Kits', href: route('kits.index'), icon: LayoutGrid, shortcut: 'k' },
+        { title: 'Products', href: '/products', icon: Package, shortcut: 'p' },
       ]
     : [],
 );
 const alertsNavItems = computed<NavItem[]>(() =>
   user.value
     ? [
-        { title: 'Recent', href: route('dashboard.recents'), icon: Activity },
-        { title: 'Streams', href: route('dashboard.stream-sessions'), icon: Radio },
-        { title: 'Routes', href: route('dashboard.gps-sessions'), icon: MapPin },
+        // Reference holds the R (it is Alt+R already), so Recent takes E for
+        // "recent events" and Routes its second letter.
+        { title: 'Recent', href: route('dashboard.recents'), icon: Activity, shortcut: 'e' },
+        { title: 'Streams', href: route('dashboard.stream-sessions'), icon: Radio, shortcut: 's' },
+        { title: 'Routes', href: route('dashboard.gps-sessions'), icon: MapPin, shortcut: 't' },
       ]
     : [],
 );
@@ -71,12 +73,39 @@ const alertsNavItems = computed<NavItem[]>(() =>
 const learnNavItems = computed<NavItem[]>(() =>
   user.value
     ? [
-        { title: 'Help', href: route('help'), target: '_blank', icon: BookOpen },
-        { title: 'Reference', href: route('help.reference'), target: '_blank', icon: Brackets },
-        { title: 'Updates', href: route('updates.index'), icon: Newspaper },
+        { title: 'Help', href: route('help'), target: '_blank', icon: BookOpen, shortcut: 'h' },
+        // Alt+R opens the reference search; G then R opens the reference itself.
+        { title: 'Reference', href: route('help.reference'), target: '_blank', icon: Brackets, shortcut: 'r' },
+        { title: 'Updates', href: route('updates.index'), icon: Newspaper, shortcut: 'd' },
       ]
     : [],
 );
+
+// "G then <letter>" jumps to a main navigation page, the Gmail / GitHub /
+// Linear convention. The letter lives on the nav item so the chord and the
+// destination cannot drift apart. Registered here rather than in the layout
+// because the sidebar is where the destinations are declared.
+const { register } = useKeyboardShortcuts();
+
+onMounted(() => {
+  const items = [...mainNavItems.value, ...alertsNavItems.value, ...learnNavItems.value];
+  for (const item of items) {
+    if (!item.shortcut) continue;
+    register(
+      `go-to-${item.title.toLowerCase()}`,
+      `g ${item.shortcut}`,
+      () => {
+        // Same behaviour as clicking the item: the two Learn pages open in a new tab.
+        if (item.target === '_blank') {
+          window.open(item.href, '_blank', 'noopener,noreferrer');
+        } else {
+          router.visit(item.href);
+        }
+      },
+      { description: item.title, group: 'Go to' },
+    );
+  }
+});
 
 const helpNavItems: NavItem[] = [
   { title: 'Help', href: '/help', icon: BookOpen },
