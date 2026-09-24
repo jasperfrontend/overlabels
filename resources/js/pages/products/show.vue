@@ -7,15 +7,13 @@ import { serviceLabel } from '@/utils/services';
 import { urlWithTab } from '@/composables/useAddressableTabs';
 import { useConfirm } from '@/composables/useConfirm';
 import { withLastMileHint } from '@/composables/useUiMode';
-import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
 import ServiceLogo from '@/components/ServiceLogo.vue';
 import { useEventColors } from '@/composables/useEventColors';
 import ProductsLayout, { type ProductCategory } from '@/layouts/ProductsLayout.vue';
 import ProductServices from '@/components/ProductServices.vue';
 import type { ProductService } from '@/components/ProductServices.vue';
-import RekaToast from '@/components/RekaToast.vue';
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 type WireState = 'satisfied' | 'missing' | 'not_applicable';
 
@@ -129,23 +127,6 @@ const page = usePage<AppPageProps>();
 const isAuthed = computed(() => !!page.props.auth?.user);
 const { eventTypeDotClass } = useEventColors();
 const installError = computed(() => (page.props.errors as Record<string, string> | undefined)?.install);
-
-// Same flash-to-toast wiring as AppLayout. This page renders outside it, so
-// without this an install or uninstall only swapped a button label.
-const flashMessage = ref<string | null>(null);
-const flashType = ref<'info' | 'success' | 'warning' | 'error'>('info');
-const flashKey = ref(0);
-
-watch(
-  () => page.props.flash,
-  (flash) => {
-    if (!flash?.message) return;
-    flashMessage.value = flash.message;
-    flashType.value = flash.type || 'info';
-    flashKey.value++;
-  },
-  { immediate: true },
-);
 
 // Only the wires that apply to this product are steps. A wire that does not
 // apply is not a step someone skipped, so it is not shown at all here: the
@@ -290,10 +271,6 @@ async function uninstall(): Promise<void> {
     <meta name="description" :content="product.description" />
   </Head>
 
-  <!-- This page renders outside AppLayout, where the app's single ConfirmDialog
-       normally lives, so the uninstall confirm needs its own mount. -->
-  <ConfirmDialog />
-  <RekaToast v-if="flashMessage" :key="flashKey" :message="flashMessage" :type="flashType" @dismiss="flashMessage = null" />
   <ProductsLayout
     :categories="categories"
     :category="product.category"

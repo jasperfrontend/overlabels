@@ -2,11 +2,10 @@
 import { computed, type Component } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { BellRing, Blocks, Gamepad2, LayoutGrid, PackageCheck } from '@lucide/vue';
-import Breadcrumbs from '@/components/Breadcrumbs.vue';
-import DarkModeToggle from '@/components/DarkModeToggle.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from '@/components/ui/navigation-menu';
-import type { AppPageProps } from '@/types';
+import type { AppPageProps, BreadcrumbItemType } from '@/types';
 
 export interface ProductCategory {
   key: string;
@@ -15,14 +14,16 @@ export interface ProductCategory {
   count: number;
 }
 
-// The shell every /products page sits in: brand bar, the Products heading,
-// a breadcrumb that always starts at Products, and the category sidebar.
-// Renders outside AppLayout so a visitor without an account can read it.
-// The sidebar links always lead to the listing, like a shop's category
-// links do; a product page marks its own category as the place it belongs.
+// The shell every /products page sits in: the Products heading, a breadcrumb
+// that always starts at Products, and the category rail. It renders inside
+// AppLayout like every other page in the main navigation; the app shell has
+// its signed-out branches (a Log in button in place of the account menu), so
+// a visitor without an account still reads it, the way /updates works.
+// The rail links always lead to the listing, like a shop's category links
+// do; a product page marks its own category as the place it belongs.
 const props = defineProps<{
   categories: ProductCategory[];
-  // The active sidebar entry: a category key, 'installed', or null for Show all.
+  // The active rail entry: a category key, 'installed', or null for Show all.
   category: string | null;
   // Null for a visitor, who has no Installed link.
   installedCount: number | null;
@@ -31,16 +32,19 @@ const props = defineProps<{
   // A product's page wears the product at the top: its own name and its own
   // description, in place of the catalogue's heading and lead. The listing
   // passes neither, so the shelf copy below is what it keeps. The name is
-  // not a link back to /products - the breadcrumb under it already is one.
+  // not a link back to /products - the breadcrumb already is one.
   heading?: string;
   lead?: string;
 }>();
 
 const page = usePage<AppPageProps>();
-const isAuthed = computed(() => !!page.props.auth?.user);
-const loginHref = computed(() => `/login?redirect_to=${encodeURIComponent(page.url)}`);
 
-const breadcrumbs = computed(() => [{ title: 'Products', href: '/products' }, ...(props.crumb ? [{ title: props.crumb }] : [])]);
+// The app header draws the breadcrumb. The current page's crumb points at
+// itself only to satisfy the type; the component renders the last one as text.
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
+  { title: 'Products', href: '/products' },
+  ...(props.crumb ? [{ title: props.crumb, href: page.url }] : []),
+]);
 
 // One icon per shelf, keyed like CATEGORIES on the server. A shelf added
 // there without one here gets the generic blocks, not a blank.
@@ -94,21 +98,8 @@ const isActive = (key: string) => (props.category === null ? key === 'all' : key
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-foreground">
-    <div class="mx-auto max-w-7xl p-4 lg:p-6">
-      <div class="mb-6 flex items-center justify-between">
-        <a href="/" class="flex cursor-pointer items-center gap-2 text-sm font-bold tracking-tight text-foreground hover:text-violet-400">
-          <img src="/favicon-light.svg" alt="" class="h-6 w-6 dark:hidden" />
-          <img src="/favicon.png" alt="" class="hidden h-6 w-6 dark:block" />
-          Overlabels
-        </a>
-        <div class="flex items-center gap-2">
-          <Link v-if="isAuthed" :href="route('dashboard.index')" class="text-sm text-violet-400 hover:underline">Dashboard</Link>
-          <a v-else :href="loginHref" class="text-sm text-violet-400 hover:underline">Log in</a>
-          <DarkModeToggle />
-        </div>
-      </div>
-
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <div class="p-4">
       <header class="mb-6 flex flex-col gap-2">
         <div class="flex items-center gap-2">
           <ProductBadge
@@ -127,10 +118,6 @@ const isActive = (key: string) => (props.category === null ? key === 'all' : key
           }}
         </p>
       </header>
-
-      <!-- Always starts at Products, on an alert's page too: every listed
-           thing is a product, whichever shelf it sits on. -->
-      <Breadcrumbs :breadcrumbs="breadcrumbs" class="mb-6" />
 
       <div class="lg:flex lg:gap-8">
         <!-- A row of links on a phone, a column from lg up, with the divider
@@ -174,10 +161,10 @@ const isActive = (key: string) => (props.category === null ? key === 'all' : key
           </NavigationMenu>
         </aside>
 
-        <main class="min-w-0 flex-1">
+        <div class="min-w-0 flex-1">
           <slot />
-        </main>
+        </div>
       </div>
     </div>
-  </div>
+  </AppLayout>
 </template>
