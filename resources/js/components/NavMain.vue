@@ -4,16 +4,26 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ExternalLink } from '@lucide/vue';
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     label: string | null | undefined;
     items: NavItem[];
     // Show each item's chord letter as a key tip, the way Word shows KeyTips
     // once Alt is pressed. The sidebar turns this on while G is armed.
     keyTips?: boolean;
+    // The letter of the chord that just fired. Its tip alone stays up, with a
+    // bounce, while the page it points at loads - the confirmation that the
+    // keystroke landed. Independent of `keyTips`, which drops the moment the
+    // chord completes.
+    confirmed?: string | null;
   }>(),
-  { keyTips: false },
+  { keyTips: false, confirmed: null },
 );
+
+function showTip(item: NavItem): boolean {
+  if (!item.shortcut) return false;
+  return props.keyTips || props.confirmed === item.shortcut;
+}
 
 const page = usePage();
 
@@ -60,13 +70,17 @@ const isActive = (href: string): boolean => {
             <ExternalLink
               class="ml-auto opacity-0 transition-opacity group-hover/nav-link:opacity-100 group-focus-visible/nav-link:opacity-100 group-data-[collapsible=icon]:hidden"
             />
-            <kbd v-if="keyTips && item.shortcut" :class="keyTipClass" aria-hidden="true">{{ item.shortcut.toUpperCase() }}</kbd>
+            <kbd v-if="showTip(item)" :class="[keyTipClass, { 'key-tip-confirm': confirmed === item.shortcut }]" aria-hidden="true">{{
+              item.shortcut!.toUpperCase()
+            }}</kbd>
           </Link>
           <Link v-else :href="item.href">
             <component :is="item.icon" />
             <!-- `truncate` spelled out for the same reason as above: the key tip can follow it. -->
             <span class="truncate">{{ item.title }}</span>
-            <kbd v-if="keyTips && item.shortcut" :class="[keyTipClass, 'ml-auto']" aria-hidden="true">{{ item.shortcut.toUpperCase() }}</kbd>
+            <kbd v-if="showTip(item)" :class="[keyTipClass, 'ml-auto', { 'key-tip-confirm': confirmed === item.shortcut }]" aria-hidden="true">{{
+              item.shortcut!.toUpperCase()
+            }}</kbd>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>

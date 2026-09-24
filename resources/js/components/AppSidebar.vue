@@ -33,7 +33,7 @@ import {
   SlidersHorizontal,
   Users,
 } from '@lucide/vue';
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import AppLogo from './AppLogo.vue';
 import type { AppPageProps } from '@/types';
 
@@ -91,6 +91,28 @@ const { register, armedPrefix } = useKeyboardShortcuts();
 // prefix a page might arm later.
 const gArmed = computed(() => armedPrefix.value.length === 1 && armedPrefix.value[0].length === 1 && armedPrefix.value[0][0] === 'g');
 
+// The letter of the chord that just fired. Completing a chord clears the armed
+// prefix, so every tip would vanish at the exact moment the user wants to see
+// that theirs landed; this keeps that one tip up, bouncing, until the visit
+// it started has finished. A bounded timer backs the visit callbacks so a
+// tip can never stick.
+const confirmedShortcut = ref<string | null>(null);
+let confirmTimer: ReturnType<typeof setTimeout> | null = null;
+const CONFIRM_FALLBACK_MS = 4000;
+const CONFIRM_NEW_TAB_MS = 900;
+
+function holdKeyTip(letter: string, ms: number): () => void {
+  confirmedShortcut.value = letter;
+  if (confirmTimer !== null) clearTimeout(confirmTimer);
+  const done = () => {
+    if (confirmTimer !== null) clearTimeout(confirmTimer);
+    confirmTimer = null;
+    confirmedShortcut.value = null;
+  };
+  confirmTimer = setTimeout(done, ms);
+  return done;
+}
+
 onMounted(() => {
   const items = [...mainNavItems.value, ...alertsNavItems.value, ...learnNavItems.value];
   for (const item of items) {
@@ -99,11 +121,14 @@ onMounted(() => {
       `go-to-${item.title.toLowerCase()}`,
       `g ${item.shortcut}`,
       () => {
-        // Same behaviour as clicking the item: the two Learn pages open in a new tab.
+        // Same behaviour as clicking the item: the two Learn pages open in a
+        // new tab, so there is no visit to wait on - just the bounce.
         if (item.target === '_blank') {
+          holdKeyTip(item.shortcut!, CONFIRM_NEW_TAB_MS);
           window.open(item.href, '_blank', 'noopener,noreferrer');
         } else {
-          router.visit(item.href);
+          const done = holdKeyTip(item.shortcut!, CONFIRM_FALLBACK_MS);
+          router.visit(item.href, { onFinish: done, onCancel: done });
         }
       },
       { description: item.title, group: 'Go to' },
@@ -173,9 +198,9 @@ const adminNavItems = computed<NavItem[]>(() => {
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" :key-tips="gArmed" />
-      <NavMain v-if="user && alertsNavItems.length > 0" label="My events" :items="alertsNavItems" :key-tips="gArmed" />
-      <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" :key-tips="gArmed" />
+      <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" :key-tips="gArmed" :confirmed="confirmedShortcut" />
+      <NavMain v-if="user && alertsNavItems.length > 0" label="My events" :items="alertsNavItems" :key-tips="gArmed" :confirmed="confirmedShortcut" />
+      <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" :key-tips="gArmed" :confirmed="confirmedShortcut" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
       <NavMain v-if="!user" label="Learn" :items="helpNavItems" />
       <div v-if="user" class="px-4 pt-2 text-[11px] group-data-[collapsible=icon]:hidden">
