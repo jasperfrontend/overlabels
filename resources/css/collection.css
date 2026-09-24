@@ -26,9 +26,8 @@
    * these below `.collection-row` - they win by source order, not specificity.
    */
   .collection-row-destructive {
-    @apply border-l-amber-500/70;
-    @apply hover:border-l-amber-400;
-    @apply active:border-l-amber-500 active:from-amber-400/20;
+    @apply hover:border-l-rose-400;
+    @apply active:border-l-rose-500 active:from-rose-400/20;
   }
 
   /**
@@ -42,12 +41,12 @@
     @apply transition-colors;
   }
   .collection-row-destructive .collection-row-state {
-    @apply text-amber-500/70;
+    @apply text-rose-400/70;
   }
   .collection-row-destructive:hover .collection-row-state {
-    @apply text-amber-400;
+    @apply text-rose-400;
   }
   .collection-row-destructive:active .collection-row-state {
-    @apply text-amber-500;
+    @apply text-rose-500;
   }
 }

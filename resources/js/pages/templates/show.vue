@@ -25,6 +25,7 @@ import {
   MoreVertical,
   SlidersHorizontalIcon,
   LightbulbIcon,
+  LockKeyholeOpen,
   SquarePenIcon,
   FileCode2Icon,
   CodeIcon,
@@ -32,7 +33,7 @@ import {
   TargetIcon,
   ImageIcon,
   Zap,
-  VideoIcon,
+  VideoIcon, HatGlasses
 } from '@lucide/vue';
 import TabStrip, { type TabStripItem } from '@/components/TabStrip.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
@@ -43,7 +44,6 @@ import { useTemplateActions } from '@/composables/useTemplateActions';
 import { takeSaveNotice } from '@/utils/saveNotice';
 import { captureListContext } from '@/composables/useListContext';
 import { VisuallyHidden } from 'reka-ui';
-import { Badge } from '@/components/ui/badge';
 
 const showPreview = ref(false);
 
@@ -271,10 +271,19 @@ const breadcrumbs: BreadcrumbItem[] = [
             </template>
 
             <template #afterTitle>
-              <Badge variant="default">
-                {{ template?.is_public ? 'Public' : 'Private' }}
-              </Badge>
+              <div
+                :class="template?.is_public ? '' : 'collection-row-destructive'"
+              >
+                <span v-if="template?.is_public" class="ml-3 collection-row-state text-xs flex gap-1 align-middle">
+                  <LockKeyholeOpen class="size-4" />
+                  public
+                </span>
 
+                <span v-else class="ml-3 collection-row-state text-xs flex gap-1 align-middle">
+                  <HatGlasses class="size-4" />
+                  private
+                </span>
+              </div>
               <!-- Which event fires this alert - the detail page never said. -->
               <span v-if="boundEvent" class="text-sm" :class="eventTypeDotClass(boundEvent.eventType, boundEvent.source)">
                 {{ eventLabel(boundEvent) }}

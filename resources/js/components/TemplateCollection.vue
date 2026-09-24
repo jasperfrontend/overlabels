@@ -6,7 +6,7 @@
  */
 import { Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import { Check, ChevronRight, ExternalLinkIcon, Eye, GitFork, LinkIcon, MoreVertical, PencilIcon, Trash2 } from '@lucide/vue';
+import { Check, ChevronRight, ExternalLinkIcon, HatGlasses, Eye, GitFork, LinkIcon, MoreVertical, PencilIcon, Trash2 } from '@lucide/vue';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CollectionList from '@/components/CollectionList.vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
@@ -126,7 +126,10 @@ async function handleDelete(t: OverlayTemplate) {
         <div class="flex items-center gap-3">
           <span class="font-medium">{{ t.name }}</span>
           <!-- Text twin of the red accent bar, so private isn't color-only -->
-          <span v-if="!t.is_public" class="collection-row-state text-xs">private</span>
+          <span v-if="!t.is_public" class="collection-row-state text-xs flex gap-1 align-middle">
+            <HatGlasses class="size-4" />
+            private
+          </span>
         </div>
 
         <span v-if="t.description" class="max-w-[90%] truncate text-xs text-muted-foreground">
