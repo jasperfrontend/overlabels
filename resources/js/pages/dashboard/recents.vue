@@ -527,9 +527,7 @@ const breadcrumbs = [
                 >
                   {{ saveLabel }}
                 </button>
-                <a v-if="selectedList" :href="`/lists/${selectedList.slug}`" class="cursor-pointer text-sm text-primary underline">
-                  View list
-                </a>
+                <a v-if="selectedList" :href="`/lists/${selectedList.slug}`" class="cursor-pointer text-sm text-primary underline"> View list </a>
                 <span v-if="feedSaved && !feedDirty" class="flex items-center gap-1 text-sm text-green-500"> <Check class="h-4 w-4" /> Saved </span>
                 <span v-else-if="selectedList && feedDirty" class="text-sm text-amber-500">Unsaved changes</span>
               </div>
