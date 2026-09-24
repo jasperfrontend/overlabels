@@ -66,11 +66,20 @@ const formatDate = (date: string) => {
 
 <template>
   <Card class="group relative flex h-full flex-col overflow-hidden bg-background pt-0">
+    <!-- The card is the link, the same stretched-link shape as a CollectionList
+         row: one Tab stop per kit, Enter views it, middle-click and ctrl-click
+         work. The buttons below sit above it (`relative z-10`). -->
+    <!-- The ring is drawn inset because the card clips overflow, which would
+         swallow a ring drawn outside the box. -->
+    <Link
+      :href="`/kits/${kit.id}`"
+      :aria-label="`View kit: ${kit.title}`"
+      class="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-violet-400"
+    />
+
     <!-- Thumbnail -->
     <div v-if="kit.thumbnail_url" class="aspect-video w-full overflow-hidden rounded-sm rounded-b-none bg-background">
-      <Link :href="`/kits/${kit.id}`">
-        <img :src="kit.thumbnail_url" :alt="kit.title" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-      </Link>
+      <img :src="kit.thumbnail_url" :alt="kit.title" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
     </div>
     <div v-else class="flex aspect-video w-full items-center justify-center">
       <Package class="h-12 w-12 text-primary/40" />
@@ -80,13 +89,7 @@ const formatDate = (date: string) => {
       <div class="space-y-2">
         <div class="flex items-start justify-between gap-2">
           <CardTitle class="min-w-0 flex-1 text-base">
-            <Link
-              :href="`/kits/${kit.id}`"
-              class="block truncate transition-colors hover:text-accent-foreground/80"
-              :title="`View kit: ${kit.title}`"
-            >
-              {{ kit.title }}
-            </Link>
+            <span class="block truncate transition-colors group-hover:text-accent-foreground/80">{{ kit.title }}</span>
           </CardTitle>
           <div class="flex shrink-0 items-center gap-2">
             <div
@@ -136,7 +139,7 @@ const formatDate = (date: string) => {
         </div>
       </div>
 
-      <div class="ml-auto flex gap-2 pt-2">
+      <div class="relative z-10 ml-auto flex gap-2 pt-2">
         <Link :href="`/kits/${kit.id}`" class="btn btn-sm btn-primary">
           <Eye class="size-4" />
         </Link>
