@@ -126,7 +126,7 @@ async function handleDelete(t: OverlayTemplate) {
         <div class="flex items-center gap-3">
           <span class="font-medium">{{ t.name }}</span>
           <!-- Text twin of the red accent bar, so private isn't color-only -->
-          <span v-if="!t.is_public" class="collection-row-state text-xs flex gap-1 align-middle">
+          <span v-if="!t.is_public" class="collection-row-state flex gap-1 align-middle text-xs">
             <HatGlasses class="size-4" />
             private
           </span>

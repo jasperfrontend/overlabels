@@ -33,7 +33,8 @@ import {
   TargetIcon,
   ImageIcon,
   Zap,
-  VideoIcon, HatGlasses
+  VideoIcon,
+  HatGlasses,
 } from '@lucide/vue';
 import TabStrip, { type TabStripItem } from '@/components/TabStrip.vue';
 import TemplateMeta from '@/components/TemplateMeta.vue';
@@ -271,15 +272,13 @@ const breadcrumbs: BreadcrumbItem[] = [
             </template>
 
             <template #afterTitle>
-              <div
-                :class="template?.is_public ? '' : 'collection-row-destructive'"
-              >
-                <span v-if="template?.is_public" class="ml-3 collection-row-state text-xs flex gap-1 align-middle">
+              <div :class="template?.is_public ? '' : 'collection-row-destructive'">
+                <span v-if="template?.is_public" class="collection-row-state ml-3 flex gap-1 align-middle text-xs">
                   <LockKeyholeOpen class="size-4" />
                   public
                 </span>
 
-                <span v-else class="ml-3 collection-row-state text-xs flex gap-1 align-middle">
+                <span v-else class="collection-row-state ml-3 flex gap-1 align-middle text-xs">
                   <HatGlasses class="size-4" />
                   private
                 </span>
