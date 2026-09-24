@@ -38,7 +38,7 @@
 - **C5** [test] The whitespace, empty-line and duplicate preservation tests in `ListControllerTest` post to `/lists` and `/lists/{list}` and pass, which exercises C4 on the new prefix.
 - **C6** [code] `ListActionService` returns the reply `no list named '<slug>'. Check your lists at /lists.` when the slug is unknown.
 - **C7** [code] `OverlayShareService` writes `create one with a matching slug under /lists.` into an exported overlay's Lists note.
-- **C8** [code] No file under `app/`, `routes/`, `bootstrap/`, `resources/js/`, `resources/help/` or `tests/` contains the string `/dashboard/lists`.
+- **C8** [code] The string `/dashboard/lists` occurs under `app/`, `routes/`, `bootstrap/`, `resources/js/`, `resources/help/` and `tests/` only in the two redirects in C2 and the test in C3.
 - **C9** [code] `ListController::index()` and `show()` still render the Inertia components `dashboard/lists/index` and `dashboard/lists/show`; the page files under `resources/js/pages/dashboard/lists/` did not move.
 
 ### Unchanged
