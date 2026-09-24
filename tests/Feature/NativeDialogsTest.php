@@ -100,6 +100,18 @@ it('mounts exactly one ConfirmDialog in the app layout', function () {
 it('mounts ConfirmDialog on pages that confirm outside the app layout', function () {
     $missing = [];
 
+    // A page may sit inside a layout of its own that renders AppLayout in
+    // turn (ProductsLayout does); the dialog reaches that page too. AppLayout
+    // itself is in this list, since it renders the sidebar layout under the
+    // same name.
+    $wrappingLayouts = [];
+    foreach (glob(resource_path('js/layouts/*.vue')) as $file) {
+        if (str_contains(file_get_contents($file), '<AppLayout')) {
+            $wrappingLayouts[] = pathinfo($file, PATHINFO_FILENAME);
+        }
+    }
+    expect($wrappingLayouts)->toContain('AppLayout');
+
     foreach (frontendSources() as $path => $contents) {
         if (! str_starts_with($path, 'pages/')) {
             continue;
@@ -107,7 +119,7 @@ it('mounts ConfirmDialog on pages that confirm outside the app layout', function
         if (! preg_match('/await\s+(confirm|alert)\(/', $contents)) {
             continue;
         }
-        if (str_contains($contents, 'AppLayout')) {
+        if (array_any($wrappingLayouts, fn (string $layout) => str_contains($contents, $layout))) {
             continue;
         }
         if (str_contains($contents, '<ConfirmDialog />')) {
