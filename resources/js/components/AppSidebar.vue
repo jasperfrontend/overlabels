@@ -85,7 +85,11 @@ const learnNavItems = computed<NavItem[]>(() =>
 // Linear convention. The letter lives on the nav item so the chord and the
 // destination cannot drift apart. Registered here rather than in the layout
 // because the sidebar is where the destinations are declared.
-const { register } = useKeyboardShortcuts();
+const { register, armedPrefix } = useKeyboardShortcuts();
+
+// Key tips show only while a bare G waits for its letter, not for any other
+// prefix a page might arm later.
+const gArmed = computed(() => armedPrefix.value.length === 1 && armedPrefix.value[0].length === 1 && armedPrefix.value[0][0] === 'g');
 
 onMounted(() => {
   const items = [...mainNavItems.value, ...alertsNavItems.value, ...learnNavItems.value];
@@ -169,9 +173,9 @@ const adminNavItems = computed<NavItem[]>(() => {
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" />
-      <NavMain v-if="user && alertsNavItems.length > 0" label="My events" :items="alertsNavItems" />
-      <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" />
+      <NavMain v-if="user && mainNavItems.length > 0" label="My stuff" :items="mainNavItems" :key-tips="gArmed" />
+      <NavMain v-if="user && alertsNavItems.length > 0" label="My events" :items="alertsNavItems" :key-tips="gArmed" />
+      <NavMain v-if="user && learnNavItems.length > 0" label="Learn" :items="learnNavItems" :key-tips="gArmed" />
       <NavMain v-if="isAdmin" label="Admin" :items="adminNavItems" />
       <NavMain v-if="!user" label="Learn" :items="helpNavItems" />
       <div v-if="user" class="px-4 pt-2 text-[11px] group-data-[collapsible=icon]:hidden">

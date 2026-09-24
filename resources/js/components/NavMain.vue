@@ -4,12 +4,24 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ExternalLink } from '@lucide/vue';
 
-defineProps<{
-  label: string | null | undefined;
-  items: NavItem[];
-}>();
+withDefaults(
+  defineProps<{
+    label: string | null | undefined;
+    items: NavItem[];
+    // Show each item's chord letter as a key tip, the way Word shows KeyTips
+    // once Alt is pressed. The sidebar turns this on while G is armed.
+    keyTips?: boolean;
+  }>(),
+  { keyTips: false },
+);
 
 const page = usePage();
+
+// A filled square the size of a key cap. Dark text on violet reads on both the
+// plain row and the active row (which is itself violet), and the shadow lifts
+// it off the active row where the two violets sit closest.
+const keyTipClass =
+  'flex size-5 shrink-0 items-center justify-center rounded-sm bg-violet-400 font-mono text-[11px] leading-none font-semibold text-violet-950 shadow-sm dark:bg-violet-300 group-data-[collapsible=icon]:hidden';
 
 const isActive = (href: string): boolean => {
   let itemPath: string;
@@ -48,10 +60,13 @@ const isActive = (href: string): boolean => {
             <ExternalLink
               class="ml-auto opacity-0 transition-opacity group-hover/nav-link:opacity-100 group-focus-visible/nav-link:opacity-100 group-data-[collapsible=icon]:hidden"
             />
+            <kbd v-if="keyTips && item.shortcut" :class="keyTipClass" aria-hidden="true">{{ item.shortcut.toUpperCase() }}</kbd>
           </Link>
           <Link v-else :href="item.href">
             <component :is="item.icon" />
-            <span>{{ item.title }}</span>
+            <!-- `truncate` spelled out for the same reason as above: the key tip can follow it. -->
+            <span class="truncate">{{ item.title }}</span>
+            <kbd v-if="keyTips && item.shortcut" :class="[keyTipClass, 'ml-auto']" aria-hidden="true">{{ item.shortcut.toUpperCase() }}</kbd>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>

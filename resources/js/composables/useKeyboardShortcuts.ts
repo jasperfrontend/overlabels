@@ -1,5 +1,5 @@
 import { isTextEntryTarget } from '@/utils/isTextEntryTarget';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, readonly, ref } from 'vue';
 
 type ShortcutCallback = (event: KeyboardEvent) => void;
 
@@ -21,10 +21,11 @@ export interface ShortcutListing {
   group?: string;
 }
 
-// How long a chord prefix stays armed. Gmail and GitHub both give roughly this
-// much; long enough to find the second key, short enough that a stray G does
-// not swallow a keystroke seconds later.
-export const CHORD_TIMEOUT_MS = 1500;
+// How long a chord prefix stays armed. Gmail and GitHub give about 1.5 s; this
+// is two seconds longer because the sidebar shows key tips while G is armed,
+// and the user needs time to read them and pick. Still short enough that a
+// stray G does not swallow a keystroke much later.
+export const CHORD_TIMEOUT_MS = 3500;
 
 const MODIFIER_KEYS = ['ctrl', 'alt', 'shift', 'meta'];
 
@@ -35,8 +36,9 @@ const version = ref(0);
 let listenerCount = 0;
 
 // The chord steps pressed so far, as normalised key lists. Empty when no
-// prefix is armed.
-let pending: string[][] = [];
+// prefix is armed. Reactive so the UI can show key tips while a prefix waits
+// for its second key (the sidebar does, for G).
+const pending = ref<string[][]>([]);
 let pendingTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function pressedKeys(event: Pick<KeyboardEvent, 'ctrlKey' | 'altKey' | 'shiftKey' | 'metaKey' | 'key'>): string[] {
@@ -86,7 +88,7 @@ export function resolveKeystroke(shortcuts: Iterable<Shortcut>, prefix: string[]
 }
 
 function clearPending(): void {
-  pending = [];
+  pending.value = [];
   if (pendingTimer !== null) {
     clearTimeout(pendingTimer);
     pendingTimer = null;
@@ -94,7 +96,7 @@ function clearPending(): void {
 }
 
 function armPending(step: string[]): void {
-  pending = [...pending, step];
+  pending.value = [...pending.value, step];
   if (pendingTimer !== null) clearTimeout(pendingTimer);
   pendingTimer = setTimeout(clearPending, CHORD_TIMEOUT_MS);
 }
@@ -116,8 +118,8 @@ function handleKeyDown(event: KeyboardEvent): void {
   if (inInput || inDialog) clearPending();
 
   const pressed = pressedKeys(event);
-  const wasPending = pending.length > 0;
-  const resolution = resolveKeystroke(registry.values(), pending, pressed);
+  const wasPending = pending.value.length > 0;
+  const resolution = resolveKeystroke(registry.values(), pending.value, pressed);
 
   if (resolution.kind === 'fire') {
     clearPending();
@@ -235,5 +237,5 @@ export function useKeyboardShortcuts() {
     }
   });
 
-  return { register, unregister, getAllShortcuts };
+  return { register, unregister, getAllShortcuts, armedPrefix: readonly(pending) };
 }
