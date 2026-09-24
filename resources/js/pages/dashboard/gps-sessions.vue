@@ -118,7 +118,7 @@ function toggleMap(sessionId: string) {
         <p>So yeah, you're out of luck until Google changes their store policies - which they won't.</p>
       </div>
 
-      <div class="space-y-4">
+      <div class="space-y-4" data-tab-start>
         <div v-for="session in sessions" :key="session.session_id" class="space-y-3 border border-sidebar-border bg-card p-4">
           <!-- Header: date + status -->
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

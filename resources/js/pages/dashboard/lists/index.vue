@@ -356,7 +356,7 @@ onUnmounted(() => {
             message="Create one above to use it across your overlays."
           />
 
-          <CollectionList v-else :items="filteredLists" :item-key="rowKey" :href="rowHref" :label="rowLabel" :row-class="rowClass">
+          <CollectionList v-else data-tab-start :items="filteredLists" :item-key="rowKey" :href="rowHref" :label="rowLabel" :row-class="rowClass">
             <template #item="{ item: { list, hint } }">
               <div class="flex flex-wrap items-center gap-1.5">
                 <ListIcon class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />

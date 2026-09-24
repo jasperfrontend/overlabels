@@ -8,6 +8,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import type { AppPageProps, BreadcrumbItemType } from '@/types';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { useFocusStart } from '@/composables/useFocusStart';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { useProductFocus, useUiMode } from '@/composables/useUiMode';
 import { usePage } from '@inertiajs/vue3';
@@ -52,6 +53,9 @@ useUiMode({ apply: true });
 // Lights up, and scrolls to, whatever the flow's next step is about, on any
 // page that marks it with data-product-target.
 useProductFocus();
+// Puts the Tab starting point on the page's primary list (data-tab-start), or
+// on the main landmark, once the page has rendered.
+useFocusStart();
 
 onMounted(() => {
   register(

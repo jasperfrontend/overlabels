@@ -576,6 +576,7 @@ const breadcrumbs = [
 
           <EventsTable
             v-if="recentEvents.data.length > 0"
+            data-tab-start
             :events="recentEvents.data"
             selectable
             :selection="selection"

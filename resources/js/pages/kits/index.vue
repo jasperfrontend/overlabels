@@ -71,7 +71,7 @@ defineProps<Props>();
         </Link>
       </div>
 
-      <div v-if="kits.data.length > 0" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div v-if="kits.data.length > 0" data-tab-start class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <KitCard v-for="kit in kits.data" :key="kit.id" :kit="kit" :current-user-id="auth?.user?.id" :allow-delete="true" />
       </div>
 

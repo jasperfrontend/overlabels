@@ -75,6 +75,14 @@
   }
 }
 
+/* The element Tab starts from once a page has rendered (useFocusStart): a
+   page's primary list, or the main landmark. Focused by script, never reached
+   by the user, so it draws no ring. */
+[data-tab-start]:focus,
+#main-content:focus {
+  outline: none;
+}
+
 @theme inline {
   --font-sans: 'Albert Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 

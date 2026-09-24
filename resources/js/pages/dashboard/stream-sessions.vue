@@ -446,7 +446,7 @@ const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-fore
 
       <div v-else class="flex flex-col gap-4 lg:flex-row">
         <!-- Selector rail -->
-        <nav class="shrink-0 border border-sidebar-border bg-card lg:w-72" aria-label="Streams">
+        <nav class="shrink-0 border border-sidebar-border bg-card lg:w-72" aria-label="Streams" data-tab-start>
           <ul class="max-h-64 divide-y divide-sidebar-border overflow-y-auto lg:max-h-[72vh]">
             <li v-for="s in sessions" :key="s.session_id">
               <button

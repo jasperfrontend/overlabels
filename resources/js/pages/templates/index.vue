@@ -222,6 +222,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       </FilterBar>
 
       <TemplateCollection
+        data-tab-start
         :templates="templates?.data ?? []"
         :show-owner="true"
         :show-event="filters.type === 'alert'"
