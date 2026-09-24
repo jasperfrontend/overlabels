@@ -108,7 +108,7 @@ class ListActionService
         /** @var OptionSet|null $list */
         $list = OptionSet::where('user_id', $owner->id)->where('slug', $slug)->first();
         if (! $list) {
-            return $this->mention($invokerDisplayName)."no list named '$slug'. Check your lists at /dashboard/lists.";
+            return $this->mention($invokerDisplayName)."no list named '$slug'. Check your lists at /lists.";
         }
 
         if ($tokens === []) {

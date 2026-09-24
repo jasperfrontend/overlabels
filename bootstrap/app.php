@@ -44,10 +44,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // the user's input before it reached the ListController. The
         // callback returns true to skip the conversion for this request.
         $middleware->trimStrings([
-            fn ($request) => $request->is('dashboard/lists', 'dashboard/lists/*'),
+            fn ($request) => $request->is('lists', 'lists/*'),
         ]);
         $middleware->convertEmptyStringsToNull([
-            fn ($request) => $request->is('dashboard/lists', 'dashboard/lists/*'),
+            fn ($request) => $request->is('lists', 'lists/*'),
         ]);
 
         // The overlay host (overlabels.net) answers the hosted overlay and its

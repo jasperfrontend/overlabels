@@ -709,7 +709,7 @@ class RecipeInstaller
     }
 
     /**
-     * One user List, empty, exactly as /dashboard/lists creates one. The slug
+     * One user List, empty, exactly as /lists creates one. The slug
      * is the manifest's, not per instance: the overlay reads
      * [[[c:list:<slug>]]] and mods type !list <slug>, so it has to be the
      * name the product documents. A slug the account already uses is a

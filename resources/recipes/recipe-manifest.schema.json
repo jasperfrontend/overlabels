@@ -263,7 +263,7 @@
         },
         "lists": {
           "type": "array",
-          "description": "User Lists to create, empty, exactly as /dashboard/lists creates one. The slug is what the overlay's [[[c:list:<slug>]]] tags and the !list command name, so it is fixed by the manifest, not per instance. The install refuses if the account already has a list with that slug.",
+          "description": "User Lists to create, empty, exactly as /lists creates one. The slug is what the overlay's [[[c:list:<slug>]]] tags and the !list command name, so it is fixed by the manifest, not per instance. The install refuses if the account already has a list with that slug.",
           "items": {
             "type": "object",
             "additionalProperties": false,

@@ -105,7 +105,7 @@ every topple, and `c.tower.tallest_tower_record_at` only when the record actuall
 
 Everyone who had a block in the tallest tower ever, bottom to top, one entry per viewer, lives in
 a List with the slug `tower_record`. The product creates it; a hand-built setup can create it on
-the [Lists page](/dashboard/lists) with that exact slug and the roster starts being written on the
+the [Lists page](/lists) with that exact slug and the roster starts being written on the
 next record. It is a normal List, so it shows on your Lists page and any overlay can loop it:
 
 ```

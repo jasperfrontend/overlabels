@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="TItem">
 /**
  * The one list. Every surface that renders a collection of rows uses this, so
- * a row on /templates, /triggers, /updates and /dashboard/lists looks and
+ * a row on /templates, /triggers, /updates and /lists looks and
  * behaves identically. Row chrome (left accent bar, hover, active, spacing,
  * hover-revealed actions) lives here and nowhere else.
  *

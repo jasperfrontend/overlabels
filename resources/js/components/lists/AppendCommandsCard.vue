@@ -27,7 +27,7 @@ onMounted(load);
 async function load() {
   loading.value = true;
   try {
-    const res = await axios.get(`/dashboard/lists/${props.listId}/appenders`);
+    const res = await axios.get(`/lists/${props.listId}/appenders`);
     appenders.value = res.data.appenders ?? [];
   } catch {
     appenders.value = [];
@@ -60,7 +60,7 @@ function onSaved(appender: AppenderRow, created: boolean) {
 async function remove(a: AppenderRow) {
   if (!(await confirm({ message: `Delete command !${a.command}?`, confirmLabel: 'Delete' }))) return;
   try {
-    await axios.delete(`/dashboard/lists/${props.listId}/appenders/${a.id}`);
+    await axios.delete(`/lists/${props.listId}/appenders/${a.id}`);
     appenders.value = appenders.value.filter((x) => x.id !== a.id);
     emit('toast', `!${a.command} deleted.`, 'success');
   } catch {

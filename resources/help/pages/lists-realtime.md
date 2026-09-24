@@ -191,7 +191,7 @@ you have a live, custom overlay driven by chat.
 |---|---|
 | Fetch fails / blocked by mixed content | Your page is served over `http` (or `file://`). Host it over **https**. The API and the WebSocket both require it. |
 | `401` from the read endpoint | Token missing, not 64 chars, or revoked. Regenerate it on the [Overlay Access Tokens](/settings/tokens) page and update your page. |
-| `404` from the read endpoint | No List with that slug on your account. Check the slug exactly (lowercase, underscores) on your [Lists page](/dashboard/lists). |
+| `404` from the read endpoint | No List with that slug on your account. Check the slug exactly (lowercase, underscores) on your [Lists page](/lists). |
 | Loads once, never updates | The subscribe step isn't connecting. Check the browser console: is `pusher.subscribe` firing `pusher:subscription_succeeded`? Confirm you used `key/host/port` from the `realtime` block, and prefixed the channel with `private-`. |
 | `403` "Channel not permitted" | The token's account doesn't match the channel's twitch id, or the slug is malformed. Use the exact `realtime.channel` string from the read response, and the same token. |
 | Works in a browser, not in OBS | OBS browser sources are stricter: the page must be https, and some setups cache aggressively - right-click the source and Refresh after changes. |

@@ -29,7 +29,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class ListAppenderController extends Controller
 {
     /**
-     * GET /dashboard/lists/{list}/appenders
+     * GET /lists/{list}/appenders
      */
     public function index(Request $request, OptionSet $list): JsonResponse
     {
@@ -44,7 +44,7 @@ class ListAppenderController extends Controller
     }
 
     /**
-     * POST /dashboard/lists/{list}/appenders
+     * POST /lists/{list}/appenders
      */
     public function store(Request $request, OptionSet $list): JsonResponse
     {
@@ -71,7 +71,7 @@ class ListAppenderController extends Controller
     }
 
     /**
-     * PUT /dashboard/lists/{list}/appenders/{appender}
+     * PUT /lists/{list}/appenders/{appender}
      */
     public function update(Request $request, OptionSet $list, ListAppender $appender): JsonResponse
     {
@@ -96,7 +96,7 @@ class ListAppenderController extends Controller
     }
 
     /**
-     * DELETE /dashboard/lists/{list}/appenders/{appender}
+     * DELETE /lists/{list}/appenders/{appender}
      */
     public function destroy(Request $request, OptionSet $list, ListAppender $appender): JsonResponse
     {

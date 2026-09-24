@@ -51,8 +51,8 @@ watch(
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
   { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Lists', href: '/dashboard/lists' },
-  { title: list.value.label || list.value.slug, href: `/dashboard/lists/${list.value.slug}` },
+  { title: 'Lists', href: '/lists' },
+  { title: list.value.label || list.value.slug, href: `/lists/${list.value.slug}` },
 ]);
 
 // Draft state for the items editor. The textarea holds raw text; split-on-
@@ -403,7 +403,7 @@ async function runAction(action: string, args: string = '', requiresConfirm = fa
 
   runningAction.value = action;
   try {
-    const res = await axios.post(`/dashboard/lists/${list.value.id}/actions`, { action, args });
+    const res = await axios.post(`/lists/${list.value.id}/actions`, { action, args });
     toastMessage.value = res.data.reply || `'${action}' done.`;
     toastType.value = 'success';
     if (['clear', 'draw', 'pop'].includes(action)) {
@@ -548,7 +548,7 @@ const metaCommand = ref<{ command: string; enabled: boolean } | null>(null);
 
 async function loadMeta() {
   try {
-    const res = await axios.get('/dashboard/lists/meta-command');
+    const res = await axios.get('/lists/meta-command');
     metaCommand.value = res.data.meta;
   } catch {
     /* ignore */

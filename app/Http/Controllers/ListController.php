@@ -40,7 +40,7 @@ class ListController extends Controller
     private const string SLUG_PATTERN = '/^[a-z][a-z0-9_]{0,49}$/';
 
     /**
-     * GET /dashboard/lists
+     * GET /lists
      */
     public function index(Request $request): Response
     {
@@ -83,7 +83,7 @@ class ListController extends Controller
     }
 
     /**
-     * GET /dashboard/lists/{slug}
+     * GET /lists/{slug}
      *
      * Single-list detail page. Slugs are unique per user (not globally), so
      * we resolve scoped to the authenticated user rather than using implicit
@@ -103,7 +103,7 @@ class ListController extends Controller
     }
 
     /**
-     * POST /dashboard/lists
+     * POST /lists
      */
     public function store(Request $request): RedirectResponse
     {
@@ -147,7 +147,7 @@ class ListController extends Controller
     }
 
     /**
-     * PUT /dashboard/lists/{list}
+     * PUT /lists/{list}
      */
     public function update(Request $request, OptionSet $list): RedirectResponse
     {
@@ -286,7 +286,7 @@ class ListController extends Controller
     }
 
     /**
-     * PUT /dashboard/lists/{list}/event-feed
+     * PUT /lists/{list}/event-feed
      *
      * Turn a List into (or out of) a recent-events feed. Configured from the
      * recents page: an enabled flag, an event_type whitelist (empty = all
@@ -342,7 +342,7 @@ class ListController extends Controller
     }
 
     /**
-     * DELETE /dashboard/lists/{list}
+     * DELETE /lists/{list}
      */
     public function destroy(Request $request, OptionSet $list): RedirectResponse
     {

@@ -663,7 +663,7 @@ class OverlayShareService
         if ($lists !== []) {
             $out .= $h."# Lists\n\n";
             $out .= 'This overlay reads '.count($lists).' List(s). Lists hold their own data and are not '
-                ."copied with an overlay - create one with a matching slug under /dashboard/lists.\n\n";
+                ."copied with an overlay - create one with a matching slug under /lists.\n\n";
 
             foreach ($lists as $list) {
                 $out .= '- `[[['.$list['tag'].']]]` - list slug `'.$list['slug']."`\n";

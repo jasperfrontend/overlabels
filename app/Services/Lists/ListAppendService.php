@@ -88,7 +88,7 @@ readonly class ListAppendService
             // disabled the list intentionally, no need to apologise
             // in chat. Existing items stay visible to overlays; only
             // new chat-driven appends are blocked. Streamer can
-            // still curate manually via /dashboard/lists.
+            // still curate manually via /lists.
             if ($list->disabled_at !== null) {
                 return ['fired' => false, 'reason' => 'list_disabled'];
             }

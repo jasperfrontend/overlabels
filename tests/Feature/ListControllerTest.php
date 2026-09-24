@@ -27,7 +27,7 @@ it('index returns user-owned lists with the [[[c:list:<slug>]]] tag baked in', f
         'user_editable' => true,
     ]);
 
-    $this->actingAs($user)->get('/dashboard/lists')
+    $this->actingAs($user)->get('/lists')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/lists/index')
@@ -36,6 +36,11 @@ it('index returns user-owned lists with the [[[c:list:<slug>]]] tag baked in', f
             ->where('lists.0.tag', '[[[c:list:pizza]]]')
             ->where('lists.0.items', ['Pepperoni', 'Mushroom'])
         );
+});
+
+it('sends the old /dashboard/lists addresses to /lists permanently', function () {
+    $this->get('/dashboard/lists')->assertRedirect('/lists')->assertStatus(301);
+    $this->get('/dashboard/lists/pizza')->assertRedirect('/lists/pizza')->assertStatus(301);
 });
 
 it('does not leak lists owned by another user', function () {
@@ -47,7 +52,7 @@ it('does not leak lists owned by another user', function () {
         'items' => ['x'],
     ]);
 
-    $this->actingAs($me)->get('/dashboard/lists')
+    $this->actingAs($me)->get('/lists')
         ->assertOk()
         ->assertInertia(fn ($page) => $page->has('lists', 0));
 });
@@ -59,22 +64,22 @@ it('index filters by search across slug, label, and item contents, echoing the t
     OptionSet::create(['user_id' => $user->id, 'slug' => 'songs', 'label' => null, 'items' => ['Bohemian Rhapsody']]);
 
     // Slug match, echoed back for the filter bar
-    $this->actingAs($user)->get('/dashboard/lists?search=piz')
+    $this->actingAs($user)->get('/lists?search=piz')
         ->assertInertia(fn ($page) => $page
             ->has('lists', 1)
             ->where('lists.0.slug', 'pizza')
             ->where('filters.search', 'piz'));
 
     // Label match, case-insensitive
-    $this->actingAs($user)->get('/dashboard/lists?search=MOVIE')
+    $this->actingAs($user)->get('/lists?search=MOVIE')
         ->assertInertia(fn ($page) => $page->has('lists', 1)->where('lists.0.slug', 'films'));
 
     // Item-contents match
-    $this->actingAs($user)->get('/dashboard/lists?search=rhapsody')
+    $this->actingAs($user)->get('/lists?search=rhapsody')
         ->assertInertia(fn ($page) => $page->has('lists', 1)->where('lists.0.slug', 'songs'));
 
     // No match
-    $this->actingAs($user)->get('/dashboard/lists?search=zzz')
+    $this->actingAs($user)->get('/lists?search=zzz')
         ->assertInertia(fn ($page) => $page->has('lists', 0));
 });
 
@@ -82,11 +87,11 @@ it('index treats a blank or non-string search as no search', function () {
     $user = User::factory()->create();
     OptionSet::create(['user_id' => $user->id, 'slug' => 'pizza', 'items' => ['Pepperoni']]);
 
-    $this->actingAs($user)->get('/dashboard/lists?search=')
+    $this->actingAs($user)->get('/lists?search=')
         ->assertInertia(fn ($page) => $page->has('lists', 1)->where('filters.search', ''));
 
     // ?search[]=x arrives as an array - must not fatal, must not filter.
-    $this->actingAs($user)->get('/dashboard/lists?search[]=zzz')
+    $this->actingAs($user)->get('/lists?search[]=zzz')
         ->assertOk()
         ->assertInertia(fn ($page) => $page->has('lists', 1)->where('filters.search', ''));
 });
@@ -100,7 +105,7 @@ it('store creates a user-authored list preserving exactly what was sent', functi
 
     $user = User::factory()->create(['twitch_id' => '12345']);
 
-    $this->actingAs($user)->post('/dashboard/lists', [
+    $this->actingAs($user)->post('/lists', [
         'slug' => 'pizza',
         'label' => 'Pizza toppings',
         'items' => ['Pepperoni', 'Mushroom', '', 'Mushroom', ' '],
@@ -121,7 +126,7 @@ it('store rejects a slug that already exists for this user', function () {
     $user = User::factory()->create();
     OptionSet::create(['user_id' => $user->id, 'slug' => 'pizza', 'items' => []]);
 
-    $this->actingAs($user)->post('/dashboard/lists', [
+    $this->actingAs($user)->post('/lists', [
         'slug' => 'pizza',
         'items' => [],
     ])->assertSessionHasErrors('slug');
@@ -130,7 +135,7 @@ it('store rejects a slug that already exists for this user', function () {
 it('store rejects malformed slugs', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->post('/dashboard/lists', [
+    $this->actingAs($user)->post('/lists', [
         'slug' => 'Pizza-Capital',
         'items' => [],
     ])->assertSessionHasErrors('slug');
@@ -139,7 +144,7 @@ it('store rejects malformed slugs', function () {
 it('store strips NUL bytes but preserves everything else verbatim', function () {
     $user = User::factory()->create(['twitch_id' => '12345']);
 
-    $this->actingAs($user)->post('/dashboard/lists', [
+    $this->actingAs($user)->post('/lists', [
         'slug' => 'weird',
         'items' => ['clean', "with\0null", '  spaces  ', '🌮'],
     ]);
@@ -159,7 +164,7 @@ it('update accepts chat_permissions PATCH and drops default-level entries', func
     // Mix: count -> override to 'everyone', clear -> matches default 'moderator'
     // (should be dropped at save time so the stored JSON stays minimal),
     // search -> override to 'vip'.
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'chat_permissions' => [
             'count' => 'everyone',
             'clear' => 'moderator',
@@ -181,7 +186,7 @@ it('update accepts a fully-default chat_permissions PATCH and persists null', fu
     ]);
 
     // All-defaults submission -> stored as NULL (no overrides).
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'chat_permissions' => [
             'count' => 'moderator',
         ],
@@ -195,7 +200,7 @@ it('update rejects unknown permission levels in chat_permissions PATCH', functio
     $user = User::factory()->create(['twitch_id' => '886']);
     $list = OptionSet::create(['user_id' => $user->id, 'slug' => 'q', 'items' => []]);
 
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'chat_permissions' => ['count' => 'gooseberry'],
     ])->assertSessionHasErrors('chat_permissions.count');
 });
@@ -205,7 +210,7 @@ it('update replaces items wholesale and broadcasts ListUpdated', function () {
     $user = User::factory()->create(['twitch_id' => '999']);
     $list = OptionSet::create(['user_id' => $user->id, 'slug' => 'pizza', 'items' => ['a']]);
 
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'label' => 'new label',
         'items' => ['b', 'c'],
     ])->assertRedirect();
@@ -241,7 +246,7 @@ it('update refuses recipe-locked lists', function () {
         'user_editable' => false, // locked
     ]);
 
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'items' => ['b'],
     ])->assertForbidden();
 
@@ -273,7 +278,7 @@ it('update allows recipe-installed lists when user_editable is true', function (
         'user_editable' => true,
     ]);
 
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'items' => ['b', 'c'],
     ])->assertRedirect();
 
@@ -291,11 +296,11 @@ it('update enforces min/max bounds when set', function () {
         'user_editable' => true,
     ]);
 
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'items' => ['only_one'],
     ])->assertStatus(422);
 
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'items' => ['a', 'b', 'c', 'd', 'e'],
     ])->assertStatus(422);
 
@@ -307,7 +312,7 @@ it('update refuses to act on another users list (404)', function () {
     $intruder = User::factory()->create();
     $list = OptionSet::create(['user_id' => $owner->id, 'slug' => 'private_list', 'items' => ['x']]);
 
-    $this->actingAs($intruder)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($intruder)->put("/lists/{$list->id}", [
         'items' => ['changed'],
     ])->assertNotFound();
 });
@@ -321,7 +326,7 @@ it('destroy removes user-authored lists and broadcasts a delete', function () {
     $user = User::factory()->create(['twitch_id' => '999']);
     $list = OptionSet::create(['user_id' => $user->id, 'slug' => 'gone', 'items' => ['x']]);
 
-    $this->actingAs($user)->delete("/dashboard/lists/{$list->id}")
+    $this->actingAs($user)->delete("/lists/{$list->id}")
         ->assertRedirect();
 
     expect(OptionSet::find($list->id))->toBeNull();
@@ -352,7 +357,7 @@ it('destroy refuses recipe-installed lists', function () {
         'user_editable' => true,
     ]);
 
-    $this->actingAs($user)->delete("/dashboard/lists/{$list->id}")
+    $this->actingAs($user)->delete("/lists/{$list->id}")
         ->assertForbidden();
 
     expect(OptionSet::find($list->id))->not->toBeNull();

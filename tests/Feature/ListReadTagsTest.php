@@ -229,20 +229,20 @@ it('fire works again after the list is re-enabled', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
-// PUT /dashboard/lists/{list} with disabled flag
+// PUT /lists/{list} with disabled flag
 // ──────────────────────────────────────────────────────────────────────────────
 
 it('toggles disabled_at via the update endpoint', function () {
     $user = User::factory()->create();
     $list = OptionSet::create(['user_id' => $user->id, 'slug' => 'togglable', 'items' => ['x']]);
 
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'disabled' => true,
     ])->assertRedirect();
 
     expect($list->fresh()->disabled_at)->not->toBeNull();
 
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'disabled' => false,
     ])->assertRedirect();
 
@@ -255,7 +255,7 @@ it('disabled toggle does not touch items when present', function () {
 
     // Send items in the payload too, but the disabled flag should
     // make the controller ignore them and only touch disabled_at.
-    $this->actingAs($user)->put("/dashboard/lists/{$list->id}", [
+    $this->actingAs($user)->put("/lists/{$list->id}", [
         'disabled' => true,
         'items' => ['this', 'should', 'not', 'replace'],
     ])->assertRedirect();

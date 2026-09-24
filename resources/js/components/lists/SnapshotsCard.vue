@@ -34,7 +34,7 @@ onMounted(load);
 async function load() {
   loading.value = true;
   try {
-    const res = await axios.get(`/dashboard/lists/${props.listId}/snapshots`);
+    const res = await axios.get(`/lists/${props.listId}/snapshots`);
     snapshots.value = res.data.snapshots ?? [];
   } catch {
     snapshots.value = [];
@@ -49,7 +49,7 @@ defineExpose({ reload: load });
 
 async function takeManualSnapshot() {
   try {
-    await axios.post(`/dashboard/lists/${props.listId}/snapshots/manual`);
+    await axios.post(`/lists/${props.listId}/snapshots/manual`);
     await load();
     emit('toast', 'Snapshot taken.', 'success');
   } catch {
@@ -66,7 +66,7 @@ async function restoreSnapshot(snap: SnapshotRow) {
   )
     return;
   try {
-    await axios.post(`/dashboard/lists/${props.listId}/snapshots/${snap.id}/restore`);
+    await axios.post(`/lists/${props.listId}/snapshots/${snap.id}/restore`);
     await load();
     emit('toast', `Restored to snapshot (${snap.item_count} items).`, 'success');
   } catch {
@@ -76,7 +76,7 @@ async function restoreSnapshot(snap: SnapshotRow) {
 
 async function togglePin(snap: SnapshotRow) {
   try {
-    const res = await axios.patch(`/dashboard/lists/${props.listId}/snapshots/${snap.id}/pin`);
+    const res = await axios.patch(`/lists/${props.listId}/snapshots/${snap.id}/pin`);
     snap.pinned = res.data.pinned;
     emit('toast', snap.pinned ? 'Snapshot pinned (survives retention sweep).' : 'Snapshot unpinned.', 'success');
   } catch {
@@ -87,7 +87,7 @@ async function togglePin(snap: SnapshotRow) {
 async function deleteSnapshot(snap: SnapshotRow) {
   if (!(await confirm({ message: 'Delete this snapshot? Cannot be undone.', confirmLabel: 'Delete' }))) return;
   try {
-    await axios.delete(`/dashboard/lists/${props.listId}/snapshots/${snap.id}`);
+    await axios.delete(`/lists/${props.listId}/snapshots/${snap.id}`);
     snapshots.value = snapshots.value.filter((s) => s.id !== snap.id);
     emit('toast', 'Snapshot deleted.', 'success');
   } catch {

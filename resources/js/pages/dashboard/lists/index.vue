@@ -42,7 +42,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Dashboard', href: '/dashboard' },
-  { title: 'Lists', href: '/dashboard/lists' },
+  { title: 'Lists', href: '/lists' },
 ];
 
 const lists = ref<ListRow[]>([...props.lists]);
@@ -233,7 +233,7 @@ const savingMeta = ref(false);
 
 async function loadMeta() {
   try {
-    const res = await axios.get('/dashboard/lists/meta-command');
+    const res = await axios.get('/lists/meta-command');
     metaCommand.value = res.data.meta;
     if (metaCommand.value) {
       metaForm.value.command = metaCommand.value.command;
@@ -248,7 +248,7 @@ async function saveMeta() {
   savingMeta.value = true;
   metaError.value = null;
   try {
-    const res = await axios.put('/dashboard/lists/meta-command', metaForm.value);
+    const res = await axios.put('/lists/meta-command', metaForm.value);
     metaCommand.value = res.data.meta;
     toastMessage.value = `!${metaCommand.value?.command} ${metaCommand.value?.enabled ? 'enabled' : 'disabled'}.`;
     toastType.value = 'success';

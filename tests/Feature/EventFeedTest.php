@@ -177,7 +177,7 @@ it('seeds the list with existing events, oldest-first, when the feed is enabled'
     ]);
 
     $this->actingAs($user)
-        ->put("/dashboard/lists/{$list->id}/event-feed", [
+        ->put("/lists/{$list->id}/event-feed", [
             'enabled' => true,
             'types' => [],
         ])
@@ -200,7 +200,7 @@ it('defaults a FIFO cap when enabling a feed on an uncapped list', function () {
     ]);
 
     $this->actingAs($user)
-        ->put("/dashboard/lists/{$list->id}/event-feed", ['enabled' => true])
+        ->put("/lists/{$list->id}/event-feed", ['enabled' => true])
         ->assertRedirect();
 
     expect($list->fresh()->max_items)->toBe(50);
@@ -212,7 +212,7 @@ it('refuses to configure a feed on a list owned by another user', function () {
     $list = efFeedList($other, ['slug' => 'theirs', 'feed_enabled' => false]);
 
     $this->actingAs($owner)
-        ->put("/dashboard/lists/{$list->id}/event-feed", ['enabled' => true])
+        ->put("/lists/{$list->id}/event-feed", ['enabled' => true])
         ->assertNotFound();
 });
 

@@ -85,10 +85,10 @@ async function save() {
 
   try {
     if (props.appender) {
-      const res = await axios.put(`/dashboard/lists/${props.listId}/appenders/${props.appender.id}`, body);
+      const res = await axios.put(`/lists/${props.listId}/appenders/${props.appender.id}`, body);
       emit('saved', res.data.appender, false);
     } else {
-      const res = await axios.post(`/dashboard/lists/${props.listId}/appenders`, body);
+      const res = await axios.post(`/lists/${props.listId}/appenders`, body);
       emit('saved', res.data.appender, true);
     }
     emit('update:open', false);

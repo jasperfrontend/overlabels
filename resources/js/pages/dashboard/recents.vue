@@ -423,7 +423,7 @@ const breadcrumbs = [
                       :class="f.disabled ? 'bg-amber-500' : 'bg-green-500'"
                       :title="f.disabled ? 'List is disabled - appends are paused' : 'Receiving events'"
                     ></span>
-                    <a :href="`/dashboard/lists/${f.slug}`" class="cursor-pointer font-medium text-foreground hover:underline">
+                    <a :href="`/lists/${f.slug}`" class="cursor-pointer font-medium text-foreground hover:underline">
                       {{ f.label || f.slug }}
                     </a>
                     <span class="text-foreground">·</span>
@@ -442,7 +442,7 @@ const breadcrumbs = [
 
             <div v-if="userLists.length === 0" class="mt-4 text-sm text-foreground">
               You don't have any editable lists yet.
-              <a href="/dashboard/lists" class="cursor-pointer text-primary underline">Create a list</a> first, then come back here.
+              <a href="/lists" class="cursor-pointer text-primary underline">Create a list</a> first, then come back here.
             </div>
 
             <div v-else class="mt-4 space-y-4 border-t border-sidebar-border pt-4">
@@ -527,7 +527,7 @@ const breadcrumbs = [
                 >
                   {{ saveLabel }}
                 </button>
-                <a v-if="selectedList" :href="`/dashboard/lists/${selectedList.slug}`" class="cursor-pointer text-sm text-primary underline">
+                <a v-if="selectedList" :href="`/lists/${selectedList.slug}`" class="cursor-pointer text-sm text-primary underline">
                   View list
                 </a>
                 <span v-if="feedSaved && !feedDirty" class="flex items-center gap-1 text-sm text-green-500"> <Check class="h-4 w-4" /> Saved </span>

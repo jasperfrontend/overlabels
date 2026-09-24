@@ -208,6 +208,12 @@ Route::get('/dashboard/recents', [DashboardController::class, 'recentActivity'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.recents');
 
+// The Lists pages left the /dashboard prefix on 2026-09-24. Links written
+// before then (help pages already read, bot replies in chat logs, bookmarks,
+// exported overlays' notes) land on the new address.
+Route::permanentRedirect('/dashboard/lists', '/lists');
+Route::permanentRedirect('/dashboard/lists/{slug}', '/lists/{slug}');
+
 Route::get('/dashboard/gps-sessions', [GpsSessionController::class, 'index'])
     ->middleware(['auth.redirect'])
     ->name('dashboard.gps-sessions');
@@ -601,9 +607,9 @@ Route::middleware('auth.redirect')->group(function () {
         Route::delete('/{token}', [OverlayAccessTokenController::class, 'destroy'])->name('destroy');
     });
 
-    // Lists (user-managed OptionSets, surfaced as a top-level dashboard
-    // section). User-authored rows live alongside recipe-installed lists.
-    Route::prefix('dashboard/lists')->name('lists.')->group(function () {
+    // Lists (user-managed OptionSets, a top-level section of the main
+    // navigation). User-authored rows live alongside recipe-installed lists.
+    Route::prefix('lists')->name('lists.')->group(function () {
         Route::get('/', [ListController::class, 'index'])->name('index');
         Route::post('/', [ListController::class, 'store'])->name('store');
 

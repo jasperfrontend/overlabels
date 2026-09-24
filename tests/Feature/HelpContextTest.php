@@ -162,7 +162,7 @@ it('keeps any single context down to three pages', function () {
 it('shares contextual help with the frontend', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->get('/dashboard/lists');
+    $response = $this->actingAs($user)->get('/lists');
 
     $response->assertOk();
     $help = $response->viewData('page')['props']['help'] ?? null;

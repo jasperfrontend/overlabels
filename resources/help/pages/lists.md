@@ -24,7 +24,7 @@ create is only visible inside your overlays, your chat commands, and your dashbo
 
 ## Creating and editing Lists
 
-Lists live at [/dashboard/lists](/dashboard/lists). Click "New list", pick a slug (lowercase letters,
+Lists live at [/lists](/lists). Click "New list", pick a slug (lowercase letters,
 digits, underscores - must start with a letter, max 50 chars), optionally a label, and optionally a
 starting set of items - one per line.
 
@@ -283,7 +283,7 @@ Each appender configures:
 
 `!list` is a single configurable chat command that gives you (and your mods) the full action vocabulary
 against any of your Lists from chat, without wiring a separate command per action. You opt in once from
-[/dashboard/lists](/dashboard/lists) and pick the command name - default is `!list`, but if that collides
+[/lists](/lists) and pick the command name - default is `!list`, but if that collides
 with a bot you already use (StreamElements, Nightbot, Fossabot), rename it to whatever you like (`!ol`,
 `!l`, `!mylist`...).
 
@@ -317,7 +317,7 @@ replies with the per-list help. An unknown action lists the valid ones. Missing 
 ## The action vocabulary in detail
 
 The same verbs are available from both the chat `!list` command and the action buttons on
-[/dashboard/lists](/dashboard/lists). They split into three groups by semantics.
+[/lists](/lists). They split into three groups by semantics.
 
 ### Read actions (no mutation, no snapshot)
 

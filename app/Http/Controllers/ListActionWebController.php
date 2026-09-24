@@ -33,7 +33,7 @@ class ListActionWebController extends Controller
     ) {}
 
     /**
-     * POST /dashboard/lists/{list}/actions
+     * POST /lists/{list}/actions
      * Body: { action: "draw"|"clear"|... , args?: "<remaining args>" }
      *
      * args is the same shape the chat command sends - whatever comes
@@ -70,7 +70,7 @@ class ListActionWebController extends Controller
     }
 
     /**
-     * GET /dashboard/lists/{list}/snapshots
+     * GET /lists/{list}/snapshots
      */
     public function listSnapshots(Request $request, OptionSet $list): JsonResponse
     {
@@ -95,7 +95,7 @@ class ListActionWebController extends Controller
     }
 
     /**
-     * POST /dashboard/lists/{list}/snapshots/manual
+     * POST /lists/{list}/snapshots/manual
      * Take a snapshot of the current state on demand (not tied to a
      * destructive action). Useful before manual edits.
      */
@@ -117,7 +117,7 @@ class ListActionWebController extends Controller
     }
 
     /**
-     * POST /dashboard/lists/{list}/snapshots/{snapshot}/restore
+     * POST /lists/{list}/snapshots/{snapshot}/restore
      * Replaces the current items with the snapshot's items. Creates
      * a before_restore snapshot of the current state first so the
      * restore is itself undoable.
@@ -149,7 +149,7 @@ class ListActionWebController extends Controller
     }
 
     /**
-     * PATCH /dashboard/lists/{list}/snapshots/{snapshot}/pin
+     * PATCH /lists/{list}/snapshots/{snapshot}/pin
      * Toggles pinned. Pinned snapshots survive the 30-day retention sweep.
      */
     public function togglePin(Request $request, OptionSet $list, ListSnapshot $snapshot): JsonResponse
@@ -163,7 +163,7 @@ class ListActionWebController extends Controller
     }
 
     /**
-     * DELETE /dashboard/lists/{list}/snapshots/{snapshot}
+     * DELETE /lists/{list}/snapshots/{snapshot}
      */
     public function deleteSnapshot(Request $request, OptionSet $list, ListSnapshot $snapshot): JsonResponse
     {
@@ -176,7 +176,7 @@ class ListActionWebController extends Controller
     }
 
     /**
-     * GET /dashboard/lists/meta-command
+     * GET /lists/meta-command
      * Returns the user's !list meta-command config (or null if not opted in).
      */
     public function getMeta(Request $request): JsonResponse
@@ -192,7 +192,7 @@ class ListActionWebController extends Controller
     }
 
     /**
-     * PUT /dashboard/lists/meta-command
+     * PUT /lists/meta-command
      * Body: { command: "list", enabled: true }
      * Creates or updates the user's meta-command config. Refuses on
      * collision with existing builtin / custom / recipe_trigger /

@@ -598,7 +598,7 @@ it('web action endpoint runs the same vocabulary', function () {
     $user = actionUser();
     $list = actionList($user, 'raffle', ['a', 'b', 'c']);
 
-    $this->actingAs($user)->postJson("/dashboard/lists/{$list->id}/actions", [
+    $this->actingAs($user)->postJson("/lists/{$list->id}/actions", [
         'action' => 'count',
     ])->assertOk()->assertJson(['reply' => "'raffle' has 3 entries."]);
 });
@@ -607,7 +607,7 @@ it('web action endpoint can draw and the list shrinks', function () {
     $user = actionUser();
     $list = actionList($user, 'raffle', ['a', 'b']);
 
-    $this->actingAs($user)->postJson("/dashboard/lists/{$list->id}/actions", [
+    $this->actingAs($user)->postJson("/lists/{$list->id}/actions", [
         'action' => 'draw',
     ])->assertOk();
 
@@ -619,7 +619,7 @@ it('web action endpoint refuses foreign user (404)', function () {
     $intruder = actionUser('streamer_b');
     $list = actionList($owner, 'mine', ['a']);
 
-    $this->actingAs($intruder)->postJson("/dashboard/lists/{$list->id}/actions", [
+    $this->actingAs($intruder)->postJson("/lists/{$list->id}/actions", [
         'action' => 'count',
     ])->assertNotFound();
 });
@@ -629,7 +629,7 @@ it('snapshots endpoint lists recent snapshots', function () {
     $list = actionList($user, 'raffle', ['a', 'b']);
     app(ListActionService::class)->handleInvocation($user, 'raffle clear', 'Mod');
 
-    $this->actingAs($user)->getJson("/dashboard/lists/{$list->id}/snapshots")
+    $this->actingAs($user)->getJson("/lists/{$list->id}/snapshots")
         ->assertOk()
         ->assertJsonPath('snapshots.0.reason', 'before_clear')
         ->assertJsonPath('snapshots.0.item_count', 2);
@@ -644,7 +644,7 @@ it('snapshot restore writes the snapshot items back and snapshots first', functi
     $snap = ListSnapshot::where('list_id', $list->id)->where('reason', 'before_clear')->first();
 
     // Restore - should produce a before_restore snapshot AND bring back items
-    $this->actingAs($user)->postJson("/dashboard/lists/{$list->id}/snapshots/{$snap->id}/restore")
+    $this->actingAs($user)->postJson("/lists/{$list->id}/snapshots/{$snap->id}/restore")
         ->assertOk();
 
     expect(ListItems::values($list->fresh()->items))->toBe(['a', 'b', 'c'])
@@ -657,7 +657,7 @@ it('snapshot pin toggles the pinned flag', function () {
     app(ListActionService::class)->handleInvocation($user, 'raffle clear', 'Mod');
     $snap = ListSnapshot::where('list_id', $list->id)->first();
 
-    $this->actingAs($user)->patchJson("/dashboard/lists/{$list->id}/snapshots/{$snap->id}/pin")
+    $this->actingAs($user)->patchJson("/lists/{$list->id}/snapshots/{$snap->id}/pin")
         ->assertOk()
         ->assertJson(['pinned' => true]);
 
@@ -667,7 +667,7 @@ it('snapshot pin toggles the pinned flag', function () {
 it('meta-command endpoint creates and updates', function () {
     $user = actionUser();
 
-    $this->actingAs($user)->putJson('/dashboard/lists/meta-command', [
+    $this->actingAs($user)->putJson('/lists/meta-command', [
         'command' => 'queue',
         'enabled' => true,
     ])->assertOk()->assertJson(['meta' => ['command' => 'queue', 'enabled' => true]]);
@@ -675,7 +675,7 @@ it('meta-command endpoint creates and updates', function () {
     expect(ListMetaCommand::where('user_id', $user->id)->first()->command)->toBe('queue');
 
     // Update
-    $this->actingAs($user)->putJson('/dashboard/lists/meta-command', [
+    $this->actingAs($user)->putJson('/lists/meta-command', [
         'command' => 'l',
         'enabled' => false,
     ])->assertOk()->assertJson(['meta' => ['command' => 'l', 'enabled' => false]]);
@@ -694,7 +694,7 @@ it('meta-command rejects collisions with existing commands', function () {
         'enabled' => true,
     ]);
 
-    $this->actingAs($user)->putJson('/dashboard/lists/meta-command', [
+    $this->actingAs($user)->putJson('/lists/meta-command', [
         'command' => 'mycustomcmd',
     ])->assertStatus(422);
 });
