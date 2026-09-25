@@ -10,12 +10,12 @@
 
       <div>
         <h1 class="mb-6 text-4xl leading-[1.05] font-bold tracking-tight sm:text-5xl lg:text-6xl">
-          Give your chat<br />something to play.
+          Give your <span class="whitespace-nowrap">Twitch chat</span><br />something to play.
         </h1>
 
         <p class="mb-4 max-w-xl text-xl leading-relaxed text-foreground">
-          Chat builds a tower. Chat bowls your newest followers. Chat pins itself on a spinning globe.
-          Small games that run on your stream, built by Overlabels, and nobody else has them.
+          Looking for Twitch chat games your viewers have never played? You found them. Overlabels makes small
+          games your Twitch chat plays live on your stream, and nobody else has them.
         </p>
         <p class="mb-10 max-w-xl text-base text-foreground">
           Free. One click to install. One link to paste into OBS. Works with the Twitch account you already have.
@@ -30,7 +30,7 @@
             <a href="{{ route('dashboard.index') }}" class="btn btn-secondary cursor-pointer">Go to dashboard</a>
           @else
             <a href="/login" class="btn btn-secondary gap-2 cursor-pointer">
-              <svg viewBox="0 0 24 24" fill="currentColor" class="size-4 text-[#9146FF]"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0 1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z" /></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor" class="size-4"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0 1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z" /></svg>
               Log in with Twitch
             </a>
           @endauth

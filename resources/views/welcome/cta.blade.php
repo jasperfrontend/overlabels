@@ -2,7 +2,7 @@
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-2xl text-center">
       <h2 class="mb-6 text-4xl font-bold tracking-tight sm:text-5xl">
-        Your chat is waiting.<br />
+        Your Twitch chat is waiting.<br />
         <span class="text-sky-500">Free. Forever.</span>
       </h2>
       <p class="mx-auto mb-10 max-w-lg text-lg text-foreground">

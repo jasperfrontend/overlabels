@@ -18,10 +18,10 @@
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-5xl">
       <span class="inline-flex items-center border-transparent bg-accent text-foreground font-semibold transition-colors mb-4 px-3 py-1 font-mono text-xs hover:bg-background-accent">Alerts</span>
-      <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Your tips land on stream, whoever sends them.</h2>
+      <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Your tips land on your Twitch stream, whoever sends them.</h2>
       <p class="mb-12 max-w-2xl text-lg text-foreground">
         Connect the service you already use and every tip shows up on your overlay with a sound, a spoken line and
-        a message in chat. Five services, one alert each, all in one place.
+        a message in your Twitch chat. Five services, one alert each, all in one place.
       </p>
 
       <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">

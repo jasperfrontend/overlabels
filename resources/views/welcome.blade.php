@@ -35,25 +35,25 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=albert-sans:300,400,500,600,700" rel="stylesheet" />
 
-    <title>Overlabels &bull; Free Twitch overlays and games your chat plays live</title>
-    <meta name="description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on stream too. Open source." />
+    <title>Overlabels &bull; Free Twitch overlays and games your Twitch chat plays live</title>
+    <meta name="description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your Twitch chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on your Twitch stream too. Open source." />
     <link rel="canonical" href="https://overlabels.com/" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://overlabels.com/" />
     <meta property="og:site_name" content="Overlabels" />
-    <meta property="og:title" content="Overlabels • Free Twitch overlays and games your chat plays live" />
-    <meta property="og:description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on stream too. Open source." />
+    <meta property="og:title" content="Overlabels • Free Twitch overlays and games your Twitch chat plays live" />
+    <meta property="og:description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your Twitch chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on your Twitch stream too. Open source." />
     <meta property="og:image" content="{{ asset('ogimage.jpg') }}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Overlabels • games your chat plays live on your Twitch stream" />
+    <meta property="og:image:alt" content="Overlabels • games your Twitch chat plays live on your stream" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Overlabels • Free Twitch overlays and games your chat plays live" />
-    <meta name="twitter:description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on stream too. Open source." />
+    <meta name="twitter:title" content="Overlabels • Free Twitch overlays and games your Twitch chat plays live" />
+    <meta name="twitter:description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your Twitch chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on your Twitch stream too. Open source." />
     <meta name="twitter:image" content="{{ asset('ogimage.jpg') }}" />
-    <meta name="twitter:image:alt" content="Overlabels • games your chat plays live on your Twitch stream" />
+    <meta name="twitter:image:alt" content="Overlabels • games your Twitch chat plays live on your stream" />
 
     @vite(['resources/js/welcome/app.ts'])
 </head>

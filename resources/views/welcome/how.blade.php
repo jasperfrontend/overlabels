@@ -17,7 +17,7 @@
           <span class="mb-4 block font-mono text-xs text-sky-500">01</span>
           <h3 class="mb-2 text-lg font-semibold">Pick a product</h3>
           <p class="text-sm text-foreground">
-            Open its page, read what your chat gets to do, and press Install. The product page keeps count of the
+            Open its page, read what your Twitch chat gets to do, and press Install. The product page keeps count of the
             two or three things left to do, and every one of them is listed on that same page.
           </p>
         </li>
@@ -31,9 +31,9 @@
         </li>
         <li class="border border-sidebar-border bg-card p-6">
           <span class="mb-4 block font-mono text-xs text-sky-500">03</span>
-          <h3 class="mb-2 text-lg font-semibold">Your chat plays</h3>
+          <h3 class="mb-2 text-lg font-semibold">Your Twitch chat plays</h3>
           <p class="text-sm text-foreground">
-            Games run through the Overlabels bot in your chat. Mod it once and every viewer's command reaches
+            Games run through the Overlabels bot in your Twitch chat. Mod it once and every viewer's command reaches
             your overlay. Alerts and the chat overlay need no bot at all.
           </p>
         </li>

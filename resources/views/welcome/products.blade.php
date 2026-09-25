@@ -28,13 +28,13 @@
 
     $facts = [
         'chat-tower' => [
-            'Chat types !stack, or !stack left and !stack right to fight the lean.',
-            'The tower sways more the taller it gets, and the fall lines are on screen so chat sees it coming.',
+            'Twitch chat types !stack, or !stack left and !stack right to fight the lean.',
+            'The tower sways more the taller it gets, and the fall lines are on screen so your Twitch chat sees it coming.',
             'Whoever topples it gets named. Everyone who built the all-time record tower lands in a List any overlay can show.',
         ],
         'follower-bowling' => [
-            'Your ten newest followers are the pins, with their avatars and names.',
-            '!bowl puts a viewer in line. While the lane is on, it sends the next one down every fifteen seconds by itself.',
+            'Your ten newest Twitch followers are the pins, with their avatars and names.',
+            '!bowl puts a Twitch viewer in line. While the lane is on, it sends the next one down every fifteen seconds by itself.',
             'Ball, pins and score play out on the overlay. A strike says STRIKE.',
         ],
         'chat-checkin' => [
@@ -53,10 +53,11 @@
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-5xl">
       <span class="inline-flex items-center border-transparent bg-accent text-foreground font-semibold transition-colors mb-4 px-3 py-1 font-mono text-xs hover:bg-background-accent">Products</span>
-      <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Pick one. Your chat plays it tonight.</h2>
+      <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Pick one. Your Twitch chat plays it tonight.</h2>
       <p class="mb-16 max-w-2xl text-lg text-foreground sm:mb-20">
-        Every product installs in one click and shows up in OBS as one browser source. Made by Overlabels,
-        free, and not available anywhere else. Every demo below runs the product's own rules, with made-up viewers.
+        Every product installs in one click and shows up on your Twitch stream as one browser source in OBS. Made by
+        Overlabels, free, and not available anywhere else. Every demo below runs the product's own rules, with made-up
+        Twitch viewers.
       </p>
 
       <div class="flex flex-col gap-16 sm:gap-24">
@@ -87,7 +88,7 @@
             <div class="mt-8 grid gap-8 sm:mt-10 md:grid-cols-[1.1fr_1fr] md:gap-12 lg:gap-16">
               <div class="min-w-0">
                 @if ($cmd)
-                  <span class="mb-4 inline-block border border-violet-400/60 px-2 py-0.5 font-mono text-xs text-violet-600 dark:text-violet-300">chat types {{ $cmd }}</span>
+                  <span class="mb-4 inline-block border border-violet-400/60 px-2 py-0.5 font-mono text-xs text-violet-600 dark:text-violet-300">Twitch chat types {{ $cmd }}</span>
                 @else
                   <span class="mb-4 inline-block border border-sidebar-border px-2 py-0.5 text-xs text-muted-foreground">no bot needed</span>
                 @endif
@@ -120,7 +121,7 @@
       </div>
 
       <p class="mt-16 border-t border-sidebar-border pt-10 text-sm text-foreground sm:mt-24">
-        More are coming, and the next one comes from what streamers ask for.
+        More are coming, and the next one comes from what Twitch streamers ask for.
         <a href="{{ route('products.index') }}" class="text-sky-500 hover:underline cursor-pointer">See everything on the products page</a>.
       </p>
     </div>
