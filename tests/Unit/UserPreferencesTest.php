@@ -74,7 +74,7 @@ test('foreachCaps merges stored values over defaults', function () {
     expect($caps['subscribers'])->toBe(20);
     // Defaults fill in the rest
     expect($caps['goals'])->toBe(3);
-    expect($caps['followers'])->toBe(5);
+    expect($caps['followers'])->toBe(10);
     expect($caps['followed'])->toBe(5);
 });
 

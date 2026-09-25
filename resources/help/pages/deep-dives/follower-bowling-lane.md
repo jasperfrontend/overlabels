@@ -2,7 +2,7 @@
 title: Inside the Follower bowling lane - an Overlabels deep dive
 description: A line-by-line teardown of the Follower bowling lane overlay - how one List removal timestamp becomes a chat queue, a weighted dice roll and a full bowling animation with no JavaScript anywhere.
 heading: Inside the Follower bowling lane
-lead: A chatter types !bowl, a mod draws a name, and a bowling ball knocks over your ten latest followers. This is a teardown of how one timestamp powers the whole thing - the queue, the dice roll and the animation - without a single line of JavaScript.
+lead: A chatter types !bowl, the lane sends them down (or a mod draws a name), and a bowling ball knocks over your ten latest followers. This is a teardown of how one timestamp powers the whole thing - the queue, the dice roll and the animation - without a single line of JavaScript.
 canonical: https://overlabels.com/help/deep-dives/follower-bowling-lane
 keywords: deep dive, bowling, minigame, chat game, queue, raffle, pop, draw, seed, pseudo-random, deterministic, shader noise, now_ms, timeline, choreography
 ---
@@ -32,7 +32,9 @@ properties, and plain CSS does the rest.
    pushes the chatter's own name onto the `lane` List. The queue panel on the left just reads
    `[[[c:list:lane:count]]]` and loops the first three names with a `foreach`.
 2. `!list lane pop first` (take the front of the queue) or `!list lane draw` (raffle) removes one
-   entry. A List remembers what pop and draw took out: the removal broadcasts two companion
+   entry. The installed product does the pop itself, one every fifteen seconds while `gobowl` is
+   on and someone is in line, so the mod commands are there to skip ahead, not to run the lane.
+   Either way the writer is the same. A List remembers what pop and draw took out: the removal broadcasts two companion
    controls, `[[[c:list:lane:last_removed]]]` (the name) and `[[[c:list:lane:last_removed_at]]]`
    (a Unix timestamp in seconds).
 3. The first expression control, `bowl_t`, is just an alias for that timestamp:
@@ -168,9 +170,11 @@ do not, because they live outside the overlay:
 
 1. A List with the slug `lane`, created under your dashboard's Lists page.
 2. A `!bowl` bot command that appends to that List, with `[[[bot:from_user]]]` as the value.
-3. Your followers `foreach` cap set to 10, on the account settings page, so all ten pins render.
+3. Your followers `foreach` cap at 10 (the default) on the account settings page, so all ten pins
+   render.
 
-Then have a mod run `!list lane pop first` or `!list lane draw`, and watch the ball roll.
+Then run `!list lane pop first` or `!list lane draw`, and watch the ball roll. The installed
+product pops for you; a hand-built copy is driven by those two commands.
 
 The genuinely reusable idea: a broadcast timestamp is the only event this overlay ever receives,
 and it is recycled three ways - as the trigger, as the clock origin, and as the entropy source.

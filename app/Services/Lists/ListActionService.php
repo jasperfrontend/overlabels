@@ -511,12 +511,34 @@ class ListActionService
             return $this->mention($invokerName)."pop needs first or last (got '$which'): !list $list->slug pop first  OR  !list $list->slug pop last";
         }
 
+        $poppedValue = $this->pop($owner, $list, $which);
+
+        if ($poppedValue === null) {
+            return "Can't pop: '$list->slug' is empty.";
+        }
+
+        return "Popped $which from '$list->slug': $poppedValue";
+    }
+
+    /**
+     * Remove the first or last item and record it as `last_removed` with a
+     * fresh `last_removed_at`, which is what an overlay reads to start a
+     * throw. Shared by the chat action above and a product's auto-play loop
+     * (AutoPlayService), which pops without saying anything in chat.
+     *
+     * @param  'first'|'last'  $which
+     * @return string|null The removed value, or null when the list was empty.
+     *
+     * @throws Throwable
+     */
+    public function pop(User $owner, OptionSet $list, string $which): ?string
+    {
         return DB::transaction(function () use ($owner, $list, $which) {
             /** @var OptionSet $locked */
             $locked = OptionSet::lockForUpdate()->find($list->id);
             $current = array_values($locked->items ?? []);
             if ($current === []) {
-                return "Can't pop: '$locked->slug' is empty.";
+                return null;
             }
             $this->snapshot($locked, ListSnapshot::REASON_BEFORE_POP, $owner->id);
 
@@ -530,7 +552,7 @@ class ListActionService
             ]);
             $this->broadcast($owner, $locked->fresh());
 
-            return "Popped $which from '$locked->slug': $poppedValue";
+            return $poppedValue;
         });
     }
 

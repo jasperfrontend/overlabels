@@ -4,7 +4,7 @@
   "url_aliases": ["follower_bowling"],
   "name": "Follower Bowling",
   "version": 1,
-  "description": "Your ten newest followers get racked as pins. Chat types !bowl to get in line, a mod sends the next bowler down the lane, and the ball, the pins and the score play out on your overlay. Installs the lane overlay, the queue List and the !bowl command. You switch the bot on and put the overlay in OBS.",
+  "description": "Your ten newest followers get racked as pins. Chat types !bowl to get in line, the lane sends them down one every fifteen seconds while it is on, and the ball, the pins and the score play out on your overlay. Installs the lane overlay, the queue List and the !bowl command. You switch the bot on and put the overlay in OBS.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"
@@ -17,9 +17,11 @@
   "category": "product",
   "hero": "/products/follower-bowling-hero.svg",
   "follower_pins": 10,
-  "ready_message": "Your chat can type !bowl right now. Switch on gobowl when you want the lane on screen.",
+  "auto_play": { "list": "lane", "switch": "gobowl", "seconds": 15 },
+  "ready_message": "Your chat can type !bowl right now. Switch on gobowl when you want the lane on screen; it runs itself from there.",
   "notes": [
-    "Mods run the lane: !fbfirst sends the next person in line, !fbdraw picks one at random. Both are aliases for !list lane pop first and !list lane draw, and you can rename them under Settings, Bot aliases.",
+    "The lane runs itself: while gobowl is on and someone is in line, the next bowler goes every fifteen seconds and the bot says nothing. Switch gobowl off and the line waits.",
+    "Mods can skip ahead: !fbfirst sends the next person in line, !fbdraw picks one at random. Both are aliases for !list lane pop first and !list lane draw, and you can rename them under Settings, Bot aliases.",
     "The overlay is hidden until you switch on its gobowl control, so it can sit in OBS all stream and only show when you say so.",
     "Every throw is decided by the moment the bowler was taken off the list. No randomness, no scripts."
   ],

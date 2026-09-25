@@ -189,10 +189,10 @@ it('tells a small channel how many pins are real, and says nothing when Twitch c
 });
 
 it('counts the real pins the lane renders, which is the followers cap when the channel is above it', function () {
-    // Default followers cap is 5. The lane renders min(total, cap) real pins,
-    // so a channel with 25 followers on the default cap shows 5 real pins and
-    // 5 stand-ins, and the page must say 5, not 25 and not nothing.
-    $user = bowlingUser(['access_token' => 'streamer-token']);
+    // The lane renders min(total, cap) real pins, so a channel with 25
+    // followers and a cap of 5 shows 5 real pins and 5 stand-ins, and the
+    // page must say 5, not 25 and not nothing.
+    $user = bowlingUser(['access_token' => 'streamer-token', 'preferences' => ['foreach_caps' => ['followers' => 5]]]);
     $instance = installProduct($user, 'follower-bowling');
 
     $this->mock(TwitchApiService::class)

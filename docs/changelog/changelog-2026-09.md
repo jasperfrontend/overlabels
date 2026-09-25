@@ -1,5 +1,35 @@
 # Changelog - September 2026
 
+## OL-2609-137 - September 25th, 2026 - feat(products): Follower Bowling runs itself
+
+Follower Bowling had one thing wrong with it, and it was the part that was not on screen. Chat
+typed `!bowl` and got in line, and then a moderator had to send each bowler down the lane by hand:
+`!fbfirst` for the next in line, `!fbdraw` for a raffle. With twenty people in line that was twenty
+commands in chat and twenty bot replies to go with them, which is the kind of thing that makes a
+streamer stop using a feature they otherwise like. A moderator asked for one command that drains the
+whole queue. The better question turned out to be why the lane needed a command at all.
+
+Now it does not. While the `gobowl` control is on and someone is in line, the next bowler goes every
+fifteen seconds, and the bot says nothing. Switch `gobowl` off and the line waits. Switch it back on
+and it picks up where it left off. The two mod commands are still there, renamed in the notes to what
+they are now: a way to skip ahead. A mod pop mid-throw is respected, the loop waits for that throw to
+finish before it sends the next one.
+
+Under the hood this is the smallest thing it could be. The lane never needed the bot: it reads two
+fields on the queue List, the last removed name and its timestamp, and a pop from anywhere writes
+them. So the product's manifest now declares a loop (`auto_play`: which list, which switch, how many
+seconds), and a small service arms one delayed job from the same two doors the Living Title uses, a
+list append and a control write. The job pops the front of the list and arms the next one while the
+switch is on and the queue is not empty. There is no per-install pacing setting on purpose: fifteen
+seconds is the overlay's own animation window, and anything shorter would land a ball on a throw
+still playing.
+
+Two smaller things landed alongside. The default followers cap for a new account moves from five to
+ten, so the rack is full without a trip to the settings page; anyone who set their own cap keeps
+it, and since yesterday a cap below ten pads the rack with stand-ins rather than leaving it short.
+And the manifest schema learned the new key, with the validator refusing a loop that names a list
+the product does not install.
+
 ## OL-2609-121 - September 22nd, 2026 - feat(products): save your own chat looks by name
 
 The chat designer had ten looks and a hole. You could start from Terminal, swap the font, push the

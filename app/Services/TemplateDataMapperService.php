@@ -58,7 +58,7 @@ class TemplateDataMapperService
     private const array INDEXED_USER_SCOPE_FIELDS = [
         'subscribers' => ['source' => 'subscribers.data', 'alias' => 'subscribers', 'default_cap' => 10],
         'goals' => ['source' => 'goals.data', 'alias' => 'goals', 'default_cap' => 3],
-        'followers' => ['source' => 'channel_followers.data', 'alias' => 'channel_followers', 'default_cap' => 5],
+        'followers' => ['source' => 'channel_followers.data', 'alias' => 'channel_followers', 'default_cap' => 10],
         'followed' => ['source' => 'followed_channels.data', 'alias' => 'followed_channels', 'default_cap' => 5],
     ];
 

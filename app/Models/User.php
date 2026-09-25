@@ -129,7 +129,7 @@ class User extends Authenticatable
         'foreach_caps' => [
             'subscribers' => 10,
             'goals' => 3,
-            'followers' => 5,
+            'followers' => 10,
             'followed' => 5,
             // Enforced CLIENT-SIDE, unlike the four above. Those slice a Twitch
             // payload in TemplateDataMapperService before the overlay ever sees

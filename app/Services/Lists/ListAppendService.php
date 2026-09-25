@@ -10,6 +10,7 @@ use App\Models\OptionSet;
 use App\Models\User;
 use App\Services\Bot\BotCommandResolver;
 use App\Services\Bot\BotCommandService;
+use App\Services\Recipes\AutoPlayService;
 use App\Services\ViewerErasureService;
 use App\Support\BotChatGate;
 use App\Support\ControlSnapshot;
@@ -36,6 +37,7 @@ readonly class ListAppendService
         private BotCommandResolver $resolver,
         private BotCommandService $commandService,
         private ViewerErasureService $erasures,
+        private AutoPlayService $autoPlay,
     ) {}
 
     /**
@@ -159,6 +161,10 @@ readonly class ListAppendService
             $appender->forceFill(['last_fired_at' => Carbon::now()])->save();
 
             ListUpdated::dispatchFor((string) $user->twitch_id, $list->fresh());
+
+            // A product whose manifest declares an auto-play loop on this
+            // list gets its next pop armed here; a no-op for any other list.
+            $this->autoPlay->listAppended($list->fresh());
 
             // Optional success reply. Same context and same control
             // snapshot as value_template; lists read fresh so

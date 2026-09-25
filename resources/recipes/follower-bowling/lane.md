@@ -6,7 +6,7 @@ author: Overlabels
 
 # Follower bowling lane
 
-Chatters type !bowl to get in line; a mod runs !list lane pop first (next up) or !list lane draw (raffle) and whoever was removed bowls: the ball rolls for them, your ten latest followers are the pins, and the outcome is decided from the removal timestamp. Switch on the gobowl control to show it.
+Chatters type !bowl to get in line; while the gobowl control is on, the lane sends the next in line down every fifteen seconds, and a mod can skip ahead with !list lane pop first (next up) or !list lane draw (raffle). Whoever was removed bowls: the ball rolls for them, your ten latest followers are the pins, and the outcome is decided from the removal timestamp. Switch on the gobowl control to show it.
 
 An Overlabels **static overlay** by Overlabels.
 
@@ -73,7 +73,7 @@ The markup.
     </div>
     <div class="bowler chip" id="bowler">[[[c:list:lane:last_removed]]]</div>
     <div class="score" id="score">[[[if:c:bowl_knocked = 10]]]STRIKE![[[elseif:c:bowl_knocked = 0]]]GUTTER[[[else]]][[[c:bowl_knocked]]] PINS[[[endif]]]</div>
-    <div class="throw" id="throw"><span class="chip chip-mods">mods</span><span class="throw-cmds">!fbfirst &middot; !fbdraw</span></div>
+    <div class="throw" id="throw"><span class="chip chip-mods">mods</span><span class="throw-cmds">skip ahead: !fbfirst &middot; !fbdraw</span></div>
   </div>
 </div>
 [[[endif]]]
@@ -602,7 +602,7 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
   - expression: `c.bowl_t > 0 && c.bowl_knocked > 8 && c.bowl_age > 5.5 && c.bowl_age < 12 ? 1 : 0`
 - `c:pin_9`
   - expression: `c.bowl_t > 0 && c.bowl_knocked > 9 && c.bowl_age > 5.55 && c.bowl_age < 12 ? 1 : 0`
-- `c:gobowl` - This enables bowling on stream
+- `c:gobowl` - This enables bowling on stream: shows the lane and lets it run itself, one bowler every fifteen seconds while someone is in line
 
 Every control also exposes a companion `[[[c:<key>_at]]]` holding the Unix timestamp in seconds of when it last changed.
 

@@ -126,7 +126,7 @@ follow Twitch's own limits. User-scope collections obey the caps on your
 | `event.top_contributions` | Hype train alert | 3 (fixed) | Alert |
 | `subscribers` | User (channel) | Account settings (default 10) | Static |
 | `goals` | User (channel) | Account settings (default 3) | Static |
-| `channel_followers` | User (channel) | Account settings (default 5) | Static |
+| `channel_followers` | User (channel) | Account settings (default 10) | Static |
 | `followed_channels` | User (channel) | Account settings (default 5) | Static |
 
 Inside a loop, use `[[[alias.count]]]` on the iterable itself to get the total (untruncated) count. For

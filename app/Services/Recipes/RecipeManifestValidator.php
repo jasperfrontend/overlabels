@@ -371,6 +371,23 @@ class RecipeManifestValidator
             }
         }
 
+        // An auto-play loop pops a list the product installs. A ref that
+        // names no installed list would leave AutoPlayService with nothing
+        // to look up and the loop silently never running.
+        $autoPlayList = $manifest['auto_play']['list'] ?? null;
+        if (is_string($autoPlayList)) {
+            $listRefs = array_values(array_filter(array_map(
+                fn ($list) => $list['ref'] ?? null,
+                $installs['lists'] ?? [],
+            ), 'is_string'));
+            if (! in_array($autoPlayList, $listRefs, true)) {
+                $errors[] = [
+                    'pointer' => '/auto_play/list',
+                    'message' => "Auto-play references unknown list \"{$autoPlayList}\".",
+                ];
+            }
+        }
+
         return $errors;
     }
 

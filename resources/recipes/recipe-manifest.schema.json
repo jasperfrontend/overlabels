@@ -113,6 +113,17 @@
       "minimum": 1,
       "maximum": 100
     },
+    "auto_play": {
+      "type": "object",
+      "description": "A loop the installed product runs by itself: while the switch control is on and the list has people in it, the front of the list is popped every `seconds`, with nothing said in chat. The pop writes the same last_removed and last_removed_at the chat pop and draw actions write, so an overlay keyed on those needs no change. `list` is an installs.lists ref; `switch` is the key of a boolean control on one of the product's overlays; `seconds` must cover the overlay's animation for one item. Optional.",
+      "additionalProperties": false,
+      "required": ["list", "switch", "seconds"],
+      "properties": {
+        "list": { "type": "string", "minLength": 1 },
+        "switch": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,49}$" },
+        "seconds": { "type": "integer", "minimum": 1, "maximum": 600 }
+      }
+    },
     "ready_message": {
       "type": "string",
       "description": "One line for the moment every step is done, in the streamer's world: what their chat can do right now. Shown once, large, under 'Everything is in place'.",
