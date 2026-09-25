@@ -1,9 +1,8 @@
 # Claims Guide
 
-A change that touches logic gets a claim file: a short, hard, checkable account of what it did.
-Which changes qualify is a path rule, below. From 2026-09-01 to 2026-09-17 every change got one,
-icon swaps included; 91 folders in 17 days showed that most of them recorded nothing a diff did not
-already say, so the bar moved.
+A change that earns a prose changelog entry gets a claim file beside it: a short, hard, checkable
+account of what it did. Nothing else does, unless Jasper asks. The bar has moved twice, and the
+section below says why.
 
 This exists so an agent can read a claim, resolve the commit it describes, and **scrutinize it** -
 confirm each statement against the tree, catch anything in the diff that was not disclosed, and say
@@ -43,20 +42,20 @@ and lets an agent read exactly one change without loading the month.
 
 ## When a claim is required
 
-The rule is path-based so `/ship` can apply it without judgment. Run `git diff --cached
---name-only`; a claim is required if ANY path matches:
+**A claim is written when, and only when, a prose changelog entry is written for the same commit,
+or when Jasper asks for one** (decided 2026-09-25). The two files share the ID and land together.
 
-- `app/**`, `database/**`, `routes/**`, `config/**`, `bootstrap/**`
-- `resources/recipes/**` (products), `resources/js/overlay/**`, any `OverlayRenderer.vue`
-- `resources/js/**/*.ts`, `*.mts`, `*.mjs`, `*.js` - except `*.test.ts`
-- `.github/**`, `docker/**`, `Dockerfile`, `vite.config.mts`, `package.json`, `composer.json`
+That is the third version of this rule. From 2026-09-01 every commit got a claim; from 2026-09-17
+only a change touching a logic path did (`app/`, `database/`, `routes/`, `config/`, recipes,
+non-test `.ts`, `OverlayRenderer.vue`, infra files). Under those rules 135 claims accumulated in 25
+days, and on 2026-09-24 all of them were audited cold in one sitting, at about $120 of API credit.
+The yield was one real prod bug (OL-2609-087: two routes with no name, 404 on the overlay host), two
+trivial copy fixes and a few CLAUDE.md corrections. The other eighty-odd findings were about the
+claims themselves: tests narrower than their claim, wrong test counts, `[unverified]` tags on things
+the tree could have answered. The record was auditing its own paperwork, and writing it cost time on
+every logic change. So the bar moved to the one the prose changelog already has.
 
-A diff made only of `.vue`, `.css`, `.blade.php`, `resources/help/**`, `docs/**`, `public/**`,
-`tests/**` or `.md` files needs no claim. A `.vue` file can hold real logic, and that is a known
-edge accepted for the sake of a rule with no judgment in it; when it matters, write one anyway.
-
-Two overrides: a change that earns a prose changelog entry always gets a claim, and Jasper can ask
-for one on anything. Nothing forbids a claim on an exempt change.
+Nothing forbids a claim on a change without a prose entry. Nothing requires one.
 
 ## Allocating an ID
 
@@ -201,7 +200,8 @@ the honest tag always costs less than the flattering one.
 
 Four mechanical checks, no judgment, red gate = no push:
 
-1. Whether the staged paths match the rule above. If not, steps 2 to 4 are skipped.
+1. Whether the commit carries a prose changelog entry (or Jasper asked for a claim). If not,
+   steps 2 to 4 are skipped and the commit carries no trailer.
 2. A new folder exists under `docs/changelog/claims/YYYY/MM/` containing `claim.md`.
 3. That folder's ID is in the commit trailer as `Changelog: <ID>`.
 4. Surface covers every path in the diff.

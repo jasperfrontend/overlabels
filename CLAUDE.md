@@ -854,18 +854,15 @@ clobbered by a checkout, a stash, or a branch switch that a later step needs to 
   npm run typecheck && npm run build && php artisan test` (build before pest - two tests inspect
   the built assets). Red gate = no push. `/ship` runs exactly this.
 - "Ship it" means gate, commit, push - one shot, no confirmation pause.
-- **A claim file is required when a change touches logic, and only then** (rule tightened
-  2026-09-17 after 91 claims in 17 days, most of them CONFIRMED-in-advance paperwork). The test is
-  path-based so `/ship` can check it: any staged path under `app/`, `database/`, `routes/`,
-  `config/`, `bootstrap/`, `resources/recipes/`, `resources/js/overlay/`, `.github/`, or `docker/`;
-  any `.ts`/`.mts`/`.mjs`/`.js` under `resources/js/` that is not a `*.test.ts`; `OverlayRenderer.vue`;
-  `Dockerfile`, `vite.config.mts`, `package.json` or `composer.json`. A diff made ONLY of `.vue`,
-  `.css`, `.blade.php`, `resources/help/`, `docs/`, `public/`, `tests/` or markdown needs none.
-  Two overrides: a change that earns a prose changelog entry always gets one, and Jasper can ask
-  for one. When required: `docs/changelog/claims/YYYY/MM/OL-YYMM-NNN/claim.md`, same commit as the
-  change, ID in the commit as a `Changelog: OL-2609-004` trailer, Surface complete. It is a hard,
-  checkable record written for a cold agent, not a nice read. **Full format and rules:
-  `docs/changelog/claims-guide.md`.**
+- **A claim file is written ONLY when a prose changelog entry is written, or when Jasper asks
+  for one** (decided 2026-09-25). There is no path rule any more. The earlier rules - every commit
+  from 2026-09-01, then every logic change from 2026-09-17 - produced 135 claims in 25 days, and a
+  $120 cold audit of all of them on 2026-09-24 found one real prod bug (OL-2609-087, two unnamed
+  routes) and a long tail of findings about the paperwork itself. The record was costing more than
+  it caught. When one IS written: `docs/changelog/claims/YYYY/MM/OL-YYMM-NNN/claim.md`, same commit
+  as the change, the same ID on the prose heading and in the commit as a `Changelog: OL-2609-004`
+  trailer, Surface complete. A commit with no prose entry carries no trailer. **Full format and
+  rules: `docs/changelog/claims-guide.md`.**
 - **Scrutinize Sally, the claims auditor, is ADVISORY, never a deploy gate** (decided 2026-09-17).
   She inspects the building and files a report; she does not block the sale. She is the `sally`
   agent in `.claude/agents/`, run cold through `/sally <ID>`; `audit.md` lands beside the claim.
