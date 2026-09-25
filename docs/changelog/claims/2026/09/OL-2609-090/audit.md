@@ -1,0 +1,38 @@
+## Audit of OL-2609-090 - feat(products): ten looks for Twitch Chat, a skin control and one-click presets on the product page
+
+**Audited:** 2026-09-25
+**Commit:** 6aeb339666a235f213e3d069b4244621679a9c31
+**Verdict:** FINDINGS
+
+### Claims
+| Claim | Verdict | Evidence |
+|-------|---------|----------|
+| C1 | CONFIRMED | `app/Support/ChatPresets.php:42 @6aeb339` - `PRESETS` holds exactly `clean`, `terminal`, `bubbles`, `neon`, `paper`, `broadcast`, `caption`, `pixel`, `cards`, `vapor`; each `values` has the 13 keys of `KEYS` (`:34`) and `skin` equal to its own key. @HEAD keys and values unchanged; blurbs respelled (OL-2609-118), `PRODUCT` is `twitch-chat-overlay` (OL-2609-114) |
+| C2 | CONFIRMED | `resources/recipes/twitch_chat/chat.md @6aeb339` controls table has 13 rows, `skin` .. `emote_size`, same set and order as `ChatPresets::KEYS`; `ProductChatPresetsTest` line 46-47 compares `KEYS` against `OverlayMarkdown::parse()` and passed. @HEAD the file lives at `resources/recipes/twitch-chat-overlay/chat.md` (OL-2609-114) |
+| C3 | CONFIRMED | `chat.md @6aeb339` css lines 136-192 hold `.skin-terminal`, `-bubbles`, `-neon`, `-paper`, `-broadcast`, `-caption`, `-pixel`, `-cards`, `-vapor`; `grep -c skin-clean` = 0 |
+| C4 | CONTRADICTED | `chat.md:141 @6aeb339` `.skin-bubbles { gap: 12px; }`, `:168` `.skin-caption { align-items: center; text-align: center; }` and `:180` `.skin-cards { gap: 10px; }` are single-class (0,1,0) selectors, below `.skin-x .msg`. The "after the `.bg-x .msg` rules" half is true (bg rules at `:100-102`, skins from `:136`) |
+| C5 | CONFIRMED | `ChatPresets.php:157-176 @6aeb339` - returns `[]` unless `has()` (`:135`, `=== 'twitch_chat'`); `active` is `$current !== [] && matches()` (`:176`), `matches()` (`:222`) requires every key present and string-equal. @HEAD slug is `twitch-chat-overlay` (OL-2609-114) |
+| C6 | CONFIRMED | `ChatPresets.php:201-211 @6aeb339` - per key `$template->controls()->where('key', ...)->first()`, `continue` on miss (`:208`), `writeValue($value)` (`:211`), no create, returns `$written`. @HEAD delegates to `applyValues()` with `(string)` cast (OL-2609-121) |
+| C7 | CONFIRMED | `ProductController.php:328-350 @6aeb339` - `abort_unless(has && isset(PRESETS[$preset]), 404)` `:330`, `abort_if($template === null \|\| owner_id !== user->id, 404)` `:335`, `ControlValueUpdated::dispatch(slug, broadcastKey(), type, (string) value, twitch_id, null, null, null)` `:338`, redirect to `products.show` `:350`. @HEAD `canonical($slug)` first line (OL-2609-114) and a JSON branch (OL-2609-109) |
+| C8 | CONFIRMED | `resources/js/pages/products/show.vue:661 @6aeb339` `v-if="installed && presets.length"`; `:703` `v-if="preset.active"` "Applied", button `v-else` `:708`; `:317` `<link v-if="presets.length" ... :href="PRESET_FONTS">`. @HEAD section, cards and link removed (OL-2609-118) |
+| C9 | CONFIRMED | `show.vue:204-211 @6aeb339` `swatchStyle()` sets `fontFamily`, `color: text_color`, `background` (`transparent` when `none`); `:681`/`:687` name colours `#1e90ff`/`#ff7f50` when `twitch_colors === '1'`, else `name_color`. @HEAD removed (OL-2609-118) |
+| C10 | CONFIRMED | `resources/recipes/twitch_chat/manifest.json:5 @6aeb339` `"version": 2`; `RecipeCatalog::sync()` `updateOrCreate` keyed on `slug` + `version` (`app/Services/Recipes/RecipeCatalog.php:89-93 @6aeb339`); `ProductController::instanceFor()` `:422-428` matches `recipe_id` in any `Recipe` with the slug. @HEAD manifest moved to `twitch-chat-overlay/` (OL-2609-114) |
+| C11 | CONTRADICTED | `tests/Feature/ProductChatPresetsTest.php @6aeb339` exists and all 8 tests passed (run at @6aeb339 in an extracted tree and at @HEAD). Narrower than claimed in three places: C1 - asserts count 10 (`:46`) and `skin === key` (`:51`) but names only `clean`/`terminal` (`:88-90`), not the other eight keys; C3 - skips `clean` (`:64`) and never asserts `clean` has no rules; C5 - before install asserts only `presets.0.active` false (`:81`), not every preset, and after install asserts only `presets.0` true and `presets.1` false (`:89-91`), not presets 2-9 false. The remaining listed items (layout/background/font, apply writing 13 `terminal` values, 13 dispatches, clean->terminal flip, drift, the three 404s, guest redirect) are asserted |
+| C12 | CONFIRMED | `tests/Feature/ProductTwitchChatTest.php:89 @6aeb339` key order starts `'skin'`, `:94` `skin` value `clean`; passed at @6aeb339 and @HEAD |
+| C13 | UNVERIFIABLE | tagged [unverified] |
+| C14 | UNVERIFIABLE | tagged [unverified]; compound - the pre-ship Chrome observations are unverifiable, but the resulting CSS it names is checkable and true: `chat.md:142,147 @6aeb339` bubbles `.msg` `fit-content` and `.body` `display: block`; `:165` `.skin-broadcast.layout-ticker { gap: 0; ... background: var(--bg); }`; `:151`, `:174` `fit-content` on neon and pixel |
+
+### Surface
+Complete.
+
+### Findings
+- **F1** contradicted claim - C4 says every skin rule is at least `.skin-x .msg`, but `resources/recipes/twitch_chat/chat.md:141,168,180 @6aeb339` (`.skin-bubbles`, `.skin-caption`, `.skin-cards` on the root) are single-class; the same false sentence is in the css comment at `:130-131`. A new claim should restate C4 as scoped to rules under `.msg`, or name the three root rules.
+- **F2** test narrower than claimed - C11 says `ProductChatPresetsTest` asserts C1, C3 and C5, but it does not assert the eight preset keys other than `clean`/`terminal` (C1), that `clean` has no rules (C3, skipped at `:64`), or that every preset is inactive before an install and all but `clean` inactive after (C5, `:81`, `:89-91`). Either add those assertions or restate C11 at what the test checks.
+- **F3** mistagged compound - C14 is tagged [unverified], but its second half (`.body` block and `.msg` `fit-content` for bubbles, ticker root `gap: 0` with the background, `fit-content` on neon and pixel) is checkable as [code] in `chat.md @6aeb339`; split it so the checkable half carries [code].
+- **F4** earlier claim superseded without citation - OL-2609-089 recorded "`OverlayMarkdown::parse()` on `chat.md` yields twelve controls with keys, in order: `layout`, ..." (C2), "The root element's class list is `ol-chat layout-[[[c:layout]]] bg-[[[c:background]]]` ..." (C6) and "The five Google Fonts families load from `fonts.googleapis.com`" (Risk); this change makes all three false (thirteen controls with `skin` first, `skin-[[[c:skin]]]` on the root, six families) and never names OL-2609-089. A later claim should cite OL-2609-089 C2, C6 and Risk as superseded by OL-2609-090.
+
+### Notes
+- Tests: `php artisan test --filter='ProductChatPresetsTest|ProductTwitchChatTest'` - 16 passed at @HEAD; 16 passed at @6aeb339 in a `git archive` extract with its own `composer install`, after copying HEAD's `public/build` (the page tests fail without a Vite manifest).
+- All HEAD drift in touched symbols is disclosed by later claims: OL-2609-109 (JSON branch), OL-2609-114 (slug and recipe directory rename, `canonical()`), OL-2609-118 (preset cards, `swatchStyle()`, `PRESET_FONTS` removed), OL-2609-119 (Google Fonts dropped, test font assertion changed), OL-2609-121 (`applyValues()`).
+- `show.vue @6aeb339` inserts the presets script block between the comment at `:187` ("Only a static overlay goes into OBS...") and `const stages` at `:214`, and the "Pick a look" section between the comment at `:655` ("Installed, steps left...") and the section it describes at `:721`, separating both comments from their code.
+- Unchanged line 1 says `applyPreset()` performs "the same write" as `OverlayControlController::setValue()`; @6aeb339 `setValue()` writes `$sanitized` after type-based clamping (`:417`), while `applyPreset()` writes the preset constants without `sanitizeValue()`.
