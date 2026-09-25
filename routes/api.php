@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CheckinResolveController;
 use App\Http\Controllers\Api\DeployWebhookController;
 use App\Http\Controllers\Api\EventFeedController;
 use App\Http\Controllers\Api\ExternalWebhookController;
@@ -150,6 +151,18 @@ Route::prefix('/overlay')->group(function () {
         return response()->json($badges);
     })->name('api.overlay.badges')->middleware(['throttle:60,1'])->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 });
+
+// Public place lookup for the homepage's !checkin demo: the same resolver and
+// the same miss reply the bot uses, read-only, no pin stored. No auth and no
+// session (a logged-out visitor is the whole audience), its own per-IP
+// throttle; the per-query cache (24 h for a hit, minutes for a miss) and the
+// same-site check that keeps other sites from embedding it both live in the
+// controller. See App\Http\Controllers\Api\CheckinResolveController for the
+// response shapes.
+Route::get('/checkin/resolve', CheckinResolveController::class)
+    ->name('api.checkin.resolve')
+    ->middleware(['throttle:30,1', 'lockdown'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 
 // Get all template tags (API endpoint)
 Route::get('/template-tags', [TemplateTagController::class, 'getAllTags'])

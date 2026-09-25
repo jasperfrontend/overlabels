@@ -40,6 +40,7 @@ use App\Http\Controllers\WhatsNewController;
 use App\Http\Controllers\WiringController;
 use App\Jobs\SetupUserEventSubSubscriptions;
 use App\Models\User;
+use App\Services\Recipes\RecipeCatalog;
 use App\Services\TwitchApiService;
 use App\Services\TwitchScopeService;
 use App\Services\TwitchTokenService;
@@ -53,8 +54,17 @@ use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-Route::get('/', function () {
-    return view('welcome');
+// The homepage is a standalone Blade view, not the Inertia shell. The product
+// shelf on it is read from the recipe catalogue at request time, so a product
+// is on the homepage the day its manifest lands and never has to be listed
+// here by hand. HomepageTest pins that against the catalogue.
+Route::get('/', function (RecipeCatalog $catalog) {
+    $listed = collect($catalog->listed());
+
+    return view('welcome', [
+        'games' => $listed->where('category', 'product')->values()->all(),
+        'alerts' => $listed->where('category', 'alert')->values()->all(),
+    ]);
 })->name('home');
 
 Route::get('/privacy', function () {

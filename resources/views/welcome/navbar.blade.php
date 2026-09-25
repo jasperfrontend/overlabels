@@ -6,13 +6,10 @@
         <span class="text-lg font-bold tracking-tight">Overlabels</span>
       </a>
       <div class="hidden text-foreground items-center gap-6 lg:flex">
-        <a href="{{ route('products.index') }}" class="text-sm hover:text-sky-500 cursor-pointer">Products</a>
-        <a href="#tags" class="text-sm hover:text-sky-500 cursor-pointer">Tags</a>
-        <a href="#controls" class="text-sm hover:text-sky-500 cursor-pointer">Controls</a>
-        <a href="#conditionals" class="text-sm hover:text-sky-500 cursor-pointer">Conditionals</a>
-        <a href="#events" class="text-sm hover:text-sky-500 cursor-pointer">Events</a>
-        <a href="#integrations" class="text-sm hover:text-sky-500 cursor-pointer">Integrations</a>
-        <a href="#kits" class="text-sm hover:text-sky-500 cursor-pointer">Kits</a>
+        <a href="#products" class="text-sm hover:text-sky-500 cursor-pointer">Products</a>
+        <a href="#how-it-works" class="text-sm hover:text-sky-500 cursor-pointer">How it works</a>
+        <a href="#alerts" class="text-sm hover:text-sky-500 cursor-pointer">Alerts</a>
+        <a href="#build" class="text-sm hover:text-sky-500 cursor-pointer">Build your own</a>
         <a href="/help" class="text-sm hover:text-sky-500 cursor-pointer">Help</a>
         <a href="/help/manifesto" class="text-sm hover:text-sky-500 cursor-pointer">Why Overlabels</a>
         @include('welcome.theme-toggle')
@@ -54,12 +51,10 @@
   <div data-mobile-menu class="hidden border-t border-sidebar-accent bg-sidebar-accent/95 backdrop-blur-lg lg:hidden">
     <div class="container mx-auto space-y-1 px-4 py-4 sm:px-6">
       @foreach ([
-          ['href' => '#tags', 'label' => 'Tags'],
-          ['href' => '#controls', 'label' => 'Controls'],
-          ['href' => '#conditionals', 'label' => 'Conditionals'],
-          ['href' => '#events', 'label' => 'Events'],
-          ['href' => '#integrations', 'label' => 'Integrations'],
-          ['href' => '#kits', 'label' => 'Kits'],
+          ['href' => '#products', 'label' => 'Products'],
+          ['href' => '#how-it-works', 'label' => 'How it works'],
+          ['href' => '#alerts', 'label' => 'Alerts'],
+          ['href' => '#build', 'label' => 'Build your own'],
       ] as $item)
         <a href="{{ $item['href'] }}" data-mobile-menu-link
            class="block rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer">{{ $item['label'] }}</a>

@@ -1,5 +1,43 @@
 # Changelog - September 2026
 
+## OL-2609-138 - September 25th, 2026 - feat(home): the homepage sells the products, not the syntax
+
+The homepage's title tag said "Reactive Twitch overlays for people who code", the hero was two code
+blocks side by side, and the navigation read Tags, Controls, Conditionals, Events. The four
+products with real artwork, the things a streamer might actually want, were one word in that nav.
+A streamer landing from a search read "something with code" and left, and that was the right call
+given what the page told them. Fourteen months of work had a front door built for the wrong
+visitor.
+
+The page now opens for streamers. The hero says "Give your chat something to play" next to a
+Chat Tower that builds, sways and falls in a loop, pure CSS, nine viewers typing `!stack`. Under it
+the product shelf: the four games as big cards with their artwork, one sentence each, and the chat
+command a viewer types. Then how it works in three beats (pick a product, paste one link into OBS,
+your chat plays), the five alert products as a quiet logo row, and four tiles on why here and
+nowhere else. The shelf and the row are read from the recipe catalogue at request time, the same
+list `/products` serves, so the next product is on the homepage the day its manifest lands and a
+test fails if any listed product is missing from the page.
+
+Nothing was thrown away. Everything the old page said about tags, controls, conditionals, events,
+integrations and kits is still on the page, word for word, with the same anchors, under one fold
+headed "Want something nobody has made yet?". That fold also makes the one claim the builder half
+can make that no other overlay tool can: hand `overlabels.com/llms.txt` to Claude or ChatGPT,
+describe the overlay in plain words, and paste in what comes back. The title, description and
+Open Graph copy now say games and overlays your chat plays live, and the share image is the four
+product artworks instead of the code pitch. The old anchor links moved from the nav to the footer.
+
+The second pass gave every product a running demo instead of a still. Follower Bowling's queue
+panel, ten pins and rolling ball, Chat Checkin's globe and HUD, and the Twitch Chat Overlay cycling
+three of its ten looks are all pure CSS loops on the product's own rules, made-up viewers included,
+and each product now owns a full-width row: the demo across the whole column, the description, the
+three things you get and the button below it. The third pass made the Chat Checkin demo the real
+thing. It mounts the same three.js globe the overlay renders, lazily, and under it sits a chat box:
+type `!checkin Avarua` and a pin lands, the HUD counts it, and the bot answers with the same
+sentences it uses on stream, distance and all. That runs on a new public `GET /api/checkin/resolve`
+over the same 234k-city gazetteer the product uses, cached, throttled per IP, and refusing
+cross-site callers. The hero's right column became a tabbed showcase of all four demos, named by
+what chat types, that walks through them on its own until the visitor picks one.
+
 ## OL-2609-137 - September 25th, 2026 - feat(products): Follower Bowling runs itself
 
 Follower Bowling had one thing wrong with it, and it was the part that was not on screen. Chat

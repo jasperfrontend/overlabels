@@ -29,6 +29,12 @@ import { landDots, latLngToUnitVector } from './landmask';
 
 export interface GlobeInstance {
   update(pins: CheckinPin[]): void;
+  /**
+   * Put the render loop to sleep and wake it again. An overlay in OBS never
+   * needs this; a page that scrolls the globe out of view does, or the GPU
+   * keeps drawing an invisible sphere for the rest of the visit.
+   */
+  setPaused(paused: boolean): void;
   destroy(): void;
 }
 
@@ -226,9 +232,10 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
   let raf = 0;
   let last = performance.now();
   let destroyed = false;
+  let paused = false;
 
   function frame(now: number): void {
-    if (destroyed) return;
+    if (destroyed || paused) return;
     const delta = Math.min(0.1, (now - last) / 1000);
     last = now;
 
@@ -247,6 +254,17 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
     update(pins: CheckinPin[]): void {
       // Every globe carries the maker's mark - see brandPin.ts.
       rebuildPins(withBrandPin(pins));
+    },
+    setPaused(next: boolean): void {
+      if (destroyed || paused === next) return;
+      paused = next;
+      if (paused) {
+        cancelAnimationFrame(raf);
+      } else {
+        // Reset the clock so the first frame back is not one huge delta.
+        last = performance.now();
+        raf = requestAnimationFrame(frame);
+      }
     },
     destroy(): void {
       destroyed = true;

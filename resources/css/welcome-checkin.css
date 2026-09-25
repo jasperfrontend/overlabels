@@ -1,0 +1,241 @@
+/*
+  Chat Checkin demo on the homepage: the product's real three.js globe in
+  the demo scene, a chat column that fills up as viewers check in, the
+  product's HUD, and the chat box under the scene where the visitor types
+  their own !checkin. Hand-written, unlike welcome-demos.css.
+
+  The scene sits on .ol-demo (16:9, dark, mono) from welcome-demos.css and
+  sizes in cqw against .ol-demo-frame like the other demos. The globe's
+  colours are the product recipe's exact values
+  (resources/recipes/chat-checkin/globe.md), read by the renderer off the
+  custom properties on the mount element.
+*/
+
+/* ---- the left column: chat on top, the HUD under it, never overlapping ---- */
+/* Ends at 40% of the scene, where the globe slot begins: the two boxes never
+   share a pixel, so a wrapped chat line cannot run into the sphere. */
+.ol-ck__left {
+  position: absolute;
+  left: 4%;
+  top: 6%;
+  bottom: 7%;
+  width: 36%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2cqw;
+  pointer-events: none;
+}
+
+/* The chat column, newest at the bottom; older lines fade out at the top. */
+.ol-ck__chat {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.35em;
+  overflow: hidden;
+  font-size: clamp(8px, 2.2cqw, 17px);
+  line-height: 1.4;
+  mask-image: linear-gradient(to bottom, transparent, #000 22%);
+}
+.ol-ck__line {
+  overflow-wrap: anywhere;
+  animation: ol-ck-rise 0.35s ease-out both;
+}
+.ol-ck__name {
+  font-weight: 600;
+}
+.ol-ck__cmd {
+  color: #c4b5fd;
+}
+.ol-ck__bot {
+  color: #a78bfa;
+}
+.ol-ck__bot .ol-ck__name {
+  color: #a78bfa;
+}
+.ol-ck__line--you .ol-ck__name {
+  color: #1daaff;
+}
+@keyframes ol-ck-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.6em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- the globe: an explicit box so three.js can size its canvas ---- */
+/* The slot places it; the mount element inside is position: relative
+   because checkinGlobe.ts sets that inline and would override absolute.
+   The sphere fills 99% of the slot's SHORTER side (fixed camera), so the
+   slot is wider than it is tall: 50cqw of height makes a ~49.5cqw sphere
+   centred at 70cqw, whose west limb sits at ~45cqw - clear of the chat
+   column (ends at 40cqw) with room on its left for a pin's label. */
+.ol-ck__globe-slot {
+  position: absolute;
+  top: 3.125cqw;
+  right: 0;
+  width: 60cqw;
+  height: 50cqw;
+}
+.ol-ck__globe {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  --globe-shell-color: #000;
+  --globe-shell-opacity: 0.5;
+  --globe-dot-color: #2dd4bf;
+  --globe-pin-color: #bfe3e0;
+  --globe-rotation-seconds: 30;
+  --globe-dot-size: 5;
+}
+@media (min-width: 640px) {
+  .ol-ck__globe {
+    --globe-dot-size: 4;
+  }
+}
+
+/* The renderer clips its label layer to the mount (inline, non-important), so
+   a label centred on a pin at the west limb lost its first letters at the
+   slot edge. Let them hang out; .ol-demo still clips at the scene edge. */
+.ol-ck__globe .ol-globe-labels {
+  overflow: visible !important;
+}
+
+/* The pin labels the renderer writes, styled as the product recipe styles them. */
+.ol-ck__globe .ol-globe-label {
+  color: #dfe8e8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(9px, 2.1cqw, 13px);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 6px #000;
+  transition: opacity 0.3s;
+}
+.ol-ck__globe .ol-globe-label[data-login='you'] {
+  color: #1daaff;
+  font-weight: 600;
+}
+.ol-ck__globe .ol-globe-label.is-new {
+  animation: ol-ck-pop 0.6s ease-out;
+}
+@keyframes ol-ck-pop {
+  0% {
+    transform: translate(-50%, -100%) scale(0.4);
+  }
+  60% {
+    transform: translate(-50%, -100%) scale(1.25);
+  }
+  100% {
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
+
+/* The stand-in until three.js arrives, and forever when it cannot: a dotted disc. */
+.ol-ck__disc {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46cqw;
+  height: 46cqw;
+  margin: -23cqw 0 0 -23cqw;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #061412;
+  box-shadow:
+    inset -2cqw -1.5cqw 4cqw rgb(0 0 0 / 0.8),
+    0 0 3cqw rgb(45 212 191 / 0.18);
+}
+.ol-ck__disc::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, #2dd4bf 0.3cqw, transparent 0.4cqw);
+  background-size: 1.6cqw 1.6cqw;
+  opacity: 0.85;
+  mask-image: radial-gradient(circle at 50% 50%, #000 58%, transparent 72%);
+  animation: ol-ck-spin 12s linear infinite;
+}
+@keyframes ol-ck-spin {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -16cqw 0;
+  }
+}
+
+/* ---- the HUD, the product's three lines ---- */
+.ol-ck__hud {
+  flex: none;
+  color: #1daaff;
+  font-size: clamp(8px, 2.1cqw, 16px);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.ol-ck__hud [data-hud='latest'],
+.ol-ck__hud [data-hud='farthest'] {
+  color: #8fb6b3;
+}
+
+/* ---- the chat box under the scene ---- */
+.ol-ck__prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid var(--sidebar-border);
+  background: color-mix(in srgb, var(--card) 50%, transparent);
+  padding: 0.75rem 1rem;
+}
+.ol-ck__prompt-hint {
+  font-size: 0.8125rem;
+  color: var(--foreground);
+}
+.ol-ck__prompt-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.ol-ck__input {
+  flex: 1;
+  min-width: 0;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--sidebar-border);
+  border-radius: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* 16px: anything smaller makes iOS Safari zoom the page when the input is tapped. */
+  font-size: 1rem;
+}
+.ol-ck__input::placeholder {
+  color: var(--muted-foreground);
+}
+.ol-ck__input:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 2px #0ea5e9;
+}
+.ol-ck__input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ol-ck__prompt .btn {
+  height: 2.5rem;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ol-ck__globe {
+    --globe-rotation-seconds: 0;
+  }
+  .ol-ck__line,
+  .ol-ck__disc::before,
+  .ol-ck__globe .ol-globe-label.is-new {
+    animation: none;
+  }
+}

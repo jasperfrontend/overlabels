@@ -1,5 +1,9 @@
 import '../../css/app.css';
+import '../../css/welcome-checkin.css';
+import '../../css/welcome-demos.css';
+import '../../css/welcome.css';
 import { wireThemeMenus } from '../utils/themeMenu';
+import { initCheckinDemo } from './checkinDemo';
 
 // The homepage is a static blade page - this entry only wires up the handful
 // of interactive bits: theme switching, the mobile menu, and tab groups.
@@ -45,8 +49,47 @@ function wireTabs() {
   });
 }
 
+// The hero showcase: one tab per product, auto-advancing at the end of each
+// demo's loop until the visitor picks one themselves. A programmatic click
+// is not trusted, a real one is, which is how the two are told apart. A
+// panel hidden with display:none restarts its CSS animations when shown, so
+// every tab opens at the start of its loop.
+function wireShowcase() {
+  document.querySelectorAll<HTMLElement>('[data-showcase]').forEach((group) => {
+    const buttons = Array.from(group.querySelectorAll<HTMLElement>('[data-tab]'));
+    const panels = Array.from(group.querySelectorAll<HTMLElement>('[data-tab-panel]'));
+    if (buttons.length < 2) return;
+
+    let timer = 0;
+    let manual = false;
+
+    const schedule = () => {
+      window.clearTimeout(timer);
+      if (manual) return;
+      const active = panels.find((p) => !p.classList.contains('hidden'));
+      const seconds = Number(active?.dataset.duration) || 12;
+      timer = window.setTimeout(() => {
+        const index = buttons.findIndex((b) => b.dataset.tab === active?.dataset.tabPanel);
+        buttons[(index + 1) % buttons.length]?.click();
+      }, seconds * 1000);
+    };
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        if (event.isTrusted) manual = true;
+        // wireTabs() swapped the panels in its own listener, registered first.
+        schedule();
+      });
+    });
+
+    schedule();
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   wireThemeMenus();
   wireMobileMenu();
   wireTabs();
+  wireShowcase();
+  initCheckinDemo();
 });

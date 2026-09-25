@@ -35,32 +35,41 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=albert-sans:300,400,500,600,700" rel="stylesheet" />
 
-    <title>Overlabels &bull; Reactive Twitch overlays for people who code</title>
-    <meta name="description" content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts, and donation tracking from Ko-fi, Streamlabs, and Fourthwall. Free and open source." />
+    <title>Overlabels &bull; Free Twitch overlays and games your chat plays live</title>
+    <meta name="description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on stream too. Open source." />
     <link rel="canonical" href="https://overlabels.com/" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://overlabels.com/" />
     <meta property="og:site_name" content="Overlabels" />
-    <meta property="og:title" content="Overlabels • Reactive Twitch overlays for people who code" />
-    <meta property="og:description" content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts and donation tracking from Ko-fi, Streamlabs, Buy Me A Coffee, FourthWall and Throne. Free and open source." />
+    <meta property="og:title" content="Overlabels • Free Twitch overlays and games your chat plays live" />
+    <meta property="og:description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on stream too. Open source." />
     <meta property="og:image" content="{{ asset('ogimage.jpg') }}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Overlabels • reactive Twitch overlays for people who code" />
+    <meta property="og:image:alt" content="Overlabels • games your chat plays live on your Twitch stream" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Overlabels • Reactive Twitch overlays for people who code" />
-    <meta name="twitter:description" content="Template tags, reactive expressions, and pipe formatters on top of the HTML and CSS you already write. Live Twitch data, event alerts, and donation tracking from Ko-fi, Streamlabs, and Fourthwall. Free and open source." />
+    <meta name="twitter:title" content="Overlabels • Free Twitch overlays and games your chat plays live" />
+    <meta name="twitter:description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on stream too. Open source." />
     <meta name="twitter:image" content="{{ asset('ogimage.jpg') }}" />
-    <meta name="twitter:image:alt" content="Overlabels • reactive Twitch overlays for people who code" />
+    <meta name="twitter:image:alt" content="Overlabels • games your chat plays live on your Twitch stream" />
 
     @vite(['resources/js/welcome/app.ts'])
 </head>
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-sidebar-accent text-foreground">
         @include('welcome.navbar')
+        {{-- For streamers: the products, how they install, the alerts, why here. --}}
         @include('welcome.hero')
+        @include('welcome.products')
+        @include('welcome.how')
+        @include('welcome.alerts')
+        @include('welcome.why')
+        {{-- For builders: the original homepage, kept whole under one fold.
+             Its sections and anchors (#tags, #controls, #conditionals,
+             #events, #integrations, #kits) are what the page ranks on. --}}
+        @include('welcome.build')
         @include('welcome.syntax')
         @include('welcome.controls')
         @include('welcome.conditionals')

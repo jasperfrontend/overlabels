@@ -6,8 +6,14 @@
         <span class="font-semibold">Overlabels</span>
       </div>
       <div class="flex flex-wrap items-center gap-6 text-sm text-foreground">
+        <a href="{{ route('products.index') }}" class="hover:text-sky-500 cursor-pointer">Products</a>
+        <a href="#tags" class="hover:text-sky-500 cursor-pointer">Tags</a>
+        <a href="#controls" class="hover:text-sky-500 cursor-pointer">Controls</a>
+        <a href="#conditionals" class="hover:text-sky-500 cursor-pointer">Conditionals</a>
+        <a href="#events" class="hover:text-sky-500 cursor-pointer">Events</a>
+        <a href="#integrations" class="hover:text-sky-500 cursor-pointer">Integrations</a>
+        <a href="#kits" class="hover:text-sky-500 cursor-pointer">Kits</a>
         <a href="/help" class="hover:text-sky-500 cursor-pointer">Help</a>
-        <a href="/help/controls" class="hover:text-sky-500 cursor-pointer">Controls</a>
         <a href="/help/manifesto" class="hover:text-sky-500 cursor-pointer">Why Overlabels</a>
         <a href="/terms" class="hover:text-sky-500 cursor-pointer">Terms</a>
         <a href="/privacy" class="hover:text-sky-500 cursor-pointer">Privacy</a>

@@ -2,11 +2,12 @@
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-2xl text-center">
       <h2 class="mb-6 text-4xl font-bold tracking-tight sm:text-5xl">
-        Ship your overlay.<br />
+        Your chat is waiting.<br />
         <span class="text-sky-500">Free. Forever.</span>
       </h2>
       <p class="mx-auto mb-10 max-w-lg text-lg text-foreground">
-        No paywalls. No tiers. No artificial limits. Everything you create is yours. The whole thing is open source.
+        Log in with Twitch, pick a product, paste one link into OBS. No paywalls, no tiers, no limits. Everything
+        you install is yours, and the whole thing is open source.
       </p>
 
       @auth
