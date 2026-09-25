@@ -455,9 +455,15 @@ final class WiringFacts
         $pins = (int) ($manifest['follower_pins'] ?? 0);
         if ($pins > 0 && $user->access_token) {
             $total = app(TwitchApiService::class)->getCachedFollowersTotal($user->access_token, (string) $user->twitch_id);
-            if ($total !== null && $total < $pins) {
-                $filled = max(0, $total);
-                $context[] = "Your rack has {$filled} of {$pins} pins from real followers; the rest are stand-ins until more followers arrive";
+            // The lane renders min(total, cap) real pins: the followers
+            // foreach cap slices the list before the overlay sees it, so a
+            // channel with more followers than its cap still gets stand-ins.
+            $cap = $user->foreachCaps()['followers'];
+            if ($total !== null && min($total, $cap) < $pins) {
+                $filled = max(0, min($total, $cap));
+                $context[] = $total <= $cap
+                    ? "Your rack has {$filled} of {$pins} pins from real followers; the rest are stand-ins until more followers arrive"
+                    : "Your rack has {$filled} of {$pins} pins from real followers; the rest are stand-ins because your followers cap is {$cap}";
             }
         }
 

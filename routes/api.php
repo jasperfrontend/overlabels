@@ -117,7 +117,7 @@ Route::prefix('/overlay')->group(function () {
         );
 
         return response()->json($emotes);
-    })->middleware(['throttle:60,1'])->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+    })->name('api.overlay.emotes')->middleware(['throttle:60,1'])->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 
     // Returns Twitch chat badge art as { global: {...}, channel: {...} }, each
     // keyed "set/version" to match the IRC `badges` tag (`moderator/1`).
@@ -148,7 +148,7 @@ Route::prefix('/overlay')->group(function () {
         );
 
         return response()->json($badges);
-    })->middleware(['throttle:60,1'])->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+    })->name('api.overlay.badges')->middleware(['throttle:60,1'])->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 });
 
 // Get all template tags (API endpoint)

@@ -131,6 +131,15 @@ test('date custom patterns replace the six shared tokens', function () {
     expect(PipeFormatter::apply('1788261900', 'date:dd-MM-yyyy HH:mm', 'en-US'))->toBe('01-09-2026 11:25');
 });
 
+test('date custom patterns leave everything outside the six tokens literal, as formatters.ts does', function () {
+    // Carbon::format() reads nearly every letter as a format character, so
+    // without escaping a bare 'yy' printed the two-digit year twice ('2626')
+    // and 'at' printed the meridiem and the days in the month.
+    expect(PipeFormatter::apply('1788261900', 'date:dd-MM-yy', 'en-US'))->toBe('01-09-yy')
+        ->and(PipeFormatter::apply('1788261900', 'date:dd-MM at HH:mm', 'en-US'))->toBe('01-09 at 11:25')
+        ->and(PipeFormatter::apply('1788261900', 'date:Day dd, yyyy', 'en-US'))->toBe('Day 01, 2026');
+});
+
 test('date passes unparseable input through', function () {
     expect(PipeFormatter::apply('soon', 'date', 'en-US'))->toBe('soon');
 });

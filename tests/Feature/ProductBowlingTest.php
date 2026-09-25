@@ -159,19 +159,24 @@ it('reports the list and command wires and leaves the integration wire out', fun
 it('pads the rack with stand-in pins for the followers a channel does not have', function () {
     $doc = OverlayMarkdown::parse(file_get_contents(base_path('resources/recipes/follower-bowling/lane.md')));
 
-    // One gated stand-in per slot, each carrying its slot's fall flag, so the
-    // physics and the strike logic see ten pins whatever the follower count.
+    // One stand-in per slot, rendered when THAT slot has no real follower
+    // and carrying that slot's fall flag, so the physics and the strike
+    // logic see ten pins whatever the follower count. The gate reads the
+    // slot, not `channel_followers.count`: count is the raw Twitch total
+    // while the loop renders at most the followers foreach cap, so a count
+    // gate left a channel above its cap with a short rack.
     foreach (range(0, 9) as $slot) {
-        expect($doc['html'])->toContain("[[[if:channel_followers.count <= {$slot}]]]")
-            ->and($doc['html'])->toContain("style=\"--fall: var(--pin{$slot})\"");
+        $standIn = "[[[if:channel_followers.{$slot}.user_id]]][[[else]]]<div class=\"pin pin-filler\" style=\"--fall: var(--pin{$slot})\">";
+        expect($doc['html'])->toContain($standIn);
     }
-    expect(substr_count($doc['html'], 'pin pin-filler'))->toBe(10)
+    expect($doc['html'])->not->toContain('channel_followers.count <=')
+        ->and(substr_count($doc['html'], 'pin pin-filler'))->toBe(10)
         ->and(substr_count($doc['html'], 'https://images.overlabels.com/overlays/twitch-avatar.png'))->toBe(10)
         ->and($doc['css'])->toContain('.pin-filler img');
 });
 
 it('tells a small channel how many pins are real, and says nothing when Twitch cannot be asked', function () {
-    $user = bowlingUser(['access_token' => 'streamer-token']);
+    $user = bowlingUser(['access_token' => 'streamer-token', 'preferences' => ['foreach_caps' => ['followers' => 10]]]);
     $instance = installProduct($user, 'follower-bowling');
 
     $this->mock(TwitchApiService::class)
@@ -181,6 +186,24 @@ it('tells a small channel how many pins are real, and says nothing when Twitch c
         ->toContain('Your rack has 1 of 10 pins from real followers; the rest are stand-ins until more followers arrive');
     expect(collect(WiringFacts::productSubject($instance)['context'])->filter(fn ($line) => str_contains($line, 'pins')))->toBeEmpty();
     expect(collect(WiringFacts::productSubject($instance)['context'])->filter(fn ($line) => str_contains($line, 'pins')))->toBeEmpty();
+});
+
+it('counts the real pins the lane renders, which is the followers cap when the channel is above it', function () {
+    // Default followers cap is 5. The lane renders min(total, cap) real pins,
+    // so a channel with 25 followers on the default cap shows 5 real pins and
+    // 5 stand-ins, and the page must say 5, not 25 and not nothing.
+    $user = bowlingUser(['access_token' => 'streamer-token']);
+    $instance = installProduct($user, 'follower-bowling');
+
+    $this->mock(TwitchApiService::class)
+        ->shouldReceive('getCachedFollowersTotal')->with('streamer-token', (string) $user->twitch_id)->andReturn(25, 7, 3);
+
+    expect(WiringFacts::productSubject($instance)['context'])
+        ->toContain('Your rack has 5 of 10 pins from real followers; the rest are stand-ins because your followers cap is 5');
+    expect(WiringFacts::productSubject($instance)['context'])
+        ->toContain('Your rack has 5 of 10 pins from real followers; the rest are stand-ins because your followers cap is 5');
+    expect(WiringFacts::productSubject($instance)['context'])
+        ->toContain('Your rack has 3 of 10 pins from real followers; the rest are stand-ins until more followers arrive');
 });
 
 it('keeps the checkin product free of list and command wires', function () {

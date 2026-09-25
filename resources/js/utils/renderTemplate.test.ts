@@ -372,3 +372,30 @@ describe('renderTemplateSource / html-safe foreach fields', () => {
     expect(out).not.toContain('<img');
   });
 });
+
+describe('renderTemplateSource / capped list padding', () => {
+  // The follower-bowling recipe pads its rack to ten pins with one stand-in
+  // per slot, gated on THAT slot having no real item. `<list>.count` is the
+  // raw Twitch total and cannot be the gate: the followers foreach cap slices
+  // the indexed keys before the overlay sees them, so a channel with 25
+  // followers and a cap of 2 has data for slots 0 and 1 only.
+  const CAPPED = {
+    'channel_followers.count': 25,
+    'channel_followers.0.user_id': '11',
+    'channel_followers.0.user_name': 'ana',
+    'channel_followers.1.user_id': '12',
+    'channel_followers.1.user_name': 'bo',
+  };
+
+  const slot = (n: number) => `[[[if:channel_followers.${n}.user_id]]][[[else]]]<i>${n}</i>[[[endif]]]`;
+
+  it('renders a stand-in for every slot past the capped data, whatever count says', () => {
+    const source = '[[[foreach:channel_followers as f]]]<b>[[[f.user_name]]]</b>[[[endforeach]]]' + slot(0) + slot(1) + slot(2) + slot(3);
+
+    expect(renderTemplateSource(source, CAPPED, LOCALE)).toBe('<b>ana</b><b>bo</b><i>2</i><i>3</i>');
+  });
+
+  it('renders every stand-in when there is no data at all', () => {
+    expect(renderTemplateSource(slot(0) + slot(1), { 'channel_followers.count': 0 }, LOCALE)).toBe('<i>0</i><i>1</i>');
+  });
+});

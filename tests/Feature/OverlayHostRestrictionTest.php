@@ -3,6 +3,7 @@
 use App\Http\Middleware\RestrictOverlayHost;
 use App\Models\OverlayTemplate;
 use App\Models\User;
+use App\Services\TwitchEventSubService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 uses(DatabaseTransactions::class);
@@ -57,6 +58,19 @@ test('the overlay host serves the overlay API', function () {
 
     expect($response->status())->not->toBe(404);
 });
+
+test('the overlay host serves the emote and badge manifests the chat overlay fetches', function (string $path) {
+    // Both routes are matched by name, so an unnamed route is a 404 on the
+    // overlay host even though it lives under /api/overlay. No app token
+    // means an empty manifest, which is fine: the point is the status.
+    $this->mock(TwitchEventSubService::class)->shouldReceive('getAppAccessToken')->andReturn(null);
+
+    $this->getJson(OVERLAY_HOST.$path)->assertOk();
+    $this->getJson(APP_HOST.$path)->assertOk();
+})->with([
+    'emotes' => '/api/overlay/emotes/1130071166',
+    'badges' => '/api/overlay/badges/1130071166',
+]);
 
 test('the overlay host 404s the public share surface', function (string $suffix) {
     $template = overlayHostTemplate();

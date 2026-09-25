@@ -278,7 +278,7 @@ class KitController extends Controller
             $forkedKit = $kit->fork($request->user());
 
             return redirect()->route('kits.show', $forkedKit)
-                ->with('success', 'Kit forked successfully!');
+                ->with('success', 'Kit copied successfully!');
         } catch (Exception $e) {
             return back()->withErrors(['error' => 'Failed to fork kit: '.$e->getMessage()]);
         }

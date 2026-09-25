@@ -1694,7 +1694,7 @@ class OverlayTemplateController extends Controller
         if ($request->wantsJson()) {
             return response()->json([
                 ...$wizardPayload,
-                'message' => 'Template forked successfully',
+                'message' => 'Template copied successfully',
             ]);
         }
 
@@ -1705,6 +1705,6 @@ class OverlayTemplateController extends Controller
         // forked template would never be imported through these entry points.
         return redirect()->route('templates.show', $fork)
             ->with('fork_wizard', $wizardPayload)
-            ->with('success', 'Template forked successfully! The template "'.$fork->name.'" has been added to your templates.');
+            ->with('success', 'Template copied successfully! The template "'.$fork->name.'" has been added to your templates.');
     }
 }

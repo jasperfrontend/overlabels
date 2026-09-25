@@ -195,7 +195,12 @@ class PipeFormatter
     private static function translateDateFormat(string $pattern): string
     {
         // The same six tokens formatters.ts replaces - and only those. A
-        // bare 'yy' stays literal there, so it stays literal here.
+        // bare 'yy' stays literal there, so it stays literal here. Every
+        // other character is backslash-escaped before it reaches
+        // Carbon::format(), where nearly every letter is a format character:
+        // unescaped, 'yy' became the two-digit year twice ('2626') and the
+        // 'at' in 'dd-MM at HH:mm' became the meridiem and the days in the
+        // month.
         $map = [
             'yyyy' => 'Y',
             'MM' => 'm',
@@ -205,7 +210,12 @@ class PipeFormatter
             'ss' => 's',
         ];
 
-        return strtr($pattern, $map);
+        $parts = preg_split('/(yyyy|MM|dd|HH|mm|ss)/', $pattern, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+
+        return implode('', array_map(
+            fn (string $part) => $map[$part] ?? preg_replace('/(.)/su', '\\\\$1', $part),
+            $parts ?: [],
+        ));
     }
 
     /**
