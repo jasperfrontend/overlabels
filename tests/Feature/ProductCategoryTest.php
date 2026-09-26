@@ -49,7 +49,7 @@ it('gives every listed manifest exactly one category from the taxonomy', functio
     }
 });
 
-it('files the four products and the five alerts on the expected shelves', function () {
+it('files the five products and the five alerts on the expected shelves', function () {
     $byCategory = collect(app(RecipeCatalog::class)->listed())
         ->groupBy('category', true)
         ->map(fn ($manifests) => $manifests->keys()->sort()->values()->all())

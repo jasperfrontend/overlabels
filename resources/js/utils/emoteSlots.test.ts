@@ -112,10 +112,13 @@ describe('emoteHtml', () => {
   });
 
   it('escapes the name and the url anyway', () => {
-    const e = { ...emoteOccurrences(msg({ text: 'Kappa', emotes: [kappa] }))[0], name: 'a"b<c', url: 'x"y' };
+    const e = { ...emoteOccurrences(msg({ text: 'Kappa', emotes: [kappa] }))[0], name: 'a"b<c', url: 'x"y<z' };
 
-    expect(emoteHtml(e)).not.toContain('"b<');
-    expect(emoteHtml(e)).toContain('a&quot;b&lt;c');
+    const html = emoteHtml(e);
+    expect(html).not.toContain('"b<');
+    expect(html).not.toContain('y<z');
+    expect(html).toContain('alt="a&quot;b&lt;c"');
+    expect(html).toContain('src="x&quot;y&lt;z"');
   });
 });
 
