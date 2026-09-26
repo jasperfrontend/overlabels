@@ -38,16 +38,16 @@ function towerRecipe(): Recipe
     return $catalog->sync($catalog->find('chat-tower'));
 }
 
-it('is listed with its hero image, between checkin and bowling', function () {
+it('is listed with its hero image, between the bubbles and bowling', function () {
     $this->get('/products')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('products.1.slug', 'chat-tower')
-            ->where('products.1.hero', '/products/chat-tower-hero.svg')
+            ->where('products.2.slug', 'chat-tower')
+            ->where('products.2.hero', '/products/chat-tower-hero.jpg')
         );
 
-    expect(is_file(public_path('products/chat-tower-hero.svg')))->toBeTrue()
-        ->and(file_get_contents(public_path('products/chat-tower-hero.svg')))->not->toContain('c2pa');
+    expect(is_file(public_path('products/chat-tower-hero.jpg')))->toBeTrue()
+        ->and(file_get_contents(public_path('products/chat-tower-hero.jpg')))->not->toContain('c2pa');
 });
 
 it('shows the integration, the list and the overlay it will create, and no chat commands', function () {

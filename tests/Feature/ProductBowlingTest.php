@@ -45,12 +45,12 @@ it('is listed with its hero image', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('products.3.slug', 'follower-bowling')
-            ->where('products.3.hero', '/products/follower-bowling-hero.svg')
-            ->where('products.0.hero', '/products/chat-checkin-hero.svg')
+            ->where('products.3.hero', '/products/follower-bowling-hero.jpg')
+            ->where('products.0.hero', '/products/chat-checkin-hero.jpg')
         );
 
-    expect(is_file(public_path('products/follower-bowling-hero.svg')))->toBeTrue()
-        ->and(file_get_contents(public_path('products/follower-bowling-hero.svg')))->not->toContain('c2pa');
+    expect(is_file(public_path('products/follower-bowling-hero.jpg')))->toBeTrue()
+        ->and(file_get_contents(public_path('products/follower-bowling-hero.jpg')))->not->toContain('c2pa');
 });
 
 it('shows the list and the command it will create', function () {

@@ -15,7 +15,7 @@
   "requires_bot": true,
   "listed": true,
   "category": "product",
-  "hero": "/products/follower-bowling-hero.svg",
+  "hero": "/products/follower-bowling-hero.jpg",
   "follower_pins": 10,
   "auto_play": { "list": "lane", "switch": "gobowl", "seconds": 15 },
   "ready_message": "Your chat can type !bowl right now. Switch on gobowl when you want the lane on screen; it runs itself from there.",

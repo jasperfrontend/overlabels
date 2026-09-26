@@ -15,7 +15,7 @@
   "requires_bot": true,
   "listed": true,
   "category": "product",
-  "hero": "/products/chat-checkin-hero.svg",
+  "hero": "/products/chat-checkin-hero.jpg",
   "ready_message": "Your chat can type !checkin right now, and the globe is waiting in OBS.",
   "notes": [
     "Set a home place under Settings, Integrations, Chat Checkin and the HUD shows how far away the farthest checkin is. Without one, distances stay empty.",

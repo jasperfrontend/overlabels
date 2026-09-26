@@ -14,7 +14,7 @@
   "requires_bot": false,
   "listed": true,
   "category": "product",
-  "hero": "/products/chat-emote-bubbles-hero.svg",
+  "hero": "/products/chat-emote-bubbles-hero.jpg",
   "ready_message": "Every emote your chat types is a bubble on your stream right now. The overlay's Controls tab sets the look, the speed and where they appear.",
   "notes": [
     "Every emote comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so the bubbles keep coming even when Overlabels is having a bad day.",

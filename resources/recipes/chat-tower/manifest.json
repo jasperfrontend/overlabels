@@ -15,7 +15,7 @@
   "requires_bot": true,
   "listed": true,
   "category": "product",
-  "hero": "/products/chat-tower-hero.svg",
+  "hero": "/products/chat-tower-hero.jpg",
   "ready_message": "Your chat can type !stack right now, and the tower is waiting in OBS.",
   "notes": [
     "The tower falls when the top of its sway crosses a fall line. Both lines are on the overlay, so chat can see it coming. Nothing happens to the viewer who topples it beyond being named.",

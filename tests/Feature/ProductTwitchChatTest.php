@@ -50,13 +50,13 @@ it('is listed on the products shelf with its hero image, after bowling', functio
         ->assertInertia(fn (Assert $page) => $page
             ->where('products.4.slug', 'twitch-chat-overlay')
             ->where('products.4.category', 'product')
-            ->where('products.4.hero', '/products/twitch-chat-hero.svg')
+            ->where('products.4.hero', '/products/twitch-chat-hero.jpg')
             ->where('products.4.installs', ['Overlay'])
             ->where('products.4.service', null)
         );
 
-    expect(is_file(public_path('products/twitch-chat-hero.svg')))->toBeTrue()
-        ->and(file_get_contents(public_path('products/twitch-chat-hero.svg')))->not->toContain('c2pa');
+    expect(is_file(public_path('products/twitch-chat-hero.jpg')))->toBeTrue()
+        ->and(file_get_contents(public_path('products/twitch-chat-hero.jpg')))->not->toContain('c2pa');
 });
 
 it('shows one overlay and nothing else to connect', function () {

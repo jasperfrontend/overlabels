@@ -49,13 +49,13 @@ it('is listed on the products shelf between checkin and the tower', function () 
         ->assertInertia(fn (Assert $page) => $page
             ->where('products.1.slug', 'chat-emote-bubbles')
             ->where('products.1.category', 'product')
-            ->where('products.1.hero', '/products/chat-emote-bubbles-hero.svg')
+            ->where('products.1.hero', '/products/chat-emote-bubbles-hero.jpg')
             ->where('products.1.installs', ['Overlay'])
             ->where('products.1.service', null)
         );
 
-    expect(is_file(public_path('products/chat-emote-bubbles-hero.svg')))->toBeTrue()
-        ->and(file_get_contents(public_path('products/chat-emote-bubbles-hero.svg')))->not->toContain('c2pa');
+    expect(is_file(public_path('products/chat-emote-bubbles-hero.jpg')))->toBeTrue()
+        ->and(file_get_contents(public_path('products/chat-emote-bubbles-hero.jpg')))->not->toContain('c2pa');
 });
 
 it('shows one overlay and nothing else to connect', function () {
