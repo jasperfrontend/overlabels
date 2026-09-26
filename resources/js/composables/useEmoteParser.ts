@@ -82,7 +82,7 @@ export function useEmoteParser() {
    *
    * This is safe to make async because nothing awaits initialize(): OverlayRenderer
    * calls it fire-and-forget with a `.catch()`, and parseEmotes() already returns
-   * its input untouched while `isReady` is false. The download window simply joins
+   * its input as escaped text while `isReady` is false. The download window simply joins
    * the fetch window that was always there.
    *
    * It also degrades better than the static import did. A chunk that fails to load
@@ -190,7 +190,9 @@ export function useEmoteParser() {
   }
 
   function parseEmotes(text: string, twitchEmotesJson?: string): string {
-    if (!isReady.value) return text;
+    // Callers render this output unescaped, so "not ready" must still mean
+    // escaped text, never the chatter's raw input.
+    if (!isReady.value) return encodeHtml(text);
 
     // Parse Twitch emote positions from EventSub payload (resub messages have these)
     let twitchEmotes: TwitchEmotePosition[] = [];

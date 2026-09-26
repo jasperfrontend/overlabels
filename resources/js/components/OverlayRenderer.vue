@@ -1528,7 +1528,7 @@ function handleAlertTriggered(event: any) {
     if (typeof processedData[field] === 'string' && processedData[field]) {
       // Safety net for an alert template that started using an emote field
       // after this overlay mounted, so the preload hint missed it. parseEmotes
-      // passes the text through untouched while the library is still loading,
+      // returns the text escaped, with no emotes, while the library is still loading,
       // so this alert renders plain and every later one renders emotes.
       loadEmoteParser();
       processedData[field] = emoteParser.parseEmotes(processedData[field], emotesField ? processedData[emotesField] : undefined);

@@ -1,11 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { splitByEmotePositions } from './useEmoteParser';
+import { splitByEmotePositions, useEmoteParser } from './useEmoteParser';
 
 /*
- * Only the pure part is covered here. The composable itself fetches emote
- * manifests and needs a DOM, and the suite runs in node by deliberate choice -
- * see the testing note in CLAUDE.md.
+ * Mostly the pure part is covered here. initialize() fetches emote manifests
+ * and needs a DOM, and the suite runs in node by deliberate choice - see the
+ * testing note in CLAUDE.md. parseEmotes() before initialize() needs neither.
  */
+
+describe('parseEmotes before the emote library is ready', () => {
+  // Its output lands in `chat.N.html` and the alert message fields, which are
+  // rendered WITHOUT escaping. "Not ready" used to return the chatter's text
+  // untouched - raw HTML in an OBS browser source, which has no sandbox. It stays
+  // not-ready forever if the library chunk fails to load.
+  it('entity-escapes the text instead of passing it through raw', () => {
+    const { parseEmotes, isReady } = useEmoteParser();
+    expect(isReady.value).toBe(false);
+    expect(parseEmotes('hi <img src=x onerror="pwn()"> & bye')).toBe('hi &lt;img src=x onerror=&quot;pwn()&quot;&gt; &amp; bye');
+  });
+
+  it('escapes when emote positions are supplied too', () => {
+    const { parseEmotes } = useEmoteParser();
+    expect(parseEmotes('<b>Kappa</b>', JSON.stringify([{ id: '25', begin: 3, end: 7 }]))).not.toContain('<b>');
+  });
+});
 
 const emote = (text: string, id: string) => ({ kind: 'emote' as const, text, id });
 const run = (text: string) => ({ kind: 'text' as const, text });
