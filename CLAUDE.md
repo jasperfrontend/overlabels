@@ -779,6 +779,34 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 - Hero SVGs from Claude Design carry a c2pa manifest in `<metadata>` plus an `xmlns:c2pa`; every
   product test asserts the file has no `c2pa`. Strip both before committing.
 
+### Control vocabularies and the unified product designer (started Sept 27th 2026, OL-2609-140)
+
+- **A text control's allowed values live on the row, as `config.choices`**, declared in the overlay
+  document's Control detail list (`- choices=[{"value":..,"label":..,"hint":..}]`, or a bare list
+  of strings) and installed, imported and copied like `min`/`max`. `resources/js/utils/controlChoices.ts`
+  is the one reader; the Controls tab (`ControlPanel.vue`) and the designer both render a select
+  from it. Nothing enforces the vocabulary server-side yet: `sanitizeValue()` still accepts any
+  string for `text`, so a select is a courtesy, not a gate.
+- `OverlayMarkdown::behaviourPairs()` walks a line left to right and reads a JSON value to its
+  matching bracket. Before this it split on commas, so no array config ever survived a round trip;
+  the emitter had been writing them with `json_encode()` all along.
+- **`ChatDesigner::CHOICES` is now a FALLBACK**, for rows installed before `chat.md` declared its
+  vocabularies. A migration backfilled every install of both products through the install record
+  (`recipe_instances.primitive_map`), never by key or description alone. The constant goes when
+  step two moves presets and groups into a `designer` block on the recipe manifest.
+- The agreed plan (2026-09-27): vocabularies on rows (done), then a manifest `designer` block for
+  presets, groups and per-product extras with the validator checking preset values against the
+  rows' choices, then Chat Emote Bubbles opts in with three presets (Soap, Winter, Valentine) and
+  two sliders for `spawn_x`/`spawn_y`, then a `product` column on `user_chat_presets`. Tower and
+  Checkin integration settings stay where they are.
+- **The Values tab (`ControlPanel.vue`) is due an overhaul, and the designer's left column is the
+  reference** (decided 2026-09-27). Its cards give label, type badge, description, tag key, input,
+  save button and constraints equal weight, and the value is the smallest thing on them. The
+  plan: rows not cards, description and `c:key` behind the label, the designer's knobs (slider
+  plus an exact number box, toggle, select, color) lifted out of `design.vue` into ONE shared
+  knob component both pages render. That extraction is part of step 2, not a separate pass. Do
+  not invent a new list design for it.
+
 ### Chat load testing (Aug 2026)
 
 - `resources/js/dev/chatHose.ts` synthesizes tagged IRC lines and feeds them through `useTwitchChat.injectRawLine()` - the REAL parser - so a load test exercises parsing, filters, the ordered queue, flush batching, window trimming and moderation. Injecting into `messages` directly would skip everything worth measuring.

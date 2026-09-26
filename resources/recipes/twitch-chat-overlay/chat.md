@@ -238,6 +238,7 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 
 - `c:skin` - The shape and behaviour of a message. One of `clean`, `terminal`, `bubbles`, `neon`, `paper`, `broadcast`, `caption`, `pixel`, `cards` or `vapor`; each is a block of rules in the CSS, and a preset pairs one with a palette.
 - `c:layout` - Where new messages go. `bottom` stacks upward with the newest at the bottom, `top` stacks downward with the newest at the top, `ticker` is one horizontal line with the newest at the right.
+  - choices=[{"value":"bottom","label":"Bottom","hint":"Stacks upward, newest at the bottom."},{"value":"top","label":"Top","hint":"Stacks downward, newest at the top."},{"value":"ticker","label":"Ticker","hint":"One line, newest at the right."}]
 - `c:font` - The font family, any of the ~1970 families Bunny Fonts serves. The overlay loads it itself, so the name has to be one Bunny knows, spelled its way.
   - webfont=true
 - `c:font_size` - Text size in pixels. Badges scale with it; emotes have their own size.
@@ -248,6 +249,7 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 - `c:text_color` - The message text color.
 - `c:accent` - The chip on a viewer's first ever message, and the stripe on your own messages.
 - `c:background` - What sits behind each message. `none` for text over the game with a shadow, `solid` for the Background color, `glass` for a translucent, blurred version of it.
+  - choices=[{"value":"none","label":"None","hint":"Text straight over the game, with a shadow."},{"value":"solid","label":"Solid","hint":"The background color, flat."},{"value":"glass","label":"Glass","hint":"Translucent and blurred."}]
 - `c:background_color` - The color behind each message for the solid and glass backgrounds.
 - `c:lifetime` - How many seconds a message stays before fading out. 0 keeps every message until it scrolls off.
   - min=0, max=600, step=1, reset_value=0, random=false, random_interval=null

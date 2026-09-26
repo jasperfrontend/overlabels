@@ -8,6 +8,7 @@ import type { OverlayControl, OverlayTemplate } from '@/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { SERVICE_LABELS } from '@/utils/services';
+import { choiceHint, controlChoices } from '@/utils/controlChoices';
 
 const props = defineProps<{
   template: OverlayTemplate;
@@ -344,7 +345,10 @@ async function postValue(ctrl: OverlayControl, payload: Record<string, any>) {
 async function saveTextValue(ctrl: OverlayControl) {
   const val = localValues.value[ctrl.id] ?? ctrl.value ?? '';
   await postValue(ctrl, { value: val });
-  showMsg(`"${ctrl.label || ctrl.key}" updated.`);
+  // A pick from a vocabulary names what was picked, by its label, so the
+  // toast confirms the choice and not just that something was written.
+  const picked = controlChoices(ctrl.config).find((choice) => choice.value === val);
+  showMsg(picked ? `"${ctrl.label || ctrl.key}" updated to ${picked.label}.` : `"${ctrl.label || ctrl.key}" updated.`);
 }
 
 /**
@@ -498,6 +502,41 @@ async function toggleBoolean(ctrl: OverlayControl) {
                     {{ ctrl.value ?? '-' }}
                   </div>
                 </div>
+
+                <!-- Text control with a vocabulary: the row itself says which
+                     values it takes (config.choices), so it gets a select
+                     rather than a box to guess into. Same form as the text row
+                     below - pick, then the save button - because this tab is
+                     not the overlay: nothing here shows a value landing, so
+                     the button and its toast are the receipt. A held value
+                     that is not one of the choices stays selectable as itself,
+                     so the select never shows a value the row does not hold. -->
+                <template v-else-if="ctrl.type === 'text' && controlChoices(ctrl.config).length">
+                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="group flex gap-0">
+                    <select
+                      :id="`cp-input-${ctrl.id}`"
+                      :name="`cp-input-${ctrl.id}`"
+                      class="peer input-border min-w-0 flex-1 cursor-pointer"
+                      :value="getLocalValue(ctrl)"
+                      @change="localValues[ctrl.id] = ($event.target as HTMLSelectElement).value"
+                    >
+                      <option v-if="!controlChoices(ctrl.config).some((choice) => choice.value === getLocalValue(ctrl))" :value="getLocalValue(ctrl)">
+                        {{ getLocalValue(ctrl) }}
+                      </option>
+                      <option v-for="choice in controlChoices(ctrl.config)" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
+                    </select>
+                    <button
+                      type="submit"
+                      class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border bg-background p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 hover:ring-0 dark:border-violet-300/30 dark:peer-focus:border-violet-400"
+                      :disabled="saving[ctrl.id]"
+                    >
+                      <SaveIcon class="h-3.5 w-3.5" />
+                    </button>
+                  </form>
+                  <p v-if="choiceHint(controlChoices(ctrl.config), getLocalValue(ctrl))" class="mt-1 text-xs text-muted-foreground">
+                    {{ choiceHint(controlChoices(ctrl.config), getLocalValue(ctrl)) }}
+                  </p>
+                </template>
 
                 <!-- Text control -->
                 <template v-else-if="ctrl.type === 'text'">

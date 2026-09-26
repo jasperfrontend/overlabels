@@ -60,6 +60,13 @@ function importControls(OverlayTemplate $template, User $owner): void
         ['key' => 'dice', 'type' => 'expression', 'label' => 'Dice',
             'config' => ['expression' => 'c.matrix > 100 || c.matrix < 10 ? floor(c.matrix / 7) : 1']],
         ['key' => 'greeting', 'type' => 'text', 'label' => 'Greeting', 'value' => 'hi | `there`'],
+        // A vocabulary is a JSON list inside a behaviour line, so the pair
+        // reader has to survive commas, brackets and quotes inside a value.
+        ['key' => 'look', 'type' => 'text', 'label' => 'Look', 'value' => 'bubble',
+            'config' => ['choices' => [
+                ['value' => 'bubble', 'label' => 'Bubble', 'hint' => 'A soap bubble, white.'],
+                ['value' => 'snow', 'label' => 'Snowflake', 'hint' => 'Behind the emote [cold], "frosty".'],
+            ]]],
         ['key' => 'hype', 'type' => 'counter', 'value' => '3',
             'config' => ['min' => 0, 'max' => null, 'step' => 2, 'reset_value' => 0, 'random' => false, 'random_interval' => null]],
         ['key' => 'muted', 'type' => 'boolean', 'value' => '1'],

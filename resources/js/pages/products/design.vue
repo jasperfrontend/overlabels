@@ -8,6 +8,7 @@ import AddToObsButton from '@/components/AddToObsButton.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import FontPicker from '@/components/products/FontPicker.vue';
+import { controlChoices } from '@/utils/controlChoices';
 import type { AppPageProps, BreadcrumbItem, ForeachCaps } from '@/types';
 
 interface Choice {
@@ -123,6 +124,17 @@ function valueOf(key: string): string {
 function numberBound(key: string, bound: 'min' | 'max', fallback: number): number {
   const raw = controls[key]?.config?.[bound];
   return typeof raw === 'number' ? raw : Number(raw ?? fallback) || fallback;
+}
+
+/**
+ * The values a text control may take: the row's own `config.choices` first,
+ * the server's per-key map (ChatDesigner::CHOICES) for a row installed before
+ * the recipe declared them. Same shape either way, so the select below does
+ * not care which one answered.
+ */
+function choicesFor(key: string): Choice[] {
+  const own = controlChoices(controls[key]?.config);
+  return own.length ? own : (props.choices[key] ?? []);
 }
 
 const debounces: Record<string, ReturnType<typeof setTimeout>> = {};
@@ -791,8 +803,8 @@ function keysIn(group: { keys: string[] }): string[] {
                 />
               </template>
 
-              <!-- A closed vocabulary: layout, background. -->
-              <template v-else-if="choices[key]">
+              <!-- A closed vocabulary, declared on the row or by the server. -->
+              <template v-else-if="choicesFor(key).length">
                 <label class="text-sm text-foreground" :for="`knob-${key}`">{{ controls[key].label }}</label>
                 <select
                   :id="`knob-${key}`"
@@ -800,9 +812,9 @@ function keysIn(group: { keys: string[] }): string[] {
                   :value="valueOf(key)"
                   @change="writeControl(key, ($event.target as HTMLSelectElement).value)"
                 >
-                  <option v-for="choice in choices[key]" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
+                  <option v-for="choice in choicesFor(key)" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
                 </select>
-                <p class="text-xs text-muted-foreground">{{ choices[key].find((choice) => choice.value === valueOf(key))?.hint }}</p>
+                <p class="text-xs text-muted-foreground">{{ choicesFor(key).find((choice) => choice.value === valueOf(key))?.hint }}</p>
               </template>
 
               <!-- On or off. -->

@@ -147,6 +147,49 @@ it('has no wires beyond the overlay and its OBS link', function () {
         ->and($states['product.bot_modded'])->toBe(WiringCatalog::NOT_APPLICABLE);
 });
 
+it('declares a vocabulary on each text control, styles every value in it, and defaults to one of them', function () {
+    // The three text controls are each a closed vocabulary the CSS keys on
+    // (`look-`, `dir-`, `spawn-` classes). The row says which values exist,
+    // so the Controls tab offers a select rather than a box to guess into,
+    // and this holds the declaration against the CSS in both directions.
+    $doc = bubblesDocument();
+    $prefixes = ['look' => '.look-', 'direction' => '.dir-', 'spawn' => '.spawn-'];
+
+    $text = collect($doc['controls'])->where('type', 'text')->keyBy('key');
+    expect($text->keys()->all())->toEqualCanonicalizing(array_keys($prefixes));
+
+    foreach ($text as $key => $control) {
+        $choices = $control['config']['choices'] ?? [];
+        $values = array_column($choices, 'value');
+
+        expect($choices)->not->toBe([])
+            ->and($values)->toContain($control['value']);
+
+        foreach ($choices as $choice) {
+            expect($choice['label'])->not->toBe('')
+                ->and($choice['hint'])->not->toBe('')
+                ->and($doc['css'])->toContain($prefixes[$key].$choice['value']);
+        }
+
+        preg_match_all('/'.preg_quote($prefixes[$key], '/').'([a-z]+)/', $doc['css'], $styled);
+        expect(array_values(array_unique($styled[1])))->toEqualCanonicalizing($values);
+    }
+});
+
+it('installs the vocabularies onto the rows', function () {
+    $user = bubblesUser();
+    $instance = app(RecipeInstaller::class)->install(bubblesRecipe(), $user, 'chat_emote_bubbles');
+    $declared = collect(bubblesDocument()['controls'])->keyBy('key');
+
+    $controls = OverlayControl::where('overlay_template_id', $instance->primitive_map['overlays']['bubbles'])->get()->keyBy('key');
+
+    foreach (['look', 'direction', 'spawn'] as $key) {
+        expect($controls[$key]->config['choices'])->toBe($declared[$key]['config']['choices']);
+    }
+
+    expect($controls['bubble_size']->config)->not->toHaveKey('choices');
+});
+
 it('uninstalls the overlay and its controls together', function () {
     $user = bubblesUser();
     $instance = app(RecipeInstaller::class)->install(bubblesRecipe(), $user, 'chat_emote_bubbles');

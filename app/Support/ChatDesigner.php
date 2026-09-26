@@ -13,11 +13,14 @@ use App\Models\UserChatPreset;
  *
  * The thirteen controls carry their own label, type and (for the numbers)
  * min/max/step, so the designer reads those from the rows rather than
- * restating them. What a row cannot say is which VALUES a text control may
- * take: `skin`, `layout` and `background` are each a small closed vocabulary
- * that only the overlay's own CSS knows about. That vocabulary is here, and a
- * test holds it against the recipe so a skin added to the CSS without a choice
- * here fails rather than quietly rendering wrong.
+ * restating them. Since 2026-09-27 a row can also say which VALUES a text
+ * control may take: `config.choices`, declared in the recipe's Control detail
+ * list and installed onto the row like `min`/`max`. `layout` and `background`
+ * are declared there now, and CHOICES below is the FALLBACK for a row
+ * installed before the recipe said so (a backfill migration covers installs
+ * on prod; a copy made from one before it does not get it). A test holds the
+ * two against each other, and both against the CSS, so a value added to the
+ * overlay without a choice fails rather than quietly rendering wrong.
  *
  * `font` is the exception, and has SUGGESTED_FONTS instead: its vocabulary is
  * open - every family Bunny Fonts serves - because the overlay loads whichever

@@ -96,6 +96,22 @@ it('offers only layouts and backgrounds the overlay styles', function () {
     expect(ChatDesigner::CHOICES)->not->toHaveKey('font');
 });
 
+it('declares the same vocabularies on the chat document itself, so a fresh install carries them on the rows', function () {
+    // CHOICES is the fallback for rows installed before the recipe declared
+    // its vocabularies. The recipe is the declaration now, so the two must say
+    // the same thing, and an install must land it on the row like min/max.
+    $declared = collect(designerDocument()['controls'])->keyBy('key');
+
+    foreach (ChatDesigner::CHOICES as $key => $choices) {
+        expect($declared[$key]['config']['choices'] ?? null)->toBe($choices);
+    }
+
+    $template = designerInstall(designerUser());
+
+    expect($template->controls()->where('key', 'layout')->firstOrFail()->config['choices'])->toBe(ChatDesigner::CHOICES['layout'])
+        ->and($template->controls()->where('key', 'background')->firstOrFail()->config['choices'])->toBe(ChatDesigner::CHOICES['background']);
+});
+
 it('suggests only fonts Bunny actually serves, and loads them from the control not the head', function () {
     $doc = designerDocument();
 

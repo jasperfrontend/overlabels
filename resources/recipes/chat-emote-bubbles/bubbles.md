@@ -202,17 +202,20 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 ### Control detail
 
 - `c:look` - What each emote floats in. One of `bubble` (a soap bubble), `snow` (a snowflake behind the emote) or `heart` (a heart-shaped bubble).
+  - choices=[{"value":"bubble","label":"Bubble","hint":"A soap bubble."},{"value":"snow","label":"Snowflake","hint":"A snowflake behind the emote."},{"value":"heart","label":"Heart","hint":"A heart-shaped bubble."}]
 - `c:bubble_size` - Width and height of a bubble in pixels. The emote inside scales with it.
   - min=32, max=240, step=1, reset_value=96, random=false, random_interval=null
 - `c:bubble_color` - The color of the bubble's ring and glow, the snowflake, or the heart. White reads as soap; try a pale pink on the heart.
 - `c:speed` - How fast a bubble travels, 1 to 10. At 1 a bubble takes 24 seconds to cross the screen, at 10 under three.
   - min=1, max=10, step=1, reset_value=4, random=false, random_interval=null
 - `c:direction` - `up` floats bubbles toward the top of the screen, `down` sinks them toward the bottom. The spawn edge follows.
+  - choices=[{"value":"up","label":"Up","hint":"Floats toward the top of the screen."},{"value":"down","label":"Down","hint":"Sinks toward the bottom. The spawn edge follows."}]
 - `c:max_bubbles` - How many bubbles can be on screen at once. The newest ones show; older ones are dropped. A 500-character message can hold about 55 of the shortest emote.
   - min=1, max=100, step=1, reset_value=40, random=false, random_interval=null
 - `c:pop_after` - 0 lets bubbles float off the edge of the screen. Any other number makes them gather at that edge and pop after this many seconds.
   - min=0, max=60, step=1, reset_value=0, random=false, random_interval=null
 - `c:spawn` - Where a bubble appears. `outside` floats in from just past the edge it starts from, `edge` appears on that edge, `random` appears anywhere on screen, `cannon` appears at the point set by Spawn X and Spawn Y.
+  - choices=[{"value":"outside","label":"Outside","hint":"Floats in from just past the edge it starts from."},{"value":"edge","label":"Edge","hint":"Appears on that edge."},{"value":"random","label":"Random","hint":"Appears anywhere on screen."},{"value":"cannon","label":"Cannon","hint":"Appears at the point set by Spawn X and Spawn Y."}]
 - `c:spawn_x` - For the cannon: how far across the screen a bubble appears, 0 at the left edge to 100 at the right.
   - min=0, max=100, step=1, reset_value=50, random=false, random_interval=null
 - `c:spawn_y` - For the cannon: how far down the screen a bubble appears, 0 at the top edge to 100 at the bottom.

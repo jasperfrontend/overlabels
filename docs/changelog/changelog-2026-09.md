@@ -1,5 +1,32 @@
 # Changelog - September 2026
 
+## OL-2609-140 - September 27th, 2026 - feat(controls): a text control can declare its values, and gets a select for them
+
+Chat Emote Bubbles shipped yesterday with a `look` control that takes one of three words, `bubble`,
+`snow` or `heart`, and offered a blank text box to type them into. The Twitch Chat designer knew
+better for its own `layout` and `background` controls, but only because the words were written into
+a PHP class behind that one page. From today the overlay document itself can say which values a
+text control takes: a `choices` line in its Control detail list, next to the `min` and `max` a
+number control already carries. The install copies it onto the row like everything else, and the
+Controls tab renders a select with a hint under it instead of a box to guess into. Both products
+declare theirs now, and every overlay already installed from them has been given the same
+vocabulary, so nobody reinstalls for it.
+
+- The overlay `.md` format now round-trips a JSON list inside a behaviour line. The pair reader used
+  to stop at the first comma, which no scalar config ever had and a list of labelled choices has
+  many of. Pinned by the import round trip, which failed with the new fixture before the fix.
+- One reader, `controlChoices()`, serves both the Controls tab and the designer. It also accepts a
+  bare list of strings for a hand-written document, and anything malformed degrades to "plain text",
+  never an error in the panel.
+- The designer reads the vocabulary from the row first and falls back to its own map only for a row
+  installed before the recipe declared one. A test holds the two against each other.
+- The backfill is a migration that finds the rows through each product's install record, never by
+  key alone, so a control someone made by hand and called `look` is not touched, and a row that
+  already carries a vocabulary keeps it.
+- This is step one of the unified product designer: the vocabulary is now a fact about the control,
+  where the designer already reads its label, type and bounds. Presets and groups move to the
+  recipe manifest next, and Chat Emote Bubbles gets the designer after that.
+
 ## OL-2609-139 - September 26th, 2026 - feat(products): Chat Emote Bubbles, and an emotes loop for every overlay
 
 Nerd or Die sells a widget called Bubble Trouble for fifteen dollars: every emote your chat types

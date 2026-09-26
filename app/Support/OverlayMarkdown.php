@@ -228,21 +228,46 @@ final class OverlayMarkdown
      * `min=0, max=NULL, step=1, random=false` back into typed values. Scalars
      * were written with var_export, anything else as JSON.
      *
+     * Read left to right rather than with one regex over the line: a JSON
+     * value (`choices=[{"value":"bubble","label":"Bubble"}]`) has commas,
+     * brackets and quotes of its own, so "up to the next comma" cannot find
+     * its end. A JSON value is walked to its matching bracket, a quoted scalar
+     * to its closing quote, and anything else to the next `, `.
+     *
      * @return array<string,mixed>
      */
     private static function behaviourPairs(string $line): array
     {
         $pairs = [];
+        $length = strlen($line);
+        $i = 0;
 
-        if (! preg_match_all('/([a-z][a-z0-9_]*)=(\'(?:[^\'\\\\]|\\\\.)*\'|[^,]*)(?:, |$)/', $line, $matches, PREG_SET_ORDER)) {
-            return $pairs;
-        }
+        while ($i < $length) {
+            if (! preg_match('/\G([a-z][a-z0-9_]*)=/', $line, $m, 0, $i)) {
+                break;
+            }
 
-        foreach ($matches as $m) {
-            $raw = $m[2];
+            $key = $m[1];
+            $i += strlen($m[0]);
+            $first = $line[$i] ?? '';
+
+            if ($first === "'") {
+                if (! preg_match("/\\G'(?:[^'\\\\]|\\\\.)*'/", $line, $m, 0, $i)) {
+                    break;
+                }
+                $raw = $m[0];
+            } elseif ($first === '[' || $first === '{') {
+                $raw = substr($line, $i, self::jsonEnd($line, $i) - $i);
+            } else {
+                preg_match('/\G[^,]*/', $line, $m, 0, $i);
+                $raw = $m[0];
+            }
+
+            $i += strlen($raw);
+
             // null is not scalar, so the emitter json_encodes it as `null`;
             // `NULL` is accepted too in case that ever changes to var_export.
-            $pairs[$m[1]] = match (true) {
+            $pairs[$key] = match (true) {
                 $raw === 'null', $raw === 'NULL' => null,
                 $raw === 'true' => true,
                 $raw === 'false' => false,
@@ -250,9 +275,55 @@ final class OverlayMarkdown
                 (bool) preg_match('/^\'(.*)\'$/s', $raw, $s) => strtr($s[1], ['\\\\' => '\\', "\\'" => "'"]),
                 default => json_decode($raw, true) ?? $raw,
             };
+
+            if (substr($line, $i, 2) !== ', ') {
+                break;
+            }
+
+            $i += 2;
         }
 
         return $pairs;
+    }
+
+    /**
+     * The offset just past the JSON array or object that starts at `$start`:
+     * brackets are counted outside strings, and a string's escapes are honoured
+     * so a bracket or quote inside a hint cannot close anything. An unbalanced
+     * value runs to the end of the line.
+     */
+    private static function jsonEnd(string $line, int $start): int
+    {
+        $length = strlen($line);
+        $depth = 0;
+        $inString = false;
+
+        for ($i = $start; $i < $length; $i++) {
+            $char = $line[$i];
+
+            if ($inString) {
+                if ($char === '\\') {
+                    $i++;
+                } elseif ($char === '"') {
+                    $inString = false;
+                }
+
+                continue;
+            }
+
+            if ($char === '"') {
+                $inString = true;
+            } elseif ($char === '[' || $char === '{') {
+                $depth++;
+            } elseif ($char === ']' || $char === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    return $i + 1;
+                }
+            }
+        }
+
+        return $length;
     }
 
     /**
