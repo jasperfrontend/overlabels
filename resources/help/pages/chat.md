@@ -219,3 +219,5 @@ feed updates a few times a second at most, so animations have room to finish.
 - [Overlays vs Alerts](/help/overlays-vs-alerts) - why chat lives in a static overlay
 - [Twitch Chat Overlay](/products/twitch-chat-overlay) - the ready-made one, if you would rather pick a look
   than write the markup
+- [Chat Emote Bubbles](/help/chat-emote-bubbles) - the same connection read through a second loop,
+  `[[[foreach:emotes as e]]]`: one item per emote typed, for floating them across the stream

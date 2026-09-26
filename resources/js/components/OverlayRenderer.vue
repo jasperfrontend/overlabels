@@ -45,6 +45,7 @@ import { type BadgeManifest, EMPTY_BADGE_MANIFEST, badgeImages, toBadgeManifest 
 import { toChatFilters } from '@/utils/chatFilters';
 import type { ChatSampleFeed } from '@/utils/chatSample';
 import { withChatSlots } from '@/utils/chatSlots';
+import { withEmoteSlots } from '@/utils/emoteSlots';
 import { DEFAULT_CHECKINS_WINDOW, clampCheckinsWindow, pinsFromData, toPin, upsertPin, withCheckinSlots } from '@/utils/checkinSlots';
 import {
   DEFAULT_TOWER_WINDOW,
@@ -152,7 +153,9 @@ const towerWindow = ref<number>(DEFAULT_TOWER_WINDOW);
  */
 const templateUsesChat = computed(() => {
   const source = `${rawHtml.value ?? ''}\n${css.value ?? ''}`;
-  return /\[\[\[foreach:\s*chat\s+as\s/.test(source) || /\[\[\[chat\.count\b/.test(source);
+  // The emotes loop is chat too: it is fed by the same socket, so a template
+  // that only ever draws emotes still has to join the channel.
+  return /\[\[\[foreach:\s*(chat|emotes)\s+as\s/.test(source) || /\[\[\[(chat|emotes)\.count\b/.test(source);
 });
 
 /**
@@ -354,6 +357,24 @@ function refreshChatSlots(list: readonly ChatMessage[]): void {
 
 watch(twitchChat.messages, refreshChatSlots);
 
+/**
+ * Project the emote buffer into `emotes.*` slots whenever it changes.
+ *
+ * The occurrences are resolved at ingest, in the composable, so this is a pure
+ * projection: no emote parser call here, and nothing to rebuild when the
+ * library becomes ready (see the note in useTwitchChat.flush()).
+ */
+watch(twitchChat.emotes, (list) => {
+  if (!data.value || typeof data.value !== 'object') return;
+  data.value = withEmoteSlots(data.value, list);
+});
+
+// Third-party emotes are matched by token, and only the emote library knows
+// the tokens. Twitch's own emotes arrive with ids and need none of this. The
+// resolver reads the parser's live state, so it starts answering the moment
+// the library is ready without anything being re-registered.
+twitchChat.setEmoteResolver((token) => emoteParser.emoteUrl(token));
+
 // The badge manifest is fetched asynchronously, so the first messages of a
 // stream can arrive before it lands. Rebuild once it does, exactly as the
 // emote library does below, so those messages gain their badges instead of
@@ -496,12 +517,19 @@ const userId = ref<string | null>(null);
  * alt text is escaped anyway, and an unknown badge key produces no element at
  * all rather than being interpolated into the output.
  *
+ * `emotes.N.html` is produced by emoteHtml() in emoteSlots.ts: one `<img>`
+ * whose src this app built from an emote id (or took from the emote library's
+ * own CDN link) and whose alt is the emote code, both entity-escaped anyway.
+ * The chatter's text never reaches it - the occurrence list is built from
+ * Twitch's emote positions and from tokens the library recognised, and the
+ * markup is assembled from the emote, not the message.
+ *
  * Keep this list tiny and keep every entry's producer honest. Adding a field
  * here without an escaping guarantee on the other end is an XSS hole, and it is
  * the kind that no test notices because the markup only appears when a real
  * stranger sends it.
  */
-const HTML_SAFE_FOREACH_FIELDS = { chat: ['html', 'badge_images'] } as const;
+const HTML_SAFE_FOREACH_FIELDS = { chat: ['html', 'badge_images'], emotes: ['html'] } as const;
 
 function parseSource(source: string | null | undefined, encode: boolean = true): string {
   if (!source) return '';

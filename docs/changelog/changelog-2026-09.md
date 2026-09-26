@@ -1,5 +1,38 @@
 # Changelog - September 2026
 
+## OL-2609-139 - September 26th, 2026 - feat(products): Chat Emote Bubbles, and an emotes loop for every overlay
+
+Nerd or Die sells a widget called Bubble Trouble for fifteen dollars: every emote your chat types
+floats up the screen inside a soap bubble. Type PogChamp five times, five PogChamps drift up and
+away. That is the whole thing, and it is a lovely thing, and it is now the fifth Overlabels
+product, for free, called Chat Emote Bubbles. One click installs one overlay. Nothing to connect,
+no bot to add: the overlay reads your chat from Twitch directly, the same way Twitch Chat Overlay
+does, so it works the moment the link is in OBS and keeps working when Overlabels is having a bad
+day. Twitch emotes and the 7TV, BTTV and FFZ emotes enabled in your channel all count.
+
+Ten controls on the overlay's Controls tab are the whole product. Three looks: a soap bubble with
+a shine, a snowflake behind the emote for winter, a heart-shaped bubble for Valentine's Day, each
+in whatever colour you pick. A speed from 1 to 10, a direction (up, or sinking down), a size, and
+how many bubbles can be on screen at once, up to a hundred, because a 500-character message holds
+about 55 of the shortest emote and a real emote bomb should be a real emote bomb. Pop after is one
+number that decides both remaining questions: at 0 the bubbles float off the edge, at any other
+number they gather at that edge and pop after that many seconds. And Spawn says where a bubble is
+born: floating in from just past the edge, appearing on the edge, anywhere on screen, or from one
+point you choose in percent, a bubble cannon in the corner where your camera sits. Bubbles from
+one message are staggered a fraction of a second apart so a bomb streams out instead of landing as
+a wall, a bubble mid-flight keeps its course while the next message arrives, and a message a
+moderator deletes takes its bubbles with it.
+
+Under it is one addition to the overlay language that any overlay can use: `[[[foreach:emotes as
+e]]]`. The chat feed exposes a message with its emotes already rendered into the text; this loop
+is the other view of the same connection, one item per emote typed, oldest first, carrying the
+picture, the name, who typed it, its position within its message for staggering, and three random
+numbers that are different per bubble and identical on every re-render, which is what lets a
+bubble keep its place without any JavaScript to remember it. It has its own buffer of the last
+hundred emotes rather than riding the chat window, so a three-line chat feed on the same account
+does not sweep the bubbles away, and the chat display filters apply to it at ingest. The reference
+entry, a help page, the editor's autocomplete and an `!emotes` bang all know about it.
+
 ## OL-2609-138 - September 25th, 2026 - feat(home): the homepage sells the products, not the syntax
 
 The homepage's title tag said "Reactive Twitch overlays for people who code", the hero was two code

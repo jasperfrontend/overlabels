@@ -749,6 +749,36 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 - `chat.N.html` is the ONLY foreach field rendered unescaped (`htmlSafeFields`, keyed by iterable). **Bracket defusing still applies inside it** - skipping that reopens the PR #230 injection hole through a side door.
 - Deletions are not optional: CLEARMSG removes one message, CLEARCHAT purges a user or clears the room. Purge by user id, falling back to login, and NEVER to "clear everything".
 
+### Chat Emote Bubbles and the `emotes` loop (Sept 26th 2026, OL-2609-139)
+
+- **`[[[foreach:emotes as e]]]` is the second view of the chat socket**: one item per emote
+  OCCURRENCE (five PogChamps = five items), oldest first, built in `useTwitchChat.flush()` from the
+  same queue as `messages` and moderated by the same actions. `emoteSlots.ts` mirrors
+  `chatSlots.ts`. `e.x`/`e.y`/`e.seed` are FNV-1a hashes of the occurrence id, folded to 0-99:
+  random-looking, identical on every rebuild, so a bubble mid-flight never jumps. Do not replace
+  them with `Math.random()`.
+- **Its buffer is `EMOTE_WINDOW` (100), a fixed bound and NOT a foreach cap.** The chat window is
+  the streamer's feed setting and can be three lines; deriving emotes from it would sweep bubbles
+  away mid-flight. How many to SHOW is the template's job (`max_bubbles` control).
+- **Third-party emotes are resolved at INGEST** through `setEmoteResolver()` (the renderer hands
+  in `emoteParser.emoteUrl`). A message landing before the library is ready contributes its
+  Twitch emotes only, deliberately: a bubble appearing seconds late reads as a glitch. The chat
+  feed's rebuild-on-ready does not apply here.
+- **The on-screen cap is `.bubble:nth-last-child(-n + [[[c:max_bubbles ?? 40]]])`.** A tag in a
+  selector cannot become a `var()`, and the fast path would emit an invalid selector silently; the
+  `?? 40` is what sends the stylesheet to the slow path. Running CSS animations survive the style
+  swap (verified in Chrome). A conditional cannot do it: `[[[if:a < b]]]` takes a literal on the
+  right, never a second tag.
+- Product = `resources/recipes/chat-emote-bubbles/`, one overlay, ten controls, no designer (the
+  chat designer is hard-wired to `ChatPresets`; bubbles settings live on the Controls tab). Looks
+  are `bubble` (CSS), `snow` and `heart` (SVG data-URI masks tinted by `bubble_color`). `pop_after`
+  folds accumulate-and-pop and float-off into one number, like chat's `lifetime`.
+- **A background Chrome tab looks like a frozen renderer**: `requestAnimationFrame` never fires
+  and CDP screenshots time out. Check `document.visibilityState` before blaming the overlay; the
+  snow look was wrongly suspected for twenty minutes.
+- Hero SVGs from Claude Design carry a c2pa manifest in `<metadata>` plus an `xmlns:c2pa`; every
+  product test asserts the file has no `c2pa`. Strip both before committing.
+
 ### Chat load testing (Aug 2026)
 
 - `resources/js/dev/chatHose.ts` synthesizes tagged IRC lines and feeds them through `useTwitchChat.injectRawLine()` - the REAL parser - so a load test exercises parsing, filters, the ordered queue, flush batching, window trimming and moderation. Injecting into `messages` directly would skip everything worth measuring.

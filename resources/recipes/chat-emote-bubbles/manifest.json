@@ -1,0 +1,29 @@
+{
+  "recipe_format_version": 1,
+  "slug": "chat-emote-bubbles",
+  "name": "Chat Emote Bubbles",
+  "version": 1,
+  "description": "Every emote your chat types floats across your stream in a soap bubble. Type PogChamp five times and five PogChamps drift up and away. Twitch, 7TV, BTTV and FFZ emotes all count, read straight from Twitch chat with nothing to connect and no bot to add. Ten controls set the look (bubble, snowflake or heart), the speed, the direction, how many can be on screen, where they appear and whether they pop.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "Initial release. The fifth product, and the second that needs nothing beyond the overlay itself.",
+  "min_overlabels_version": 1,
+  "requires_integrations": [],
+  "requires_bot": false,
+  "listed": true,
+  "category": "product",
+  "hero": "/products/chat-emote-bubbles-hero.svg",
+  "ready_message": "Every emote your chat types is a bubble on your stream right now. The overlay's Controls tab sets the look, the speed and where they appear.",
+  "notes": [
+    "Every emote comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so the bubbles keep coming even when Overlabels is having a bad day.",
+    "Size the OBS browser source to your whole canvas (1920 by 1080) and put it above your camera. Bubbles rise from the bottom edge by default; the Spawn control moves them to the top, to a random spot, or to one point you pick with X and Y.",
+    "Pop after is 0 by default, so bubbles float off the top of the screen. Set it to a number of seconds and they gather at the edge and pop after that long instead.",
+    "Only pictures are bubbled: Twitch emotes and the 7TV, BTTV and FFZ emotes enabled in your channel. A plain emoji like a party popper is text, not an emote, and stays in chat."
+  ],
+  "max_instances_per_user": 1,
+  "installs": {
+    "overlays": [{ "ref": "bubbles", "file": "bubbles.md" }]
+  }
+}

@@ -533,6 +533,7 @@ The catalogue is `https://overlabels.com/products`, and each product has a page 
 | Product | URL | What it is |
 |---|---|---|
 | Twitch Chat Overlay | `/products/twitch-chat-overlay` | Live chat on stream with badges and emotes. Ten built-in looks, thirteen controls, a live designer. Needs nothing connected. |
+| Chat Emote Bubbles | `/products/chat-emote-bubbles` | Every emote chat types floats across the stream in a soap bubble, one per emote. Three looks, ten controls. Needs nothing connected. |
 | Chat Tower | `/products/chat-tower` | Chat stacks blocks with `!stack` until the tower topples. Needs the bot. |
 | Chat Checkin | `/products/chat-checkin` | Viewers `!checkin` from their city and appear on a globe. Needs the bot. |
 | Follower Bowling | `/products/follower-bowling` | A new follower rolls a bowling ball. Needs the bot. |

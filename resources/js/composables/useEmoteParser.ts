@@ -2,7 +2,7 @@ import { encodeHtml } from '@/utils/tagParser';
 // TYPE-ONLY on purpose: this import is erased at compile time, so it creates no
 // runtime dependency and the library stays out of the overlay's entry bundle.
 // The value import lives inside initialize(), below. See the note there.
-import type { EmoteParser } from '@mkody/twitch-emoticons';
+import type { EmoteFetcher, EmoteParser } from '@mkody/twitch-emoticons';
 import { ref } from 'vue';
 
 interface TwitchEmotePosition {
@@ -67,6 +67,9 @@ interface TwitchEmoteEntry {
 export function useEmoteParser() {
   const isReady = ref(false);
   let parser: InstanceType<typeof EmoteParser> | null = null;
+  // Kept for emoteUrl(): the parser only answers "replace this text", and the
+  // emotes loop needs "is this one token an emote, and where is its image".
+  let fetcher: InstanceType<typeof EmoteFetcher> | null = null;
   // Twitch emotes fetched from backend proxy (credentials stay server-side)
   const twitchEmoteMap = new Map<string, string>(); // code → CDN URL
 
@@ -99,7 +102,7 @@ export function useEmoteParser() {
   async function initialize(channelId: number): Promise<void> {
     const { EmoteFetcher, EmoteParser } = await import('@mkody/twitch-emoticons');
 
-    const fetcher = new EmoteFetcher(); // No Twitch credentials — BTTV/FFZ/7TV only
+    fetcher = new EmoteFetcher(); // No Twitch credentials — BTTV/FFZ/7TV only
     parser = new EmoteParser(fetcher, {
       // No inline styles. Sizing lives in the overlay's base stylesheet as a
       // `.overlay-emote` rule, so a template can override it with an ordinary
@@ -149,7 +152,7 @@ export function useEmoteParser() {
 
     // Still a partial failure worth naming: every source can resolve and yet
     // cache nothing, which looks identical on screen to not loading at all.
-    const thirdPartyCount = fetcher.emotes?.size ?? 0;
+    const thirdPartyCount = fetcher?.emotes?.size ?? 0;
     if (thirdPartyCount === 0) {
       console.warn(`[emotes] no BTTV/FFZ/7TV emotes cached for channel ${channelId}. ` + 'Those emotes will render as plain text.');
     }
@@ -221,5 +224,36 @@ export function useEmoteParser() {
       .join('');
   }
 
-  return { initialize, parseEmotes, isReady };
+  /**
+   * The image for ONE whitespace-free token, or null when it is not an emote.
+   *
+   * The same two lookups parseToken() makes, answered as a URL instead of as
+   * markup, for the `[[[foreach:emotes as e]]]` loop: it lists emote occurrences
+   * rather than replacing text, so it needs to know where an emote's picture is
+   * without wrapping it in an <img> first. Before the library is ready every
+   * third-party token is "not an emote", which matches what the chat feed
+   * shows for the same message at that moment.
+   *
+   * Sized for a bubble, not a line of text: the Twitch proxy hands out 1.0
+   * (28 px) URLs and the CDN serves the same id at 2.0, and the third-party
+   * providers get their second size where they have one. A single-size FFZ
+   * emote would otherwise resolve to `.../undefined`.
+   */
+  function emoteUrl(token: string): string | null {
+    const twitchUrl = twitchEmoteMap.get(token);
+    if (twitchUrl) return twitchUrl.replace(/\/1\.0$/, '/2.0');
+
+    const emote = fetcher?.emotes.get(token);
+    if (!emote || (emote as { modifier?: boolean }).modifier) return null;
+
+    // The typings declare toLink on each provider's subclass rather than on
+    // the abstract base, which is all the fetcher's map is typed to hold.
+    const { sizes, toLink } = emote as unknown as { sizes?: unknown[]; toLink: (size: number) => string | null };
+    const size = Array.isArray(sizes) ? Math.min(1, sizes.length - 1) : 1;
+    const link = toLink.call(emote, size);
+
+    return typeof link === 'string' && link !== '' ? link : null;
+  }
+
+  return { initialize, parseEmotes, emoteUrl, isReady };
 }

@@ -47,6 +47,11 @@
             'Ten looks, from a terminal to speech bubbles to a news ticker, and thirteen controls for font, colours, layout and how long a message stays.',
             'Nothing to connect and no bot to add. Every change lands in OBS as you make it.',
         ],
+        'chat-emote-bubbles' => [
+            'Every emote your Twitch chat types floats across your stream in a bubble. Five PogChamps in one message are five bubbles.',
+            'Three looks: soap bubble, snowflake, heart. Speed, direction, size, color, how many at once, and where they appear.',
+            'Nothing to connect and no bot to add. Every change lands in OBS as you make it.',
+        ],
     ];
 @endphp
 <section id="products" class="scroll-mt-16 border-b border-b-sidebar-border bg-card py-20 sm:py-24">

@@ -141,6 +141,11 @@ describe('foreach scope', () => {
     expect(found).toEqual(expect.arrayContaining(['m.author', 'm.html', 'm.badge_images', 'm.source_channel']));
   });
 
+  it('knows the emote occurrence fields under whatever alias was chosen', () => {
+    const found = labels('[[[foreach:emotes as e]]][[[');
+    expect(found).toEqual(expect.arrayContaining(['e.html', 'e.url', 'e.name', 'e.n', 'e.x', 'e.y', 'e.seed', 'e.author']));
+  });
+
   it('offers the bare alias and the item fields for a List loop', () => {
     const found = labels('[[[foreach:c:list:donors as donor]]][[[d');
     expect(found).toEqual(expect.arrayContaining(['donor', 'donor.value', 'donor.added_at', 'donor.id']));
@@ -156,12 +161,12 @@ describe('foreach scope', () => {
 describe('bang snippets', () => {
   it('always offers the block and loop snippets', () => {
     const labels = bangSnippets({ ...data, controls: [] }).map((s) => s.label);
-    expect(labels).toEqual(['!chat', '!subs', '!followers', '!goals', '!checkins', '!tower', '!followed', '!if', '!ifelse', '!foreach']);
+    expect(labels).toEqual(['!chat', '!emotes', '!subs', '!followers', '!goals', '!checkins', '!tower', '!followed', '!if', '!ifelse', '!foreach']);
   });
 
   it('covers every iterable a static overlay can loop over', () => {
     const templates = bangSnippets({ ...data, controls: [] }).map((s) => s.template);
-    for (const iterable of ['chat', 'subscribers', 'channel_followers', 'followed_channels', 'goals', 'checkins', 'tower']) {
+    for (const iterable of ['chat', 'emotes', 'subscribers', 'channel_followers', 'followed_channels', 'goals', 'checkins', 'tower']) {
       expect(
         templates.some((t) => t.includes(`[[[foreach:${iterable} as `)),
         iterable,

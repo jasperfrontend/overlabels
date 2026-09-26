@@ -156,6 +156,8 @@ const ITEM_FIELDS: Record<string, string[]> = {
     'first',
     'source_channel',
   ],
+  // Mirrors emoteSlots.ts.
+  emotes: ['name', 'url', 'html', 'n', 'x', 'y', 'seed', 'id', 'message_id', 'author', 'login', 'color', 'at', 'source_channel'],
   // Mirrors checkinSlots.ts.
   checkins: ['name', 'login', 'place', 'country', 'country_code', 'lat', 'lng', 'at', 'distance'],
   // Mirrors towerSlots.ts.
@@ -175,6 +177,7 @@ const ITERABLES: Array<{ label: string; alias: string; info: string; alertOnly?:
   { label: 'followed_channels', alias: 'channel', info: 'Channels you follow.' },
   { label: 'goals', alias: 'goal', info: 'Your active channel goals.' },
   { label: 'chat', alias: 'msg', info: 'Live chat, oldest first. Opens a direct connection to Twitch chat.' },
+  { label: 'emotes', alias: 'e', info: 'Every emote typed in chat lately, one item per emote, oldest first. Same connection as chat.' },
   { label: 'checkins', alias: 'pin', info: 'Viewer !checkin pins, newest first. Needs the Chat Checkin integration.' },
   { label: 'tower', alias: 'block', info: 'The Chat Tower blocks, bottom to top. Needs the Chat Tower integration.' },
   { label: 'event.choices', alias: 'choice', info: 'Poll choices from the event payload.', alertOnly: true },
@@ -394,6 +397,11 @@ const BASE_BANGS: BangSnippet[] = [
       '  <div class="chat-line"><span style="color: [[[msg.color]]]">[[[msg.author]]]</span>: [[[msg.html]]]</div>',
       '[[[endforeach]]]',
     ].join('\n'),
+  },
+  {
+    label: '!emotes',
+    info: 'Every emote typed in chat lately, one image each, newest last.',
+    template: ['[[[foreach:emotes as e]]]', '  <span class="emote" data-key="[[[e.id]]]">[[[e.html]]]</span>', '[[[endforeach]]]'].join('\n'),
   },
   {
     label: '!subs',

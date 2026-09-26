@@ -48,11 +48,11 @@ it('is listed on the products shelf with its hero image, after bowling', functio
     $this->get('/products')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('products.3.slug', 'twitch-chat-overlay')
-            ->where('products.3.category', 'product')
-            ->where('products.3.hero', '/products/twitch-chat-hero.svg')
-            ->where('products.3.installs', ['Overlay'])
-            ->where('products.3.service', null)
+            ->where('products.4.slug', 'twitch-chat-overlay')
+            ->where('products.4.category', 'product')
+            ->where('products.4.hero', '/products/twitch-chat-hero.svg')
+            ->where('products.4.installs', ['Overlay'])
+            ->where('products.4.service', null)
         );
 
     expect(is_file(public_path('products/twitch-chat-hero.svg')))->toBeTrue()

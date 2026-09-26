@@ -1,4 +1,5 @@
 import { type ChatFilters, EMPTY_CHAT_FILTERS, hasActiveFilters, shouldHideMessage } from '@/utils/chatFilters';
+import { type EmoteOccurrence, type EmoteUrlResolver, emoteOccurrences } from '@/utils/emoteSlots';
 import { type ChatMessage, type ModerationAction, parseIrcLine, toChatMessage, toModerationAction } from '@/utils/ircParser';
 import { ref } from 'vue';
 
@@ -58,6 +59,20 @@ export function clampWindow(size: number): number {
 }
 
 /**
+ * How many emote OCCURRENCES the `emotes` buffer keeps.
+ *
+ * Its own buffer, deliberately not derived from the message window. The message
+ * window is the streamer's chat-feed setting and can be three lines; a bubble
+ * that vanished because its message scrolled off a three-line feed would look
+ * broken, and a busy chat would sweep every bubble away mid-flight. This is a
+ * fixed bound, not a setting: the setting is how many a template SHOWS, which
+ * it decides itself (Chat Emote Bubbles has a control for it). 100 covers the
+ * largest single message Twitch allows - 500 characters is about 55 of the
+ * shortest emote code - with room for the next message behind it.
+ */
+export const EMOTE_WINDOW = 100;
+
+/**
  * How long changes are allowed to queue before being applied.
  *
  * Not a throughput fix - the renderer handles a 50-message feed in well under a
@@ -90,7 +105,15 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
   let filters: ChatFilters = EMPTY_CHAT_FILTERS;
 
   const messages = ref<ChatMessage[]>([]);
+  // Every emote in the recent messages, one entry per occurrence, oldest first.
+  // Fed from the same queue as `messages` so a deletion reaches both.
+  const emotes = ref<EmoteOccurrence[]>([]);
   const isConnected = ref(false);
+
+  // Answers "is this token a third-party emote, and where is its image". Set by
+  // the renderer once it has an emote parser; until then only Twitch's own
+  // emotes (which carry ids on the wire) make it into the buffer.
+  let resolveEmote: EmoteUrlResolver | undefined;
 
   let socket: WebSocket | null = null;
   let channel = '';
@@ -104,10 +127,14 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
   // the same window, order is the only thing that gets the result right.
   let queue: QueuedChange[] = [];
 
-  function applyModeration(list: ChatMessage[], action: ModerationAction): ChatMessage[] {
+  // Both lists carry the same three identities, so one rule moderates both:
+  // an emote is removed with its message, its chatter or the whole room.
+  type Moderatable = { id?: string; messageId?: string; userId: string; login: string };
+
+  function applyModeration<T extends Moderatable>(list: T[], action: ModerationAction): T[] {
     switch (action.type) {
       case 'delete_message':
-        return list.filter((m) => m.id !== action.messageId);
+        return list.filter((m) => (m.messageId ?? m.id) !== action.messageId);
       case 'purge_user':
         return list.filter((m) => m.userId !== action.userId);
       case 'purge_login':
@@ -125,11 +152,20 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
     queue = [];
 
     let next = messages.value.slice();
+    let nextEmotes = emotes.value.slice();
     for (const change of pending) {
       if (change.kind === 'add') {
         next.push(change.message);
+        // Resolved at ingest, with whatever the resolver knows right now. A
+        // third-party emote in a message that lands before the library has
+        // loaded is not bubbled; the chat feed rebuilds its HTML for that
+        // case, but a bubble that appears seconds late would look like a
+        // glitch rather than a catch-up, and the window is a second or two
+        // after the overlay loads.
+        nextEmotes.push(...emoteOccurrences(change.message, resolveEmote));
       } else {
         next = applyModeration(next, change.action);
+        nextEmotes = applyModeration(nextEmotes, change.action);
       }
     }
 
@@ -138,8 +174,12 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
     if (next.length > windowSize) {
       next = next.slice(next.length - windowSize);
     }
+    if (nextEmotes.length > EMOTE_WINDOW) {
+      nextEmotes = nextEmotes.slice(nextEmotes.length - EMOTE_WINDOW);
+    }
 
     messages.value = next;
+    emotes.value = nextEmotes;
   }
 
   function scheduleFlush(): void {
@@ -275,6 +315,15 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
   }
 
   /**
+   * Hand over the third-party emote lookup. Safe before or after connect().
+   *
+   * Only affects messages arriving from now on, for the reason given in flush().
+   */
+  function setEmoteResolver(next: EmoteUrlResolver | undefined): void {
+    resolveEmote = next;
+  }
+
+  /**
    * Set how many messages the window holds. Safe before or after connect().
    *
    * Trims immediately rather than waiting for the next message, so lowering the
@@ -308,5 +357,5 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
     handleLine(raw);
   }
 
-  return { messages, isConnected, connect, disconnect, setFilters, setWindowSize, injectRawLine };
+  return { messages, emotes, isConnected, connect, disconnect, setFilters, setEmoteResolver, setWindowSize, injectRawLine };
 }
