@@ -163,6 +163,11 @@ it('arms one pending pop however many chatters join', function () {
 });
 
 it('waits out a throw still playing before joining the queue arms the next pop', function () {
+    // Whole seconds, frozen. The seed below is written without its fractional
+    // second, so with a live clock the service saw an age of 6 rather than 5
+    // whenever the write and the dispatch straddled a second boundary, armed
+    // the pop 9 s out, and the assertion read 8.999 as 8. Two runs in fifteen.
+    $this->freezeSecond();
     Bus::fake([AutoPlayNext::class]);
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
