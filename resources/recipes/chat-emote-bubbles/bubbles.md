@@ -137,19 +137,6 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: trans
   background: radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--tint) 45%, transparent), color-mix(in srgb, var(--tint) 6%, transparent) 40%, color-mix(in srgb, var(--tint) 3%, transparent) 62%, color-mix(in srgb, var(--tint) 24%, transparent) 100%);
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tint) 78%, transparent), inset -5px -7px 12px color-mix(in srgb, var(--tint) 16%, transparent), 0 2px 10px rgba(0, 0, 0, 0.14);
 }
-.look-bubble .skin::after {
-  content: "";
-  position: absolute;
-  top: 10%;
-  left: 13%;
-  width: 30%;
-  height: 30%;
-  border-radius: 50%;
-  border-top: 3px solid color-mix(in srgb, var(--tint) 88%, transparent);
-  border-left: 3px solid transparent;
-  transform: rotate(-24deg);
-}
-
 .look-snow .skin::before {
   content: "";
   position: absolute;
@@ -214,10 +201,10 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 
 ### Control detail
 
-- `c:look` - What each emote floats in. One of `bubble` (a soap bubble with a shine), `snow` (a snowflake behind the emote) or `heart` (a heart-shaped bubble).
+- `c:look` - What each emote floats in. One of `bubble` (a soap bubble), `snow` (a snowflake behind the emote) or `heart` (a heart-shaped bubble).
 - `c:bubble_size` - Width and height of a bubble in pixels. The emote inside scales with it.
   - min=32, max=240, step=1, reset_value=96, random=false, random_interval=null
-- `c:bubble_color` - The color of the bubble's ring and shine, the snowflake, or the heart. White reads as soap; try a pale pink on the heart.
+- `c:bubble_color` - The color of the bubble's ring and glow, the snowflake, or the heart. White reads as soap; try a pale pink on the heart.
 - `c:speed` - How fast a bubble travels, 1 to 10. At 1 a bubble takes 24 seconds to cross the screen, at 10 under three.
   - min=1, max=10, step=1, reset_value=4, random=false, random_interval=null
 - `c:direction` - `up` floats bubbles toward the top of the screen, `down` sinks them toward the bottom. The spawn edge follows.

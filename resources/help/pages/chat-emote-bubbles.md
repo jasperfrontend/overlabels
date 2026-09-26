@@ -17,7 +17,7 @@ OBS the moment it is made.
 
 ## The controls
 
-- **Look** - `bubble` is a soap bubble with a shine, `snow` puts a snowflake behind the emote, `heart`
+- **Look** - `bubble` is a soap bubble, `snow` puts a snowflake behind the emote, `heart`
   is a heart-shaped bubble. Winter and Valentine's Day are the point of the second and third.
 - **Bubble size** - width and height in pixels, 32 to 240. The emote inside scales with it.
 - **Bubble color** - the ring and shine, the snowflake, or the heart. White reads as soap; try a pale
