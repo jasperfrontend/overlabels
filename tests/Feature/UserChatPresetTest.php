@@ -257,3 +257,28 @@ it('keeps each product\'s looks to its own designer', function () {
     $this->actingAs($user)->postJson('/products/chat-emote-bubbles/saved-presets', ['name' => 'One more'])->assertUnprocessable();
     $this->actingAs($user)->postJson(SAVED_LOOKS, ['name' => 'Still room'])->assertCreated();
 });
+
+it('answers 404 for a product with no designer and for an account with no install', function () {
+    $user = savedLookUser();
+
+    $this->actingAs($user)->postJson(SAVED_LOOKS, ['name' => 'No install'])->assertNotFound();
+
+    savedLookInstall($user);
+    $this->actingAs($user)->postJson('/products/chat-tower/saved-presets', ['name' => 'No designer'])->assertNotFound();
+
+    expect(UserChatPreset::where('user_id', $user->id)->count())->toBe(0);
+});
+
+it('requires a login', function () {
+    $this->postJson(SAVED_LOOKS, ['name' => 'Anon'])->assertUnauthorized();
+});
+
+it('goes with the account when the account is deleted', function () {
+    $user = savedLookUser();
+    savedLookInstall($user);
+    $preset = UserChatPreset::create(['user_id' => $user->id, 'product' => 'twitch-chat-overlay', 'name' => 'Mine', 'values' => ['skin' => 'clean']]);
+
+    $user->forceDelete();
+
+    expect(UserChatPreset::find($preset->id))->toBeNull();
+});
