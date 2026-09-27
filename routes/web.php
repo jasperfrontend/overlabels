@@ -748,12 +748,13 @@ Route::middleware('auth.redirect')->group(function () {
         ->where('slug', '[a-z][a-z0-9_-]*');
     // The designer: knobs on the left, the product's own overlay on the right.
     // Authenticated and install-gated, so it sits here rather than with the
-    // public read side. Only a product that declares presets answers.
+    // public read side. Only a product whose manifest declares a `designer`
+    // block answers (ProductDesigner::declared).
     Route::get('/products/{slug}/design', [ProductController::class, 'design'])
         ->name('products.design')
         ->where('slug', '[a-z][a-z0-9_-]*');
-    // A preset: one click writes every look control on the product's overlay.
-    // Only a product that declares presets (ChatPresets) answers here.
+    // A preset: one click writes every designer control on the product's
+    // overlay. Same gate as the designer.
     Route::post('/products/{slug}/presets/{preset}', [ProductController::class, 'applyPreset'])
         ->name('products.preset')
         ->where(['slug' => '[a-z][a-z0-9_-]*', 'preset' => '[a-z][a-z0-9_]*']);

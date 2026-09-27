@@ -1,5 +1,41 @@
 # Changelog - September 2026
 
+## OL-2609-141 - September 28th, 2026 - feat(products): every product declares its own designer, and Chat Emote Bubbles gets one
+
+Until today the designer at `/products/twitch-chat-overlay/design` was wired to that one product
+at every layer: its ten looks, its five groups and its two account settings were constants in two
+PHP classes, and every route and page checked the product's slug before answering. Chat Emote
+Bubbles shipped two days ago with the same kind of overlay and no designer at all, just ten boxes
+on a Values tab. From today a product declares its designer in its own manifest, next to the
+overlay it installs: which overlay, how the knobs are grouped, the built-in looks, which account
+settings sit beside them, and what size the preview should be. Having the block is what gives a
+product the page. Twitch Chat's block says exactly what the two classes said, so nothing about
+its designer changed; Chat Emote Bubbles' block gives it three looks, Soap, Winter and Valentine,
+four groups, the sample-chat controls and a full-screen preview with emotes bubbling in it.
+
+- The knobs are the overlay's own controls, so the manifest only says how they are arranged and
+  what a look writes. The validator checks the block against the overlay document: every control
+  the designer can render has exactly one home, a look is complete, and a look never writes a value
+  the control's own vocabulary refuses. A manifest that would give a product a broken page fails
+  the catalogue read, not a streamer.
+- One widget now renders a designer-type control everywhere. The designer's knobs were lifted
+  into a shared component that the overlay's Values tab mounts too, so a number is a slider within
+  the control's own bounds with an exact box beside it (streamers type 96), a color is a picker
+  beside an editable field, and a text control with a vocabulary is a select with a hint, on both
+  pages, from one file.
+- The Values tab is rows, not cards. The label leads, the widget is the biggest thing on the row,
+  the description and the tag key sit behind it in small type, and the type badge and the
+  constraints line are gone. Every write there shows "Saved" and what was saved beside the label
+  for two seconds, because that tab is not the overlay and nothing on it shows a value landing. The
+  designer keeps its own receipt, the preview.
+- Saved looks belong to the product they were saved on. The one table gained a product column,
+  every existing look is a Twitch Chat look, and a look is only listed on the designer it came
+  from: a chat look's thirteen keys mean nothing to the bubbles overlay. The same name is free on
+  each product, and the cap of twenty counts per product.
+- The product page's designer card now reads the manifest: how many looks, and the names of the
+  groups, so Bubbles says "the look, motion, spawn and crowd" where Chat says "the layout, type,
+  colors, background and badges".
+
 ## OL-2609-140 - September 27th, 2026 - feat(controls): a text control can declare its values, and gets a select for them
 
 Chat Emote Bubbles shipped yesterday with a `look` control that takes one of three words, `bubble`,

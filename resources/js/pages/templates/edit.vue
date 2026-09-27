@@ -112,6 +112,7 @@ interface Props {
     sample_data?: string;
   }>;
   controls?: OverlayControl[];
+  fonts?: { url: string; suggested: { value: string; hint: string }[] };
   connectedServices?: string[];
   isLive?: boolean;
   staticOverlays?: OverlayOption[];
@@ -735,7 +736,7 @@ onMounted(() => {
 
           <!-- Values Tab -->
           <div v-if="mainTab === 'panel'" class="p-4">
-            <ControlPanel :template="template" :controls="localControls" :is-live="isLive" />
+            <ControlPanel :template="template" :controls="localControls" :is-live="isLive" :fonts="fonts" />
           </div>
 
           <!-- Screenshot Tab -->

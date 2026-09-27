@@ -3,7 +3,6 @@
 use App\Models\OverlayTemplate;
 use App\Models\User;
 use App\Services\Recipes\RecipeInstaller;
-use App\Support\ChatPresets;
 use App\Support\OverlayMarkdown;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
@@ -20,7 +19,7 @@ const TICKER_MIGRATION = 'database/migrations/2026_09_22_160000_cap_ticker_messa
 
 function tickerRecipeCss(): string
 {
-    $file = RecipeInstaller::directoryFor(ChatPresets::PRODUCT).DIRECTORY_SEPARATOR.'chat.md';
+    $file = RecipeInstaller::directoryFor('twitch-chat-overlay').DIRECTORY_SEPARATOR.'chat.md';
 
     return OverlayMarkdown::parse(file_get_contents($file))['css'];
 }

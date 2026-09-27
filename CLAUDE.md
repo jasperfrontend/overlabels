@@ -790,22 +790,43 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 - `OverlayMarkdown::behaviourPairs()` walks a line left to right and reads a JSON value to its
   matching bracket. Before this it split on commas, so no array config ever survived a round trip;
   the emitter had been writing them with `json_encode()` all along.
-- **`ChatDesigner::CHOICES` is now a FALLBACK**, for rows installed before `chat.md` declared its
-  vocabularies. A migration backfilled every install of both products through the install record
-  (`recipe_instances.primitive_map`), never by key or description alone. The constant goes when
-  step two moves presets and groups into a `designer` block on the recipe manifest.
-- The agreed plan (2026-09-27): vocabularies on rows (done), then a manifest `designer` block for
-  presets, groups and per-product extras with the validator checking preset values against the
-  rows' choices, then Chat Emote Bubbles opts in with three presets (Soap, Winter, Valentine) and
-  two sliders for `spawn_x`/`spawn_y`, then a `product` column on `user_chat_presets`. Tower and
-  Checkin integration settings stay where they are.
-- **The Values tab (`ControlPanel.vue`) is due an overhaul, and the designer's left column is the
-  reference** (decided 2026-09-27). Its cards give label, type badge, description, tag key, input,
-  save button and constraints equal weight, and the value is the smallest thing on them. The
-  plan: rows not cards, description and `c:key` behind the label, the designer's knobs (slider
-  plus an exact number box, toggle, select, color) lifted out of `design.vue` into ONE shared
-  knob component both pages render. That extraction is part of step 2, not a separate pass. Do
-  not invent a new list design for it.
+- **A product's designer is its manifest's `designer` block, and nothing else** (shipped
+  2026-09-28, OL-2609-141). `overlay` (an `installs.overlays` ref), `groups` (titles and control
+  keys, page order), `presets` (key, label, blurb, and a `values` bundle), optional `skin_key` (the
+  text control the strip above the groups writes, one button per preset), `extras` (a closed enum:
+  `sample_chat`, `chat_window`, `chat_filters`) and `stage` (preview sizes, the last matching
+  `when` wins). `App\Support\ProductDesigner` is the ONE reader; `ChatPresets` and `ChatDesigner`
+  are deleted. Every route and controller that used to gate on the chat slug gates on
+  `ProductDesigner::declared($manifest)` now, and the product page card does too. Twitch Chat and
+  Chat Emote Bubbles both declare one (Bubbles: Soap, Winter, Valentine; no skin; 1920x1080).
+- **The validator holds the block against the overlay document** (`RecipeManifestValidator::
+  designerErrors()`, pinned by `RecipeDesignerBlockTest`): every grouped key is a declared control,
+  every text/number/boolean/color control (`ProductDesigner::KNOB_TYPES`) is in exactly one group
+  or is the skin key, a counter/timer/expression/datetime may not be grouped, a preset names every
+  designer key and no other, a preset value for a control with `choices` is one of them, and a
+  preset's skin value is its own key. A manifest that would give a product a broken designer fails
+  the catalogue read, not a streamer's page. Nothing enforces the vocabulary server-side for a
+  streamer's own writes: `sanitizeValue()` still accepts any string for `text`.
+- **`ControlKnob.vue` (`resources/js/components/controls/`) is the ONE widget for a designer-type
+  control**, mounted by both the designer and the Values tab. The row decides the widget: choices
+  -> select with hint, `webfont` -> FontPicker, boolean -> checkbox, color -> native picker beside
+  an editable field, number -> slider bounded by the row's min/max PLUS an exact number box. Two
+  events: `input` (continuous, for the designer's optimistic debounce) and `commit` (a finished
+  change, the one to write on). The designer shows no receipt because the preview frame is one;
+  **the Values tab shows "Saved: <value>" beside the row's label for two seconds on every commit**,
+  because that tab is not the overlay and nothing on it shows a value landing. Do not put a save
+  button inside the knob: the designer has none and the two pages must stay one widget.
+- The Values tab is rows in the designer's shape (label, widget, description under, `c:key` small
+  at the right), not cards; the type badge and the constraints line are gone. Counter, timer,
+  expression, datetime, free text and source-managed rows keep their own widgets under the same
+  label line. The font shortlist is `BunnyFonts::SUGGESTED` and reaches the tab as the `fonts` prop
+  from `OverlayTemplateController`.
+- **Saved looks (`user_chat_presets`) carry a `product` column**, unique on
+  `(user_id, product, name)`, every pre-existing row stamped `twitch-chat-overlay`. A look is only
+  listed on, and reachable from, the designer it was saved on: a chat look's keys mean nothing to
+  the bubbles overlay. The cap of 20 is per product. The table and model keep their `Chat` names.
+- Tower and Checkin integration settings stay on their settings pages; a designer edits overlay
+  controls only. Ingredients are not settings either (baked at install).
 
 ### Chat load testing (Aug 2026)
 

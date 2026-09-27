@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\ControlValueUpdated;
 use App\Models\ExternalIntegration;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
@@ -10,9 +11,11 @@ use App\Models\User;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
 use App\Support\OverlayMarkdown;
+use App\Support\ProductDesigner;
 use App\Support\WiringCatalog;
 use App\Support\WiringFacts;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Event;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(DatabaseTransactions::class);
@@ -200,4 +203,101 @@ it('uninstalls the overlay and its controls together', function () {
     expect(OverlayTemplate::find($templateId))->toBeNull()
         ->and(OverlayControl::where('overlay_template_id', $templateId)->count())->toBe(0)
         ->and(RecipeInstance::where('user_id', $user->id)->count())->toBe(0);
+});
+
+it('declares a designer with three looks, every control in a group and no skin strip', function () {
+    // The designer is the manifest's to declare, and this product's block is
+    // the first written for a product other than Twitch Chat. Soap is the
+    // install's own defaults, so a fresh install shows it active.
+    $designer = ProductDesigner::declared(app(RecipeCatalog::class)->find('chat-emote-bubbles'));
+    $defaults = collect(bubblesDocument()['controls'])->pluck('value', 'key')->all();
+
+    expect($designer['overlay'])->toBe('bubbles')
+        ->and($designer)->not->toHaveKey('skin_key')
+        ->and(ProductDesigner::skins($designer))->toBe([])
+        ->and(array_column(ProductDesigner::presets($designer), 'key'))->toBe(['soap', 'winter', 'valentine'])
+        ->and(ProductDesigner::preset($designer, 'soap')['values'])->toEqual($defaults)
+        ->and(ProductDesigner::preset($designer, 'winter')['values']['look'])->toBe('snow')
+        ->and(ProductDesigner::preset($designer, 'winter')['values']['direction'])->toBe('down')
+        ->and(ProductDesigner::preset($designer, 'valentine')['values']['look'])->toBe('heart')
+        ->and(ProductDesigner::preset($designer, 'valentine')['values']['spawn'])->toBe('cannon')
+        ->and(collect(ProductDesigner::keys($designer))->sort()->values()->all())->toBe(collect(array_keys($defaults))->sort()->values()->all())
+        ->and(ProductDesigner::extras($designer))->toBe(['sample_chat', 'chat_filters'])
+        ->and(ProductDesigner::stage($designer))->toBe([['w' => 1920, 'h' => 1080]]);
+});
+
+it('opens the designer for an install, with the bubbles controls and no chat window', function () {
+    $user = bubblesUser();
+    $instance = app(RecipeInstaller::class)->install(bubblesRecipe(), $user, 'chat_emote_bubbles');
+
+    $this->actingAs($user)->get('/products/chat-emote-bubbles/design')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('products/design')
+            ->where('product.slug', 'chat-emote-bubbles')
+            ->where('overlay.id', $instance->primitive_map['overlays']['bubbles'])
+            ->has('controls', 10)
+            ->where('controls.look.value', 'bubble')
+            ->where('controls.spawn_x.type', 'number')
+            ->has('presets', 3)
+            ->where('presets.0.key', 'soap')
+            ->where('skins', [])
+            ->where('skin_key', null)
+            ->has('groups', 4)
+            ->where('groups.0.title', 'Look')
+            ->where('extras', ['sample_chat', 'chat_filters'])
+            ->where('stage', [['w' => 1920, 'h' => 1080]])
+            // The emote buffer is a fixed bound, not a foreach cap, so the
+            // window slider has no business here; the filters do apply,
+            // because a hidden chatter's emotes do not bubble.
+            ->missing('chat_window')
+            ->missing('chat_window_max')
+            ->has('chat_filters')
+            ->where('max_hidden_logins', User::MAX_HIDDEN_LOGINS)
+        );
+
+    $url = $this->actingAs($user)->get('/products/chat-emote-bubbles/design')->viewData('page')['props']['preview_url'];
+    expect($url)->toStartWith('/overlay/'.OverlayTemplate::find($instance->primitive_map['overlays']['bubbles'])->slug.'?chat=sample#');
+
+    // Not for an account with no install.
+    $this->actingAs(bubblesUser())->get('/products/chat-emote-bubbles/design')->assertNotFound();
+});
+
+it('shows the designer card on the product page once installed, and applies a look from it', function () {
+    Event::fake([ControlValueUpdated::class]);
+    $user = bubblesUser();
+
+    $this->actingAs($user)->get('/products/chat-emote-bubbles')
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('product.designer.presets', 3)
+            ->where('product.designer.presets.0.active', false)
+            ->where('product.designer.groups', ['Look', 'Motion', 'Spawn', 'Crowd'])
+        );
+
+    $instance = app(RecipeInstaller::class)->install(bubblesRecipe(), $user, 'chat_emote_bubbles');
+    $templateId = $instance->primitive_map['overlays']['bubbles'];
+
+    $this->actingAs($user)->get('/products/chat-emote-bubbles')
+        ->assertInertia(fn (Assert $page) => $page->where('product.designer.presets.0.active', true));
+
+    $this->actingAs($user)->postJson('/products/chat-emote-bubbles/presets/winter')
+        ->assertOk()
+        ->assertJsonPath('values.look', 'snow')
+        ->assertJsonPath('values.bubble_color', '#bfe3ff');
+
+    $values = OverlayControl::where('overlay_template_id', $templateId)->pluck('value', 'key')->all();
+    expect($values['look'])->toBe('snow')
+        ->and($values['direction'])->toBe('down')
+        ->and($values['spawn'])->toBe('random')
+        ->and($values['max_bubbles'])->toBe('60');
+
+    Event::assertDispatchedTimes(ControlValueUpdated::class, 10);
+
+    $this->actingAs($user)->get('/products/chat-emote-bubbles')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('product.designer.presets.0.active', false)
+            ->where('product.designer.presets.1.active', true)
+        );
+
+    $this->actingAs($user)->post('/products/chat-emote-bubbles/presets/clean')->assertNotFound();
 });

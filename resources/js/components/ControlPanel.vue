@@ -3,17 +3,19 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import axios from 'axios';
 import { usePage } from '@inertiajs/vue3';
 import RekaToast from '@/components/RekaToast.vue';
+import ControlKnob from '@/components/controls/ControlKnob.vue';
 import { PlayIcon, PauseIcon, RotateCcwIcon, SaveIcon, LockIcon, Search, ChevronRight, ChevronsUpDown, ChevronsDownUp } from '@lucide/vue';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ColorPicker } from '@/components/ui/color-picker';
 import { SERVICE_LABELS } from '@/utils/services';
-import { choiceHint, controlChoices } from '@/utils/controlChoices';
+import { controlChoices } from '@/utils/controlChoices';
 
 const props = defineProps<{
   template: OverlayTemplate;
   controls: OverlayControl[];
   isLive?: boolean;
+  /** The font picker's shortlist and where to fetch the rest of the catalogue from. */
+  fonts?: { url: string; suggested: { value: string; hint: string }[] };
 }>();
 
 /** Build the template tag key: c:source:key for external, c:key for twitch/user. */
@@ -26,6 +28,20 @@ function tagKey(ctrl: OverlayControl): string {
 
 function isTwitchOffline(ctrl: OverlayControl): boolean {
   return ctrl.source === 'twitch' && ctrl.source_managed && !props.isLive;
+}
+
+/**
+ * Whether a control is rendered by the shared knob (ControlKnob), which is
+ * the same widget the product designer mounts for it: a number, a boolean, a
+ * color, and a text control with a vocabulary or a webfont. Everything else -
+ * counter, timer, expression, datetime, free text - is not a designer knob
+ * and keeps its own widget below. A source-managed control is read-only
+ * whatever its type.
+ */
+function isKnob(ctrl: OverlayControl): boolean {
+  if (ctrl.source_managed) return false;
+  if (ctrl.type === 'number' || ctrl.type === 'boolean' || ctrl.type === 'color') return true;
+  return ctrl.type === 'text' && (controlChoices(ctrl.config).length > 0 || (ctrl.config?.webfont === true && !!props.fonts));
 }
 
 /** Group controls by category for organized display. */
@@ -154,13 +170,6 @@ const localValues = ref<Record<number, string>>({});
 const saving = ref<Record<number, boolean>>({});
 const timerIntervals = ref<Record<number, number>>({});
 const timerDisplays = ref<Record<number, string>>({});
-const invalidNumberInputs = ref<Record<number, boolean>>({});
-
-function onNumberInput(ctrl: OverlayControl, ev: Event) {
-  const input = ev.target as HTMLInputElement;
-  localValues.value[ctrl.id] = String(input.value);
-  invalidNumberInputs.value[ctrl.id] = Boolean(input.validity?.badInput);
-}
 
 function showMsg(msg: string, type: 'success' | 'error' = 'success') {
   toastMessage.value = msg;
@@ -183,28 +192,6 @@ function formatSeconds(secs: number): string {
   const sec = s % 60;
   if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   return `${m}:${String(sec).padStart(2, '0')}`;
-}
-
-function numberConstraintsText(ctrl: OverlayControl): string {
-  const cfg = ctrl.config ?? {};
-  const parts: string[] = [];
-  if (cfg.min != null) parts.push(`Min: ${cfg.min}`);
-  if (cfg.max != null) parts.push(`Max: ${cfg.max}`);
-  if (cfg.step != null && cfg.step !== 1) parts.push(`Step: ${cfg.step}`);
-  if (cfg.reset_value != null) parts.push(`Reset: ${cfg.reset_value}`);
-  return parts.join(' · ');
-}
-
-function isNumberOutOfRangeOrGarbage(ctrl: OverlayControl): boolean {
-  if (ctrl.type !== 'number') return false;
-  if (invalidNumberInputs.value[ctrl.id]) return true;
-  const raw = getLocalValue(ctrl);
-  if (raw === '') return false;
-  const num = Number(raw);
-  if (!Number.isFinite(num)) return true;
-  const cfg = ctrl.config ?? {};
-  if (cfg.min != null && num < Number(cfg.min)) return true;
-  return cfg.max != null && num > Number(cfg.max);
 }
 
 function computeTimerDisplay(ctrl: OverlayControl): string {
@@ -313,6 +300,7 @@ onBeforeUnmount(() => {
     echoChannel.stopListening('.control.batch', handleControlBatch);
     echoChannel = null;
   }
+  for (const timer of Object.values(receiptTimers)) clearTimeout(timer);
 });
 
 function handleControlBatch(event: any) {
@@ -345,20 +333,38 @@ async function postValue(ctrl: OverlayControl, payload: Record<string, any>) {
 async function saveTextValue(ctrl: OverlayControl) {
   const val = localValues.value[ctrl.id] ?? ctrl.value ?? '';
   await postValue(ctrl, { value: val });
-  // A pick from a vocabulary names what was picked, by its label, so the
-  // toast confirms the choice and not just that something was written.
-  const picked = controlChoices(ctrl.config).find((choice) => choice.value === val);
-  showMsg(picked ? `"${ctrl.label || ctrl.key}" updated to ${picked.label}.` : `"${ctrl.label || ctrl.key}" updated.`);
+  showMsg(`"${ctrl.label || ctrl.key}" updated.`);
 }
 
-/**
- * A finished pick saves itself rather than waiting for the save button, so a
- * streamer matching an overlay to a scene sees it land. Only fires on the
- * picker's `commit`, never mid-drag - see the emits on ColorPicker.
+/* ------------------------------------------------------------------ knobs */
+
+/*
+ * A knob writes on `commit` - a pick, a tick, a slider released, a typed value
+ * left - through the same endpoint as everything else here. This tab is NOT
+ * the overlay: nothing on it shows a value landing, so every write gets a
+ * receipt where the hand was, a "Saved" that names what landed and holds for
+ * two seconds beside the row's label. (The designer has no receipt because
+ * the preview frame is one.) The row shows the server's answer, not what was
+ * typed: a number is clamped to the control's own bounds there.
  */
-async function saveColorValue(ctrl: OverlayControl, value: string) {
+const receipts = ref<Record<number, string>>({});
+const receiptTimers: Record<number, ReturnType<typeof setTimeout>> = {};
+
+function receipt(ctrl: OverlayControl, saved: string): string {
+  if (ctrl.type === 'boolean') return saved === '1' ? 'Saved: on' : 'Saved: off';
+  const picked = controlChoices(ctrl.config).find((choice) => choice.value === saved);
+  return `Saved: ${picked ? picked.label : saved}`;
+}
+
+async function commitKnob(ctrl: OverlayControl, value: string) {
   localValues.value[ctrl.id] = value;
-  await postValue(ctrl, { value });
+  const data = await postValue(ctrl, { value });
+  delete localValues.value[ctrl.id];
+
+  const saved = typeof data?.value === 'string' ? data.value : (ctrl.value ?? '');
+  receipts.value[ctrl.id] = receipt(ctrl, saved);
+  clearTimeout(receiptTimers[ctrl.id]);
+  receiptTimers[ctrl.id] = setTimeout(() => delete receipts.value[ctrl.id], 2000);
 }
 
 async function counterAction(ctrl: OverlayControl, action: 'increment' | 'decrement' | 'reset') {
@@ -370,12 +376,6 @@ async function timerAction(ctrl: OverlayControl, action: 'start' | 'stop' | 'res
 }
 
 const isTimerRunning = (ctrl: OverlayControl) => Boolean(ctrl.config?.running);
-
-async function toggleBoolean(ctrl: OverlayControl) {
-  const newValue = ctrl.value === '1' ? '0' : '1';
-  await postValue(ctrl, { value: newValue });
-  showMsg(`"${ctrl.label || ctrl.key}" ${newValue === '1' ? 'enabled' : 'disabled'}.`);
-}
 </script>
 
 <template>
@@ -448,36 +448,36 @@ async function toggleBoolean(ctrl: OverlayControl) {
           </CollapsibleTrigger>
 
           <CollapsibleContent>
-            <div class="grid grid-cols-1 gap-4 bg-sidebar/50 p-4 lg:grid-cols-2 xl:grid-cols-3">
-              <div
-                v-for="ctrl in group.controls"
-                :key="ctrl.id"
-                :class="[
-                  'border border-sidebar-border bg-sidebar p-3 transition-all duration-500',
-                  !ctrl.source_managed &&
-                    ctrl.type === 'timer' &&
-                    ctrl.config?.mode !== 'countto' &&
-                    isTimerRunning(ctrl) &&
-                    'bg-linear-to-br from-green-500/15 to-background',
-                  !ctrl.source_managed &&
-                    ctrl.type === 'timer' &&
-                    ctrl.config?.mode !== 'countto' &&
-                    !isTimerRunning(ctrl) &&
-                    'bg-linear-to-br from-red-500/15 to-background',
-                  !ctrl.source_managed && isNumberOutOfRangeOrGarbage(ctrl) && 'bg-linear-to-br from-red-500/15 to-background',
-                ]"
-              >
-                <div class="mb-2">
-                  <div class="mb-4 flex items-start justify-between gap-3">
-                    <div class="flex min-w-0 flex-col items-start gap-1">
-                      <label :for="`cp-input-${ctrl.id}`"
-                        ><span class="font-medium text-foreground">{{ ctrl.label || ctrl.key }}</span></label
-                      >
-                      <p v-if="ctrl.description" class="text-xs whitespace-pre-line text-foreground">{{ ctrl.description }}</p>
-                      <span class="font-mono text-xs text-muted-foreground">{{ tagKey(ctrl) }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2 text-center">
-                      <span class="text-xs text-foreground capitalize">{{ ctrl.type }}</span>
+            <!-- Rows, in the shape the product designer's column gives a
+                 control: the label, the widget, a line under it. The value is
+                 the biggest thing on a row; the tag key and the description
+                 sit behind the label in small type. -->
+            <div class="grid grid-cols-1 gap-x-10 bg-sidebar/50 px-4 py-2 md:grid-cols-2 xl:grid-cols-3">
+              <div v-for="ctrl in group.controls" :key="ctrl.id" class="flex flex-col gap-1.5 border-b border-border/60 py-3">
+                <!-- The shared knob, for the five designer types. -->
+                <ControlKnob
+                  v-if="isKnob(ctrl)"
+                  :id="`cp-input-${ctrl.id}`"
+                  :control="ctrl"
+                  :value="getLocalValue(ctrl)"
+                  :suggested-fonts="fonts?.suggested"
+                  :fonts-url="fonts?.url"
+                  @input="localValues[ctrl.id] = $event"
+                  @commit="commitKnob(ctrl, $event)"
+                >
+                  <template #aside>
+                    <span class="flex shrink-0 items-baseline gap-2 text-xs">
+                      <span v-if="receipts[ctrl.id]" class="text-green-600 dark:text-green-400">{{ receipts[ctrl.id] }}</span>
+                      <span class="font-mono text-muted-foreground">{{ tagKey(ctrl) }}</span>
+                    </span>
+                  </template>
+                </ControlKnob>
+
+                <!-- Everything else keeps its own widget under the same label line. -->
+                <template v-else>
+                  <div class="flex items-baseline justify-between gap-3">
+                    <label :for="`cp-input-${ctrl.id}`" class="text-sm text-foreground">{{ ctrl.label || ctrl.key }}</label>
+                    <span class="flex shrink-0 items-center gap-2 text-xs">
                       <span
                         v-if="isTwitchOffline(ctrl)"
                         title="This Control only works when you're streaming"
@@ -492,55 +492,17 @@ async function toggleBoolean(ctrl: OverlayControl) {
                         <LockIcon class="h-2.5 w-2.5" />
                         {{ SERVICE_LABELS[ctrl.source] }}
                       </span>
-                    </div>
+                      <span class="font-mono text-muted-foreground">{{ tagKey(ctrl) }}</span>
+                    </span>
                   </div>
-                </div>
 
-                <!-- Source-managed: read-only value display -->
-                <div v-if="ctrl.source_managed" class="flex items-center gap-3">
-                  <div class="min-w-0 flex-1 truncate font-mono text-sm text-foreground">
+                  <!-- Source-managed: read-only value display -->
+                  <div v-if="ctrl.source_managed" class="min-w-0 truncate font-mono text-sm text-foreground">
                     {{ ctrl.value ?? '-' }}
                   </div>
-                </div>
 
-                <!-- Text control with a vocabulary: the row itself says which
-                     values it takes (config.choices), so it gets a select
-                     rather than a box to guess into. Same form as the text row
-                     below - pick, then the save button - because this tab is
-                     not the overlay: nothing here shows a value landing, so
-                     the button and its toast are the receipt. A held value
-                     that is not one of the choices stays selectable as itself,
-                     so the select never shows a value the row does not hold. -->
-                <template v-else-if="ctrl.type === 'text' && controlChoices(ctrl.config).length">
-                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="group flex gap-0">
-                    <select
-                      :id="`cp-input-${ctrl.id}`"
-                      :name="`cp-input-${ctrl.id}`"
-                      class="peer input-border min-w-0 flex-1 cursor-pointer"
-                      :value="getLocalValue(ctrl)"
-                      @change="localValues[ctrl.id] = ($event.target as HTMLSelectElement).value"
-                    >
-                      <option v-if="!controlChoices(ctrl.config).some((choice) => choice.value === getLocalValue(ctrl))" :value="getLocalValue(ctrl)">
-                        {{ getLocalValue(ctrl) }}
-                      </option>
-                      <option v-for="choice in controlChoices(ctrl.config)" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
-                    </select>
-                    <button
-                      type="submit"
-                      class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border bg-background p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 hover:ring-0 dark:border-violet-300/30 dark:peer-focus:border-violet-400"
-                      :disabled="saving[ctrl.id]"
-                    >
-                      <SaveIcon class="h-3.5 w-3.5" />
-                    </button>
-                  </form>
-                  <p v-if="choiceHint(controlChoices(ctrl.config), getLocalValue(ctrl))" class="mt-1 text-xs text-muted-foreground">
-                    {{ choiceHint(controlChoices(ctrl.config), getLocalValue(ctrl)) }}
-                  </p>
-                </template>
-
-                <!-- Text control -->
-                <template v-else-if="ctrl.type === 'text'">
-                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="group flex gap-0">
+                  <!-- Free text: typed, so it waits for the button. -->
+                  <form v-else-if="ctrl.type === 'text'" @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="group flex gap-0">
                     <input
                       type="text"
                       :id="`cp-input-${ctrl.id}`"
@@ -559,71 +521,9 @@ async function toggleBoolean(ctrl: OverlayControl) {
                       <SaveIcon class="h-3.5 w-3.5" />
                     </button>
                   </form>
-                </template>
 
-                <!-- Color control. The text field stays the source of truth -
-                     anything CSS understands is valid here, including the
-                     colors the picker itself cannot read - and the swatch
-                     beside it opens the picker as an offer, not a gate. -->
-                <template v-else-if="ctrl.type === 'color'">
-                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="group flex gap-2">
-                    <ColorPicker
-                      :model-value="getLocalValue(ctrl)"
-                      :label="ctrl.label || ctrl.key"
-                      @update:model-value="localValues[ctrl.id] = $event"
-                      @commit="saveColorValue(ctrl, $event)"
-                    />
-                    <input
-                      type="text"
-                      :id="`cp-input-${ctrl.id}`"
-                      :name="`cp-input-${ctrl.id}`"
-                      :value="getLocalValue(ctrl)"
-                      :title="getLocalValue(ctrl) || 'Click to edit'"
-                      @input="localValues[ctrl.id] = String(($event.target as HTMLInputElement).value)"
-                      class="peer input-border min-w-0 flex-1 font-mono"
-                      placeholder="#7c3aed, rgb(...), oklch(...)"
-                    />
-                    <button
-                      type="submit"
-                      class="btn btn-sm rounded-none border border-border bg-background p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 hover:ring-0 dark:border-violet-300/30 dark:peer-focus:border-violet-400"
-                      :disabled="saving[ctrl.id]"
-                    >
-                      <SaveIcon class="h-3.5 w-3.5" />
-                    </button>
-                  </form>
-                </template>
-
-                <!-- Number control -->
-                <template v-else-if="ctrl.type === 'number'">
-                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex">
-                    <input
-                      :value="getLocalValue(ctrl)"
-                      :title="getLocalValue(ctrl) || 'Click to edit'"
-                      :id="`cp-input-${ctrl.id}`"
-                      :name="`cp-input-${ctrl.id}`"
-                      @input="onNumberInput(ctrl, $event)"
-                      type="number"
-                      :min="ctrl.config?.min"
-                      :max="ctrl.config?.max"
-                      :step="ctrl.config?.step ?? 1"
-                      class="peer input-border flex-1"
-                    />
-                    <button
-                      type="submit"
-                      class="btn btn-sm rounded-none rounded-r-none border border-l-0 border-border bg-background p-2 px-4 text-sm peer-focus:border-violet-400 peer-focus:bg-background hover:bg-violet-400/40 hover:ring-0 dark:border-violet-300/30 dark:peer-focus:border-violet-400"
-                      :disabled="saving[ctrl.id]"
-                    >
-                      <SaveIcon class="h-3.5 w-3.5" />
-                    </button>
-                  </form>
-                  <p v-if="numberConstraintsText(ctrl)" class="mt-2 text-xs text-muted-foreground">
-                    {{ numberConstraintsText(ctrl) }}
-                  </p>
-                </template>
-
-                <!-- Counter control -->
-                <template v-else-if="ctrl.type === 'counter'">
-                  <div class="flex items-center gap-3">
+                  <!-- Counter control -->
+                  <div v-else-if="ctrl.type === 'counter'" class="flex items-center gap-3">
                     <div class="min-w-15 text-center text-2xl font-bold tabular-nums">
                       {{ ctrl.value ?? '0' }}
                     </div>
@@ -654,11 +554,9 @@ async function toggleBoolean(ctrl: OverlayControl) {
                       </button>
                     </div>
                   </div>
-                </template>
 
-                <!-- Timer control -->
-                <template v-else-if="ctrl.type === 'timer'">
-                  <div class="flex items-center gap-3">
+                  <!-- Timer control -->
+                  <div v-else-if="ctrl.type === 'timer'" class="flex items-center gap-3">
                     <div class="min-w-22.5 text-center font-mono text-2xl font-bold tabular-nums">
                       <span
                         v-if="isTimerRunning(ctrl) && ctrl.config?.mode !== 'countto'"
@@ -691,50 +589,15 @@ async function toggleBoolean(ctrl: OverlayControl) {
                       </button>
                     </div>
                   </div>
-                </template>
 
-                <!-- Boolean control -->
-                <template v-else-if="ctrl.type === 'boolean'">
-                  <div class="flex items-center gap-3">
-                    <button
-                      type="button"
-                      role="switch"
-                      :aria-checked="ctrl.value === '1'"
-                      :title="ctrl.value === '1' ? 'Enabled' : 'Disabled'"
-                      :disabled="saving[ctrl.id]"
-                      @click="toggleBoolean(ctrl)"
-                      :class="[
-                        'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 ' +
-                          'border-transparent bg-card transition-colors focus:outline-none' +
-                          'disabled:cursor-not-allowed disabled:opacity-50',
-                        ctrl.value === '1' ? 'bg-accent' : 'bg-input',
-                      ]"
-                    >
-                      <span
-                        :class="[
-                          'pointer-events-none inline-block h-4 w-4 rounded-full bg-accent-foreground shadow-sm ring-0 transition-transform dark:bg-white',
-                          ctrl.value === '1' ? 'translate-x-4' : 'translate-x-0',
-                        ]"
-                      />
-                    </button>
-                    <span class="text-sm uppercase" :class="['text-sm', ctrl.value === '1' ? 'text-green-400' : 'text-muted-foreground']">
-                      {{ ctrl.value === '1' ? 'On' : 'Off' }}
-                    </span>
-                  </div>
-                </template>
+                  <!-- Expression control (read-only, evaluated in overlay) -->
+                  <pre
+                    v-else-if="ctrl.type === 'expression'"
+                    class="w-full overflow-hidden rounded-sm bg-card p-2 font-mono text-xs text-muted-foreground"
+                    >{{ ctrl.config?.expression ?? '' }}</pre>
 
-                <!-- Expression control (read-only, evaluated in overlay) -->
-                <template v-else-if="ctrl.type === 'expression'">
-                  <div class="flex items-center gap-3">
-                    <pre class="w-full overflow-hidden rounded-sm bg-card p-2 font-mono text-xs text-muted-foreground">{{
-                      ctrl.config?.expression ?? ''
-                    }}</pre>
-                  </div>
-                </template>
-
-                <!-- Datetime control -->
-                <template v-else-if="ctrl.type === 'datetime'">
-                  <form @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex gap-0">
+                  <!-- Datetime control -->
+                  <form v-else-if="ctrl.type === 'datetime'" @submit.prevent="saveTextValue(ctrl)" @keydown.enter.stop class="flex gap-0">
                     <input
                       :value="getLocalValue(ctrl)"
                       @input="localValues[ctrl.id] = ($event.target as HTMLInputElement).value"
@@ -752,6 +615,8 @@ async function toggleBoolean(ctrl: OverlayControl) {
                     </button>
                   </form>
                 </template>
+
+                <p v-if="ctrl.description" class="text-xs whitespace-pre-line text-muted-foreground">{{ ctrl.description }}</p>
               </div>
             </div>
           </CollapsibleContent>

@@ -7,8 +7,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
-import FontPicker from '@/components/products/FontPicker.vue';
-import { controlChoices } from '@/utils/controlChoices';
+import ControlKnob from '@/components/controls/ControlKnob.vue';
+import { stageFor, type StageSize } from '@/utils/designerStage';
 import type { AppPageProps, BreadcrumbItem, ForeachCaps } from '@/types';
 
 interface Choice {
@@ -40,23 +40,33 @@ interface SavedPreset {
   values: Record<string, string>;
 }
 
+/**
+ * The account-level extras a manifest may switch on beside the knobs.
+ * `sample_chat` is the rate, More and Clear above the preview; the other two
+ * are the chat foreach cap and the two display filters, which arrive with
+ * their own props only when declared.
+ */
+type Extra = 'sample_chat' | 'chat_window' | 'chat_filters';
+
 const props = defineProps<{
   product: { slug: string; name: string };
   overlay: { id: number; name: string; slug: string };
   preview_url: string;
   presets: Preset[];
   skins: Choice[];
-  choices: Record<string, Choice[]>;
+  skin_key: string | null;
   groups: { title: string; keys: string[] }[];
   controls: Record<string, Control>;
-  chat_window: number;
-  chat_window_max: number;
-  chat_filters: { hide_commands: boolean; hidden_logins: string[] };
-  max_hidden_logins: number;
   suggested_fonts: { value: string; hint: string }[];
   fonts_url: string;
   saved_presets: SavedPreset[];
   saved_presets_max: number;
+  extras: Extra[];
+  stage: StageSize[];
+  chat_window?: number;
+  chat_window_max?: number;
+  chat_filters?: { hide_commands: boolean; hidden_logins: string[] };
+  max_hidden_logins?: number;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -67,9 +77,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const page = usePage<AppPageProps>();
 
+function has(extra: Extra): boolean {
+  return props.extras.includes(extra);
+}
+
 // The frame's URL is read once. Re-reading the prop would mean a re-render
 // could swap the src and reload the preview mid-design; the token behind it is
-// held in the session for the same reason (ChatDesigner::previewToken).
+// held in the session for the same reason (ProductDesigner::previewToken).
 const frameSrc = ref(props.preview_url);
 const frame = ref<HTMLIFrameElement | null>(null);
 
@@ -84,7 +98,7 @@ const controls = reactive<Record<string, Control>>(JSON.parse(JSON.stringify(pro
 // already assigned it, so writeControl saw no change and never posted, and
 // every slider and color picker on the page moved without saving anything.
 const saved = reactive<Record<string, string>>(Object.fromEntries(Object.entries(props.controls).map(([key, control]) => [key, control.value])));
-const windowSize = ref(props.chat_window);
+const windowSize = ref(props.chat_window ?? 0);
 
 // Only failures are said out loud. Every successful change is visible in the
 // frame on the right, which is the whole point of the page.
@@ -121,26 +135,10 @@ function valueOf(key: string): string {
   return controls[key]?.value ?? '';
 }
 
-function numberBound(key: string, bound: 'min' | 'max', fallback: number): number {
-  const raw = controls[key]?.config?.[bound];
-  return typeof raw === 'number' ? raw : Number(raw ?? fallback) || fallback;
-}
-
-/**
- * The values a text control may take: the row's own `config.choices` first,
- * the server's per-key map (ChatDesigner::CHOICES) for a row installed before
- * the recipe declared them. Same shape either way, so the select below does
- * not care which one answered.
- */
-function choicesFor(key: string): Choice[] {
-  const own = controlChoices(controls[key]?.config);
-  return own.length ? own : (props.choices[key] ?? []);
-}
-
 const debounces: Record<string, ReturnType<typeof setTimeout>> = {};
 
 /**
- * One knob, one control, one POST, through the endpoint the controls tab uses.
+ * One knob, one control, one POST, through the endpoint the Values tab uses.
  *
  * Nothing else has to happen for the overlay to change: the endpoint
  * broadcasts, and both the preview frame and OBS are listening. That is the
@@ -201,7 +199,7 @@ const applying = ref<string | null>(null);
 /**
  * A bundle the server has just written onto the controls, built-in or saved:
  * move the knobs, expect it in the frame, and rewrite the history entry once
- * for the whole bundle rather than thirteen times.
+ * for the whole bundle rather than once per key.
  */
 function adoptValues(values: Record<string, string>): void {
   for (const [controlKey, value] of Object.entries(values)) {
@@ -239,9 +237,9 @@ async function applyPreset(key: string): Promise<void> {
 /* ------------------------------------------------------------ saved looks */
 
 /*
- * The streamer's own looks. A row holds the thirteen look values as they were
- * when it was saved, and "active" is derived by the same comparison the
- * built-ins get - so a look you tuned after applying is shown as "with
+ * The streamer's own looks for this product. A row holds every designer value
+ * as it was when it was saved, and "active" is derived by the same comparison
+ * the built-ins get - so a look you tuned after applying is shown as "with
  * changes", which is the truth, and Update is how you keep them.
  *
  * `selectedSavedId` is the dropdown's own state, kept apart from which one is
@@ -392,8 +390,8 @@ async function deleteSaved(): Promise<void> {
  * in it and no real logins, so there is nothing for either filter to catch.
  *
  * That is why this trio confirms itself. Every other knob on the page is its
- * own receipt - you see the overlay move - and these three would otherwise
- * write silently into a page where everything else answers instantly.
+ * own receipt - you see the overlay move - and these would otherwise write
+ * silently into a page where everything else answers instantly.
  */
 const feedSaved = ref(false);
 let savedFlash: ReturnType<typeof setTimeout>;
@@ -427,9 +425,10 @@ function writeWindowSoon(size: number): void {
 
 /* ------------------------------------------------------------ chat filters */
 
-const hideCommands = ref(props.chat_filters.hide_commands);
-const hiddenLoginsText = ref(props.chat_filters.hidden_logins.join('\n'));
-const savedLoginCount = ref(props.chat_filters.hidden_logins.length);
+const hideCommands = ref(props.chat_filters?.hide_commands ?? false);
+const hiddenLoginsText = ref((props.chat_filters?.hidden_logins ?? []).join('\n'));
+const savedLoginCount = ref(props.chat_filters?.hidden_logins.length ?? 0);
+const maxHiddenLogins = computed(() => props.max_hidden_logins ?? 0);
 
 // What the endpoint keeps after normalising: it lowercases, strips a leading
 // @, drops anything that is not a Twitch login and dedupes. So the typed count
@@ -443,7 +442,7 @@ const typedLoginCount = computed(
       .filter((line) => line !== '').length,
 );
 
-const overHiddenCap = computed(() => typedLoginCount.value > props.max_hidden_logins);
+const overHiddenCap = computed(() => typedLoginCount.value > maxHiddenLogins.value);
 
 /**
  * Both filters go in one request, because the endpoint takes both and
@@ -483,21 +482,16 @@ function writeHiddenLoginsSoon(): void {
 /* ---------------------------------------------------------------- preview */
 
 /**
- * What OBS browser source this layout wants, and therefore what shape the
- * preview is. A ticker in a 500x800 box would look nothing like a ticker.
+ * What OBS browser source this look wants, and therefore what shape the
+ * preview is, as the manifest declares it. A ticker in a 500x800 box would
+ * look nothing like a ticker.
  */
-const SOURCE_SIZES: Record<string, { w: number; h: number }> = {
-  bottom: { w: 500, h: 800 },
-  top: { w: 500, h: 800 },
-  ticker: { w: 1920, h: 80 },
-};
-
-const sourceSize = computed(() => SOURCE_SIZES[valueOf('layout')] ?? SOURCE_SIZES.bottom);
+const sourceSize = computed(() => stageFor(props.stage, valueOf));
 
 // The frame renders at the real browser-source size and is scaled down to fit,
 // so 22px type looks like 22px type relative to the source rather than
 // relative to whatever space the column happens to have.
-const stage = ref<HTMLElement | null>(null);
+const stageEl = ref<HTMLElement | null>(null);
 const stageSize = reactive({ w: 0, h: 0 });
 const scale = computed(() => {
   if (!stageSize.w || !stageSize.h) return 1;
@@ -525,7 +519,7 @@ function setRate(perMinute: number): void {
  * The preview is veiled from a confirmed write until the frame has applied it.
  *
  * A knob's write lands in the frame over the same broadcast OBS listens on, a
- * few seconds after the server answers, and a preset is thirteen of those
+ * few seconds after the server answers, and a preset is a dozen of those
  * arriving staggered. Watching the overlay restructure itself piece by piece
  * with nothing saying "this is in progress" reads as broken. So the stage is
  * covered from the moment a write is confirmed until every key written has
@@ -536,8 +530,8 @@ function setRate(perMinute: number): void {
  * that reloaded mid-write - so the veil can never stick. It measures SILENCE,
  * restarting on every key the frame reports, rather than the whole wait: a
  * queue that is slow but alive (local `queue:listen` boots a process per job,
- * so a preset's thirteen land about a second apart) must not have the veil
- * lifted from under it with keys still arriving.
+ * so a preset's keys land about a second apart) must not have the veil lifted
+ * from under it with keys still arriving.
  */
 const pendingKeys = reactive(new Set<string>());
 const applyingLook = computed(() => pendingKeys.size > 0);
@@ -615,12 +609,12 @@ function onFrameMessage(event: MessageEvent): void {
 onMounted(() => {
   window.addEventListener('message', onFrameMessage);
 
-  if (stage.value && typeof ResizeObserver !== 'undefined') {
+  if (stageEl.value && typeof ResizeObserver !== 'undefined') {
     observer = new ResizeObserver(([entry]) => {
       stageSize.w = entry.contentRect.width;
       stageSize.h = entry.contentRect.height;
     });
-    observer.observe(stage.value);
+    observer.observe(stageEl.value);
   }
 });
 
@@ -638,6 +632,8 @@ onBeforeUnmount(() => {
 function keysIn(group: { keys: string[] }): string[] {
   return group.keys.filter((key) => !!controls[key]);
 }
+
+const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?? null) : null));
 </script>
 
 <template>
@@ -647,7 +643,7 @@ function keysIn(group: { keys: string[] }): string[] {
     <div class="p-4">
       <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
         <Heading
-          title="Design your chat"
+          :title="`Design ${product.name}`"
           description="Every change lands in the overlay as you make it - here and in OBS, at the same moment."
           description-class="text-sm text-muted-foreground"
         />
@@ -728,7 +724,7 @@ function keysIn(group: { keys: string[] }): string[] {
                 >{{ saved_presets_max }} looks saved, which is the most there is room for. Delete one to save another.</template
               >
               <template v-else>
-                Saves the skin, font, colors, layout and lifetime as they are right now, under any name you like.
+                Saves every knob below as it is right now, under any name you like.
                 <template v-if="savedPresets.length">{{ savedPresets.length }} of {{ saved_presets_max }} saved.</template>
               </template>
             </p>
@@ -763,11 +759,12 @@ function keysIn(group: { keys: string[] }): string[] {
             </p>
           </section>
 
-          <!-- Skin. Separate from the presets on purpose: the shape of a
-               message and the palette on it are two choices, and Terminal in
-               pink is one click from here. -->
-          <section v-if="controls.skin" class="flex flex-col gap-2">
-            <h2 class="text-sm font-semibold text-foreground">Skin</h2>
+          <!-- Skin. Only a product whose manifest names a skin key has one.
+               Separate from the presets on purpose: the shape of a message
+               and the palette on it are two choices, and Terminal in pink is
+               one click from here. -->
+          <section v-if="skin_key && skinControl" class="flex flex-col gap-2">
+            <h2 class="text-sm font-semibold text-foreground">{{ skinControl.label }}</h2>
             <div class="grid grid-cols-2 gap-1.5">
               <button
                 v-for="skin in skins"
@@ -775,12 +772,12 @@ function keysIn(group: { keys: string[] }): string[] {
                 type="button"
                 class="cursor-pointer rounded-sm border px-2.5 py-1.5 text-left text-sm"
                 :class="
-                  valueOf('skin') === skin.value
+                  valueOf(skin_key) === skin.value
                     ? 'border-violet-500 bg-violet-500/10 text-foreground'
                     : 'border-border text-foreground hover:border-foreground/40'
                 "
                 :title="skin.hint"
-                @click="writeControl('skin', skin.value)"
+                @click="writeControl(skin_key, skin.value)"
               >
                 {{ skin.label }}
               </button>
@@ -791,97 +788,31 @@ function keysIn(group: { keys: string[] }): string[] {
             <h2 class="text-sm font-semibold text-foreground">{{ group.title }}</h2>
 
             <div v-for="key in keysIn(group)" :key="key" class="flex flex-col gap-1.5">
-              <!-- An open vocabulary: every family Bunny Fonts serves. -->
-              <template v-if="key === 'font'">
-                <label class="text-sm text-foreground" :for="`knob-${key}`">{{ controls[key].label }}</label>
-                <FontPicker
-                  :id="`knob-${key}`"
-                  :model-value="valueOf(key)"
-                  :suggested="suggested_fonts"
-                  :catalogue-url="fonts_url"
-                  @update:model-value="writeControl(key, $event)"
-                />
-              </template>
-
-              <!-- A closed vocabulary, declared on the row or by the server. -->
-              <template v-else-if="choicesFor(key).length">
-                <label class="text-sm text-foreground" :for="`knob-${key}`">{{ controls[key].label }}</label>
-                <select
-                  :id="`knob-${key}`"
-                  class="w-full cursor-pointer rounded-sm border border-border bg-background px-2 py-1.5 text-sm text-foreground"
-                  :value="valueOf(key)"
-                  @change="writeControl(key, ($event.target as HTMLSelectElement).value)"
-                >
-                  <option v-for="choice in choicesFor(key)" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
-                </select>
-                <p class="text-xs text-muted-foreground">{{ choicesFor(key).find((choice) => choice.value === valueOf(key))?.hint }}</p>
-              </template>
-
-              <!-- On or off. -->
-              <template v-else-if="controls[key].type === 'boolean'">
-                <label class="flex cursor-pointer items-center gap-2 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    :checked="valueOf(key) === '1'"
-                    @change="writeControl(key, ($event.target as HTMLInputElement).checked ? '1' : '0')"
-                  />
-                  {{ controls[key].label }}
-                </label>
-              </template>
-
-              <!-- A color. -->
-              <template v-else-if="controls[key].type === 'color'">
-                <label class="text-sm text-foreground" :for="`knob-${key}`">{{ controls[key].label }}</label>
-                <div class="flex items-center gap-2">
-                  <input
-                    :id="`knob-${key}`"
-                    type="color"
-                    class="size-8 cursor-pointer rounded-sm border border-border bg-transparent p-0.5"
-                    :value="valueOf(key)"
-                    @input="writeControlSoon(key, ($event.target as HTMLInputElement).value)"
-                  />
-                  <span class="font-mono text-xs text-muted-foreground">{{ valueOf(key) }}</span>
-                </div>
-              </template>
-
-              <!-- A number, with the control's own bounds. -->
-              <template v-else>
-                <label class="flex items-baseline justify-between text-sm text-foreground" :for="`knob-${key}`">
-                  {{ controls[key].label }}
-                  <span class="text-xs text-muted-foreground tabular-nums">{{ valueOf(key) }}</span>
-                </label>
-                <input
-                  :id="`knob-${key}`"
-                  type="range"
-                  class="w-full cursor-pointer"
-                  :min="numberBound(key, 'min', 0)"
-                  :max="numberBound(key, 'max', 100)"
-                  :value="valueOf(key)"
-                  @input="writeControlSoon(key, ($event.target as HTMLInputElement).value)"
-                />
-                <p v-if="key === 'lifetime'" class="text-xs text-muted-foreground">
-                  {{
-                    valueOf('lifetime') === '0'
-                      ? 'Messages stay until they scroll off.'
-                      : `Each message fades out after ${valueOf('lifetime')} seconds.`
-                  }}
-                </p>
-              </template>
+              <ControlKnob
+                :id="`knob-${key}`"
+                :control="controls[key]"
+                :value="valueOf(key)"
+                :suggested-fonts="suggested_fonts"
+                :fonts-url="fonts_url"
+                @input="writeControlSoon(key, $event)"
+                @commit="writeControl(key, $event)"
+              />
             </div>
           </section>
 
-          <!-- The last three are account preferences rather than controls on
-               this overlay: the chat foreach cap and the two display filters.
-               None of them rides the control broadcast, and none of them shows
-               in the preview either, since the sample chat has no commands in
-               it and no real logins. So they say what they do and when. -->
-          <section class="flex flex-col gap-4">
+          <!-- Account preferences rather than controls on this overlay: the
+               chat foreach cap and the two display filters, each only when
+               the manifest asks for it. None of them rides the control
+               broadcast, and none of them shows in the preview either, since
+               the sample chat has no commands in it and no real logins. So
+               they say what they do and when. -->
+          <section v-if="has('chat_window') || has('chat_filters')" class="flex flex-col gap-4">
             <div class="flex flex-wrap items-baseline justify-between gap-x-3">
               <h2 class="text-sm font-semibold text-foreground">What the feed shows</h2>
               <span v-if="feedSaved" class="text-xs text-green-600 dark:text-green-400">Saved</span>
             </div>
 
-            <div class="flex flex-col gap-1.5">
+            <div v-if="has('chat_window')" class="flex flex-col gap-1.5">
               <label class="flex items-baseline justify-between text-sm text-foreground" for="knob-window">
                 How many messages at once
                 <span class="text-xs text-muted-foreground tabular-nums">{{ windowSize }}</span>
@@ -897,45 +828,47 @@ function keysIn(group: { keys: string[] }): string[] {
               />
             </div>
 
-            <label class="flex cursor-pointer items-start gap-2.5">
-              <input
-                type="checkbox"
-                class="mt-0.5"
-                :checked="hideCommands"
-                @change="writeHideCommands(($event.target as HTMLInputElement).checked)"
-              />
-              <span class="text-sm">
-                <span class="text-foreground">Hide messages starting with <code class="font-mono">!</code></span>
-                <span class="block text-xs text-muted-foreground">
-                  Keeps bot commands off the overlay. Every message starting with an exclamation mark goes, so
-                  <code class="font-mono">!!!</code> and <code class="font-mono">!what a play</code> go too.
+            <template v-if="has('chat_filters')">
+              <label class="flex cursor-pointer items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  class="mt-0.5"
+                  :checked="hideCommands"
+                  @change="writeHideCommands(($event.target as HTMLInputElement).checked)"
+                />
+                <span class="text-sm">
+                  <span class="text-foreground">Hide messages starting with <code class="font-mono">!</code></span>
+                  <span class="block text-xs text-muted-foreground">
+                    Keeps bot commands off the overlay. Every message starting with an exclamation mark goes, so
+                    <code class="font-mono">!!!</code> and <code class="font-mono">!what a play</code> go too.
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
 
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm text-foreground" for="knob-hidden-logins">Hidden chatters</label>
-              <textarea
-                id="knob-hidden-logins"
-                v-model="hiddenLoginsText"
-                rows="5"
-                class="input-border w-full font-mono text-sm"
-                placeholder="somebot&#10;anotherbot"
-                @input="writeHiddenLoginsSoon"
-              ></textarea>
-              <p v-if="overHiddenCap" class="text-xs text-destructive">
-                {{ typedLoginCount }} names typed. Only the first {{ max_hidden_logins }} are saved.
-              </p>
-              <p v-else class="text-xs text-muted-foreground">
-                One Twitch username per line, up to {{ max_hidden_logins }}.
-                <template v-if="savedLoginCount">{{ savedLoginCount }} {{ savedLoginCount === 1 ? 'name is' : 'names are' }} hidden.</template>
-              </p>
-            </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm text-foreground" for="knob-hidden-logins">Hidden chatters</label>
+                <textarea
+                  id="knob-hidden-logins"
+                  v-model="hiddenLoginsText"
+                  rows="5"
+                  class="input-border w-full font-mono text-sm"
+                  placeholder="somebot&#10;anotherbot"
+                  @input="writeHiddenLoginsSoon"
+                ></textarea>
+                <p v-if="overHiddenCap" class="text-xs text-destructive">
+                  {{ typedLoginCount }} names typed. Only the first {{ maxHiddenLogins }} are saved.
+                </p>
+                <p v-else class="text-xs text-muted-foreground">
+                  One Twitch username per line, up to {{ maxHiddenLogins }}.
+                  <template v-if="savedLoginCount">{{ savedLoginCount }} {{ savedLoginCount === 1 ? 'name is' : 'names are' }} hidden.</template>
+                </p>
+              </div>
+            </template>
 
             <p class="text-xs text-muted-foreground">
-              These three are account settings rather than overlay controls, so OBS picks them up when the browser source next loads, and the preview
-              here follows on reload. Hiding a chatter or a command changes your overlay only: the message is still in chat, still in the VOD, and
-              everyone watching still sees it.
+              These are account settings rather than overlay controls, so OBS picks them up when the browser source next loads, and the preview here
+              follows on reload. Hiding a chatter or a command changes your overlay only: the message is still in chat, still in the VOD, and everyone
+              watching still sees it.
             </p>
           </section>
 
@@ -946,7 +879,7 @@ function keysIn(group: { keys: string[] }): string[] {
 
         <!-- Preview -->
         <div class="flex flex-col gap-2 lg:sticky lg:top-4">
-          <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div v-if="has('sample_chat')" class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div class="flex items-center gap-2">
               <label class="text-sm text-foreground" for="sample-rate">Sample chat</label>
               <input
@@ -974,14 +907,14 @@ function keysIn(group: { keys: string[] }): string[] {
           </div>
 
           <div
-            ref="stage"
+            ref="stageEl"
             class="ol-design-stage relative flex h-[min(72vh,820px)] items-center justify-center overflow-hidden rounded-sm border border-border p-2"
           >
             <div :style="{ width: `${sourceSize.w * scale}px`, height: `${sourceSize.h * scale}px` }" class="relative shrink-0">
               <iframe
                 ref="frame"
                 :src="frameSrc"
-                title="Your chat overlay"
+                :title="`Your ${overlay.name} overlay`"
                 class="absolute top-0 left-0 origin-top-left border-0"
                 :style="{ width: `${sourceSize.w}px`, height: `${sourceSize.h}px`, transform: `scale(${scale})` }"
               />
@@ -1004,8 +937,9 @@ function keysIn(group: { keys: string[] }): string[] {
           <!-- The right padding keeps the last line clear of the help beacon,
                which is fixed to the bottom-right of every app page. -->
           <p class="pr-12 text-sm text-muted-foreground">
-            The real overlay, at {{ sourceSize.w }}&times;{{ sourceSize.h }} - the browser source size this layout wants. The chat in it is invented,
-            so it reads the same whether or not you are live. The checkerboard is this page; your overlay is transparent.
+            The real overlay, at {{ sourceSize.w }}&times;{{ sourceSize.h }} - the browser source size this look wants.
+            <template v-if="has('sample_chat')">The chat in it is invented, so it reads the same whether or not you are live.</template>
+            The checkerboard is this page; your overlay is transparent.
           </p>
         </div>
       </div>

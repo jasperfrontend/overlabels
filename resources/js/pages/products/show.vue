@@ -57,16 +57,18 @@ interface Product {
   commands: { command: string; kind: 'appender' | 'alias' | 'command'; detail: string }[];
   notes: string[];
   ready_message: string | null;
-  presets: Preset[];
+  designer: Designer | null;
 }
 /**
- * A fixed look for the product's overlay. Picking one happens in the designer,
- * not here, so this page reads nothing from a preset but its existence: a
- * product with looks is a product with a designer, and how many there are is
- * the one number the designer's card quotes.
+ * The product's designer, declared by its manifest. Picking a look happens
+ * on the designer, not here, so this page reads nothing from a preset but its
+ * existence: how many there are, and what the page's groups are called, are
+ * the two things the designer's card quotes. Null is a product with no
+ * designer, and no card.
  */
-interface Preset {
-  key: string;
+interface Designer {
+  presets: { key: string }[];
+  groups: string[];
 }
 
 interface InstalledOverlay {
@@ -162,11 +164,12 @@ function install(): void {
 const stages = computed(() => (props.installed?.overlays ?? []).filter((overlay) => overlay.type !== 'alert'));
 const alerts = computed(() => (props.installed?.overlays ?? []).filter((overlay) => overlay.type === 'alert'));
 
-// The looks. They are the designer's opening move, not a row of cards here:
-// ten previews of someone else's chat asked the streamer to choose before
-// they could see their own in it. All this page does with the presets now is
-// count them and point at the one door that has them.
-const presets = computed(() => props.product.presets ?? []);
+// The designer. Its looks are its opening move, not a row of cards here: ten
+// previews of someone else's chat asked the streamer to choose before they
+// could see their own in it. All this page does with the designer is count
+// its looks, name its groups and point at the one door that has them.
+const designer = computed(() => props.product.designer);
+const designerGroups = computed(() => joinNames((designer.value?.groups ?? []).map((title) => title.toLowerCase())));
 
 function joinNames(names: string[]): string {
   return names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
@@ -609,12 +612,12 @@ async function uninstall(): Promise<void> {
            the installer did is already a tick; each remaining line has one
            button; the bar fills as they go. -->
       <!-- The looks, as one door rather than a wall of cards. Only a product
-           with presets (Twitch Chat) has a designer, and only an install can
-           open it. This is the loudest thing on an installed page for a
+           whose manifest declares a designer has one, and only an install
+           can open it. This is the loudest thing on an installed page for a
            reason: everything above it is setup the person has already done,
            and this is the part that is theirs. -->
       <Link
-        v-if="installed && presets.length"
+        v-if="installed && designer"
         :href="withLastMileHint(route('products.design', product.slug), product.slug)"
         class="product-design mt-8 flex cursor-pointer flex-col gap-4 border border-violet-500 p-5 transition-colors hover:bg-violet-500/[0.08] sm:flex-row sm:items-center sm:gap-5 dark:border-violet-400 dark:hover:bg-violet-400/[0.09]"
       >
@@ -627,7 +630,7 @@ async function uninstall(): Promise<void> {
         <span class="min-w-0 flex-1">
           <span class="block text-lg leading-[1.3] font-semibold text-foreground">Design it yourself</span>
           <span class="block text-sm leading-relaxed text-pretty text-foreground">
-            Start from one of {{ presets.length }} looks, then change the skin, the font, the colors and the layout next to your own overlay.
+            Start from one of {{ designer.presets.length }} looks, then change the {{ designerGroups }} next to your own overlay.
           </span>
         </span>
         <!-- A span, not a button: this whole card is one link, and a button

@@ -8,6 +8,7 @@ use App\Models\OverlayTemplate;
 use App\Services\External\ExternalServiceRegistry;
 use App\Support\Dsl;
 use App\Support\OverlayMarkdown;
+use App\Support\ProductDesigner;
 use InvalidArgumentException;
 use JsonException;
 use Opis\JsonSchema\Errors\ErrorFormatter;
@@ -251,7 +252,179 @@ class RecipeManifestValidator
             }
         }
 
-        return array_merge($errors, $this->installsErrors($manifest), $this->ingredientErrors($manifest, $directory));
+        return array_merge(
+            $errors,
+            $this->installsErrors($manifest),
+            $this->ingredientErrors($manifest, $directory),
+            $this->designerErrors($manifest, $directory),
+        );
+    }
+
+    /**
+     * The designer block against the overlay it designs.
+     *
+     * The knobs are the overlay's own controls, so the block can only be
+     * judged next to the document: every key it groups or a preset writes
+     * has to be a control the document declares, every control the designer
+     * can render (ProductDesigner::KNOB_TYPES) has to have exactly one home
+     * on the page or be the skin strip, and a preset has to be a complete
+     * look - every designer key and no other - with each value for a control
+     * that declares choices being one of them. Without `$directory` only the
+     * overlay ref and the block's own consistency are checked.
+     *
+     * The skin strip is derived from the presets one to one, which is what
+     * keeps adding a look to one list rather than two; so a preset's value
+     * for the skin key must be its own key.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return list<array{pointer: string, message: string}>
+     */
+    private function designerErrors(array $manifest, ?string $directory): array
+    {
+        $designer = $manifest['designer'] ?? null;
+        if (! is_array($designer)) {
+            return [];
+        }
+
+        $errors = [];
+
+        $overlayRef = $designer['overlay'] ?? null;
+        $overlayIndex = null;
+        foreach ($manifest['installs']['overlays'] ?? [] as $i => $overlay) {
+            if (is_string($overlayRef) && ($overlay['ref'] ?? null) === $overlayRef) {
+                $overlayIndex = $i;
+            }
+        }
+        if (is_string($overlayRef) && $overlayIndex === null) {
+            $errors[] = ['pointer' => '/designer/overlay', 'message' => "Designer references unknown overlay \"{$overlayRef}\"."];
+        }
+
+        $skinKey = $designer['skin_key'] ?? null;
+
+        // The block's own consistency: a key grouped twice, a skin key in a
+        // group, a preset key used twice, a group title used twice.
+        $grouped = [];
+        $titles = [];
+        foreach ($designer['groups'] ?? [] as $g => $group) {
+            $title = $group['title'] ?? null;
+            if (is_string($title)) {
+                if (in_array($title, $titles, true)) {
+                    $errors[] = ['pointer' => "/designer/groups/{$g}/title", 'message' => "Duplicate group title \"{$title}\"."];
+                }
+                $titles[] = $title;
+            }
+            foreach ($group['keys'] ?? [] as $k => $key) {
+                if (! is_string($key)) {
+                    continue;
+                }
+                if (isset($grouped[$key])) {
+                    $errors[] = ['pointer' => "/designer/groups/{$g}/keys/{$k}", 'message' => "Control \"{$key}\" is in more than one group."];
+                }
+                if ($key === $skinKey) {
+                    $errors[] = ['pointer' => "/designer/groups/{$g}/keys/{$k}", 'message' => "Control \"{$key}\" is the skin_key and has the strip above the groups, not a row in one."];
+                }
+                $grouped[$key] = "/designer/groups/{$g}/keys/{$k}";
+            }
+        }
+
+        $designerKeys = array_keys($grouped);
+        if (is_string($skinKey)) {
+            array_unshift($designerKeys, $skinKey);
+        }
+
+        $presetKeys = [];
+        foreach ($designer['presets'] ?? [] as $p => $preset) {
+            $key = $preset['key'] ?? null;
+            if (is_string($key)) {
+                if (in_array($key, $presetKeys, true)) {
+                    $errors[] = ['pointer' => "/designer/presets/{$p}/key", 'message' => "Duplicate preset key \"{$key}\"."];
+                }
+                $presetKeys[] = $key;
+            }
+
+            $values = $preset['values'] ?? [];
+            if (! is_array($values)) {
+                continue;
+            }
+            foreach ($designerKeys as $designerKey) {
+                if (! array_key_exists($designerKey, $values)) {
+                    $errors[] = ['pointer' => "/designer/presets/{$p}/values", 'message' => "Preset \"{$key}\" does not set \"{$designerKey}\". A preset is a complete look."];
+                }
+            }
+            foreach ($values as $valueKey => $value) {
+                if (! in_array($valueKey, $designerKeys, true)) {
+                    $errors[] = ['pointer' => "/designer/presets/{$p}/values/{$valueKey}", 'message' => "Preset \"{$key}\" sets \"{$valueKey}\", which is not a designer key."];
+                }
+            }
+            if (is_string($skinKey) && is_string($key) && array_key_exists($skinKey, $values) && $values[$skinKey] !== $key) {
+                $errors[] = ['pointer' => "/designer/presets/{$p}/values/{$skinKey}", 'message' => "Preset \"{$key}\" sets {$skinKey} to \"{$values[$skinKey]}\"; the strip is one button per preset, so it must be \"{$key}\"."];
+            }
+        }
+
+        // The document side.
+        $documents = $this->overlayDocuments($manifest, $directory);
+        if ($overlayIndex === null || ! isset($documents[$overlayIndex])) {
+            return $errors;
+        }
+
+        try {
+            $doc = OverlayMarkdown::parse($documents[$overlayIndex]['text']);
+        } catch (InvalidArgumentException) {
+            // ingredientErrors() already reports a document that does not parse.
+            return $errors;
+        }
+
+        $declared = [];
+        foreach ($doc['controls'] as $control) {
+            $declared[$control['key']] = $control;
+        }
+
+        foreach ($grouped as $key => $pointer) {
+            if (! isset($declared[$key])) {
+                $errors[] = ['pointer' => $pointer, 'message' => "Control \"{$key}\" is not declared by {$documents[$overlayIndex]['file']}."];
+            } elseif (! in_array($declared[$key]['type'], ProductDesigner::KNOB_TYPES, true)) {
+                $errors[] = ['pointer' => $pointer, 'message' => "Control \"{$key}\" is a {$declared[$key]['type']} control, which the designer has no knob for."];
+            }
+        }
+
+        if (is_string($skinKey)) {
+            if (! isset($declared[$skinKey])) {
+                $errors[] = ['pointer' => '/designer/skin_key', 'message' => "Control \"{$skinKey}\" is not declared by {$documents[$overlayIndex]['file']}."];
+            } elseif ($declared[$skinKey]['type'] !== 'text') {
+                $errors[] = ['pointer' => '/designer/skin_key', 'message' => "Control \"{$skinKey}\" is a {$declared[$skinKey]['type']} control; the skin strip writes a text control."];
+            }
+        }
+
+        foreach ($declared as $key => $control) {
+            if (in_array($control['type'], ProductDesigner::KNOB_TYPES, true) && ! in_array($key, $designerKeys, true)) {
+                $errors[] = ['pointer' => '/designer/groups', 'message' => "Control \"{$key}\" ({$control['type']}) has no home on the designer: put it in a group."];
+            }
+        }
+
+        foreach ($designer['presets'] ?? [] as $p => $preset) {
+            foreach ($preset['values'] ?? [] as $valueKey => $value) {
+                $choices = array_column($declared[$valueKey]['config']['choices'] ?? [], 'value');
+                if ($choices !== [] && ! in_array($value, $choices, true)) {
+                    $errors[] = ['pointer' => "/designer/presets/{$p}/values/{$valueKey}", 'message' => "Preset \"{$preset['key']}\" sets {$valueKey} to \"{$value}\", which is not one of its choices (".implode(', ', $choices).').'];
+                }
+            }
+        }
+
+        foreach ($designer['stage'] ?? [] as $s => $stage) {
+            foreach ($stage['when'] ?? [] as $whenKey => $value) {
+                if (! isset($declared[$whenKey])) {
+                    $errors[] = ['pointer' => "/designer/stage/{$s}/when/{$whenKey}", 'message' => "Stage condition names \"{$whenKey}\", which {$documents[$overlayIndex]['file']} does not declare."];
+
+                    continue;
+                }
+                $choices = array_column($declared[$whenKey]['config']['choices'] ?? [], 'value');
+                if ($choices !== [] && ! in_array($value, $choices, true)) {
+                    $errors[] = ['pointer' => "/designer/stage/{$s}/when/{$whenKey}", 'message' => "Stage condition sets {$whenKey} to \"{$value}\", which is not one of its choices (".implode(', ', $choices).').'];
+                }
+            }
+        }
+
+        return $errors;
     }
 
     /**

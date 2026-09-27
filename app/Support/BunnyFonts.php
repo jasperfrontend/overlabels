@@ -57,6 +57,30 @@ class BunnyFonts
     /** What a font control falls back to, and what the chat overlay ships with. */
     public const DEFAULT_FAMILY = 'Albert Sans';
 
+    /**
+     * Fonts worth putting in front of someone before they search.
+     *
+     * A font control's vocabulary is open - every family Bunny serves - and
+     * the overlay loads whichever it is given rather than choosing from a
+     * list baked into its head. These six are the shortlist the font picker
+     * shows first, on the designer and on the Values tab alike: the chat
+     * presets between them use exactly these, so the list is what a streamer
+     * lands on anyway, and the search is there when they want out of it.
+     *
+     * A name here that Bunny does not serve is a row that writes a value the
+     * value endpoint refuses, so a test holds this against the catalogue.
+     *
+     * @var list<array{value: string, hint: string}>
+     */
+    public const SUGGESTED = [
+        ['value' => 'Albert Sans', 'hint' => 'The default. Plain and wide.'],
+        ['value' => 'Inter', 'hint' => 'Neutral, reads small.'],
+        ['value' => 'Space Grotesk', 'hint' => 'Squarer, a little technical.'],
+        ['value' => 'Fredoka', 'hint' => 'Round and friendly.'],
+        ['value' => 'JetBrains Mono', 'hint' => 'Monospaced.'],
+        ['value' => 'Silkscreen', 'hint' => 'Pixel type. Best large.'],
+    ];
+
     /** @var array<string, array{name: string, category: string}>|null */
     private static ?array $cache = null;
 

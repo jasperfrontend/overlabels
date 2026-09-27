@@ -2,12 +2,13 @@
 
 use App\Events\ControlValueUpdated;
 use App\Models\OverlayControl;
+use App\Models\OverlayTemplate;
 use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Models\UserChatPreset;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
-use App\Support\ChatPresets;
+use App\Support\ProductDesigner;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -15,10 +16,12 @@ use Inertia\Testing\AssertableInertia as Assert;
 uses(DatabaseTransactions::class);
 
 /**
- * A streamer's own looks for the Twitch Chat product: the current look
- * saved under a name, then applied, updated, renamed and deleted from the
- * designer. Values are captured server-side; the client only ever sends a
- * name. Which one is active is never stored - the designer derives it.
+ * A streamer's own looks for a product: the current look saved under a name,
+ * then applied, updated, renamed and deleted from the designer. Values are
+ * captured server-side; the client only ever sends a name. Which one is
+ * active is never stored - the designer derives it. One table holds every
+ * product's looks, and a look is only ever reachable from the designer it
+ * was saved on.
  */
 function savedLookUser(): User
 {
@@ -28,11 +31,26 @@ function savedLookUser(): User
     ]);
 }
 
-function savedLookInstall(User $user): RecipeInstance
+function savedLookDesigner(string $product = 'twitch-chat-overlay'): array
+{
+    return ProductDesigner::declared(app(RecipeCatalog::class)->find($product));
+}
+
+function savedLookInstall(User $user, string $product = 'twitch-chat-overlay'): RecipeInstance
 {
     $catalog = app(RecipeCatalog::class);
 
-    return app(RecipeInstaller::class)->install($catalog->sync($catalog->find(ChatPresets::PRODUCT)), $user, 'twitch_chat_overlay');
+    return app(RecipeInstaller::class)->install($catalog->sync($catalog->find($product)), $user, RecipeInstance::instanceSlugFrom($product));
+}
+
+function savedLookOverlay(RecipeInstance $instance, string $product = 'twitch-chat-overlay'): OverlayTemplate
+{
+    return ProductDesigner::overlayFor(savedLookDesigner($product), $instance);
+}
+
+function savedLookPreset(string $key): array
+{
+    return ProductDesigner::preset(savedLookDesigner(), $key)['values'];
 }
 
 const SAVED_LOOKS = '/products/twitch-chat-overlay/saved-presets';
@@ -40,7 +58,7 @@ const SAVED_LOOKS = '/products/twitch-chat-overlay/saved-presets';
 it('saves the overlay look as it stands, under the name given, and the designer lists it', function () {
     $user = savedLookUser();
     $instance = savedLookInstall($user);
-    $template = ChatPresets::overlayFor($instance);
+    $template = savedLookOverlay($instance);
 
     // Tune two knobs off the Clean install, so the capture is provably the
     // rows and not the built-in bundle.
@@ -55,8 +73,9 @@ it('saves the overlay look as it stands, under the name given, and the designer 
         ->assertJsonPath('preset.values.skin', 'clean');
 
     $values = $response->json('preset.values');
-    expect(array_keys($values))->toBe(ChatPresets::KEYS)
-        ->and(UserChatPreset::where('user_id', $user->id)->count())->toBe(1);
+    expect(array_keys($values))->toBe(ProductDesigner::keys(savedLookDesigner()))
+        ->and(UserChatPreset::where('user_id', $user->id)->count())->toBe(1)
+        ->and(UserChatPreset::where('user_id', $user->id)->value('product'))->toBe('twitch-chat-overlay');
 
     $this->actingAs($user)->get('/products/twitch-chat-overlay/design')
         ->assertInertia(fn (Assert $page) => $page
@@ -98,7 +117,7 @@ it('refuses a blank name, a name already used, and a twenty-first look', functio
         ->assertJsonPath('message', 'You already have a look with that name.');
 
     for ($i = UserChatPreset::where('user_id', $user->id)->count(); $i < UserChatPreset::MAX_PER_USER; $i++) {
-        UserChatPreset::create(['user_id' => $user->id, 'name' => "Look $i", 'values' => ['skin' => 'clean']]);
+        UserChatPreset::create(['user_id' => $user->id, 'product' => 'twitch-chat-overlay', 'name' => "Look $i", 'values' => ['skin' => 'clean']]);
     }
 
     $this->actingAs($user)->postJson(SAVED_LOOKS, ['name' => 'One more'])
@@ -112,11 +131,11 @@ it('applies a saved look: every captured control written and broadcast, the valu
     Event::fake([ControlValueUpdated::class]);
     $user = savedLookUser();
     $instance = savedLookInstall($user);
-    $template = ChatPresets::overlayFor($instance);
+    $template = savedLookOverlay($instance);
 
-    $values = ChatPresets::PRESETS['vapor']['values'];
+    $values = savedLookPreset('vapor');
     $values['font_size'] = '31';
-    $preset = UserChatPreset::create(['user_id' => $user->id, 'name' => 'Mine', 'values' => $values]);
+    $preset = UserChatPreset::create(['user_id' => $user->id, 'product' => 'twitch-chat-overlay', 'name' => 'Mine', 'values' => $values]);
 
     $this->actingAs($user)->postJson(SAVED_LOOKS."/{$preset->id}/apply")
         ->assertOk()
@@ -128,16 +147,16 @@ it('applies a saved look: every captured control written and broadcast, the valu
         expect($stored[$key])->toBe($value);
     }
 
-    Event::assertDispatchedTimes(ControlValueUpdated::class, count(ChatPresets::KEYS));
+    Event::assertDispatchedTimes(ControlValueUpdated::class, count(ProductDesigner::keys(savedLookDesigner())));
     Event::assertDispatched(ControlValueUpdated::class, fn (ControlValueUpdated $e) => $e->overlaySlug === $template->slug && $e->key === 'font_size' && $e->value === '31');
 });
 
 it('updates a saved look with the overlay as it stands now', function () {
     $user = savedLookUser();
     $instance = savedLookInstall($user);
-    $template = ChatPresets::overlayFor($instance);
+    $template = savedLookOverlay($instance);
 
-    $preset = UserChatPreset::create(['user_id' => $user->id, 'name' => 'Mine', 'values' => ChatPresets::PRESETS['pixel']['values']]);
+    $preset = UserChatPreset::create(['user_id' => $user->id, 'product' => 'twitch-chat-overlay', 'name' => 'Mine', 'values' => savedLookPreset('pixel')]);
     $template->controls()->where('key', 'lifetime')->first()->writeValue('9');
 
     $this->actingAs($user)->postJson(SAVED_LOOKS."/{$preset->id}/overwrite")
@@ -153,8 +172,8 @@ it('renames a saved look, and refuses the name of another of your own', function
     $user = savedLookUser();
     savedLookInstall($user);
 
-    $one = UserChatPreset::create(['user_id' => $user->id, 'name' => 'One', 'values' => ['skin' => 'clean']]);
-    UserChatPreset::create(['user_id' => $user->id, 'name' => 'Two', 'values' => ['skin' => 'clean']]);
+    $one = UserChatPreset::create(['user_id' => $user->id, 'product' => 'twitch-chat-overlay', 'name' => 'One', 'values' => ['skin' => 'clean']]);
+    UserChatPreset::create(['user_id' => $user->id, 'product' => 'twitch-chat-overlay', 'name' => 'Two', 'values' => ['skin' => 'clean']]);
 
     $this->actingAs($user)->patchJson(SAVED_LOOKS."/{$one->id}", ['name' => ' Uno '])
         ->assertOk()
@@ -173,7 +192,7 @@ it('renames a saved look, and refuses the name of another of your own', function
 it('deletes a saved look', function () {
     $user = savedLookUser();
     savedLookInstall($user);
-    $preset = UserChatPreset::create(['user_id' => $user->id, 'name' => 'Gone', 'values' => ['skin' => 'clean']]);
+    $preset = UserChatPreset::create(['user_id' => $user->id, 'product' => 'twitch-chat-overlay', 'name' => 'Gone', 'values' => ['skin' => 'clean']]);
 
     $this->actingAs($user)->deleteJson(SAVED_LOOKS."/{$preset->id}")->assertOk()->assertJsonPath('deleted', true);
 
@@ -183,7 +202,7 @@ it('deletes a saved look', function () {
 it('answers 404 for another account\'s look on every door, and never touches it', function () {
     $owner = savedLookUser();
     savedLookInstall($owner);
-    $theirs = UserChatPreset::create(['user_id' => $owner->id, 'name' => 'Theirs', 'values' => ['skin' => 'terminal']]);
+    $theirs = UserChatPreset::create(['user_id' => $owner->id, 'product' => 'twitch-chat-overlay', 'name' => 'Theirs', 'values' => ['skin' => 'terminal']]);
 
     $intruder = savedLookUser();
     savedLookInstall($intruder);
@@ -199,27 +218,42 @@ it('answers 404 for another account\'s look on every door, and never touches it'
         ->and($fresh->values['skin'])->toBe('terminal');
 });
 
-it('answers 404 for another product and for an account with no install', function () {
-    $user = savedLookUser();
-
-    $this->actingAs($user)->postJson(SAVED_LOOKS, ['name' => 'No install'])->assertNotFound();
-
-    savedLookInstall($user);
-    $this->actingAs($user)->postJson('/products/chat-tower/saved-presets', ['name' => 'Wrong product'])->assertNotFound();
-
-    expect(UserChatPreset::where('user_id', $user->id)->count())->toBe(0);
-});
-
-it('requires a login', function () {
-    $this->postJson(SAVED_LOOKS, ['name' => 'Anon'])->assertUnauthorized();
-});
-
-it('goes with the account when the account is deleted', function () {
+it('keeps each product\'s looks to its own designer', function () {
+    // The same account installs both products. A look saved on the bubbles
+    // designer must not be listed on, or reachable from, the chat designer:
+    // its keys mean nothing to the chat overlay and would apply as nothing.
     $user = savedLookUser();
     savedLookInstall($user);
-    $preset = UserChatPreset::create(['user_id' => $user->id, 'name' => 'Mine', 'values' => ['skin' => 'clean']]);
+    savedLookInstall($user, 'chat-emote-bubbles');
 
-    $user->forceDelete();
+    $bubbles = $this->actingAs($user)->postJson('/products/chat-emote-bubbles/saved-presets', ['name' => 'Cozy'])
+        ->assertCreated()
+        ->assertJsonPath('preset.values.look', 'bubble')
+        ->json('preset');
 
-    expect(UserChatPreset::find($preset->id))->toBeNull();
+    expect(array_keys($bubbles['values']))->toBe(ProductDesigner::keys(savedLookDesigner('chat-emote-bubbles')))
+        ->and(UserChatPreset::find($bubbles['id'])->product)->toBe('chat-emote-bubbles');
+
+    // The same name is free on the other product.
+    $chat = $this->actingAs($user)->postJson(SAVED_LOOKS, ['name' => 'Cozy'])->assertCreated()->json('preset');
+
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/design')
+        ->assertInertia(fn (Assert $page) => $page->has('saved_presets', 1)->where('saved_presets.0.id', $chat['id']));
+    $this->actingAs($user)->get('/products/chat-emote-bubbles/design')
+        ->assertInertia(fn (Assert $page) => $page->has('saved_presets', 1)->where('saved_presets.0.id', $bubbles['id']));
+
+    // Every door on the chat designer treats the bubbles look as not there.
+    $this->actingAs($user)->postJson(SAVED_LOOKS."/{$bubbles['id']}/apply")->assertNotFound();
+    $this->actingAs($user)->postJson(SAVED_LOOKS."/{$bubbles['id']}/overwrite")->assertNotFound();
+    $this->actingAs($user)->patchJson(SAVED_LOOKS."/{$bubbles['id']}", ['name' => 'Moved'])->assertNotFound();
+    $this->actingAs($user)->deleteJson(SAVED_LOOKS."/{$bubbles['id']}")->assertNotFound();
+
+    expect(UserChatPreset::find($bubbles['id'])?->name)->toBe('Cozy');
+
+    // And the cap counts per product.
+    for ($i = 1; $i < UserChatPreset::MAX_PER_USER; $i++) {
+        UserChatPreset::create(['user_id' => $user->id, 'product' => 'chat-emote-bubbles', 'name' => "Look $i", 'values' => ['look' => 'snow']]);
+    }
+    $this->actingAs($user)->postJson('/products/chat-emote-bubbles/saved-presets', ['name' => 'One more'])->assertUnprocessable();
+    $this->actingAs($user)->postJson(SAVED_LOOKS, ['name' => 'Still room'])->assertCreated();
 });

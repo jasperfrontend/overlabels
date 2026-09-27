@@ -187,6 +187,89 @@
         }
       }
     },
+    "designer": {
+      "type": "object",
+      "description": "The product's designer at /products/<slug>/design: knobs on the left, grouped by topic, the real overlay on the right, and one-click presets. Declaring this block is what gives a product the page; nothing else does. The knobs themselves are the overlay's own controls (label, type, bounds and choices all live on the control row), so this block only says how they are arranged and what the presets write. Every text, number, boolean and color control the overlay declares must appear in exactly one group, or be the skin_key; a control of any other type is not a designer knob and may not be grouped.",
+      "additionalProperties": false,
+      "required": ["overlay", "groups", "presets"],
+      "properties": {
+        "overlay": {
+          "$ref": "#/$defs/primitiveRef",
+          "description": "The ref of the overlay in installs.overlays whose controls the designer edits. One per product."
+        },
+        "skin_key": {
+          "type": "string",
+          "description": "The key of a text control rendered as a strip of buttons above the groups rather than a row in one: one button per preset, in preset order, and every preset's value for it must equal the preset's own key. Optional; a product with no such control simply has no strip.",
+          "pattern": "^[a-z][a-z0-9_]{0,49}$"
+        },
+        "groups": {
+          "type": "array",
+          "description": "The sections down the left column, in order. Each names the control keys it holds, in the order they are rendered.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["title", "keys"],
+            "properties": {
+              "title": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "keys": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,49}$" }
+              }
+            }
+          }
+        },
+        "presets": {
+          "type": "array",
+          "description": "The built-in looks, in the order the page offers them. A preset is a complete look: its values name every designer key (every grouped key plus the skin_key) and nothing else, and a value for a control with choices must be one of them. Which preset is active is never stored; it is derived by comparing the overlay's controls to each bundle.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "label", "blurb", "values"],
+            "properties": {
+              "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,49}$" },
+              "label": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "blurb": { "type": "string", "minLength": 1, "maxLength": 200 },
+              "values": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": { "pattern": "^[a-z][a-z0-9_]{0,49}$" },
+                "additionalProperties": { "type": "string", "maxLength": 1000 }
+              }
+            }
+          }
+        },
+        "extras": {
+          "type": "array",
+          "description": "Account-level settings the page edits beside the knobs, and the sample feed. `sample_chat` puts the sample-chat rate, More and Clear above the preview (for an overlay that reads chat, which includes the emotes loop). `chat_window` is the chat foreach cap slider; `chat_filters` is the hide-commands switch and the hidden-chatters box. Each is a closed name the page knows.",
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["sample_chat", "chat_window", "chat_filters"] }
+        },
+        "stage": {
+          "type": "array",
+          "description": "The OBS browser-source size the preview renders at, in pixels. The first entry with no `when` is the default; an entry with `when` applies while every named control holds the given value, and the last matching entry wins. Omitted, the preview is 1920 by 1080.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["w", "h"],
+            "properties": {
+              "w": { "type": "integer", "minimum": 1, "maximum": 7680 },
+              "h": { "type": "integer", "minimum": 1, "maximum": 4320 },
+              "when": {
+                "type": "object",
+                "minProperties": 1,
+                "propertyNames": { "pattern": "^[a-z][a-z0-9_]{0,49}$" },
+                "additionalProperties": { "type": "string", "maxLength": 1000 }
+              }
+            }
+          }
+        }
+      }
+    },
     "installs": {
       "type": "object",
       "description": "Rows the installer creates in the account beyond the picker primitives: overlays from markdown files shipped next to the manifest, and integration connections. Everything here is idempotent per install and belongs to the instance.",

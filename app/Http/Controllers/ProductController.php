@@ -19,9 +19,8 @@ use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeIngredients;
 use App\Services\Recipes\RecipeInstaller;
 use App\Support\BunnyFonts;
-use App\Support\ChatDesigner;
-use App\Support\ChatPresets;
 use App\Support\OverlayMarkdown;
+use App\Support\ProductDesigner;
 use App\Support\ProductSetup;
 use App\Support\ServiceConnections;
 use App\Support\ServiceTestGuides;
@@ -342,9 +341,11 @@ class ProductController extends Controller
                     ->all(),
                 'notes' => $manifest['notes'] ?? [],
                 'ready_message' => $manifest['ready_message'] ?? null,
-                // The product's fixed looks, with the one its overlay currently
-                // holds marked. Empty for every product but Twitch Chat.
-                'presets' => ChatPresets::forProduct($slug, $instance),
+                // The product's designer, for the card that opens it: its fixed
+                // looks with the one the overlay currently holds marked, and
+                // the group titles the card's copy names. Null for a product
+                // whose manifest declares no designer.
+                'designer' => ProductDesigner::forProduct($manifest, $instance),
             ],
             'installed' => $installed,
             'categories' => $this->categories(),
@@ -388,23 +389,25 @@ class ProductController extends Controller
     }
 
     /**
-     * One click, thirteen controls. Writes the preset onto the product's
-     * overlay and broadcasts every control the way the controls tab does,
-     * so OBS changes as the page reloads. The result is the card turning
-     * to Applied and the overlay itself; no toast.
+     * One click, every designer control. Writes the preset onto the product's
+     * overlay and broadcasts every control the way the Values tab does, so
+     * OBS changes as the page reloads. The result is the overlay itself; no
+     * toast.
      */
     public function applyPreset(Request $request, string $slug, string $preset): RedirectResponse|JsonResponse
     {
         $slug = $this->canonical($slug);
 
-        abort_unless(ChatPresets::has($slug) && isset(ChatPresets::PRESETS[$preset]), 404);
+        $designer = ProductDesigner::declared($this->listedManifest($slug));
+        $bundle = $designer ? ProductDesigner::preset($designer, $preset) : null;
+        abort_if($bundle === null, 404);
 
         $user = $request->user();
         $instance = $this->instanceFor($user, $slug);
-        $template = $instance ? ChatPresets::overlayFor($instance) : null;
+        $template = $instance ? ProductDesigner::overlayFor($designer, $instance) : null;
         abort_if($template === null || $template->owner_id !== $user->id, 404);
 
-        foreach (ChatPresets::apply($template, $preset) as $control) {
+        foreach (ProductDesigner::applyValues($template, $bundle['values']) as $control) {
             ControlValueUpdated::dispatch(
                 $template->slug,
                 $control->broadcastKey(),
@@ -422,14 +425,15 @@ class ProductController extends Controller
         // away the chat that is in it. The values come back so the knobs move
         // to match in the same beat the overlay does.
         if ($request->wantsJson()) {
-            return response()->json(['values' => ChatPresets::PRESETS[$preset]['values']]);
+            return response()->json(['values' => $bundle['values']]);
         }
 
         return redirect()->route('products.show', $slug);
     }
 
     /**
-     * The chat designer: every knob on the left, the real overlay on the right.
+     * The product's designer: every knob on the left, the real overlay on the
+     * right, arranged as the manifest's `designer` block says.
      *
      * The preview frame is the overlay itself, on this origin, with generated
      * chat instead of the channel's own. That is deliberate on both counts. It
@@ -439,8 +443,9 @@ class ProductController extends Controller
      * reaches OBS. There is no preview pipeline to keep in step, because there
      * is no preview: it is the overlay.
      *
-     * 404 for any product but Twitch Chat, and for an account with no install:
-     * there is nothing to design until there is an overlay to design.
+     * 404 for a product whose manifest declares no designer, and for an
+     * account with no install: there is nothing to design until there is an
+     * overlay to design.
      */
     public function design(Request $request, string $slug): Response|RedirectResponse
     {
@@ -448,49 +453,62 @@ class ProductController extends Controller
             return $moved;
         }
 
-        abort_unless(ChatPresets::has($slug), 404);
+        $manifest = $this->listedManifest($slug);
+        $designer = ProductDesigner::declared($manifest);
+        abort_if($designer === null, 404);
 
         $user = $request->user();
         $instance = $this->instanceFor($user, $slug);
-        $template = $instance ? ChatPresets::overlayFor($instance) : null;
+        $template = $instance ? ProductDesigner::overlayFor($designer, $instance) : null;
         abort_if($template === null || $template->owner_id !== $user->id, 404);
 
-        $manifest = $this->listedManifest($slug);
+        $extras = ProductDesigner::extras($designer);
 
-        return Inertia::render('products/design', [
+        $props = [
             'product' => ['slug' => $manifest['slug'], 'name' => $manifest['name']],
             'overlay' => ['id' => $template->id, 'name' => $template->name, 'slug' => $template->slug],
-            'preview_url' => ChatDesigner::previewUrl($template, ChatDesigner::previewToken($user)),
-            'presets' => ChatDesigner::presets(),
-            'skins' => ChatDesigner::skins(),
-            'choices' => ChatDesigner::CHOICES,
-            // The font row is a search, not a select: its vocabulary is the
+            'preview_url' => ProductDesigner::previewUrl($template, ProductDesigner::previewToken($user)),
+            'presets' => ProductDesigner::presets($designer),
+            'skins' => ProductDesigner::skins($designer),
+            'skin_key' => $designer['skin_key'] ?? null,
+            'groups' => ProductDesigner::groups($designer),
+            'controls' => ProductDesigner::controls($designer, $template),
+            // A font row is a search, not a select: its vocabulary is the
             // whole Bunny Fonts catalogue. The catalogue is 118 KB, so it is
             // fetched by the picker when it opens rather than serialised into
             // this page - these six are what the row shows until then, and
             // what it falls back to if the fetch fails.
-            'suggested_fonts' => ChatDesigner::SUGGESTED_FONTS,
+            'suggested_fonts' => BunnyFonts::SUGGESTED,
             'fonts_url' => asset(BunnyFonts::CATALOGUE_PATH),
-            'groups' => ChatDesigner::GROUPS,
-            'controls' => ChatDesigner::controls($template),
-            // The streamer's own looks, with their values, so the page can
-            // derive which one is active the same way it does for the ten
-            // built-in ones - by comparison, on every knob turn, nothing stored.
-            'saved_presets' => ChatDesigner::savedPresets($user),
+            // The streamer's own looks for THIS product, with their values, so
+            // the page can derive which one is active the same way it does for
+            // the built-in ones - by comparison, on every knob turn, nothing
+            // stored.
+            'saved_presets' => ProductDesigner::savedPresets($user, $slug),
             'saved_presets_max' => UserChatPreset::MAX_PER_USER,
-            // The chat window is a foreach cap, not a control: it is "how many
-            // items does this loop expand to", the same question the other four
-            // caps answer, and it is written on /settings/account. The designer
-            // writes the same preference through the same endpoint.
-            'chat_window' => $user->foreachCaps()['chat'],
-            'chat_window_max' => User::FOREACH_CAP_MAX,
-            // Asked for explicitly, because chatFilters() is deliberately not
-            // appended to a serialised User. Here for the same reason the
-            // window cap is: a streamer deciding what their chat looks like
-            // should not have to find a settings page to say "not the bot".
-            'chat_filters' => $user->chatFilters(),
-            'max_hidden_logins' => User::MAX_HIDDEN_LOGINS,
-        ]);
+            'extras' => $extras,
+            'stage' => ProductDesigner::stage($designer),
+        ];
+
+        // The chat window is a foreach cap, not a control: it is "how many
+        // items does this loop expand to", the same question the other four
+        // caps answer, and it is written on /settings/account. The designer
+        // writes the same preference through the same endpoint.
+        if (in_array('chat_window', $extras, true)) {
+            $props['chat_window'] = $user->foreachCaps()['chat'];
+            $props['chat_window_max'] = User::FOREACH_CAP_MAX;
+        }
+
+        // Asked for explicitly, because chatFilters() is deliberately not
+        // appended to a serialised User. Here for the same reason the window
+        // cap is: a streamer deciding what their chat looks like should not
+        // have to find a settings page to say "not the bot".
+        if (in_array('chat_filters', $extras, true)) {
+            $props['chat_filters'] = $user->chatFilters();
+            $props['max_hidden_logins'] = User::MAX_HIDDEN_LOGINS;
+        }
+
+        return Inertia::render('products/design', $props);
     }
 
     public function dismissSetup(Request $request): RedirectResponse

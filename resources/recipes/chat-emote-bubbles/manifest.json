@@ -23,7 +23,93 @@
     "Only pictures are bubbled: Twitch emotes and the 7TV, BTTV and FFZ emotes enabled in your channel. A plain emoji like a party popper is text, not an emote, and stays in chat."
   ],
   "max_instances_per_user": 1,
+  "designer": {
+    "overlay": "bubbles",
+    "groups": [
+      {
+        "title": "Look",
+        "keys": ["look", "bubble_size", "bubble_color"]
+      },
+      {
+        "title": "Motion",
+        "keys": ["direction", "speed", "pop_after"]
+      },
+      {
+        "title": "Spawn",
+        "keys": ["spawn", "spawn_x", "spawn_y"]
+      },
+      {
+        "title": "Crowd",
+        "keys": ["max_bubbles"]
+      }
+    ],
+    "presets": [
+      {
+        "key": "soap",
+        "label": "Soap",
+        "blurb": "A white soap bubble for every emote, floating in from below and off the top. The one you start with.",
+        "values": {
+          "look": "bubble",
+          "bubble_size": "96",
+          "bubble_color": "#ffffff",
+          "direction": "up",
+          "speed": "4",
+          "pop_after": "0",
+          "spawn": "outside",
+          "spawn_x": "50",
+          "spawn_y": "85",
+          "max_bubbles": "40"
+        }
+      },
+      {
+        "key": "winter",
+        "label": "Winter",
+        "blurb": "Pale blue snowflakes, appearing anywhere on screen and sinking slowly. December, or a chilly game.",
+        "values": {
+          "look": "snow",
+          "bubble_size": "88",
+          "bubble_color": "#bfe3ff",
+          "direction": "down",
+          "speed": "2",
+          "pop_after": "0",
+          "spawn": "random",
+          "spawn_x": "50",
+          "spawn_y": "85",
+          "max_bubbles": "60"
+        }
+      },
+      {
+        "key": "valentine",
+        "label": "Valentine",
+        "blurb": "Pink hearts fired up from one point near the bottom. Aim the cannon with Spawn X and Spawn Y.",
+        "values": {
+          "look": "heart",
+          "bubble_size": "96",
+          "bubble_color": "#ff7eb6",
+          "direction": "up",
+          "speed": "5",
+          "pop_after": "0",
+          "spawn": "cannon",
+          "spawn_x": "50",
+          "spawn_y": "85",
+          "max_bubbles": "40"
+        }
+      }
+    ],
+    "extras": ["sample_chat", "chat_filters"],
+    "stage": [
+      {
+        "w": 1920,
+        "h": 1080
+      }
+    ]
+  },
   "installs": {
-    "overlays": [{ "ref": "bubbles", "file": "bubbles.md" }]
+    "overlays": [
+      {
+        "ref": "bubbles",
+        "file": "bubbles.md"
+      }
+    ]
   }
 }

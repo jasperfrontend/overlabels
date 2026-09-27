@@ -8,24 +8,26 @@ use App\Models\User;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
 use App\Support\BunnyFonts;
-use App\Support\ChatDesigner;
-use App\Support\ChatPresets;
 use App\Support\OverlayMarkdown;
+use App\Support\ProductDesigner;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(DatabaseTransactions::class);
 
 /**
- * The chat designer: every knob on the left, the product's own overlay on the
- * right. The right-hand side is the REAL overlay in a frame, not a preview
- * pipeline, so there is nothing here that can drift from what OBS shows - and
- * the knobs write controls through the ordinary value endpoint, whose
- * broadcast the frame and OBS are both already listening on.
+ * The Twitch Chat product's designer: every knob on the left, the product's
+ * own overlay on the right, arranged as the manifest's `designer` block says.
+ * The right-hand side is the REAL overlay in a frame, not a preview pipeline,
+ * so there is nothing here that can drift from what OBS shows - and the knobs
+ * write controls through the ordinary value endpoint, whose broadcast the
+ * frame and OBS are both already listening on.
  *
- * What these pin: the vocabularies the designer offers really exist in the
- * overlay, every control has a home on the page, and the preview frame's token
- * is one token, marked, reused and short-lived rather than minted per render.
+ * What these pin: the skins the designer offers really exist in the overlay,
+ * the page gets what the manifest declares, and the preview frame's token is
+ * one token, marked, reused and short-lived rather than minted per render.
+ * Which controls have a home on the page, and whether a preset is a complete
+ * look, is the manifest validator's job (RecipeDesignerBlockTest).
  */
 function designerUser(): User
 {
@@ -35,33 +37,40 @@ function designerUser(): User
     ]);
 }
 
+function designerManifest(): array
+{
+    return app(RecipeCatalog::class)->find('twitch-chat-overlay');
+}
+
 function designerRecipe(): Recipe
 {
-    $catalog = app(RecipeCatalog::class);
-
-    return $catalog->sync($catalog->find(ChatPresets::PRODUCT));
+    return app(RecipeCatalog::class)->sync(designerManifest());
 }
 
 function designerDocument(): array
 {
-    return OverlayMarkdown::parse(file_get_contents(RecipeInstaller::directoryFor(ChatPresets::PRODUCT).DIRECTORY_SEPARATOR.'chat.md'));
+    return OverlayMarkdown::parse(file_get_contents(RecipeInstaller::directoryFor('twitch-chat-overlay').DIRECTORY_SEPARATOR.'chat.md'));
 }
 
 function designerInstall(User $user): OverlayTemplate
 {
-    return ChatPresets::overlayFor(app(RecipeInstaller::class)->install(designerRecipe(), $user, RecipeInstance::instanceSlugFrom(ChatPresets::PRODUCT)));
+    $instance = app(RecipeInstaller::class)->install(designerRecipe(), $user, RecipeInstance::instanceSlugFrom('twitch-chat-overlay'));
+
+    return ProductDesigner::overlayFor(ProductDesigner::declared(designerManifest()), $instance);
 }
 
 it('offers only skins the overlay defines, and one per preset', function () {
     // A skin IS a preset key, one to one, which is what keeps adding a look to
-    // one constant rather than two. `clean` has no rules on purpose: it is the
+    // one list rather than two. `clean` has no rules on purpose: it is the
     // base look, so it is the one skin with no .skin- block.
     preg_match_all('/\.skin-([a-z]+)/', designerDocument()['css'], $matches);
     $defined = array_values(array_unique($matches[1]));
 
-    expect(collect(ChatDesigner::skins())->pluck('value')->all())->toBe(array_keys(ChatPresets::PRESETS));
+    $designer = ProductDesigner::declared(designerManifest());
+    expect($designer['skin_key'])->toBe('skin')
+        ->and(collect(ProductDesigner::skins($designer))->pluck('value')->all())->toBe(array_column($designer['presets'], 'key'));
 
-    foreach (ChatDesigner::skins() as $skin) {
+    foreach (ProductDesigner::skins($designer) as $skin) {
         expect($skin['label'])->not->toBe('')
             ->and($skin['hint'])->not->toBe('');
 
@@ -73,19 +82,21 @@ it('offers only skins the overlay defines, and one per preset', function () {
     expect($defined)->not->toContain('clean');
 });
 
-it('offers only layouts and backgrounds the overlay styles', function () {
+it('declares layouts and backgrounds the overlay styles, on the document itself', function () {
+    // The vocabularies live on the rows (config.choices), declared by the
+    // document, so an install lands them like min/max. Each value has to be
+    // something the CSS actually keys on.
     $doc = designerDocument();
+    $declared = collect($doc['controls'])->keyBy('key');
 
-    foreach (ChatDesigner::CHOICES['layout'] as $choice) {
+    foreach ($declared['layout']['config']['choices'] as $choice) {
         expect($doc['css'])->toContain('.layout-'.$choice['value'].' ');
     }
-
-    foreach (ChatDesigner::CHOICES['background'] as $choice) {
+    foreach ($declared['background']['config']['choices'] as $choice) {
         expect($doc['css'])->toContain('.bg-'.$choice['value'].' ');
     }
-
-    foreach (ChatDesigner::CHOICES as $choices) {
-        foreach ($choices as $choice) {
+    foreach (['layout', 'background'] as $key) {
+        foreach ($declared[$key]['config']['choices'] as $choice) {
             expect($choice['label'])->not->toBe('')
                 ->and($choice['hint'])->not->toBe('');
         }
@@ -93,23 +104,11 @@ it('offers only layouts and backgrounds the overlay styles', function () {
 
     // The font row is not one of these. Its vocabulary is open, so it has its
     // own test below rather than a list held against the overlay's head.
-    expect(ChatDesigner::CHOICES)->not->toHaveKey('font');
-});
-
-it('declares the same vocabularies on the chat document itself, so a fresh install carries them on the rows', function () {
-    // CHOICES is the fallback for rows installed before the recipe declared
-    // its vocabularies. The recipe is the declaration now, so the two must say
-    // the same thing, and an install must land it on the row like min/max.
-    $declared = collect(designerDocument()['controls'])->keyBy('key');
-
-    foreach (ChatDesigner::CHOICES as $key => $choices) {
-        expect($declared[$key]['config']['choices'] ?? null)->toBe($choices);
-    }
+    expect($declared['font']['config'])->not->toHaveKey('choices');
 
     $template = designerInstall(designerUser());
-
-    expect($template->controls()->where('key', 'layout')->firstOrFail()->config['choices'])->toBe(ChatDesigner::CHOICES['layout'])
-        ->and($template->controls()->where('key', 'background')->firstOrFail()->config['choices'])->toBe(ChatDesigner::CHOICES['background']);
+    expect($template->controls()->where('key', 'layout')->firstOrFail()->config['choices'])->toBe($declared['layout']['config']['choices'])
+        ->and($template->controls()->where('key', 'background')->firstOrFail()->config['choices'])->toBe($declared['background']['config']['choices']);
 });
 
 it('suggests only fonts Bunny actually serves, and loads them from the control not the head', function () {
@@ -117,7 +116,7 @@ it('suggests only fonts Bunny actually serves, and loads them from the control n
 
     // A suggested family Bunny does not serve is a row that writes a value the
     // value endpoint refuses - a picker that looks fine and does nothing.
-    foreach (ChatDesigner::SUGGESTED_FONTS as $suggestion) {
+    foreach (BunnyFonts::SUGGESTED as $suggestion) {
         expect(BunnyFonts::has($suggestion['value']))->toBeTrue()
             ->and(BunnyFonts::canonical($suggestion['value']))->toBe($suggestion['value'])
             ->and($suggestion['hint'])->not->toBe('');
@@ -147,25 +146,7 @@ it('installs the font control with the webfont declaration actually on the row',
         ->and(BunnyFonts::has($control->value))->toBeTrue();
 });
 
-it('gives every look control exactly one home on the page', function () {
-    // skin is deliberately absent from the groups: it has the preset strip and
-    // the skin picker above them. Everything else has to land in a group, or a
-    // fourteenth control would be added to the overlay and silently have no
-    // knob.
-    $grouped = collect(ChatDesigner::GROUPS)->flatMap(fn (array $group) => $group['keys'])->all();
-    $expected = collect(ChatPresets::KEYS)->reject(fn (string $key) => $key === 'skin')->values()->all();
-
-    expect(collect($grouped)->sort()->values()->all())->toBe(collect($expected)->sort()->values()->all())
-        ->and(count($grouped))->toBe(count(array_unique($grouped)));
-
-    // Anything with no closed vocabulary is rendered from its own type, so a
-    // choice list for a key that is not a text control would never be reached.
-    foreach (array_keys(ChatDesigner::CHOICES) as $key) {
-        expect($expected)->toContain($key);
-    }
-});
-
-it('hands the page every control the overlay has, with the presets and the window cap', function () {
+it('hands the page every control the overlay has, with the presets, the groups, the extras and the window cap', function () {
     $user = designerUser();
     $template = designerInstall($user);
 
@@ -184,13 +165,20 @@ it('hands the page every control the overlay has, with the presets and the windo
             ->where('presets.1.key', 'terminal')
             ->where('presets.1.values.font', 'JetBrains Mono')
             ->has('skins', 10)
+            ->where('skin_key', 'skin')
             // The font row is a search over the catalogue, so the page ships
             // the shortlist and the URL to fetch the rest from, not a vocabulary.
             ->has('suggested_fonts', 6)
             ->where('fonts_url', asset(BunnyFonts::CATALOGUE_PATH))
             ->has('groups', 5)
+            ->where('groups.0.title', 'Layout')
+            ->where('extras', ['sample_chat', 'chat_window', 'chat_filters'])
+            // A ticker wants a strip, not a column.
+            ->where('stage.0', ['w' => 500, 'h' => 800])
+            ->where('stage.1', ['when' => ['layout' => 'ticker'], 'w' => 1920, 'h' => 80])
             ->where('chat_window', 50)
             ->where('chat_window_max', User::FOREACH_CAP_MAX)
+            ->missing('choices')
         );
 });
 
@@ -225,10 +213,12 @@ it('keeps one preview token, marked and short-lived, across renders', function (
 
     $tokens = OverlayAccessToken::where('user_id', $user->id)->get();
     expect($tokens)->toHaveCount(1)
-        ->and($tokens->first()->name)->toBe(ChatDesigner::TOKEN_NAME)
+        ->and($tokens->first()->name)->toBe(ProductDesigner::TOKEN_NAME)
         // The marker is what lets a future "we saw OBS load it" check tell a
-        // preview apart from a browser source: both serve the same slug.
-        ->and($tokens->first()->metadata['purpose'])->toBe(ChatDesigner::TOKEN_PURPOSE)
+        // preview apart from a browser source: both serve the same slug. Its
+        // value predates the unified designer and is kept, because live
+        // tokens on prod carry it.
+        ->and($tokens->first()->metadata['purpose'])->toBe('chat_designer')
         ->and($tokens->first()->expires_at->isFuture())->toBeTrue()
         ->and($tokens->first()->expires_at->lessThan(now()->addDays(2)))->toBeTrue();
 });
@@ -265,7 +255,7 @@ it('lets a second session mint its own token without killing the first one', fun
 
     expect($second)->not->toBe($first)
         ->and(OverlayAccessToken::findByToken($firstToken))->not->toBeNull()
-        ->and(OverlayAccessToken::where('user_id', $user->id)->where('metadata->purpose', ChatDesigner::TOKEN_PURPOSE)->count())->toBe(2);
+        ->and(OverlayAccessToken::where('user_id', $user->id)->where('metadata->purpose', ProductDesigner::TOKEN_PURPOSE)->count())->toBe(2);
 
     // Once the first one runs out, the next mint from anywhere clears it.
     OverlayAccessToken::where('token_hash', hash('sha256', $firstToken))->update(['expires_at' => now()->subMinute()]);
@@ -273,13 +263,15 @@ it('lets a second session mint its own token without killing the first one', fun
     $this->actingAs($user)->get('/products/twitch-chat-overlay/design');
 
     expect(OverlayAccessToken::findByToken($firstToken))->toBeNull()
-        ->and(OverlayAccessToken::where('user_id', $user->id)->where('metadata->purpose', ChatDesigner::TOKEN_PURPOSE)->count())->toBe(2);
+        ->and(OverlayAccessToken::where('user_id', $user->id)->where('metadata->purpose', ProductDesigner::TOKEN_PURPOSE)->count())->toBe(2);
 });
 
-it('refuses another product and an account with no install', function () {
+it('refuses a product with no designer and an account with no install', function () {
     $user = designerUser();
 
     $this->actingAs($user)->get('/products/twitch-chat-overlay/design')->assertNotFound();
+    // The tower's manifest declares no designer block, so no install of it
+    // could have one either.
     $this->actingAs($user)->get('/products/chat-tower/design')->assertNotFound();
 
     designerInstall($user);

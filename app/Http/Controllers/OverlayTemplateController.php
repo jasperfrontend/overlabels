@@ -22,6 +22,7 @@ use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchEventSubService;
 use App\Services\TwitchTokenService;
+use App\Support\BunnyFonts;
 use App\Support\Conditionals;
 use App\Support\HelpContext;
 use App\Support\ListItems;
@@ -307,6 +308,7 @@ class OverlayTemplateController extends Controller
             'template' => $template,
             'canEdit' => $canEdit,
             'controls' => $controls,
+            'fonts' => $this->fonts(),
             'connectedServices' => $connectedServices,
             'isLive' => $isLive,
             'targetStaticOverlayIds' => $targetStaticOverlayIds,
@@ -315,6 +317,19 @@ class OverlayTemplateController extends Controller
             'userLists' => $userLists,
             'triggers' => $triggers,
         ]);
+    }
+
+    /**
+     * What the Values tab's font picker needs: the shortlist it shows before
+     * a search, and where to fetch the rest of the catalogue from. The
+     * catalogue is 118 KB, so it is fetched by the picker when it opens rather
+     * than serialised into the page. Same pair the product designer gets.
+     *
+     * @return array{url: string, suggested: list<array{value: string, hint: string}>}
+     */
+    private function fonts(): array
+    {
+        return ['url' => asset(BunnyFonts::CATALOGUE_PATH), 'suggested' => BunnyFonts::SUGGESTED];
     }
 
     /**
@@ -388,6 +403,7 @@ class OverlayTemplateController extends Controller
             'template' => $template,
             'availableTags' => $availableTags,
             'controls' => $controls,
+            'fonts' => $this->fonts(),
             'connectedServices' => $connectedServices,
             'isLive' => $isLive,
             'targetStaticOverlayIds' => $targetStaticOverlayIds,

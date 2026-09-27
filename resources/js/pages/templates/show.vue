@@ -58,6 +58,7 @@ const props = defineProps<{
   template: any;
   canEdit: boolean;
   controls?: OverlayControl[];
+  fonts?: { url: string; suggested: { value: string; hint: string }[] };
   connectedServices?: string[];
   isLive?: boolean;
   staticOverlays?: OverlayOption[];
@@ -346,7 +347,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         <!-- Control Panel tab -->
         <div v-if="canEdit && mainTab === 'panel'" class="mb-6 p-4">
-          <ControlPanel :template="template" :controls="localControls" :is-live="isLive" />
+          <ControlPanel :template="template" :controls="localControls" :is-live="isLive" :fonts="fonts" />
         </div>
 
         <!-- Screenshot tab -->

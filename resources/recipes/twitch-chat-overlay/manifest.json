@@ -23,7 +23,254 @@
     "The feed keeps the most recent 50 messages, which is more than fits on screen. The Chat messages loop limit under Settings, Account shortens it; reload the browser source in OBS after changing it."
   ],
   "max_instances_per_user": 1,
+  "designer": {
+    "overlay": "chat",
+    "skin_key": "skin",
+    "groups": [
+      {
+        "title": "Layout",
+        "keys": ["layout", "lifetime"]
+      },
+      {
+        "title": "Type",
+        "keys": ["font", "font_size", "emote_size"]
+      },
+      {
+        "title": "Colors",
+        "keys": ["twitch_colors", "name_color", "text_color", "accent"]
+      },
+      {
+        "title": "Background",
+        "keys": ["background", "background_color"]
+      },
+      {
+        "title": "Badges",
+        "keys": ["show_badges"]
+      }
+    ],
+    "presets": [
+      {
+        "key": "clean",
+        "label": "Clean",
+        "blurb": "Glass rows, everyone in their own Twitch color. The one you never regret.",
+        "values": {
+          "skin": "clean",
+          "layout": "bottom",
+          "font": "Albert Sans",
+          "font_size": "22",
+          "twitch_colors": "1",
+          "name_color": "#ffffff",
+          "text_color": "#ffffff",
+          "accent": "#9146ff",
+          "background": "glass",
+          "background_color": "#0f0f14",
+          "lifetime": "0",
+          "show_badges": "1",
+          "emote_size": "28"
+        }
+      },
+      {
+        "key": "terminal",
+        "label": "Terminal",
+        "blurb": "Green on black in a mono font, a prompt before every name and a cursor blinking on the last line.",
+        "values": {
+          "skin": "terminal",
+          "layout": "bottom",
+          "font": "JetBrains Mono",
+          "font_size": "20",
+          "twitch_colors": "0",
+          "name_color": "#7cff7c",
+          "text_color": "#c8f7c8",
+          "accent": "#3dff3d",
+          "background": "solid",
+          "background_color": "#050805",
+          "lifetime": "0",
+          "show_badges": "0",
+          "emote_size": "22"
+        }
+      },
+      {
+        "key": "bubbles",
+        "label": "Bubbles",
+        "blurb": "Speech bubbles with the name above each one, in a round friendly font. For cozy streams.",
+        "values": {
+          "skin": "bubbles",
+          "layout": "bottom",
+          "font": "Fredoka",
+          "font_size": "22",
+          "twitch_colors": "1",
+          "name_color": "#ffffff",
+          "text_color": "#ffffff",
+          "accent": "#f472b6",
+          "background": "solid",
+          "background_color": "#2a1b3d",
+          "lifetime": "0",
+          "show_badges": "1",
+          "emote_size": "28"
+        }
+      },
+      {
+        "key": "neon",
+        "label": "Neon",
+        "blurb": "No background, a thin glowing outline and names that light up. Late nights and dark games.",
+        "values": {
+          "skin": "neon",
+          "layout": "bottom",
+          "font": "Space Grotesk",
+          "font_size": "22",
+          "twitch_colors": "1",
+          "name_color": "#ffffff",
+          "text_color": "#e0f2fe",
+          "accent": "#22d3ee",
+          "background": "none",
+          "background_color": "#0b1020",
+          "lifetime": "0",
+          "show_badges": "1",
+          "emote_size": "28"
+        }
+      },
+      {
+        "key": "paper",
+        "label": "Paper",
+        "blurb": "Cream cards with dark ink and a soft shadow. The light one, for bright rooms and art streams.",
+        "values": {
+          "skin": "paper",
+          "layout": "bottom",
+          "font": "Inter",
+          "font_size": "21",
+          "twitch_colors": "0",
+          "name_color": "#6d28d9",
+          "text_color": "#1f1a2e",
+          "accent": "#f59e0b",
+          "background": "solid",
+          "background_color": "#fbf7ee",
+          "lifetime": "0",
+          "show_badges": "1",
+          "emote_size": "26"
+        }
+      },
+      {
+        "key": "broadcast",
+        "label": "Broadcast",
+        "blurb": "A news ticker along the bottom edge, names in caps. Just Chatting and podcast formats.",
+        "values": {
+          "skin": "broadcast",
+          "layout": "ticker",
+          "font": "Inter",
+          "font_size": "22",
+          "twitch_colors": "0",
+          "name_color": "#ffd166",
+          "text_color": "#ffffff",
+          "accent": "#ef4444",
+          "background": "solid",
+          "background_color": "#111827",
+          "lifetime": "0",
+          "show_badges": "0",
+          "emote_size": "24"
+        }
+      },
+      {
+        "key": "caption",
+        "label": "Caption",
+        "blurb": "Big centred text with a heavy shadow, gone after twelve seconds. Subtitles for IRL and talking-head streams.",
+        "values": {
+          "skin": "caption",
+          "layout": "bottom",
+          "font": "Albert Sans",
+          "font_size": "34",
+          "twitch_colors": "0",
+          "name_color": "#ffd166",
+          "text_color": "#ffffff",
+          "accent": "#ffd166",
+          "background": "none",
+          "background_color": "#000000",
+          "lifetime": "12",
+          "show_badges": "0",
+          "emote_size": "34"
+        }
+      },
+      {
+        "key": "pixel",
+        "label": "Pixel",
+        "blurb": "A pixel font, chunky borders and a hard drop shadow. Retro and indie games.",
+        "values": {
+          "skin": "pixel",
+          "layout": "bottom",
+          "font": "Silkscreen",
+          "font_size": "18",
+          "twitch_colors": "0",
+          "name_color": "#ffe66d",
+          "text_color": "#ffffff",
+          "accent": "#ff6b6b",
+          "background": "solid",
+          "background_color": "#1a1a2e",
+          "lifetime": "0",
+          "show_badges": "1",
+          "emote_size": "24"
+        }
+      },
+      {
+        "key": "cards",
+        "label": "Cards",
+        "blurb": "Each message its own card, the name as a header bar in the chatter's color, emotes big. Room for slow chats.",
+        "values": {
+          "skin": "cards",
+          "layout": "bottom",
+          "font": "Albert Sans",
+          "font_size": "21",
+          "twitch_colors": "1",
+          "name_color": "#ffffff",
+          "text_color": "#f4f4f5",
+          "accent": "#9146ff",
+          "background": "solid",
+          "background_color": "#18181b",
+          "lifetime": "0",
+          "show_badges": "1",
+          "emote_size": "36"
+        }
+      },
+      {
+        "key": "vapor",
+        "label": "Vapor",
+        "blurb": "Pink and cyan on deep purple glass, newest at the top, emotes oversized. For the chat that is mostly emotes anyway.",
+        "values": {
+          "skin": "vapor",
+          "layout": "top",
+          "font": "Space Grotesk",
+          "font_size": "22",
+          "twitch_colors": "0",
+          "name_color": "#ff71ce",
+          "text_color": "#ffffff",
+          "accent": "#01cdfe",
+          "background": "glass",
+          "background_color": "#2d0a4e",
+          "lifetime": "0",
+          "show_badges": "1",
+          "emote_size": "44"
+        }
+      }
+    ],
+    "extras": ["sample_chat", "chat_window", "chat_filters"],
+    "stage": [
+      {
+        "w": 500,
+        "h": 800
+      },
+      {
+        "when": {
+          "layout": "ticker"
+        },
+        "w": 1920,
+        "h": 80
+      }
+    ]
+  },
   "installs": {
-    "overlays": [{ "ref": "chat", "file": "chat.md" }]
+    "overlays": [
+      {
+        "ref": "chat",
+        "file": "chat.md"
+      }
+    ]
   }
 }
