@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Testing\TestResponse;
@@ -98,6 +99,30 @@ it('persists a remember token so the login survives session expiry', function ()
     // Without the remember_token column the guard cannot cycle a token at all,
     // and the callback fails outright.
     expect($user->fresh()->remember_token)->not->toBeNull();
+});
+
+it('logs the user back in from the remember cookie alone', function () {
+    $user = User::factory()->create();
+
+    // The guard writes the cookie on login; capture it the way a browser
+    // would, then come back with a fresh session and nothing but that cookie.
+    // The two earlier tests only asserted the cookie is issued and the token
+    // stored. Laravel 13.33 started refusing to recall any user whose
+    // getAuthPassword() is not a string, and this is the assertion that would
+    // have caught it: without it the suite was green while every login on
+    // prod died at 120 idle minutes.
+    Auth::login($user, true);
+    $user->refresh();
+
+    $guard = Auth::guard('web');
+    $cookieName = $guard->getRecallerName();
+    $cookieValue = $user->getAuthIdentifier().'|'.$user->remember_token.'|'.$guard->hashPasswordForCookie($user->getAuthPassword());
+
+    $this->app['auth']->forgetGuards();
+    $this->flushSession();
+
+    $this->withCookie($cookieName, $cookieValue)->get('/dashboard')->assertOk();
+    $this->assertAuthenticatedAs($user);
 });
 
 it('does not leave a banned user holding a remember cookie', function () {

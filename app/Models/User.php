@@ -237,6 +237,24 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * There is no password. Accounts are Twitch logins and the column was
+     * dropped in April 2026.
+     *
+     * The session guard bakes a HMAC of this value into the remember cookie so
+     * that a password change invalidates old cookies, and since Laravel 13.33
+     * (framework PRs 61386 and 61532) it refuses to recall a user unless the
+     * value is a string - null means "do not remember". That silently turned
+     * every remember cookie off on September 24th 2026, and the login page
+     * was back after 120 idle minutes. An empty string is what the cookie
+     * already carried (null coerced through hash_hmac), so cookies issued
+     * before this override stay valid. Logout still cycles the token.
+     */
+    public function getAuthPassword(): string
+    {
+        return '';
+    }
+
     public function getBotSetting(string $key, mixed $default = null): mixed
     {
         return $this->bot_settings[$key] ?? $default;
