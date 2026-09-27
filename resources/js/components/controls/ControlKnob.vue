@@ -136,12 +136,14 @@ function valueOf(event: Event): string {
     </div>
 
     <!-- A number: a slider within the row's own bounds, and the exact value
-         beside it for anyone who knows the number they want. -->
-    <div v-else-if="kind === 'number'" class="flex items-center gap-3">
+         beside it for anyone who knows the number they want. A grid, not
+         flex: `input-border` carries `flex-1`, which would split the row in
+         half; the slider is the knob and gets 70 of it. -->
+    <div v-else-if="kind === 'number'" class="grid grid-cols-[7fr_3fr] items-center gap-3">
       <input
         :id="id"
         type="range"
-        class="min-w-0 flex-1 cursor-pointer"
+        class="min-w-0 cursor-pointer"
         :min="min"
         :max="max"
         :step="step"
@@ -151,7 +153,7 @@ function valueOf(event: Event): string {
       />
       <input
         type="number"
-        class="input-border w-20 text-sm tabular-nums"
+        class="input-border min-w-0 text-sm tabular-nums"
         :min="min"
         :max="max"
         :step="step"
