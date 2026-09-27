@@ -49,7 +49,7 @@ beforeEach(function () {
 it('starts the flow on install and shares the banner on an app page', function () {
     $user = flowUser();
 
-    $this->actingAs($user)->post('/products/chat-checkin/install')->assertRedirect('/products/chat-checkin');
+    $this->actingAs($user)->post('/products/chat-checkin/install')->assertRedirect('/products/chat-checkin/install');
 
     expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat-checkin');
 
@@ -58,7 +58,7 @@ it('starts the flow on install and shares the banner on an app page', function (
         ->assertInertia(fn (Assert $page) => $page
             ->where('productSetup.slug', 'chat-checkin')
             ->where('productSetup.name', 'Chat Checkin')
-            ->where('productSetup.url', route('products.show', 'chat-checkin'))
+            ->where('productSetup.url', route('products.manage', 'chat-checkin'))
             ->where('productSetup.ready', false)
             ->where('productSetup.remaining', 2)
             ->where('productSetup.next.label', 'The bot is switched on')
@@ -109,7 +109,7 @@ it('turns ready and ends when the product page sees nothing left', function () {
 
     // The product page is what ends it.
     $this->actingAs($user)
-        ->get('/products/chat-checkin')
+        ->get('/products/chat-checkin/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed.remaining', 0));
     expect(ProductSetup::activeSlug($user->fresh()))->toBeNull();
 });
@@ -119,7 +119,7 @@ it('refreshes the mod lookup when the product page loads mid-setup', function ()
     $this->actingAs($user)->post('/products/chat-checkin/install');
     Cache::put('bot:moderated_channels', 'unknown', now()->addMinutes(5));
 
-    $this->actingAs($user->fresh())->get('/products/chat-checkin')->assertOk();
+    $this->actingAs($user->fresh())->get('/products/chat-checkin/install')->assertOk();
 
     // Forgotten on load, then re-asked: with no bot token the fresh answer is
     // unknown again, but it is a fresh answer, written after the page ran.
@@ -127,7 +127,7 @@ it('refreshes the mod lookup when the product page loads mid-setup', function ()
 
     ProductSetup::end($user->fresh());
     Cache::put('bot:moderated_channels', ['keep'], now()->addMinutes(5));
-    $this->actingAs($user->fresh())->get('/products/chat-checkin')->assertOk();
+    $this->actingAs($user->fresh())->get('/products/chat-checkin/install')->assertOk();
     expect(Cache::get('bot:moderated_channels'))->toBe(['keep']);
 });
 
@@ -187,7 +187,7 @@ it('sends the next step to the page its control is on, with the fragment that fi
     // settings page - not on the product page the banner button returns to.
     expect($banner['next']['target'])->toBe('bot-toggle')
         ->and($banner['next']['url'])->toBe(route('settings.integrations.bot.show').'#el-bot-toggle')
-        ->and($banner['url'])->toBe(route('products.show', 'chat-checkin'));
+        ->and($banner['url'])->toBe(route('products.manage', 'chat-checkin'));
 });
 
 it('omits the fragment for a step with no single control to point at', function () {

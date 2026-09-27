@@ -35,7 +35,7 @@ it('hands the Ko-fi product its one row, not connected until the token is in, wi
     $kofi = ExternalIntegration::where('user_id', $user->id)->where('service', 'kofi')->firstOrFail();
 
     $this->actingAs($user->fresh())
-        ->get('/products/ko-fi-alerts')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->has('installed.services', 1)
             ->where('installed.services.0.service', 'kofi')
@@ -58,14 +58,14 @@ it('hands the Streamlabs product a one-click connect that comes back to the prod
     installProductFor($user, 'streamlabs-alerts');
 
     $this->actingAs($user->fresh())
-        ->get('/products/streamlabs-alerts')
+        ->get('/products/streamlabs-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->has('installed.services', 1)
             ->where('installed.services.0.service', 'streamlabs')
             ->where('installed.services.0.kind', 'oauth')
             ->where('installed.services.0.connected', false)
             ->where('installed.services.0.webhook_url', null)
-            ->where('installed.services.0.connect_url', route('settings.integrations.streamlabs.redirect', ['return_to' => '/products/streamlabs-alerts']))
+            ->where('installed.services.0.connect_url', route('settings.integrations.streamlabs.redirect', ['return_to' => '/products/streamlabs-alerts/install']))
         );
 });
 
@@ -74,12 +74,12 @@ it('connects Ko-fi from the product page and lands back on it with the row ticke
     installProductFor($user, 'ko-fi-alerts');
 
     $this->actingAs($user)
-        ->from('/products/ko-fi-alerts')
+        ->from('/products/ko-fi-alerts/install')
         ->post(route('settings.integrations.kofi.save'), ['verification_token' => 'kofi-token'])
-        ->assertRedirect('/products/ko-fi-alerts');
+        ->assertRedirect('/products/ko-fi-alerts/install');
 
     $this->actingAs($user->fresh())
-        ->get('/products/ko-fi-alerts')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.services.0.connected', true)
             ->where('installed.services.0.has_credential', true)
@@ -94,9 +94,9 @@ it('refuses an empty Ko-fi token back on the product page, naming the field', fu
     installProductFor($user, 'ko-fi-alerts');
 
     $this->actingAs($user)
-        ->from('/products/ko-fi-alerts')
+        ->from('/products/ko-fi-alerts/install')
         ->post(route('settings.integrations.kofi.save'), ['verification_token' => ''])
-        ->assertRedirect('/products/ko-fi-alerts')
+        ->assertRedirect('/products/ko-fi-alerts/install')
         ->assertSessionHasErrors('verification_token');
 });
 
@@ -106,7 +106,7 @@ it('connects Throne by the install itself and shows the link to paste, and recon
     $throne = ExternalIntegration::where('user_id', $user->id)->where('service', 'throne')->firstOrFail();
 
     $this->actingAs($user->fresh())
-        ->get('/products/throne-alerts')
+        ->get('/products/throne-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.services.0.kind', 'none')
             ->where('installed.services.0.connected', true)
@@ -117,16 +117,16 @@ it('connects Throne by the install itself and shows the link to paste, and recon
 
     $throne->delete();
     $this->actingAs($user->fresh())
-        ->get('/products/throne-alerts')
+        ->get('/products/throne-alerts/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed.services.0.connected', false)->where('installed.services.0.webhook_url', null));
 
     $this->actingAs($user)
-        ->from('/products/throne-alerts')
+        ->from('/products/throne-alerts/install')
         ->post(route('settings.integrations.throne.connect'))
-        ->assertRedirect('/products/throne-alerts');
+        ->assertRedirect('/products/throne-alerts/install');
 
     $this->actingAs($user->fresh())
-        ->get('/products/throne-alerts')
+        ->get('/products/throne-alerts/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed.services.0.connected', true));
 });
 
@@ -136,7 +136,7 @@ it('shows Buy Me a Coffee its link from the install, then takes the secret on th
     $bmac = ExternalIntegration::where('user_id', $user->id)->where('service', 'bmac')->firstOrFail();
 
     $this->actingAs($user->fresh())
-        ->get('/products/buy-me-a-coffee-alerts')
+        ->get('/products/buy-me-a-coffee-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.services.0.kind', 'secret')
             ->where('installed.services.0.connected', false)
@@ -145,12 +145,12 @@ it('shows Buy Me a Coffee its link from the install, then takes the secret on th
         );
 
     $this->actingAs($user)
-        ->from('/products/buy-me-a-coffee-alerts')
+        ->from('/products/buy-me-a-coffee-alerts/install')
         ->post(route('settings.integrations.bmac.save'), ['webhook_secret' => 'bmac-secret'])
-        ->assertRedirect('/products/buy-me-a-coffee-alerts');
+        ->assertRedirect('/products/buy-me-a-coffee-alerts/install');
 
     $this->actingAs($user->fresh())
-        ->get('/products/buy-me-a-coffee-alerts')
+        ->get('/products/buy-me-a-coffee-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.services.0.connected', true)
             ->where('installed.services.0.has_credential', true)
@@ -162,9 +162,9 @@ it('brings a Streamlabs connect started from the product page back to it', funct
     installProductFor($user, 'streamlabs-alerts');
 
     $this->actingAs($user)
-        ->get(route('settings.integrations.streamlabs.redirect', ['return_to' => '/products/streamlabs-alerts']))
+        ->get(route('settings.integrations.streamlabs.redirect', ['return_to' => '/products/streamlabs-alerts/install']))
         ->assertRedirect()
-        ->assertSessionHas('integration_return_to.streamlabs', '/products/streamlabs-alerts');
+        ->assertSessionHas('integration_return_to.streamlabs', '/products/streamlabs-alerts/install');
 
     Http::fake([
         'streamlabs.com/api/v2.0/token' => Http::response(['access_token' => 'at', 'refresh_token' => 'rt', 'token_type' => 'Bearer']),
@@ -172,14 +172,14 @@ it('brings a Streamlabs connect started from the product page back to it', funct
     ]);
 
     $this->actingAs($user)
-        ->withSession(['streamlabs_oauth_state' => 'state-1', 'integration_return_to.streamlabs' => '/products/streamlabs-alerts'])
+        ->withSession(['streamlabs_oauth_state' => 'state-1', 'integration_return_to.streamlabs' => '/products/streamlabs-alerts/install'])
         ->get('/auth/callback/streamlabs?code=code-1&state=state-1')
-        ->assertRedirect('/products/streamlabs-alerts')
+        ->assertRedirect('/products/streamlabs-alerts/install')
         ->assertSessionHas('success')
         ->assertSessionMissing('integration_return_to.streamlabs');
 
     $this->actingAs($user->fresh())
-        ->get('/products/streamlabs-alerts')
+        ->get('/products/streamlabs-alerts/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed.services.0.connected', true));
 });
 
@@ -187,9 +187,9 @@ it('brings a cancelled Streamlabs connect back to the product page too, with the
     $user = connectUser();
 
     $this->actingAs($user)
-        ->withSession(['integration_return_to.streamlabs' => '/products/streamlabs-alerts'])
+        ->withSession(['integration_return_to.streamlabs' => '/products/streamlabs-alerts/install'])
         ->get('/auth/callback/streamlabs')
-        ->assertRedirect('/products/streamlabs-alerts')
+        ->assertRedirect('/products/streamlabs-alerts/install')
         ->assertSessionHas('error')
         ->assertSessionMissing('integration_return_to.streamlabs');
 });
@@ -198,7 +198,7 @@ it('ignores a return_to that is not a path on this site, and the settings page b
     $user = connectUser();
 
     $this->actingAs($user)
-        ->withSession(['integration_return_to.streamlabs' => '/products/streamlabs-alerts'])
+        ->withSession(['integration_return_to.streamlabs' => '/products/streamlabs-alerts/install'])
         ->get(route('settings.integrations.streamlabs.redirect', ['return_to' => $returnTo]))
         ->assertRedirect()
         ->assertSessionMissing('integration_return_to.streamlabs');
@@ -214,8 +214,8 @@ it('remembers where a Fourthwall connect came from, and returns there when Fourt
     config(['services.fourthwall.auth_url' => null, 'services.fourthwall.redirect_url' => null]);
 
     $this->actingAs($user)
-        ->get(route('settings.integrations.fourthwall.redirect', ['return_to' => '/products/fourthwall-alerts']))
-        ->assertRedirect('/products/fourthwall-alerts')
+        ->get(route('settings.integrations.fourthwall.redirect', ['return_to' => '/products/fourthwall-alerts/install']))
+        ->assertRedirect('/products/fourthwall-alerts/install')
         ->assertSessionHas('error')
         ->assertSessionMissing('integration_return_to.fourthwall');
 });
@@ -225,6 +225,6 @@ it('gives a product with no external alert no service rows', function () {
     installProductFor($user, 'chat-tower');
 
     $this->actingAs($user->fresh())
-        ->get('/products/chat-tower')
+        ->get('/products/chat-tower/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed.services', []));
 });

@@ -50,15 +50,18 @@ it('is listed with its hero image, between the bubbles and bowling', function ()
         ->and(file_get_contents(public_path('products/chat-tower-hero.jpg')))->not->toContain('c2pa');
 });
 
-it('shows the integration, the list and the overlay it will create, and no chat commands', function () {
-    $this->get('/products/chat-tower')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('product.integrations.0', 'tower')
-            ->where('product.lists.0.slug', TowerService::RECORD_LIST_SLUG)
-            ->where('product.overlays.0.name', 'Chat Tower')
-            ->where('product.commands', [])
-        );
+it('installs the integration, the list and the overlay it will create, and no chat commands', function () {
+    // Was a page-payload assertion against fields the install/manage page no
+    // longer carries (they fed a marketing block that moved to the pitch
+    // page's own manifest-driven copy) - the manifest is the fact itself.
+    $manifest = app(RecipeCatalog::class)->find('chat-tower');
+
+    expect($manifest['installs']['integrations'] ?? [])->toBe(['tower'])
+        ->and($manifest['installs']['lists'][0]['slug'] ?? null)->toBe(TowerService::RECORD_LIST_SLUG)
+        ->and($manifest['installs']['overlays'] ?? [])->toHaveCount(1)
+        ->and($manifest['installs']['list_appenders'] ?? [])->toBe([])
+        ->and($manifest['installs']['bot_aliases'] ?? [])->toBe([])
+        ->and($manifest['installs']['bot_commands'] ?? [])->toBe([]);
 });
 
 it('installs the tower overlay, connects the integration and creates the record list', function () {

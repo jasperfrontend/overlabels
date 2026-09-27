@@ -16,6 +16,11 @@
   "category": "product",
   "hero": "/products/chat-emote-bubbles-hero.jpg",
   "ready_message": "Every emote your chat types is a bubble on your stream right now. The overlay's Controls tab sets the look, the speed and where they appear.",
+  "highlights": [
+    "Every emote your Twitch chat types floats across your stream in a bubble. Five PogChamps in one message are five bubbles.",
+    "Three looks: soap bubble, snowflake, heart. Speed, direction, size, color, how many at once, and where they appear.",
+    "Nothing to connect and no bot to add. Every change lands in OBS as you make it."
+  ],
   "notes": [
     "Every emote comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so the bubbles keep coming even when Overlabels is having a bad day.",
     "Size the OBS browser source to your whole canvas (1920 by 1080) and put it above your camera. Bubbles rise from the bottom edge by default; the Spawn control moves them to the top, to a random spot, or to one point you pick with X and Y.",

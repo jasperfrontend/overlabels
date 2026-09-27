@@ -61,16 +61,19 @@ it('is listed on the products shelf between checkin and the tower', function () 
         ->and(file_get_contents(public_path('products/chat-emote-bubbles-hero.jpg')))->not->toContain('c2pa');
 });
 
-it('shows one overlay and nothing else to connect', function () {
-    $this->get('/products/chat-emote-bubbles')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('product.overlays.0.name', 'Chat Emote Bubbles')
-            ->where('product.integrations', [])
-            ->where('product.lists', [])
-            ->where('product.commands', [])
-            ->where('product.requires_bot', false)
-        );
+it('installs one overlay and nothing else to connect', function () {
+    // Was a page-payload assertion against fields the install/manage page no
+    // longer carries (they fed a marketing block that moved to the pitch
+    // page's own manifest-driven copy) - the manifest is the fact itself.
+    $manifest = app(RecipeCatalog::class)->find('chat-emote-bubbles');
+
+    expect($manifest['installs']['overlays'] ?? [])->toHaveCount(1)
+        ->and($manifest['installs']['integrations'] ?? [])->toBe([])
+        ->and($manifest['installs']['lists'] ?? [])->toBe([])
+        ->and($manifest['installs']['list_appenders'] ?? [])->toBe([])
+        ->and($manifest['installs']['bot_aliases'] ?? [])->toBe([])
+        ->and($manifest['installs']['bot_commands'] ?? [])->toBe([])
+        ->and($manifest['requires_bot'] ?? false)->toBeFalse();
 });
 
 it('installs the bubbles overlay with its ten controls and no other rows', function () {
@@ -267,7 +270,7 @@ it('shows the designer card on the product page once installed, and applies a lo
     Event::fake([ControlValueUpdated::class]);
     $user = bubblesUser();
 
-    $this->actingAs($user)->get('/products/chat-emote-bubbles')
+    $this->actingAs($user)->get('/products/chat-emote-bubbles/install')
         ->assertInertia(fn (Assert $page) => $page
             ->has('product.designer.presets', 3)
             ->where('product.designer.presets.0.active', false)
@@ -277,7 +280,7 @@ it('shows the designer card on the product page once installed, and applies a lo
     $instance = app(RecipeInstaller::class)->install(bubblesRecipe(), $user, 'chat_emote_bubbles');
     $templateId = $instance->primitive_map['overlays']['bubbles'];
 
-    $this->actingAs($user)->get('/products/chat-emote-bubbles')
+    $this->actingAs($user)->get('/products/chat-emote-bubbles/install')
         ->assertInertia(fn (Assert $page) => $page->where('product.designer.presets.0.active', true));
 
     $this->actingAs($user)->postJson('/products/chat-emote-bubbles/presets/winter')
@@ -293,7 +296,7 @@ it('shows the designer card on the product page once installed, and applies a lo
 
     Event::assertDispatchedTimes(ControlValueUpdated::class, 10);
 
-    $this->actingAs($user)->get('/products/chat-emote-bubbles')
+    $this->actingAs($user)->get('/products/chat-emote-bubbles/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('product.designer.presets.0.active', false)
             ->where('product.designer.presets.1.active', true)

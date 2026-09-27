@@ -59,16 +59,19 @@ it('is listed on the products shelf with its hero image, after bowling', functio
         ->and(file_get_contents(public_path('products/twitch-chat-hero.jpg')))->not->toContain('c2pa');
 });
 
-it('shows one overlay and nothing else to connect', function () {
-    $this->get('/products/twitch-chat-overlay')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('product.overlays.0.name', 'Twitch Chat')
-            ->where('product.integrations', [])
-            ->where('product.lists', [])
-            ->where('product.commands', [])
-            ->where('product.requires_bot', false)
-        );
+it('installs one overlay and nothing else to connect', function () {
+    // Was a page-payload assertion against fields the install/manage page no
+    // longer carries (they fed a marketing block that moved to the pitch
+    // page's own manifest-driven copy) - the manifest is the fact itself.
+    $manifest = app(RecipeCatalog::class)->find('twitch-chat-overlay');
+
+    expect($manifest['installs']['overlays'] ?? [])->toHaveCount(1)
+        ->and($manifest['installs']['integrations'] ?? [])->toBe([])
+        ->and($manifest['installs']['lists'] ?? [])->toBe([])
+        ->and($manifest['installs']['list_appenders'] ?? [])->toBe([])
+        ->and($manifest['installs']['bot_aliases'] ?? [])->toBe([])
+        ->and($manifest['installs']['bot_commands'] ?? [])->toBe([])
+        ->and($manifest['requires_bot'] ?? false)->toBeFalse();
 });
 
 it('installs the chat overlay with its thirteen controls and no other rows', function () {

@@ -9,6 +9,8 @@ use App\Models\OverlayTemplate;
 use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Services\Recipes\RecipeCatalog;
+use App\Services\Recipes\RecipeInstaller;
+use App\Support\OverlayMarkdown;
 use App\Support\ProductSetup;
 use App\Support\WiringCatalog;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -53,22 +55,31 @@ function donationProducts(): array
 }
 
 it('is one product per service, with no question, no hero and no stage', function (string $slug) {
+    // Was a page-payload assertion; the manifest (plus its own overlay
+    // document) is the fact itself, and holds regardless of which page a
+    // visitor lands on.
     $product = DONATION_PRODUCTS[$slug];
+    $manifest = app(RecipeCatalog::class)->find($slug);
 
-    $this->get("/products/{$slug}")
+    expect($manifest['name'])->toBe($product['name'])
+        ->and($manifest['hero'] ?? null)->toBeNull()
+        ->and($manifest['requires_bot'] ?? false)->toBeFalse()
+        ->and($manifest['ingredients'] ?? [])->toBe([])
+        ->and($manifest['installs']['integrations'] ?? [])->toBe([$product['service']])
+        ->and($manifest['installs']['overlays'] ?? [])->toHaveCount(1)
+        ->and($manifest['installs']['list_appenders'] ?? [])->toBe([])
+        ->and($manifest['installs']['bot_aliases'] ?? [])->toBe([])
+        ->and($manifest['installs']['bot_commands'] ?? [])->toBe([]);
+
+    $overlay = $manifest['installs']['overlays'][0];
+    $doc = OverlayMarkdown::parse(file_get_contents(RecipeInstaller::directoryFor($slug).DIRECTORY_SEPARATOR.basename($overlay['file'])));
+    expect($doc['name'])->toBe($product['alert'])
+        ->and($doc['type'])->toBe('alert');
+
+    $this->actingAs(donationProductUser())
+        ->get("/products/{$slug}/install")
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('product.name', $product['name'])
-            ->where('product.hero', null)
-            ->where('product.requires_bot', false)
-            ->where('product.ingredients', [])
-            ->where('product.integrations', [$product['service']])
-            ->has('product.overlays', 1)
-            ->where('product.overlays.0.name', $product['alert'])
-            ->where('product.overlays.0.type', 'alert')
-            ->where('product.commands', [])
-            ->where('installed', null)
-        );
+        ->assertInertia(fn (Assert $page) => $page->where('installed', null));
 })->with(donationProducts());
 
 it('declares one trigger for its own service, targets nothing, and claims no service on the integrations page', function (string $slug) {
@@ -88,7 +99,7 @@ it('installs the alert, its one trigger and its integration, targeted at every s
 
     $this->actingAs($user)
         ->post("/products/{$slug}/install")
-        ->assertRedirect("/products/{$slug}")
+        ->assertRedirect("/products/{$slug}/install")
         ->assertSessionHas('success', $product['name'].' is installed.');
 
     $instance = donationProductInstance($user, $slug);
@@ -123,7 +134,7 @@ it('refuses to install over an alert already firing on its own service, even swi
 
     $this->actingAs($user)
         ->post("/products/{$slug}/install")
-        ->assertRedirect("/products/{$slug}")
+        ->assertRedirect("/products/{$slug}/install")
         ->assertSessionHasErrors(['install' => "{$product['name']} fires on {$product['fires_on']} too, and your alert 'My own alert' already does. Delete that trigger on its Triggers tab, switching it off is not enough, then install again."]);
 
     expect(RecipeInstance::where('user_id', $user->id)->exists())->toBeFalse()
@@ -158,7 +169,7 @@ it('shows the alert wired to its one service, the person\'s own overlays for OBS
     $this->actingAs($user)->post('/products/ko-fi-alerts/install');
 
     $this->actingAs($user->fresh())
-        ->get('/products/ko-fi-alerts')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.ingredients', [])
             ->has('installed.overlays', 1)
@@ -186,7 +197,7 @@ it('has nothing more to offer for a service with one event type, and no overlays
     $this->actingAs($user)->post('/products/streamlabs-alerts/install');
 
     $this->actingAs($user->fresh())
-        ->get('/products/streamlabs-alerts')
+        ->get('/products/streamlabs-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.overlays.0.more_events', [])
             ->where('installed.your_overlays', ['loaded' => false, 'overlays' => [], 'total' => 0])
@@ -200,7 +211,7 @@ it('offers no overlays of the person\'s own for a product that ships its own sta
     $this->actingAs($user)->post('/products/chat-tower/install');
 
     $this->actingAs($user->fresh())
-        ->get('/products/chat-tower')
+        ->get('/products/chat-tower/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed.your_overlays', ['loaded' => false, 'overlays' => [], 'total' => 0]));
 });
 
@@ -216,7 +227,7 @@ it('names the overlays an overlay link has served lately, and otherwise offers t
 
     // Nothing served yet: the five newest, and a count of the rest.
     $this->actingAs($user->fresh())
-        ->get('/products/ko-fi-alerts')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.your_overlays.loaded', false)
             ->has('installed.your_overlays.overlays', 5)
@@ -236,7 +247,7 @@ it('names the overlays an overlay link has served lately, and otherwise offers t
     OverlayAccessLog::create(['token_id' => $token->id, 'template_slug' => $scenes[4]->slug, 'accessed_at' => now()->subDays(40)]);
 
     $this->actingAs($user->fresh())
-        ->get('/products/ko-fi-alerts')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.your_overlays.loaded', true)
             ->has('installed.your_overlays.overlays', 1)
@@ -260,7 +271,7 @@ it('says the tip landed for its own service, and not for another service or anot
         ]);
     }
     $this->actingAs($user->fresh())
-        ->get('/products/ko-fi-alerts')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed.landed', null));
 
     ExternalEvent::create([
@@ -272,7 +283,7 @@ it('says the tip landed for its own service, and not for another service or anot
         'normalized_payload' => ['event.from_name' => 'Jo', 'event.formatted_amount' => 'EUR 5,00'],
     ]);
     $this->actingAs($user->fresh())
-        ->get('/products/ko-fi-alerts')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.landed.from_name', 'Jo')
             ->where('installed.landed.formatted_amount', 'EUR 5,00')
@@ -294,7 +305,7 @@ it('does not count a tip that arrived before the install', function () {
     $this->actingAs($user)->post('/products/ko-fi-alerts/install');
 
     $this->actingAs($user->fresh())
-        ->get('/products/ko-fi-alerts')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed.landed', null));
 });
 
@@ -304,7 +315,7 @@ it('reads the alert wiring live, so a trigger switched off drops out of the page
     ExternalEventTemplateMapping::where('user_id', $user->id)->update(['enabled' => false]);
 
     $this->actingAs($user->fresh())
-        ->get('/products/ko-fi-alerts')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.overlays.0.fires_on', [])
             ->where('installed.services', [])
@@ -327,7 +338,7 @@ it('lets a streamer who already has the service connected install without a seco
     $user = donationProductUser();
     ExternalIntegration::create(['user_id' => $user->id, 'service' => 'kofi', 'enabled' => false]);
 
-    $this->actingAs($user)->post('/products/ko-fi-alerts/install')->assertRedirect('/products/ko-fi-alerts');
+    $this->actingAs($user)->post('/products/ko-fi-alerts/install')->assertRedirect('/products/ko-fi-alerts/install');
 
     expect(ExternalIntegration::where('user_id', $user->id)->where('service', 'kofi')->count())->toBe(1)
         ->and(ExternalIntegration::where('user_id', $user->id)->where('service', 'kofi')->value('enabled'))->toBeTrue()
@@ -339,7 +350,7 @@ it('uninstalls the alert and its trigger, leaves the connection, and the page go
     $this->actingAs($user)->post('/products/ko-fi-alerts/install');
     $alertId = donationProductInstance($user, 'ko-fi-alerts')->primitive_map['overlays']['tip_alert'];
 
-    $this->actingAs($user)->post('/products/ko-fi-alerts/uninstall')->assertRedirect('/products/ko-fi-alerts');
+    $this->actingAs($user)->post('/products/ko-fi-alerts/uninstall')->assertRedirect('/products/ko-fi-alerts/install');
 
     expect(OverlayTemplate::find($alertId))->toBeNull()
         ->and(ExternalEventTemplateMapping::where('user_id', $user->id)->exists())->toBeFalse()
@@ -347,6 +358,6 @@ it('uninstalls the alert and its trigger, leaves the connection, and the page go
         ->and(ExternalIntegration::where('user_id', $user->id)->where('service', 'kofi')->exists())->toBeTrue();
 
     $this->actingAs($user->fresh())
-        ->get('/products/ko-fi-alerts')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed', null));
 });

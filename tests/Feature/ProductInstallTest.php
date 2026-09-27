@@ -155,16 +155,15 @@ it('shows the product list to a visitor without an account', function () {
 });
 
 it('shows a product page to a visitor without an account', function () {
-    $this->get('/products/chat-checkin')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('products/show')
-            ->where('product.name', 'Chat Checkin')
-            ->where('product.requires_bot', true)
-            ->where('product.integrations', ['checkin'])
-            ->where('product.overlays.0.name', 'Chat Checkin globe')
-            ->where('installed', null)
-        );
+    $response = $this->get('/products/chat-checkin')->assertOk();
+
+    // The pitch, not the checklist: a guest reads Blade, not an Inertia
+    // payload, and sees the manifest's own copy - never the wiring circuit.
+    expect($response->headers->has('X-Inertia'))->toBeFalse();
+    $response->assertSee('Chat Checkin')
+        ->assertSee('a city drops a pin on a spinning globe')
+        ->assertSee('Get Chat Checkin')
+        ->assertDontSee('Finish setting up');
 });
 
 it('404s an unlisted recipe and an unknown slug on the product page', function () {
@@ -183,7 +182,7 @@ it('installs the product on POST and shows the page in its installed state', fun
 
     $this->actingAs($user)
         ->post('/products/chat-checkin/install')
-        ->assertRedirect('/products/chat-checkin')
+        ->assertRedirect('/products/chat-checkin/install')
         ->assertSessionHas('success', 'Chat Checkin is installed.');
 
     $instance = RecipeInstance::where('user_id', $user->id)->first();
@@ -191,7 +190,7 @@ it('installs the product on POST and shows the page in its installed state', fun
         ->and($instance->recipe->slug)->toBe('chat-checkin');
 
     $this->actingAs($user)
-        ->get('/products/chat-checkin')
+        ->get('/products/chat-checkin/install')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('products/show')
@@ -211,7 +210,7 @@ it('does not install a second copy when the button is pressed again', function (
     $user = productUser();
 
     $this->actingAs($user)->post('/products/chat-checkin/install');
-    $this->actingAs($user)->post('/products/chat-checkin/install')->assertRedirect('/products/chat-checkin');
+    $this->actingAs($user)->post('/products/chat-checkin/install')->assertRedirect('/products/chat-checkin/install');
 
     expect(RecipeInstance::where('user_id', $user->id)->count())->toBe(1)
         ->and(OverlayTemplate::where('owner_id', $user->id)->count())->toBe(1);

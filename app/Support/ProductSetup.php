@@ -93,7 +93,7 @@ final class ProductSetup
         return [
             'slug' => $slug,
             'name' => $manifest['name'],
-            'url' => route('products.show', $slug),
+            'url' => route('products.manage', $slug),
             'remaining' => count($missing),
             'next' => $next ? self::step($next, $instance) : null,
             'ready' => $missing === [],

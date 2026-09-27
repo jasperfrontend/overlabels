@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowRight, Bot, Check, Circle, Download, ExternalLink, ListIcon, PlugZap, Sliders, Trash2, TriangleAlert } from '@lucide/vue';
+import { ArrowRight, Bot, Check, Circle, Download, ExternalLink, Sliders, Trash2, TriangleAlert } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
-import { serviceLabel } from '@/utils/services';
 import { urlWithTab } from '@/composables/useAddressableTabs';
 import { useConfirm } from '@/composables/useConfirm';
 import { withLastMileHint } from '@/composables/useUiMode';
@@ -13,6 +12,7 @@ import { useEventColors } from '@/composables/useEventColors';
 import ProductsLayout, { type ProductCategory } from '@/layouts/ProductsLayout.vue';
 import ProductServices from '@/components/ProductServices.vue';
 import type { ProductService } from '@/components/ProductServices.vue';
+import AddToObsButton from '@/components/AddToObsButton.vue';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 type WireState = 'satisfied' | 'missing' | 'not_applicable';
@@ -52,9 +52,6 @@ interface Product {
   hero: string | null;
   ingredients: Ingredient[];
   integrations: string[];
-  overlays: { ref: string; name: string; type: string; description: string | null }[];
-  lists: { slug: string; label: string }[];
-  commands: { command: string; kind: 'appender' | 'alias' | 'command'; detail: string }[];
   notes: string[];
   ready_message: string | null;
   designer: Designer | null;
@@ -112,7 +109,7 @@ interface Installed {
    * overlays an overlay link has served lately (`loaded`), else up to five of
    * the person's own, with the total. Empty for a product with its own stage.
    */
-  your_overlays: { loaded: boolean; overlays: { id: number; name: string }[]; total: number };
+  your_overlays: { loaded: boolean; overlays: { id: number; name: string; slug: string }[]; total: number };
   test_guide: TestGuide | null;
   landed: Landed | null;
   removes: string[];
@@ -126,7 +123,6 @@ const props = defineProps<{
 }>();
 
 const page = usePage<AppPageProps>();
-const isAuthed = computed(() => !!page.props.auth?.user);
 const { eventTypeDotClass } = useEventColors();
 const installError = computed(() => (page.props.errors as Record<string, string> | undefined)?.install);
 
@@ -140,14 +136,8 @@ const done = computed(() => steps.value.length - remaining.value);
 const progress = computed(() => (steps.value.length ? Math.round((done.value / steps.value.length) * 100) : 100));
 
 // The product's questions, answered with their defaults until the person
-// picks otherwise. Whatever the manifest wrote as {{key}} reads as the
-// current answer here, so the list of what the click gives you follows
-// the pick rather than showing a placeholder.
+// picks otherwise.
 const answers = ref<Record<string, string>>(Object.fromEntries(props.product.ingredients.map((ingredient) => [ingredient.key, ingredient.default])));
-
-function fill(text: string): string {
-  return text.replace(/\{\{([a-z][a-z0-9_]*)\}\}/g, (whole, key: string) => answers.value[key] ?? whole);
-}
 
 function answerLabel(ingredient: Ingredient): string {
   const value = props.installed?.ingredients[ingredient.key];
@@ -327,14 +317,10 @@ async function uninstall(): Promise<void> {
               <Trash2 class="mr-2 size-4" />
               Uninstall
             </button>
-            <button v-else-if="isAuthed" type="button" class="btn btn-primary cursor-pointer" @click="install">
+            <button v-else type="button" class="btn btn-primary cursor-pointer" @click="install">
               <Download class="mr-2 size-4" />
               Install
             </button>
-            <a v-else :href="`/login?redirect_to=/products/${product.slug}`" class="btn btn-primary cursor-pointer">
-              <Download class="mr-2 size-4" />
-              Log in with Twitch to install
-            </a>
           </div>
         </div>
 
@@ -415,19 +401,8 @@ async function uninstall(): Promise<void> {
             />
             <div class="flex min-w-0 flex-col items-start gap-2.5">
               <h3 class="text-base leading-[1.35] font-semibold text-foreground">Put {{ joinNames(stages.map((stage) => stage.name)) }} in OBS</h3>
-              <p class="text-sm leading-relaxed text-pretty text-foreground">
-                The OBS tab makes your overlay link and tells you the size. Add it in OBS as a Browser source, then keep OBS open.
-              </p>
-              <div class="flex flex-wrap gap-2">
-                <Link
-                  v-for="overlay in stages"
-                  :key="overlay.id"
-                  :href="urlWithTab(withLastMileHint(route('templates.show', overlay.id), product.slug), 'obs')"
-                  class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-blue-500/50 bg-blue-500/8 px-4 py-2 text-sm font-semibold text-blue-700 hover:border-blue-500 hover:bg-blue-500/18 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
-                >
-                  <ExternalLink class="size-3.5" />
-                  Add {{ overlay.name }} to OBS
-                </Link>
+              <div class="flex w-full max-w-xs flex-col gap-2">
+                <AddToObsButton v-for="overlay in stages" :key="overlay.id" :template="overlay" />
               </div>
             </div>
           </li>
@@ -454,19 +429,10 @@ async function uninstall(): Promise<void> {
               </p>
               <template v-else-if="yourOverlays.overlays.length">
                 <p class="text-sm leading-relaxed text-pretty text-foreground">
-                  The alert shows inside every overlay of yours that is in OBS, on top of whatever is there. One is enough. An overlay's OBS tab makes
-                  its link and tells you the size.
+                  The alert shows inside every overlay of yours that is in OBS, on top of whatever is there. One is enough.
                 </p>
-                <div class="flex flex-wrap gap-2">
-                  <Link
-                    v-for="overlay in yourOverlays.overlays"
-                    :key="overlay.id"
-                    :href="urlWithTab(withLastMileHint(route('templates.show', overlay.id), product.slug), 'obs')"
-                    class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-blue-500/50 bg-blue-500/8 px-4 py-2 text-sm font-semibold text-blue-700 hover:border-blue-500 hover:bg-blue-500/18 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
-                  >
-                    <ExternalLink class="size-3.5" />
-                    Add {{ overlay.name }} to OBS
-                  </Link>
+                <div class="flex w-full max-w-xs flex-col gap-2">
+                  <AddToObsButton v-for="overlay in yourOverlays.overlays" :key="overlay.id" :template="overlay" />
                 </div>
                 <p v-if="yourOverlays.total > yourOverlays.overlays.length" class="text-[13px] leading-relaxed text-muted-foreground">
                   And {{ yourOverlays.total - yourOverlays.overlays.length }} more on
@@ -592,6 +558,29 @@ async function uninstall(): Promise<void> {
             </div>
           </li>
         </ol>
+
+        <div v-if="installed.overlays.length" class="flex flex-col gap-2">
+          <h3 class="text-sm font-medium text-foreground">{{ installed.overlays.length === 1 ? 'Your overlay' : 'Your overlays' }}</h3>
+          <ul class="flex flex-col gap-2">
+            <li v-for="overlay in installed.overlays" :key="overlay.id" class="collection-row relative border border-border p-3">
+              <Link :href="route('templates.show', overlay.id)" class="absolute inset-0 z-0 cursor-pointer" :aria-label="overlay.name" />
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-foreground">{{ overlay.name }}</p>
+                <ExternalLink class="size-4 text-muted-foreground" />
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div v-if="product.notes.length" class="flex flex-col gap-2">
+          <h3 class="text-sm font-medium text-foreground">Good to know</h3>
+          <ul class="flex flex-col gap-1">
+            <li v-for="note in product.notes" :key="note" class="flex gap-2 text-sm text-foreground">
+              <Circle class="mt-1.5 size-2 shrink-0 text-muted-foreground" />
+              <span>{{ note }}</span>
+            </li>
+          </ul>
+        </div>
       </section>
 
       <!-- Steps left, and the product has services: their connects are right
@@ -608,9 +597,6 @@ async function uninstall(): Promise<void> {
         <ProductServices :services="services" />
       </section>
 
-      <!-- Installed, steps left: the checklist as a progress piece. Everything
-           the installer did is already a tick; each remaining line has one
-           button; the bar fills as they go. -->
       <!-- The looks, as one door rather than a wall of cards. Only a product
            whose manifest declares a designer has one, and only an install
            can open it. This is the loudest thing on an installed page for a
@@ -641,20 +627,20 @@ async function uninstall(): Promise<void> {
         </span>
       </Link>
 
-      <section v-if="installed && installed.subject" class="mt-8 flex flex-col gap-3">
+      <!-- Installed, steps left: the checklist as a progress piece. Once
+           remaining hits zero the celebration section above is the sole
+           post-completion view - this section stops rendering rather than
+           sitting underneath it saying the same thing twice. -->
+      <section v-if="installed && installed.subject && remaining > 0" class="mt-8 flex flex-col gap-3">
         <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 class="text-lg font-semibold text-foreground">{{ remaining ? 'Finish setting up' : 'Your setup' }}</h2>
-          <span v-if="remaining" class="text-sm text-fuchsia-600 tabular-nums dark:text-fuchsia-400">
+          <h2 class="text-lg font-semibold text-foreground">Finish setting up</h2>
+          <span class="text-sm text-fuchsia-600 tabular-nums dark:text-fuchsia-400">
             {{ remaining === 1 ? 'One thing left' : `${remaining} things left` }}
-          </span>
-          <span v-else class="inline-flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
-            <Check class="size-4" />
-            {{ steps.length }} of {{ steps.length }} done
           </span>
         </div>
 
         <div class="h-2 w-full overflow-hidden bg-muted" role="progressbar" :aria-valuenow="done" :aria-valuemin="0" :aria-valuemax="steps.length">
-          <div class="product-progress h-full" :class="remaining ? 'bg-fuchsia-500' : 'bg-green-500'" :style="{ width: `${progress}%` }" />
+          <div class="product-progress h-full bg-fuchsia-500" :style="{ width: `${progress}%` }" />
         </div>
 
         <ul class="flex flex-col gap-2">
@@ -684,82 +670,6 @@ async function uninstall(): Promise<void> {
             </div>
           </li>
         </ul>
-
-        <div v-if="installed.overlays.length" class="mt-2 flex flex-col gap-2">
-          <h3 class="text-sm font-medium text-foreground">{{ installed.overlays.length === 1 ? 'Your overlay' : 'Your overlays' }}</h3>
-          <ul class="flex flex-col gap-2">
-            <li v-for="overlay in installed.overlays" :key="overlay.id" class="collection-row relative border border-border p-3">
-              <Link :href="route('templates.show', overlay.id)" class="absolute inset-0 z-0 cursor-pointer" :aria-label="overlay.name" />
-              <div class="flex items-center justify-between gap-3">
-                <p class="text-foreground">{{ overlay.name }}</p>
-                <ExternalLink class="size-4 text-muted-foreground" />
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <div v-if="product.notes.length" class="mt-2 flex flex-col gap-2">
-          <h3 class="text-sm font-medium text-foreground">Good to know</h3>
-          <ul class="flex flex-col gap-1">
-            <li v-for="note in product.notes" :key="note" class="flex gap-2 text-sm text-foreground">
-              <Circle class="mt-1.5 size-2 shrink-0 text-muted-foreground" />
-              <span>{{ note }}</span>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- Not installed: what the click does, and what it cannot do for you. -->
-      <section v-else class="mt-8 grid gap-6 md:grid-cols-2">
-        <div class="flex flex-col gap-3">
-          <h2 class="text-lg font-semibold text-foreground">Installing gives you</h2>
-          <ul class="flex flex-col gap-2">
-            <li v-for="overlay in product.overlays" :key="overlay.ref" class="collection-row border border-border p-3">
-              <p class="font-medium text-foreground">{{ overlay.name }}</p>
-              <p v-if="overlay.description" class="mt-1 text-sm text-foreground">{{ overlay.description }}</p>
-            </li>
-            <li v-for="integration in product.integrations" :key="integration" class="collection-row border border-border p-3">
-              <p class="inline-flex items-center gap-2 font-medium text-foreground">
-                <PlugZap class="size-4 text-violet-400" />
-                {{ serviceLabel(fill(integration)) }} connected
-              </p>
-              <p class="mt-1 text-sm text-foreground">The integration and its controls, ready before you open the overlay.</p>
-            </li>
-            <li v-for="list in product.lists" :key="list.slug" class="collection-row border border-border p-3">
-              <p class="inline-flex items-center gap-2 font-medium text-foreground">
-                <ListIcon class="size-4 text-violet-400" />
-                A list called {{ list.label }}
-              </p>
-              <p class="mt-1 text-sm text-foreground">
-                Empty to start. Mods work it with <code class="text-violet-400">!list {{ list.slug }}</code
-                >.
-              </p>
-            </li>
-            <li v-for="command in product.commands" :key="command.command" class="collection-row border border-border p-3">
-              <p class="inline-flex items-center gap-2 font-medium text-foreground">
-                <Bot class="size-4 text-violet-400" />
-                The <code class="text-violet-400">{{ command.command }}</code> {{ command.kind === 'alias' ? 'alias' : 'chat command' }}
-              </p>
-              <p class="mt-1 text-sm text-foreground">{{ command.detail }}</p>
-            </li>
-          </ul>
-        </div>
-
-        <div class="flex flex-col gap-3">
-          <h2 class="text-lg font-semibold text-foreground">You still do</h2>
-          <ul class="flex flex-col gap-2 text-sm text-foreground">
-            <li v-if="product.requires_bot" class="collection-row border border-border p-3">
-              Switch the Overlabels bot on for your channel and type <code class="text-violet-400">/mod overlabels</code> in your chat.
-            </li>
-            <li v-if="product.overlays.some((overlay) => overlay.type !== 'alert')" class="collection-row border border-border p-3">
-              Add the overlay to OBS as a browser source. The page tells you when that is the only thing left.
-            </li>
-            <li v-else-if="product.overlays.some((overlay) => overlay.type === 'alert')" class="collection-row border border-border p-3">
-              Have one of your overlays in OBS. The alert shows inside every overlay that is there, so one is enough.
-            </li>
-          </ul>
-          <p class="text-sm text-muted-foreground">About five minutes, and this page keeps track of which of these is done.</p>
-        </div>
       </section>
     </div>
   </ProductsLayout>

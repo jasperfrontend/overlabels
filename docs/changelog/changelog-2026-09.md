@@ -1,5 +1,35 @@
 # Changelog - September 2026
 
+## OL-2609-144 - September 27th, 2026 - feat(products): split the product page into a pitch and an install checklist
+
+Every product used to go straight from the homepage to `/products/{slug}`, and that one page did
+double duty as both the not-yet-installed pitch and the post-install status screen. That is why the
+install page read as a mess once everything was wired up: a "you're done" celebration banner and a
+separate checklist both rendered off the exact same wiring data, narrated twice, a designer CTA on
+top, and nothing won. The flow is now Introduction (homepage) then Presentation (a real pitch page)
+then Installation, matching how every other product page on the internet works.
+
+`/products/{slug}` is a public Blade page now - readable by a guest, indexable by a search engine,
+carrying the product's own OG tags and structured data - built from a manifest `highlights` field
+that also feeds the homepage teaser, so the copy is authored once. The checklist moved to
+`/products/{slug}/install`, authed-only, and lost the marketing block it no longer needs. The actual
+redundancy is fixed there too: the checklist now only shows while something is still missing, so a
+fully wired product shows the celebration once, not the celebration plus a second checklist
+underneath saying the same thing.
+
+Chat Emote Bubbles was the one product with no homepage demo; it has one now, built the same way as
+the other four (pure CSS, no socket), and reused as the hero on its new pitch page.
+
+- The five product-category manifests each got a `highlights` field - the three "what you get"
+  lines a homepage row already carried, moved out of a hand-kept PHP array and into the manifest
+  itself, so the pitch page and the homepage teaser read the same copy from one place.
+- The install checklist's "Add this overlay to OBS" links used to send the streamer away to the
+  overlay's own OBS tab. They open the real Add-to-OBS button inline now, so adding the overlay
+  never means leaving the checklist.
+- A handful of internal links (the mid-setup banner, the designer's "Back to the product", the
+  settings page's "Install the product" prompt) pointed at the bare product URL, which is now the
+  pitch page; all of them now point at `/install`, where the state they were promising actually is.
+
 ## OL-2609-141 - September 28th, 2026 - feat(products): every product declares its own designer, and Chat Emote Bubbles gets one
 
 Until today the designer at `/products/twitch-chat-overlay/design` was wired to that one product

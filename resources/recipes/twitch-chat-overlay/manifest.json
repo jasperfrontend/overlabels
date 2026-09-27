@@ -17,6 +17,11 @@
   "category": "product",
   "hero": "/products/twitch-chat-hero.jpg",
   "ready_message": "Your chat is on screen. Design it below to get the look you want, and every change shows in OBS as you make it.",
+  "highlights": [
+    "Names in their Twitch colours, badges, Twitch and third-party emotes, a chip on a first message.",
+    "Ten looks, from a terminal to speech bubbles to a news ticker, and thirteen controls for font, colours, layout and how long a message stays.",
+    "Nothing to connect and no bot to add. Every change lands in OBS as you make it."
+  ],
   "notes": [
     "Every message comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so chat keeps flowing even when Overlabels is having a bad day.",
     "Size the OBS browser source to size the chat: the feed fills whatever box you give it. 500 by 800 is a good start for a stacked feed, 1920 by 80 for the ticker.",

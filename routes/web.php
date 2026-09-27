@@ -321,11 +321,11 @@ Route::get('/overlay/{slug}/public', [OverlayTemplateController::class, 'servePu
     ->name('overlay.public')
     ->where('slug', '[a-z0-9]+(-[a-z0-9]+)*');
 
-// Products: listed recipes a streamer installs in one click. Reading about
-// one needs no account, which is why these two sit outside the auth group;
-// the install itself is in it, further down next to kits.
+// Products: listed recipes a streamer installs in one click. Reading the
+// pitch needs no account, which is why these two sit outside the auth group;
+// the install/manage checklist is authed, further down next to kits.
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/products/{slug}', [ProductController::class, 'show'])
+Route::get('/products/{slug}', [ProductController::class, 'pitch'])
     ->name('products.show')
     ->where('slug', '[a-z][a-z0-9_-]*');
 
@@ -738,13 +738,19 @@ Route::middleware('auth.redirect')->group(function () {
             ->middleware('throttle:kit-fork')->name('fork');
     });
 
-    // Installing a product. The read side is public, above.
+    // Installing a product. The pitch is public, above.
     Route::post('/products/{slug}/install', [ProductController::class, 'install'])
         ->middleware('throttle:product-install')
         ->name('products.install')
         ->where('slug', '[a-z][a-z0-9_-]*');
     Route::post('/products/{slug}/uninstall', [ProductController::class, 'uninstall'])
         ->name('products.uninstall')
+        ->where('slug', '[a-z][a-z0-9_-]*');
+    // The install/manage checklist: the ingredients form before install, the
+    // wiring checklist and designer CTA after. Authed, since it has nothing
+    // to say to a guest - that's what the pitch page above is for.
+    Route::get('/products/{slug}/install', [ProductController::class, 'manage'])
+        ->name('products.manage')
         ->where('slug', '[a-z][a-z0-9_-]*');
     // The designer: knobs on the left, the product's own overlay on the right.
     // Authenticated and install-gated, so it sits here rather than with the

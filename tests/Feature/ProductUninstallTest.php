@@ -131,18 +131,18 @@ it('uninstalls from the product page and shows the page uninstalled', function (
     installProduct($user, 'follower-bowling');
 
     $this->actingAs($user)
-        ->get('/products/follower-bowling')
+        ->get('/products/follower-bowling/install')
         ->assertInertia(fn (Assert $page) => $page->has('installed.removes', 5));
 
     $this->actingAs($user)
         ->post('/products/follower-bowling/uninstall')
-        ->assertRedirect('/products/follower-bowling')
+        ->assertRedirect('/products/follower-bowling/install')
         ->assertSessionHas('success', 'Follower Bowling is uninstalled.');
 
     expect(RecipeInstance::where('user_id', $user->id)->count())->toBe(0);
 
     $this->actingAs($user)
-        ->get('/products/follower-bowling')
+        ->get('/products/follower-bowling/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed', null));
 });
 
@@ -154,7 +154,7 @@ it('surfaces the kit refusal on the product page', function () {
 
     $this->actingAs($user)
         ->post('/products/follower-bowling/uninstall')
-        ->assertRedirect('/products/follower-bowling')
+        ->assertRedirect('/products/follower-bowling/install')
         ->assertSessionHasErrors('uninstall');
 
     expect(RecipeInstance::find($instance->id))->not->toBeNull();
@@ -166,6 +166,6 @@ it('is a no-op when nothing is installed, and needs a login', function () {
     $user = uninstallUser();
     $this->actingAs($user)
         ->post('/products/follower-bowling/uninstall')
-        ->assertRedirect('/products/follower-bowling')
+        ->assertRedirect('/products/follower-bowling/install')
         ->assertSessionHasNoErrors();
 });

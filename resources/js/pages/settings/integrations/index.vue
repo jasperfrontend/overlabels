@@ -99,7 +99,9 @@ const { query, filtering, filtered: filteredRows } = useCollectionFilter<Integra
                 </p>
                 <p v-else-if="row.product" class="text-sm text-muted-foreground">
                   Not connected.
-                  <Link :href="`/products/${row.product}`" class="underline underline-offset-2 hover:text-foreground">Install the product</Link>
+                  <Link :href="`/products/${row.product}/install`" class="underline underline-offset-2 hover:text-foreground"
+                    >Install the product</Link
+                  >
                   to connect it.
                 </p>
               </div>

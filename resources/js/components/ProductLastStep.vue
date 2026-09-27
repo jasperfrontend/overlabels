@@ -16,7 +16,7 @@ defineProps<{ product: string | null }>();
     </span>
     <Link
       v-if="product"
-      :href="`/products/${product}`"
+      :href="`/products/${product}/install`"
       class="inline-flex cursor-pointer items-center gap-1.5 border border-white/60 bg-white px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-50"
     >
       <ArrowLeft class="size-3" />

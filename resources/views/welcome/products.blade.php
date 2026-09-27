@@ -1,15 +1,15 @@
 {{--
-  The shelf. One row per product on the Products shelf of /products, read
-  from the recipe catalogue by the home route, so a new manifest shows up
-  here without anyone editing this file. A product with a demo partial in
-  welcome/demos gets it, running; one without gets its hero artwork. The
-  three "what you get" lines per product are the one hand-kept thing here,
-  and a product without them shows the manifest's first sentence only.
+  The teaser shelf. One row per product on the Products shelf of /products,
+  read from the recipe catalogue by the home route, so a new manifest shows
+  up here without anyone editing this file. A product with a demo partial in
+  welcome/demos gets it, running; one without gets its hero artwork. This is
+  a teaser, not the pitch: name, first sentence, one button to the product's
+  own pitch page (resources/views/products/pitch.blade.php), which is where
+  the full "what you get" highlights live now.
 
-  Each product owns a whole row: the demo runs at the full content width,
-  the description sits below it in two columns (name and pitch on the left,
-  what you get and the button on the right). Rows are separated by a thin
-  rule and a numbered mono label, never boxed.
+  Each product owns a whole row: the demo runs constrained under the row,
+  the name/description/button sit below it in one column. Rows are separated
+  by a thin rule and a numbered mono label, never boxed.
 --}}
 @php
     $firstSentence = function (string $text): string {
@@ -24,34 +24,7 @@
         'follower-bowling' => 'bowling',
         'chat-checkin' => 'checkin',
         'twitch-chat-overlay' => 'chat',
-    ];
-
-    $facts = [
-        'chat-tower' => [
-            'Twitch chat types !stack, or !stack left and !stack right to fight the lean.',
-            'The tower sways more the taller it gets, and the fall lines are on screen so your Twitch chat sees it coming.',
-            'Whoever topples it gets named. Everyone who built the all-time record tower lands in a List any overlay can show.',
-        ],
-        'follower-bowling' => [
-            'Your ten newest Twitch followers are the pins, with their avatars and names.',
-            '!bowl puts a Twitch viewer in line. While the lane is on, it sends the next one down every fifteen seconds by itself.',
-            'Ball, pins and score play out on the overlay. A strike says STRIKE.',
-        ],
-        'chat-checkin' => [
-            '!checkin and a city drops a pin on a spinning globe.',
-            'Counts every checkin, the countries this stream, and who checked in from farthest away.',
-            'A HUD with the numbers and a list of who checked in, each behind one toggle.',
-        ],
-        'twitch-chat-overlay' => [
-            'Names in their Twitch colours, badges, Twitch and third-party emotes, a chip on a first message.',
-            'Ten looks, from a terminal to speech bubbles to a news ticker, and thirteen controls for font, colours, layout and how long a message stays.',
-            'Nothing to connect and no bot to add. Every change lands in OBS as you make it.',
-        ],
-        'chat-emote-bubbles' => [
-            'Every emote your Twitch chat types floats across your stream in a bubble. Five PogChamps in one message are five bubbles.',
-            'Three looks: soap bubble, snowflake, heart. Speed, direction, size, color, how many at once, and where they appear.',
-            'Nothing to connect and no bot to add. Every change lands in OBS as you make it.',
-        ],
+        'chat-emote-bubbles' => 'bubbles',
     ];
 @endphp
 <section id="products" class="scroll-mt-16 border-b border-b-sidebar-border bg-card py-20 sm:py-24">
@@ -70,7 +43,6 @@
           @php
               $cmd = $command($game['description']);
               $demo = $demos[$game['slug']] ?? null;
-              $lines = $facts[$game['slug']] ?? [];
               $number = str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT);
           @endphp
           <article class="{{ $loop->first ? '' : 'border-t border-sidebar-border pt-16 sm:pt-24' }} min-w-0" aria-labelledby="product-{{ $game['slug'] }}">
@@ -80,8 +52,8 @@
               <span class="font-mono text-xs text-muted-foreground">{{ $game['name'] }}</span>
             </div>
 
-            {{-- The demo, at the whole content width. --}}
-            <div class="min-w-0">
+            {{-- The demo, constrained rather than full width: this is a teaser, the pitch page is where it runs at full size. --}}
+            <div class="mx-auto min-w-0 max-w-2xl">
               @if ($demo)
                 @include('welcome.demos.'.$demo)
               @elseif (!empty($game['hero']))
@@ -89,37 +61,18 @@
               @endif
             </div>
 
-            {{-- The description, below the demo: the pitch left, what you get right. --}}
-            <div class="mt-8 grid gap-8 sm:mt-10 md:grid-cols-[1.1fr_1fr] md:gap-12 lg:gap-16">
-              <div class="min-w-0">
-                @if ($cmd)
-                  <span class="mb-4 inline-block border border-violet-400/60 px-2 py-0.5 font-mono text-xs text-violet-600 dark:text-violet-300">Twitch chat types {{ $cmd }}</span>
-                @else
-                  <span class="mb-4 inline-block border border-sidebar-border px-2 py-0.5 text-xs text-muted-foreground">no bot needed</span>
-                @endif
-                <h3 id="product-{{ $game['slug'] }}" class="mb-4 text-3xl leading-[1.1] font-bold tracking-tight sm:text-4xl">{{ $game['name'] }}</h3>
-                <p class="max-w-lg text-lg leading-relaxed text-foreground">{{ $firstSentence($game['description']) }}</p>
-              </div>
-
-              <div class="min-w-0 md:pt-1">
-                @if ($lines)
-                  <ul class="mb-8 flex flex-col gap-3">
-                    @foreach ($lines as $line)
-                      <li class="flex items-start gap-3 text-base text-foreground">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mt-1 h-4 w-4 shrink-0 text-sky-500"><path d="M20 6 9 17l-5-5"/></svg>
-                        <span>{{ $line }}</span>
-                      </li>
-                    @endforeach
-                  </ul>
-                @endif
-                <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-                  <a href="{{ route('products.show', $game['slug']) }}" class="btn btn-primary w-full cursor-pointer sm:w-auto">
-                    Get {{ $game['name'] }}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 h-4 w-4"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                  </a>
-                  <span class="text-xs text-muted-foreground">Free. One click. One link into OBS.</span>
-                </div>
-              </div>
+            <div class="mx-auto mt-8 flex max-w-2xl min-w-0 flex-col items-start gap-4 sm:mt-10">
+              @if ($cmd)
+                <span class="inline-block border border-violet-400/60 px-2 py-0.5 font-mono text-xs text-violet-600 dark:text-violet-300">Twitch chat types {{ $cmd }}</span>
+              @else
+                <span class="inline-block border border-sidebar-border px-2 py-0.5 text-xs text-muted-foreground">no bot needed</span>
+              @endif
+              <h3 id="product-{{ $game['slug'] }}" class="text-3xl leading-[1.1] font-bold tracking-tight sm:text-4xl">{{ $game['name'] }}</h3>
+              <p class="max-w-lg text-lg leading-relaxed text-foreground">{{ $firstSentence($game['description']) }}</p>
+              <a href="{{ route('products.show', $game['slug']) }}" class="btn btn-primary w-full cursor-pointer sm:w-auto">
+                Get {{ $game['name'] }}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 h-4 w-4"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </a>
             </div>
           </article>
         @endforeach

@@ -71,7 +71,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Products', href: '/products' },
-  { title: props.product.name, href: `/products/${props.product.slug}` },
+  { title: props.product.name, href: `/products/${props.product.slug}/install` },
   { title: 'Design', href: `/products/${props.product.slug}/design` },
 ];
 
@@ -648,7 +648,7 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
           description-class="text-sm text-muted-foreground"
         />
         <div class="flex shrink-0 items-center gap-2">
-          <Link :href="`/products/${product.slug}`" class="btn btn-sm btn-cancel">Back to {{ product.name }}</Link>
+          <Link :href="`/products/${product.slug}/install`" class="btn btn-sm btn-cancel">Back to {{ product.name }}</Link>
         </div>
       </div>
 

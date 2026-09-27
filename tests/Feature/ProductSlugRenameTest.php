@@ -26,6 +26,23 @@ it('301s every slug a product used to live at to the slug it lives at now', func
     }
 });
 
+it('301s an aliased slug under /install to the current slug too', function () {
+    $catalog = app(RecipeCatalog::class);
+    $slug = 'chat-checkin';
+    $alias = ($catalog->find($slug)['url_aliases'] ?? [])[0] ?? null;
+    expect($alias)->not->toBeNull();
+
+    $user = User::factory()->create([
+        'twitch_id' => (string) fake()->unique()->randomNumber(9),
+        'twitch_data' => ['login' => 'slugalias'.fake()->unique()->randomNumber(5)],
+    ]);
+
+    $this->actingAs($user)
+        ->get("/products/{$alias}/install")
+        ->assertStatus(301)
+        ->assertRedirect(route('products.manage', $slug));
+});
+
 it('gives every listed product an alias, so no old URL is left dead', function () {
     $catalog = app(RecipeCatalog::class);
 

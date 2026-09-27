@@ -17,6 +17,11 @@
   "category": "product",
   "hero": "/products/chat-tower-hero.jpg",
   "ready_message": "Your chat can type !stack right now, and the tower is waiting in OBS.",
+  "highlights": [
+    "Twitch chat types !stack, or !stack left and !stack right to fight the lean.",
+    "The tower sways more the taller it gets, and the fall lines are on screen so your Twitch chat sees it coming.",
+    "Whoever topples it gets named. Everyone who built the all-time record tower lands in a List any overlay can show."
+  ],
   "notes": [
     "The tower falls when the top of its sway crosses a fall line. Both lines are on the overlay, so chat can see it coming. Nothing happens to the viewer who topples it beyond being named.",
     "The tower comes down at the start of every stream by default. Settings, Integrations, Chat Tower can leave it standing between streams instead, and has a button to clear it by hand. The record carries over either way.",

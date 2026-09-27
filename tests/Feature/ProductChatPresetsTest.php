@@ -92,7 +92,7 @@ it('names only skins the overlay CSS defines, layouts and backgrounds it styles,
 it('publishes the designer on the product page with clean active right after an install', function () {
     $user = presetUser();
 
-    $this->actingAs($user)->get('/products/twitch-chat-overlay')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/install')
         ->assertInertia(fn (Assert $page) => $page
             ->has('product.designer.presets', 10)
             ->where('product.designer.presets.0.active', false)
@@ -101,7 +101,7 @@ it('publishes the designer on the product page with clean active right after an 
 
     app(RecipeInstaller::class)->install(presetRecipe(), $user, 'twitch_chat_overlay');
 
-    $this->actingAs($user)->get('/products/twitch-chat-overlay')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/install')
         ->assertInertia(fn (Assert $page) => $page
             ->has('product.designer.presets', 10)
             ->where('product.designer.presets.0.key', 'clean')
@@ -113,7 +113,9 @@ it('publishes the designer on the product page with clean active right after an 
 });
 
 it('publishes no designer for a product whose manifest declares none', function () {
-    $this->get('/products/chat-tower')
+    // The designer prop lives on manage() now, not the guest-readable pitch.
+    $this->actingAs(presetUser())
+        ->get('/products/chat-tower/install')
         ->assertInertia(fn (Assert $page) => $page->where('product.designer', null));
 });
 
@@ -124,7 +126,7 @@ it('applies a preset: every control written, every control broadcast, the card t
     $template = ProductDesigner::overlayFor(presetDesigner(), $instance);
 
     $this->actingAs($user)->post('/products/twitch-chat-overlay/presets/terminal')
-        ->assertRedirect('/products/twitch-chat-overlay');
+        ->assertRedirect('/products/twitch-chat-overlay/install');
 
     $values = OverlayControl::where('overlay_template_id', $template->id)->pluck('value', 'key')->all();
     foreach (ProductDesigner::preset(presetDesigner(), 'terminal')['values'] as $key => $value) {
@@ -134,7 +136,7 @@ it('applies a preset: every control written, every control broadcast, the card t
     Event::assertDispatchedTimes(ControlValueUpdated::class, 13);
     Event::assertDispatched(ControlValueUpdated::class, fn (ControlValueUpdated $e) => $e->overlaySlug === $template->slug && $e->key === 'skin' && $e->value === 'terminal');
 
-    $this->actingAs($user)->get('/products/twitch-chat-overlay')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('product.designer.presets.0.active', false)
             ->where('product.designer.presets.1.active', true)
@@ -146,7 +148,7 @@ it('shows no preset as active once a value has drifted from the bundle', functio
     $instance = app(RecipeInstaller::class)->install(presetRecipe(), $user, 'twitch_chat_overlay');
     ProductDesigner::overlayFor(presetDesigner(), $instance)->controls()->where('key', 'accent')->first()->writeValue('#123456');
 
-    $this->actingAs($user)->get('/products/twitch-chat-overlay')
+    $this->actingAs($user)->get('/products/twitch-chat-overlay/install')
         ->assertInertia(fn (Assert $page) => $page->where('product.designer.presets', fn ($presets) => collect($presets)->every(fn ($p) => $p['active'] === false)));
 });
 

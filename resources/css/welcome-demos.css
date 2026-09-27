@@ -1312,6 +1312,106 @@
   text-align: right;
 }
 
+/* ---- Chat Emote Bubbles ----
+   Hand-authored, not run through the scratch generator above: bubbles rise
+   continuously rather than on a scripted narrative timeline, so there is no
+   percentage-synced sequence to generate.
+
+   Every position/timing/drift value is a CSS custom property set INLINE per
+   bubble by the Blade partial, randomised server-side on every request
+   (resources/views/welcome/demos/bubbles.blade.php) - not by nth-child rule.
+   A fixed left-to-right position paired with a strictly increasing delay
+   read as a single diagonal wave that never varied; random, uncorrelated
+   values per bubble are what makes it read as chat rather than a conveyor
+   belt, and a fresh shuffle every page load means it never looks the same
+   way twice. */
+.ol-bub {
+  background: linear-gradient(180deg, #0b0f1a, #131a2b 60%, #0b0f1a);
+}
+.ol-bub__chat {
+  position: absolute;
+  left: 4%;
+  bottom: 6%;
+  width: 52%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  opacity: 0.75;
+}
+.ol-bub__stage {
+  position: absolute;
+  inset: 0;
+}
+/* One uniform look, on purpose - the real overlay picks ONE skin per
+   install, never a random mix of tints per bubble. A plain glass circle
+   clipping the emote image is what "soap bubble" (the default look) is. */
+.ol-bub__bubble {
+  position: absolute;
+  bottom: -18%;
+  left: var(--x, 50%);
+  width: calc(var(--u) * var(--size, 7));
+  height: calc(var(--u) * var(--size, 7));
+  border-radius: 999px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: rgb(255 255 255 / 0.05);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.2),
+    inset 0 0 0.7em rgb(255 255 255 / 0.1),
+    0 0.15em 0.5em rgb(0 0 0 / 0.35);
+  opacity: 0;
+  animation: ol-bub-rise var(--dur, 6s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+/* Padded and contained, not stretched to the bubble's own edge: the glass
+   rim stays visible all the way round, and a non-square emote keeps its
+   own proportions instead of being cropped or distorted to fill a circle. */
+.ol-bub__bubble img {
+  width: 68%;
+  height: 68%;
+  object-fit: contain;
+}
+@keyframes ol-bub-rise {
+  /* bottom, not transform: translateY() - a transform percentage resolves
+     against the BUBBLE's own box, so it barely moved regardless of frame
+     size. bottom is a layout offset and resolves against the stage's
+     height, same axis the tower/bowling demos already rely on for their own
+     percentage positioning.
+
+     The drift/rotate wobble is what keeps the path from being a dead
+     straight vertical line - a real bubble does not rise in a ruler-straight
+     column, it wanders. --driftn and --rotn are unitless numbers set per
+     bubble; the sign and magnitude differ per element, so no two bubbles
+     wobble the same way or in the same direction. */
+  0% {
+    bottom: -18%;
+    transform: translateX(0) rotate(0deg) scale(0.85);
+    opacity: 0;
+  }
+  8%,
+  12% {
+    opacity: 1;
+  }
+  30% {
+    transform: translateX(calc(var(--u) * var(--driftn, 0) * 0.35)) rotate(calc(var(--rotn, 0) * 0.3deg)) scale(0.97);
+  }
+  55% {
+    transform: translateX(calc(var(--u) * var(--driftn, 0) * -0.55)) rotate(calc(var(--rotn, 0) * -0.5deg)) scale(1.02);
+  }
+  80% {
+    transform: translateX(calc(var(--u) * var(--driftn, 0) * 0.8)) rotate(calc(var(--rotn, 0) * 0.7deg)) scale(1.04);
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    bottom: 120%;
+    transform: translateX(calc(var(--u) * var(--driftn, 0))) rotate(calc(var(--rotn, 0) * 1deg)) scale(1.05);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ol-demo *,
   .ol-demo *::after {
@@ -1321,7 +1421,8 @@
   .ol-bowl__score,
   .ol-bowl__qname,
   .ol-ci__pin,
-  .ol-tc__msg {
+  .ol-tc__msg,
+  .ol-bub__bubble {
     opacity: 1 !important;
     transform: none !important;
   }

@@ -19,6 +19,11 @@
   "follower_pins": 10,
   "auto_play": { "list": "lane", "switch": "gobowl", "seconds": 15 },
   "ready_message": "Your chat can type !bowl right now. Switch on gobowl when you want the lane on screen; it runs itself from there.",
+  "highlights": [
+    "Your ten newest Twitch followers are the pins, with their avatars and names.",
+    "!bowl puts a Twitch viewer in line. While the lane is on, it sends the next one down every fifteen seconds by itself.",
+    "Ball, pins and score play out on the overlay. A strike says STRIKE."
+  ],
   "notes": [
     "The lane runs itself: while gobowl is on and someone is in line, the next bowler goes every fifteen seconds and the bot says nothing. Switch gobowl off and the line waits.",
     "Mods can skip ahead: !fbfirst sends the next person in line, !fbdraw picks one at random. Both are aliases for !list lane pop first and !list lane draw, and you can rename them under Settings, Bot aliases.",

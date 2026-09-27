@@ -209,7 +209,12 @@ it('exposes no installed filter constant beyond the one the page reads', functio
 });
 
 it('hands a product page the same sidebar, with its own category marked', function () {
-    $this->get('/products/ko-fi-alerts')
+    // The sidebar is manage()'s prop now, not pitch()'s - a guest reads the
+    // pitch, which carries no app chrome to put a sidebar in.
+    $user = categoryProductUser();
+
+    $this->actingAs($user)
+        ->get('/products/ko-fi-alerts/install')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('products/show')
@@ -219,14 +224,13 @@ it('hands a product page the same sidebar, with its own category marked', functi
             ->where('categories.0.count', 5)
             ->where('categories.1.key', 'alert')
             ->where('categories.1.count', 5)
-            ->where('installed_count', null)
+            ->where('installed_count', 0)
         );
 
-    $user = categoryProductUser();
     $this->actingAs($user)->post('/products/chat-checkin/install');
 
     $this->actingAs($user)
-        ->get('/products/chat-checkin')
+        ->get('/products/chat-checkin/install')
         ->assertInertia(fn (Assert $page) => $page->where('product.category', 'product')->where('installed_count', 1));
 });
 
@@ -250,6 +254,6 @@ it('counts only listed products as installed, never a picker recipe instance', f
         });
 
     $this->actingAs($user)
-        ->get('/products/chat-checkin')
+        ->get('/products/chat-checkin/install')
         ->assertInertia(fn (Assert $page) => $page->where('installed_count', 1));
 });

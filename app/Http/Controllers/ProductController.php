@@ -32,15 +32,18 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * A product is a listed recipe: something a streamer installs in one click
- * and finishes setting up from the same page. The catalogue is the repo
- * (RecipeCatalog); the install is RecipeInstaller; the "what is left for
- * you to do" block is the product's wiring circuit.
+ * and finishes setting up on its own checklist page. The catalogue is the
+ * repo (RecipeCatalog); the install is RecipeInstaller; the "what is left
+ * for you to do" block is the product's wiring circuit.
  *
- * Index and show are public. A visitor can read what a product does before
- * having an account; the install button is where the login happens.
+ * Index and pitch are public - a visitor can read what a product does
+ * before having an account. manage() is the install/checklist page, and is
+ * authed-only: the install button on the pitch page is where the login
+ * happens.
  */
 class ProductController extends Controller
 {
@@ -209,88 +212,105 @@ class ProductController extends Controller
         return array_values(array_unique($chips));
     }
 
-    public function show(Request $request, string $slug): Response|RedirectResponse
+    /**
+     * The pitch: what the product is and what it's worth having, readable by
+     * a guest and by every search engine. This is the SEO-bearing page for
+     * the slug now - the checklist that used to live here moved to
+     * manage(), which owns nothing a logged-out visitor needs to see.
+     */
+    public function pitch(Request $request, string $slug): SymfonyResponse|RedirectResponse
     {
         if ($moved = $this->movedPermanently($slug, 'products.show')) {
             return $moved;
         }
 
-        $manifest = $this->listedManifest($slug);
-        $user = $request->user();
-        $instance = $user ? $this->instanceFor($user, $slug) : null;
-
-        // Coming back to the page mid-setup is the moment to re-ask Twitch
-        // about mod status rather than serve a five-minute-old answer, since
-        // typing /mod overlabels is the step people leave for.
-        $inSetup = $user && $instance && ProductSetup::activeSlug($user) === $slug;
-        if ($inSetup) {
-            app(BotModeratedChannels::class)->forget();
+        // Not an Inertia response - HelpController::show() does the same for
+        // /help. An in-app <Link> still pointed at products.show hard-navigates
+        // instead of trying to parse this Blade HTML as an Inertia payload.
+        if ($request->header('X-Inertia')) {
+            return response('', 409)->header('X-Inertia-Location', $request->fullUrl());
         }
 
-        $overlays = collect($manifest['installs']['overlays'] ?? [])
-            ->map(function (array $overlay) use ($slug) {
-                $doc = OverlayMarkdown::parse(
-                    (string) file_get_contents(RecipeInstaller::directoryFor($slug).DIRECTORY_SEPARATOR.basename($overlay['file']))
-                );
-
-                return ['ref' => $overlay['ref'], 'name' => $doc['name'], 'type' => $doc['type'], 'description' => $doc['description']];
-            })
-            ->values()
-            ->all();
-
+        $manifest = $this->listedManifest($slug);
         $canonical = route('products.show', $slug);
 
-        view()->share('og', [
-            'title' => $manifest['name'].' - Overlabels product',
-            'description' => $manifest['description'],
-            'url' => $canonical,
-        ]);
-
-        view()->share('canonical', $canonical);
-
-        /*
-         * A product IS free installable software, so SoftwareApplication is
-         * the honest type: a free Offer is how schema.org says "costs
-         * nothing", and it is the one thing on this page a search engine can
-         * show without us claiming a rating nobody has given.
-         *
-         * A @graph rather than a bare node so the breadcrumb rides along in
-         * the same block. The root template json_encodes whatever is shared,
-         * and an assoc array is what its array_filter expects - a top-level
-         * list would break the moment one entry were null.
-         */
-        view()->share('jsonLd', [
-            '@context' => 'https://schema.org',
-            '@graph' => [
-                [
-                    '@type' => 'SoftwareApplication',
-                    '@id' => $canonical.'#product',
-                    'name' => $manifest['name'],
-                    'description' => $manifest['description'],
-                    'url' => $canonical,
-                    'applicationCategory' => 'MultimediaApplication',
-                    'operatingSystem' => 'Any',
-                    'softwareVersion' => (string) $manifest['version'],
-                    'isAccessibleForFree' => true,
-                    'image' => url($manifest['hero'] ?? '/ogimage.jpg'),
-                    'offers' => [
-                        '@type' => 'Offer',
-                        'price' => '0',
-                        'priceCurrency' => 'EUR',
-                        'availability' => 'https://schema.org/InStock',
+        return response()->view('products.pitch', [
+            'product' => [
+                'slug' => $manifest['slug'],
+                'name' => $manifest['name'],
+                'description' => $manifest['description'],
+                'highlights' => $manifest['highlights'] ?? [],
+                'hero' => $manifest['hero'] ?? null,
+                'version' => $manifest['version'],
+            ],
+            'installed' => $this->installedFor($request->user(), $slug),
+            'canonical' => $canonical,
+            /*
+             * A product IS free installable software, so SoftwareApplication is
+             * the honest type: a free Offer is how schema.org says "costs
+             * nothing", and it is the one thing on this page a search engine can
+             * show without us claiming a rating nobody has given.
+             *
+             * A @graph rather than a bare node so the breadcrumb rides along in
+             * the same block.
+             */
+            'jsonLd' => [
+                '@context' => 'https://schema.org',
+                '@graph' => [
+                    [
+                        '@type' => 'SoftwareApplication',
+                        '@id' => $canonical.'#product',
+                        'name' => $manifest['name'],
+                        'description' => $manifest['description'],
+                        'url' => $canonical,
+                        'applicationCategory' => 'MultimediaApplication',
+                        'operatingSystem' => 'Any',
+                        'softwareVersion' => (string) $manifest['version'],
+                        'isAccessibleForFree' => true,
+                        'image' => url($manifest['hero'] ?? '/ogimage.jpg'),
+                        'offers' => [
+                            '@type' => 'Offer',
+                            'price' => '0',
+                            'priceCurrency' => 'EUR',
+                            'availability' => 'https://schema.org/InStock',
+                        ],
+                        'author' => $this->publisher(),
+                        'publisher' => $this->publisher(),
                     ],
-                    'author' => $this->publisher(),
-                    'publisher' => $this->publisher(),
-                ],
-                [
-                    '@type' => 'BreadcrumbList',
-                    'itemListElement' => [
-                        ['@type' => 'ListItem', 'position' => 1, 'name' => 'Products', 'item' => route('products.index')],
-                        ['@type' => 'ListItem', 'position' => 2, 'name' => $manifest['name'], 'item' => $canonical],
+                    [
+                        '@type' => 'BreadcrumbList',
+                        'itemListElement' => [
+                            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Products', 'item' => route('products.index')],
+                            ['@type' => 'ListItem', 'position' => 2, 'name' => $manifest['name'], 'item' => $canonical],
+                        ],
                     ],
                 ],
             ],
         ]);
+    }
+
+    /**
+     * The install/manage checklist: the ingredients form before install, the
+     * wiring circuit and designer CTA after. Authed-only - the pitch above is
+     * where a guest reads about the product.
+     */
+    public function manage(Request $request, string $slug): Response|RedirectResponse
+    {
+        if ($moved = $this->movedPermanently($slug, 'products.manage')) {
+            return $moved;
+        }
+
+        $manifest = $this->listedManifest($slug);
+        $user = $request->user();
+        $instance = $this->instanceFor($user, $slug);
+
+        // Coming back to the page mid-setup is the moment to re-ask Twitch
+        // about mod status rather than serve a five-minute-old answer, since
+        // typing /mod overlabels is the step people leave for.
+        $inSetup = $instance && ProductSetup::activeSlug($user) === $slug;
+        if ($inSetup) {
+            app(BotModeratedChannels::class)->forget();
+        }
 
         $installed = $instance ? $this->installedView($instance, $slug) : null;
 
@@ -311,34 +331,11 @@ class ProductController extends Controller
                 // The questions the install asks. Integrations are handed over
                 // as written, placeholders and all: the page fills them from
                 // whatever is currently picked, so the list of what the click
-                // gives you follows the pick.
+                // gives you follows the pick. Only the first is read (the
+                // header's service icon) - a product connecting two would
+                // need a second visual, and none does.
                 'ingredients' => RecipeIngredients::declared($manifest),
                 'integrations' => $manifest['installs']['integrations'] ?? [],
-                'overlays' => $overlays,
-                'lists' => collect($manifest['installs']['lists'] ?? [])
-                    ->map(fn (array $list) => ['slug' => $list['slug'], 'label' => $list['label'] ?? $list['slug']])
-                    ->values()
-                    ->all(),
-                // Every chat command the install creates, in one list for the
-                // page, with a line saying what kind it is.
-                'commands' => collect($manifest['installs']['list_appenders'] ?? [])
-                    ->map(fn (array $appender) => [
-                        'command' => $appender['command'],
-                        'kind' => 'appender',
-                        'detail' => 'Anyone in chat can type it to get on the list.',
-                    ])
-                    ->concat(collect($manifest['installs']['bot_aliases'] ?? [])->map(fn (array $alias) => [
-                        'command' => $alias['command'],
-                        'kind' => 'alias',
-                        'detail' => 'Short for '.ltrim($alias['target'], '!').'. An alias, so you can rename it.',
-                    ]))
-                    ->concat(collect($manifest['installs']['bot_commands'] ?? [])->map(fn (array $command) => [
-                        'command' => $command['command'],
-                        'kind' => 'command',
-                        'detail' => 'A bot command with its own reply. Yours to edit.',
-                    ]))
-                    ->values()
-                    ->all(),
                 'notes' => $manifest['notes'] ?? [],
                 'ready_message' => $manifest['ready_message'] ?? null,
                 // The product's designer, for the card that opens it: its fixed
@@ -349,7 +346,7 @@ class ProductController extends Controller
             ],
             'installed' => $installed,
             'categories' => $this->categories(),
-            'installed_count' => $user ? $this->installedCount($user) : null,
+            'installed_count' => $this->installedCount($user),
         ]);
     }
 
@@ -362,7 +359,7 @@ class ProductController extends Controller
         // The result is visible where the button was: the page turns into
         // its installed state. No toast on top of that.
         if ($this->instanceFor($user, $slug)) {
-            return redirect()->route('products.show', $slug);
+            return redirect()->route('products.manage', $slug);
         }
 
         // The answers to the product's questions, keyed by ingredient key.
@@ -378,14 +375,14 @@ class ProductController extends Controller
         try {
             $this->installer->install($recipe, $user, RecipeInstance::instanceSlugFrom($slug), null, $ingredients);
         } catch (RuntimeException $e) {
-            return redirect()->route('products.show', $slug)->withErrors(['install' => $e->getMessage()]);
+            return redirect()->route('products.manage', $slug)->withErrors(['install' => $e->getMessage()]);
         }
 
         // From here every app page carries the setup banner until the
         // product page sees nothing left, or the person says not now.
         ProductSetup::start($user, $slug);
 
-        return redirect()->route('products.show', $slug)->with('success', $manifest['name'].' is installed.');
+        return redirect()->route('products.manage', $slug)->with('success', $manifest['name'].' is installed.');
     }
 
     /**
@@ -428,7 +425,7 @@ class ProductController extends Controller
             return response()->json(['values' => $bundle['values']]);
         }
 
-        return redirect()->route('products.show', $slug);
+        return redirect()->route('products.manage', $slug);
     }
 
     /**
@@ -526,20 +523,20 @@ class ProductController extends Controller
 
         // Nothing installed is nothing to undo; the page already shows that.
         if (! $instance) {
-            return redirect()->route('products.show', $slug);
+            return redirect()->route('products.manage', $slug);
         }
 
         try {
             $this->installer->uninstall($instance);
         } catch (RuntimeException $e) {
-            return redirect()->route('products.show', $slug)->withErrors(['uninstall' => $e->getMessage()]);
+            return redirect()->route('products.manage', $slug)->withErrors(['uninstall' => $e->getMessage()]);
         }
 
         if (ProductSetup::activeSlug($request->user()) === $slug) {
             ProductSetup::end($request->user());
         }
 
-        return redirect()->route('products.show', $slug)->with('success', $manifest['name'].' is uninstalled.');
+        return redirect()->route('products.manage', $slug)->with('success', $manifest['name'].' is uninstalled.');
     }
 
     /**
@@ -641,6 +638,16 @@ class ProductController extends Controller
     }
 
     /**
+     * Whether the current visitor already has this product, for the pitch
+     * page's CTA - "Get" vs "Manage". No wiring circuit is built here; that
+     * stays on manage(), which is the only page that needs it.
+     */
+    private function installedFor(?User $user, string $slug): bool
+    {
+        return $user !== null && $this->instanceFor($user, $slug) !== null;
+    }
+
+    /**
      * The installed product as the page shows it: its circuit, and each
      * overlay the install created with what the page needs to say about it.
      *
@@ -725,7 +732,7 @@ class ProductController extends Controller
         $subject = $circuit['subjects'][0] ?? null;
 
         $rows = ExternalIntegration::where('user_id', $instance->user_id)->get()->keyBy('service');
-        $returnTo = route('products.show', $slug, false);
+        $returnTo = route('products.manage', $slug, false);
         $connectable = collect($firing)
             ->pluck('service')
             ->unique()
@@ -759,7 +766,7 @@ class ProductController extends Controller
      * are. A product with a stage of its own gets an empty answer.
      *
      * @param  list<array<string, mixed>>  $overlays
-     * @return array{loaded: bool, overlays: list<array{id: int, name: string}>, total: int}
+     * @return array{loaded: bool, overlays: list<array{id: int, name: string, slug: string}>, total: int}
      */
     private function yourOverlays(RecipeInstance $instance, array $overlays): array
     {
@@ -791,7 +798,7 @@ class ProductController extends Controller
 
         return [
             'loaded' => $loaded->isNotEmpty(),
-            'overlays' => $pick->map(fn (OverlayTemplate $template) => ['id' => $template->id, 'name' => $template->name])->values()->all(),
+            'overlays' => $pick->map(fn (OverlayTemplate $template) => ['id' => $template->id, 'name' => $template->name, 'slug' => $template->slug])->values()->all(),
             'total' => $statics->count(),
         ];
     }

@@ -139,6 +139,17 @@
         "maxLength": 300
       }
     },
+    "highlights": {
+      "type": "array",
+      "description": "Up to three short lines of what makes this product worth having, shown as ticked bullets beside its pitch on both the homepage teaser and the product's pitch page. Optional; a product without them shows its description alone.",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 220
+      }
+    },
     "ingredients": {
       "type": "array",
       "description": "The questions the install asks, in order. A recipe is a form, not a tree: each ingredient has fixed choices and a default, and an answer is written wherever the manifest or an overlay document says {{key}}. The answers are recorded on the instance, so the shipped files plus the answers always reproduce what was installed. Nothing here is an option set; those are Lists.",

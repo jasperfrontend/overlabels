@@ -53,18 +53,17 @@ it('is listed with its hero image', function () {
         ->and(file_get_contents(public_path('products/follower-bowling-hero.jpg')))->not->toContain('c2pa');
 });
 
-it('shows the list and the command it will create', function () {
-    $this->get('/products/follower-bowling')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('product.lists.0.slug', 'lane')
-            ->where('product.commands.0.command', '!bowl')
-            ->where('product.commands.0.kind', 'appender')
-            ->where('product.commands.1.command', '!fbfirst')
-            ->where('product.commands.1.kind', 'alias')
-            ->where('product.commands.2.command', '!fbdraw')
-            ->where('product.overlays.0.name', 'Follower bowling lane')
-        );
+it('installs the list and the command it will create', function () {
+    // Was a page-payload assertion against fields the install/manage page no
+    // longer carries (they fed a marketing block that moved to the pitch
+    // page's own manifest-driven copy) - the manifest is the fact itself.
+    $manifest = app(RecipeCatalog::class)->find('follower-bowling');
+
+    expect($manifest['installs']['lists'][0]['slug'] ?? null)->toBe('lane')
+        ->and($manifest['installs']['list_appenders'][0]['command'] ?? null)->toBe('!bowl')
+        ->and($manifest['installs']['bot_aliases'][0]['command'] ?? null)->toBe('!fbfirst')
+        ->and($manifest['installs']['bot_aliases'][1]['command'] ?? null)->toBe('!fbdraw')
+        ->and($manifest['installs']['overlays'] ?? [])->toHaveCount(1);
 });
 
 it('installs the lane overlay with all 21 controls, the lane list and the !bowl appender', function () {
@@ -134,7 +133,7 @@ it('surfaces the refusal on the product page instead of a 500', function () {
 
     $this->actingAs($user)
         ->post('/products/follower-bowling/install')
-        ->assertRedirect('/products/follower-bowling')
+        ->assertRedirect('/products/follower-bowling/install')
         ->assertSessionHasErrors('install');
 
     expect(RecipeInstance::where('user_id', $user->id)->count())->toBe(0);
