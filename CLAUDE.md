@@ -769,10 +769,11 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
   `?? 40` is what sends the stylesheet to the slow path. Running CSS animations survive the style
   swap (verified in Chrome). A conditional cannot do it: `[[[if:a < b]]]` takes a literal on the
   right, never a second tag.
-- Product = `resources/recipes/chat-emote-bubbles/`, one overlay, ten controls, no designer (the
-  chat designer is hard-wired to `ChatPresets`; bubbles settings live on the Controls tab). Looks
-  are `bubble` (CSS), `snow` and `heart` (SVG data-URI masks tinted by `bubble_color`). `pop_after`
-  folds accumulate-and-pop and float-off into one number, like chat's `lifetime`.
+- Product = `resources/recipes/chat-emote-bubbles/`, one overlay, ten controls, and since
+  OL-2609-141 a designer of its own declared in its manifest (Soap, Winter, Valentine; see the
+  "Control vocabularies and the unified product designer" subsection). Looks are `bubble` (CSS),
+  `snow` and `heart` (SVG data-URI masks tinted by `bubble_color`). `pop_after` folds
+  accumulate-and-pop and float-off into one number, like chat's `lifetime`.
 - **A background Chrome tab looks like a frozen renderer**: `requestAnimationFrame` never fires
   and CDP screenshots time out. Check `document.visibilityState` before blaming the overlay; the
   snow look was wrongly suspected for twenty minutes.
