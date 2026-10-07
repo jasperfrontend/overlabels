@@ -22,6 +22,99 @@
     "Ten looks, from a terminal to speech bubbles to a news ticker, and thirteen controls for font, colours, layout and how long a message stays.",
     "Nothing to connect and no bot to add. Every change lands in OBS as you make it."
   ],
+  "pitch": {
+    "tagline": "Your Twitch chat on your stream, in your style.",
+    "lede": "Names in their Twitch colours, badges and emotes, read straight from Twitch. Pick one of ten looks, change anything you like, and see every change in OBS as you make it.",
+    "plays": [
+      {
+        "title": "Chat talks",
+        "line": "Like it always does.",
+        "art": {
+          "type": "chat",
+          "lines": [
+            {
+              "name": "quietfox",
+              "text": "that jump was insane",
+              "color": "#f472b6"
+            },
+            {
+              "name": "pixelmoth",
+              "text": "gg",
+              "color": "#60a5fa"
+            }
+          ]
+        }
+      },
+      {
+        "title": "It shows on your stream",
+        "line": "Names, badges and emotes, as it happens.",
+        "art": {
+          "type": "image",
+          "src": "/products/twitch-chat-overlay/play-feed.svg",
+          "alt": "Three chat messages shown as an overlay, with coloured names and badges"
+        }
+      },
+      {
+        "title": "You make it yours",
+        "line": "Every change lands in OBS as you make it.",
+        "art": {
+          "type": "stat",
+          "stats": [
+            {
+              "value": "10",
+              "label": "looks"
+            },
+            {
+              "value": "13",
+              "label": "controls"
+            }
+          ],
+          "caption": "Change it while you're live"
+        }
+      }
+    ],
+    "reasons_heading": "Your chat on screen, without the hassle.",
+    "reasons": [
+      {
+        "icon": "zap",
+        "title": "Nothing to connect",
+        "body": "No bot and no account to link. It reads your Twitch chat directly, like any viewer does."
+      },
+      {
+        "icon": "palette",
+        "title": "Ten looks to start from",
+        "body": "From a terminal to speech bubbles to a news ticker. Then the font, colours and layout are yours."
+      },
+      {
+        "icon": "eye",
+        "title": "Every emote shows up",
+        "body": "Twitch emotes plus 7TV, BTTV and FFZ, and the badges your chatters earned."
+      },
+      {
+        "icon": "shield",
+        "title": "Keeps going when we don't",
+        "body": "Messages come straight from Twitch, not through Overlabels, so chat keeps flowing even if Overlabels has a bad day."
+      }
+    ],
+    "looks_heading": "Ten looks to start from.",
+    "looks_lede": "Pick one in the designer, then tune the font, colours, layout and how long a message stays.",
+    "setup_note": "The feed fills whatever box you give it in OBS. 500 by 800 is a good start for a stacked feed, 1920 by 80 for the ticker.",
+    "faq": [
+      {
+        "q": "Do deleted messages disappear?",
+        "a": "Yes. When a moderator deletes a message or times someone out, it comes off your overlay too."
+      },
+      {
+        "q": "Can I hide commands or certain chatters?",
+        "a": "Yes. You can hide messages that start with `!` and hide chosen accounts, like other bots."
+      },
+      {
+        "q": "Do my viewers need to do anything?",
+        "a": "No. They chat like they always do."
+      }
+    ],
+    "closing": "Put your chat on screen tonight."
+  },
   "notes": [
     "Every message comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so chat keeps flowing even when Overlabels is having a bad day.",
     "Size the OBS browser source to size the chat: the feed fills whatever box you give it. 500 by 800 is a good start for a stacked feed, 1920 by 80 for the ticker.",

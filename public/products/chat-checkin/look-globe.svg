@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <circle cx="160" cy="100" r="78" fill="#0f1a24" stroke="#1f6f68" stroke-width="1"/>
+  <g fill="#2dd4bf" opacity=".55">
+    <circle cx="130" cy="70" r="1.6"/><circle cx="138" cy="66" r="1.6"/><circle cx="146" cy="72" r="1.6"/><circle cx="154" cy="68" r="1.6"/>
+    <circle cx="140" cy="80" r="1.6"/><circle cx="150" cy="84" r="1.6"/><circle cx="182" cy="110" r="1.6"/><circle cx="190" cy="118" r="1.6"/>
+    <circle cx="186" cy="128" r="1.6"/><circle cx="194" cy="134" r="1.6"/><circle cx="178" cy="122" r="1.6"/><circle cx="120" cy="120" r="1.6"/>
+    <circle cx="128" cy="126" r="1.6"/><circle cx="168" cy="60" r="1.6"/><circle cx="176" cy="64" r="1.6"/>
+  </g>
+  <line x1="146" y1="78" x2="118" y2="52" stroke="#bfe3e0" stroke-width="1"/>
+  <circle cx="146" cy="78" r="3.5" fill="#bfe3e0"/>
+  <text x="84" y="48" fill="#dfe8e8" font-family="ui-monospace, Consolas, monospace" font-size="10">pixelmoth</text>
+  <circle cx="186" cy="122" r="3.5" fill="#bfe3e0"/>
+  <text x="196" y="150" fill="#dfe8e8" font-family="ui-monospace, Consolas, monospace" font-size="10">quietfox</text>
+</svg>

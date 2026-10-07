@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150">
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      .ball { animation: roll 2.6s ease-in infinite; }
+      @keyframes roll { 0% { transform: translate(0, 0); } 70%, 100% { transform: translate(0, -86px) scale(.55); } }
+      .ball { transform-origin: 120px 128px; transform-box: view-box; }
+    }
+  </style>
+  <polygon points="88,18 152,18 196,146 44,146" fill="#3a2a1c"/>
+  <polygon points="88,18 152,18 196,146 44,146" fill="none" stroke="#5b4430" stroke-width="1"/>
+  <line x1="120" y1="18" x2="120" y2="146" stroke="#5b4430" stroke-width=".6" opacity=".6"/>
+  <g fill="#f1edf9">
+    <circle cx="120" cy="40" r="4.5"/>
+    <circle cx="113" cy="33" r="4.5"/><circle cx="127" cy="33" r="4.5"/>
+    <circle cx="106" cy="26" r="4.5"/><circle cx="120" cy="26" r="4.5"/><circle cx="134" cy="26" r="4.5"/>
+    <circle cx="99" cy="19" r="4.5"/><circle cx="113" cy="19" r="4.5"/><circle cx="127" cy="19" r="4.5"/><circle cx="141" cy="19" r="4.5"/>
+  </g>
+  <circle class="ball" cx="120" cy="128" r="10" fill="#a78bfa"/>
+</svg>

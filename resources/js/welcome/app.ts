@@ -1,4 +1,5 @@
 import '../../css/app.css';
+import '../../css/product-page.css';
 import '../../css/welcome-checkin.css';
 import '../../css/welcome-demos.css';
 import '../../css/welcome.css';

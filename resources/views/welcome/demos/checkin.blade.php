@@ -36,10 +36,13 @@
     $last = end($checkins);
 @endphp
 <div class="ol-demo-frame overflow-hidden rounded-sm border border-sidebar-border" data-checkin-demo>
+  {{-- The product page passes bare: it has its own heading, and a pretend OBS title bar there reads as filler. --}}
+  @unless ($bare ?? false)
   <div class="flex items-center gap-2 border-b border-sidebar-border bg-card/50 px-4 py-2.5">
     <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-600 dark:bg-emerald-500"></span>
     <span class="font-mono text-xs text-muted-foreground">Chat Checkin, live in OBS</span>
   </div>
+  @endunless
   <div class="ol-demo ol-ck" aria-label="Chat Checkin demo: viewers type !checkin with their city and a pin lands on a spinning globe">
     <div class="ol-ck__left">
       <div class="ol-ck__chat" data-checkin-chat aria-live="polite">

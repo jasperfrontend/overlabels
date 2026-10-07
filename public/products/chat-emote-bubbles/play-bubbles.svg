@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150">
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      .b { animation: rise 4s linear infinite; }
+      .b2 { animation-delay: -1.3s; }
+      .b3 { animation-delay: -2.6s; }
+      @keyframes rise { from { transform: translateY(40px); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } to { transform: translateY(-40px); opacity: 0; } }
+    }
+  </style>
+  <g class="b">
+    <circle cx="70" cy="80" r="20" fill="#ffffff" fill-opacity=".08" stroke="#e5e7eb" stroke-opacity=".7"/>
+    <circle cx="70" cy="80" r="11" fill="#facc15"/>
+    <circle cx="66" cy="77" r="1.6" fill="#1f1300"/><circle cx="74" cy="77" r="1.6" fill="#1f1300"/>
+    <ellipse cx="70" cy="84" rx="3" ry="2.4" fill="#1f1300"/>
+  </g>
+  <g class="b b2">
+    <circle cx="125" cy="62" r="24" fill="#ffffff" fill-opacity=".08" stroke="#e5e7eb" stroke-opacity=".7"/>
+    <circle cx="125" cy="62" r="13" fill="#facc15"/>
+    <circle cx="120" cy="58" r="1.8" fill="#1f1300"/><circle cx="130" cy="58" r="1.8" fill="#1f1300"/>
+    <ellipse cx="125" cy="67" rx="3.4" ry="2.8" fill="#1f1300"/>
+  </g>
+  <g class="b b3">
+    <circle cx="180" cy="92" r="18" fill="#ffffff" fill-opacity=".08" stroke="#e5e7eb" stroke-opacity=".7"/>
+    <circle cx="180" cy="92" r="10" fill="#facc15"/>
+    <circle cx="176.5" cy="89" r="1.5" fill="#1f1300"/><circle cx="183.5" cy="89" r="1.5" fill="#1f1300"/>
+    <ellipse cx="180" cy="96" rx="2.8" ry="2.2" fill="#1f1300"/>
+  </g>
+</svg>

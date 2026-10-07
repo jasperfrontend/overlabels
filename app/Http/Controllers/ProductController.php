@@ -29,6 +29,7 @@ use App\Support\WiringReport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
@@ -234,7 +235,10 @@ class ProductController extends Controller
         $manifest = $this->listedManifest($slug);
         $canonical = route('products.show', $slug);
 
-        return response()->view('products.pitch', [
+        // A product that declares a `pitch` gets the full sales page; the
+        // donation alerts do not declare one and keep the short page.
+        return response()->view(isset($manifest['pitch']) ? 'products.page' : 'products.pitch', [
+            'page' => isset($manifest['pitch']) ? $this->pitchPage($manifest) : null,
             'product' => [
                 'slug' => $manifest['slug'],
                 'name' => $manifest['name'],
@@ -537,6 +541,73 @@ class ProductController extends Controller
         }
 
         return redirect()->route('products.manage', $slug)->with('success', $manifest['name'].' is uninstalled.');
+    }
+
+    /**
+     * Everything the full product page shows beyond the manifest's own
+     * `pitch` text, derived so nothing is written twice: the setup steps come
+     * from requires_bot, the looks fall back to the designer's presets, two
+     * questions every product shares are added after its own, and the closing
+     * points at the other products that have a page like this one.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return array<string, mixed>
+     */
+    private function pitchPage(array $manifest): array
+    {
+        $pitch = $manifest['pitch'];
+        $command = preg_match('/!\w+/', $manifest['description'], $m) ? $m[0] : null;
+
+        $steps = [[
+            'title' => 'Get '.$manifest['name'],
+            'body' => 'Log in with Twitch. One click puts it in your account.',
+        ]];
+        if ($manifest['requires_bot'] ?? false) {
+            $steps[] = [
+                'title' => 'Switch on the bot',
+                'body' => 'One button turns on the Overlabels bot, which reads `'.$command.'` in your chat. Type `/mod overlabels` in your chat so it can reply.',
+            ];
+        }
+        $steps[] = [
+            'title' => 'Add it to OBS',
+            'body' => 'Copy one link into a Browser Source. Streamlabs Desktop and any other app with a browser source work the same way.',
+        ];
+
+        $looks = $pitch['looks'] ?? array_map(
+            fn (array $preset) => ['title' => $preset['label'], 'body' => $preset['blurb'] ?? ''],
+            $manifest['designer']['presets'] ?? [],
+        );
+
+        $note = $pitch['plays_note'] ?? null;
+        if ($note !== null) {
+            $route = $note['link_route'] ?? null;
+            $note['link_url'] = $route !== null && Route::has($route) ? route($route) : null;
+        }
+
+        $more = collect($this->catalog->listed())
+            ->filter(fn (array $other) => isset($other['pitch']) && $other['slug'] !== $manifest['slug'])
+            ->take(3)
+            ->map(fn (array $other) => [
+                'name' => $other['name'],
+                'tagline' => $other['pitch']['tagline'],
+                'url' => route('products.show', $other['slug']),
+            ])
+            ->values()
+            ->all();
+
+        return [
+            ...$pitch,
+            'plays_note' => $note,
+            'looks' => $looks,
+            'steps' => $steps,
+            'steps_word' => count($steps) === 2 ? 'two' : 'three',
+            'faq' => [
+                ...$pitch['faq'],
+                ['q' => 'Is it really free?', 'a' => 'Yes. Overlabels has no tiers, no trial and no card to enter. Every product is free.'],
+                ['q' => 'Can I remove it later?', 'a' => "Yes. One button on the product's page removes it and everything it installed."],
+            ],
+            'more' => $more,
+        ];
     }
 
     /**

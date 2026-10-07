@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <circle cx="210" cy="96" r="70" fill="#0f1a24" stroke="#1f6f68" stroke-width="1"/>
+  <g fill="#2dd4bf" opacity=".55">
+    <circle cx="190" cy="70" r="1.6"/><circle cx="198" cy="66" r="1.6"/><circle cx="206" cy="74" r="1.6"/><circle cx="230" cy="110" r="1.6"/>
+    <circle cx="238" cy="118" r="1.6"/><circle cx="226" cy="124" r="1.6"/><circle cx="180" cy="116" r="1.6"/>
+  </g>
+  <circle cx="204" cy="78" r="3.5" fill="#bfe3e0"/>
+  <circle cx="232" cy="120" r="3.5" fill="#bfe3e0"/>
+  <g font-family="ui-monospace, Consolas, monospace" font-size="10.5">
+    <text x="22" y="56" fill="#60a5fa">pixelmoth</text><text x="22" y="69" fill="#c8c0d8">Lisbon, PT</text>
+    <text x="22" y="90" fill="#f472b6">quietfox</text><text x="22" y="103" fill="#c8c0d8">Austin, US</text>
+    <text x="22" y="124" fill="#a3e635">tea_and_raids</text><text x="22" y="137" fill="#c8c0d8">Auckland, NZ</text>
+  </g>
+</svg>

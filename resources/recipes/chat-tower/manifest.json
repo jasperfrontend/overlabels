@@ -22,6 +22,97 @@
     "The tower sways more the taller it gets, and the fall lines are on screen so your Twitch chat sees it coming.",
     "Whoever topples it gets named. Everyone who built the all-time record tower lands in a List any overlay can show."
   ],
+  "pitch": {
+    "tagline": "Your chat builds one tower together.",
+    "lede": "Viewers type `!stack` and a block lands on top. Every block lands a little off the one below, the tower sways more as it grows, and sooner or later someone knocks it over.",
+    "plays": [
+      {
+        "title": "Chat stacks a block",
+        "line": "Aim it left or right to fight the lean.",
+        "art": {
+          "type": "chat",
+          "lines": [
+            {
+              "name": "quietfox",
+              "text": "!stack",
+              "color": "#f472b6"
+            },
+            {
+              "name": "pixelmoth",
+              "text": "!stack left",
+              "color": "#60a5fa"
+            }
+          ]
+        }
+      },
+      {
+        "title": "The tower sways as it grows",
+        "line": "Both fall lines are on screen, so chat sees it coming.",
+        "art": {
+          "type": "image",
+          "src": "/products/chat-tower/play-sway.svg",
+          "alt": "A leaning tower of coloured blocks between two dashed fall lines"
+        }
+      },
+      {
+        "title": "Someone knocks it over",
+        "line": "Whoever placed the last block gets named.",
+        "art": {
+          "type": "chat",
+          "lines": [
+            {
+              "name": "overlabels",
+              "text": "The tower fell at 23. tea_and_raids placed the last block. Record stands at 31.",
+              "color": "#a78bfa"
+            }
+          ]
+        }
+      }
+    ],
+    "reasons_heading": "One tower, built by your whole chat.",
+    "reasons": [
+      {
+        "icon": "people",
+        "title": "Everyone builds the same thing",
+        "body": "One tower for the whole chat. Every block is somebody's, and it only gets tall if chat works together."
+      },
+      {
+        "icon": "trophy",
+        "title": "A record to chase",
+        "body": "The tallest tower ever stays on record, and everyone who had a block in it lands in a list any overlay can show."
+      },
+      {
+        "icon": "eye",
+        "title": "The fall is part of the show",
+        "body": "The tower leans, sways and finally comes down on screen. Chat can see exactly how close it is."
+      },
+      {
+        "icon": "clock",
+        "title": "Fresh each stream, or left standing",
+        "body": "The tower comes down at the start of every stream, or stays up between streams if you'd rather. The record carries over either way."
+      }
+    ],
+    "setup_note": "Blocks only land while you are live. Anyone can type `!tower` to see how tall it is and how close it is to falling.",
+    "faq": [
+      {
+        "q": "What happens to whoever knocks it over?",
+        "a": "Nothing, apart from being named in chat and on screen."
+      },
+      {
+        "q": "Can one viewer spam it?",
+        "a": "No. Each viewer waits a few seconds between blocks, 5 by default, and you can make that longer."
+      },
+      {
+        "q": "Does the record reset?",
+        "a": "No. The record and the list of who built it carry over from stream to stream."
+      },
+      {
+        "q": "Do my viewers need to sign up for anything?",
+        "a": "No. They type in your Twitch chat, like any other chat command."
+      }
+    ],
+    "closing": "Give your chat something to build tonight."
+  },
   "notes": [
     "The tower falls when the top of its sway crosses a fall line. Both lines are on the overlay, so chat can see it coming. Nothing happens to the viewer who topples it beyond being named.",
     "The tower comes down at the start of every stream by default. Settings, Integrations, Chat Tower can leave it standing between streams instead, and has a button to clear it by hand. The record carries over either way.",

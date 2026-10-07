@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150">
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      .pin { animation: drop 2.4s ease-out infinite; }
+      @keyframes drop { 0%, 15% { opacity: 0; transform: translateY(-10px); } 30%, 100% { opacity: 1; transform: none; } }
+    }
+  </style>
+  <circle cx="120" cy="75" r="62" fill="#0f1a24" stroke="#1f6f68" stroke-width="1"/>
+  <g fill="#2dd4bf" opacity=".5">
+    <circle cx="96" cy="48" r="1.5"/><circle cx="104" cy="44" r="1.5"/><circle cx="112" cy="50" r="1.5"/><circle cx="120" cy="46" r="1.5"/>
+    <circle cx="102" cy="58" r="1.5"/><circle cx="114" cy="62" r="1.5"/><circle cx="140" cy="88" r="1.5"/><circle cx="148" cy="96" r="1.5"/>
+    <circle cx="144" cy="104" r="1.5"/><circle cx="152" cy="110" r="1.5"/><circle cx="136" cy="98" r="1.5"/><circle cx="88" cy="94" r="1.5"/>
+    <circle cx="96" cy="100" r="1.5"/><circle cx="130" cy="40" r="1.5"/>
+  </g>
+  <circle cx="144" cy="100" r="3" fill="#bfe3e0" opacity=".6"/>
+  <g class="pin">
+    <line x1="110" y1="58" x2="84" y2="30" stroke="#bfe3e0" stroke-width="1"/>
+    <circle cx="110" cy="58" r="4" fill="#bfe3e0"/>
+    <text x="38" y="26" fill="#f1edf9" font-family="ui-monospace, Consolas, monospace" font-size="12">pixelmoth</text>
+  </g>
+</svg>

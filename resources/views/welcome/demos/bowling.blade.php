@@ -10,10 +10,13 @@
     $bowlPins = ['moss_ttv', 'pixelmoth', 'tea_and_raids', 'noodlebyte', 'quietfox', 'kettle_', 'dana_plays', 'sunroof', 'bytesized', 'rivermoss'];
 @endphp
 <div class="ol-demo-frame overflow-hidden rounded-sm border border-sidebar-border">
+  {{-- The product page passes bare: it has its own heading, and a pretend OBS title bar there reads as filler. --}}
+  @unless ($bare ?? false)
   <div class="flex items-center gap-2 border-b border-sidebar-border bg-card/50 px-4 py-2.5">
     <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-600 dark:bg-emerald-500"></span>
     <span class="font-mono text-xs text-muted-foreground">Follower Bowling, live in OBS</span>
   </div>
+  @endunless
   <div class="ol-demo ol-bowl" aria-label="Follower Bowling demo: viewers type !bowl to get in line, the ball rolls, the newest followers fall as pins">
     <div class="ol-bowl__queue" aria-hidden="true">
       <div class="ol-bowl__qhead"><span>In line</span><span class="ol-bowl__qcount"><span>3</span><span>2</span><span>3</span></span></div>

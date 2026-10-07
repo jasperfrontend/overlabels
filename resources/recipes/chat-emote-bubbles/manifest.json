@@ -21,6 +21,95 @@
     "Three looks: soap bubble, snowflake, heart. Speed, direction, size, color, how many at once, and where they appear.",
     "Nothing to connect and no bot to add. Every change lands in OBS as you make it."
   ],
+  "pitch": {
+    "tagline": "Every emote your chat types floats across your stream.",
+    "lede": "Type PogChamp five times and five PogChamps drift up your screen in soap bubbles. Twitch, 7TV, BTTV and FFZ emotes all count, and there's nothing to connect and no bot to add.",
+    "plays": [
+      {
+        "title": "Chat types emotes",
+        "line": "Twitch, 7TV, BTTV and FFZ all count.",
+        "art": {
+          "type": "chat",
+          "lines": [
+            {
+              "name": "tea_and_raids",
+              "text": "GoldPLZ GoldPLZ",
+              "color": "#f97316"
+            },
+            {
+              "name": "noodlebyte",
+              "text": "PogChamp PogChamp PogChamp",
+              "color": "#a3e635"
+            }
+          ]
+        }
+      },
+      {
+        "title": "Each one gets a bubble",
+        "line": "Three PogChamps in one message are three bubbles.",
+        "art": {
+          "type": "image",
+          "src": "/products/chat-emote-bubbles/play-bubbles.svg",
+          "alt": "Three emotes floating upward inside soap bubbles"
+        }
+      },
+      {
+        "title": "They drift off or pop",
+        "line": "Float away, or gather at the top and pop.",
+        "art": {
+          "type": "stat",
+          "stats": [
+            {
+              "value": "40",
+              "label": "bubbles on screen at once"
+            }
+          ],
+          "caption": "You choose how many"
+        }
+      }
+    ],
+    "reasons_heading": "Your chat's emotes, on your stream.",
+    "reasons": [
+      {
+        "icon": "eye",
+        "title": "Chat sees itself on screen",
+        "body": "Every emote someone types turns up on your stream a moment later."
+      },
+      {
+        "icon": "palette",
+        "title": "Three looks to start from",
+        "body": "Soap bubbles, snowflakes or hearts, in any colour, rising, sinking or fired from one spot."
+      },
+      {
+        "icon": "zap",
+        "title": "Nothing to set up",
+        "body": "No bot and no account to connect. It reads your Twitch chat directly, like any viewer does."
+      },
+      {
+        "icon": "shield",
+        "title": "Keeps going when we don't",
+        "body": "Emotes come straight from Twitch, not through Overlabels, so the bubbles keep coming even if Overlabels has a bad day."
+      }
+    ],
+    "looks_heading": "Three looks to start from.",
+    "looks_lede": "Pick one in the designer, then change the colour, size, speed and direction to suit your stream.",
+    "setup_note": "Size the browser source to your whole canvas, 1920 by 1080, and put it above your camera.",
+    "faq": [
+      {
+        "q": "Which emotes count?",
+        "a": "Twitch emotes, plus the 7TV, BTTV and FFZ emotes enabled in your channel. A plain emoji is text, not an emote, so it stays in chat."
+      },
+      {
+        "q": "Can a busy chat flood my screen?",
+        "a": "No. You set how many bubbles can be on screen at once, 40 by default."
+      },
+      {
+        "q": "Do my viewers need to do anything?",
+        "a": "No. They chat like they always do."
+      }
+    ],
+    "closing": "Let your chat's emotes loose tonight."
+  },
   "notes": [
     "Every emote comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so the bubbles keep coming even when Overlabels is having a bad day.",
     "Size the OBS browser source to your whole canvas (1920 by 1080) and put it above your camera. Bubbles rise from the bottom edge by default; the Spawn control moves them to the top, to a random spot, or to one point you pick with X and Y.",

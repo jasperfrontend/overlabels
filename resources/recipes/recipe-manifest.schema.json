@@ -150,6 +150,154 @@
         "maxLength": 220
       }
     },
+    "pitch": {
+      "type": "object",
+      "description": "The public product page, section by section. Only a listed `product` (not an `alert`) carries one, and ProductPitchPageTest requires it there. Text may wrap a command or a tag in backticks to set it in code type; nothing else is markup.",
+      "additionalProperties": false,
+      "required": ["tagline", "lede", "plays", "reasons_heading", "reasons", "faq", "closing"],
+      "properties": {
+        "tagline": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "The page's H1: one line, what the product does on stream. Also the one-liner other product pages use to point at this one."
+        },
+        "lede": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320,
+          "description": "Two or three sentences under the H1. No setup in it: the steps section says how."
+        },
+        "plays": {
+          "type": "array",
+          "description": "What chat does, as exactly three beats, each a picture, a short title and one line.",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["title", "line", "art"],
+            "properties": {
+              "title": { "type": "string", "minLength": 1, "maxLength": 60 },
+              "line": { "type": "string", "minLength": 1, "maxLength": 90 },
+              "art": {
+                "type": "object",
+                "description": "`chat`: a few chat lines, the last one highlighted. `stat`: one or two big values and a caption. `image`: a file under public/products/<slug>/.",
+                "additionalProperties": false,
+                "required": ["type"],
+                "properties": {
+                  "type": { "enum": ["chat", "stat", "image"] },
+                  "lines": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["name", "text"],
+                      "properties": {
+                        "name": { "type": "string", "minLength": 1, "maxLength": 25 },
+                        "text": { "type": "string", "minLength": 1, "maxLength": 90 },
+                        "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+                      }
+                    }
+                  },
+                  "stats": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 2,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["value", "label"],
+                      "properties": {
+                        "value": { "type": "string", "minLength": 1, "maxLength": 8 },
+                        "label": { "type": "string", "minLength": 1, "maxLength": 30 }
+                      }
+                    }
+                  },
+                  "caption": { "type": "string", "maxLength": 60 },
+                  "src": { "type": "string", "pattern": "^/products/[a-z0-9-]+/[a-z0-9-]+\\.svg$" },
+                  "alt": { "type": "string", "maxLength": 120 }
+                }
+              }
+            }
+          }
+        },
+        "plays_note": {
+          "type": "object",
+          "description": "One quiet line under the three beats, optionally ending in a link to a named route.",
+          "additionalProperties": false,
+          "required": ["text"],
+          "properties": {
+            "text": { "type": "string", "minLength": 1, "maxLength": 160 },
+            "link_label": { "type": "string", "maxLength": 60 },
+            "link_route": { "type": "string", "maxLength": 80 }
+          }
+        },
+        "reasons_heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "What the product is, plainly. Never pitched as making quiet viewers talk."
+        },
+        "reasons": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["icon", "title", "body"],
+            "properties": {
+              "icon": { "enum": ["globe", "clock", "people", "shield", "eye", "palette", "trophy", "zap"] },
+              "title": { "type": "string", "minLength": 1, "maxLength": 60 },
+              "body": { "type": "string", "minLength": 1, "maxLength": 200 }
+            }
+          }
+        },
+        "looks_heading": { "type": "string", "maxLength": 80 },
+        "looks_lede": { "type": "string", "maxLength": 200 },
+        "looks": {
+          "type": "array",
+          "description": "Ways the product can look. Omit it and a product with a designer shows its designer presets instead; a product with neither has no looks section.",
+          "minItems": 2,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["title", "body"],
+            "properties": {
+              "title": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "body": { "type": "string", "minLength": 1, "maxLength": 160 },
+              "image": { "type": "string", "pattern": "^/products/[a-z0-9-]+/[a-z0-9-]+\\.svg$" },
+              "badge": { "type": "string", "maxLength": 20 }
+            }
+          }
+        },
+        "setup_note": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One line under the setup steps. The steps themselves are derived from requires_bot."
+        },
+        "faq": {
+          "type": "array",
+          "description": "Questions about this product. Two shared ones (is it free, can I remove it) are added after these by the page.",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["q", "a"],
+            "properties": {
+              "q": { "type": "string", "minLength": 1, "maxLength": 100 },
+              "a": { "type": "string", "minLength": 1, "maxLength": 400 }
+            }
+          }
+        },
+        "closing": { "type": "string", "minLength": 1, "maxLength": 80, "description": "The headline beside the last Get button." }
+      }
+    },
     "ingredients": {
       "type": "array",
       "description": "The questions the install asks, in order. A recipe is a form, not a tree: each ingredient has fixed choices and a default, and an answer is written wherever the manifest or an overlay document says {{key}}. The answers are recorded on the instance, so the shipped files plus the answers always reproduce what was installed. Nothing here is an option set; those are Lists.",

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <circle cx="210" cy="96" r="70" fill="#0f1a24" stroke="#1f6f68" stroke-width="1"/>
+  <g fill="#2dd4bf" opacity=".55">
+    <circle cx="190" cy="70" r="1.6"/><circle cx="198" cy="66" r="1.6"/><circle cx="206" cy="74" r="1.6"/><circle cx="230" cy="110" r="1.6"/>
+    <circle cx="238" cy="118" r="1.6"/><circle cx="226" cy="124" r="1.6"/><circle cx="180" cy="116" r="1.6"/>
+  </g>
+  <circle cx="204" cy="78" r="3.5" fill="#bfe3e0"/>
+  <circle cx="232" cy="120" r="3.5" fill="#bfe3e0"/>
+  <g font-family="ui-monospace, Consolas, monospace">
+    <text x="22" y="62" fill="#2dd4bf" font-size="12">14 checkins</text>
+    <text x="22" y="80" fill="#2dd4bf" font-size="12">9 countries</text>
+    <text x="22" y="108" fill="#c8c0d8" font-size="10">farthest from you</text>
+    <text x="22" y="124" fill="#f1edf9" font-size="11">18,173 km</text>
+    <text x="22" y="140" fill="#f1edf9" font-size="11">tea_and_raids</text>
+  </g>
+</svg>

@@ -161,7 +161,7 @@ it('shows a product page to a visitor without an account', function () {
     // payload, and sees the manifest's own copy - never the wiring circuit.
     expect($response->headers->has('X-Inertia'))->toBeFalse();
     $response->assertSee('Chat Checkin')
-        ->assertSee('a city drops a pin on a spinning globe')
+        ->assertSee('A pin drops with their name')
         ->assertSee('Get Chat Checkin')
         ->assertDontSee('Finish setting up');
 });

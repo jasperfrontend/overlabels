@@ -19,10 +19,13 @@
     ];
 @endphp
 <div class="ol-demo-frame overflow-hidden rounded-sm border border-sidebar-border">
+  {{-- The product page passes bare: it has its own heading, and a pretend OBS title bar there reads as filler. --}}
+  @unless ($bare ?? false)
   <div class="flex items-center gap-2 border-b border-sidebar-border bg-card/50 px-4 py-2.5">
     <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-600 dark:bg-emerald-500"></span>
     <span class="font-mono text-xs text-muted-foreground">Chat Tower, live in OBS</span>
   </div>
+  @endunless
   <div class="ol-tower-demo" aria-label="Chat Tower demo: viewers type !stack in chat, the tower grows, sways and falls">
     <div class="ol-tower-demo__chat" aria-hidden="true">
       @foreach ($towerChat as $line)

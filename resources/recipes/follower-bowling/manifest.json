@@ -24,6 +24,96 @@
     "!bowl puts a Twitch viewer in line. While the lane is on, it sends the next one down every fifteen seconds by itself.",
     "Ball, pins and score play out on the overlay. A strike says STRIKE."
   ],
+  "pitch": {
+    "tagline": "Your newest followers become bowling pins.",
+    "lede": "Your ten newest followers are racked up as pins, with their avatars and names. Chat types `!bowl` to get in line, and the lane rolls the next viewer down every fifteen seconds.",
+    "plays": [
+      {
+        "title": "Chat gets in line",
+        "line": "One `!bowl` and you are in the queue.",
+        "art": {
+          "type": "chat",
+          "lines": [
+            {
+              "name": "quietfox",
+              "text": "!bowl",
+              "color": "#f472b6"
+            },
+            {
+              "name": "noodlebyte",
+              "text": "!bowl",
+              "color": "#a3e635"
+            }
+          ]
+        }
+      },
+      {
+        "title": "The ball rolls by itself",
+        "line": "Every fifteen seconds, the next viewer bowls.",
+        "art": {
+          "type": "image",
+          "src": "/products/follower-bowling/play-lane.svg",
+          "alt": "A ball rolling down a bowling lane towards ten pins"
+        }
+      },
+      {
+        "title": "Pins fall, the score shows",
+        "line": "A strike says STRIKE. A gutter says GUTTER.",
+        "art": {
+          "type": "stat",
+          "stats": [
+            {
+              "value": "STRIKE!",
+              "label": "all ten followers down"
+            }
+          ]
+        }
+      }
+    ],
+    "reasons_heading": "A bowling lane made of your followers.",
+    "reasons": [
+      {
+        "icon": "people",
+        "title": "New followers get a moment",
+        "body": "Following your channel puts someone on your stream as a pin, with their avatar and name."
+      },
+      {
+        "icon": "zap",
+        "title": "It runs itself",
+        "body": "Switch the lane on and it bowls every fifteen seconds while there's a line. You keep streaming."
+      },
+      {
+        "icon": "eye",
+        "title": "On screen only when you want",
+        "body": "The lane stays hidden until you switch it on, so it can sit in OBS all stream."
+      },
+      {
+        "icon": "shield",
+        "title": "Mods can call the next bowler",
+        "body": "`!fbfirst` sends the next one in line and `!fbdraw` picks one at random."
+      }
+    ],
+    "setup_note": "Switch the lane on from the overlay's Controls tab when you want it on screen. It runs itself from there.",
+    "faq": [
+      {
+        "q": "Who are the pins?",
+        "a": "Your ten newest followers, with their avatars and names."
+      },
+      {
+        "q": "Does the bot fill chat with messages?",
+        "a": "No. While the lane runs, the bot stays quiet. The score is on the overlay."
+      },
+      {
+        "q": "Can mods skip the line?",
+        "a": "Yes. `!fbfirst` sends the next person in line and `!fbdraw` picks one at random. You can rename both under Settings, Bot aliases."
+      },
+      {
+        "q": "Do my viewers need to sign up for anything?",
+        "a": "No. They type in your Twitch chat, like any other chat command."
+      }
+    ],
+    "closing": "Roll your newest followers tonight."
+  },
   "notes": [
     "The lane runs itself: while gobowl is on and someone is in line, the next bowler goes every fifteen seconds and the bot says nothing. Switch gobowl off and the line waits.",
     "Mods can skip ahead: !fbfirst sends the next person in line, !fbdraw picks one at random. Both are aliases for !list lane pop first and !list lane draw, and you can rename them under Settings, Bot aliases.",

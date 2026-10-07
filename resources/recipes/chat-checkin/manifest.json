@@ -22,6 +22,130 @@
     "Counts every checkin, the countries this stream, and who checked in from farthest away.",
     "A HUD with the numbers and a list of who checked in, each behind one toggle."
   ],
+  "pitch": {
+    "tagline": "Your chat puts itself on the map.",
+    "lede": "Viewers type `!checkin` and a city. A pin drops on a spinning globe on your stream, with their name on it. By the end of the night you can see where your whole chat is watching from.",
+    "plays": [
+      {
+        "title": "A viewer types a city",
+        "line": "Any city in the world. Typos are fine.",
+        "art": {
+          "type": "chat",
+          "lines": [
+            {
+              "name": "quietfox",
+              "text": "hi chat",
+              "color": "#f472b6"
+            },
+            {
+              "name": "pixelmoth",
+              "text": "!checkin Lisbon",
+              "color": "#60a5fa"
+            }
+          ]
+        }
+      },
+      {
+        "title": "A pin drops with their name",
+        "line": "The bot confirms it in chat.",
+        "art": {
+          "type": "image",
+          "src": "/products/chat-checkin/play-pin.svg",
+          "alt": "A pin labelled pixelmoth dropping onto the globe"
+        }
+      },
+      {
+        "title": "Chat races to be farthest from you",
+        "line": "The record is the one to beat.",
+        "art": {
+          "type": "stat",
+          "stats": [
+            {
+              "value": "14",
+              "label": "checkins"
+            },
+            {
+              "value": "9",
+              "label": "countries"
+            }
+          ],
+          "caption": "Farthest from you: tea_and_raids, 18,173 km"
+        }
+      }
+    ],
+    "plays_note": {
+      "text": "\"Farthest\" is measured from your home location. Set it in",
+      "link_label": "Settings > Integrations > Chat Checkin",
+      "link_route": "settings.integrations.checkin.show"
+    },
+    "reasons_heading": "It visualises your viewers on a globe.",
+    "reasons": [
+      {
+        "icon": "globe",
+        "title": "See where your chat watches from",
+        "body": "Every checkin is a pin with a name on it. One look at the globe shows you your audience, city by city."
+      },
+      {
+        "icon": "clock",
+        "title": "A ritual for the start of stream",
+        "body": "The globe starts empty when you go live, and chat fills it back up. Regulars race to be the first pin of the night."
+      },
+      {
+        "icon": "people",
+        "title": "Your chat meets itself",
+        "body": "Two viewers find out they live in the same city. Someone sees a pin from a country they never expected."
+      },
+      {
+        "icon": "shield",
+        "title": "Safe for your viewers",
+        "body": "A pin is only ever a city. The globe doesn't know anything smaller, so nobody can put a street address on your stream, even on purpose."
+      }
+    ],
+    "looks_heading": "Just the globe, or the whole scoreboard.",
+    "looks_lede": "Two switches on the overlay decide what shows next to the globe. Flip them any time and OBS updates while you watch.",
+    "looks": [
+      {
+        "title": "Globe",
+        "body": "The spinning globe and a name on every pin. Nothing else on screen.",
+        "image": "/products/chat-checkin/look-globe.svg",
+        "badge": "default"
+      },
+      {
+        "title": "Globe and numbers",
+        "body": "Adds the checkin and country count for this stream, and who came from farthest away.",
+        "image": "/products/chat-checkin/look-numbers.svg"
+      },
+      {
+        "title": "Globe and who checked in",
+        "body": "Adds a running list of names and cities, newest at the top.",
+        "image": "/products/chat-checkin/look-list.svg"
+      }
+    ],
+    "setup_note": "Checkins only open while you are live. If someone tries while you're offline, the bot tells them, so nobody wonders whether it worked.",
+    "faq": [
+      {
+        "q": "What if they spell the city wrong?",
+        "a": "It still lands. The globe knows about 235,000 cities and forgives typos, so \"amsterdamm\" ends up in Amsterdam. Bare \"Paris\" is Paris, France, and \"Paris, US\" is Paris, Texas. If a place really can't be found, the bot says so."
+      },
+      {
+        "q": "Do my viewers need to sign up for anything?",
+        "a": "No. They type in your Twitch chat, like any other chat command."
+      },
+      {
+        "q": "Does it show where my viewers live?",
+        "a": "Only the city they type, and they can type any city they like. The globe knows cities and nothing smaller, so a street address can never end up on your stream."
+      },
+      {
+        "q": "What if someone checks in twice?",
+        "a": "Each viewer has one pin. Checking in again moves it to the new city."
+      },
+      {
+        "q": "Can I change how it looks?",
+        "a": "Switch the numbers and the list of names on or off from the overlay's Controls tab. The globe's colours, size and spin speed can be changed too if you know a little CSS."
+      }
+    ],
+    "closing": "Put your chat on the map tonight."
+  },
   "notes": [
     "Set a home place under Settings, Integrations, Chat Checkin and the HUD shows how far away the farthest checkin is. Without one, distances stay empty.",
     "Pins clear at the start of every stream by default. The same page can keep them forever instead.",
