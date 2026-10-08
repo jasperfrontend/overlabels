@@ -15,15 +15,13 @@
       <div class="grid items-center gap-12 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-16">
       <div class="max-w-3xl">
         <h1 class="mb-6 text-4xl leading-[1.05] font-bold tracking-tight sm:text-5xl lg:text-6xl">
-          Give your <span class="whitespace-nowrap">Twitch chat</span><br />something to play.
+          <span class="whitespace-nowrap">Twitch Chat Games</span> for Downtime and BRB Breaks
         </h1>
 
-        <p class="mb-4 max-w-2xl text-xl leading-relaxed text-foreground">
-          Looking for Twitch chat games your viewers have never played? You found them. Overlabels makes small
-          games your Twitch chat plays live on your stream, and nobody else has them.
-        </p>
-        <p class="mb-10 max-w-2xl text-base text-foreground">
-          Free. One click to install. One link to paste into OBS. Works with the Twitch account you already have.
+        <p class="mb-10 max-w-2xl text-xl leading-relaxed text-foreground">
+          Free Twitch chat games your viewers play by typing a !command in chat, plus a <a href="#twitch-chat-overlay" class="cursor-pointer text-sky-500 hover:underline">Twitch Chat Overlay</a> you can
+          style any way you like in just a few clicks. Put a quick <a href="#chat-tower" class="cursor-pointer text-sky-500 hover:underline">Chat Tower</a> or <a href="#follower-bowling" class="cursor-pointer text-sky-500 hover:underline">Follower Bowling</a> game up while you grab a drink,
+          and chat has something to do until you're back.
         </p>
 
         <div class="flex flex-wrap items-center gap-4">
@@ -31,14 +29,16 @@
             See the products
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 h-4 w-4"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
           </a>
-          @auth
-            <a href="{{ route('dashboard.index') }}" class="btn btn-secondary cursor-pointer">Go to dashboard</a>
-          @else
+          @guest
             <a href="/login" class="btn btn-secondary gap-2 cursor-pointer">
               <svg viewBox="0 0 24 24" fill="currentColor" class="size-4"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0 1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z" /></svg>
               Log in with Twitch
             </a>
-          @endauth
+          @endguest
+          <p class="flex max-w-md items-start gap-2.5 text-sm text-foreground">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 size-5 shrink-0 text-green-500" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+            <span>Free forever. No registration required. Overlabels doesn't steal your data, nor is any of your data used to train AI. <a href="/ai" class="cursor-pointer text-sky-500 hover:underline">Promised</a>.</span>
+          </p>
         </div>
       </div>
 

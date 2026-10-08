@@ -120,6 +120,10 @@ Route::redirect('/manifesto', '/help/manifesto', 301);
 // like everything else; this is the front door.
 Route::redirect('/viewers', '/help/viewers', 301);
 
+// The AI promise, linked from the homepage hero as "Promised". Same front-door
+// pattern as /viewers: the page is a help page, this is the short URL.
+Route::redirect('/ai', '/help/ai', 301);
+
 // The hand-written per-service control pages were replaced by the generated
 // `integration-controls` category. They were filed under eventsub-tags despite
 // documenting controls, and they had gone stale - each claimed the shared
