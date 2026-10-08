@@ -46,7 +46,7 @@
         @endphp
 
         {{-- 1. Hero: the promise and the button first, then the product running. --}}
-        <section class="border-b border-b-sidebar-border bg-card py-14 sm:py-20">
+        <section class="bg-card py-16 sm:py-24">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-5xl">
                     <div class="mb-10 max-w-3xl">
@@ -59,7 +59,7 @@
                                 <span class="text-sm text-muted-foreground">Free. {{ ucfirst($page['steps_word']) }} steps.</span>
                             @endunless
                         </div>
-                        @include('products._works-with')
+                        @include('products._works-with', ['class' => 'mt-14 sm:mt-16'])
                     </div>
 
                     @if ($demo)
@@ -71,8 +71,39 @@
             </div>
         </section>
 
+        {{-- Everything under the hero sits in one wrapper so the jump bar sticks
+             under the site nav for the whole page and lets go at the footer.
+             The wrapper also alternates the section backgrounds, which is what
+             separates them now that there are no rules between them; doing it
+             here rather than per section keeps it right when Looks is absent.
+             wireProductNav (welcome/app.ts) marks the section in view. --}}
+        @php
+            $jumps = array_filter([
+                'what-chat-does' => 'What chat does',
+                'why' => 'Why streamers use it',
+                'looks' => $page['looks'] ? 'Looks' : null,
+                'setup' => 'Setup',
+                'questions' => 'Questions',
+            ]);
+        @endphp
+        <div class="[&>section:nth-of-type(even)]:bg-card">
+        <nav data-product-nav aria-label="On this page" class="sticky top-(--ol-nav-h) z-40 bg-sidebar-accent/90 backdrop-blur-lg">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="mx-auto flex max-w-5xl items-center gap-4">
+                    <ul class="relative flex min-w-0 flex-1 gap-1 overflow-x-auto py-2 [scrollbar-width:none]">
+                        @foreach ($jumps as $id => $label)
+                            <li class="shrink-0">
+                                <a href="#{{ $id }}" data-product-nav-link="{{ $id }}" class="block cursor-pointer rounded-sm px-3 py-1.5 text-sm whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground aria-[current=true]:bg-sky-500/10 aria-[current=true]:text-sky-500">{{ $label }}</a>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <a href="{{ $ctaUrl }}" class="btn btn-primary hidden shrink-0 cursor-pointer text-sm sm:inline-flex">{{ $cta }}{!! $arrow !!}</a>
+                </div>
+            </div>
+        </nav>
+
         {{-- 2. What chat does: three beats, the pictures carry them. --}}
-        <section class="border-b border-b-sidebar-border py-16 sm:py-20">
+        <section id="what-chat-does" data-product-row class="scroll-mt-[calc(var(--ol-nav-h)+3rem)] py-20 sm:py-28">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-5xl">
                     <p class="pp-kicker">What your chat does</p>
@@ -119,7 +150,7 @@
         </section>
 
         {{-- 3. Why: what the product is, plainly. --}}
-        <section class="border-b border-b-sidebar-border bg-card py-16 sm:py-20">
+        <section id="why" data-product-row class="scroll-mt-[calc(var(--ol-nav-h)+3rem)] py-20 sm:py-28">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-5xl">
                     <p class="pp-kicker">Why streamers use it</p>
@@ -139,7 +170,7 @@
 
         {{-- 4. Looks: the manifest's own, or the designer's presets. --}}
         @if ($page['looks'])
-            <section class="border-b border-b-sidebar-border py-16 sm:py-20">
+            <section id="looks" data-product-row class="scroll-mt-[calc(var(--ol-nav-h)+3rem)] py-20 sm:py-28">
                 <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="mx-auto max-w-5xl">
                         <p class="pp-kicker">Make it yours</p>
@@ -166,7 +197,7 @@
         @endif
 
         {{-- 5. Setup: the steps are derived, not written per product. --}}
-        <section class="border-b border-b-sidebar-border bg-card py-16 sm:py-20">
+        <section id="setup" data-product-row class="scroll-mt-[calc(var(--ol-nav-h)+3rem)] py-20 sm:py-28">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-5xl">
                     <p class="pp-kicker">Ready in {{ $page['steps_word'] }} steps</p>
@@ -189,7 +220,7 @@
         </section>
 
         {{-- 6. Questions: native details, no script. --}}
-        <section class="border-b border-b-sidebar-border py-16 sm:py-20">
+        <section id="questions" data-product-row class="scroll-mt-[calc(var(--ol-nav-h)+3rem)] py-20 sm:py-28">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-5xl">
                     <p class="pp-kicker">Questions</p>
@@ -207,7 +238,7 @@
         </section>
 
         {{-- 7. Closing: the button again, and where to go next. --}}
-        <section class="border-b border-b-sidebar-border bg-card py-16 sm:py-20">
+        <section class="py-20 sm:py-28">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-5xl">
                     <div class="grid items-center gap-6 md:grid-cols-[1.3fr_1fr]">
@@ -216,7 +247,7 @@
                             @unless ($installed)
                                 <p class="text-base text-muted-foreground">Free. {{ ucfirst($page['steps_word']) }} steps.</p>
                             @endunless
-                            @include('products._works-with')
+                            @include('products._works-with', ['class' => 'mt-8'])
                         </div>
                         <div class="min-w-0">
                             <a href="{{ $ctaUrl }}" class="btn btn-primary w-full cursor-pointer sm:w-auto">{{ $cta }}{!! $arrow !!}</a>
@@ -237,6 +268,7 @@
                 </div>
             </div>
         </section>
+        </div>
 
         @include('welcome.footer')
     </div>

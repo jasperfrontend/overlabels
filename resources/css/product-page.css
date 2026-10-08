@@ -2,7 +2,8 @@
   The full product page (resources/views/products/page.blade.php). Layout and
   type are Tailwind in the view; this file holds the pieces Tailwind would make
   unreadable: the three-beat flow and its dashed connector, the dark "on
-  stream" scenes the beats are drawn in, the Works with tiles and the FAQ.
+  stream" scenes the beats are drawn in, and the FAQ. The Works with tiles are
+  the <x-brand-icons> component (resources/views/components/brand-icons.blade.php).
 
   The scenes are dark in both themes on purpose: they show what is on a stream,
   and the overlays themselves are drawn on dark.
@@ -169,13 +170,11 @@
   }
 }
 
-/* Why: four cards on a hairline grid. */
+/* Why: four reasons, spacing between them and no frames. */
 .pp-reasons {
   display: grid;
-  gap: 1px;
+  gap: 2.5rem 3.5rem;
   grid-template-columns: 1fr;
-  border: 1px solid var(--sidebar-border);
-  background: var(--sidebar-border);
 }
 @media (min-width: 720px) {
   .pp-reasons {
@@ -184,8 +183,6 @@
 }
 .pp-reasons > div {
   min-width: 0;
-  padding: 1.625rem;
-  background: var(--card);
 }
 
 /* Looks: pictures in threes, or text cards when there are no pictures. */
@@ -203,17 +200,19 @@
   gap: 0.75rem;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
 }
+/* A tint of the text colour, not a fixed surface: sections alternate their
+   background, so a card has to read on either one. */
 .pp-look {
   min-width: 0;
-  border: 1px solid var(--sidebar-border);
-  background: var(--card);
+  overflow: hidden;
+  border-radius: 0.375rem;
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
 }
 .pp-look img {
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 10;
-  border-bottom: 1px solid var(--sidebar-border);
   background: #0b0418;
 }
 .pp-look-body {
@@ -222,7 +221,8 @@
 .pp-badge {
   margin-left: 0.4rem;
   padding: 1px 6px;
-  border: 1px solid var(--sidebar-border);
+  border-radius: 0.25rem;
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
   color: var(--muted-foreground);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.6875rem;
@@ -230,105 +230,42 @@
   vertical-align: 2px;
 }
 
-/* Setup: numbered panels in one bordered strip. */
+/* Setup: numbered steps side by side, spacing between them and no frames. */
 .pp-setup {
   display: grid;
+  gap: 2.5rem;
   grid-template-columns: 1fr;
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--sidebar-border);
-  background: var(--sidebar-accent);
 }
 .pp-setup > li {
   min-width: 0;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--sidebar-border);
-}
-.pp-setup > li:last-child {
-  border-bottom: 0;
 }
 @media (min-width: 820px) {
   .pp-setup {
+    gap: 3rem;
     grid-template-columns: repeat(3, 1fr);
   }
   .pp-setup--two {
     grid-template-columns: repeat(2, 1fr);
   }
-  .pp-setup > li {
-    border-bottom: 0;
-    border-right: 1px solid var(--sidebar-border);
-  }
-  .pp-setup > li:last-child {
-    border-right: 0;
-  }
 }
 .pp-setup-n {
   display: inline-flex;
-  width: 1.875rem;
-  height: 1.875rem;
-  margin-bottom: 0.875rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: 1rem;
   align-items: center;
   justify-content: center;
-  border: 1px solid #8b5cf6;
+  border-radius: 9999px;
+  background: color-mix(in oklab, #8b5cf6 16%, transparent);
   color: #7c3aed;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .dark .pp-setup-n {
   color: #c4b5fd;
-}
-
-/* Works with. */
-.pp-works {
-  display: flex;
-  margin-top: 1.125rem;
-  align-items: center;
-  gap: 0.875rem;
-}
-.pp-works-label {
-  font-size: 0.9375rem;
-  font-weight: 700;
-}
-.pp-works ul {
-  display: flex;
-  gap: 0.625rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.pp-tile {
-  display: inline-flex;
-  width: 2.125rem;
-  height: 2.125rem;
-  align-items: center;
-  justify-content: center;
-}
-.pp-tile svg {
-  display: block;
-  width: 1.5rem;
-  height: 1.5rem;
-}
-.pp-tile--twitch svg {
-  fill: #9146ff;
-}
-.pp-tile--streamlabs {
-  border-radius: 0.5rem;
-  background: #80f5d2;
-}
-.pp-tile--streamlabs svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  fill: #09161d;
-}
-.pp-tile--obs {
-  border-radius: 9999px;
-  background: #1b1a1f;
-}
-.pp-tile--obs svg {
-  width: 1.875rem;
-  height: 1.875rem;
-  fill: #fff;
 }
 
 /* Questions. */
@@ -381,12 +318,13 @@
   display: block;
   min-width: 0;
   padding: 1rem 1.125rem;
-  border: 1px solid var(--sidebar-border);
-  background: var(--sidebar-accent);
+  border-radius: 0.375rem;
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
   text-decoration: none;
+  transition: background-color 150ms;
 }
 .pp-more a:hover {
-  border-color: #8b5cf6;
+  background: color-mix(in oklab, #8b5cf6 16%, transparent);
 }
 .pp-more strong {
   display: block;
