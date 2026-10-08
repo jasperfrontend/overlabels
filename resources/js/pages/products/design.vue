@@ -864,15 +864,16 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
                 </p>
               </div>
             </template>
-
-            <p class="text-xs text-muted-foreground">
-              These are account settings rather than overlay controls, so OBS picks them up when the browser source next loads, and the preview here
-              follows on reload. Hiding a chatter or a command changes your overlay only: the message is still in chat, still in the VOD, and everyone
-              watching still sees it.
-            </p>
           </section>
 
-          <div class="border-t border-border pt-4">
+          <div class="flex flex-col gap-3 border-t border-border pt-5">
+            <div>
+              <h2 class="text-base font-bold text-foreground">Happy with your design?</h2>
+              <p class="mt-1 text-sm text-foreground">
+                Click the button below and follow the steps to add {{ product.name }} to OBS as a browser source. You can come back and change your
+                design any time.
+              </p>
+            </div>
             <AddToObsButton :template="overlay" />
           </div>
         </div>
