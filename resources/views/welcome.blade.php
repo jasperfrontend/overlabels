@@ -40,24 +40,24 @@
     <link href="https://fonts.bunny.net/css?family=albert-sans:300,400,500,600,700" rel="stylesheet" />
 
     <title>Overlabels: Free Twitch Chat Games and Chat Overlay</title>
-    <meta name="description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your Twitch chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on your Twitch stream too. Open source." />
+    <meta name="description" content="Free Twitch chat games for downtime and BRB breaks, plus a Twitch chat overlay you style in a few clicks. One browser source in OBS. Open source." />
     <link rel="canonical" href="https://overlabels.com/" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://overlabels.com/" />
     <meta property="og:site_name" content="Overlabels" />
     <meta property="og:title" content="Overlabels: Free Twitch Chat Games and Chat Overlay" />
-    <meta property="og:description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your Twitch chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on your Twitch stream too. Open source." />
+    <meta property="og:description" content="Free Twitch chat games for downtime and BRB breaks, plus a Twitch chat overlay you style in a few clicks." />
     <meta property="og:image" content="{{ asset('ogimage.jpg') }}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Overlabels • games your Twitch chat plays live on your stream" />
+    <meta property="og:image:alt" content="Twitch Chat Games for Downtime and BRB Breaks, with Chat Tower, Follower Bowling, Twitch Chat Overlay, Chat Checkin and Chat Emote Bubbles" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Overlabels: Free Twitch Chat Games and Chat Overlay" />
-    <meta name="twitter:description" content="Chat Tower, Follower Bowling, Chat Checkin and a Twitch chat overlay: free games and overlays your Twitch chat plays live on your stream, installed in one click, one browser source in OBS. Tips from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee and Throne land on your Twitch stream too. Open source." />
+    <meta name="twitter:description" content="Free Twitch chat games for downtime and BRB breaks, plus a Twitch chat overlay you style in a few clicks." />
     <meta name="twitter:image" content="{{ asset('ogimage.jpg') }}" />
-    <meta name="twitter:image:alt" content="Overlabels • games your Twitch chat plays live on your stream" />
+    <meta name="twitter:image:alt" content="Twitch Chat Games for Downtime and BRB Breaks, with Chat Tower, Follower Bowling, Twitch Chat Overlay, Chat Checkin and Chat Emote Bubbles" />
 
     @vite(['resources/js/welcome/app.ts'])
 </head>
