@@ -1,5 +1,28 @@
 # Changelog - October 2026
 
+## OL-2610-003 - October 9th, 2026 - feat(home): a headline that says what the games are for, and a promise about AI
+
+The homepage opened with "Give your Twitch chat something to play.", which read with an undertone
+nobody asked for, and its paragraph said "nobody else has them" about games that partly borrow their
+ideas from elsewhere. The headline is now "Twitch Chat Games for Downtime and BRB Breaks": what they
+are, and when a streamer reaches for one. The paragraph under it names the two actual games, Chat
+Tower and Follower Bowling, and the Twitch chat overlay, each linked to its row further down the page.
+
+The dashboard button beside "See the products" made way for one line: free forever, no registration
+required, and Overlabels never sells your data or uses it to train AI. "Promised" links to a new page,
+`/ai` (a help page at `/help/ai`), which keeps that promise in writing and is honest about the edges:
+
+- What is encrypted (Twitch tokens and integration credentials) and what is not, and that the data is
+  stored in the EU.
+- ElevenLabs as the one AI service Overlabels talks to, and only for alerts set to be spoken.
+- That Overlabels is built with Claude, that Claude has no access to the live database of its own,
+  and that three users who agreed to it are the only real data it sees.
+- That the code is open source, so anyone can point their own AI at it.
+
+The page title is now "Overlabels: Free Twitch Chat Games and Chat Overlay", the descriptions are
+short enough that search results and link previews no longer cut them off, and the share image was
+redrawn around the new headline with all five products on it.
+
 ## OL-2610-002 - October 8th, 2026 - feat(products): a three-knob designer that plays itself on the Twitch Chat Overlay page
 
 The Twitch Chat Overlay's designer is the most capable thing on the platform, and its product page
