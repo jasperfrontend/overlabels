@@ -152,10 +152,22 @@
     },
     "pitch": {
       "type": "object",
-      "description": "The public product page, section by section. Only a listed `product` (not an `alert`) carries one, and ProductPitchPageTest requires it there. Text may wrap a command or a tag in backticks to set it in code type; nothing else is markup.",
+      "description": "The public product page, section by section. Only a listed `product` (not an `alert`) carries one, and ProductPitchPageTest requires it there. Text may wrap a command or a tag in backticks to set it in code type, and may carry a [text](url) link to an https:// or site-relative address; nothing else is markup.",
       "additionalProperties": false,
       "required": ["tagline", "lede", "plays", "reasons_heading", "reasons", "faq", "closing"],
       "properties": {
+        "meta_title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 70,
+          "description": "Optional search title (the <title>, og:title and twitter:title). Without it the page uses \"<name> - Overlabels product\". Keep it under 60 characters so search results show it whole."
+        },
+        "meta_description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 170,
+          "description": "Optional search snippet (meta, og and twitter description). Without it the page uses the manifest's `description`, which is written for the catalogue, not for a results page."
+        },
         "tagline": {
           "type": "string",
           "minLength": 1,

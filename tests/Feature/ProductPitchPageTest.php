@@ -108,3 +108,26 @@ it('keeps the short page for a donation alert', function () {
         ->assertSee($alert['name'])
         ->assertDontSee('One command. Three things happen.');
 });
+
+it('uses a pitch\'s own search title and description when it names them', function () {
+    $pitch = listedProducts('product')->firstWhere('slug', 'twitch-chat-overlay')['pitch'];
+
+    $this->get(route('products.show', 'twitch-chat-overlay'))
+        ->assertOk()
+        ->assertSee('<title>'.e($pitch['meta_title']).'</title>', escape: false)
+        ->assertSee('<meta name="description" content="'.e($pitch['meta_description']).'" />', escape: false);
+});
+
+it('keeps the generic search title for a pitch that names none', function () {
+    $this->get(route('products.show', 'chat-tower'))
+        ->assertOk()
+        ->assertSee('<title>Chat Tower - Overlabels product</title>', escape: false);
+});
+
+it('turns a [text](url) in an answer into a link, off-site ones in a new tab', function () {
+    $this->get(route('products.show', 'twitch-chat-overlay'))
+        ->assertOk()
+        ->assertSee('<a href="https://discord.gg/qANdj5QPpd" class="cursor-pointer text-sky-500 hover:underline" target="_blank" rel="noopener noreferrer">Overlabels Discord</a>', escape: false)
+        ->assertSee('<a href="/help/llms-txt" class="cursor-pointer text-sky-500 hover:underline">Ask an AI to do it for you</a>', escape: false)
+        ->assertDontSee('](', escape: false);
+});

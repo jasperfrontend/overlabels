@@ -16,9 +16,18 @@
             ];
             $demo = $demos[$product['slug']] ?? null;
 
-            // Manifest text may wrap a command in backticks; that is the only
-            // markup it has. Escape first, so nothing else in it can be HTML.
-            $md = fn (string $text): string => preg_replace('/`([^`]+)`/', '<code class="pp-code">$1</code>', e($text));
+            // Manifest text may wrap a command in backticks and carry a
+            // [text](url) link to an https:// or site-relative address; that is
+            // all the markup it has. Escape first, so nothing else in it can be
+            // HTML (e() also turns a quote in the url into &quot;, so it cannot
+            // leave the attribute). An off-site link opens in a new tab.
+            $md = fn (string $text): string => preg_replace_callback(
+                '/\[([^\]]+)\]\((https:\/\/[^\s)]+|\/[^\s)]*)\)/',
+                fn (array $m) => '<a href="'.$m[2].'" class="cursor-pointer text-sky-500 hover:underline"'
+                    .(str_starts_with($m[2], 'https://') ? ' target="_blank" rel="noopener noreferrer"' : '')
+                    .'>'.$m[1].'</a>',
+                preg_replace('/`([^`]+)`/', '<code class="pp-code">$1</code>', e($text)),
+            );
 
             $cta = $installed ? 'Manage '.$product['name'] : 'Get '.$product['name'];
             $ctaUrl = route('products.manage', $product['slug']);

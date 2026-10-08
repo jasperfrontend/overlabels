@@ -23,8 +23,10 @@
     "Nothing to connect and no bot to add. Every change lands in OBS as you make it."
   ],
   "pitch": {
-    "tagline": "Your Twitch chat on your stream, in your style.",
-    "lede": "Names in their Twitch colours, badges and emotes, read straight from Twitch. Pick one of ten looks, change anything you like, and see every change in OBS as you make it.",
+    "meta_title": "Free Twitch Chat Overlay for OBS, No Code - Overlabels",
+    "meta_description": "Show your Twitch chat in OBS as a browser source. 10 styles to start from, badges, and Twitch, 7TV, BTTV and FFZ emotes. Free, a few clicks, no code.",
+    "tagline": "Show your Twitch Chat in a Browser Source in OBS.",
+    "lede": "10 styles to begin with, endless customisation. Start with a few clicks - not a single line of code needed: it just works.",
     "plays": [
       {
         "title": "Chat talks",
@@ -111,6 +113,18 @@
       {
         "q": "Do my viewers need to do anything?",
         "a": "No. They chat like they always do."
+      },
+      {
+        "q": "Which emote services are supported?",
+        "a": "All Twitch emotes, plus 7TV, BTTV and FFZ. They work out of the box, with zero extra setup."
+      },
+      {
+        "q": "Can I use my own font?",
+        "a": "Every font on [fonts.bunny.net](https://fonts.bunny.net) is one click away. If yours isn't there, a bit of CSS makes it fully yours. Not sure how? [Ask an AI to do it for you](/help/llms-txt)."
+      },
+      {
+        "q": "Can I suggest changes, additions or design presets?",
+        "a": "Absolutely. Join the [Overlabels Discord](https://discord.gg/qANdj5QPpd) and post in #integration-suggestions. The Discord is still very new, but you can talk to the Overlabels developer there directly."
       }
     ],
     "closing": "Put your chat on screen tonight."

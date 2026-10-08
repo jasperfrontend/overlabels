@@ -36,22 +36,27 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=albert-sans:300,400,500,600,700" rel="stylesheet" />
 
-    <title>{{ $product['name'] }} - Overlabels product</title>
-    <meta name="description" content="{{ $product['description'] }}" />
+    {{-- A product with a pitch may name its own search title and snippet; every other one gets the generic pair. --}}
+    @php
+        $metaTitle = $page['meta_title'] ?? $product['name'].' - Overlabels product';
+        $metaDescription = $page['meta_description'] ?? $product['description'];
+    @endphp
+    <title>{{ $metaTitle }}</title>
+    <meta name="description" content="{{ $metaDescription }}" />
     <link rel="canonical" href="{{ $canonical }}" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{ $canonical }}" />
     <meta property="og:site_name" content="Overlabels" />
-    <meta property="og:title" content="{{ $product['name'] }} - Overlabels product" />
-    <meta property="og:description" content="{{ $product['description'] }}" />
+    <meta property="og:title" content="{{ $metaTitle }}" />
+    <meta property="og:description" content="{{ $metaDescription }}" />
     <meta property="og:image" content="{{ url($product['hero'] ?? '/ogimage.jpg') }}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="{{ $product['name'] }} - Overlabels product" />
-    <meta name="twitter:description" content="{{ $product['description'] }}" />
+    <meta name="twitter:title" content="{{ $metaTitle }}" />
+    <meta name="twitter:description" content="{{ $metaDescription }}" />
     <meta name="twitter:image" content="{{ url($product['hero'] ?? '/ogimage.jpg') }}" />
 
     {{-- JSON_HEX_TAG etc. are what stop an author-written title containing
