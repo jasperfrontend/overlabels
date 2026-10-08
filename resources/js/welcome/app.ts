@@ -7,7 +7,8 @@ import { wireThemeMenus } from '../utils/themeMenu';
 import { initCheckinDemo } from './checkinDemo';
 
 // The homepage is a static blade page - this entry only wires up the handful
-// of interactive bits: theme switching, the mobile menu, and tab groups.
+// of interactive bits: theme switching, the mobile menu, tab groups and the
+// product jump bar.
 
 function wireMobileMenu() {
   const toggle = document.querySelector<HTMLElement>('[data-mobile-menu-toggle]');
@@ -50,47 +51,71 @@ function wireTabs() {
   });
 }
 
-// The hero showcase: one tab per product, auto-advancing at the end of each
-// demo's loop until the visitor picks one themselves. A programmatic click
-// is not trusted, a real one is, which is how the two are told apart. A
-// panel hidden with display:none restarts its CSS animations when shown, so
-// every tab opens at the start of its loop.
-function wireShowcase() {
-  document.querySelectorAll<HTMLElement>('[data-showcase]').forEach((group) => {
-    const buttons = Array.from(group.querySelectorAll<HTMLElement>('[data-tab]'));
-    const panels = Array.from(group.querySelectorAll<HTMLElement>('[data-tab-panel]'));
-    if (buttons.length < 2) return;
+// The site nav is sticky and grows a second row below lg, so its height is
+// measured rather than assumed: the product jump bar sticks under it, and
+// anchors scroll clear of it, through --ol-nav-h.
+function trackNavHeight() {
+  const nav = document.querySelector<HTMLElement>('[data-site-nav]');
+  if (!nav) return;
+  const set = () => document.documentElement.style.setProperty('--ol-nav-h', `${nav.offsetHeight}px`);
+  set();
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(set).observe(nav);
+}
 
-    let timer = 0;
-    let manual = false;
+// The product jump bar marks the row being read: the last row whose top has
+// passed a line just under the bar. Above the first row nothing is marked.
+// On a phone the bar scrolls sideways, so the marked link is kept in view.
+function wireProductNav() {
+  const bar = document.querySelector<HTMLElement>('[data-product-nav]');
+  if (!bar) return;
+  const list = bar.querySelector<HTMLElement>('ul');
+  const links = Array.from(bar.querySelectorAll<HTMLAnchorElement>('[data-product-nav-link]'));
+  const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-product-row]'));
+  if (!rows.length) return;
 
-    const schedule = () => {
-      window.clearTimeout(timer);
-      if (manual) return;
-      const active = panels.find((p) => !p.classList.contains('hidden'));
-      const seconds = Number(active?.dataset.duration) || 12;
-      timer = window.setTimeout(() => {
-        const index = buttons.findIndex((b) => b.dataset.tab === active?.dataset.tabPanel);
-        buttons[(index + 1) % buttons.length]?.click();
-      }, seconds * 1000);
-    };
+  let current: string | null = null;
+  let queued = false;
 
-    buttons.forEach((btn) => {
-      btn.addEventListener('click', (event) => {
-        if (event.isTrusted) manual = true;
-        // wireTabs() swapped the panels in its own listener, registered first.
-        schedule();
-      });
+  const update = () => {
+    queued = false;
+    const line = bar.getBoundingClientRect().bottom + window.innerHeight * 0.25;
+    let next: string | null = null;
+    for (const row of rows) {
+      if (row.getBoundingClientRect().top <= line) next = row.id;
+    }
+    if (next === current) return;
+    current = next;
+    links.forEach((link) => {
+      const active = link.dataset.productNavLink === current;
+      if (active) {
+        link.setAttribute('aria-current', 'true');
+        // Only when the bar overflows (a phone), and instant, so it never
+        // competes with the page's own smooth scroll to the anchor.
+        if (list && list.scrollWidth > list.clientWidth) {
+          list.scrollLeft = link.offsetLeft - (list.clientWidth - link.offsetWidth) / 2;
+        }
+      } else {
+        link.removeAttribute('aria-current');
+      }
     });
+  };
 
-    schedule();
-  });
+  const queue = () => {
+    if (queued) return;
+    queued = true;
+    window.requestAnimationFrame(update);
+  };
+
+  window.addEventListener('scroll', queue, { passive: true });
+  window.addEventListener('resize', queue);
+  update();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   wireThemeMenus();
   wireMobileMenu();
   wireTabs();
-  wireShowcase();
+  trackNavHeight();
+  wireProductNav();
   initCheckinDemo();
 });

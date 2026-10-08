@@ -48,13 +48,15 @@ it('renders every section of a chat product page', function () {
             $response->assertSee(str_replace('`', '', $item['q']));
         }
 
-        // The pretend OBS title bar stays on the homepage demo only.
+        // No pretend OBS title bar on a demo: the page has its own heading.
         $response->assertDontSee('live in OBS');
     }
 });
 
-it('keeps the OBS title bar on the homepage demos', function () {
-    $this->get('/')->assertOk()->assertSee('live in OBS');
+it('shows the homepage demos without the OBS title bar', function () {
+    // ", live in OBS" is the bar's own wording ("Chat Tower, live in OBS"); the
+    // Controls section further down says "live in OBS" in a sentence.
+    $this->get('/')->assertOk()->assertDontSee(', live in OBS');
 });
 
 it('derives the setup steps from whether the product needs the bot', function () {

@@ -357,8 +357,7 @@ class CheckinDemo {
 /* ---- entry ---- */
 
 export function initCheckinDemo(): void {
-  // The partial is on the page twice - once in the hero showcase, once as
-  // the product row - and each instance is its own demo with its own globe.
+  // Every instance of the partial on a page is its own demo with its own globe.
   document.querySelectorAll<HTMLElement>('[data-checkin-demo]').forEach(wireCheckinDemo);
 }
 

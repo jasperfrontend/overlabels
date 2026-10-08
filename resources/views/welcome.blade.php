@@ -25,6 +25,10 @@
         html { background-color: oklch(1 0 0); }
         html.dark { background-color: oklch(0.145 0 0); }
         html.theme-sepia { background-color: hsl(30 7% 8%); }
+        /* The sticky site nav's height. The product jump bar sticks under it
+           and anchors scroll clear of it; welcome/app.ts keeps it measured,
+           because the nav grows a second row below lg. */
+        html { --ol-nav-h: 4rem; }
     </style>
 
     <link rel="icon" href="/favicon.png" sizes="any">
@@ -59,6 +63,11 @@
 </head>
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-sidebar-accent text-foreground">
+        @php
+            // Shared by the hero cards and the product rows: the chat command a
+            // product's description names, if it names one.
+            $command = fn (string $text): ?string => preg_match('/!\w+/', $text, $m) ? $m[0] : null;
+        @endphp
         @include('welcome.navbar')
         {{-- For streamers: the products, how they install, the alerts, why here. --}}
         @include('welcome.hero')

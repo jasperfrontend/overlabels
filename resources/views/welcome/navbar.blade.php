@@ -1,17 +1,16 @@
-<nav class="sticky top-0 z-50 border-b border-sidebar-accent bg-sidebar-accent/80 backdrop-blur-lg">
+<nav data-site-nav class="sticky top-0 z-50 border-b border-sidebar-accent bg-sidebar-accent/80 backdrop-blur-lg">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex h-16 items-center justify-between">
       <a href="/" class="flex items-center gap-2.5 cursor-pointer">
         <img src="/favicon-light.svg" alt="" class="h-8 w-8 dark:hidden" /><img src="/favicon.png" alt="" class="hidden h-8 w-8 dark:block" />
         <span class="text-lg font-bold tracking-tight">Overlabels</span>
       </a>
-      <div class="hidden text-foreground items-center gap-6 lg:flex">
-        <a href="/#products" class="text-sm hover:text-sky-500 cursor-pointer">Products</a>
+      <div class="hidden text-foreground items-center gap-6 whitespace-nowrap lg:flex">
+        <a href="/#products" class="text-sm hover:text-sky-500 cursor-pointer">Twitch Chat Games</a>
+        <a href="{{ route('products.show', 'twitch-chat-overlay') }}" class="text-sm hover:text-sky-500 cursor-pointer">Twitch Chat Overlay</a>
         <a href="/#how-it-works" class="text-sm hover:text-sky-500 cursor-pointer">How it works</a>
         <a href="/#alerts" class="text-sm hover:text-sky-500 cursor-pointer">Alerts</a>
-        <a href="/#build" class="text-sm hover:text-sky-500 cursor-pointer">Build your own</a>
         <a href="/help" class="text-sm hover:text-sky-500 cursor-pointer">Help</a>
-        <a href="/help/manifesto" class="text-sm hover:text-sky-500 cursor-pointer">Why Overlabels</a>
         @include('welcome.theme-toggle')
         @auth
           <a href="{{ route('dashboard.index') }}" class="btn btn-primary text-sm cursor-pointer">
@@ -51,7 +50,8 @@
   <div data-mobile-menu class="hidden border-t border-sidebar-accent bg-sidebar-accent/95 backdrop-blur-lg lg:hidden">
     <div class="container mx-auto space-y-1 px-4 py-4 sm:px-6">
       @foreach ([
-          ['href' => '/#products', 'label' => 'Products'],
+          ['href' => '/#products', 'label' => 'Twitch Chat Games'],
+          ['href' => route('products.show', 'twitch-chat-overlay'), 'label' => 'Twitch Chat Overlay'],
           ['href' => '/#how-it-works', 'label' => 'How it works'],
           ['href' => '/#alerts', 'label' => 'Alerts'],
           ['href' => '/#build', 'label' => 'Build your own'],
