@@ -15,6 +15,10 @@ who support you. No deal with an AI company, no "anonymised dataset", no opt-out
 somewhere. I would rather stop building Overlabels than hand your data over to the AI gods. It is not
 going to happen, ever.
 
+Overlabels never sells your data, to anyone. It could not even email you if it wanted to:
+your email address is [thrown away](/help/your-data#your-account) the moment you log in with Twitch,
+before anything is stored.
+
 Overlabels does not run an AI model on your data either. Your overlays, your events, your chat and
 your settings are handled by plain code that does what it says.
 

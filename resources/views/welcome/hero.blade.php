@@ -19,7 +19,7 @@
         </h1>
 
         <p class="mb-10 max-w-2xl text-xl leading-relaxed text-foreground">
-          Free Twitch chat games your viewers play by typing a !command in chat, plus a <a href="#twitch-chat-overlay" class="cursor-pointer text-sky-500 hover:underline">Twitch Chat Overlay</a> you can
+          Free Twitch chat games your viewers play by typing a !command in chat, plus a <a href="#twitch-chat-overlay" class="cursor-pointer text-sky-500 hover:underline">Twitch chat overlay</a> you can
           style any way you like in just a few clicks. Put a quick <a href="#chat-tower" class="cursor-pointer text-sky-500 hover:underline">Chat Tower</a> or <a href="#follower-bowling" class="cursor-pointer text-sky-500 hover:underline">Follower Bowling</a> game up while you grab a drink,
           and chat has something to do until you're back.
         </p>
@@ -37,7 +37,7 @@
           @endguest
           <p class="flex max-w-md items-start gap-2.5 text-sm text-foreground">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 size-5 shrink-0 text-green-500" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-            <span>Free forever. No registration required. Overlabels doesn't steal your data, nor is any of your data used to train AI. <a href="/ai" class="cursor-pointer text-sky-500 hover:underline">Promised</a>.</span>
+            <span>Free forever. No registration required. Overlabels never sells your data or uses it to train AI. <a href="/ai" class="cursor-pointer text-sky-500 hover:underline">Promised</a>.</span>
           </p>
         </div>
       </div>
