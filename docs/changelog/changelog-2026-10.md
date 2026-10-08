@@ -1,5 +1,26 @@
 # Changelog - October 2026
 
+## OL-2610-002 - October 8th, 2026 - feat(products): a three-knob designer that plays itself on the Twitch Chat Overlay page
+
+The Twitch Chat Overlay's designer is the most capable thing on the platform, and its product page
+showed it as ten blocks of text. Dropping the whole designer on a visitor would bury them, so the
+page now shows exactly three of its controls, working: Start from (all ten looks), Accent and Font
+size, beside a preview with made-up chat that keeps arriving.
+
+The preview runs the overlay's own stylesheet, straight out of the recipe, with the designer's own
+ten presets, so every look on the page is the look OBS shows - Broadcast even drops to a ticker
+strip at the bottom. A cursor plays the knobs by itself: it picks the next look, then an accent,
+then drags the font size. The moment a visitor's mouse or keyboard enters, the cursor gets out of
+the way and the knobs are theirs; it comes back a few seconds after they leave.
+
+- "Your name in chat" puts the visitor on the broadcaster's line. A logged-in streamer starts with
+  their own Twitch name.
+- The rest of the designer is named in one line, not shown, with an "Open the full designer"
+  button: straight to the designer for someone who has the product, to the installer for everyone
+  else.
+- Reduced motion never plays it, and chat only moves while the section is on screen.
+- Every other product keeps its looks as text.
+
 ## OL-2610-001 - October 7th, 2026 - feat(products): a full sales page for every chat product
 
 The product pages that shipped in September were a summary at best: one demo, one paragraph that

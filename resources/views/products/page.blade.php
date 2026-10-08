@@ -178,6 +178,9 @@
                         @if (!empty($page['looks_lede']))
                             <p class="mb-10 max-w-2xl text-lg text-muted-foreground">{{ $page['looks_lede'] }}</p>
                         @endif
+                        @if ($page['teaser'])
+                            @include('products._looks-teaser', ['teaser' => $page['teaser']])
+                        @else
                         <div @class(['pp-looks', 'pp-looks--text' => empty($page['looks'][0]['image'])])>
                             @foreach ($page['looks'] as $look)
                                 <div class="pp-look">
@@ -191,6 +194,7 @@
                                 </div>
                             @endforeach
                         </div>
+                        @endif
                     </div>
                 </div>
             </section>

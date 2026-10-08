@@ -131,3 +131,19 @@ it('turns a [text](url) in an answer into a link, off-site ones in a new tab', f
         ->assertSee('<a href="/help/llms-txt" class="cursor-pointer text-sky-500 hover:underline">Ask an AI to do it for you</a>', escape: false)
         ->assertDontSee('](', escape: false);
 });
+
+it('gives the Twitch Chat Overlay the three-knob designer on its real stylesheet', function () {
+    $html = $this->get(route('products.show', 'twitch-chat-overlay'))->assertOk()->getContent();
+
+    expect($html)->toContain('data-looks-teaser')
+        ->and($html)->toContain('data-look="vapor"')
+        // The overlay's own rules, with every control tag filled in.
+        ->and($html)->toContain('.skin-terminal .name::before')
+        ->and($html)->not->toContain('[[[c:');
+});
+
+it('keeps the looks as text on a product without the three-knob designer', function () {
+    $this->get(route('products.show', 'chat-emote-bubbles'))
+        ->assertOk()
+        ->assertDontSee('data-looks-teaser', escape: false);
+});

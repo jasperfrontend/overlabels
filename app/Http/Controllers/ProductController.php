@@ -607,6 +607,66 @@ class ProductController extends Controller
                 ['q' => 'Can I remove it later?', 'a' => "Yes. One button on the product's page removes it and everything it installed."],
             ],
             'more' => $more,
+            'teaser' => $this->looksTeaser($manifest),
+        ];
+    }
+
+    /**
+     * The three-knob designer on the Twitch Chat Overlay page: the overlay's
+     * REAL stylesheet in a sandboxed preview, the designer's presets, and a
+     * script (welcome/looksTeaser.ts) that changes look, accent and font size
+     * the way the designer does - a class on .ol-chat and a custom property.
+     *
+     * Chat-only on purpose: the script builds `.ol-chat > .msg` markup, which
+     * is this overlay's and no other product's. The stylesheet's only tags are
+     * the `[[[c:key]]]` custom properties on .ol-chat; they are filled with the
+     * first preset so the preview is a real look before any script runs, and
+     * anything else left in it means the overlay changed shape - no teaser
+     * then, and the page falls back to the looks as text.
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return array{css: string, fonts_url: string, skin_key: string, presets: list<array{key: string, label: string, blurb: string, values: array<string, string>}>}|null
+     */
+    private function looksTeaser(array $manifest): ?array
+    {
+        $presets = $manifest['designer']['presets'] ?? [];
+        $skinKey = $manifest['designer']['skin_key'] ?? null;
+        $overlay = $manifest['installs']['overlays'][0]['file'] ?? null;
+
+        if ($manifest['slug'] !== 'twitch-chat-overlay' || $presets === [] || $skinKey === null || $overlay === null) {
+            return null;
+        }
+
+        $css = OverlayMarkdown::parse(
+            (string) file_get_contents(RecipeInstaller::directoryFor($manifest['slug']).DIRECTORY_SEPARATOR.basename($overlay))
+        )['css'];
+
+        $first = $presets[0]['values'];
+        $css = preg_replace_callback('/\[\[\[c:(\w+)]]]/', fn (array $m) => (string) ($first[$m[1]] ?? ''), $css);
+
+        if (str_contains($css, '[[[')) {
+            return null;
+        }
+
+        // Every family a preset names, from Bunny in one request; the slug rule
+        // is BunnyFonts' (family lowercased, spaces hyphenated).
+        $families = collect($presets)
+            ->pluck('values.font')
+            ->filter()
+            ->unique()
+            ->map(fn (string $family) => str_replace(' ', '-', strtolower($family)).':400,700')
+            ->implode('|');
+
+        return [
+            'css' => $css,
+            'fonts_url' => 'https://fonts.bunny.net/css?family='.$families,
+            'skin_key' => $skinKey,
+            'presets' => array_map(fn (array $preset) => [
+                'key' => $preset['key'],
+                'label' => $preset['label'],
+                'blurb' => $preset['blurb'] ?? '',
+                'values' => array_map('strval', $preset['values']),
+            ], $presets),
         ];
     }
 

@@ -156,3 +156,32 @@ it('uninstalls the overlay and its controls together', function () {
         ->and(OverlayControl::where('overlay_template_id', $templateId)->count())->toBe(0)
         ->and(RecipeInstance::where('user_id', $user->id)->count())->toBe(0);
 });
+
+it('sends the teaser\'s designer button to the installer until the product is installed', function () {
+    $user = twitchChatUser();
+    $design = 'href="'.route('products.design', 'twitch-chat-overlay').'"';
+
+    $this->get(route('products.show', 'twitch-chat-overlay'))
+        ->assertOk()
+        ->assertSee('Open the full designer')
+        ->assertDontSee($design, escape: false);
+
+    app(RecipeInstaller::class)->install(twitchChatRecipe(), $user, 'twitch_chat_overlay');
+
+    $this->actingAs($user)->get(route('products.show', 'twitch-chat-overlay'))
+        ->assertOk()
+        ->assertSee($design, escape: false);
+});
+
+it('puts a logged-in streamer\'s own name in the teaser\'s name field', function () {
+    $user = twitchChatUser(['twitch_data' => ['login' => 'nightowl', 'display_name' => 'NightOwl']]);
+
+    $this->get(route('products.show', 'twitch-chat-overlay'))
+        ->assertOk()
+        ->assertSee('data-name type="text"', escape: false)
+        ->assertDontSee('value="NightOwl"', escape: false);
+
+    $this->actingAs($user)->get(route('products.show', 'twitch-chat-overlay'))
+        ->assertOk()
+        ->assertSee('value="NightOwl"', escape: false);
+});
