@@ -33,7 +33,7 @@ const open = ref(props.show);
 
       <DialogFooter class="mt-2 gap-2">
         <button type="button" class="btn btn-sm btn-secondary" @click="open = false">Maybe later</button>
-        <Link :href="route('products.index')" class="btn btn-sm btn-primary">
+        <Link :href="route('products.index', { from: 'welcome-dialog' })" class="btn btn-sm btn-primary">
           Go check out the products
           <ArrowRight class="ml-1.5 h-4 w-4" />
         </Link>

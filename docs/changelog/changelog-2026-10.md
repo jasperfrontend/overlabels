@@ -1,5 +1,21 @@
 # Changelog - October 2026
 
+## OL-2610-005 - October 23rd, 2026 - feat(admin): a funnel page that shows how far new accounts get
+
+The welcome dialog and banner went out today, and there was no way to tell whether anyone followed
+them. There is now. Every account gets a first-time stamp for four steps: reaching the products
+page, opening a product, installing one, and which welcome link (banner, dialog, or neither)
+brought them to the products page.
+
+- `/admin/funnel` lists every signup in the last 7, 30 or 90 days or all time, with how long after
+  signup each step happened, and the totals per step on top.
+- Each step is stamped once, the first time, so later visits write nothing.
+- An install stays counted after an uninstall. Installs from before today still show, because
+  their row is the fallback.
+- An admin looking through someone's account stamps nothing for them.
+- Accounts older than today show blanks for the products page, product page and banner columns,
+  even if they got further.
+
 ## OL-2610-004 - October 23rd, 2026 - feat(dashboard): new users now actually get welcomed
 
 Honest version first: signing up dropped you on a dashboard that said nothing about where to go

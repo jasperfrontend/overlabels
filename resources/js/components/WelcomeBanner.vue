@@ -14,7 +14,7 @@ defineProps<{
 
 <template>
   <Link
-    :href="route('products.index')"
+    :href="route('products.index', { from: 'welcome-banner' })"
     class="welcome-banner group block cursor-pointer border-2 border-neutral-950 bg-cyan-300 p-5 text-neutral-950 transition-colors hover:bg-cyan-200 focus-visible:ring-4 focus-visible:ring-cyan-300/50 focus-visible:outline-none sm:p-6"
   >
     <div class="flex items-center gap-4">

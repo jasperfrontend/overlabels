@@ -12,6 +12,7 @@ import {
   Blocks,
   Brackets,
   FileText,
+  Filter,
   Flag,
   HashIcon,
   Heart,
@@ -162,6 +163,7 @@ const adminNavItems = computed<NavItem[]>(() => {
   return [
     dashboard,
     { title: 'Users', href: route('admin.users.index'), icon: Users },
+    { title: 'Funnel', href: route('admin.funnel.index'), icon: Filter },
     { title: 'Overlays', href: route('admin.templates.index'), icon: Layers },
     { title: 'Events', href: route('admin.events.index'), icon: Radio },
     { title: 'Tokens', href: route('admin.tokens.index'), icon: HashIcon },

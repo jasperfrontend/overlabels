@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminAccessTokenController;
 use App\Http\Controllers\Admin\AdminAuditLogController;
 use App\Http\Controllers\Admin\AdminBanController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminFunnelController;
 use App\Http\Controllers\Admin\AdminKitController;
 use App\Http\Controllers\Admin\AdminLockdownController;
 use App\Http\Controllers\Admin\AdminReportController;
@@ -33,6 +34,9 @@ Route::prefix('admin')
             ->name('users.integration-seed')
             ->withTrashed()
             ->where('service', 'kofi|streamlabs|fourthwall|bmac|throne');
+
+        // Welcome funnel: signup -> products -> install
+        Route::get('/funnel', [AdminFunnelController::class, 'index'])->name('funnel.index');
 
         // Kits
         Route::get('/kits', [AdminKitController::class, 'index'])->name('kits.index');

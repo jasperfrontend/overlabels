@@ -24,6 +24,7 @@ use App\Support\ProductDesigner;
 use App\Support\ProductSetup;
 use App\Support\ServiceConnections;
 use App\Support\ServiceTestGuides;
+use App\Support\WelcomeFunnel;
 use App\Support\WiringFacts;
 use App\Support\WiringReport;
 use Illuminate\Http\JsonResponse;
@@ -63,6 +64,7 @@ class ProductController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        WelcomeFunnel::reachedListing($request);
         $installed = $user ? $this->installedSlugs($user) : [];
 
         $all = collect($this->catalog->listed())
@@ -234,6 +236,7 @@ class ProductController extends Controller
 
         $manifest = $this->listedManifest($slug);
         $canonical = route('products.show', $slug);
+        WelcomeFunnel::openedProduct($request, $manifest['slug']);
 
         // A product that declares a `pitch` gets the full sales page; the
         // donation alerts do not declare one and keep the short page.
@@ -381,6 +384,8 @@ class ProductController extends Controller
         } catch (RuntimeException $e) {
             return redirect()->route('products.manage', $slug)->withErrors(['install' => $e->getMessage()]);
         }
+
+        WelcomeFunnel::installed($request, $slug);
 
         // From here every app page carries the setup banner until the
         // product page sees nothing left, or the person says not now.
