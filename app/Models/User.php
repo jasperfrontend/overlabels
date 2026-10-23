@@ -176,6 +176,9 @@ class User extends Authenticatable
         // desktop does not reappear on the phone - these are one-time notices,
         // and showing one twice is the whole failure mode.
         'dismissed_nudges' => [],
+        // Unix seconds the dashboard last opened the "Welcome to Overlabels"
+        // dialog. Null = never. See DashboardController::claimWelcomeDialog().
+        'welcome_shown_at' => null,
     ];
 
     public const int FOREACH_CAP_MAX = 50;

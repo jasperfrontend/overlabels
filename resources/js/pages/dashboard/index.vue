@@ -12,6 +12,8 @@ import { Bell, Layers, List, Newspaper, Plus } from '@lucide/vue';
 import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
 import type { AppPageProps, OverlayTemplate, Update, UsageSummary, WhatsNew } from '@/types';
 import EmptyState from '@/components/EmptyState.vue';
+import WelcomeBanner from '@/components/WelcomeBanner.vue';
+import WelcomeDialog from '@/components/WelcomeDialog.vue';
 
 const page = usePage<AppPageProps>();
 
@@ -32,6 +34,9 @@ const props = defineProps<{
   recentUpdates: Update[];
   whatsNew: WhatsNew;
   usage: UsageSummary | null;
+  /** No product installed yet - see DashboardController::index(). */
+  isNewUser: boolean;
+  showWelcomeDialog: boolean;
 }>();
 
 const isAdmin = computed(() => page.props.isAdmin);
@@ -95,10 +100,16 @@ const breadcrumbs = [
     <meta name="description" content="Dashboard for Overlabels - My Twitch overlay hub" />
   </Head>
   <AppLayout :breadcrumbs="breadcrumbs">
+    <WelcomeDialog :show="props.showWelcomeDialog" />
+
     <div class="flex h-full flex-1 flex-col gap-4">
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <!-- 60% -->
         <div class="p-4 lg:col-span-3">
+          <!-- No close button: it stays until the first product is installed, for
+               everyone who closed the welcome dialog without reading it. -->
+          <WelcomeBanner v-if="props.isNewUser" class="mb-6" :name="page.props.auth.user.name" :avatar="page.props.auth.user.avatar" />
+
           <TabStrip v-model="activeTab" :tabs="mainTabs">
             <template #actions>
               <a class="btn btn-sm btn-chill flex-1 md:flex-none" :href="tabActions.viewHref" :title="tabActions.viewTitle" aria-label="View all">

@@ -1,5 +1,21 @@
 # Changelog - October 2026
 
+## OL-2610-004 - October 23rd, 2026 - feat(dashboard): new users now actually get welcomed
+
+Honest version first: signing up dropped you on a dashboard that said nothing about where to go
+next. Of the last ten people who signed up, one made it to the products. That one is on me.
+
+New accounts are now welcomed and pointed at the products:
+
+- A "Welcome to Overlabels" dialog on the first visit to the dashboard, with one button to the
+  products.
+- A bright cyan welcome banner above the tabs, with your Twitch avatar and name. The whole banner
+  is the link, and it stays until your first product is installed.
+- "New" means no product installed, not a recent signup. Someone who signed up months ago, left,
+  and came back with nothing installed gets the same welcome.
+
+The official product badge on the products pages is cyan now too, to match.
+
 ## OL-2610-003 - October 9th, 2026 - feat(home): a headline that says what the games are for, and a promise about AI
 
 The homepage opened with "Give your Twitch chat something to play.", which read with an undertone

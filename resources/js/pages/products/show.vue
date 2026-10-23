@@ -296,7 +296,7 @@ async function uninstall(): Promise<void> {
                  one color; the green band and the Installed line carry the
                  installed state. An alert shows its service's icon instead:
                  it is that service's API inside Overlabels. -->
-            <ProductBadge v-if="product.category === 'product'" label="An official Overlabels product" class="size-9 shrink-0 text-violet-400" />
+            <ProductBadge v-if="product.category === 'product'" label="An official Overlabels product" class="size-9 shrink-0 text-cyan-300" />
             <ServiceLogo
               v-else-if="product.integrations[0]"
               :source="product.integrations[0]"
