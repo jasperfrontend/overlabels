@@ -2,6 +2,8 @@
 
 use App\Models\ExternalIntegration;
 use App\Models\OptionSet;
+use App\Models\OverlayAccessLog;
+use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Models\Recipe;
@@ -10,6 +12,7 @@ use App\Models\User;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
 use App\Services\Tower\TowerService;
+use App\Support\ProductDesigner;
 use App\Support\WiringCatalog;
 use App\Support\WiringFacts;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -115,4 +118,36 @@ it('reports the integration and list wires and leaves the command wire out', fun
 
     ExternalIntegration::where('user_id', $user->id)->where('service', 'tower')->update(['enabled' => false]);
     expect(WiringFacts::productSubject($instance->fresh())['states']['product.integration'])->toBe(WiringCatalog::MISSING);
+});
+
+it('says when a real overlay link last loaded the tower, and never counts the designer preview', function () {
+    $user = towerUser();
+    $this->actingAs($user)->post('/products/chat-tower/install');
+    $tower = OverlayTemplate::where('owner_id', $user->id)->where('type', '!=', 'alert')->firstOrFail();
+
+    $page = fn () => $this->actingAs($user->fresh())->get('/products/chat-tower/install');
+
+    // Nothing has loaded it yet: the page offers Add to OBS.
+    $page()->assertInertia(fn (Assert $page) => $page->where('installed.overlays.0.loaded_ago', null));
+
+    // The designer's preview token renders the same slug, and is not OBS.
+    $preview = OverlayAccessToken::create([
+        'user_id' => $user->id, 'name' => ProductDesigner::TOKEN_NAME, 'token_hash' => hash('sha256', 'preview-'.$user->id),
+        'token_prefix' => 'prev', 'is_active' => true, 'metadata' => ['purpose' => ProductDesigner::TOKEN_PURPOSE],
+    ]);
+    OverlayAccessLog::create(['token_id' => $preview->id, 'template_slug' => $tower->slug, 'accessed_at' => now()]);
+    $page()->assertInertia(fn (Assert $page) => $page->where('installed.overlays.0.loaded_ago', null));
+
+    // A load of another overlay through a real link says nothing about this one.
+    $link = OverlayAccessToken::create([
+        'user_id' => $user->id, 'name' => 'OBS - Chat Tower', 'token_hash' => hash('sha256', 'obs-'.$user->id),
+        'token_prefix' => 'obs', 'is_active' => true,
+    ]);
+    OverlayAccessLog::create(['token_id' => $link->id, 'template_slug' => 'someone-elses-slug', 'accessed_at' => now()]);
+    $page()->assertInertia(fn (Assert $page) => $page->where('installed.overlays.0.loaded_ago', null));
+
+    // A real link loading the tower is the answer, latest load first.
+    OverlayAccessLog::create(['token_id' => $link->id, 'template_slug' => $tower->slug, 'accessed_at' => now()->subDays(2)]);
+    OverlayAccessLog::create(['token_id' => $link->id, 'template_slug' => $tower->slug, 'accessed_at' => now()->subMinutes(3)]);
+    $page()->assertInertia(fn (Assert $page) => $page->where('installed.overlays.0.loaded_ago', '3 minutes ago'));
 });

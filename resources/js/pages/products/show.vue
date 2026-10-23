@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowRight, Bot, Check, Circle, Download, ExternalLink, Sliders, Trash2, TriangleAlert } from '@lucide/vue';
+import { ArrowRight, Bot, Check, Download, ExternalLink, Sliders, Trash2, TriangleAlert } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
 import { urlWithTab } from '@/composables/useAddressableTabs';
 import { useConfirm } from '@/composables/useConfirm';
@@ -13,7 +13,7 @@ import ProductsLayout, { type ProductCategory } from '@/layouts/ProductsLayout.v
 import ProductServices from '@/components/ProductServices.vue';
 import type { ProductService } from '@/components/ProductServices.vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { productMoves, type MoveKey, type Moves } from '@/utils/productMoves';
 
 type WireState = 'satisfied' | 'missing' | 'not_applicable';
 
@@ -54,6 +54,8 @@ interface Product {
   integrations: string[];
   notes: string[];
   ready_message: string | null;
+  /** One line under the Add to OBS button: how big to make the browser source. Null when the dialog's own advice is right. */
+  obs_hint: string | null;
   designer: Designer | null;
 }
 /**
@@ -74,6 +76,11 @@ interface InstalledOverlay {
   slug: string;
   id: number;
   type: string;
+  /**
+   * Not alerts: when a real overlay link last loaded it ("3 minutes ago"),
+   * or null when none ever has. The designer's preview does not count.
+   */
+  loaded_ago?: string | null;
   /** Alerts only: the events it fires on, as the Triggers tab labels them. */
   fires_on?: string[];
   /** Alerts only: the static overlays it renders inside. Empty means every one. */
@@ -118,6 +125,11 @@ interface Installed {
 const props = defineProps<{
   product: Product;
   installed: Installed | null;
+  /**
+   * True on the one view that ended this product's setup flow, and never
+   * again: the server computes it from the flow it is ending.
+   */
+  arrived: boolean;
   categories: ProductCategory[];
   installed_count: number | null;
 }>();
@@ -134,6 +146,10 @@ const steps = computed(() => (props.installed?.subject?.wires ?? []).filter((wir
 const remaining = computed(() => steps.value.filter((wire) => wire.state === 'missing').length);
 const done = computed(() => steps.value.length - remaining.value);
 const progress = computed(() => (steps.value.length ? Math.round((done.value / steps.value.length) * 100) : 100));
+
+// Installed with nothing left in the setup flow. A product whose circuit has
+// no subject has no wires, so nothing is left for it either.
+const finished = computed(() => !!props.installed && remaining.value === 0);
 
 // The product's questions, answered with their defaults until the person
 // picks otherwise.
@@ -153,6 +169,7 @@ function install(): void {
 // to a page that warns them off doing exactly that.
 const stages = computed(() => (props.installed?.overlays ?? []).filter((overlay) => overlay.type !== 'alert'));
 const alerts = computed(() => (props.installed?.overlays ?? []).filter((overlay) => overlay.type === 'alert'));
+const stageNames = computed(() => joinNames(stages.value.map((stage) => stage.name)));
 
 // The designer. Its looks are its opening move, not a row of cards here: ten
 // previews of someone else's chat asked the streamer to choose before they
@@ -165,12 +182,11 @@ function joinNames(names: string[]): string {
   return names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
-// Every service the alert fires on, with its connect. The pill names the
-// connected ones, and the test-tip beat runs once per connected service that
-// has a test button of its own; the picked service's guide stands in for a
-// product with no services block.
+// Every service the alert fires on, with its connect. The test-tip move runs
+// once per connected service that has a test button of its own; the picked
+// service's guide stands in for a product with no services block.
 const services = computed(() => props.installed?.services ?? []);
-const connectedLabels = computed(() => services.value.filter((service) => service.connected).map((service) => service.label));
+const unconnected = computed(() => services.value.filter((service) => !service.connected));
 const testGuides = computed<TestGuide[]>(() => {
   const own = services.value.flatMap((service) => (service.connected && service.test_guide ? [service.test_guide] : []));
   if (own.length) return own;
@@ -179,7 +195,7 @@ const testGuides = computed<TestGuide[]>(() => {
 
 // A product that installs only an alert has nothing of its own for OBS: the
 // alert renders inside every static overlay the person has there. The OBS
-// beat offers their own overlays instead, any one of which is enough.
+// move offers their own overlays instead, any one of which is enough.
 const yourOverlays = computed(() => props.installed?.your_overlays ?? { loaded: false, overlays: [], total: 0 });
 
 // Up to three names, then a count: "Scene, Clock, Chat and 4 more".
@@ -197,17 +213,23 @@ const servicesLead = computed(() =>
     : 'A tip from any connected one lands as the alert. Connect the ones you use, now or later, right here.',
 );
 
-// An inline link inside the finished band's footnotes: violet, underlined
-// at half strength until hovered. One string so the two sites cannot drift.
+// An inline link in the page's smaller print: violet, underlined at half
+// strength until hovered. One string so the sites cannot drift.
 const noteLink =
   'cursor-pointer text-violet-600 underline decoration-violet-600/45 underline-offset-2 hover:text-violet-500 hover:decoration-current dark:text-violet-400 dark:decoration-violet-400/45 dark:hover:text-violet-300';
 
-// Beat three, "watch it land". The server says whether an event one of the
-// product's alerts fires on has arrived since the install, so a reload after
-// the test tip still says so; the alert broadcast flips it the moment one
-// lands while the page is open. The broadcast carries the template's slug,
-// which is how this product's alert is told apart from any other.
+// "Watch it land". The server says whether an event one of the product's
+// alerts fires on has arrived since the install, so a reload after the test
+// tip still says so; the alert broadcast flips it the moment one lands while
+// the page is open. The broadcast carries the template's slug, which is how
+// this product's alert is told apart from any other.
 const landed = ref<Landed | null>(props.installed?.landed ?? null);
+watch(
+  () => props.installed?.landed,
+  (value) => {
+    if (value) landed.value = value;
+  },
+);
 const landedLine = computed(() => {
   if (!landed.value) return '';
   const { from_name: who, formatted_amount: amount } = landed.value;
@@ -225,6 +247,10 @@ function onAlertTriggered(e: { alert?: { alert_template_slug?: string; data?: Re
     formatted_amount: String(e.alert?.data?.['event.formatted_amount'] ?? ''),
     at: new Date().toISOString(),
   };
+  // The tip came through the service's link, so the server now counts the
+  // service as reached; read that back rather than leave the page saying
+  // "paste your link" next to a tip that used it.
+  router.reload({ only: ['installed'] });
 }
 
 onMounted(() => {
@@ -235,9 +261,155 @@ onMounted(() => {
   channel.listen('.alert.triggered', onAlertTriggered);
 });
 
+// What is left once the flow is done, as moves: see productMoves. Empty on
+// any page that is not finished.
+const moves = computed<Moves>(() =>
+  finished.value
+    ? productMoves({
+        stages: stages.value.map((stage) => ({ loaded: !!stage.loaded_ago })),
+        alerts: alerts.value.length,
+        hostLoaded: yourOverlays.value.loaded,
+        services: services.value.map(({ service, kind, connected, webhook_url, received }) => ({ service, kind, connected, webhook_url, received })),
+        tests: testGuides.value.map((guide) => guide.service),
+        landed: landed.value !== null,
+      })
+    : { moves: [], current: null, pending: 0, paste: [] },
+);
+const eyebrow = computed(() => (moves.value.pending === 1 ? 'Last step' : 'Next step'));
+const lastTestKey = computed(() => [...moves.value.moves].reverse().find((move) => move.key.startsWith('test:') || move.key === 'watch')?.key);
+const obsDone = computed(() => moves.value.moves.find((move) => move.key === 'obs')?.done ?? true);
+
+function guideFor(key: MoveKey): TestGuide | undefined {
+  return testGuides.value.find((guide) => `test:${guide.service}` === key);
+}
+
+// The paste of our link on a service's side rides on that service's test-tip
+// move, since only the test can prove it (productMoves). A service with no
+// test move of its own rides on the last one, so no paste is ever dropped.
+function pasteFor(key: MoveKey): ProductService[] {
+  const testKeys = new Set(moves.value.moves.map((move) => move.key));
+  return services.value.filter(
+    (service) =>
+      moves.value.paste.includes(service.service) &&
+      (key === `test:${service.service}` || (key === lastTestKey.value && !testKeys.has(`test:${service.service}`))),
+  );
+}
+
+function testTitle(key: MoveKey): string {
+  const label = guideFor(key)?.service_label;
+  const paste = pasteFor(key);
+  if (!label) return paste.length ? `Paste your link into ${joinNames(paste.map((service) => service.label))}, then watch it land` : 'Watch it land';
+  return paste.length ? `Paste your link into ${label}, then send yourself a test tip` : `Send yourself a test tip from ${label}`;
+}
+
+// After "Close this screen and continue" in the OBS dialog: ask the server
+// whether a real link has loaded the overlay. OBS fetches a browser source the
+// moment it is made, so by the time someone has ticked the box and pressed
+// Continue the load is normally logged, and the move turns into its tick where
+// they clicked. One more look a few seconds later covers a slow OBS; nothing
+// beyond that, and no polling. If OBS never loaded it the move stays open,
+// which is the honest answer. The person's own tick is never taken as proof.
+let recheckTimer: ReturnType<typeof setTimeout> | null = null;
+
+function recheck(): void {
+  if (recheckTimer) clearTimeout(recheckTimer);
+  router.reload({
+    only: ['installed'],
+    onSuccess: () => {
+      if (obsDone.value) return;
+      recheckTimer = setTimeout(() => router.reload({ only: ['installed'] }), 4000);
+    },
+  });
+}
+
+// Coming back to this tab is the other moment worth a look: plenty of people
+// press Continue first and only then switch to OBS to drop the link in. While
+// the OBS move is open, returning to the page asks once, at most every five
+// seconds. Still not polling: nothing happens while the page is not looked at.
+let lastReturnCheck = 0;
+
+function onReturn(): void {
+  if (document.visibilityState !== 'visible' || obsDone.value) return;
+  const now = Date.now();
+  if (now - lastReturnCheck < 5000) return;
+  lastReturnCheck = now;
+  router.reload({ only: ['installed'] });
+}
+
+onMounted(() => {
+  window.addEventListener('focus', onReturn);
+  document.addEventListener('visibilitychange', onReturn);
+});
+
 // Stop listening rather than leave: the channel is shared with anything else
 // on the account that listens, and leaving would take it down for them too.
-onBeforeUnmount(() => channel?.stopListening('.alert.triggered', onAlertTriggered));
+onBeforeUnmount(() => {
+  channel?.stopListening('.alert.triggered', onAlertTriggered);
+  if (recheckTimer) clearTimeout(recheckTimer);
+  window.removeEventListener('focus', onReturn);
+  document.removeEventListener('visibilitychange', onReturn);
+});
+
+// A tick lands (the pop-in) on the arrival view, and on a move that turns
+// done while the page is open. A revisit shows the ticks already sitting
+// there: a celebration that replays on every visit stops meaning anything.
+const flipped = ref(new Set<MoveKey>());
+watch(
+  () => moves.value.moves.map((move) => [move.key, move.done] as const),
+  (now, before) => {
+    const wasOpen = new Set(before.filter(([, done]) => !done).map(([key]) => key));
+    const turned = now.filter(([key, done]) => done && wasOpen.has(key)).map(([key]) => key);
+    if (turned.length) flipped.value = new Set([...flipped.value, ...turned]);
+  },
+);
+
+// The arrival. The setup flow lights its next step with data-product-focus
+// while it runs, but on this view it has just ended, so it lights nothing;
+// the page lights its own current move instead (the binding in the template,
+// a STATE: it is on whenever the move really is not done) and, only on the
+// view that ended the flow, scrolls to it (an EVENT). Same split, and the
+// same fuchsia, as useProductFocus.
+//
+// `arrivedNow` is captured before the prop is cleared, so the band's tick
+// still lands on this view. The prop is cleared with replaceProp because Back
+// and Forward restore this page from its history entry rather than the server,
+// and without it they would scroll again. The watch covers the last step
+// finished inline on this page, where Inertia reuses this component and
+// onMounted does not run a second time.
+const arrivedNow = ref(props.arrived);
+const movesEl = ref<HTMLElement | null>(null);
+
+function arrive(): void {
+  arrivedNow.value = true;
+  router.replaceProp('arrived', false);
+
+  // After Inertia's own scroll reset for the visit, which runs once the page
+  // has mounted and, in Firefox with smooth scrolling, a frame later still:
+  // two frames and a task puts this behind it. Under reduced motion it jumps;
+  // 'auto' would not, since app.css makes the page scroll smoothly. Focus is
+  // not moved: .btn rings on :focus, and a mouse arrival would stack a violet
+  // ring on the fuchsia glow.
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() =>
+      setTimeout(() => {
+        const el = movesEl.value?.querySelector<HTMLElement>('[aria-current="step"]');
+        if (!el) return;
+        const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+        el.scrollIntoView({ block: 'center', behavior: reduced ? 'instant' : 'smooth' });
+      }),
+    ),
+  );
+}
+
+onMounted(() => {
+  if (props.arrived) arrive();
+});
+watch(
+  () => props.arrived,
+  (now) => {
+    if (now) arrive();
+  },
+);
 
 const { confirm } = useConfirm();
 const uninstallError = computed(() => (page.props.errors as Record<string, string> | undefined)?.uninstall);
@@ -254,7 +426,9 @@ async function uninstall(): Promise<void> {
     confirmLabel: 'Uninstall',
   });
   if (!ok) return;
-  router.post(route('products.uninstall', props.product.slug));
+  // A refusal renders its error here at the foot of the page, so the page
+  // stays where the button is rather than jumping to the top.
+  router.post(route('products.uninstall', props.product.slug), {}, { preserveScroll: 'errors' });
 }
 </script>
 
@@ -278,15 +452,65 @@ async function uninstall(): Promise<void> {
       <!-- The same artwork as the listing card, full width, as the page's hero. -->
       <img v-if="product.hero" :src="product.hero" alt="" class="mb-4 block aspect-video w-full object-cover" />
 
-      <!-- The state band. The product's name and description are the page's
-           own heading and lead now, above the breadcrumb, so this carries
-           what is true of THIS account: whether it is installed, the button
-           that changes that, and the questions the install asks. Installed,
-           it turns green and carries the badge large. This is the one page in
-           the app that is allowed to celebrate: the person did nothing but
-           press a button and follow a few lines, and the page's job is to
-           make that feel like it counted. -->
+      <!-- Finished: the win, said once. This is the one page in the app that
+           is allowed to celebrate: the person did nothing but press a button
+           and follow a few lines, and the page's job is to make that feel
+           like it counted. One green band, one heading, one line of what is
+           true right now. No "Installed" above it, no "Connected" pill under
+           it and no bot line beside it - each said the same thing in other
+           words - and Uninstall is at the foot of the page, not next to the
+           win. -->
       <header
+        v-if="finished"
+        class="flex items-start gap-4 border border-green-600/60 bg-green-50 p-5 sm:gap-5 sm:p-6 dark:border-green-500/60 dark:bg-green-950/40"
+      >
+        <!-- The product's mark with a tick on its corner. The tick lands
+             (once) on the view that ended the setup, and just sits there on
+             any later visit. -->
+        <span class="relative mt-0.5 flex shrink-0">
+          <ProductBadge v-if="product.category === 'product'" label="An official Overlabels product" class="size-10 text-cyan-300" />
+          <ServiceLogo
+            v-else-if="product.integrations[0]"
+            :source="product.integrations[0]"
+            class="size-9"
+            :class="eventTypeDotClass('product', product.integrations[0])"
+          />
+          <span
+            class="flex items-center justify-center rounded-full bg-green-500 text-white"
+            :class="[
+              product.category === 'product' || product.integrations[0]
+                ? 'absolute -right-1.5 -bottom-1.5 size-5 ring-2 ring-green-50 dark:ring-background'
+                : 'size-9',
+              { 'product-tick': arrivedNow },
+            ]"
+            aria-hidden="true"
+          >
+            <Check class="size-3" stroke-width="3.5" />
+          </span>
+        </span>
+
+        <div class="flex min-w-0 flex-col gap-1.5">
+          <h2 class="text-2xl leading-tight font-bold tracking-[-0.015em] text-pretty text-foreground sm:text-3xl">Everything is in place</h2>
+          <p v-if="product.ready_message" class="max-w-[600px] text-[15px] leading-relaxed text-pretty text-foreground">
+            {{ product.ready_message }}
+          </p>
+          <dl v-if="product.ingredients.length" class="mt-1 flex flex-col gap-1 text-sm">
+            <div v-for="ingredient in product.ingredients" :key="ingredient.key" class="flex flex-wrap gap-x-2">
+              <dt class="text-muted-foreground">{{ ingredient.question }}</dt>
+              <dd class="font-medium text-foreground">{{ answerLabel(ingredient) }}</dd>
+            </div>
+          </dl>
+          <p v-if="installError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ installError }}</p>
+        </div>
+      </header>
+
+      <!-- Not installed, or installed with steps left: the state band. The
+           product's name and description are the page's own heading and lead,
+           above the breadcrumb, so this carries what is true of THIS account:
+           whether it is installed, the button that changes that, and the
+           questions the install asks. -->
+      <header
+        v-else
         class="flex flex-col gap-3 border p-5"
         :class="installed ? 'border-green-600/60 bg-green-50 dark:border-green-500/60 dark:bg-green-950/40' : 'border-sidebar-border bg-sidebar'"
       >
@@ -312,16 +536,10 @@ async function uninstall(): Promise<void> {
             </div>
           </div>
 
-          <div class="flex shrink-0 flex-col items-end gap-2">
-            <button v-if="installed" type="button" class="btn btn-sm btn-chill cursor-pointer" @click="uninstall">
-              <Trash2 class="mr-2 size-4" />
-              Uninstall
-            </button>
-            <button v-else type="button" class="btn btn-primary cursor-pointer" @click="install">
-              <Download class="mr-2 size-4" />
-              Install
-            </button>
-          </div>
+          <button v-if="!installed" type="button" class="btn btn-primary shrink-0 cursor-pointer" @click="install">
+            <Download class="mr-2 size-4" />
+            Install
+          </button>
         </div>
 
         <!-- The product's questions. Before the install they are a form the
@@ -342,246 +560,216 @@ async function uninstall(): Promise<void> {
         </dl>
 
         <p v-if="installError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ installError }}</p>
-        <p v-if="uninstallError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ uninstallError }}</p>
       </header>
 
-      <!-- Installed and finished: the win, said once, then the beats that
-           make it land - the stage into OBS, a real test event from the
-           service, and this page noticing the alert fire. A stage sitting in
-           OBS with nothing on it is not a payoff; an alert landing is. No
-           settings vocabulary here. Green is a pill, a tick and a dot, never
-           a wall: the cards are the page's own dark, and the one thing that
-           glows is the line that says the tip arrived. -->
-      <section v-if="installed && installed.subject && remaining === 0" class="product-ready mt-8 flex flex-col gap-6">
-        <div class="flex flex-col items-center gap-3.5 text-center">
-          <span
-            class="product-glow inline-flex items-center gap-2 rounded-full border border-green-500/55 bg-green-500/8 py-1.25 pr-3.5 pl-2.75 text-[13px] font-semibold text-green-700 dark:text-green-400"
-          >
-            <Check class="size-3.5" stroke-width="2.4" />
-            {{ connectedLabels.length ? `${joinNames(connectedLabels)} connected` : 'Connected' }}
-          </span>
-          <h2 class="text-3xl leading-[1.2] font-bold tracking-[-0.015em] text-foreground">Everything is in place</h2>
-          <p v-if="product.ready_message" class="max-w-[600px] text-[15px] leading-relaxed text-pretty text-muted-foreground">
-            {{ product.ready_message }}
-          </p>
-        </div>
-
-        <ol class="product-beats flex flex-col gap-3">
-          <!-- Every service the alert fires on, each with its connect right
-               here. One is enough for the alert to work, and the page must
-               never call the product done and send someone elsewhere for the
-               rest. -->
-          <li
-            v-if="services.length"
-            class="product-beat grid grid-cols-[28px_minmax(0,1fr)] gap-4 border border-sidebar-border bg-sidebar p-5 dark:bg-black/35"
-          >
+      <!-- Finished: what is left to put it on stream, as moves (productMoves).
+           Everything here happens outside Overlabels - OBS, the service's own
+           site - which is why none of it is a setup step. Exactly one move is
+           current, the first one not done: it alone carries the fuchsia glow
+           the setup flow used for "this is the button", and an eyebrow that
+           says whether it is the last. A done move shrinks to a tick row.
+           Nothing is numbered, so a product with one move never shows a lone
+           "1". No settings vocabulary here. -->
+      <ol
+        v-if="finished && moves.moves.length"
+        ref="movesEl"
+        class="mt-6 flex flex-col gap-3"
+        aria-label="Putting it on stream"
+        :data-tab-start="moves.current ? '' : undefined"
+      >
+        <li
+          v-for="move in moves.moves"
+          :key="move.key"
+          :aria-current="move.key === moves.current ? 'step' : undefined"
+          :data-product-focus="move.key === moves.current ? '' : undefined"
+          :class="
+            move.done
+              ? 'flex items-start gap-3 border border-green-600/40 p-4 dark:border-green-500/40'
+              : 'flex flex-col items-start gap-3 border border-sidebar-border bg-sidebar p-5 sm:p-6 dark:bg-black/35'
+          "
+        >
+          <!-- Done: a tick and what is now true. -->
+          <template v-if="move.done">
             <span
-              class="product-beat-number flex size-7 items-center justify-center rounded-full border border-foreground/35 text-[13px] font-semibold text-foreground/80 tabular-nums"
+              class="mt-px inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-green-500 text-white"
+              :class="{ 'product-tick': arrivedNow || flipped.has(move.key) }"
               aria-hidden="true"
-            />
-            <div class="flex min-w-0 flex-col gap-3">
+            >
+              <Check class="size-3.5" stroke-width="3" />
+            </span>
+            <div class="flex min-w-0 flex-1 flex-col items-start gap-1.5">
+              <!-- Loaded from a real link is what the server can see. That is
+                   OBS nearly always, but a browser tab or the phone code
+                   counts too, so the line says loaded, never "is in OBS". -->
+              <template v-if="move.key === 'obs' && stages.length">
+                <h3 class="text-base leading-[1.35] font-semibold text-foreground">
+                  {{ stageNames }} {{ stages.length === 1 ? 'has' : 'have' }} loaded from your link
+                </h3>
+                <p v-for="stage in stages" :key="stage.id" class="text-sm leading-relaxed text-pretty text-foreground">
+                  {{ stages.length === 1 ? 'Last loaded' : `${stage.name} last loaded` }} {{ stage.loaded_ago }}.
+                </p>
+                <p class="text-sm leading-relaxed text-pretty text-muted-foreground">
+                  Missing from OBS, or want it in another scene? Add it again - your first link keeps working.
+                </p>
+                <div class="mt-1 flex flex-wrap gap-2">
+                  <AddToObsButton
+                    v-for="stage in stages"
+                    :key="stage.id"
+                    :template="stage"
+                    variant="again"
+                    :hint="product.obs_hint"
+                    @done="recheck"
+                  />
+                </div>
+              </template>
+
+              <template v-else-if="move.key === 'obs'">
+                <h3 class="text-base leading-[1.35] font-semibold text-foreground">The alert shows inside {{ loadedNames }}</h3>
+                <p class="text-sm leading-relaxed text-pretty text-foreground">
+                  Your overlay link has been serving {{ yourOverlays.overlays.length === 1 ? 'that overlay' : 'those overlays' }} lately, so there is
+                  nothing to add to OBS.
+                </p>
+              </template>
+
+              <!-- The payoff. Read from the stored event on load and flipped
+                   live by the alert broadcast. -->
+              <template v-else>
+                <h3 class="text-base leading-[1.35] font-semibold text-foreground">It landed</h3>
+                <p
+                  v-if="landedLine"
+                  :key="landedLine"
+                  class="product-landed product-glow flex items-center gap-2.5 rounded-full border border-green-500/50 bg-green-500/8 px-3.5 py-1.5 text-[13px] font-medium text-green-700 dark:text-green-400"
+                  role="status"
+                >
+                  <span class="size-2 shrink-0 rounded-full bg-green-500" aria-hidden="true" />
+                  {{ landedLine }}
+                </p>
+                <p class="text-sm leading-relaxed text-pretty text-foreground">
+                  Every real tip{{ guideFor(move.key) ? ` from ${guideFor(move.key)?.service_label}` : '' }} fires the alert the same way.
+                </p>
+              </template>
+            </div>
+          </template>
+
+          <!-- Open: the move as a card, with its one action right here. -->
+          <template v-else>
+            <p v-if="move.key === moves.current" class="text-xs font-semibold tracking-wide text-fuchsia-600 uppercase dark:text-fuchsia-400">
+              {{ eyebrow }}
+            </p>
+
+            <!-- A service not connected yet, with its connect right here. Only
+                 the unconnected ones: a connected one's link paste rides on
+                 its test tip below. -->
+            <template v-if="move.key === 'services'">
               <div class="flex flex-col gap-1">
-                <h3 class="text-base leading-[1.35] font-semibold text-foreground">{{ servicesTitle }}</h3>
+                <h3 class="text-xl leading-tight font-semibold text-foreground">{{ servicesTitle }}</h3>
                 <p class="text-sm leading-relaxed text-pretty text-foreground">{{ servicesLead }}</p>
               </div>
-              <ProductServices :services="services" />
-            </div>
-          </li>
+              <ProductServices :services="unconnected" />
+            </template>
 
-          <!-- The stage into OBS. The overlay's own OBS tab does the
-               handholding (it makes the token link and says the size); this
-               beat only sends them there and says what they will find. -->
-          <li
-            v-if="stages.length"
-            class="product-beat grid grid-cols-[28px_minmax(0,1fr)] gap-4 border border-sidebar-border bg-sidebar p-5 dark:bg-black/35"
-          >
-            <span
-              class="product-beat-number flex size-7 items-center justify-center rounded-full border border-foreground/35 text-[13px] font-semibold text-foreground/80 tabular-nums"
-              aria-hidden="true"
-            />
-            <div class="flex min-w-0 flex-col items-start gap-2.5">
-              <h3 class="text-base leading-[1.35] font-semibold text-foreground">Put {{ joinNames(stages.map((stage) => stage.name)) }} in OBS</h3>
-              <div class="flex w-full max-w-xs flex-col gap-2">
-                <AddToObsButton v-for="overlay in stages" :key="overlay.id" :template="overlay" />
+            <!-- The product's own stage into OBS: the whole step is one click
+                 here, which makes the link and shows it to drag onto OBS. -->
+            <template v-else-if="move.key === 'obs' && stages.length">
+              <div class="flex flex-col gap-1">
+                <h3 class="text-xl leading-tight font-semibold text-foreground">Add {{ stageNames }} to OBS</h3>
+                <p class="text-sm leading-relaxed text-pretty text-foreground">
+                  {{
+                    stages.length === 1
+                      ? `One click makes your link. Drag it onto OBS and ${stageNames} appears as a new browser source.`
+                      : 'One click makes each link. Drag each one onto OBS and it appears as a new browser source.'
+                  }}
+                </p>
               </div>
-            </div>
-          </li>
-
-          <!-- An alert-only product has nothing of its own for OBS. The alert
-               renders inside every static overlay in OBS, so the beat offers
-               the person's own overlays: any one of them is enough. -->
-          <li
-            v-if="!stages.length && alerts.length"
-            class="product-beat grid grid-cols-[28px_minmax(0,1fr)] gap-4 border border-sidebar-border bg-sidebar p-5 dark:bg-black/35"
-          >
-            <span
-              class="product-beat-number flex size-7 items-center justify-center rounded-full border border-foreground/35 text-[13px] font-semibold text-foreground/80 tabular-nums"
-              aria-hidden="true"
-            />
-            <div class="flex min-w-0 flex-col items-start gap-2.5">
-              <h3 class="text-base leading-[1.35] font-semibold text-foreground">Have an overlay in OBS</h3>
-              <!-- The access log says which overlays a link has served lately.
-                   When it names any, the alert already shows there and the
-                   beat is done; otherwise a short list to pick one from. -->
-              <p v-if="yourOverlays.loaded" class="text-sm leading-relaxed text-pretty text-foreground">
-                The alert already shows inside {{ loadedNames }}, on top of whatever is there. That is what your overlay link has been serving lately,
-                so there is nothing to add.
-              </p>
-              <template v-else-if="yourOverlays.overlays.length">
-                <p class="text-sm leading-relaxed text-pretty text-foreground">
-                  The alert shows inside every overlay of yours that is in OBS, on top of whatever is there. One is enough.
-                </p>
-                <div class="flex w-full max-w-xs flex-col gap-2">
-                  <AddToObsButton v-for="overlay in yourOverlays.overlays" :key="overlay.id" :template="overlay" />
+              <div class="flex w-full flex-col gap-3 sm:max-w-sm">
+                <div v-for="stage in stages" :key="stage.id" class="flex flex-col gap-1.5">
+                  <p v-if="stages.length > 1" class="text-sm font-medium text-foreground">{{ stage.name }}</p>
+                  <AddToObsButton :template="stage" :hint="product.obs_hint" @done="recheck" />
                 </div>
-                <p v-if="yourOverlays.total > yourOverlays.overlays.length" class="text-[13px] leading-relaxed text-muted-foreground">
-                  And {{ yourOverlays.total - yourOverlays.overlays.length }} more on
-                  <Link :href="route('templates.index', { type: 'static' })" :class="noteLink">your overlays page</Link>.
-                </p>
-              </template>
-              <template v-else>
-                <p class="text-sm leading-relaxed text-pretty text-foreground">
-                  The alert shows inside every overlay of yours that is in OBS, on top of whatever is there. You have none yet.
-                </p>
-                <Link
-                  :href="route('templates.create')"
-                  class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-blue-500/50 bg-blue-500/8 px-4 py-2 text-sm font-semibold text-blue-700 hover:border-blue-500 hover:bg-blue-500/18 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
-                >
-                  Make an overlay
-                </Link>
-              </template>
-            </div>
-          </li>
-
-          <!-- A real test event, from the service's own site, opened in a new
-               tab so this page stays put for the last beat. One beat per
-               connected service; the steps are the service's, not the
-               product's: ServiceTestGuides. -->
-          <li
-            v-for="guide in testGuides"
-            :key="guide.service"
-            class="product-beat grid grid-cols-[28px_minmax(0,1fr)] gap-4 border border-sidebar-border bg-sidebar p-5 dark:bg-black/35"
-          >
-            <span
-              class="product-beat-number flex size-7 items-center justify-center rounded-full border border-foreground/35 text-[13px] font-semibold text-foreground/80 tabular-nums"
-              aria-hidden="true"
-            />
-            <div class="flex min-w-0 flex-col items-start gap-3">
-              <h3 class="text-base leading-[1.35] font-semibold text-foreground">Send yourself a test tip from {{ guide.service_label }}</h3>
-              <a
-                :href="guide.url"
-                target="_blank"
-                rel="noopener"
-                class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-foreground/35 bg-transparent px-4 py-2 text-sm font-semibold text-foreground hover:border-foreground/60 hover:bg-foreground/6"
-              >
-                <ExternalLink class="size-3.5" />
-                {{ guide.label }}
-              </a>
-              <ol class="flex list-decimal flex-col gap-1.25 pl-5 text-sm leading-[1.55] text-foreground">
-                <li v-for="(step, i) in guide.steps" :key="i">{{ step }}</li>
-              </ol>
+              </div>
+              <p v-if="product.obs_hint" class="text-sm leading-relaxed text-pretty text-foreground">{{ product.obs_hint }}</p>
               <p class="text-[13px] leading-relaxed text-pretty text-muted-foreground">
-                Pressing it again? A second identical test is dropped as a retry, unless
-                <a :href="guide.settings_url" :class="noteLink">test mode</a>
-                is on for {{ guide.service_label }}.
+                Streamlabs Desktop and any other app with a browser source work the same way.
               </p>
-            </div>
-          </li>
+            </template>
 
-          <!-- The payoff. Landed is read from the stored event on load and
-               flipped live by the alert broadcast. The alert's wiring sits
-               under it as done steps, so nobody goes looking for an OBS step
-               for the alert. -->
-          <li
-            v-if="alerts.length"
-            class="product-beat grid grid-cols-[28px_minmax(0,1fr)] gap-4 border border-sidebar-border bg-sidebar p-5 dark:bg-black/35"
-          >
-            <span
-              class="product-beat-number flex size-7 items-center justify-center rounded-full border border-foreground/35 text-[13px] font-semibold text-foreground/80 tabular-nums"
-              aria-hidden="true"
-            />
-            <div class="flex min-w-0 flex-col gap-3">
-              <h3 class="text-base leading-[1.35] font-semibold text-foreground">Watch it land</h3>
-              <p
-                v-if="landed"
-                class="product-landed product-glow flex items-center gap-2.5 self-start rounded-full border border-green-500/50 bg-green-500/8 px-3.5 py-2.25 text-[13px] font-medium text-green-700 dark:text-green-400"
-                role="status"
-              >
-                <span class="size-2 shrink-0 rounded-full bg-green-500" aria-hidden="true" />
-                <span>It landed{{ landedLine ? `: ${landedLine}` : '' }}</span>
+            <!-- An alert-only product has nothing of its own for OBS. The
+                 alert renders inside every static overlay in OBS, so the move
+                 offers the person's own overlays, each by name: any one of
+                 them is enough. -->
+            <template v-else-if="move.key === 'obs' && yourOverlays.overlays.length">
+              <div class="flex flex-col gap-1">
+                <h3 class="text-xl leading-tight font-semibold text-foreground">Put one of your overlays in OBS</h3>
+                <p class="text-sm leading-relaxed text-pretty text-foreground">
+                  The alert shows inside every overlay of yours that is in OBS, on top of whatever is there. One is enough, and the alert itself needs
+                  nothing added.
+                </p>
+              </div>
+              <ul class="flex w-full flex-col divide-y divide-sidebar-border">
+                <li
+                  v-for="overlay in yourOverlays.overlays"
+                  :key="overlay.id"
+                  class="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
+                >
+                  <span class="min-w-0 truncate text-sm font-medium text-foreground">{{ overlay.name }}</span>
+                  <AddToObsButton :template="overlay" variant="compact" @done="recheck" />
+                </li>
+              </ul>
+              <p v-if="yourOverlays.total > yourOverlays.overlays.length" class="text-[13px] leading-relaxed text-muted-foreground">
+                And {{ yourOverlays.total - yourOverlays.overlays.length }} more on
+                <Link :href="route('templates.index', { type: 'static' })" :class="noteLink">your overlays page</Link>.
               </p>
+            </template>
+
+            <template v-else-if="move.key === 'obs'">
+              <div class="flex flex-col gap-1">
+                <h3 class="text-xl leading-tight font-semibold text-foreground">Make an overlay for the alert to show in</h3>
+                <p class="text-sm leading-relaxed text-pretty text-foreground">
+                  The alert shows inside an overlay of yours that is in OBS. You have none yet.
+                </p>
+              </div>
+              <Link :href="withLastMileHint(route('templates.create'), product.slug)" class="btn btn-secondary cursor-pointer">Make an overlay</Link>
+            </template>
+
+            <!-- A real test event, from the service's own site, opened in a
+                 new tab so this page stays put to notice it land. The steps
+                 are the service's, not the product's: ServiceTestGuides. -->
+            <template v-else>
+              <h3 class="text-xl leading-tight font-semibold text-foreground">{{ testTitle(move.key) }}</h3>
+              <!-- Our link, still to paste on the service's side. The test
+                   below is what proves it went in, so the two share a card. -->
+              <ProductServices v-if="pasteFor(move.key).length" :services="pasteFor(move.key)" inline />
+              <template v-if="guideFor(move.key)">
+                <a
+                  :href="guideFor(move.key)?.url"
+                  target="_blank"
+                  rel="noopener"
+                  class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-foreground/35 bg-transparent px-4 py-2 text-sm font-semibold text-foreground hover:border-foreground/60 hover:bg-foreground/6"
+                >
+                  <ExternalLink class="size-3.5" />
+                  {{ guideFor(move.key)?.label }}
+                </a>
+                <ol class="flex list-decimal flex-col gap-1.25 pl-5 text-sm leading-[1.55] text-foreground">
+                  <li v-for="(step, i) in guideFor(move.key)?.steps" :key="i">{{ step }}</li>
+                </ol>
+                <p class="text-[13px] leading-relaxed text-pretty text-muted-foreground">
+                  Pressing it again? A second identical test is dropped as a retry, unless
+                  <a :href="guideFor(move.key)?.settings_url" :class="noteLink">test mode</a>
+                  is on for {{ guideFor(move.key)?.service_label }}.
+                </p>
+              </template>
               <p
-                v-else
-                class="flex items-center gap-2.5 self-start rounded-full border border-foreground/25 bg-foreground/3 px-3.5 py-2.25 text-[13px] text-foreground"
+                v-if="move.key === lastTestKey"
+                class="flex items-center gap-2.5 rounded-full border border-foreground/25 bg-foreground/3 px-3.5 py-2.25 text-[13px] text-foreground"
                 role="status"
               >
                 <span class="product-pulse size-2 shrink-0 rounded-full bg-blue-300" aria-hidden="true" />
                 Waiting for your test tip. This page notices the moment it arrives.
               </p>
-
-              <div v-for="alert in alerts" :key="alert.id" class="flex flex-col gap-3 text-sm">
-                <p class="leading-relaxed text-foreground">
-                  <Link
-                    :href="withLastMileHint(route('templates.show', alert.id), product.slug)"
-                    class="cursor-pointer font-semibold text-foreground underline-offset-2 hover:underline"
-                  >
-                    {{ alert.name }}
-                  </Link>
-                  is the alert. Nothing to add to OBS for it.
-                </p>
-                <div class="flex flex-col gap-2">
-                  <p class="grid grid-cols-[16px_minmax(0,1fr)] items-start gap-2.5">
-                    <Check class="mt-[3px] size-4 text-green-500" stroke-width="2.2" />
-                    <span v-if="alert.fires_on?.length" class="leading-[1.55] text-pretty text-foreground"
-                      >Fires on {{ joinNames(alert.fires_on) }}.</span
-                    >
-                    <span v-else class="leading-[1.55] text-pretty text-foreground"
-                      >Has no trigger switched on yet. Its Triggers tab is where that lives.</span
-                    >
-                  </p>
-                  <p class="grid grid-cols-[16px_minmax(0,1fr)] items-start gap-2.5">
-                    <Check class="mt-[3px] size-4 text-green-500" stroke-width="2.2" />
-                    <span v-if="alert.targets?.length" class="leading-[1.55] text-pretty text-foreground">
-                      Shows inside {{ joinNames(alert.targets) }}, on top of whatever is there.
-                    </span>
-                    <span v-else class="leading-[1.55] text-pretty text-foreground">Shows inside every static overlay of yours.</span>
-                  </p>
-                </div>
-                <p v-if="alert.more_events?.length" class="pl-[26px] text-[13px] leading-relaxed text-pretty text-muted-foreground">
-                  {{ installed.test_guide?.service_label ?? 'It' }} also sends {{ joinNames(alert.more_events) }}.
-                  <Link :href="urlWithTab(withLastMileHint(route('templates.show', alert.id), product.slug), 'triggers')" :class="noteLink">
-                    The alert's Triggers tab
-                  </Link>
-                  switches those on for the same alert.
-                </p>
-              </div>
-            </div>
-          </li>
-        </ol>
-
-        <div v-if="installed.overlays.length" class="flex flex-col gap-2">
-          <h3 class="text-sm font-medium text-foreground">{{ installed.overlays.length === 1 ? 'Your overlay' : 'Your overlays' }}</h3>
-          <ul class="flex flex-col gap-2">
-            <li v-for="overlay in installed.overlays" :key="overlay.id" class="collection-row relative border border-border p-3">
-              <Link :href="route('templates.show', overlay.id)" class="absolute inset-0 z-0 cursor-pointer" :aria-label="overlay.name" />
-              <div class="flex items-center justify-between gap-3">
-                <p class="text-foreground">{{ overlay.name }}</p>
-                <ExternalLink class="size-4 text-muted-foreground" />
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <div v-if="product.notes.length" class="flex flex-col gap-2">
-          <h3 class="text-sm font-medium text-foreground">Good to know</h3>
-          <ul class="flex flex-col gap-1">
-            <li v-for="note in product.notes" :key="note" class="flex gap-2 text-sm text-foreground">
-              <Circle class="mt-1.5 size-2 shrink-0 text-muted-foreground" />
-              <span>{{ note }}</span>
-            </li>
-          </ul>
-        </div>
-      </section>
+            </template>
+          </template>
+        </li>
+      </ol>
 
       <!-- Steps left, and the product has services: their connects are right
            here too, so the one thing the checklist asks for is a click away
@@ -597,40 +785,10 @@ async function uninstall(): Promise<void> {
         <ProductServices :services="services" />
       </section>
 
-      <!-- The looks, as one door rather than a wall of cards. Only a product
-           whose manifest declares a designer has one, and only an install
-           can open it. This is the loudest thing on an installed page for a
-           reason: everything above it is setup the person has already done,
-           and this is the part that is theirs. -->
-      <Link
-        v-if="installed && designer"
-        :href="withLastMileHint(route('products.design', product.slug), product.slug)"
-        class="product-design mt-8 flex cursor-pointer flex-col gap-4 border border-violet-500 p-5 transition-colors hover:bg-violet-500/[0.08] sm:flex-row sm:items-center sm:gap-5 dark:border-violet-400 dark:hover:bg-violet-400/[0.09]"
-      >
-        <span
-          class="flex size-12 shrink-0 items-center justify-center bg-violet-500 text-white dark:bg-violet-400 dark:text-sidebar"
-          aria-hidden="true"
-        >
-          <Sliders class="size-6" />
-        </span>
-        <span class="min-w-0 flex-1">
-          <span class="block text-lg leading-[1.3] font-semibold text-foreground">Design it yourself</span>
-          <span class="block text-sm leading-relaxed text-pretty text-foreground">
-            Start from one of {{ designer.presets.length }} looks, then change the {{ designerGroups }} next to your own overlay.
-          </span>
-        </span>
-        <!-- A span, not a button: this whole card is one link, and a button
-             inside an anchor is invalid and navigates twice. -->
-        <span class="btn btn-primary shrink-0 self-start sm:self-auto">
-          Open the designer
-          <ArrowRight class="product-design-arrow ml-2 size-4" />
-        </span>
-      </Link>
-
       <!-- Installed, steps left: the checklist as a progress piece. Once
-           remaining hits zero the celebration section above is the sole
-           post-completion view - this section stops rendering rather than
-           sitting underneath it saying the same thing twice. -->
+           remaining hits zero the moves above are the sole post-completion
+           view - this section stops rendering rather than sitting underneath
+           them saying the same thing twice. -->
       <section v-if="installed && installed.subject && remaining > 0" class="mt-8 flex flex-col gap-3">
         <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 class="text-lg font-semibold text-foreground">Finish setting up</h2>
@@ -671,41 +829,135 @@ async function uninstall(): Promise<void> {
           </li>
         </ul>
       </section>
+
+      <!-- The looks, as one door rather than a wall of cards. Only a product
+           whose manifest declares a designer has one, and only an install
+           can open it. It is optional, so it never competes with a move that
+           is not: it sits still while anything above is left to do, and
+           starts breathing once nothing is - the part that is the streamer's
+           own, on a page that is otherwise done. -->
+      <Link
+        v-if="installed && designer"
+        :href="withLastMileHint(route('products.design', product.slug), product.slug)"
+        class="product-design mt-8 flex cursor-pointer flex-col gap-4 border border-violet-500 p-5 transition-colors hover:bg-violet-500/[0.08] sm:flex-row sm:items-center sm:gap-5 dark:border-violet-400 dark:hover:bg-violet-400/[0.09]"
+        :class="{ 'product-design-calm': !finished || moves.current !== null }"
+      >
+        <span
+          class="flex size-12 shrink-0 items-center justify-center bg-violet-500 text-white dark:bg-violet-400 dark:text-sidebar"
+          aria-hidden="true"
+        >
+          <Sliders class="size-6" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-lg leading-[1.3] font-semibold text-foreground">Design it yourself</span>
+          <span class="block text-sm leading-relaxed text-pretty text-foreground">
+            Start from one of {{ designer.presets.length }} looks, then change the {{ designerGroups }} next to your own overlay.
+          </span>
+        </span>
+        <!-- A span, not a button: this whole card is one link, and a button
+             inside an anchor is invalid and navigates twice. -->
+        <span class="btn btn-primary shrink-0 self-start sm:self-auto">
+          Open the designer
+          <ArrowRight class="product-design-arrow ml-2 size-4" />
+        </span>
+      </Link>
+
+      <!-- Finished: the reference, quiet and below everything that needs
+           doing. Facts about the alert are not a step, so they live here and
+           not in a card that looks like one. -->
+      <section v-if="finished && (alerts.length || product.notes.length)" class="mt-12 flex flex-col gap-8">
+        <div v-if="alerts.length" class="flex flex-col gap-3">
+          <h3 class="text-sm font-medium text-foreground">How the alert works</h3>
+          <div v-for="alert in alerts" :key="alert.id" class="flex flex-col gap-2 text-sm">
+            <!-- One line of what it does. Where it shows is said only when it
+                 is narrowed to some overlays: "every overlay" is what the OBS
+                 move above already says. -->
+            <p v-if="alert.fires_on?.length" class="leading-relaxed text-pretty text-foreground">
+              <Link
+                :href="route('templates.show', alert.id)"
+                class="cursor-pointer font-semibold text-foreground underline-offset-2 hover:underline"
+                >{{ alert.name }}</Link
+              >
+              fires on every {{ joinNames(alert.fires_on) }}{{ alert.targets?.length ? `, inside ${joinNames(alert.targets)}` : '' }}.
+            </p>
+            <p v-else class="leading-relaxed text-pretty text-foreground">
+              <Link
+                :href="route('templates.show', alert.id)"
+                class="cursor-pointer font-semibold text-foreground underline-offset-2 hover:underline"
+                >{{ alert.name }}</Link
+              >
+              fires on nothing right now.
+              <Link :href="urlWithTab(route('templates.show', alert.id), 'triggers')" :class="noteLink">Turn its event back on</Link>
+            </p>
+            <p v-if="alert.more_events?.length" class="text-[13px] leading-relaxed text-pretty text-muted-foreground">
+              {{ installed?.test_guide?.service_label ?? 'It' }} also sends {{ joinNames(alert.more_events) }}.
+              <Link :href="urlWithTab(route('templates.show', alert.id), 'triggers')" :class="noteLink">The alert's Triggers tab</Link>
+              switches those on for the same alert.
+            </p>
+          </div>
+        </div>
+
+        <div v-if="product.notes.length" class="flex flex-col gap-3">
+          <h3 class="text-sm font-medium text-foreground">Good to know</h3>
+          <ul class="flex list-disc flex-col gap-2 pl-5 text-sm leading-relaxed text-pretty text-foreground marker:text-muted-foreground">
+            <li v-for="note in product.notes" :key="note">{{ note }}</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- The foot of an installed page: the overlay's own controls, and the
+           one destructive action, as far from the win as the page allows. -->
+      <footer v-if="installed" class="mt-10 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-sidebar-border pt-5">
+        <div class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          <!-- A product with a designer already has its door to the same
+               settings above, so it gets no second one here. -->
+          <Link
+            v-for="stage in designer ? [] : stages"
+            :key="stage.id"
+            :href="urlWithTab(route('templates.show', stage.id), 'controls')"
+            :class="noteLink"
+            class="inline-flex items-center"
+          >
+            {{ stage.name }} controls
+            <ArrowRight class="ml-1 size-3.5" />
+          </Link>
+        </div>
+        <div class="ml-auto flex flex-col items-end gap-2">
+          <button type="button" class="btn btn-sm btn-chill cursor-pointer" @click="uninstall">
+            <Trash2 class="mr-2 size-4" />
+            Uninstall
+          </button>
+          <p v-if="uninstallError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ uninstallError }}</p>
+        </div>
+      </footer>
     </div>
   </ProductsLayout>
 </template>
 
 <style scoped>
-/* The beats number themselves, so a product with no test guide or no alert
-   skips a beat without leaving a gap in the count. */
-.product-beats {
-  counter-reset: beat;
-}
-
-.product-beat {
-  counter-increment: beat;
-}
-
-.product-beat-number::before {
-  content: counter(beat);
-}
-
-/* The soft inner glow the two green pills carry: "Connected" at the top and
-   the landed line. Same glow the status pills wear elsewhere. */
+/* The soft inner glow the landed line carries. Same glow the status pills
+   wear elsewhere. */
 .product-glow {
   box-shadow: inset 0 0 12px 0 rgb(34 197 94 / 0.18);
 }
 
-/* The designer card, the loudest thing on an installed page. Same device as
-   the green pills - a glow, a border and an icon, never a gradient wash - in
-   the app's violet: a halo outside, a wash inside, both breathing slowly so
-   the card catches the eye on a page that is otherwise done. Hover holds it
-   at its brightest. */
+/* The designer card. Same device as the green pills - a glow, a border and
+   an icon, never a gradient wash - in the app's violet: a halo outside, a
+   wash inside, both breathing slowly so the card catches the eye on a page
+   that is otherwise done. Hover holds it at its brightest. */
 .product-design {
   box-shadow:
     0 0 20px -4px rgb(139 92 246 / 0.35),
     inset 0 0 24px 0 rgb(139 92 246 / 0.12);
   animation: product-design-breathe 5s ease-in-out infinite;
+}
+
+/* While a move above is still open, or setup is still going, the card is
+   still: one thing glows on this page at a time, and it is the move. Hover
+   still lights it, since the selector below outranks this one. */
+.product-design-calm {
+  animation: none;
+  box-shadow: none;
 }
 
 .product-design:hover {
@@ -737,9 +989,9 @@ async function uninstall(): Promise<void> {
   }
 }
 
-/* The only motion on the page: the bar fills, a completed tick lands, the
-   waiting dot breathes, the landed line arrives. All gone under reduced
-   motion. */
+/* The only motion on the page besides the current move's glow (app.css):
+   the bar fills, a tick lands, the waiting dot breathes, the landed line
+   arrives. All gone under reduced motion. */
 .product-progress {
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }

@@ -6,9 +6,30 @@ import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/u
 import { VisuallyHidden } from 'reka-ui';
 import type { AppPageProps } from '@/types';
 
-const props = defineProps<{
-  template: { id: number; name: string; slug: string };
-}>();
+const props = withDefaults(
+  defineProps<{
+    template: { id: number; name: string; slug: string };
+    /**
+     * `hero` is the big full-width button, the one every other caller has.
+     * `compact` sits at the end of a row naming its overlay, where a column
+     * of full-width buttons could not say which overlay each one adds.
+     * `again` is the quiet one beside an overlay that has already loaded:
+     * the same dialog, for a second scene or a second PC.
+     */
+    variant?: 'hero' | 'compact' | 'again';
+    /**
+     * How big to make the browser source, when "fit to screen" is wrong for
+     * this overlay (a chat feed is a box, not the whole canvas). Replaces the
+     * dialog's fullscreen advice.
+     */
+    hint?: string | null;
+  }>(),
+  { variant: 'hero', hint: null },
+);
+
+// Fired by "Close this screen and continue", the only way the dialog closes
+// once a link is made, so a caller can go and look whether OBS loaded it.
+const emit = defineEmits<{ done: [] }>();
 
 // Hosted overlays get their own origin (overlabels.net on prod) so Chrome's
 // per-origin zoom on the dashboard stops zooming an overlay tab with it.
@@ -35,7 +56,33 @@ defineExpose({ generateOBSUrl });
 </script>
 
 <template>
-  <button type="button" @click="generateOBSUrl()" class="btn btn-secondary flex w-full gap-2 py-4" title="Add this overlay to your OBS">
+  <button
+    v-if="variant === 'again'"
+    type="button"
+    @click="generateOBSUrl()"
+    class="btn btn-sm btn-chill shrink-0 cursor-pointer gap-1.5"
+    :title="`Add ${template.name} to OBS again`"
+  >
+    <span v-html="obsIconSVG" class="inline-block size-3.5" />
+    Add to OBS again
+  </button>
+  <button
+    v-else-if="variant === 'compact'"
+    type="button"
+    @click="generateOBSUrl()"
+    class="btn btn-sm btn-secondary shrink-0 cursor-pointer gap-1.5"
+    :title="`Add ${template.name} to your OBS`"
+  >
+    <span v-html="obsIconSVG" class="inline-block size-3.5" />
+    Add to OBS
+  </button>
+  <button
+    v-else
+    type="button"
+    @click="generateOBSUrl()"
+    class="btn btn-secondary flex w-full cursor-pointer gap-2 py-4"
+    title="Add this overlay to your OBS"
+  >
     <span class="flex shrink-0 items-center gap-1.5 text-sm font-medium tracking-wide uppercase">
       <span v-html="obsIconSVG" class="inline-block size-4" />
       Add to OBS
@@ -58,7 +105,9 @@ defineExpose({ generateOBSUrl });
         <ol class="list-decimal space-y-1.5 pl-4 text-foreground">
           <li><strong>Drag the box above</strong> directly on to OBS.</li>
           <li>In OBS, this will automatically create a new <strong>Browser Source</strong>.</li>
-          <li>
+          <li v-if="hint">{{ hint }}</li>
+          <li v-if="hint">Alternatively, you can click the green box above to copy the link and create the browser source manually.</li>
+          <li v-else>
             Alternatively, you can click the green box above to copy the link and create the browser source manually. Be sure to set it to fullscreen
             (right click > transform > Fit to screen)
           </li>
@@ -79,7 +128,9 @@ defineExpose({ generateOBSUrl });
           <span class="text-sm text-foreground">I have copied this overlay to my OBS as a Browser Source</span>
         </label>
 
-        <button v-if="obsConfirmedCopied" type="button" class="btn btn-primary mt-2" @click="close()">Close this screen and continue</button>
+        <button v-if="obsConfirmedCopied" type="button" class="btn btn-primary mt-2 cursor-pointer" @click="(close(), emit('done'))">
+          Close this screen and continue
+        </button>
       </div>
     </template>
   </TokenUrlDialog>

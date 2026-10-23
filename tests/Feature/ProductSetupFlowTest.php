@@ -95,11 +95,56 @@ it('turns ready and ends when the product page sees nothing left', function () {
         ->assertInertia(fn (Assert $page) => $page->where('productSetup.ready', true)->where('productSetup.remaining', 0));
     expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat-checkin');
 
-    // The product page is what ends it.
+    // The product page is what ends it, and that view is the arrival.
     $this->actingAs($user)
         ->get('/products/chat-checkin/install')
-        ->assertInertia(fn (Assert $page) => $page->where('installed.remaining', 0));
+        ->assertInertia(fn (Assert $page) => $page->where('installed.remaining', 0)->where('arrived', true));
     expect(ProductSetup::activeSlug($user->fresh()))->toBeNull();
+
+    // A revisit is not: there is no flow left to end.
+    $this->actingAs($user->fresh())
+        ->get('/products/chat-checkin/install')
+        ->assertInertia(fn (Assert $page) => $page->where('installed.remaining', 0)->where('arrived', false));
+});
+
+it('says arrived only on the view that ends the flow', function () {
+    $user = flowUser();
+    $this->actingAs($user)->post('/products/chat-checkin/install');
+
+    // Steps left, flow on: not an arrival, and the flow keeps going.
+    $this->actingAs($user->fresh())
+        ->get('/products/chat-checkin/install')
+        ->assertInertia(fn (Assert $page) => $page->where('installed.remaining', 1)->where('arrived', false));
+    expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat-checkin');
+
+    // Another product's page, finished, while this flow runs: not its arrival.
+    $catalog = app(RecipeCatalog::class);
+    app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat-emote-bubbles')), $user->fresh(), 'chat_emote_bubbles');
+    $this->actingAs($user->fresh())
+        ->get('/products/chat-emote-bubbles/install')
+        ->assertInertia(fn (Assert $page) => $page->where('installed.remaining', 0)->where('arrived', false));
+    expect(ProductSetup::activeSlug($user->fresh()))->toBe('chat-checkin');
+
+    // "Not now" ends the flow without an arrival.
+    $this->actingAs($user->fresh())->post('/products/setup/dismiss');
+    $this->actingAs($user->fresh())
+        ->get('/products/chat-checkin/install')
+        ->assertInertia(fn (Assert $page) => $page->where('arrived', false));
+});
+
+it('arrives on the first view after an install whose steps were already done', function () {
+    $user = flowUser();
+
+    $this->actingAs($user)->post('/products/twitch-chat-overlay/install')->assertRedirect('/products/twitch-chat-overlay/install');
+
+    $this->actingAs($user->fresh())
+        ->get('/products/twitch-chat-overlay/install')
+        ->assertInertia(fn (Assert $page) => $page->where('installed.remaining', 0)->where('arrived', true));
+    expect(ProductSetup::activeSlug($user->fresh()))->toBeNull();
+
+    $this->actingAs($user->fresh())
+        ->get('/products/twitch-chat-overlay/install')
+        ->assertInertia(fn (Assert $page) => $page->where('arrived', false));
 });
 
 it('refreshes the mod lookup when the product page loads mid-setup', function () {

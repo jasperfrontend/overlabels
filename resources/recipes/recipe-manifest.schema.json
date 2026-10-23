@@ -126,9 +126,15 @@
     },
     "ready_message": {
       "type": "string",
-      "description": "One line for the moment every step is done, in the streamer's world: what their chat can do right now. Shown once, large, under 'Everything is in place'.",
+      "description": "One line for the moment every setup step is done, in the streamer's world: what their chat can do right now. It must be true before the overlay is in OBS and after the test tip lands - the page's own moves say what is left. Shown under 'Everything is in place'.",
       "minLength": 1,
       "maxLength": 160
+    },
+    "obs_hint": {
+      "type": "string",
+      "description": "One line shown under the product page's Add to OBS button and in its dialog: how big to make the browser source. For an overlay that is not meant to fill the whole canvas, or that must sit in a particular place. Omit it when fit-to-screen is right.",
+      "minLength": 1,
+      "maxLength": 200
     },
     "notes": {
       "type": "array",

@@ -16,7 +16,7 @@
   "listed": true,
   "category": "product",
   "hero": "/products/chat-tower-hero.jpg",
-  "ready_message": "Your chat can type !stack right now, and the tower is waiting in OBS.",
+  "ready_message": "Your chat can type !stack right now.",
   "highlights": [
     "Twitch chat types !stack, or !stack left and !stack right to fight the lean.",
     "The tower sways more the taller it gets, and the fall lines are on screen so your Twitch chat sees it coming.",

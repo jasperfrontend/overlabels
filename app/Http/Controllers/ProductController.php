@@ -27,9 +27,12 @@ use App\Support\ServiceTestGuides;
 use App\Support\WelcomeFunnel;
 use App\Support\WiringFacts;
 use App\Support\WiringReport;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -323,7 +326,17 @@ class ProductController extends Controller
 
         // The page seeing nothing left is what ends the flow: the banner's
         // "Go to installed product" is just a link here.
-        if ($inSetup && $installed && $installed['remaining'] === 0) {
+        //
+        // That moment is also the arrival, and the page is told so: it is the
+        // one view that scrolls to what is left and lights it. Every road in
+        // passes through here - the banner's link, an Install whose steps were
+        // already satisfied, the last step finished inline on this page, the
+        // Streamlabs OAuth return - and none of them can be faked by a URL or
+        // replayed by a reload, because the flow it ends is gone afterwards.
+        // The setup flow itself cannot carry it: by the time the shared prop
+        // is computed, after this controller, it has already ended.
+        $arrived = $inSetup && $installed && $installed['remaining'] === 0;
+        if ($arrived) {
             ProductSetup::end($user);
         }
 
@@ -345,6 +358,7 @@ class ProductController extends Controller
                 'integrations' => $manifest['installs']['integrations'] ?? [],
                 'notes' => $manifest['notes'] ?? [],
                 'ready_message' => $manifest['ready_message'] ?? null,
+                'obs_hint' => $manifest['obs_hint'] ?? null,
                 // The product's designer, for the card that opens it: its fixed
                 // looks with the one the overlay currently holds marked, and
                 // the group titles the card's copy names. Null for a product
@@ -352,6 +366,7 @@ class ProductController extends Controller
                 'designer' => ProductDesigner::forProduct($manifest, $instance),
             ],
             'installed' => $installed,
+            'arrived' => $arrived,
             'categories' => $this->categories(),
             'installed_count' => $this->installedCount($user),
         ]);
@@ -391,7 +406,9 @@ class ProductController extends Controller
         // product page sees nothing left, or the person says not now.
         ProductSetup::start($user, $slug);
 
-        return redirect()->route('products.manage', $slug)->with('success', $manifest['name'].' is installed.');
+        // No toast: the page turning green is the confirmation, and a toast
+        // on top of it repeats the win next to the one step left.
+        return redirect()->route('products.manage', $slug);
     }
 
     /**
@@ -865,6 +882,15 @@ class ProductController extends Controller
             ->values()
             ->all();
 
+        // Each stage says when a real overlay link last loaded it, which is
+        // the only sign the page has that it went into OBS. Alerts carry no
+        // such key: they never go into OBS themselves.
+        $loads = $this->lastLoaded($instance->user_id, collect($overlays)->where('type', '!=', 'alert')->pluck('slug')->all());
+        $overlays = array_map(
+            fn (array $overlay) => $overlay['type'] === 'alert' ? $overlay : [...$overlay, 'loaded_ago' => $loads[$overlay['slug']] ?? null],
+            $overlays,
+        );
+
         $subject = $circuit['subjects'][0] ?? null;
 
         $rows = ExternalIntegration::where('user_id', $instance->user_id)->get()->keyBy('service');
@@ -922,7 +948,7 @@ class ProductController extends Controller
         }
 
         $served = OverlayAccessLog::query()
-            ->whereIn('token_id', OverlayAccessToken::where('user_id', $instance->user_id)->select('id'))
+            ->whereIn('token_id', $this->realLinks($instance->user_id))
             ->where('accessed_at', '>=', now()->subDays(30))
             ->whereNotNull('template_slug')
             ->distinct()
@@ -937,6 +963,53 @@ class ProductController extends Controller
             'overlays' => $pick->map(fn (OverlayTemplate $template) => ['id' => $template->id, 'name' => $template->name, 'slug' => $template->slug])->values()->all(),
             'total' => $statics->count(),
         ];
+    }
+
+    /**
+     * When an overlay link last loaded each of these overlays, as the page
+     * says it ("3 minutes ago"), keyed by slug. A slug no link has loaded is
+     * absent.
+     *
+     * Only real links count: see realLinks().
+     *
+     * No time window: the overlays were created by this install, so any load
+     * is after it, and the relative time keeps an old answer honest. The log
+     * itself is pruned at 90 days, so an overlay nobody has loaded in that
+     * long reads as never loaded, and the page offers Add to OBS again.
+     *
+     * @param  list<string>  $slugs
+     * @return array<string, string>
+     */
+    private function lastLoaded(int $userId, array $slugs): array
+    {
+        if ($slugs === []) {
+            return [];
+        }
+
+        return OverlayAccessLog::query()
+            ->whereIn('token_id', $this->realLinks($userId))
+            ->whereIn('template_slug', $slugs)
+            ->groupBy('template_slug')
+            ->selectRaw('template_slug, max(accessed_at) as last_at')
+            ->pluck('last_at', 'template_slug')
+            ->map(fn (string $at) => Carbon::parse($at)->diffForHumans(['options' => CarbonInterface::JUST_NOW]))
+            ->all();
+    }
+
+    /**
+     * The ids of this account's real overlay links, as a subquery: every
+     * token except the designer's preview. Its frame renders the real overlay
+     * through the real render path, so every time the designer is opened it
+     * logs a load of the same slug, and counting that would tell someone who
+     * has only ever looked at the designer that their overlay has loaded from
+     * their link. `metadata.purpose` is how ProductDesigner marks it; an
+     * ordinary token has no metadata at all, hence the null branch.
+     */
+    private function realLinks(int $userId): Builder
+    {
+        return OverlayAccessToken::where('user_id', $userId)
+            ->where(fn ($query) => $query->whereNull('metadata->purpose')->orWhere('metadata->purpose', '!=', ProductDesigner::TOKEN_PURPOSE))
+            ->select('id');
     }
 
     /**

@@ -16,7 +16,7 @@
   "listed": true,
   "category": "product",
   "hero": "/products/chat-checkin-hero.jpg",
-  "ready_message": "Your chat can type !checkin right now, and the globe is waiting in OBS.",
+  "ready_message": "Your chat can type !checkin right now.",
   "highlights": [
     "!checkin and a city drops a pin on a spinning globe.",
     "Counts every checkin, the countries this stream, and who checked in from farthest away.",

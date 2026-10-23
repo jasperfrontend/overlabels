@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
 use App\Support\OverlayMarkdown;
+use App\Support\ProductDesigner;
 use App\Support\ProductSetup;
 use App\Support\WiringCatalog;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -100,7 +101,7 @@ it('installs the alert, its one trigger and its integration, targeted at every s
     $this->actingAs($user)
         ->post("/products/{$slug}/install")
         ->assertRedirect("/products/{$slug}/install")
-        ->assertSessionHas('success', $product['name'].' is installed.');
+        ->assertSessionMissing('success');
 
     $instance = donationProductInstance($user, $slug);
     $alert = OverlayTemplate::find($instance->primitive_map['overlays']['tip_alert']);
@@ -178,6 +179,8 @@ it('shows the alert wired to its one service, the person\'s own overlays for OBS
             ->where('installed.overlays.0.fires_on', ['Ko-fi Donation'])
             ->where('installed.overlays.0.targets', [])
             ->where('installed.overlays.0.more_events', ['Ko-fi Subscription', 'Ko-fi Shop Order', 'Ko-fi Commission'])
+            // An alert never goes into OBS itself, so it says nothing about loading.
+            ->missing('installed.overlays.0.loaded_ago')
             ->where('installed.your_overlays.loaded', false)
             ->has('installed.your_overlays.overlays', 1)
             ->where('installed.your_overlays.overlays.0.name', 'My scene')
@@ -253,6 +256,31 @@ it('names the overlays an overlay link has served lately, and otherwise offers t
             ->has('installed.your_overlays.overlays', 1)
             ->where('installed.your_overlays.overlays.0.name', 'Scene 2')
             ->where('installed.your_overlays.total', 7)
+        );
+});
+
+it('does not count the designer preview as an overlay link serving an overlay', function () {
+    $user = donationProductUser();
+    $scene = OverlayTemplate::factory()->create(['owner_id' => $user->id, 'type' => 'static', 'name' => 'Chat']);
+    $this->actingAs($user)->post('/products/ko-fi-alerts/install');
+
+    // Opening a designer logs loads of the real slug through its preview
+    // token. That is not the overlay being in OBS.
+    $preview = OverlayAccessToken::create([
+        'user_id' => $user->id,
+        'name' => 'Designer preview',
+        'token_hash' => hash('sha256', 'preview-'.$user->id),
+        'token_prefix' => 'prev',
+        'is_active' => true,
+        'metadata' => ['purpose' => ProductDesigner::TOKEN_PURPOSE],
+    ]);
+    OverlayAccessLog::create(['token_id' => $preview->id, 'template_slug' => $scene->slug, 'accessed_at' => now()->subMinutes(5)]);
+
+    $this->actingAs($user->fresh())
+        ->get('/products/ko-fi-alerts/install')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('installed.your_overlays.loaded', false)
+            ->where('installed.your_overlays.overlays.0.name', 'Chat')
         );
 });
 

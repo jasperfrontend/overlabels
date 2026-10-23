@@ -67,6 +67,23 @@ it('parses every overlay document a listed product ships', function () {
     }
 });
 
+it('never has a ready message claim the overlay is already on stream', function () {
+    // The line shows the moment setup is done, which is before the overlay is
+    // in OBS: the page's own Add to OBS move says the rest. Four of them used
+    // to say "waiting in OBS" or "on screen" at exactly that moment.
+    foreach (app(RecipeCatalog::class)->listed() as $slug => $manifest) {
+        $message = strtolower($manifest['ready_message'] ?? '');
+
+        expect($message)->not->toContain('waiting in obs', "{$slug}")
+            ->and($message)->not->toContain('on your stream right now', "{$slug}")
+            ->and($message)->not->toContain('is on screen', "{$slug}")
+            // An alert's line shows above the card asking for our link to be
+            // pasted on the service's side, so it cannot claim the service is
+            // already wired up.
+            ->and($message)->not->toContain('wired to', "{$slug}");
+    }
+});
+
 it('rejects an overlay file name with a path separator', function () {
     $manifest = app(RecipeCatalog::class)->find('chat-checkin');
     $manifest['installs']['overlays'][0]['file'] = '../globe.md';
@@ -182,7 +199,7 @@ it('installs the product on POST and shows the page in its installed state', fun
     $this->actingAs($user)
         ->post('/products/chat-checkin/install')
         ->assertRedirect('/products/chat-checkin/install')
-        ->assertSessionHas('success', 'Chat Checkin is installed.');
+        ->assertSessionMissing('success');
 
     $instance = RecipeInstance::where('user_id', $user->id)->first();
     expect($instance)->not->toBeNull()

@@ -1,5 +1,30 @@
 # Changelog - October 2026
 
+## OL-2610-006 - October 24th, 2026 - feat(products): the finished product page leads with the one step left
+
+Finishing a product used to land you on a page that said "Installed", then "Connected" (even for
+a product that connects nothing), then "Everything is in place", then a card with a lone "1" in it,
+with the Add to OBS button somewhere below the fold and nothing pointing at it. It had grown one
+block at a time and it read that way.
+
+The finished page is now one green band that says "Everything is in place" with one sentence that
+is true, followed by the steps that are left, followed by reference material.
+
+- Coming back after the last setup step, the page scrolls to the next step on its own and lights it
+  up. For a chat product that is "Last step: Add Chat Tower to OBS" with the big button. A later
+  visit stays put and nothing glows.
+- The OBS step turns into a green tick once a real overlay link has actually loaded the overlay,
+  never because a checkbox was ticked. The page checks again when the OBS dialog closes and when you
+  come back to the window. Opening the designer does not count as a load.
+- Alert products read the same way: the OBS step, then the test tip, then "It landed". The "paste
+  your link into Ko-fi" row lives inside the test-tip card, because the test tip is what proves the
+  paste worked.
+- "Installed", the "Connected" pill, the bot line, the lone "1" and the "X is installed." toast are
+  gone. Uninstall sits at the bottom of the page.
+- Nine ready messages were rewritten so none of them claims the overlay is already in OBS before it
+  is, and seven notes the page now says by itself were removed. Twitch Chat and Chat Emote Bubbles
+  show their OBS size hint right under the Add to OBS button.
+
 ## OL-2610-005 - October 23rd, 2026 - feat(admin): a funnel page that shows how far new accounts get
 
 The welcome dialog and banner went out today, and there was no way to tell whether anyone followed

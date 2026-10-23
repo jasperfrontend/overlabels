@@ -14,11 +14,9 @@
   "requires_bot": false,
   "listed": true,
   "category": "alert",
-  "ready_message": "The alert is wired and waiting. Send yourself a test tip from Ko-fi and watch it land in your overlay.",
+  "ready_message": "Your Ko-fi alert is built and listening for tips.",
   "notes": [
-    "A test tip from Ko-fi's webhooks page travels the whole way, so it proves more than anything Overlabels could fake. Press it once; pressing it again needs test mode on for Ko-fi.",
-    "The alert shows inside every static overlay of yours, on top of whatever is there. Its Targeting tab can narrow that down to particular overlays, but nothing needs it.",
-    "Ko-fi also sends subscriptions, shop orders and commissions. The alert's Triggers tab switches those on for the same alert.",
+    "A test tip from Ko-fi's webhooks page travels the whole way, so it proves more than anything Overlabels could fake.",
     "Once Ko-fi is connected, its tip counter and latest donor are controls of yours for any overlay you write: [[[c:kofi:donations_received]]] and [[[c:kofi:latest_donor_name]]]."
   ],
   "max_instances_per_user": 1,

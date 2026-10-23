@@ -14,11 +14,9 @@
   "requires_bot": false,
   "listed": true,
   "category": "alert",
-  "ready_message": "The alert is wired and waiting. Send yourself a test event from Buy Me a Coffee and watch it land in your overlay.",
+  "ready_message": "Your Buy Me a Coffee alert is built and listening for tips.",
   "notes": [
-    "A test event from the Buy Me a Coffee dashboard travels the whole way, so it proves more than anything Overlabels could fake. Press it once; pressing it again needs test mode on for Buy Me a Coffee.",
-    "The alert shows inside every static overlay of yours, on top of whatever is there. Its Targeting tab can narrow that down to particular overlays, but nothing needs it.",
-    "Buy Me a Coffee sends more than one-off support: memberships, extras, commissions and wishlist purchases too. The alert's Triggers tab switches those on for the same alert.",
+    "A test event from the Buy Me a Coffee dashboard travels the whole way, so it proves more than anything Overlabels could fake.",
     "Once Buy Me a Coffee is connected, its counter and latest supporter are controls of yours for any overlay you write: [[[c:bmac:donations_received]]] and [[[c:bmac:latest_donor_name]]]."
   ],
   "max_instances_per_user": 1,

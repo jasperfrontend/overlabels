@@ -35,7 +35,18 @@ import type { AppPageProps } from '@/types';
  * link and its one field inline, and the row ticks itself the moment the
  * service can reach us.
  */
-defineProps<{ services: ProductService[] }>();
+withDefaults(
+  defineProps<{
+    services: ProductService[];
+    /**
+     * Inside a card whose heading already names the service and whose own
+     * button opens the service's page: drop the name line and the "Open" link,
+     * so neither is said twice.
+     */
+    inline?: boolean;
+  }>(),
+  { inline: false },
+);
 
 const page = usePage<AppPageProps>();
 const errors = computed(() => (page.props.errors as Record<string, string> | undefined) ?? {});
@@ -86,14 +97,20 @@ const openLink =
 <template>
   <ul class="flex w-full flex-col divide-y divide-sidebar-border">
     <li v-for="service in services" :key="service.service" class="flex flex-col gap-2.5 py-3 first:pt-0 last:pb-0">
-      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div v-if="!inline" class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm">
           <span class="font-semibold text-foreground">{{ service.label }}</span>
-          <span v-if="service.connected" class="inline-flex items-center gap-1 text-[13px] font-medium text-green-700 dark:text-green-400">
+          <!-- Connected but its link not used yet says nothing: the line under
+               it asks for the paste, and a tick saying "Connected" right above
+               "Paste this link" contradicts it. -->
+          <span
+            v-if="service.connected && (service.received || !service.webhook_url)"
+            class="inline-flex items-center gap-1 text-[13px] font-medium text-green-700 dark:text-green-400"
+          >
             <Check class="size-3.5" stroke-width="2.4" />
             Connected
           </span>
-          <span v-else class="text-[13px] text-muted-foreground">Not connected</span>
+          <span v-else-if="!service.connected" class="text-[13px] text-muted-foreground">Not connected</span>
         </p>
 
         <!-- One click and back, or one click and the link appears. -->
@@ -146,7 +163,7 @@ const openLink =
       <div v-if="service.webhook_url && !service.received" class="flex flex-col gap-2">
         <p class="text-sm leading-relaxed text-foreground">
           Paste this link into the webhook settings on {{ service.label }}.
-          <a v-if="service.test_guide" :href="service.test_guide.url" target="_blank" rel="noopener" :class="openLink">
+          <a v-if="service.test_guide && !inline" :href="service.test_guide.url" target="_blank" rel="noopener" :class="openLink">
             {{ service.test_guide.label }}
             <ExternalLink class="size-3.5" />
           </a>
