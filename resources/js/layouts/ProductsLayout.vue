@@ -105,7 +105,7 @@ const isActive = (key: string) => (props.category === null ? key === 'all' : key
           <ProductBadge :label="heading ? 'An official Overlabels product' : 'Official Overlabels products'" class="size-6 shrink-0 text-cyan-300" />
           <h1 class="text-2xl font-semibold text-foreground">
             <template v-if="heading">{{ heading }}</template>
-            <Link v-else href="/products" class="hover:text-violet-400">Products</Link>
+            <Link v-else href="/products" class="hover:text-violet-400">Free stream upgrades</Link>
           </h1>
         </div>
         <p class="w-full text-foreground lg:max-w-2/3">

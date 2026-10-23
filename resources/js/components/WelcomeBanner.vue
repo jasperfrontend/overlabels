@@ -29,16 +29,14 @@ defineProps<{
       </div>
     </div>
 
-    <p class="mt-4 max-w-[60ch] text-base leading-relaxed">
-      Go check out the Overlabels Products and install a Twitch Chat Game or Chat Overlay in a few clicks!
-    </p>
+    <p class="mt-4 max-w-[60ch] text-base leading-relaxed">Discover free stream upgrades and get them live in minutes!</p>
 
     <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
       <span class="inline-flex items-center gap-2 bg-neutral-950 px-5 py-3 text-lg font-semibold text-cyan-300">
-        Pick your first product
+        Give your chat something to do
         <ArrowRight class="h-5 w-5 transition-transform group-hover:translate-x-1" />
       </span>
-      <span class="text-sm font-medium">Free upgrades for your stream. Ready in minutes.</span>
+      <span class="text-sm font-medium">Free chat games and overlays. Ready in minutes.</span>
     </div>
   </Link>
 </template>
