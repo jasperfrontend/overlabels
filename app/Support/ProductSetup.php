@@ -42,7 +42,6 @@ final class ProductSetup
         'product.overlay' => ['todo' => 'get its overlay back by installing again', 'target' => null],
         'product.list' => ['todo' => 'get its list back by installing again', 'target' => null],
         'product.command' => ['todo' => 'switch its chat commands back on', 'target' => null],
-        'product.token' => ['todo' => 'create an overlay link for OBS', 'target' => 'token-create'],
     ];
 
     public static function start(User $user, string $slug): void

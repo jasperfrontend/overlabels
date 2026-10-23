@@ -3,7 +3,6 @@
 use App\Models\BotToken;
 use App\Models\Kit;
 use App\Models\OptionSet;
-use App\Models\OverlayAccessToken;
 use App\Models\User;
 use App\Services\BotModeratedChannels;
 use App\Services\BotPresence;
@@ -31,17 +30,6 @@ function flowUser(array $attrs = []): User
     ], $attrs));
 }
 
-function flowToken(User $user): void
-{
-    OverlayAccessToken::create([
-        'user_id' => $user->id,
-        'name' => 'OBS',
-        'token_hash' => hash('sha256', str_repeat('b', 64)),
-        'token_prefix' => 'bbbbbbbb',
-        'is_active' => true,
-    ]);
-}
-
 beforeEach(function () {
     Cache::flush();
 });
@@ -60,7 +48,7 @@ it('starts the flow on install and shares the banner on an app page', function (
             ->where('productSetup.name', 'Chat Checkin')
             ->where('productSetup.url', route('products.manage', 'chat-checkin'))
             ->where('productSetup.ready', false)
-            ->where('productSetup.remaining', 2)
+            ->where('productSetup.remaining', 1)
             ->where('productSetup.next.label', 'The bot is switched on')
             ->where('productSetup.next.todo', 'make sure the bot is switched on')
             ->where('productSetup.next.target', 'bot-toggle')
@@ -90,9 +78,9 @@ it('turns ready and ends when the product page sees nothing left', function () {
     $this->actingAs($user)->post('/products/chat-checkin/install');
     $user = $user->fresh();
 
-    // Finish the human steps: bot on, a token, and the bot lookups answering.
+    // Finish the human steps: bot on and the bot lookups answering. No
+    // overlay token: Add to OBS on the product page makes one.
     $user->forceFill(['bot_enabled' => true])->save();
-    flowToken($user);
     app(BotPresence::class)->record([strtolower($user->twitch_data['login'])]);
     BotToken::updateOrCreate(['account' => 'overlabels'], [
         'access_token' => 'a', 'refresh_token' => 'r', 'expires_at' => now()->addHour()->timestamp,
@@ -171,7 +159,7 @@ it('keeps the steps in checklist order so the banner names the first missing one
     $labels = array_column(ProductSetup::steps($instance), 'label');
 
     expect($labels[0])->toBe('The bot is switched on')
-        ->and($labels)->toContain('Its list still exists', 'You have an overlay link for OBS')
+        ->and($labels)->toContain('Its list still exists')
         ->and($labels)->not->toContain('Its integration is connected');
 });
 

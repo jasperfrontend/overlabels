@@ -166,9 +166,7 @@ const formatDate = (date: string | null | undefined) => (date ? new Date(date).t
       <div>
         <div class="mb-6 flex items-center justify-between">
           <HeadingSmall title="Overlay Access Tokens" description="Manage your access tokens for your overlays." />
-          <button @click="showCreateModal = true" class="btn btn-sm btn-primary" data-product-target="token-create">
-            <KeyRound class="mr-2 size-3.5 shrink-0" /> Create token
-          </button>
+          <button @click="showCreateModal = true" class="btn btn-sm btn-primary"><KeyRound class="mr-2 size-3.5 shrink-0" /> Create token</button>
         </div>
 
         <CollectionFilter v-if="tokens.length > 0" v-model="query" noun="token" placeholder="Filter tokens by name or prefix..." class="mb-4" />

@@ -11,7 +11,6 @@ use App\Models\ExternalIntegration;
 use App\Models\ListAppender;
 use App\Models\ListMetaCommand;
 use App\Models\OptionSet;
-use App\Models\OverlayAccessToken;
 use App\Models\OverlayTemplate;
 use App\Models\RecipeInstance;
 use App\Models\StreamState;
@@ -442,11 +441,6 @@ final class WiringFacts
             default => WiringCatalog::MISSING,
         };
 
-        $token = OverlayAccessToken::where('user_id', $user->id)
-            ->where('is_active', true)
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->exists() ? WiringCatalog::SATISFIED : WiringCatalog::MISSING;
-
         $context = ['Installed '.$instance->created_at->diffForHumans()];
 
         // A product that racks the channel's followers tells a small channel
@@ -479,7 +473,6 @@ final class WiringFacts
                 'product.overlay' => $overlay,
                 'product.list' => $list,
                 'product.command' => $command,
-                'product.token' => $token,
             ],
         ];
     }

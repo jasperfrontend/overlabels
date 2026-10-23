@@ -146,14 +146,6 @@ final class WiringCatalog
             'route' => 'templates.index',
             'cta' => 'Open your overlays',
         ],
-        'product.token' => [
-            'label' => 'You have an overlay link for OBS',
-            'satisfied' => 'You have an active overlay token, so the overlay can be added to OBS as a browser source.',
-            'missing' => 'You have no active overlay token yet. Create one, then add the overlay to OBS as a browser source using the link it gives you.',
-            'not_applicable' => '',
-            'route' => 'tokens.index',
-            'cta' => 'Create an overlay link',
-        ],
         'product.list' => [
             'label' => 'Its list still exists',
             'satisfied' => 'The list the install created is on your account.',
@@ -205,7 +197,7 @@ final class WiringCatalog
             'label' => 'Products',
             'outcome' => 'Each product you installed has everything it needs to run.',
             'subject' => 'product',
-            'wires' => ['product.bot_on', 'product.bot_hears', 'product.bot_modded', 'product.integration', 'product.overlay', 'product.list', 'product.command', 'product.token'],
+            'wires' => ['product.bot_on', 'product.bot_hears', 'product.bot_modded', 'product.integration', 'product.overlay', 'product.list', 'product.command'],
         ],
     ];
 

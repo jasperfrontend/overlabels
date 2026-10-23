@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\ExternalIntegration;
-use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Models\Recipe;
@@ -198,7 +197,7 @@ it('installs the product on POST and shows the page in its installed state', fun
             ->where('installed.test_guide', null)
             ->where('installed.landed', null)
             ->where('installed.subject.key', 'product:'.$instance->id)
-            ->has('installed.subject.wires', 8)
+            ->has('installed.subject.wires', 7)
         );
 
     $this->actingAs($user)
@@ -229,26 +228,23 @@ it('reports the human half of the install as missing right after installing', fu
     expect($states['product.bot_on'])->toBe(WiringCatalog::MISSING)
         ->and($states['product.bot_hears'])->toBe(WiringCatalog::NOT_APPLICABLE)
         ->and($states['product.integration'])->toBe(WiringCatalog::SATISFIED)
-        ->and($states['product.overlay'])->toBe(WiringCatalog::SATISFIED)
-        ->and($states['product.token'])->toBe(WiringCatalog::MISSING);
+        ->and($states['product.overlay'])->toBe(WiringCatalog::SATISFIED);
 });
 
-it('satisfies the token wire with an active token and the bot wire with the toggle', function () {
+it('satisfies the bot wire with the toggle', function () {
     $user = productUser(['bot_enabled' => true]);
     $instance = app(RecipeInstaller::class)->install(chatCheckinRecipe(), $user, 'chat_checkin');
 
-    OverlayAccessToken::create([
-        'user_id' => $user->id,
-        'name' => 'OBS',
-        'token_hash' => hash('sha256', str_repeat('a', 64)),
-        'token_prefix' => 'aaaaaaaa',
-        'is_active' => true,
-    ]);
-
     $states = WiringFacts::productSubject($instance->fresh())['states'];
 
-    expect($states['product.bot_on'])->toBe(WiringCatalog::SATISFIED)
-        ->and($states['product.token'])->toBe(WiringCatalog::SATISFIED);
+    expect($states['product.bot_on'])->toBe(WiringCatalog::SATISFIED);
+});
+
+it('never asks for an overlay token, because Add to OBS on the product page makes one', function () {
+    $user = productUser(['bot_enabled' => true]);
+    $instance = app(RecipeInstaller::class)->install(chatCheckinRecipe(), $user, 'chat_checkin');
+
+    expect(WiringFacts::productSubject($instance)['states'])->not->toHaveKey('product.token');
 });
 
 it('reports the overlay wire missing once the created overlay is deleted', function () {
