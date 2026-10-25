@@ -36,6 +36,8 @@ need, ignore the rest.
 
 - [**Why Overlabels**](/help/why-overlabels) - the pitch, for coders. Third-party data normalization,
   math on any value, Expression Controls, and why this thing is a bit special.
+- [**How Overlabels works**](/help/how-overlabels-works) - a tour of the whole system on one page:
+  overlays, alerts, live data, controls, the bot and testing, with a link to each part's full guide.
 - [**For Creators**](/help/for-creators) - what Overlabels actually is, beneath the HTML/CSS surface. The
   reactive value graph, the live data sources, the math layer, and an open call for collaborators.
 - [**For Designers**](/help/for-designers) - a handoff guide for designers working on overlays: the two
