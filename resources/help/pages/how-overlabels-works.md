@@ -14,8 +14,11 @@ An overlay is a web page. You load it into OBS as a browser source, and OBS show
 can write the page yourself in HTML and CSS, or build it without code. Either way, the page updates
 itself while you stream.
 
-You do not have to start from nothing. The [Products page](/products) has overlays and alerts you can
-install with one click, and everything there is free.
+You do not have to start from nothing. The [Products page](/products) is a shelf of free stream
+upgrades, each one ready in a single click. Chat games like [Chat Tower](/help/chat-tower) and
+[Chat Emote Bubbles](/help/chat-emote-bubbles) give your chat something to play together, perfect for
+downtime and BRB scenes. Alerts put every tip from Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee or
+Throne on screen the moment it lands. Install one, add it to OBS, and you are live.
 
 If you want to build your own layout without writing code, the [Builder](/help/builder) lets you place
 ready-made blocks on a grid. If you do write code, the [code editor](/help/editor) completes your tags as
