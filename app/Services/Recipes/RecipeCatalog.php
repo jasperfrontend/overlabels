@@ -26,7 +26,7 @@ class RecipeCatalog
         ],
         'alert' => [
             'label' => 'Alerts',
-            'lead' => 'Connect Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee or Throne, and every tip, order or gift lands on your stream with a sound, a spoken line and a message in chat.',
+            'lead' => 'Heads up: Integrating good looking alerts into your stream requires knowledge of HTML and CSS. This 1-click installer just installs the basic functionality of an alert, but you will need to put in some elbow grease to make it yours. If you are looking for ready-made additions to your stream, check out the Products. Connect Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee or Throne, and every tip, order or gift lands on your stream with a sound, a spoken line and a message in chat.',
         ],
     ];
 
