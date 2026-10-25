@@ -50,8 +50,7 @@ a moderator deletes takes its bubbles with it.
 ## Where the emotes come from
 
 The overlay reads your chat from Twitch directly, over the same public connection any chat viewer
-uses. Nothing passes through Overlabels, so the bubbles keep coming even when Overlabels is having a
-bad day. It is the same connection [Twitch Chat in an Overlay](/help/chat) explains, read through a
+uses. Nothing passes through Overlabels. It is the same connection [Twitch Chat in an Overlay](/help/chat) explains, read through a
 second loop.
 
 ## Build your own

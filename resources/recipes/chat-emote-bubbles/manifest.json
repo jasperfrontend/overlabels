@@ -87,9 +87,9 @@
         "body": "No bot and no account to connect. It reads your Twitch chat directly, like any viewer does."
       },
       {
-        "icon": "shield",
-        "title": "Keeps going when we don't",
-        "body": "Emotes come straight from Twitch, not through Overlabels, so the bubbles keep coming even if Overlabels has a bad day."
+        "icon": "people",
+        "title": "Follows your mods",
+        "body": "When a mod deletes a message, its bubbles go with it. Chatters you have hidden and commands that start with `!` never put a bubble on screen."
       }
     ],
     "looks_heading": "Three looks to start from.",
@@ -112,7 +112,7 @@
     "closing": "Let your chat's emotes loose tonight."
   },
   "notes": [
-    "Every emote comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so the bubbles keep coming even when Overlabels is having a bad day.",
+    "Every emote comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels.",
     "Bubbles rise from the bottom edge by default; the Spawn control moves them to the top, to a random spot, or to one point you pick with X and Y.",
     "Pop after is 0 by default, so bubbles float off the top of the screen. Set it to a number of seconds and they gather at the edge and pop after that long instead.",
     "Only pictures are bubbled: Twitch emotes and the 7TV, BTTV and FFZ emotes enabled in your channel. A plain emoji like a party popper is text, not an emote, and stays in chat."

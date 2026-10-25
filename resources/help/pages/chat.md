@@ -35,9 +35,8 @@ That is the whole feature. No setup, no connecting anything, no extra permission
 Your overlay reads chat **straight from Twitch**, over the same anonymous connection any chat viewer
 uses. Nothing is relayed through Overlabels.
 
-Three things follow from that, and they are all in your favour:
+Two things follow from that, and they are both in your favour:
 
-- Chat keeps working even if Overlabels is having a bad day.
 - There is no added delay between someone typing and the message appearing.
 - No credentials are involved, so nothing sensitive ever reaches your OBS browser source.
 

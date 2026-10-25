@@ -197,7 +197,7 @@
             "required": ["title", "line", "art"],
             "properties": {
               "title": { "type": "string", "minLength": 1, "maxLength": 60 },
-              "line": { "type": "string", "minLength": 1, "maxLength": 90 },
+              "line": { "type": "string", "minLength": 1, "maxLength": 160 },
               "art": {
                 "type": "object",
                 "description": "`chat`: a few chat lines, the last one highlighted. `stat`: one or two big values and a caption. `image`: a file under public/products/<slug>/.",

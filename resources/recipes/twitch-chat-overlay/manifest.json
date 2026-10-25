@@ -31,7 +31,7 @@
     "plays": [
       {
         "title": "Chat talks",
-        "line": "Like it always does.",
+        "line": "Like they always do.",
         "art": {
           "type": "chat",
           "lines": [
@@ -49,8 +49,8 @@
         }
       },
       {
-        "title": "It shows on your stream",
-        "line": "Names, badges and emotes, as it happens.",
+        "title": "Live chat shows in your overlay",
+        "line": "All badges and emotes are supported, including [7TV](https://7tv.app), [BTTV](https://betterttv.com) and [FFZ](https://www.frankerfacez.com).",
         "art": {
           "type": "image",
           "src": "/products/twitch-chat-overlay/play-feed.svg",
@@ -58,8 +58,8 @@
         }
       },
       {
-        "title": "You make it yours",
-        "line": "Every change lands in OBS as you make it.",
+        "title": "Comes with a full designer",
+        "line": "Every change shows up in your Twitch Chat overlay straight away.",
         "art": {
           "type": "stat",
           "stats": [
@@ -76,27 +76,27 @@
         }
       }
     ],
-    "reasons_heading": "Your chat on screen, without the hassle.",
+    "reasons_heading": "The Twitch Chat Overlay that just works.",
     "reasons": [
       {
         "icon": "zap",
-        "title": "Nothing to connect",
-        "body": "No bot and no account to link. It reads your Twitch chat directly, like any viewer does."
+        "title": "Nothing to connect, ready in minutes",
+        "body": "No bot and no account to link. This Twitch Chat Overlay reads your chat directly, the same way any viewer does. Paste it into your streaming software and you're live."
       },
       {
         "icon": "palette",
-        "title": "Ten looks to start from",
-        "body": "From a terminal to speech bubbles to a news ticker. Then the font, colours and layout are yours."
+        "title": "Ten styles to start from",
+        "body": "From a retro terminal to speech bubbles to a news ticker, pick the Twitch Chat Overlay that fits your stream. Then make it yours with your own font, colours and layout."
       },
       {
         "icon": "eye",
-        "title": "Every emote shows up",
-        "body": "Twitch emotes plus 7TV, BTTV and FFZ, and the badges your chatters earned."
+        "title": "Every emote, every badge",
+        "body": "Twitch emotes plus 7TV, BTTV and FFZ, along with the badges your chatters have earned. Your community sees itself on stream exactly as it appears in chat."
       },
       {
-        "icon": "shield",
-        "title": "Keeps going when we don't",
-        "body": "Messages come straight from Twitch, not through Overlabels, so chat keeps flowing even if Overlabels has a bad day."
+        "icon": "people",
+        "title": "Follows your mods, shows what you want",
+        "body": "When a mod deletes a message or times someone out, it leaves your overlay too. Hide commands that start with `!`, and keep chosen accounts, like other bots, off screen."
       }
     ],
     "looks_heading": "Ten looks to start from.",
@@ -128,10 +128,10 @@
         "a": "Absolutely. Join the [Overlabels Discord](https://discord.gg/qANdj5QPpd) and post in #integration-suggestions. The Discord is still very new, but you can talk to the Overlabels developer there directly."
       }
     ],
-    "closing": "Put your chat on screen tonight."
+    "closing": "Get your Twitch Chat Overlay"
   },
   "notes": [
-    "Every message comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels, so chat keeps flowing even when Overlabels is having a bad day.",
+    "Every message comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels.",
     "The feed keeps the most recent 50 messages, which is more than fits on screen. The Chat messages loop limit under Settings, Account shortens it; reload the browser source in OBS after changing it."
   ],
   "max_instances_per_user": 1,
