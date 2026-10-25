@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { Bot, Check, Ellipsis, Plug } from '@lucide/vue';
+import { Bot, Check, Ellipsis, Plug, TriangleAlert } from '@lucide/vue';
 import EmptyState from '@/components/EmptyState.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
@@ -91,6 +91,13 @@ const description = computed(
     <div data-tab-start>
       <section v-for="shelf in shelves" :key="shelf.key" class="mb-12 last:mb-0">
         <h2 class="text-lg font-semibold text-foreground">{{ shelf.label }}</h2>
+        <p
+          v-if="shelf.key === 'alert'"
+          class="my-2 flex max-w-prose items-start gap-2 border border-cyan-500/60 px-3 py-2 text-sm font-medium text-foreground"
+        >
+          <TriangleAlert class="mt-0.5 size-4 shrink-0 text-cyan-600 dark:text-cyan-300" />
+          Heads up: Integrating good looking alerts into your stream requires knowledge of HTML and CSS.
+        </p>
         <p class="mt-1 mb-4 max-w-prose text-sm text-foreground">{{ shelf.lead }}</p>
 
         <!-- The Alerts shelf is the quieter one on purpose. An alert is a
