@@ -96,7 +96,17 @@ const description = computed(
           class="my-2 flex max-w-prose items-start gap-2 border border-cyan-500/60 px-3 py-2 text-sm font-medium text-foreground"
         >
           <TriangleAlert class="mt-0.5 size-4 shrink-0 text-cyan-600 dark:text-cyan-300" />
-          Heads up: Integrating good looking alerts into your stream requires knowledge of HTML and CSS.
+          <span>
+            Heads up: Integrating good looking alerts into your stream requires knowledge of HTML and CSS.
+            <a
+              href="/help/overlays-vs-alerts"
+              target="_blank"
+              rel="noopener"
+              class="cursor-pointer whitespace-nowrap text-violet-400 hover:underline"
+            >
+              Learn how alerts work →
+            </a>
+          </span>
         </p>
         <p class="mt-1 mb-4 max-w-prose text-sm text-foreground">{{ shelf.lead }}</p>
 
