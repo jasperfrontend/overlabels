@@ -169,7 +169,7 @@ class ProductController extends Controller
     private function shelfFor(string $category): array
     {
         if ($category === self::INSTALLED_FILTER) {
-            return ['label' => 'Installed', 'lead' => 'What this account has installed. Each one opens on its own page.'];
+            return ['label' => 'Installed', 'lead' => 'What you have installed on your Twitch stream.'];
         }
 
         return RecipeCatalog::CATEGORIES[$category];

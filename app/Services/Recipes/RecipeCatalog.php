@@ -22,7 +22,7 @@ class RecipeCatalog
     public const CATEGORIES = [
         'product' => [
             'label' => 'Products',
-            'lead' => 'Small games your chat plays together, live, on your stream. No other overlay pack has these.',
+            'lead' => 'Small chat games your Twitch chat plays together. Perfect games for downtime and BRB scenes.',
         ],
         'alert' => [
             'label' => 'Alerts',
