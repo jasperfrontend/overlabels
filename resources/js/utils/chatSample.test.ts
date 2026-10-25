@@ -59,8 +59,54 @@ describe('privmsgLine', () => {
     }
   });
 
+  it('lands every emote range on a whole emote code, across many lines', () => {
+    const codes = ['Kappa', 'DansGame', 'Kreygasm', '4Head', 'LUL', 'WutFace', 'NotLikeThis', 'PogChamp'];
+
+    for (let i = 0; i < 200; i++) {
+      const message = toChatMessage(parseIrcLine(privmsgLine(options({ emoteChance: 1 }), i))!)!;
+
+      for (const emote of message.emotes) {
+        expect(codes).toContain(message.text.slice(emote.begin, emote.end + 1));
+      }
+    }
+  });
+
+  it('groups repeats of one emote under one id, the way Twitch does', () => {
+    expect(privmsgLine(options(), 0, 'LUL LUL LUL')).toContain('emotes=425618:0-2,4-6,8-10;');
+  });
+
+  it('counts emote ranges in code points, so an emoji before an emote does not shift it', () => {
+    // 💧 is two UTF-16 units but one code point. Twitch counts code points.
+    expect(privmsgLine(options(), 0, 'hydrate 💧 LUL')).toContain('emotes=425618:10-12;');
+  });
+
   it('emits no emote tag when emotes are switched off', () => {
-    expect(toChatMessage(parseIrcLine(privmsgLine(options({ emoteChance: 0 }), 0))!)!.emotes).toEqual([]);
+    for (let i = 0; i < 200; i++) {
+      expect(toChatMessage(parseIrcLine(privmsgLine(options({ emoteChance: 0 }), i))!)!.emotes).toEqual([]);
+    }
+  });
+
+  it('gives a first message a greeting, never a reaction', () => {
+    // The joke this replaced: "first time here Sadge". A first message is styled
+    // as an arrival, so it must read like one even when a wave is running.
+    const message = toChatMessage(parseIrcLine(privmsgLine(options({ firstChance: 1, emoteChance: 1, thirdPartyChance: 1 }), 0, 'LUL'))!)!;
+
+    expect(message.text).not.toBe('LUL');
+    expect(message.emotes).toEqual([]);
+  });
+
+  it('points replies at another chatter in the pool, never at the placeholder or at themselves', () => {
+    for (let i = 0; i < 300; i++) {
+      const message = toChatMessage(parseIrcLine(privmsgLine(options({ chatters: 5 }), i))!)!;
+
+      expect(message.text).not.toContain('{name}');
+
+      const mention = /^@Chatter(\d+)/.exec(message.text);
+      if (mention) {
+        expect(Number(mention[1])).toBeLessThan(5);
+        expect(`chatter${mention[1]}`).not.toBe(message.login);
+      }
+    }
   });
 
   it('produces badges the parser reads back', () => {
@@ -151,6 +197,37 @@ describe('createChatSampleFeed', () => {
     createChatSampleFeed(target, { chatters: 4 }).burst(3);
 
     expect(target.lines.map((line) => toChatMessage(parseIrcLine(line)!)!.login)).toEqual(['chatter2', 'chatter2', 'chatter2']);
+  });
+
+  it('breaks into waves, where several chatters post the same reaction', () => {
+    // A seeded generator rather than Math.random, so the run is the same every
+    // time. Over 200 messages at one wave per ~20, waves are certain.
+    let state = 42;
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      state = (state * 1664525 + 1013904223) % 2 ** 32;
+      return state / 2 ** 32;
+    });
+
+    const target = sink();
+    createChatSampleFeed(target).burst(200);
+
+    // "KEKW KEKW" is the same reaction as "KEKW".
+    const texts = target.lines.map((line) => {
+      const text = toChatMessage(parseIrcLine(line)!)!.text;
+      const half = text.slice(0, (text.length - 1) / 2);
+      return text === `${half} ${half}` ? half : text;
+    });
+
+    // Four of the same line inside eight messages does not happen by chance
+    // from a pool this size.
+    const busiest = Math.max(
+      ...texts.map((_, i) => {
+        const window = texts.slice(i, i + 8);
+        return Math.max(...window.map((t) => window.filter((u) => u === t).length));
+      }),
+    );
+
+    expect(busiest).toBeGreaterThanOrEqual(4);
   });
 
   it('runs at the rate it is given, in messages per minute', () => {

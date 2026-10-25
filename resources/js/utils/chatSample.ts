@@ -43,7 +43,7 @@
  *   curl -o /dev/null -w "%{http_code}" \
  *     https://static-cdn.jtvnw.net/emoticons/v2/<id>/default/dark/1.0
  */
-const TWITCH_EMOTES: Array<[code: string, id: string]> = [
+const TWITCH_EMOTES = new Map<string, string>([
   ['Kappa', '25'],
   ['DansGame', '33'],
   ['Kreygasm', '41'],
@@ -52,30 +52,248 @@ const TWITCH_EMOTES: Array<[code: string, id: string]> = [
   ['WutFace', '28087'],
   ['NotLikeThis', '58765'],
   ['PogChamp', '305954156'],
-];
+]);
 
 /**
  * Codes commonly present in 7TV/BTTV/FFZ channel sets. These exercise the
  * token-matching path rather than the position path; whether they resolve
  * depends on the channel's own sets, which is realistic.
  */
-const THIRD_PARTY_CODES = ['Sadge', 'Madge', 'Pepega', 'monkaS', 'KEKW', 'Pog', 'widepeepoHappy', 'catJAM'];
+const THIRD_PARTY_CODES = new Set([
+  'KEKW',
+  'OMEGALUL',
+  'Sadge',
+  'Madge',
+  'monkaS',
+  'Pog',
+  'PogU',
+  'EZ',
+  'Clap',
+  'catJAM',
+  'widepeepoHappy',
+  'peepoHappy',
+  'PepeLaugh',
+  'D:',
+]);
 
-const WORDS = [
-  'hello',
-  'chat',
-  'that was insane',
+/**
+ * Whole chat lines, each written the way one person would type it.
+ *
+ * This used to be a phrase with an emote glued on either side at random, which
+ * produced "first time here Sadge" and "this is the best stream Madge": every
+ * line read like a fixture. An emote belongs to the sentence it reacts to, so it
+ * is written into the line rather than rolled for.
+ *
+ * Nothing here is tagged by hand. Each line is filed at module load by the
+ * codes it contains (Twitch emote, third-party code, or neither), so the
+ * `emoteChance` / `thirdPartyChance` knobs keep meaning what they say and a new
+ * line cannot be filed under the wrong one.
+ *
+ * Mostly short and lower case, because chat is. Genre-neutral, because the
+ * preview runs for a speedrunner and a DJ alike. `{name}` is another chatter
+ * from the same pool, so replies point at someone who is actually talking.
+ */
+const LINES = [
+  // Reactions
   'gg',
+  'gg wp',
   'no way',
-  'first time here',
-  'lets go',
-  'what happened',
-  'nice one',
+  'NO WAY',
+  'wait what',
+  'wait go back',
+  '??',
+  '?',
+  'lmao',
+  'lol',
+  'HAHAHA',
+  'W',
+  'L',
   'o7',
-  'this is the best stream',
-  'im crying',
-  'clip it',
+  'F',
+  'rip',
+  'clean',
+  'that was clean',
+  'so close',
+  'so close omg',
+  'unlucky',
+  'true',
+  'real',
+  'called it',
+  'i literally said that 2 minutes ago',
+  'the timing on that',
+  'ok that was actually impressive',
+  'i would have panicked',
+  'bold strategy',
+  'skill issue',
+  'plot twist',
+  'not the ending i expected',
+  'clip that',
+  'someone clip that',
+  'that one is going in the highlights',
+  'i need that on a shirt',
+  'we are so back',
+  'its so over',
+  // Backseating and cheering
+  'one more try',
+  'you got this',
+  'believe',
+  'trust the process',
+  'save first',
+  'did it save?',
+  'left. LEFT',
+  'behind you',
+  'how many tries is this',
+  'new pb?',
+  'no spoilers pls',
+  // Chatting
+  'hi chat',
+  'evening all',
+  'just got here, what did i miss',
+  'how long have you been live?',
+  'brb food',
+  'back',
+  'wb',
+  'eating dinner and watching, perfect',
+  'this is so cozy',
+  'the vibes today',
+  'chat is moving fast today',
+  'how is it already this late',
+  '5 more minutes then bed',
+  'this song goes hard',
+  'whats the song?',
+  'audio is a bit quiet btw',
+  'mic is fine now',
+  'hydrate 💧',
+  'pretty 😍',
+  'chat behave',
+  '!uptime',
+  '!discord',
+  '!followage',
+  // Replies
+  '@{name} same',
+  '@{name} lol true',
+  '@{name} welcome back',
+  '@{name} hi!',
+  '@{name} nah youre right',
+  '@{name} i was thinking the same thing',
+  '@{name} its in the panels below',
+  '@{name} LUL',
+  '@{name} KEKW',
+  // Twitch emotes, written where a person would put them
+  'LUL',
+  'LUL LUL',
+  'LUL LUL LUL',
+  'the timing LUL',
+  'chat called it LUL',
+  'that was planned Kappa',
+  'totally on purpose Kappa',
+  'PogChamp',
+  'PogChamp PogChamp',
+  'no way PogChamp',
+  'NotLikeThis',
+  'NotLikeThis NotLikeThis',
+  'not again NotLikeThis',
+  'WutFace',
+  'what was that WutFace',
+  'jumpscare WutFace',
+  'Kreygasm',
+  'this song Kreygasm',
+  'that sound design Kreygasm',
+  'DansGame',
+  'the camera angle DansGame',
+  'just win 4Head',
+  'just dont get hit 4Head',
+  // Third-party codes
+  'KEKW',
+  'KEKW KEKW',
+  'OMEGALUL',
+  'no shot KEKW',
+  'chat is cooked KEKW',
+  'EZ',
+  'EZ Clap',
+  'too easy EZ',
+  'Clap Clap Clap',
+  'Pog',
+  'PogU',
+  'wait thats actually Pog',
+  'monkaS',
+  'monkaS monkaS',
+  'i cant watch monkaS',
+  'dont go in there monkaS',
+  'Sadge',
+  'missed the start Sadge',
+  'one hp Sadge',
+  'Madge',
+  'who did that Madge',
+  'catJAM',
+  'catJAM catJAM catJAM',
+  'this beat catJAM',
+  'widepeepoHappy',
+  'hi chat widepeepoHappy',
+  'cozy stream peepoHappy',
+  'PepeLaugh',
+  'PepeLaugh here it comes',
+  'PepeLaugh they dont know',
+  'D:',
+  'D: D:',
 ];
+
+/**
+ * What someone says the first time they chat in a channel.
+ *
+ * Kept apart from LINES because Twitch flags that message (`first-msg=1`) and
+ * the overlay can style it, so it has to read like an arrival. Emote-free, so
+ * the first-message chip shows on a greeting rather than on a reaction.
+ */
+const FIRST_LINES = [
+  'hi! first time catching a stream',
+  'found you through a raid, hi everyone',
+  'hello! just followed',
+  'hey, first time chatting',
+  'been watching for a while, finally saying hi',
+  'hello from brazil',
+  'hi from finland',
+  'the algorithm sent me here, no regrets',
+];
+
+/**
+ * Lines a whole chat repeats at once when something happens on stream.
+ *
+ * A wave is the most recognisable thing a real chat does and the one thing a
+ * stream of independent random lines can never produce: one moment, then ten
+ * people posting the same emote within seconds.
+ */
+const WAVE_LINES = [
+  'LUL',
+  'KEKW',
+  'OMEGALUL',
+  'o7',
+  'W',
+  'gg',
+  'F',
+  '?',
+  'Pog',
+  'PogChamp',
+  'EZ Clap',
+  'NotLikeThis',
+  'monkaS',
+  'D:',
+  'catJAM',
+  'LMAO',
+];
+
+function codesIn(line: string): { twitch: boolean; thirdParty: boolean } {
+  const words = line.split(' ');
+
+  return {
+    twitch: words.some((word) => TWITCH_EMOTES.has(word)),
+    thirdParty: words.some((word) => THIRD_PARTY_CODES.has(word)),
+  };
+}
+
+const TWITCH_LINES = LINES.filter((line) => codesIn(line).twitch);
+const THIRD_PARTY_LINES = LINES.filter((line) => !codesIn(line).twitch && codesIn(line).thirdParty);
+const PLAIN_LINES = LINES.filter((line) => !codesIn(line).twitch && !codesIn(line).thirdParty);
 
 const BADGE_SETS = ['', 'subscriber/12', 'moderator/1', 'vip/1', 'subscriber/3,moderator/1', 'broadcaster/1,subscriber/12'];
 
@@ -118,51 +336,57 @@ function chance(p: number): boolean {
 
 let messageCounter = 0;
 
+/** Pick a line for one message, by the same knobs the old phrase-and-emote roll used. */
+function sampleLine(options: ChatSampleOptions, first: boolean): string {
+  if (first) return pick(FIRST_LINES);
+  if (chance(options.emoteChance)) return pick(TWITCH_LINES);
+  if (chance(options.thirdPartyChance)) return pick(THIRD_PARTY_LINES);
+
+  return pick(PLAIN_LINES);
+}
+
+/**
+ * The IRC `emotes` tag for a finished line: `id:begin-end,begin-end/id:...`.
+ *
+ * Computed from the text rather than tracked while building it, because the
+ * renderer slices the string by these indices and getting them wrong would mean
+ * debugging the fixture instead of the overlay. Counted in CODE POINTS, as
+ * Twitch does, so an emoji earlier in the line does not shift the ranges.
+ */
+function emoteTag(text: string): string {
+  const ranges = new Map<string, string[]>();
+  let cursor = 0;
+
+  for (const word of text.split(' ')) {
+    const length = Array.from(word).length;
+    const id = TWITCH_EMOTES.get(word);
+    if (id) {
+      ranges.set(id, [...(ranges.get(id) ?? []), `${cursor}-${cursor + length - 1}`]);
+    }
+    cursor += length + 1; // the joining space
+  }
+
+  return Array.from(ranges, ([id, list]) => `${id}:${list.join(',')}`).join('/');
+}
+
 /**
  * Build one PRIVMSG line, tags and all.
  *
- * Emote positions are computed against the assembled text rather than guessed,
- * because the renderer slices the string by those indices. Getting them wrong
- * would mean debugging the fixture instead of the overlay.
+ * `text` overrides the sampled line; the preview feed uses it to make a chat
+ * wave. A first message always gets a greeting, whatever `text` says, because
+ * the overlay styles it as an arrival.
  */
-export function privmsgLine(options: ChatSampleOptions, seed = messageCounter++): string {
+export function privmsgLine(options: ChatSampleOptions, seed = messageCounter++, text?: string): string {
   const n = seed % options.chatters;
   const login = `chatter${n}`;
   const display = `Chatter${n}`;
 
-  const parts: string[] = [];
-  const emotePositions: string[] = [];
-  let cursor = 0;
+  const first = chance(options.firstChance);
+  const line = (first || text === undefined ? sampleLine(options, first) : text).replace(
+    '{name}',
+    () => `Chatter${(n + 1 + Math.floor(Math.random() * (options.chatters - 1))) % options.chatters}`,
+  );
 
-  const push = (chunk: string) => {
-    if (parts.length > 0) {
-      cursor += 1; // the joining space
-    }
-    parts.push(chunk);
-    const begin = cursor;
-    cursor += chunk.length;
-    return { begin, end: cursor - 1 };
-  };
-
-  if (chance(options.emoteChance)) {
-    const [code, id] = pick(TWITCH_EMOTES);
-    const { begin, end } = push(code);
-    emotePositions.push(`${id}:${begin}-${end}`);
-  }
-
-  push(pick(WORDS));
-
-  if (chance(options.thirdPartyChance)) {
-    push(pick(THIRD_PARTY_CODES));
-  }
-
-  if (chance(options.emoteChance)) {
-    const [code, id] = pick(TWITCH_EMOTES);
-    const { begin, end } = push(code);
-    emotePositions.push(`${id}:${begin}-${end}`);
-  }
-
-  const text = parts.join(' ');
   const badges = pick(BADGE_SETS);
   const foreign = chance(options.foreignChance);
 
@@ -171,8 +395,8 @@ export function privmsgLine(options: ChatSampleOptions, seed = messageCounter++)
     `badges=${badges}`,
     `color=${pick(COLORS)}`,
     `display-name=${display}`,
-    `emotes=${emotePositions.join('/')}`,
-    `first-msg=${chance(options.firstChance) ? '1' : '0'}`,
+    `emotes=${emoteTag(line)}`,
+    `first-msg=${first ? '1' : '0'}`,
     `id=${crypto.randomUUID()}`,
     `mod=${badges.includes('moderator') ? '1' : '0'}`,
     `room-id=${options.roomId}`,
@@ -186,7 +410,7 @@ export function privmsgLine(options: ChatSampleOptions, seed = messageCounter++)
     tags.push('source-room-id=999999', `source-badges=${badges}`);
   }
 
-  return `@${tags.join(';')} :${login}!${login}@${login}.tmi.twitch.tv PRIVMSG #${options.channel} :${text}`;
+  return `@${tags.join(';')} :${login}!${login}@${login}.tmi.twitch.tv PRIVMSG #${options.channel} :${line}`;
 }
 
 /** CLEARMSG removes exactly one message. */
@@ -232,6 +456,9 @@ const FEED_FLAVOUR: Partial<ChatSampleOptions> = {
   firstChance: 0.12,
 };
 
+/** Per message, when no wave is running. About one every twenty messages. */
+const WAVE_CHANCE = 0.05;
+
 /**
  * A human-paced sample feed, for showing a look while it is being chosen.
  *
@@ -247,13 +474,30 @@ const FEED_FLAVOUR: Partial<ChatSampleOptions> = {
  *
  * One timer, rescheduled on every rate change, so a slider drag does not pile
  * up intervals.
+ *
+ * Now and then a wave starts: for the next several messages, most chatters
+ * repeat the same reaction, sometimes twice over. Preview only - the dev hose
+ * keeps independent lines, because a load test wants an even spread.
  */
 export function createChatSampleFeed(sink: ChatSink, over: Partial<ChatSampleOptions> = {}): ChatSampleFeed {
   const options: ChatSampleOptions = { ...CHAT_SAMPLE_DEFAULTS, ...FEED_FLAVOUR, ...over };
   let timer: ReturnType<typeof setInterval> | null = null;
+  let wave = { line: '', left: 0 };
+
+  function nextText(): string | undefined {
+    if (wave.left === 0 && chance(WAVE_CHANCE)) {
+      wave = { line: pick(WAVE_LINES), left: 4 + Math.floor(Math.random() * 7) };
+    }
+    if (wave.left === 0) return undefined;
+
+    wave.left--;
+    if (!chance(0.75)) return undefined;
+
+    return chance(0.25) ? `${wave.line} ${wave.line}` : wave.line;
+  }
 
   function emit(): void {
-    sink.injectRawLine(privmsgLine(options, Math.floor(Math.random() * options.chatters)));
+    sink.injectRawLine(privmsgLine(options, Math.floor(Math.random() * options.chatters), nextText()));
   }
 
   function stop(): void {
