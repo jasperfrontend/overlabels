@@ -23,9 +23,12 @@ Chat works in a **static overlay**. Drop this in and you have a chat feed:
 That is the whole feature. No setup, no connecting anything, no extra permissions.
 
 > [!TIP]
-> Would rather not write one? **[Twitch Chat Overlay](/products/twitch-chat-overlay)** is this same feature
-> as a product: one click to install, ten looks to pick from, and a designer that changes the font,
-> the colours and the layout while you watch it in OBS. This page is for building your own.
+> **Want chat on stream without writing any code?** [Twitch Chat Overlay](/products/twitch-chat-overlay)
+> is a free, ready-made product that does all of this for you. Install it in one click, pick one of ten
+> looks - from a terminal to speech bubbles to a news ticker - and tune the font, colours and layout in a
+> live designer while OBS updates as you go. Nothing to connect, no bot to add.
+>
+> Rather build your own? Read on.
 
 ## Where the messages come from
 
