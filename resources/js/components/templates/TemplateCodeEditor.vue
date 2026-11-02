@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { css } from '@codemirror/lang-css';
+import { css as cssLanguage } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
@@ -101,7 +101,7 @@ const baseTheme = EditorView.theme({
 const editorKey = computed(() => (isDark.value ? 'dark' : 'light'));
 const headExtensions = computed(() => [html(), tagCompletion, baseTheme, ...(isDark.value ? [oneDark] : [])]);
 const htmlExtensions = computed(() => [html(), tagCompletion, baseTheme, ...(isDark.value ? [oneDark] : [])]);
-const cssExtensions = computed(() => [css(), tagCompletion, baseTheme, ...(isDark.value ? [oneDark] : [])]);
+const cssExtensions = computed(() => [cssLanguage(), tagCompletion, baseTheme, ...(isDark.value ? [oneDark] : [])]);
 </script>
 
 <template>
