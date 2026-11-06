@@ -225,6 +225,15 @@ Schedule::call(fn () => ListAppendHistory::where('fired_at', '<', now()->subDays
 Schedule::call(fn () => AdminAuditLog::where('created_at', '<', now()->subDays(730))->delete())
     ->daily()->name('prune:admin-audit-logs')->withoutOverlapping();
 
+// Hard-delete accounts that did nothing in the 48 hours after signing up: no
+// product installed, no active overlay token, nothing owned beyond the starter
+// Kit copy onboarding gave them. See App\Services\IdleAccountSweep.
+Schedule::command('users:prune-idle')
+    ->hourly()
+    ->withoutOverlapping()
+    ->name('users:prune-idle')
+    ->appendOutputTo(storage_path('logs/prune-idle-accounts.log'));
+
 // Auto-prune list snapshots older than 30 days. Pinned snapshots are
 // exempt - streamers explicitly opt into keeping those forever. Runs
 // daily so the 30-day window is honoured to the day (the privacy policy
