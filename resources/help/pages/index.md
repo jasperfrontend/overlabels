@@ -112,6 +112,8 @@ need, ignore the rest.
   per-message tag, badges and emotes, Shared Chat, the display filters, and the four chat controls.
 - [**Chat Emote Bubbles**](/help/chat-emote-bubbles) - every emote your chat types floats across your
   stream in a soap bubble, a snowflake or a heart. The ten controls and the emotes loop behind it.
+- [**Twitch Chat Plinko**](/help/twitch-chat-plinko) - your chat types !drop and their name bounces
+  down a Plinko board. Chat order, the line, the scores, and the board tag's CSS properties.
 - [**Chat Checkin**](/help/checkin) - viewers pin themselves on a 3D globe with !checkin. The globe
   tag, the pin feed, counters, distances and alerts.
 - [**Chat Tower**](/help/chat-tower) - one shared tower your chat stacks with !stack. The fall

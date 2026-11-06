@@ -60,6 +60,8 @@ import {
 } from '@/utils/towerSlots';
 import { GLOBE_SELECTOR, replaceGlobeTags, sourceUsesGlobe } from '@/globe/globeTag';
 import type { GlobeInstance } from '@/globe/checkinGlobe';
+import { isDropCommand, PLINKO_SELECTOR, replacePlinkoTags, sourceUsesPlinko } from '@/plinko/plinkoTag';
+import type { PlinkoInstance } from '@/plinko/plinkoBoard';
 import type { ChatMessage } from '@/utils/ircParser';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
 import { useCssCustomProperties } from '@/composables/useCssCustomProperties';
@@ -179,6 +181,13 @@ const templateUsesBadgeArt = computed(() => {
  * same source-gating discipline as chat and badge art above.
  */
 const templateUsesGlobe = computed(() => sourceUsesGlobe(rawHtml.value ?? ''));
+
+/**
+ * Does this template embed the Plinko board? Gates the placeholder pre-pass,
+ * the lazy board chunk, and joining chat: the board is fed by `!drop`
+ * messages read straight from Twitch, like the chat feed.
+ */
+const templateUsesPlinko = computed(() => sourceUsesPlinko(rawHtml.value ?? ''));
 
 /**
  * The chat designer's sample feed.
@@ -546,7 +555,12 @@ function parseSource(source: string | null | undefined, encode: boolean = true):
 // The globe tag is a literal pre-pass over the AUTHORED source, before the
 // block engine and tag pass - a data-driven tag cannot emit markup (values
 // render HTML-encoded, absent values render ''). See globeTag.ts.
-const compiledHtml = computed(() => parseSource(templateUsesGlobe.value ? replaceGlobeTags(rawHtml.value) : rawHtml.value, true));
+const compiledHtml = computed(() => {
+  let source = rawHtml.value;
+  if (templateUsesGlobe.value) source = replaceGlobeTags(source);
+  if (templateUsesPlinko.value) source = replacePlinkoTags(source);
+  return parseSource(source, true);
+});
 // On the fast path, compiledCss resolves to the statically-rewritten stylesheet
 // (no `data.value` dependency), so the computed never re-runs after mount and
 // the watcher fires exactly once for the initial inject. Tag updates flow
@@ -600,11 +614,14 @@ watchEffect(
       // The globe mounts a canvas + label layer INSIDE its placeholder, while
       // the compiled HTML always contains the placeholder empty - without
       // this guard every data write would wipe the mounted globe.
-      onBeforeElChildrenUpdated: (fromEl) => !fromEl.hasAttribute('data-checkin-globe'),
+      onBeforeElChildrenUpdated: (fromEl) => !fromEl.hasAttribute('data-checkin-globe') && !fromEl.hasAttribute('data-plinko-board'),
     });
 
     if (templateUsesGlobe.value) {
       syncGlobes();
+    }
+    if (templateUsesPlinko.value) {
+      syncPlinkos();
     }
   },
   { flush: 'post' },
@@ -671,6 +688,70 @@ function destroyGlobes() {
   }
   globeInstances.clear();
 }
+
+// ── Plinko board ─────────────────────────────────────────────────────────────
+// Same arrangement as the globe: a lazy chunk, instances keyed by their
+// placeholder. Drops come from the chat tap below, not from the render data.
+let plinkoModule: typeof import('@/plinko/plinkoBoard') | null = null;
+let plinkoModuleLoading = false;
+const plinkoInstances = new Map<HTMLElement, PlinkoInstance>();
+
+function loadPlinkoModule() {
+  if (plinkoModule || plinkoModuleLoading) return;
+  plinkoModuleLoading = true;
+  void import('@/plinko/plinkoBoard')
+    .then((mod) => {
+      plinkoModule = mod;
+      syncPlinkos();
+    })
+    .catch((err) => {
+      console.warn('plinko board failed to load', err);
+    })
+    .finally(() => {
+      plinkoModuleLoading = false;
+    });
+}
+
+function syncPlinkos() {
+  if (!plinkoModule) {
+    loadPlinkoModule();
+    return;
+  }
+  const container = staticContainer.value;
+  if (!container) return;
+
+  const present = new Set<HTMLElement>();
+  for (const el of container.querySelectorAll<HTMLElement>(PLINKO_SELECTOR)) {
+    present.add(el);
+    if (!plinkoInstances.has(el)) plinkoInstances.set(el, plinkoModule.mountPlinkoBoard(el));
+  }
+  for (const [el, instance] of plinkoInstances) {
+    if (!present.has(el)) {
+      instance.destroy();
+      plinkoInstances.delete(el);
+    }
+  }
+}
+
+function destroyPlinkos() {
+  for (const instance of plinkoInstances.values()) {
+    instance.destroy();
+  }
+  plinkoInstances.clear();
+}
+
+// Every `!drop` in chat becomes a ball, in the order it arrived. A board that
+// has not mounted yet simply misses it, like a feed that is not drawn yet.
+twitchChat.onMessage((message) => {
+  if (plinkoInstances.size === 0) return;
+  for (const instance of plinkoInstances.values()) {
+    if (!isDropCommand(message.text, instance.command)) continue;
+    instance.drop({ id: message.id, userId: message.userId, login: message.login, name: message.author || message.login, color: message.color });
+  }
+});
+twitchChat.onModeration((action) => {
+  for (const instance of plinkoInstances.values()) instance.moderate(action);
+});
 
 // Alert overlay gets the same treatment below, once compiledAlertHtml is
 // declared (see after the alert section).
@@ -1071,7 +1152,7 @@ onMounted(async () => {
     // Same discipline as the emote library: an overlay that never shows chat
     // should not hold a WebSocket open for hours in an OBS source.
     const chatChannel = String(json.data?.user_login ?? '');
-    if ((chatChannel || props.sample) && templateUsesChat.value) {
+    if ((chatChannel || props.sample) && (templateUsesChat.value || templateUsesPlinko.value)) {
       // Set before connecting, so the first messages through the socket are
       // already filtered rather than flashing on screen and being excluded
       // only from the second batch onward.
@@ -1195,6 +1276,7 @@ onUnmounted(() => {
   // Cancels the globes' animation frames and disposes their WebGL contexts;
   // an OBS source that reloads would otherwise leak a context per reload.
   destroyGlobes();
+  destroyPlinkos();
   // Closes the socket, cancels the reconnect backoff and drops any queued
   // flush. Without this an OBS source that reloads leaks a connection per
   // reload, and the backoff timer keeps reopening one after the component dies.

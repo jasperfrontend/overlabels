@@ -248,6 +248,7 @@ class TemplateDataMapperService
         'overlay_name' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Overlay Name', 'desc' => 'Name of the overlay', 'sample' => 'My Awesome Overlay'],
         'timestamp' => ['category' => 'overlay', 'type' => 'datetime', 'label' => 'Timestamp', 'desc' => 'Current timestamp', 'sample' => '2026-08-20 12:00:00'],
         'checkin_globe' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Check-in Globe', 'desc' => 'A spinning globe with a pin per !checkin. Drawn by the overlay itself, style it with CSS', 'sample' => ''],
+        'plinko_board' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Plinko Board', 'desc' => 'A Plinko board: every !drop in chat drops a ball with the chatter name on it. Drawn by the overlay itself, style it with CSS', 'sample' => ''],
     ];
 
     /**
@@ -328,6 +329,8 @@ class TemplateDataMapperService
             // The overlay swaps [[[checkin_globe]]] for the globe before the
             // tag pass runs (globeTag.ts), so this value is never rendered.
             'checkin_globe' => '',
+            // Same for [[[plinko_board]]] (plinkoTag.ts).
+            'plinko_board' => '',
         ];
 
         // Apply all mappings with error handling

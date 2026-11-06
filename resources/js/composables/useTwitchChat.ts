@@ -115,6 +115,13 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
   // emotes (which carry ids on the wire) make it into the buffer.
   let resolveEmote: EmoteUrlResolver | undefined;
 
+  // Taps for things drawn from chat that are not the chat feed (the Plinko
+  // board). They see a message the moment it is parsed, before the feed's
+  // filters: "hide commands" is about the feed, and must not swallow the
+  // `!drop` a game is listening for. Hidden chatters stay hidden everywhere.
+  const messageTaps = new Set<(message: ChatMessage) => void>();
+  const moderationTaps = new Set<(action: ModerationAction) => void>();
+
   let socket: WebSocket | null = null;
   let channel = '';
   let closedByUs = false;
@@ -210,6 +217,10 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
 
     const message = toChatMessage(line);
     if (message) {
+      if (messageTaps.size > 0 && !shouldHideMessage(message, { hideCommands: false, hiddenLogins: filters.hiddenLogins })) {
+        for (const tap of messageTaps) tap(message);
+      }
+
       // Filtered at INGEST, not at render. A hidden message must not occupy
       // one of the 50 window slots, or a chatter spamming commands would push
       // real messages off the overlay while showing nothing themselves.
@@ -222,6 +233,7 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
 
     const action = toModerationAction(line);
     if (action) {
+      for (const tap of moderationTaps) tap(action);
       queue.push({ kind: 'moderate', action });
       scheduleFlush();
     }
@@ -370,5 +382,29 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
     handleLine(raw);
   }
 
-  return { messages, emotes, isConnected, connect, disconnect, setFilters, setEmoteResolver, setWindowSize, injectRawLine };
+  /** Hear every chat message as it arrives. Returns the unsubscribe. */
+  function onMessage(tap: (message: ChatMessage) => void): () => void {
+    messageTaps.add(tap);
+    return () => messageTaps.delete(tap);
+  }
+
+  /** Hear every CLEARMSG / CLEARCHAT. Returns the unsubscribe. */
+  function onModeration(tap: (action: ModerationAction) => void): () => void {
+    moderationTaps.add(tap);
+    return () => moderationTaps.delete(tap);
+  }
+
+  return {
+    messages,
+    emotes,
+    isConnected,
+    connect,
+    disconnect,
+    setFilters,
+    setEmoteResolver,
+    setWindowSize,
+    injectRawLine,
+    onMessage,
+    onModeration,
+  };
 }

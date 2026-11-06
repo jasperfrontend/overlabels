@@ -49,7 +49,7 @@ it('gives every listed product an alias, so no old URL is left dead', function (
     // Not a rule for all time - it is true because all nine were renamed at
     // once. A product first published under its current slug has nothing to
     // alias and would be added to this exemption list.
-    $bornHyphenated = ['chat-emote-bubbles'];
+    $bornHyphenated = ['chat-emote-bubbles', 'twitch-chat-plinko'];
 
     foreach ($catalog->listed() as $slug => $manifest) {
         if (in_array($slug, $bornHyphenated, true)) {

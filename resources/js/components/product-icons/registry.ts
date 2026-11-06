@@ -4,6 +4,7 @@ import ChatEmoteBubbles from './ChatEmoteBubbles.vue';
 import ChatTower from './ChatTower.vue';
 import FollowerBowling from './FollowerBowling.vue';
 import TwitchChatOverlay from './TwitchChatOverlay.vue';
+import TwitchChatPlinko from './TwitchChatPlinko.vue';
 
 /**
  * Product slug -> its icon. A new product's icon is one file in this folder
@@ -16,6 +17,7 @@ export const PRODUCT_ICONS: Record<string, Component> = {
   'chat-tower': ChatTower,
   'follower-bowling': FollowerBowling,
   'twitch-chat-overlay': TwitchChatOverlay,
+  'twitch-chat-plinko': TwitchChatPlinko,
 };
 
 export function hasProductIcon(slug: string): boolean {

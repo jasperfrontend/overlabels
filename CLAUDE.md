@@ -780,6 +780,32 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 - Hero SVGs from Claude Design carry a c2pa manifest in `<metadata>` plus an `xmlns:c2pa`; every
   product test asserts the file has no `c2pa`. Strip both before committing.
 
+### Twitch Chat Plinko (Nov 7th 2026, OL-2611-002)
+
+- **The first product that ships its own script.** `[[[plinko_board]]]` is the `[[[checkin_globe]]]`
+  pattern exactly: a literal pre-pass swaps the tag for a placeholder (`resources/js/plinko/plinkoTag.ts`),
+  a lazy chunk (`plinkoBoard.ts`) mounts a canvas in it, morphdom is told to leave its children alone.
+  The physics is pure functions in `plinkoPhysics.ts`, pinned by `plinko.test.ts`. The streamer still
+  writes no script; the flat refusal of user JavaScript is untouched.
+- **Fed by the overlay's own chat socket, never by the bot.** `useTwitchChat.onMessage()` taps every
+  message BEFORE the feed's filters: `hide_commands` is about a chat feed and must not swallow the
+  `!drop` a game listens for, while `hidden_logins` is still honoured. `onModeration()` hands CLEARMSG /
+  CLEARCHAT to the board: a deleted `!drop` loses its ball or queue spot, a timeout or ban also loses the
+  chatter's score. This is why there is no cooldown: the bot's 1 s channel-wide command cooldown would
+  have dropped all but one `!drop` a second, which is why a counter-based version was abandoned.
+- **Chat order is game order, and that is what scales.** One ball per login at a time (queued or
+  falling), a release rate (`--plinko-rate`, default 10/s) up to a cap in flight (`--plinko-max-balls`,
+  150), everyone else in a visible line. Measured 61 fps in headless Firefox at 20, 200, 2000 and 20000
+  players, 20000 lines parsed in 0.13 s. OBS has not been measured.
+- **Configuration is CSS custom properties on `.ol-plinko`, read once at MOUNT.** Changing one needs the
+  browser source reloaded. There are no controls and no designer yet; adding a designer means binding
+  controls into those properties AND making the board re-read them.
+- **Scores live in the overlay's memory and reset when it reloads.** Deliberate: nothing phones home.
+- Local testing: `overlabels.test` serves through the Vite dev server when `public/hot` exists, so a
+  `VITE_CHAT_HOSE=1` build is never what the page runs. Fake Twitch instead, by replacing
+  `window.WebSocket` for `irc-ws.chat.twitch.tv` before load (`evaluateOnNewDocument`) and feeding
+  PRIVMSG lines to its `onmessage`. That exercises the real parser, tap and board.
+
 ### Control vocabularies and the unified product designer (started Sept 27th 2026, OL-2609-140)
 
 - **A text control's allowed values live on the row, as `config.choices`**, declared in the overlay

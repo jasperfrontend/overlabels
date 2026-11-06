@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150" font-family="Albert Sans, sans-serif">
+  <style>
+    @media (prefers-reduced-motion: no-preference) {
+      .ball { animation: hop 3.2s linear infinite; }
+      @keyframes hop {
+        0% { transform: translate(0, 0); opacity: 0; }
+        6% { transform: translate(0, 0); opacity: 1; }
+        20% { transform: translate(12px, 20px); }
+        34% { transform: translate(0, 40px); }
+        48% { transform: translate(12px, 60px); }
+        62% { transform: translate(24px, 80px); }
+        76% { transform: translate(12px, 104px); }
+        94% { transform: translate(12px, 104px); opacity: 1; }
+        100% { transform: translate(12px, 104px); opacity: 0; }
+      }
+    }
+  </style>
+  <g fill="#a78bfa" fill-opacity=".7">
+    <circle cx="96" cy="40" r="3"/><circle cx="144" cy="40" r="3"/>
+    <circle cx="84" cy="60" r="3"/><circle cx="108" cy="60" r="3"/><circle cx="156" cy="60" r="3"/>
+    <circle cx="72" cy="80" r="3"/><circle cx="96" cy="80" r="3"/><circle cx="144" cy="80" r="3"/><circle cx="168" cy="80" r="3"/>
+    <circle cx="60" cy="100" r="3"/><circle cx="84" cy="100" r="3"/><circle cx="108" cy="100" r="3"/><circle cx="156" cy="100" r="3"/><circle cx="180" cy="100" r="3"/>
+    <circle cx="48" cy="120" r="3"/><circle cx="72" cy="120" r="3"/><circle cx="96" cy="120" r="3"/><circle cx="120" cy="120" r="3"/><circle cx="168" cy="120" r="3"/><circle cx="192" cy="120" r="3"/>
+  </g>
+  <!-- the pegs on the ball's path -->
+  <g fill="#f472b6">
+    <circle cx="120" cy="40" r="3.6"/><circle cx="132" cy="60" r="3.6"/><circle cx="120" cy="80" r="3.6"/><circle cx="132" cy="100" r="3.6"/><circle cx="144" cy="120" r="3.6"/>
+  </g>
+  <g class="ball">
+    <rect x="96" y="6" width="48" height="13" rx="6.5" fill="#0a0512" fill-opacity=".9"/>
+    <path d="M117 19 L123 19 L120 22 Z" fill="#0a0512" fill-opacity=".9"/>
+    <text x="120" y="12.8" font-size="8" font-weight="700" fill="#fafafa" text-anchor="middle" dominant-baseline="central">noodlebyte</text>
+    <circle cx="120" cy="30" r="7" fill="#a3e635" stroke="#fafafa" stroke-width="1.5"/>
+  </g>
+</svg>

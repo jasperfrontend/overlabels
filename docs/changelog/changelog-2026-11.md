@@ -1,5 +1,31 @@
 # Changelog - November 2026
 
+## OL-2611-002 - November 7th, 2026 - feat(products): Twitch Chat Plinko, the sixth product
+
+Your chat types `!drop` and a ball with their name on it bounces down a Plinko board on stream. The
+middle slots pay 5, the rare edges pay 1000, and the six latest drops and five best totals fill in
+beside the board. It installs in one click like every product, needs nothing connected and no bot.
+
+It is the first product that ships its own script. The overlay is one tag, `[[[plinko_board]]]`, built
+the way `[[[checkin_globe]]]` is: the renderer swaps it for a canvas and loads the board's code only
+when an overlay uses it. The board reads `!drop` straight from Twitch chat over the overlay's own
+connection, the same one Twitch Chat Overlay and Chat Emote Bubbles use, so no message passes through
+Overlabels and there is no command cooldown in the way.
+
+Chat order is game order. Each chatter has one ball at a time, balls join the board at ten a second up
+to 150 at once, and everyone else waits in a line that shows on screen with the next five names. That
+is what keeps a raid of thousands a game rather than a pile: measured at 20, 200, 2,000 and 20,000
+players typing `!drop` at once, it held 61 fps throughout. Balls bounce off pegs and off each other,
+pegs light as they are hit, and the slot a ball lands in flashes.
+
+Mods stay in charge: a deleted `!drop` loses its ball or its place in line, and a timeout or ban also
+takes the chatter's score. Chatters hidden on the chat settings page never get a ball, while the
+setting that hides `!` commands from a chat feed does not stop Plinko, which listens for exactly those.
+
+- New product page, hero, product icon and help guide at `/help/twitch-chat-plinko`.
+- The command word, rows, pace, cap and colours are CSS custom properties on `.ol-plinko`.
+- Scores count from when the overlay loaded; reloading the browser source starts a new game.
+
 ## OL-2611-001 - November 6th, 2026 - feat(users): delete accounts that did nothing in their first 48 hours
 
 > **Not for the blog.** Leave this entry out of `/changeblog` posts and the November highlights

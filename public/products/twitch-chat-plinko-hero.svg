@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="Albert Sans, sans-serif"><defs>
+<clipPath id="f"><rect width="1280" height="720" rx="8"></rect></clipPath>
+<linearGradient id="base" x1=".15" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#2c074b"></stop><stop offset=".7" stop-color="#120720"></stop><stop offset="1" stop-color="#120720"></stop></linearGradient>
+<radialGradient id="sv2" gradientUnits="userSpaceOnUse" cx="179" cy="648" r="768" gradientTransform="translate(0 223) scale(1 .656)"><stop offset="0" stop-color="#5b21b6" stop-opacity=".55"></stop><stop offset=".7" stop-color="#5b21b6" stop-opacity="0"></stop></radialGradient>
+<radialGradient id="sv1" gradientUnits="userSpaceOnUse" cx="1075" cy="86" r="704" gradientTransform="translate(0 25) scale(1 .716)"><stop offset="0" stop-color="#650e8f" stop-opacity=".75"></stop><stop offset=".7" stop-color="#650e8f" stop-opacity="0"></stop></radialGradient>
+<radialGradient id="sa" gradientUnits="userSpaceOnUse" cx="973" cy="216" r="614" gradientTransform="translate(0 59) scale(1 .727)"><stop offset="0" stop-color="#ec4899" stop-opacity=".16"></stop><stop offset=".7" stop-color="#ec4899" stop-opacity="0"></stop></radialGradient>
+<linearGradient id="band" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d0b30" stop-opacity=".7"></stop><stop offset=".55" stop-color="#650e8f" stop-opacity=".35"></stop><stop offset="1" stop-color="#a78bfa" stop-opacity=".16"></stop></linearGradient>
+</defs>
+<g clip-path="url(#f)">
+<rect width="1280" height="720" fill="url(#base)"></rect>
+<rect width="1280" height="720" fill="url(#sv2)"></rect>
+<rect width="1280" height="720" fill="url(#sv1)"></rect>
+<rect width="1280" height="720" fill="url(#sa)"></rect>
+<rect x="-120" y="474" width="1560" height="120" fill="url(#band)" transform="rotate(-15 660 534)"></rect>
+<circle cx="914" cy="120" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="960" cy="120" r="6" fill="#f472b6"></circle>
+<circle cx="1006" cy="120" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="891" cy="160" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="937" cy="160" r="6" fill="#f472b6"></circle>
+<circle cx="983" cy="160" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1029" cy="160" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="868" cy="200" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="914" cy="200" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="960" cy="200" r="6" fill="#f472b6"></circle>
+<circle cx="1006" cy="200" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1052" cy="200" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="845" cy="240" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="891" cy="240" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="937" cy="240" r="6" fill="#f472b6"></circle>
+<circle cx="983" cy="240" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1029" cy="240" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1075" cy="240" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="822" cy="280" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="868" cy="280" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="914" cy="280" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="960" cy="280" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1006" cy="280" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1052" cy="280" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1098" cy="280" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="799" cy="320" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="845" cy="320" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="891" cy="320" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="937" cy="320" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="983" cy="320" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1029" cy="320" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1075" cy="320" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1121" cy="320" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="776" cy="360" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="822" cy="360" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="868" cy="360" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="914" cy="360" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="960" cy="360" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1006" cy="360" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1052" cy="360" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1098" cy="360" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1144" cy="360" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="753" cy="400" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="799" cy="400" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="845" cy="400" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="891" cy="400" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="937" cy="400" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="983" cy="400" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1029" cy="400" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1075" cy="400" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1121" cy="400" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1167" cy="400" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="730" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="776" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="822" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="868" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="914" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="960" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1006" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1052" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1098" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1144" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<circle cx="1190" cy="440" r="5" fill="#a78bfa" fill-opacity=".7"></circle>
+<rect x="729" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="775" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="821" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="867" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="913" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="959" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="1005" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="1051" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="1097" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="1143" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="1189" y="462" width="2" height="58" fill="#a78bfa" fill-opacity=".45"></rect>
+<rect x="732" y="462" width="42" height="58" fill="#ec4899" fill-opacity=".3"></rect>
+<text x="753" y="542" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#f472b6" text-anchor="middle" dominant-baseline="central">1000</text>
+<text x="799" y="542" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">250</text>
+<text x="845" y="542" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">100</text>
+<text x="891" y="542" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">20</text>
+<text x="937" y="542" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">5</text>
+<text x="983" y="542" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">5</text>
+<text x="1029" y="542" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">20</text>
+<text x="1075" y="542" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">100</text>
+<text x="1121" y="542" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">250</text>
+<text x="1167" y="542" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">1000</text>
+<rect x="914.1" y="85" width="137.8" height="28" rx="14" fill="#0a0512" fill-opacity=".9"></rect><path d="M977 113 L989 113 L983 120 Z" fill="#0a0512" fill-opacity=".9"></path><text x="983" y="99" font-size="16" font-weight="700" fill="#fafafa" text-anchor="middle" dominant-baseline="central">tea_and_raids</text><circle cx="983" cy="140" r="15" fill="#f97316" stroke="#fafafa" stroke-width="3"></circle>
+<rect x="858" y="205" width="112" height="28" rx="14" fill="#0a0512" fill-opacity=".9"></rect><path d="M908 233 L920 233 L914 240 Z" fill="#0a0512" fill-opacity=".9"></path><text x="914" y="219" font-size="16" font-weight="700" fill="#fafafa" text-anchor="middle" dominant-baseline="central">noodlebyte</text><circle cx="914" cy="260" r="15" fill="#a3e635" stroke="#fafafa" stroke-width="3"></circle>
+<rect x="1023.3" y="325" width="103.4" height="28" rx="14" fill="#0a0512" fill-opacity=".9"></rect><path d="M1069 353 L1081 353 L1075 360 Z" fill="#0a0512" fill-opacity=".9"></path><text x="1075" y="339" font-size="16" font-weight="700" fill="#fafafa" text-anchor="middle" dominant-baseline="central">pixel_kat</text><circle cx="1075" cy="380" r="15" fill="#38bdf8" stroke="#fafafa" stroke-width="3"></circle>
+<rect x="658.3" y="450" width="189.4" height="28" rx="14" fill="#0a0512" fill-opacity=".9"></rect><path d="M747 478 L759 478 L753 485 Z" fill="#0a0512" fill-opacity=".9"></path><text x="753" y="464" font-size="16" font-weight="700" fill="#fafafa" text-anchor="middle" dominant-baseline="central">MidnightSnackAttack</text><circle cx="753" cy="505" r="15" fill="#ec4899" stroke="#fafafa" stroke-width="3"></circle>
+<rect x="790" y="608" width="380" height="54" rx="10" fill="#0a0512" fill-opacity=".86"></rect>
+<text x="810" y="635" font-size="20" font-weight="700" fill="#a3e635" dominant-baseline="central">noodlebyte</text>
+<text x="925" y="635" font-size="20" font-weight="500" fill="#fafafa" dominant-baseline="central">!drop come on edges</text>
+<text x="64" y="86" font-family="JetBrains Mono, monospace" font-size="13" letter-spacing="2.6" fill="#f472b6" dominant-baseline="central">AN OVERLABELS.COM PRODUCT</text>
+<text x="64" y="154.5" font-size="92" font-weight="800" letter-spacing="-3.68" fill="#ffffff" dominant-baseline="central">TWITCH</text>
+<text x="64" y="234.5" font-size="92" font-weight="800" letter-spacing="-3.68" fill="#ffffff" dominant-baseline="central">CHAT</text>
+<text x="64" y="315.5" font-size="92" font-weight="800" letter-spacing="-3.68" fill="#ffffff" dominant-baseline="central">PLINKO</text>
+<text x="64" y="586" font-size="22" font-weight="500" fill="#e9d5ff" dominant-baseline="central">Your Twitch chat types !drop.</text>
+<text x="64" y="620" font-size="22" font-weight="500" fill="#e9d5ff" dominant-baseline="central">Every name bounces down the board,</text>
+<text x="64" y="650" font-size="22" font-weight="500" fill="#e9d5ff" dominant-baseline="central">in the order chat sent it.</text>
+</g>
+</svg>

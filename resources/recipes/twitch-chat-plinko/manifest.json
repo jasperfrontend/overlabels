@@ -1,0 +1,142 @@
+{
+  "recipe_format_version": 1,
+  "slug": "twitch-chat-plinko",
+  "name": "Twitch Chat Plinko",
+  "version": 1,
+  "description": "Type !drop in chat and a ball with your name on it drops through a Plinko board on stream. Every drop plays in the order chat sent it, one ball per chatter at a time, bouncing off every peg into a slot worth 5 in the middle and 1000 at the rare edges. Read straight from Twitch chat with nothing to connect and no bot to add.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "Initial release. The sixth product, and the first with its own physics: a board the overlay draws, fed by chat.",
+  "min_overlabels_version": 1,
+  "requires_integrations": [],
+  "requires_bot": false,
+  "listed": true,
+  "category": "product",
+  "hero": "/products/twitch-chat-plinko-hero.jpg",
+  "obs_hint": "Make the browser source your whole canvas, 1920 by 1080. It is a full scene, made for BRB and downtime.",
+  "ready_message": "Every !drop in your chat drops a ball. Type it in your own chat to see the first one land.",
+  "highlights": [
+    "Chat types !drop and a ball with their name on it bounces down a Plinko board on your stream.",
+    "Played in the order chat sends it, one ball each. A big chat waits in a line you can see.",
+    "Nothing to connect and no bot to add. Top scores fill in as the balls land."
+  ],
+  "pitch": {
+    "meta_title": "Twitch Chat Plinko - a Plinko game your chat plays",
+    "meta_description": "Your Twitch chat types !drop and a ball with their name on it bounces down a Plinko board on stream. Free, one click to install, no bot needed.",
+    "tagline": "Your chat types !drop. Their name bounces down the board.",
+    "lede": "Every `!drop` in your Twitch chat drops a ball with that chatter's name on it through a real Plinko board. The middle pays 5, the rare edges pay 1000, and the best scores go up beside the board.",
+    "plays": [
+      {
+        "title": "Chat types !drop",
+        "line": "One ball each, in the order chat sends them.",
+        "art": {
+          "type": "chat",
+          "lines": [
+            {
+              "name": "tea_and_raids",
+              "text": "!drop",
+              "color": "#f97316"
+            },
+            {
+              "name": "noodlebyte",
+              "text": "!drop come on edges",
+              "color": "#a3e635"
+            },
+            {
+              "name": "pixel_kat",
+              "text": "!drop",
+              "color": "#38bdf8"
+            }
+          ]
+        }
+      },
+      {
+        "title": "Their name rides the ball",
+        "line": "It bounces off every peg on the way down.",
+        "art": {
+          "type": "image",
+          "src": "/products/twitch-chat-plinko/play-board.svg",
+          "alt": "A ball with a chatter's name on it bouncing down through rows of pegs"
+        }
+      },
+      {
+        "title": "It lands in a slot",
+        "line": "The middle is easy and pays little. The edges are rare.",
+        "art": {
+          "type": "stat",
+          "stats": [
+            {
+              "value": "1000",
+              "label": "points at the edges"
+            }
+          ],
+          "caption": "5 in the middle, where most land"
+        }
+      }
+    ],
+    "reasons_heading": "A Plinko board your chat plays on stream.",
+    "reasons": [
+      {
+        "icon": "people",
+        "title": "Played in chat order",
+        "body": "Every `!drop` takes its turn in the order chat sent it. When chat is busy, everyone waits in a line that shows on screen."
+      },
+      {
+        "icon": "trophy",
+        "title": "Scores on screen",
+        "body": "The six latest drops and the five best totals fill in beside the board as the balls land."
+      },
+      {
+        "icon": "zap",
+        "title": "Nothing to set up",
+        "body": "No bot and no account to connect. It reads your Twitch chat directly, like any viewer does."
+      },
+      {
+        "icon": "shield",
+        "title": "Follows your mods",
+        "body": "When a mod deletes a `!drop` or times someone out, their ball leaves the board. Chatters you have hidden never get one."
+      }
+    ],
+    "setup_note": "Size the browser source to your whole canvas, 1920 by 1080. It is a full scene, made for BRB and downtime.",
+    "faq": [
+      {
+        "q": "What do my viewers type?",
+        "a": "`!drop`. Anything after it still counts, so `!drop come on edges` drops a ball too."
+      },
+      {
+        "q": "What if my whole chat drops at once?",
+        "a": "Everyone gets a turn. Up to 150 balls are on the board at once and ten new ones join every second. Everyone else waits in line in the order they typed, and the line shows on screen."
+      },
+      {
+        "q": "Can one chatter flood the board?",
+        "a": "No. Each chatter has one ball at a time. Another `!drop` while theirs is still on the board is ignored."
+      },
+      {
+        "q": "Do the scores carry over?",
+        "a": "They count from when the overlay loaded. Reloading the browser source starts a new game."
+      },
+      {
+        "q": "Does it need the Overlabels bot?",
+        "a": "No. It reads your chat directly. The bot never has to be in your channel."
+      }
+    ],
+    "closing": "Let your chat drop the first ball tonight."
+  },
+  "notes": [
+    "Every `!drop` comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels.",
+    "The chat feed setting that hides commands starting with `!` does not stop Plinko: it only hides them from a chat feed. Chatters you have hidden never get a ball.",
+    "Scores count from when the overlay loaded. Reloading the browser source starts a new game.",
+    "The command word, the number of rows, how many balls fall at once and the colours are CSS custom properties on `.ol-plinko` in the overlay's CSS."
+  ],
+  "max_instances_per_user": 1,
+  "installs": {
+    "overlays": [
+      {
+        "ref": "plinko",
+        "file": "plinko.md"
+      }
+    ]
+  }
+}
