@@ -229,9 +229,19 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
 
   function openSocket(): void {
     closedByUs = false;
-    socket = new WebSocket(TWITCH_IRC_URL);
+    const ws = new WebSocket(TWITCH_IRC_URL);
+    socket = ws;
 
-    socket.onopen = () => {
+    // Every handler below answers only while `ws` is still THE socket. A
+    // replaced socket's close event lands after its replacement is open
+    // (reconnect() swaps them synchronously, browsers fire close later), and
+    // acting on it nulled the new socket - orphaned, still joined, still
+    // adding every message - and opened yet another. Each Twitch RECONNECT
+    // added one more copy of every message for the life of the OBS source.
+    const isCurrent = () => ws === socket;
+
+    ws.onopen = () => {
+      if (!isCurrent()) return;
       reconnectAttempt = 0;
       isConnected.value = true;
       // Anonymous read-only login. Any `justinfan` nick is accepted with
@@ -242,19 +252,22 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
       send(`JOIN #${channel}`);
     };
 
-    socket.onmessage = (event: MessageEvent) => {
+    ws.onmessage = (event: MessageEvent) => {
+      if (!isCurrent()) return;
       // A frame can carry several lines.
       for (const raw of String(event.data).split('\r\n')) {
         if (raw) handleLine(raw);
       }
     };
 
-    socket.onerror = () => {
+    ws.onerror = () => {
+      if (!isCurrent()) return;
       // onclose always follows, which is where reconnection is handled.
       isConnected.value = false;
     };
 
-    socket.onclose = () => {
+    ws.onclose = () => {
+      if (!isCurrent()) return;
       isConnected.value = false;
       socket = null;
       if (closedByUs) return;
