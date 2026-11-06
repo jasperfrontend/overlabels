@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\AlertMuteService;
 use App\Services\BroadcastMeter;
 use App\Services\EventMeter;
+use App\Services\Recipes\RecipeCatalog;
 use App\Services\UnifiedEventFeedService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -56,9 +57,12 @@ class DashboardController extends Controller
         // installed has nothing on stream yet, however old it is. Overlays and
         // alerts cannot answer this - every signup gets the starter kit.
         $isNewUser = ! RecipeInstance::where('user_id', $user->id)->exists();
+        $installedProducts = $isNewUser ? [] : $this->installedProducts($user->id);
 
         return Inertia::render('dashboard/index', [
             'isNewUser' => $isNewUser,
+            'installedProducts' => $installedProducts,
+            'gamesLeft' => $this->gamesLeft($installedProducts),
             // A closure so a partial reload that does not ask for it cannot
             // spend the dialog on a render that never shows it.
             'showWelcomeDialog' => fn () => $isNewUser && $this->claimWelcomeDialog($user),
@@ -73,6 +77,56 @@ class DashboardController extends Controller
                 ? ($user->twitch_id ? app(BroadcastMeter::class)->summaryFor((string) $user->twitch_id) : null)
                 : app(EventMeter::class)->summaryFor($user->id),
         ]);
+    }
+
+    /**
+     * The listed products this account has installed, newest install first,
+     * for the dashboard's products box and tab. A product taken off the
+     * listing has no page to manage it from, so it is left out here too -
+     * same rule as the Installed count on /products.
+     *
+     * @return list<array{slug: string, name: string, description: string, hero: string|null, service: string|null, category: string|null}>
+     */
+    private function installedProducts(int $userId): array
+    {
+        $listed = app(RecipeCatalog::class)->listed();
+
+        return RecipeInstance::query()
+            ->where('recipe_instances.user_id', $userId)
+            ->join('recipes', 'recipes.id', '=', 'recipe_instances.recipe_id')
+            ->orderByDesc('recipe_instances.created_at')
+            ->pluck('recipes.slug')
+            ->unique()
+            ->filter(fn (string $slug) => isset($listed[$slug]))
+            ->map(fn (string $slug) => [
+                'slug' => $slug,
+                'name' => $listed[$slug]['name'],
+                'description' => $listed[$slug]['description'],
+                'hero' => $listed[$slug]['hero'] ?? null,
+                'service' => $listed[$slug]['installs']['integrations'][0] ?? null,
+                'category' => $listed[$slug]['category'] ?? null,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * How many listed games (the `product` shelf) this account has not
+     * installed yet. Zero swaps the dashboard's "more things for your chat"
+     * pitch for the you-beat-it note. Alerts are left out on purpose: nobody
+     * connects all five donation services, so counting them would make the
+     * note unreachable.
+     *
+     * @param  list<array{slug: string, category: string|null}>  $installed
+     */
+    private function gamesLeft(array $installed): int
+    {
+        $installedSlugs = array_column($installed, 'slug');
+
+        return collect(app(RecipeCatalog::class)->listed())
+            ->filter(fn (array $manifest) => ($manifest['category'] ?? null) === 'product')
+            ->reject(fn (array $manifest) => in_array($manifest['slug'], $installedSlugs, true))
+            ->count();
     }
 
     /**

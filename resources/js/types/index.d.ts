@@ -244,6 +244,17 @@ export interface WhatsNew {
   canUndo: boolean;
 }
 
+/** A product this account has installed. Built by DashboardController::installedProducts(). */
+export interface InstalledProduct {
+  slug: string;
+  name: string;
+  description: string;
+  hero: string | null;
+  service: string | null;
+  /** A RecipeCatalog::CATEGORIES key: 'product' or 'alert'. */
+  category: string | null;
+}
+
 export interface OverlayControl {
   id: number;
   overlay_template_id: number | null;

@@ -8,9 +8,11 @@ import { useAddressableTabs, tabKeysOf } from '@/composables/useAddressableTabs'
 import TemplateCollection from '@/components/TemplateCollection.vue';
 import UpdatesList from '@/components/UpdatesList.vue';
 import EventsTable from '@/components/EventsTable.vue';
-import { Bell, Layers, List, Newspaper, Plus } from '@lucide/vue';
+import { Bell, Layers, List, Newspaper, Package, Plus } from '@lucide/vue';
 import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
-import type { AppPageProps, OverlayTemplate, Update, UsageSummary, WhatsNew } from '@/types';
+import type { AppPageProps, InstalledProduct, OverlayTemplate, Update, UsageSummary, WhatsNew } from '@/types';
+import CollectionList from '@/components/CollectionList.vue';
+import InstalledProductsBox from '@/components/InstalledProductsBox.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import WelcomeBanner from '@/components/WelcomeBanner.vue';
 import WelcomeDialog from '@/components/WelcomeDialog.vue';
@@ -36,12 +38,17 @@ const props = defineProps<{
   usage: UsageSummary | null;
   /** No product installed yet - see DashboardController::index(). */
   isNewUser: boolean;
+  /** Listed products this account has installed, newest first. */
+  installedProducts: InstalledProduct[];
+  /** Listed games not installed yet; 0 = the you-beat-it note. */
+  gamesLeft: number;
   showWelcomeDialog: boolean;
 }>();
 
 const isAdmin = computed(() => page.props.isAdmin);
 
 const mainTabs: TabStripItem[] = [
+  { key: 'products', label: 'My products', icon: Package },
   { key: 'overlays', label: 'My overlays', icon: Layers },
   { key: 'alerts', label: 'My alerts', icon: Bell },
   { key: 'activity', label: 'Stream activity', icon: Newspaper },
@@ -51,7 +58,7 @@ const mainTabs: TabStripItem[] = [
 // to exist by then.
 const activeTab = useAddressableTabs(
   tabKeysOf(() => mainTabs),
-  'overlays',
+  'products',
 );
 
 /**
@@ -66,6 +73,15 @@ const tabActions = computed(() => {
       viewTitle: 'View all of your alerts',
       createHref: route('templates.create'),
       createTitle: 'Create a new Alert',
+    };
+  }
+
+  if (activeTab.value === 'products') {
+    return {
+      viewHref: route('products.index', { category: 'installed' }),
+      viewTitle: 'View all of your installed products',
+      createHref: route('products.index'),
+      createTitle: 'Browse products',
     };
   }
 
@@ -110,6 +126,10 @@ const breadcrumbs = [
                everyone who closed the welcome dialog without reading it. -->
           <WelcomeBanner v-if="props.isNewUser" class="mb-6" :name="page.props.auth.user.name" :avatar="page.props.auth.user.avatar" />
 
+          <!-- The banner already says "go install something"; the box and its
+               button would say it twice. -->
+          <InstalledProductsBox v-else class="mb-6" :products="props.installedProducts" :games-left="props.gamesLeft" />
+
           <TabStrip v-model="activeTab" :tabs="mainTabs">
             <template #actions>
               <a class="btn btn-sm btn-chill flex-1 md:flex-none" :href="tabActions.viewHref" :title="tabActions.viewTitle" aria-label="View all">
@@ -148,6 +168,23 @@ const breadcrumbs = [
             <EventsTable v-if="props.userRecentEvents.length > 0" :events="props.userRecentEvents" />
 
             <EmptyState v-else message="No events yet. Events will appear here once you have received one or more stream events." />
+          </div>
+
+          <div v-show="activeTab === 'products'" class="mt-4">
+            <CollectionList
+              :items="props.installedProducts"
+              :item-key="(product) => product.slug"
+              :href="(product) => route('products.manage', product.slug)"
+              :label="(product) => `Manage ${product.name}`"
+              empty-message="No products installed yet. Browse the products to put something on your stream in one click."
+            >
+              <template #item="{ item }">
+                <div class="flex flex-col gap-1">
+                  <span class="font-medium">{{ item.name }}</span>
+                  <span class="max-w-[90%] truncate text-xs text-muted-foreground">{{ item.description }}</span>
+                </div>
+              </template>
+            </CollectionList>
           </div>
         </div>
 
