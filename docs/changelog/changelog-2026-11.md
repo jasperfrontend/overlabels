@@ -2,6 +2,11 @@
 
 ## OL-2611-001 - November 6th, 2026 - feat(users): delete accounts that did nothing in their first 48 hours
 
+> **Not for the blog.** Leave this entry out of `/changeblog` posts and the November highlights
+> post entirely, not even a softened mention. It is housekeeping, and "accounts that do not use
+> the product get deleted" reads as cold to the very people the posts are written for. The claim
+> file stays as the record.
+
 Every signup gets a copy of the starter Kit, EventSub subscriptions and a place on the broadcast
 service, whether or not the person ever comes back. Most of those accounts were never used: they
 held data nobody needed, and anyone returning to one landed on a dashboard with a stale Kit in it
