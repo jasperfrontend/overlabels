@@ -2,7 +2,8 @@
 import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { ArrowRight, Trophy } from '@lucide/vue';
-import ProductIcon, { hasProductIcon } from '@/components/ProductIcon.vue';
+import ProductIcon from '@/components/product-icons/ProductIcon.vue';
+import { hasProductIcon } from '@/components/product-icons/registry';
 import ServiceLogo from '@/components/ServiceLogo.vue';
 import { useEventColors } from '@/composables/useEventColors';
 import type { InstalledProduct } from '@/types';

@@ -7,6 +7,8 @@ import { urlWithTab } from '@/composables/useAddressableTabs';
 import { useConfirm } from '@/composables/useConfirm';
 import { withLastMileHint } from '@/composables/useUiMode';
 import ProductBadge from '@/components/ProductBadge.vue';
+import ProductIcon from '@/components/product-icons/ProductIcon.vue';
+import { hasProductIcon } from '@/components/product-icons/registry';
 import ServiceLogo from '@/components/ServiceLogo.vue';
 import { useEventColors } from '@/composables/useEventColors';
 import ProductsLayout, { type ProductCategory } from '@/layouts/ProductsLayout.vue';
@@ -444,6 +446,7 @@ async function uninstall(): Promise<void> {
     :installed-count="installed_count"
     :crumb="product.name"
     :heading="product.name"
+    :slug="product.slug"
     :lead="product.description"
   >
     <!-- The product's own column keeps the measure it was written for; the
@@ -468,7 +471,8 @@ async function uninstall(): Promise<void> {
              (once) on the view that ended the setup, and just sits there on
              any later visit. -->
         <span class="relative mt-0.5 flex shrink-0">
-          <ProductBadge v-if="product.category === 'product'" label="An official Overlabels product" class="size-10 text-cyan-300" />
+          <ProductIcon v-if="product.category === 'product' && hasProductIcon(product.slug)" :slug="product.slug" class="size-10 text-foreground" />
+          <ProductBadge v-else-if="product.category === 'product'" label="An official Overlabels product" class="size-10 text-cyan-300" />
           <ServiceLogo
             v-else-if="product.integrations[0]"
             :source="product.integrations[0]"
@@ -520,7 +524,12 @@ async function uninstall(): Promise<void> {
                  one color; the green band and the Installed line carry the
                  installed state. An alert shows its service's icon instead:
                  it is that service's API inside Overlabels. -->
-            <ProductBadge v-if="product.category === 'product'" label="An official Overlabels product" class="size-9 shrink-0 text-cyan-300" />
+            <ProductIcon
+              v-if="product.category === 'product' && hasProductIcon(product.slug)"
+              :slug="product.slug"
+              class="size-9 shrink-0 text-foreground"
+            />
+            <ProductBadge v-else-if="product.category === 'product'" label="An official Overlabels product" class="size-9 shrink-0 text-cyan-300" />
             <ServiceLogo
               v-else-if="product.integrations[0]"
               :source="product.integrations[0]"

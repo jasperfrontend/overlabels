@@ -4,6 +4,8 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { BellRing, Blocks, Gamepad2, LayoutGrid, PackageCheck } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
+import ProductIcon from '@/components/product-icons/ProductIcon.vue';
+import { hasProductIcon } from '@/components/product-icons/registry';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from '@/components/ui/navigation-menu';
 import type { AppPageProps, BreadcrumbItemType } from '@/types';
 
@@ -35,6 +37,9 @@ const props = defineProps<{
   // not a link back to /products - the breadcrumb already is one.
   heading?: string;
   lead?: string;
+  // The product's slug, so the heading wears the product's own icon in place
+  // of the generic badge. A product without an icon keeps the badge.
+  slug?: string;
 }>();
 
 const page = usePage<AppPageProps>();
@@ -102,7 +107,12 @@ const isActive = (key: string) => (props.category === null ? key === 'all' : key
     <div class="p-4">
       <header class="mb-6 flex flex-col gap-2">
         <div class="flex items-center gap-2">
-          <ProductBadge :label="heading ? 'An official Overlabels product' : 'Official Overlabels products'" class="size-6 shrink-0 text-cyan-300" />
+          <ProductIcon v-if="slug && hasProductIcon(slug)" :slug="slug" class="size-6 shrink-0 text-foreground" />
+          <ProductBadge
+            v-else
+            :label="heading ? 'An official Overlabels product' : 'Official Overlabels products'"
+            class="size-6 shrink-0 text-cyan-300"
+          />
           <h1 class="text-2xl font-semibold text-foreground">
             <template v-if="heading">{{ heading }}</template>
             <Link v-else href="/products" class="hover:text-violet-400">Free stream upgrades</Link>

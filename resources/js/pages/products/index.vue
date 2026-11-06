@@ -4,6 +4,8 @@ import { Head, Link } from '@inertiajs/vue3';
 import { Bot, Check, Ellipsis, Plug, TriangleAlert } from '@lucide/vue';
 import EmptyState from '@/components/EmptyState.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
+import ProductIcon from '@/components/product-icons/ProductIcon.vue';
+import { hasProductIcon } from '@/components/product-icons/registry';
 import ProviderIcon from '@/components/ProviderIcon.vue';
 import ServiceLogo from '@/components/ServiceLogo.vue';
 import ProductsLayout, { type ProductCategory } from '@/layouts/ProductsLayout.vue';
@@ -168,11 +170,13 @@ const description = computed(
               </span>
             </div>
             <h3 class="inline-flex items-center gap-2 text-lg font-medium text-foreground">
-              <!-- The badge means "an official Overlabels product", so only the
-                 Products shelf gets it, and it is always the same colour. An
+              <!-- A product wears its own icon, in the heading's colour. The
+                 badge ("an official Overlabels product") is the fallback for a
+                 product without one, so only the Products shelf gets either. An
                  alert is a service's API inside Overlabels, not one of ours. -->
+              <ProductIcon v-if="product.category === 'product' && hasProductIcon(product.slug)" :slug="product.slug" class="size-5 shrink-0" />
               <ProductBadge
-                v-if="product.category === 'product'"
+                v-else-if="product.category === 'product'"
                 label="An official Overlabels product"
                 class="relative z-10 size-5 shrink-0 text-cyan-300"
               />

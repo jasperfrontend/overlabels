@@ -50,12 +50,12 @@ const commitHash = __COMMIT_HASH__;
 const mainNavItems = computed<NavItem[]>(() =>
   user.value
     ? [
+        { title: 'Products', href: '/products', icon: Package, shortcut: 'p' },
         { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers, shortcut: 'o' },
         { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell, shortcut: 'a' },
         { title: 'Blocks', href: '/templates?filter=mine&type=block', icon: Blocks, shortcut: 'b' },
         { title: 'Lists', href: route('lists.index'), icon: ListIcon, shortcut: 'l' },
         { title: 'Kits', href: route('kits.index'), icon: LayoutGrid, shortcut: 'k' },
-        { title: 'Products', href: '/products', icon: Package, shortcut: 'p' },
       ]
     : [],
 );
