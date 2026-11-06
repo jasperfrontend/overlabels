@@ -117,7 +117,7 @@ const visible = computed(() => props.products.filter((p) => kindOf(p) === filter
       <p class="max-w-prose text-sm text-foreground">
         All Overlabels games are installed on your account. We literally have nothing more to offer, unless you want to build it yourself?
       </p>
-      <a href="/help/how-overlabels-works" class="btn btn-md btn-primary self-start">View the docs</a>
+      <a href="/help/under-the-hood" class="btn btn-md btn-primary self-start">View the docs</a>
     </section>
   </div>
 </template>

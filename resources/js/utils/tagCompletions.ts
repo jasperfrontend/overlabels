@@ -109,7 +109,7 @@ const BLOCK_KEYWORDS: Array<{ label: string; closes: boolean; info: string }> = 
 ];
 
 const LOOP_TAGS: Array<{ label: string; info: string }> = [
-  { label: 'loop.index', info: 'Position of the current item, starting at 1.' },
+  { label: 'loop.index', info: 'Position of the current item, starting at 0.' },
   { label: 'loop.first', info: '1 on the first item, empty otherwise.' },
   { label: 'loop.last', info: '1 on the last item, empty otherwise.' },
   { label: 'loop.count', info: 'Number of items in the loop.' },

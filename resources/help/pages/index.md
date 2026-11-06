@@ -38,6 +38,8 @@ need, ignore the rest.
   math on any value, Expression Controls, and why this thing is a bit special.
 - [**How Overlabels works**](/help/how-overlabels-works) - a tour of the whole system on one page:
   overlays, alerts, live data, controls, the bot and testing, with a link to each part's full guide.
+- [**Under the hood**](/help/under-the-hood) - for streamers who installed the products and want to
+  know how they work. Four steps from Chat Emote Bubbles up to the Math Engine, one idea at a time.
 - [**For Creators**](/help/for-creators) - what Overlabels actually is, beneath the HTML/CSS surface. The
   reactive value graph, the live data sources, the math layer, and an open call for collaborators.
 - [**For Designers**](/help/for-designers) - a handoff guide for designers working on overlays: the two
