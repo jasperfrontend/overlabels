@@ -13,6 +13,7 @@ use App\Http\Controllers\Settings\GpsIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\KofiIntegrationController;
 use App\Http\Controllers\Settings\LivingTitleController;
+use App\Http\Controllers\Settings\PlinkoSettingsController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Http\Controllers\Settings\ThroneIntegrationController;
 use App\Http\Controllers\Settings\TowerIntegrationController;
@@ -171,6 +172,12 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/checkin', [CheckinIntegrationController::class, 'show'])->name('checkin.show');
         Route::post('/checkin', [CheckinIntegrationController::class, 'save'])->name('checkin.save');
         Route::delete('/checkin', [CheckinIntegrationController::class, 'disconnect'])->name('checkin.disconnect');
+
+        // Twitch Chat Plinko's settings. Not a service integration - nothing
+        // connects - but the product's settings live where every other
+        // product's do. 404 unless the product is installed.
+        Route::get('/plinko', [PlinkoSettingsController::class, 'show'])->name('plinko.show');
+        Route::post('/plinko', [PlinkoSettingsController::class, 'save'])->name('plinko.save');
 
         Route::get('/tower', [TowerIntegrationController::class, 'show'])->name('tower.show');
         Route::post('/tower', [TowerIntegrationController::class, 'save'])->name('tower.save');

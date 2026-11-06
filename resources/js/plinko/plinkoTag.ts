@@ -6,9 +6,10 @@
  * div before the block engine and the tag pass run, so nothing here scans
  * substituted output. The board module mounts a canvas inside it.
  *
- * The tag is the exact literal, no pipes or arguments. Everything a template
- * can change - the command word, the number of rows, the colours - is a CSS
- * custom property on the placeholder (see plinkoBoard.ts).
+ * The tag is the exact literal, no pipes or arguments. The rows, pace and
+ * colours are CSS custom properties on the placeholder (see plinkoBoard.ts).
+ * The command word is the streamer's own setting, not the template's: it
+ * arrives with the render payload, and `[[[plinko_command]]]` prints it.
  */
 
 export const PLINKO_TAG = '[[[plinko_board]]]';
@@ -25,7 +26,7 @@ export function replacePlinkoTags(source: string): string {
   return source.split(PLINKO_TAG).join(PLACEHOLDER);
 }
 
-/** The default chat command, without its `!`. */
+/** The default chat command, without its `!`. Mirrors User::PREFERENCE_DEFAULTS. */
 export const DEFAULT_PLINKO_COMMAND = 'drop';
 
 /**

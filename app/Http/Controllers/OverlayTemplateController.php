@@ -871,6 +871,9 @@ class OverlayTemplateController extends Controller
                 // browser would mean an authenticated Helix call from an overlay
                 // that deliberately holds no credentials.
                 'user_login' => strtolower((string) ($user->twitch_data['login'] ?? '')),
+                // [[[plinko_command]]], so a Plinko overlay's own copy says
+                // the word the board actually listens for.
+                'plinko_command' => $user->plinkoCommand(),
             ]);
 
             // Checkin pins, merged only when the template actually loops over
@@ -988,6 +991,10 @@ class OverlayTemplateController extends Controller
                 // directly from Twitch, so it travels to the client and becomes
                 // the socket's window size.
                 'chat_window' => $user->foreachCaps()['chat'],
+                // The word the Plinko board listens for. Top-level as well as
+                // in `data`, because `data` only carries tags the template
+                // writes, and the board needs the word whatever the copy says.
+                'plinko_command' => $user->plinkoCommand(),
                 // How many checkin pins the overlay keeps. The initial window
                 // above is already sliced to this; the client re-applies it
                 // when trimming after each checkins.updated delta.

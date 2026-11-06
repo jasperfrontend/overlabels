@@ -797,7 +797,16 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
   falling), a release rate (`--plinko-rate`, default 10/s) up to a cap in flight (`--plinko-max-balls`,
   150), everyone else in a visible line. Measured 61 fps in headless Firefox at 20, 200, 2000 and 20000
   players, 20000 lines parsed in 0.13 s. OBS has not been measured.
-- **Configuration is CSS custom properties on `.ol-plinko`, read once at MOUNT.** Changing one needs the
+- **The command word is the streamer's, not the template's** (`preferences.plinko.command`, default
+  `drop`, `User::plinkoCommand()`), because `!drop` is already a well-known command from another chat
+  game. Set on `/settings/integrations/plinko` (`PlinkoSettingsController`), which 404s unless the
+  product is installed and is listed on the integrations overview on the same condition, as a
+  hand-added row with its own `status` ("Listening for !drop"), since Plinko is not in the service
+  registry: nothing connects. It is NOT on `/settings/chat`, whose `settings.chat.update` is also the
+  chat designer's fixed-shape JSON endpoint. It ships as a
+  top-level `plinko_command` in the render payload (the renderer matches messages against it) and as
+  the `[[[plinko_command]]]` tag for the overlay's copy. Read at load: a change needs an OBS reload.
+- **Looks are CSS custom properties on `.ol-plinko`, read once at MOUNT.** Changing one needs the
   browser source reloaded. There are no controls and no designer yet; adding a designer means binding
   controls into those properties AND making the board re-read them.
 - **Scores live in the overlay's memory and reset when it reloads.** Deliberate: nothing phones home.

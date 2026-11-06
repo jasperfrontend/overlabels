@@ -38,7 +38,7 @@ The markup.
   [[[plinko_board]]]
   <div class="intro">
     <p class="eyebrow">Plinko</p>
-    <h1>Type <span class="cmd">!drop</span> in chat</h1>
+    <h1>Type <span class="cmd">![[[plinko_command]]]</span> in chat</h1>
     <p class="sub">Your name rides the ball. One ball each, played in the order chat sends them. The edges are rare and pay 1000.</p>
   </div>
 </div>
@@ -74,7 +74,6 @@ body {
 .ol-plinko {
   position: absolute;
   inset: 0;
-  --plinko-command: drop;
   --plinko-rows: 14;
   --plinko-max-balls: 150;
   --plinko-rate: 10;
@@ -160,4 +159,5 @@ This overlay defines no controls of its own.
 
 ## Live data tags used
 
-- `[[[plinko_board]]]` - the board itself. The overlay draws it, reading every `!drop` straight from your Twitch chat, and the CSS custom properties on `.ol-plinko` set the command word, the rows, the pace and the colours.
+- `[[[plinko_board]]]` - the board itself. The overlay draws it, reading every `!drop` straight from your Twitch chat, and the CSS custom properties on `.ol-plinko` set the rows, the pace and the colours.
+- `[[[plinko_command]]]` - the word the board listens for, without its `!`. `drop` unless you chose another on the Plinko settings page.

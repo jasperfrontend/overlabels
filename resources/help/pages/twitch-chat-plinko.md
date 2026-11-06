@@ -13,12 +13,20 @@ works best on a BRB or downtime scene. From then on, every `!drop` in your chat 
 
 ## What viewers type
 
-A chatter types `!drop`. Anything after the word still counts, so `!drop come on edges` drops a ball too,
+A chatter types `!drop`, or the word you chose instead (see below). Anything after the word still counts, so `!drop come on edges` drops a ball too,
 but `!dropped` does not. A ball with their name on it, in their Twitch name colour, falls from the top,
 bounces off every peg it touches and lands in a slot. The slot's points go on the chatter's total.
 
 The middle slots pay 5 and the edges pay 1000. Most balls land near the middle, the way a real board
 behaves, so a 1000 is rare and worth celebrating.
+
+## Use a different word than !drop
+
+If your channel already uses `!drop`, for example for another chat game, pick a different word on
+the [Plinko settings page](/settings/integrations/plinko), under Settings, Integrations. It is there
+once Plinko is installed. Type the word with or without the `!`. Reload
+the Plinko browser source in OBS afterwards and the board listens for the new word, and the line
+above the board says it too.
 
 ## Played in order, one ball each
 
@@ -52,12 +60,11 @@ nothing extra, and the Overlabels bot never has to be in your channel.
 
 ## Restyle it
 
-The board is drawn by one tag, `[[[plinko_board]]]`, and everything about it is a CSS custom property on
+The board is drawn by one tag, `[[[plinko_board]]]`, and how it looks is CSS custom properties on
 `.ol-plinko` in the overlay's CSS. Open the overlay, press Edit and change them:
 
 | Property | What it sets | Default |
 |---|---|---|
-| `--plinko-command` | the chat word, without the `!` | `drop` |
 | `--plinko-rows` | rows of pegs, 4 to 24 | `14` |
 | `--plinko-max-balls` | balls on the board at once | `150` |
 | `--plinko-rate` | new balls per second while chat waits | `10` |
@@ -74,4 +81,4 @@ drops) and `.ol-plinko-top` (best totals). Each row holds a `.ol-plinko-name` an
 `.ol-plinko-points`.
 
 You can put `[[[plinko_board]]]` in any overlay of your own, too. Give the element a size in your CSS
-and the board fills it.
+and the board fills it. `[[[plinko_command]]]` prints your command word, without the `!`.

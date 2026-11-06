@@ -118,6 +118,10 @@
         "a": "They count from when the overlay loaded. Reloading the browser source starts a new game."
       },
       {
+        "q": "My channel already uses !drop. Can I change it?",
+        "a": "Yes. Pick any word on the Plinko page in your settings, under Integrations, and the board listens for that instead."
+      },
+      {
         "q": "Does it need the Overlabels bot?",
         "a": "No. It reads your chat directly. The bot never has to be in your channel."
       }
@@ -128,7 +132,8 @@
     "Every `!drop` comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels.",
     "The chat feed setting that hides commands starting with `!` does not stop Plinko: it only hides them from a chat feed. Chatters you have hidden never get a ball.",
     "Scores count from when the overlay loaded. Reloading the browser source starts a new game.",
-    "The command word, the number of rows, how many balls fall at once and the colours are CSS custom properties on `.ol-plinko` in the overlay's CSS."
+    "The command is `!drop` unless you choose another word on the Plinko page in your settings, under Integrations. Reload the browser source in OBS after changing it.",
+    "The number of rows, how many balls fall at once and the colours are CSS custom properties on `.ol-plinko` in the overlay's CSS."
   ],
   "max_instances_per_user": 1,
   "installs": {

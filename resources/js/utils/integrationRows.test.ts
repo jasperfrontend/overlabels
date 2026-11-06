@@ -156,3 +156,20 @@ describe('filtering', () => {
     expect(matchesIntegration(bot, 'bot')).toBe(true);
   });
 });
+
+describe('a row with its own status', () => {
+  it('shows the status the server sent instead of a last-event date', () => {
+    const services = [service({ key: 'plinko', name: 'Plinko', product: 'twitch-chat-plinko', connected: true, status: 'Listening for !drop' })];
+
+    const row = buildIntegrationRows(services, offline, botOff, never).find((r) => r.key === 'plinko');
+
+    expect(row?.status).toBe('Listening for !drop');
+    expect(row?.href).toBe('/settings/integrations/plinko');
+  });
+
+  it('still says when the last event was for a row without one', () => {
+    const services = [service({ key: 'kofi', name: 'Ko-fi', connected: true })];
+
+    expect(buildIntegrationRows(services, offline, botOff, never).find((r) => r.key === 'kofi')?.status).toBe('Last event: Never');
+  });
+});

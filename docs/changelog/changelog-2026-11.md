@@ -23,7 +23,10 @@ takes the chatter's score. Chatters hidden on the chat settings page never get a
 setting that hides `!` commands from a chat feed does not stop Plinko, which listens for exactly those.
 
 - New product page, hero, product icon and help guide at `/help/twitch-chat-plinko`.
-- The command word, rows, pace, cap and colours are CSS custom properties on `.ol-plinko`.
+- `!drop` is the default command; each streamer can choose their own word on the Plinko settings page
+  (Settings, Integrations, Plinko), which appears once Plinko is installed,
+  since `!drop` is already a well-known command from another chat game.
+- Rows, pace, cap and colours are CSS custom properties on `.ol-plinko`.
 - Scores count from when the overlay loaded; reloading the browser source starts a new game.
 
 ## OL-2611-001 - November 6th, 2026 - feat(users): delete accounts that did nothing in their first 48 hours

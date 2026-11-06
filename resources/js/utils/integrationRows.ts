@@ -27,6 +27,8 @@ export interface ServiceInfo {
   last_received_at: string | null;
   /** The slug of the Overlabels product this integration belongs to, or null for a third-party service. */
   product: string | null;
+  /** A status line of the row's own, for an entry with no events on the server to date (Plinko). */
+  status?: string | null;
 }
 
 export interface EventSubSummary {
@@ -113,7 +115,7 @@ export function serviceRow(service: ServiceInfo, formatDate: (iso: string | null
     connected: service.connected,
     testMode: service.connected && service.test_mode,
     product: service.product,
-    status: service.connected ? `Last event: ${formatDate(service.last_received_at)}` : null,
+    status: service.status ?? (service.connected ? `Last event: ${formatDate(service.last_received_at)}` : null),
     statusAlert: false,
     stalled: false,
   };

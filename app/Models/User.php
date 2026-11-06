@@ -156,6 +156,13 @@ class User extends Authenticatable
             'hide_commands' => false,
             'hidden_logins' => [],
         ],
+        // The word Twitch Chat Plinko listens for, without its `!`. Chosen
+        // per account because `!drop` is already a well-known command from
+        // another chat game, and a channel running both would get two games
+        // from one message.
+        'plinko' => [
+            'command' => 'drop',
+        ],
         // The living Twitch title (LivingTitleService). `template` is what the
         // streamer wrote, `last_written` is the rendered string last sent to
         // Twitch - the comparison that keeps a re-render from writing an
@@ -189,6 +196,13 @@ class User extends Authenticatable
      * anyone plausibly needs more.
      */
     public const int MAX_HIDDEN_LOGINS = 200;
+
+    /**
+     * A Plinko command word: what may follow the `!`. Lowercase because the
+     * board matches commands case-insensitively; 25 is Twitch's login length,
+     * which no command needs to beat.
+     */
+    public const string PLINKO_COMMAND_PATTERN = '/^[a-z0-9_]{1,25}$/';
 
     /**
      * Ceiling on remembered nudge dismissals. The list ships as a shared Inertia
@@ -354,6 +368,20 @@ class User extends Authenticatable
             'hide_commands' => (bool) ($stored['hide_commands'] ?? $defaults['hide_commands']),
             'hidden_logins' => $logins,
         ];
+    }
+
+    /**
+     * The Plinko command word, without its `!`. A stored value that no longer
+     * passes the pattern falls back to the default rather than shipping a word
+     * the board could never match.
+     */
+    public function plinkoCommand(): string
+    {
+        $stored = strtolower(trim((string) $this->preference('plinko.command')));
+
+        return preg_match(self::PLINKO_COMMAND_PATTERN, $stored) === 1
+            ? $stored
+            : self::PREFERENCE_DEFAULTS['plinko']['command'];
     }
 
     /**

@@ -60,7 +60,7 @@ import {
 } from '@/utils/towerSlots';
 import { GLOBE_SELECTOR, replaceGlobeTags, sourceUsesGlobe } from '@/globe/globeTag';
 import type { GlobeInstance } from '@/globe/checkinGlobe';
-import { isDropCommand, PLINKO_SELECTOR, replacePlinkoTags, sourceUsesPlinko } from '@/plinko/plinkoTag';
+import { DEFAULT_PLINKO_COMMAND, isDropCommand, PLINKO_SELECTOR, replacePlinkoTags, sourceUsesPlinko } from '@/plinko/plinkoTag';
 import type { PlinkoInstance } from '@/plinko/plinkoBoard';
 import type { ChatMessage } from '@/utils/ircParser';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
@@ -740,12 +740,15 @@ function destroyPlinkos() {
   plinkoInstances.clear();
 }
 
-// Every `!drop` in chat becomes a ball, in the order it arrived. A board that
-// has not mounted yet simply misses it, like a feed that is not drawn yet.
+// The streamer's command word, from the render payload (settings.integrations.plinko).
+// The default covers an older server that does not send it yet.
+const plinkoCommand = ref(DEFAULT_PLINKO_COMMAND);
+
+// Every `!<command>` in chat becomes a ball, in the order it arrived. A board
+// that has not mounted yet simply misses it, like a feed that is not drawn yet.
 twitchChat.onMessage((message) => {
-  if (plinkoInstances.size === 0) return;
+  if (plinkoInstances.size === 0 || !isDropCommand(message.text, plinkoCommand.value)) return;
   for (const instance of plinkoInstances.values()) {
-    if (!isDropCommand(message.text, instance.command)) continue;
     instance.drop({ id: message.id, userId: message.userId, login: message.login, name: message.author || message.login, color: message.color });
   }
 });
@@ -1160,6 +1163,8 @@ onMounted(async () => {
       // The chat foreach cap. Set before connecting so the very first messages
       // land in a correctly sized window.
       twitchChat.setWindowSize(Number(json.chat_window));
+      // The Plinko word, set before connecting for the same reason.
+      if (typeof json.plinko_command === 'string' && json.plinko_command !== '') plinkoCommand.value = json.plinko_command;
 
       // Sample mode never opens the socket. A streamer choosing a look is
       // often sharing a screen or is mid-stream, and a preview is the last

@@ -12,11 +12,14 @@
  * on balls in flight, and everyone beyond that waits in line, in order. That
  * is what keeps a 20,000-person chat a game rather than a smear.
  *
- * Styling is CSS, not settings: the module reads custom properties off the
- * placeholder, and the scoreboard is ordinary DOM the template's own CSS
- * styles. Recognised properties, all optional:
+ * The command word is the streamer's setting (/settings/integrations/plinko), not styling:
+ * it arrives with the render payload and the renderer does the matching, so
+ * this module only ever sees drops.
  *
- *   --plinko-command     the chat word, with or without !   (default drop)
+ * Styling is CSS: the module reads custom properties off the placeholder,
+ * and the scoreboard is ordinary DOM the template's own CSS styles.
+ * Recognised properties, all optional:
+ *
  *   --plinko-rows        rows of pegs, 4-24                  (default 14)
  *   --plinko-max-balls   balls in flight at once             (default 150)
  *   --plinko-rate        balls released per second           (default 10)
@@ -51,7 +54,6 @@ import {
   STEP,
   stepBall,
 } from './plinkoPhysics';
-import { DEFAULT_PLINKO_COMMAND } from './plinkoTag';
 
 export interface PlinkoDrop {
   /** Twitch's message id: what a CLEARMSG deletes by. */
@@ -70,15 +72,12 @@ export type PlinkoModeration =
   | { type: 'clear_all' };
 
 export interface PlinkoInstance {
-  /** The command word this board answers to, read from its CSS. */
-  readonly command: string;
   drop(entry: PlinkoDrop): void;
   moderate(action: PlinkoModeration): void;
   destroy(): void;
 }
 
 interface Config {
-  command: string;
   rows: number;
   maxBalls: number;
   rate: number;
@@ -138,7 +137,6 @@ function readConfig(el: HTMLElement): Config {
   };
 
   return {
-    command: prop('--plinko-command', DEFAULT_PLINKO_COMMAND),
     rows: Math.round(num('--plinko-rows', 14, 4, 24)),
     maxBalls: Math.round(num('--plinko-max-balls', 150, 1, 1000)),
     rate: num('--plinko-rate', 10, 0.5, 120),
@@ -482,7 +480,6 @@ export function mountPlinkoBoard(el: HTMLElement): PlinkoInstance {
   raf = requestAnimationFrame(frame);
 
   return {
-    command: config.command,
     drop,
     moderate,
     destroy(): void {

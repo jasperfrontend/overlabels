@@ -52,6 +52,25 @@ class IntegrationController extends Controller
             ];
         }, ExternalServiceRegistry::services());
 
+        // Twitch Chat Plinko connects nothing, so it is not in the registry,
+        // but its settings live here with every other product's. Listed only
+        // once it is installed, which is also when its page stops 404ing.
+        if (PlinkoSettingsController::installedFor($user)) {
+            $services[] = [
+                'key' => 'plinko',
+                'url_slug' => 'plinko',
+                'name' => 'Plinko',
+                'product' => PlinkoSettingsController::PRODUCT_SLUG,
+                'connected' => true,
+                'enabled' => true,
+                'test_mode' => false,
+                'last_received_at' => null,
+                // Plinko reads chat in the overlay, so there is no "last
+                // event" on the server to report. Say what it listens for.
+                'status' => 'Listening for !'.$user->plinkoCommand(),
+            ];
+        }
+
         // Registry order is the order drivers were added in, which is what
         // put Chat Tower at the bottom of the page. The page wants what needs
         // attention on top: anything not connected first, then A-Z by name.
