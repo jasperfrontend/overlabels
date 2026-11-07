@@ -366,6 +366,10 @@ class ProductController extends Controller
                 'designer' => ProductDesigner::forProduct($manifest, $instance),
             ],
             'installed' => $installed,
+            // The chat overlay's redacted-messages setting (`!hide`), for the
+            // card that points at /settings/chat. Null for every other
+            // product, and before install.
+            'chat_redact' => $instance && $manifest['slug'] === 'twitch-chat-overlay' ? $user->chatRedact() : null,
             'arrived' => $arrived,
             'categories' => $this->categories(),
             'installed_count' => $this->installedCount($user),

@@ -21,6 +21,7 @@ use App\Http\Controllers\Settings\UsageController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\Rule;
 
 // Old appearance URL kept as a permanent redirect so existing bookmarks
 // and in-app deep links still land somewhere useful after the rename.
@@ -44,6 +45,7 @@ Route::middleware('auth.redirect')->group(function () {
     Route::get('/settings/chat', function (Request $request) {
         return inertia('settings/Chat', [
             'chatFilters' => $request->user()->chatFilters(),
+            'chatRedact' => $request->user()->chatRedact(),
         ]);
     })->name('settings.chat');
 
@@ -51,9 +53,31 @@ Route::middleware('auth.redirect')->group(function () {
     // draws - the overlay reads chat straight from Twitch, so nothing here
     // touches Twitch, the chatter, or anyone else's view of the channel.
     Route::patch('/settings/chat', function (Request $request) {
+        // Redacted messages (`!hide <text>`, chatRedact.ts) ride along, but
+        // optionally: the chat designer PATCHes this same route with the
+        // filters only, and must not switch the feature off by omission.
+        // A pasted `!hide` or ` Hide ` means hide, as on the Plinko page.
+        if ($request->has('redact_command')) {
+            $request->merge([
+                'redact_command' => strtolower(trim(ltrim(trim((string) $request->input('redact_command')), '!'))),
+            ]);
+        }
+
+        // One message must not do two things: Plinko hears the message as
+        // typed, so a shared word would both drop a ball and redact the line.
+        $plinkoWord = $request->has('redact_command') && PlinkoSettingsController::installedFor($request->user())
+            ? $request->user()->plinkoCommand()
+            : null;
+
         $validated = $request->validate([
             'hide_commands' => 'required|boolean',
             'hidden_logins' => 'nullable|string|max:10000',
+            'redact_enabled' => 'sometimes|boolean',
+            'redact_command' => ['sometimes', 'required', 'string', 'regex:'.User::CHAT_REDACT_COMMAND_PATTERN, Rule::notIn(array_filter([$plinkoWord]))],
+        ], [
+            'redact_command.required' => 'Type the word your chat will use.',
+            'redact_command.regex' => 'Use one word: letters, numbers or _, up to 25 characters.',
+            'redact_command.not_in' => 'That is your Plinko command. Pick a different word.',
         ]);
 
         // Accepted as free text (one login per line) rather than a structured
@@ -70,6 +94,12 @@ Route::middleware('auth.redirect')->group(function () {
         $user = $request->user();
         $user->setPreference('chat_filters.hide_commands', $validated['hide_commands']);
         $user->setPreference('chat_filters.hidden_logins', $logins);
+        if (array_key_exists('redact_enabled', $validated)) {
+            $user->setPreference('chat_redact.enabled', (bool) $validated['redact_enabled']);
+        }
+        if (array_key_exists('redact_command', $validated)) {
+            $user->setPreference('chat_redact.command', $validated['redact_command']);
+        }
         $user->save();
 
         // The chat designer writes these from a page whose preview frame must

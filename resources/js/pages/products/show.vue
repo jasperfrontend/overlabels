@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowRight, Bot, Check, Download, ExternalLink, Sliders, Trash2, TriangleAlert } from '@lucide/vue';
+import { ArrowRight, Bot, Check, Download, ExternalLink, EyeOff, Sliders, Trash2, TriangleAlert } from '@lucide/vue';
 import type { AppPageProps } from '@/types';
 import { urlWithTab } from '@/composables/useAddressableTabs';
 import { useConfirm } from '@/composables/useConfirm';
@@ -134,6 +134,11 @@ const props = defineProps<{
   arrived: boolean;
   categories: ProductCategory[];
   installed_count: number | null;
+  /**
+   * The Twitch Chat Overlay's redacted-messages setting (`!hide`), for the
+   * card that opens its settings page. Null for every other product.
+   */
+  chat_redact?: { enabled: boolean; command: string } | null;
 }>();
 
 const page = usePage<AppPageProps>();
@@ -870,6 +875,33 @@ async function uninstall(): Promise<void> {
           <ArrowRight class="product-design-arrow ml-2 size-4" />
         </span>
       </Link>
+
+      <!-- Redacted messages: a chat setting, not a look, so it is not in the
+           designer. Off until the streamer turns it on at /settings/chat;
+           this card says which state it is in and opens that page. -->
+      <section v-if="installed && chat_redact" class="mt-4 flex flex-col gap-4 border border-sidebar-border p-5 sm:flex-row sm:items-center sm:gap-5">
+        <span class="flex size-12 shrink-0 items-center justify-center border border-sidebar-border text-foreground" aria-hidden="true">
+          <EyeOff class="size-6" />
+        </span>
+        <div class="min-w-0 flex-1">
+          <h2 class="text-lg leading-[1.3] font-semibold text-foreground">
+            Let chatters hide a message
+            <span class="ml-1 text-sm font-medium" :class="chat_redact.enabled ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'">
+              {{ chat_redact.enabled ? 'On' : 'Off' }}
+            </span>
+          </h2>
+          <p class="text-sm leading-relaxed text-pretty text-foreground">
+            A chatter types <code class="font-mono">!{{ chat_redact.command }}</code> before their message, and your overlay draws it as solid bars.
+            It still shows in Twitch chat as normal.
+          </p>
+        </div>
+        <Link
+          :href="withLastMileHint(`${route('settings.chat')}#redacted-messages`, product.slug)"
+          class="btn btn-secondary shrink-0 cursor-pointer self-start sm:self-auto"
+        >
+          {{ chat_redact.enabled ? 'Change' : 'Turn it on' }}
+        </Link>
+      </section>
 
       <!-- Finished: the reference, quiet and below everything that needs
            doing. Facts about the alert are not a step, so they live here and

@@ -1,4 +1,5 @@
 import { type ChatFilters, EMPTY_CHAT_FILTERS, hasActiveFilters, shouldHideMessage } from '@/utils/chatFilters';
+import { redactMessage } from '@/utils/chatRedact';
 import { type EmoteOccurrence, type EmoteUrlResolver, emoteOccurrences } from '@/utils/emoteSlots';
 import { type ChatMessage, type ModerationAction, parseIrcLine, toChatMessage, toModerationAction } from '@/utils/ircParser';
 import { ref } from 'vue';
@@ -103,6 +104,7 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
   // the first instant is recoverable, and defaulting to hiding everything
   // would render an empty overlay on any payload problem.
   let filters: ChatFilters = EMPTY_CHAT_FILTERS;
+  let redactCommand = '';
 
   const messages = ref<ChatMessage[]>([]);
   // Every emote in the recent messages, one entry per occurrence, oldest first.
@@ -169,7 +171,9 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
         // case, but a bubble that appears seconds late would look like a
         // glitch rather than a catch-up, and the window is a second or two
         // after the overlay loads.
-        nextEmotes.push(...emoteOccurrences(change.message, resolveEmote));
+        //
+        // A redacted message bubbles nothing: its emotes would give it away.
+        if (!change.message.redacted) nextEmotes.push(...emoteOccurrences(change.message, resolveEmote));
       } else {
         next = applyModeration(next, change.action);
         nextEmotes = applyModeration(nextEmotes, change.action);
@@ -215,11 +219,17 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
       return;
     }
 
-    const message = toChatMessage(line);
-    if (message) {
-      if (messageTaps.size > 0 && !shouldHideMessage(message, { hideCommands: false, hiddenLogins: filters.hiddenLogins })) {
-        for (const tap of messageTaps) tap(message);
+    const parsed = toChatMessage(line);
+    if (parsed) {
+      if (messageTaps.size > 0 && !shouldHideMessage(parsed, { hideCommands: false, hiddenLogins: filters.hiddenLogins })) {
+        for (const tap of messageTaps) tap(parsed);
       }
+
+      // After the taps, so a game listening for its own word hears the
+      // message as typed. Before the filters, so `hide_commands` judges the
+      // message without its `!hide` - a redacted message is chat, not a
+      // command, and hiding it would make the feature do nothing.
+      const message = redactMessage(parsed, redactCommand);
 
       // Filtered at INGEST, not at render. A hidden message must not occupy
       // one of the 50 window slots, or a chatter spamming commands would push
@@ -340,6 +350,15 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
   }
 
   /**
+   * Set the redact word (see chatRedact.ts), without its `!`. Empty = off.
+   * Safe before or after connect(); like the filters, only affects messages
+   * arriving from now on.
+   */
+  function setRedactCommand(next: string): void {
+    redactCommand = next;
+  }
+
+  /**
    * Hand over the third-party emote lookup. Safe before or after connect().
    *
    * Only affects messages arriving from now on, for the reason given in flush().
@@ -401,6 +420,7 @@ export function useTwitchChat(options: UseTwitchChatOptions = {}) {
     connect,
     disconnect,
     setFilters,
+    setRedactCommand,
     setEmoteResolver,
     setWindowSize,
     injectRawLine,

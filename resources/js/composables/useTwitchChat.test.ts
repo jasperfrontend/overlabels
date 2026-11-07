@@ -134,3 +134,93 @@ describe('clampWindow', () => {
     expect(clampWindow(4.9)).toBe(4);
   });
 });
+
+describe('useTwitchChat redacted messages', () => {
+  beforeEach(() => {
+    FakeSocket.all = [];
+    vi.useFakeTimers();
+    vi.stubGlobal('WebSocket', FakeSocket);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  const withEmote = (text: string, emotes: string) =>
+    `@id=msg-${++nextId};user-id=1;display-name=Viewer;emotes=${emotes} :viewer!viewer@viewer.tmi.twitch.tv PRIVMSG #channel :${text}`;
+
+  async function connected(command: string, hideCommands = false) {
+    const chat = useTwitchChat({ flushMs: 0 });
+    chat.setFilters({ hideCommands, hiddenLogins: [] });
+    chat.setRedactCommand(command);
+    chat.connect('channel');
+    await vi.advanceTimersByTimeAsync(5_000);
+    return chat;
+  }
+
+  it('redacts a message that starts with the word', async () => {
+    const chat = await connected('hide');
+
+    FakeSocket.deliver(privmsg('!hide my secret'));
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(chat.messages.value).toHaveLength(1);
+    expect(chat.messages.value[0].text).toBe('my secret');
+    expect(chat.messages.value[0].redacted).toBe(true);
+    chat.disconnect();
+  });
+
+  it('still shows it when the streamer hides commands', async () => {
+    // The filter judges the message without its `!hide`. Hiding it would make
+    // the feature do nothing for exactly the streamers likely to turn it on.
+    const chat = await connected('hide', true);
+
+    FakeSocket.deliver(privmsg('!hide my secret'));
+    FakeSocket.deliver(privmsg('!other command'));
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(chat.messages.value.map((m) => m.text)).toEqual(['my secret']);
+    chat.disconnect();
+  });
+
+  it('leaves messages alone while it is off', async () => {
+    const chat = await connected('');
+
+    FakeSocket.deliver(privmsg('!hide my secret'));
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(chat.messages.value[0].text).toBe('!hide my secret');
+    expect(chat.messages.value[0].redacted).toBeUndefined();
+    chat.disconnect();
+  });
+
+  it('hands taps the message as typed', async () => {
+    // Plinko listens through onMessage and must hear its own word unchanged.
+    const chat = await connected('hide');
+    const heard: string[] = [];
+    chat.onMessage((m) => heard.push(m.text));
+
+    FakeSocket.deliver(privmsg('!hide my secret'));
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(heard).toEqual(['!hide my secret']);
+    chat.disconnect();
+  });
+
+  it('feeds no emote bubbles, which would give the message away', async () => {
+    const chat = await connected('hide');
+    // A third-party emote is matched by its code, not by a position, so
+    // dropping the Twitch positions alone would still bubble it.
+    chat.setEmoteResolver((token) => (token === 'KEKW' ? 'https://cdn.example/kekw.webp' : null));
+
+    FakeSocket.deliver(withEmote('!hide Kappa KEKW', '25:6-10'));
+    FakeSocket.deliver(withEmote('Kappa KEKW', '25:0-4'));
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(chat.messages.value).toHaveLength(2);
+    expect(chat.emotes.value).toHaveLength(2);
+    expect(chat.emotes.value.every((e) => e.messageId === chat.messages.value[1].id)).toBe(true);
+    chat.disconnect();
+  });
+});

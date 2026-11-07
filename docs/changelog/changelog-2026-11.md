@@ -1,5 +1,30 @@
 # Changelog - November 2026
 
+## OL-2611-003 - November 7th, 2026 - feat(chat): let chatters redact their message on the chat overlay with !hide
+
+A chatter types `!hide my message here` and the chat overlay draws "my message here" in the Redacted
+font: solid bars where the words were, in the message's own colour. It is only the overlay. The
+message is in Twitch chat as normal, for every viewer and moderator, and in the VOD.
+
+It is off until the streamer turns it on, on the chat settings page (`/settings/chat`), where the
+command word can be changed too. Telling chat about it is up to the streamer. The Twitch Chat Overlay
+product page has a card saying whether it is on, which opens that setting.
+
+The overlay does the work itself, from the chat connection it already has, so nothing new passes
+through Overlabels and there is no bot cooldown in the way. It works in every chat overlay, including
+ones installed before today and hand-written ones, without a reinstall.
+
+- The whole message is hidden: emotes are drawn as bars rather than images, and a hidden message
+  sends nothing to Chat Emote Bubbles.
+- Characters the Redacted font cannot draw (emoji, Cyrillic, Japanese and so on) are swapped for an
+  `x` first, so no message falls back to a readable font.
+- The setting that hides `!` commands from the overlay does not hide a `!hide` message, and Plinko
+  still hears every message as typed. The word cannot be the same as your Plinko word.
+- Moderator deletions and timeouts still remove a hidden message.
+- Templates get `[[[msg.redacted]]]` to style the whole row. `[[[msg.text]]]` is not redacted; the
+  hidden version is in `[[[msg.html]]]`.
+- After changing the setting, reload the chat overlay's browser source in OBS.
+
 ## OL-2611-002 - November 7th, 2026 - feat(products): Twitch Chat Plinko, the sixth product
 
 Your chat types `!drop` and a ball with their name on it bounces down a Plinko board on stream. The

@@ -163,6 +163,14 @@ class User extends Authenticatable
         'plinko' => [
             'command' => 'drop',
         ],
+        // Redacted messages in the Twitch Chat Overlay: `!hide <text>` draws
+        // the text in the Redacted font, on the overlay only. Off until the
+        // streamer turns it on - chatters hiding their words on someone's
+        // stream is the streamer's call to allow.
+        'chat_redact' => [
+            'enabled' => false,
+            'command' => 'hide',
+        ],
         // The living Twitch title (LivingTitleService). `template` is what the
         // streamer wrote, `last_written` is the rendered string last sent to
         // Twitch - the comparison that keeps a re-render from writing an
@@ -203,6 +211,9 @@ class User extends Authenticatable
      * which no command needs to beat.
      */
     public const string PLINKO_COMMAND_PATTERN = '/^[a-z0-9_]{1,25}$/';
+
+    /** The redact command word follows the same rule as the Plinko word. */
+    public const string CHAT_REDACT_COMMAND_PATTERN = self::PLINKO_COMMAND_PATTERN;
 
     /**
      * Ceiling on remembered nudge dismissals. The list ships as a shared Inertia
@@ -382,6 +393,33 @@ class User extends Authenticatable
         return preg_match(self::PLINKO_COMMAND_PATTERN, $stored) === 1
             ? $stored
             : self::PREFERENCE_DEFAULTS['plinko']['command'];
+    }
+
+    /**
+     * The redacted-messages setting, merged with defaults. A stored word that
+     * no longer passes the pattern falls back to the default, like the Plinko
+     * word. Not in $appends, for the reason chatFilters() is not.
+     *
+     * @return array{enabled: bool, command: string}
+     */
+    public function chatRedact(): array
+    {
+        $defaults = self::PREFERENCE_DEFAULTS['chat_redact'];
+        $stored = (array) ($this->preference('chat_redact') ?? []);
+        $command = strtolower(trim((string) ($stored['command'] ?? '')));
+
+        return [
+            'enabled' => (bool) ($stored['enabled'] ?? $defaults['enabled']),
+            'command' => preg_match(self::CHAT_REDACT_COMMAND_PATTERN, $command) === 1 ? $command : $defaults['command'],
+        ];
+    }
+
+    /** The word the chat overlay redacts on, or null while the feature is off. */
+    public function chatRedactCommand(): ?string
+    {
+        $setting = $this->chatRedact();
+
+        return $setting['enabled'] ? $setting['command'] : null;
     }
 
     /**

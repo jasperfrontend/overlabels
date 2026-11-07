@@ -82,6 +82,10 @@ export function chatSlots(messages: readonly ChatMessage[], toHtml?: EmoteRender
     slots[`${k}vip`] = flag(m.isVip);
     slots[`${k}broadcaster`] = flag(m.isBroadcaster);
     slots[`${k}first`] = flag(m.isFirstMessage);
+    // The chatter used the streamer's redact command (chatRedact.ts). `html`
+    // already draws it redacted; this lets a template style the whole row.
+    // `text` is NOT redacted - a template printing it shows the words.
+    slots[`${k}redacted`] = flag(m.redacted === true);
     // Empty for a native message. Non-empty means the message was
     // duplicated in from another channel during a Shared Chat session, so a
     // template can mark it rather than passing a partner's audience off as

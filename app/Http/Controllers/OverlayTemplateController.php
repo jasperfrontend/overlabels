@@ -995,6 +995,10 @@ class OverlayTemplateController extends Controller
                 // in `data`, because `data` only carries tags the template
                 // writes, and the board needs the word whatever the copy says.
                 'plinko_command' => $user->plinkoCommand(),
+                // The word that redacts a chat message (`!hide <text>`), or
+                // null while the feature is off. The overlay reads chat
+                // itself, so the word has to travel to it like the filters.
+                'chat_redact_command' => $user->chatRedactCommand(),
                 // How many checkin pins the overlay keeps. The initial window
                 // above is already sliced to this; the client re-applies it
                 // when trimming after each checkins.updated delta.

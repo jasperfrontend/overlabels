@@ -43,6 +43,7 @@ import { useEmoteParser } from '@/composables/useEmoteParser';
 import { useTwitchChat } from '@/composables/useTwitchChat';
 import { type BadgeManifest, EMPTY_BADGE_MANIFEST, badgeImages, toBadgeManifest } from '@/utils/badgeRenderer';
 import { toChatFilters } from '@/utils/chatFilters';
+import { redactedHtml, toRedactCommand } from '@/utils/chatRedact';
 import type { ChatSampleFeed } from '@/utils/chatSample';
 import { withChatSlots } from '@/utils/chatSlots';
 import { withEmoteSlots } from '@/utils/emoteSlots';
@@ -321,7 +322,31 @@ function scheduleEmoteParser(): void {
 }
 
 function chatMessageHtml(m: ChatMessage): string {
+  // No emote parsing for a redacted message: a third-party emote is matched
+  // by its code, and an image would give the message away.
+  if (m.redacted) return redactedHtml(m.text);
   return emoteParser.parseEmotes(m.text, m.emotes.length ? JSON.stringify(m.emotes) : undefined);
+}
+
+/**
+ * Load the Redacted font and the one rule that uses it, once, when the
+ * streamer has the redact command on. `display=block` hides the text while
+ * the font loads instead of showing it in a fallback face - the one thing
+ * this feature must never do is flash a hidden message in plain letters.
+ */
+function loadRedactedFont(): void {
+  if (document.getElementById('ol-redacted-font')) return;
+
+  const link = document.createElement('link');
+  link.id = 'ol-redacted-font';
+  link.rel = 'stylesheet';
+  link.href = `${WEBFONT_HOST}/css?family=redacted:400&display=block`;
+  document.head.appendChild(link);
+
+  const style = document.createElement('style');
+  style.id = 'ol-redacted-style';
+  style.textContent = ".ol-redacted { font-family: 'Redacted', sans-serif; font-weight: 400; font-style: normal; letter-spacing: normal; }";
+  document.head.appendChild(style);
 }
 
 /**
@@ -1160,6 +1185,11 @@ onMounted(async () => {
       // already filtered rather than flashing on screen and being excluded
       // only from the second batch onward.
       twitchChat.setFilters(toChatFilters(json.chat_filters));
+      // The redact word, only sent while the feature is on. Before connecting
+      // for the same reason as the filters.
+      const redactCommand = toRedactCommand(json.chat_redact_command);
+      twitchChat.setRedactCommand(redactCommand);
+      if (redactCommand) loadRedactedFont();
       // The chat foreach cap. Set before connecting so the very first messages
       // land in a correctly sized window.
       twitchChat.setWindowSize(Number(json.chat_window));

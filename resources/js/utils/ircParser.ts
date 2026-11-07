@@ -74,6 +74,12 @@ export interface ChatMessage {
    * positions on the wire and are matched by token further down.
    */
   emotes: TwitchEmotePosition[];
+  /**
+   * Set by `redactMessage()` when a chatter used the streamer's redact
+   * command. `text` is then the message WITHOUT the command, and the overlay
+   * draws it in the Redacted font. Absent on every other message.
+   */
+  redacted?: boolean;
 }
 
 /** A Twitch emote occurrence: an inclusive character range into the message. */
