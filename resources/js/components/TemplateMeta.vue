@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { CalendarIcon, Copy, EyeIcon, UserStar } from '@lucide/vue';
+import { CalendarIcon, Copy, CornerUpLeft, EyeIcon, UserStar } from '@lucide/vue';
 
 const page = usePage();
 const userLocale = computed<string | undefined>(() => {
@@ -91,9 +91,10 @@ function copyTag(tag: string, event: MouseEvent) {
           <span class="text-violet-400"><Copy class="-mt-0.5 size-4" /></span>
           <span class="ml-2">Copies: {{ forkCount }}</span>
         </div>
-        <div v-if="forkParent" class="col-span-2">
-          <span class="text-violet-400">Copied from:</span>
-          <Link :href="`/templates/${forkParent.id}`" class="ml-2 text-violet-400 hover:underline" :title="forkTitle">
+        <div v-if="forkParent" class="col-span-2 flex items-center" :title="forkTitle">
+          <span class="text-violet-400"><CornerUpLeft class="-mt-0.5 size-4" /></span>
+          <span class="ml-2">Copied from:</span>
+          <Link :href="`/templates/${forkParent.id}`" class="ml-1 text-violet-400 hover:underline">
             {{ forkParent.name }}
           </Link>
         </div>
