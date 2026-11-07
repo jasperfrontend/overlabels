@@ -253,6 +253,33 @@
             "link_route": { "type": "string", "maxLength": 80 }
           }
         },
+        "spotlight": {
+          "type": "object",
+          "description": "Optional: one feature worth its own section, shown under the three beats. Copy beside a chat sample; a line marked `redacted` is drawn in the Redacted font, the way the chat overlay draws a `!hide` message.",
+          "additionalProperties": false,
+          "required": ["kicker", "title", "body", "lines"],
+          "properties": {
+            "kicker": { "type": "string", "minLength": 1, "maxLength": 40 },
+            "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+            "body": { "type": "string", "minLength": 1, "maxLength": 320 },
+            "lines": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 4,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "text"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1, "maxLength": 25 },
+                  "text": { "type": "string", "minLength": 1, "maxLength": 90 },
+                  "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+                  "redacted": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
         "reasons_heading": {
           "type": "string",
           "minLength": 1,

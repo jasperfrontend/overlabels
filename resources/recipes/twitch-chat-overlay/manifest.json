@@ -76,6 +76,29 @@
         }
       }
     ],
+    "spotlight": {
+      "kicker": "Redacted messages",
+      "title": "Your chat can redact itself.",
+      "body": "Turn it on and anyone in chat can type `!hide` before a message. Your overlay draws it as solid bars, while Twitch chat shows it as normal. Spoilers, secrets, inside jokes: your chat will find a use for it. Off until you switch it on, and you pick the command word.",
+      "lines": [
+        {
+          "name": "quietfox",
+          "text": "no way, who is the final boss",
+          "color": "#f472b6"
+        },
+        {
+          "name": "pixelmoth",
+          "text": "it's the guide from the first village",
+          "color": "#60a5fa",
+          "redacted": true
+        },
+        {
+          "name": "emberkid",
+          "text": "pixelmoth what did you DO",
+          "color": "#34d399"
+        }
+      ]
+    },
     "reasons_heading": "The Twitch Chat Overlay that just works.",
     "reasons": [
       {
@@ -110,6 +133,10 @@
       {
         "q": "Can I hide commands or certain chatters?",
         "a": "Yes. You can hide messages that start with `!` and hide chosen accounts, like other bots."
+      },
+      {
+        "q": "Can a chatter hide their own message?",
+        "a": "Yes, once you turn it on in your chat settings. They type `!hide` before the message and your overlay draws it as solid bars. It still shows in Twitch chat as normal, and you can change the command word."
       },
       {
         "q": "Do my viewers need to do anything?",

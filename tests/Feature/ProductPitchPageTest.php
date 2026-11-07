@@ -53,6 +53,26 @@ it('renders every section of a chat product page', function () {
     }
 });
 
+it('shows a spotlight only where the manifest names one, drawing redacted lines in the Redacted font', function () {
+    $chat = listedProducts('product')->firstWhere('slug', 'twitch-chat-overlay');
+    expect($chat['pitch'])->toHaveKey('spotlight');
+
+    $this->get(route('products.show', 'twitch-chat-overlay'))
+        ->assertOk()
+        ->assertSee($chat['pitch']['spotlight']['title'])
+        ->assertSee('id="spotlight"', false)
+        ->assertSee('class="pp-redacted"', false)
+        ->assertSee('fonts.bunny.net/css?family=redacted', false);
+
+    $without = listedProducts('product')->first(fn (array $product) => ! isset($product['pitch']['spotlight']));
+    expect($without)->not->toBeNull();
+
+    $this->get(route('products.show', $without['slug']))
+        ->assertOk()
+        ->assertDontSee('id="spotlight"', false)
+        ->assertDontSee('family=redacted', false);
+});
+
 it('shows the homepage demos without the OBS title bar', function () {
     // ", live in OBS" is the bar's own wording ("Chat Tower, live in OBS"); the
     // Controls section further down says "live in OBS" in a sentence.

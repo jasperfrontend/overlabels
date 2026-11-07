@@ -149,6 +149,34 @@
             </div>
         </section>
 
+        {{-- 2b. Spotlight: one feature with its own section, when the manifest
+             names one. A redacted line is drawn in the Redacted font, which is
+             only loaded when a line asks for it. --}}
+        @if (!empty($page['spotlight']))
+            @php($spotlight = $page['spotlight'])
+            @if (collect($spotlight['lines'])->contains(fn ($line) => !empty($line['redacted'])))
+                <link rel="stylesheet" href="https://fonts.bunny.net/css?family=redacted:400&display=block" />
+            @endif
+            <section id="spotlight" data-product-row class="scroll-mt-[calc(var(--ol-nav-h)+3rem)] py-20 sm:py-28">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="mx-auto grid max-w-5xl items-center gap-8 md:grid-cols-2 md:gap-12">
+                        <div class="min-w-0">
+                            <p class="pp-kicker">{{ $spotlight['kicker'] }}</p>
+                            <h2 class="mb-4 text-3xl font-bold tracking-tight text-balance sm:text-4xl">{!! $md($spotlight['title']) !!}</h2>
+                            <p class="text-lg text-muted-foreground">{!! $md($spotlight['body']) !!}</p>
+                        </div>
+                        <div class="pp-art pp-art-tall">
+                            <div class="pp-chat">
+                                @foreach ($spotlight['lines'] as $line)
+                                    <div><span class="pp-chat-name" style="color: {{ $line['color'] ?? '#a78bfa' }}">{{ $line['name'] }}</span>: <span @class(['pp-redacted' => !empty($line['redacted'])])>{{ $line['text'] }}</span></div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        @endif
+
         {{-- 3. Why: what the product is, plainly. --}}
         <section id="why" data-product-row class="scroll-mt-[calc(var(--ol-nav-h)+3rem)] py-20 sm:py-28">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">

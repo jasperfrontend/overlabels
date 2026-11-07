@@ -104,6 +104,18 @@
 .pp-chat-dim {
   opacity: 0.45;
 }
+.pp-art-tall {
+  height: 210px;
+  margin-bottom: 0;
+}
+/* A command like `!hide` must not break after its `!` on a phone. */
+#spotlight code {
+  white-space: nowrap;
+}
+/* The chat overlay's `!hide`, drawn the way the overlay draws it. */
+.pp-redacted {
+  font-family: 'Redacted', ui-monospace, monospace;
+}
 .pp-chat-name {
   font-weight: 600;
 }
