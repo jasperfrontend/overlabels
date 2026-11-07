@@ -3,7 +3,7 @@
   "slug": "twitch-chat-plinko",
   "name": "Twitch Chat Plinko",
   "version": 1,
-  "description": "Type !drop in chat and a ball with your name on it drops through a Plinko board on stream. Every drop plays in the order chat sent it, one ball per chatter at a time, bouncing off every peg into a slot worth 5 in the middle and 1000 at the rare edges. Read straight from Twitch chat with nothing to connect and no bot to add.",
+  "description": "Type !drop in chat, or the word your streamer picked, and a ball with your name on it drops through a Plinko board on stream. Every drop plays in the order chat sent it, one ball per chatter at a time, bouncing off every peg into a slot worth 5 in the middle and 1000 at the rare edges. Read straight from Twitch chat with nothing to connect and no bot to add.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"
@@ -18,19 +18,19 @@
   "obs_hint": "Make the browser source your whole canvas, 1920 by 1080. It is a full scene, made for BRB and downtime.",
   "ready_message": "Every !drop in your chat drops a ball. Type it in your own chat to see the first one land.",
   "highlights": [
-    "Chat types !drop and a ball with their name on it bounces down a Plinko board on your stream.",
+    "Chat types !drop, or any word you pick, and a ball with their name on it bounces down a Plinko board on your stream.",
     "Played in the order chat sends it, one ball each. A big chat waits in a line you can see.",
     "Nothing to connect and no bot to add. Top scores fill in as the balls land."
   ],
   "pitch": {
     "meta_title": "Twitch Chat Plinko - a Plinko game your chat plays",
-    "meta_description": "Your Twitch chat types !drop and a ball with their name on it bounces down a Plinko board on stream. Free, one click to install, no bot needed.",
-    "tagline": "Your chat types !drop. Their name bounces down the board.",
-    "lede": "Every `!drop` in your Twitch chat drops a ball with that chatter's name on it through a real Plinko board. The middle pays 5, the rare edges pay 1000, and the best scores go up beside the board.",
+    "meta_description": "It's Plinko, and now it lives on your Twitch stream. Your chat types one command and their name bounces down the board. Free, one click, no bot.",
+    "tagline": "It's Plinko. You know it already. Now it lives on your stream.",
+    "lede": "Drop a ball, watch it bounce off the pegs, hope for the edge. Same game, except your Twitch chat is playing: every `!drop` (or the word you pick) sends a ball with that chatter's name on it down the board, and the best scores go up beside it.",
     "plays": [
       {
         "title": "Chat types !drop",
-        "line": "One ball each, in the order chat sends them.",
+        "line": "Or any word you pick. One ball each, in the order chat sends them.",
         "art": {
           "type": "chat",
           "lines": [
@@ -76,12 +76,12 @@
         }
       }
     ],
-    "reasons_heading": "A Plinko board your chat plays on stream.",
+    "reasons_heading": "The Plinko you know, played by your chat.",
     "reasons": [
       {
         "icon": "people",
         "title": "Played in chat order",
-        "body": "Every `!drop` takes its turn in the order chat sent it. When chat is busy, everyone waits in a line that shows on screen."
+        "body": "Every drop takes its turn in the order chat sent it. When chat is busy, everyone waits in a line that shows on screen."
       },
       {
         "icon": "trophy",
@@ -96,14 +96,14 @@
       {
         "icon": "shield",
         "title": "Follows your mods",
-        "body": "When a mod deletes a `!drop` or times someone out, their ball leaves the board. Chatters you have hidden never get one."
+        "body": "When a mod deletes a drop or times someone out, their ball leaves the board. Chatters you have hidden never get one."
       }
     ],
     "setup_note": "Size the browser source to your whole canvas, 1920 by 1080. It is a full scene, made for BRB and downtime.",
     "faq": [
       {
         "q": "What do my viewers type?",
-        "a": "`!drop`. Anything after it still counts, so `!drop come on edges` drops a ball too."
+        "a": "`!drop`, unless you picked another word. Anything after it still counts, so `!drop come on edges` drops a ball too."
       },
       {
         "q": "What if my whole chat drops at once?",
@@ -111,7 +111,7 @@
       },
       {
         "q": "Can one chatter flood the board?",
-        "a": "No. Each chatter has one ball at a time. Another `!drop` while theirs is still on the board is ignored."
+        "a": "No. Each chatter has one ball at a time. Another drop while theirs is still on the board is ignored."
       },
       {
         "q": "Do the scores carry over?",
@@ -129,7 +129,7 @@
     "closing": "Let your chat drop the first ball tonight."
   },
   "notes": [
-    "Every `!drop` comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels.",
+    "Every drop comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels.",
     "The chat feed setting that hides commands starting with `!` does not stop Plinko: it only hides them from a chat feed. Chatters you have hidden never get a ball.",
     "Scores count from when the overlay loaded. Reloading the browser source starts a new game.",
     "The command is `!drop` unless you choose another word on the Plinko page in your settings, under Integrations. Reload the browser source in OBS after changing it.",

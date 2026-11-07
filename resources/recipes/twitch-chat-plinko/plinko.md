@@ -6,7 +6,7 @@ author: Overlabels
 
 # Twitch Chat Plinko
 
-A Plinko board your Twitch chat plays. Every !drop in chat drops a ball with that chatter's name on it, in the order chat sends them, one ball each at a time. Real bouncing off every peg, 1000 points at the rare edges, a line of who is next and the top scores so far.
+A Plinko board your Twitch chat plays. Every !drop in chat (or the word you pick in your Plinko settings) drops a ball with that chatter's name on it, in the order chat sends them, one ball each at a time. Real bouncing off every peg, 1000 points at the rare edges, a line of who is next and the top scores so far.
 
 An Overlabels **static overlay** by Overlabels.
 
