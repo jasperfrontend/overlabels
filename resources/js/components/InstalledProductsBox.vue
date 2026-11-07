@@ -103,7 +103,7 @@ const visible = computed(() => props.products.filter((p) => kindOf(p) === filter
         Overlabels offers small games for your chat that are ideal for downtime, BRB scenes or if you're just looking for a small break! Yes, all
         games are free forever.
       </p>
-      <Link :href="route('products.index')" class="btn btn-md btn-primary self-start">Browse all</Link>
+      <Link :href="route('products.index')" class="btn btn-primary self-start">Browse all</Link>
     </section>
 
     <!-- Every game installed: nothing left to pitch, so say so. A plain <a>:
@@ -117,7 +117,7 @@ const visible = computed(() => props.products.filter((p) => kindOf(p) === filter
       <p class="max-w-prose text-sm text-foreground">
         All Overlabels games are installed on your account. We literally have nothing more to offer, unless you want to build it yourself?
       </p>
-      <a href="/help/under-the-hood" class="btn btn-md btn-primary self-start">View the docs</a>
+      <a href="/help/under-the-hood" class="btn btn-primary self-start">View the docs</a>
     </section>
   </div>
 </template>

@@ -88,6 +88,9 @@ Route::prefix('admin')
         Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])->name('impersonate.stop');
         Route::post('/impersonate/{user}', [ImpersonationController::class, 'start'])->name('impersonate.start');
 
+        // Every button variant and size on one page, both themes side by side
+        Route::inertia('/buttons', 'admin/Buttons')->name('buttons');
+
         // Lockdown
         Route::get('/lockdown', [AdminLockdownController::class, 'index'])->name('lockdown.index');
         Route::post('/lockdown/activate', [AdminLockdownController::class, 'activate'])->name('lockdown.activate');

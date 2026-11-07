@@ -67,7 +67,7 @@ const isActive = (href: string) => currentPath === href || currentPath.startsWit
               v-for="item in group.items"
               :key="item.href"
               :href="item.href"
-              class="btn btn-sm btn-square btn-ghost justify-start border-l-2 border-transparent px-4 py-2 text-sm font-medium hover:border-sidebar-accent hover:bg-sidebar-accent/5"
+              class="btn btn-sm btn-ghost justify-start border-l-2 border-transparent px-4 py-2 text-sm font-medium hover:border-sidebar-accent hover:bg-sidebar-accent/5"
               :class="{ 'bg-sidebar-accent text-violet-500 dark:text-violet-400': isActive(item.href) }"
             >
               {{ item.title }}

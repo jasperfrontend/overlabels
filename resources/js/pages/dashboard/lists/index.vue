@@ -340,7 +340,7 @@ onUnmounted(() => {
                 ></textarea>
               </div>
               <div class="flex justify-between gap-2">
-                <button class="btn btn-sm btn-tertiary cursor-pointer" @click="showCreate = false">Cancel</button>
+                <button class="btn btn-sm btn-cancel cursor-pointer" @click="showCreate = false">Cancel</button>
                 <button class="btn btn-sm btn-primary cursor-pointer" @click="createList">Create</button>
               </div>
             </CardContent>
