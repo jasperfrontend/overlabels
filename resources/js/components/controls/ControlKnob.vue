@@ -11,7 +11,7 @@ import { choiceHint, controlChoices } from '@/utils/controlChoices';
  * pages cannot drift into two ideas of what a number or a color looks like
  * to edit. The row decides the widget: a text control with `config.choices`
  * is a select with the held choice's hint under it, one with `config.webfont`
- * is a search over the Bunny Fonts catalogue, a boolean is a checkbox, a
+ * is a search over the Bunny Fonts catalogue, a boolean is a switch, a
  * color is a picker beside an editable field (anything CSS understands is a
  * valid value, and the picker is an offer rather than a gate), and a number
  * is a slider bounded by the row's own min/max with an exact box beside it,
@@ -72,10 +72,22 @@ function valueOf(event: Event): string {
 </script>
 
 <template>
-  <!-- On or off. The label is the checkbox's own. -->
-  <div v-if="kind === 'boolean'" class="flex items-baseline justify-between gap-3">
-    <label class="flex cursor-pointer items-center gap-2 text-sm text-foreground" :for="id">
-      <input :id="id" type="checkbox" :checked="value === '1'" @change="emit('commit', ($event.target as HTMLInputElement).checked ? '1' : '0')" />
+  <!-- On or off. The same switch the control's edit dialog draws, so one
+       boolean has one look everywhere. The label is the switch's own. -->
+  <div v-if="kind === 'boolean'" class="flex items-center justify-between gap-3">
+    <label class="flex cursor-pointer items-center gap-3 text-sm text-foreground" :for="id">
+      <span class="relative inline-flex items-center">
+        <input
+          :id="id"
+          type="checkbox"
+          class="peer sr-only"
+          :checked="value === '1'"
+          @change="emit('commit', ($event.target as HTMLInputElement).checked ? '1' : '0')"
+        />
+        <span
+          class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-green-800 dark:after:bg-gray-100"
+        ></span>
+      </span>
       {{ label }}
     </label>
     <slot name="aside" />
