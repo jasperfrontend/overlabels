@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { Bot, Check, Ellipsis, Plug, TriangleAlert } from '@lucide/vue';
+import { Bot, Check, Download, Ellipsis, Eye, Plug, Settings2, TriangleAlert } from '@lucide/vue';
 import EmptyState from '@/components/EmptyState.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
 import ProductIcon from '@/components/product-icons/ProductIcon.vue';
@@ -119,8 +119,7 @@ const description = computed(
            it the Products card would tell the reader both shelves weigh
            the same, and they do not. -->
         <ul v-if="shelf.key === 'alert' && shelf.products.length > 0" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          <li v-for="product in shelf.products" :key="product.slug" class="collection-row relative flex flex-col gap-2 border border-border p-3">
-            <Link :href="`/products/${product.slug}`" class="absolute inset-0 z-0 cursor-pointer" :aria-label="product.name" />
+          <li v-for="product in shelf.products" :key="product.slug" class="flex flex-col gap-2 border border-border p-3">
             <div class="flex items-center justify-between gap-2">
               <ServiceLogo v-if="product.service" :source="product.service" class="size-7 shrink-0" :class="serviceColor(product.service)" />
               <span
@@ -136,19 +135,27 @@ const description = computed(
               <Plug class="size-3.5" />
               Connects {{ serviceLabel(product.service) }}
             </p>
+            <div class="mt-auto flex flex-wrap justify-between gap-2 pt-1">
+              <Link :href="`/products/${product.slug}`" class="btn btn-sm btn-chill cursor-pointer gap-1.5">
+                <Eye class="size-4" />
+                View product
+              </Link>
+              <Link :href="`/products/${product.slug}/install`" class="btn btn-sm btn-primary cursor-pointer gap-1.5">
+                <component :is="product.installed ? Settings2 : Download" class="size-4" />
+                {{ product.installed ? 'Manage product' : 'Install product' }}
+              </Link>
+            </div>
           </li>
         </ul>
 
         <ul v-else-if="shelf.products.length > 0 || shelf.key === 'product'" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <li v-for="product in shelf.products" :key="product.slug" class="collection-row relative flex flex-col border border-border p-4">
-            <Link :href="`/products/${product.slug}`" class="absolute inset-0 z-0 cursor-pointer" :aria-label="product.name" />
+          <li v-for="product in shelf.products" :key="product.slug" class="relative flex flex-col border border-border p-4">
             <!-- A hero is the product's own artwork, 16:9, sitting above the
-               copy inside the same card so the whole thing stays one link.
-               Without one, the service's icon in its brand colour fills the
-               same box, so the two shelves line up. -->
-            <!-- Not positioned on purpose: a positioned box later in the DOM
-               would paint over the card's stretched link and swallow clicks
-               on the artwork. The tag anchors to the card instead. -->
+               copy inside the same card. Without one, the service's icon in
+               its brand colour fills the same box, so the two shelves line
+               up. The card itself is not a link: the two buttons at its foot
+               are the ways in. -->
+            <!-- Not positioned: the Installed tag anchors to the card. -->
             <div class="mb-4">
               <img v-if="product.hero" :src="product.hero" alt="" class="block aspect-video w-full object-cover" />
               <div
@@ -197,6 +204,16 @@ const description = computed(
                 <Bot class="size-3.5" />
                 Works through the Overlabels bot in your chat
               </p>
+              <div class="mt-3 flex flex-wrap justify-between gap-2">
+                <Link :href="`/products/${product.slug}`" class="btn btn-chill cursor-pointer gap-2">
+                  <Eye class="size-4" />
+                  View product
+                </Link>
+                <Link :href="`/products/${product.slug}/install`" class="btn btn-primary cursor-pointer gap-2">
+                  <component :is="product.installed ? Settings2 : Download" class="size-4" />
+                  {{ product.installed ? 'Manage product' : 'Install product' }}
+                </Link>
+              </div>
             </div>
           </li>
           <!-- The Products shelf always ends with a labelled placeholder. A
