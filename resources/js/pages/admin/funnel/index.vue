@@ -4,6 +4,9 @@ import PageHeader from '@/components/PageHeader.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 // Timestamps are Unix seconds, null = the account never reached that step.
 interface FunnelRow {
@@ -64,10 +67,6 @@ function percent(count: number): string {
 
 function windowLabel(days: number): string {
   return days === 0 ? 'All time' : `${days} days`;
-}
-
-function formatDate(seconds: number): string {
-  return new Date(seconds * 1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 // How long after signup a step happened, as one short unit.
@@ -151,7 +150,7 @@ function furthest(row: FunnelRow): string {
             <span class="shrink-0 text-xs font-medium">{{ furthest(row) }}</span>
           </div>
           <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span>Signed up {{ formatDate(row.signed_up_at) }}</span>
+            <span>Signed up {{ formatDateTime(row.signed_up_at) }}</span>
             <span v-if="row.listing_at !== null">Products {{ after(row, row.listing_at) }} {{ sourceLabel(row.listing_from) }}</span>
             <span v-if="row.product_slug">Opened {{ row.product_slug }}</span>
             <span v-if="row.installed_at !== null">Installed {{ row.installed_slug ?? '' }} {{ after(row, row.installed_at) }}</span>
@@ -181,7 +180,7 @@ function furthest(row: FunnelRow): string {
                   {{ row.name }}
                 </Link>
               </td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDate(row.signed_up_at) }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(row.signed_up_at) }}</td>
               <td class="px-3 py-2 text-xs">{{ after(row, row.welcomed_at) ?? '-' }}</td>
               <td class="px-3 py-2 text-xs">
                 <template v-if="row.listing_at !== null">

@@ -5,6 +5,9 @@ import EmptyState from '@/components/EmptyState.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { ref, watch } from 'vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface TwitchEvent {
   id: number;
@@ -175,7 +178,7 @@ watch([prunePeriod, () => props.source], () => {
               <span v-if="event.user">
                 <a :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</a>
               </span>
-              <span>{{ event.created_at }}</span>
+              <span>{{ formatDateTime(event.created_at) }}</span>
             </div>
           </div>
         </div>
@@ -202,7 +205,7 @@ watch([prunePeriod, () => props.source], () => {
                 <td class="px-3 py-2">
                   <Badge :variant="event.processed ? 'default' : 'secondary'">{{ event.processed ? 'processed' : 'pending' }} </Badge>
                 </td>
-                <td class="px-3 py-2 text-xs text-muted-foreground">{{ event.created_at }}</td>
+                <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(event.created_at) }}</td>
                 <td class="px-3 py-2">
                   <a :href="route('admin.events.show', event.id)" class="text-xs text-primary hover:underline">View</a>
                 </td>
@@ -240,7 +243,7 @@ watch([prunePeriod, () => props.source], () => {
               <span v-if="event.user">
                 <a :href="route('admin.users.show', event.user.id)" class="hover:underline">{{ event.user.name }}</a>
               </span>
-              <span>{{ event.created_at }}</span>
+              <span>{{ formatDateTime(event.created_at) }}</span>
             </div>
           </div>
         </div>
@@ -275,7 +278,7 @@ watch([prunePeriod, () => props.source], () => {
                 <td class="px-3 py-2">
                   <Badge :variant="event.alert_dispatched ? 'default' : 'secondary'">{{ event.alert_dispatched ? '✓' : '✗' }} </Badge>
                 </td>
-                <td class="px-3 py-2 text-xs text-muted-foreground">{{ event.created_at }}</td>
+                <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(event.created_at) }}</td>
                 <td class="px-3 py-2">
                   <a :href="route('admin.events.external.show', event.id)" class="text-xs text-primary hover:underline">View</a>
                 </td>

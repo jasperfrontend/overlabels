@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ref } from 'vue';
 import type { AdminTemplate } from '@/types';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 const props = defineProps<{
   template: AdminTemplate;
@@ -78,7 +81,7 @@ function submitDelete() {
           </div>
           <div>
             <span class="text-muted-foreground">Created</span>
-            <div>{{ template.created_at }}</div>
+            <div>{{ formatDateTime(template.created_at) }}</div>
           </div>
         </CardContent>
       </Card>

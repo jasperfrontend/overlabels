@@ -8,6 +8,9 @@ import { ref, watch } from 'vue';
 import { PencilIcon, PlusIcon, Trash2 } from '@lucide/vue';
 import type { Update } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 const { confirm } = useConfirm();
 interface Paginator {
@@ -36,14 +39,6 @@ watch(search, () => {
   clearTimeout(debounce);
   debounce = setTimeout(applyFilters, 400);
 });
-
-function formatDate(iso: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-  }).format(new Date(iso));
-}
 
 async function handleDelete(u: Update) {
   if (await confirm({ message: `Delete "${u.title}"? This cannot be undone.`, confirmLabel: 'Delete' })) {
@@ -95,7 +90,7 @@ async function handleDelete(u: Update) {
                   </span>
                 </div>
               </td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDate(u.published_at) }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(u.published_at) }}</td>
               <td class="px-3 py-2 text-right">
                 <Link
                   :href="route('admin.updates.edit', u.id)"

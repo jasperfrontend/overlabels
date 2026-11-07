@@ -7,6 +7,9 @@ import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star } from '@lucide/vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface Kit {
   id: number;
@@ -97,7 +100,7 @@ function setStarter(kit: Kit) {
           <div class="mt-2 flex flex-wrap gap-1.5">
             <Badge :variant="kit.is_public ? 'default' : 'secondary'">{{ kit.is_public ? 'public' : 'private' }}</Badge>
             <span class="text-xs text-muted-foreground">{{ kit.fork_count }} forks</span>
-            <span class="text-xs text-muted-foreground">{{ kit.created_at }}</span>
+            <span class="text-xs text-muted-foreground">{{ formatDateTime(kit.created_at) }}</span>
           </div>
         </div>
       </div>
@@ -133,7 +136,7 @@ function setStarter(kit: Kit) {
                 <Badge :variant="kit.is_public ? 'default' : 'secondary'">{{ kit.is_public ? 'public' : 'private' }} </Badge>
               </td>
               <td class="px-3 py-2">{{ kit.fork_count }}</td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ kit.created_at }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(kit.created_at) }}</td>
               <td class="px-3 py-2">
                 <div class="flex flex-col items-start gap-1.5">
                   <Badge v-if="kit.is_starter_kit" class="border-yellow-500/40 bg-yellow-500/20 text-yellow-300">

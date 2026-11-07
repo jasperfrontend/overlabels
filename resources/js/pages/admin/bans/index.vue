@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
 import { useConfirm } from '@/composables/useConfirm';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 const { confirm } = useConfirm();
 interface BanEntry {
@@ -111,7 +114,7 @@ function banTarget(ban: BanEntry): string {
 
 function formatExpiry(ban: BanEntry): string {
   if (!ban.expired_at) return 'Permanent';
-  return new Date(ban.expired_at).toLocaleString();
+  return formatDateTime(ban.expired_at);
 }
 
 const durations = [
@@ -208,7 +211,7 @@ const durations = [
             <Badge v-if="!ban.expired_at" variant="destructive" class="text-[10px]">Permanent</Badge>
             <span v-else>Expires {{ formatExpiry(ban) }}</span>
             <span v-if="ban.created_by">by {{ ban.created_by.name }}</span>
-            <span>{{ new Date(ban.created_at).toLocaleString() }}</span>
+            <span>{{ formatDateTime(ban.created_at) }}</span>
           </div>
         </div>
       </div>
@@ -242,7 +245,7 @@ const durations = [
                 <span v-else class="text-xs text-muted-foreground">{{ formatExpiry(ban) }}</span>
               </td>
               <td class="px-3 py-2 text-muted-foreground">{{ ban.created_by?.name ?? '—' }}</td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ new Date(ban.created_at).toLocaleString() }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(ban.created_at) }}</td>
               <td class="px-3 py-2">
                 <button @click="removeBan(ban.id)" class="text-xs text-destructive hover:underline">Unban</button>
               </td>

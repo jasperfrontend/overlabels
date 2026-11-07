@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref } from 'vue';
 import { useConfirm } from '@/composables/useConfirm';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 const { confirm } = useConfirm();
 interface SessionUser {
@@ -155,7 +158,7 @@ const durations = [
           <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span v-if="session.ip_address" class="font-mono">{{ session.ip_address }}</span>
             <span v-else>No IP</span>
-            <span>Active {{ session.last_activity_human }}</span>
+            <span>Active {{ formatDateTime(session.last_activity) }}</span>
           </div>
         </div>
       </div>
@@ -191,7 +194,7 @@ const durations = [
                   <Badge v-if="session.is_ip_banned" variant="destructive" class="text-[10px]">IP Banned</Badge>
                 </div>
               </td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ session.last_activity_human }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(session.last_activity) }}</td>
               <td class="px-3 py-2 font-mono text-xs text-muted-foreground">{{ session.id.substring(0, 16) }}…</td>
               <td class="px-3 py-2">
                 <div class="flex gap-2">

@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Layers, Zap, Clock, Grid2x2, ShieldBan } from '@lucide/vue';
 import EmptyState from '@/components/EmptyState.vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface StatCards {
   users: number;
@@ -121,7 +124,7 @@ const breadcrumbs = [{ title: 'Admin', href: route('admin.dashboard') }];
                   <td class="py-2">
                     <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">{{ user.role }}</Badge>
                   </td>
-                  <td class="py-2 text-muted-foreground">{{ user.created_at }}</td>
+                  <td class="py-2 text-muted-foreground">{{ formatDateTime(user.created_at) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -141,7 +144,7 @@ const breadcrumbs = [{ title: 'Admin', href: route('admin.dashboard') }];
                   <span class="ml-1 text-muted-foreground">{{ log.action }}</span>
                   <span v-if="log.target_type" class="ml-1 text-muted-foreground">on {{ log.target_type }}#{{ log.target_id }}</span>
                 </div>
-                <span class="ml-2 text-xs whitespace-nowrap text-muted-foreground">{{ log.created_at }}</span>
+                <span class="ml-2 text-xs whitespace-nowrap text-muted-foreground">{{ formatDateTime(log.created_at) }}</span>
               </div>
               <EmptyState v-if="recentAuditLogs.length === 0" message="No audit activity yet." />
             </div>

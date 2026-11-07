@@ -6,11 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EmptyState from '@/components/EmptyState.vue';
+import { ExternalLink } from '@lucide/vue';
 import { Input } from '@/components/ui/input';
 import { usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 import type { AdminTemplate } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 const { confirm } = useConfirm();
 interface User {
@@ -23,6 +27,7 @@ interface User {
   deleted_at: string | null;
   created_at: string;
   onboarded_at: string | null;
+  twitch_data: { login?: string } | null;
 }
 
 interface Token {
@@ -78,6 +83,10 @@ const breadcrumbs = [
   { title: 'Users', href: route('admin.users.index') },
   { title: props.user.name, href: route('admin.users.show', props.user.id) },
 ];
+
+// users.name is the Twitch DISPLAY name, which can be localised (CJK etc.) and then is not
+// a valid twitch.tv path. The login lives in twitch_data; the name is the fallback.
+const twitchLogin = computed(() => (props.user.is_system_user ? null : props.user.twitch_data?.login || props.user.name));
 
 // Role form
 const roleForm = useForm({ role: props.user.role });
@@ -159,7 +168,20 @@ function restore() {
           {{ user.name[0] }}
         </div>
         <div>
-          <h1 class="text-2xl font-bold">{{ user.name }}</h1>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl font-bold">{{ user.name }}</h1>
+            <a
+              v-if="twitchLogin"
+              :href="`https://www.twitch.tv/${twitchLogin}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+              :aria-label="`Open ${twitchLogin} on Twitch`"
+              :title="`twitch.tv/${twitchLogin}`"
+            >
+              <ExternalLink class="size-4" />
+            </a>
+          </div>
           <div class="flex items-center gap-2 text-sm text-muted-foreground">
             <span v-if="user.twitch_id">{{ user.twitch_id }}</span>
             <Badge :variant="user.role === 'admin' ? 'default' : 'secondary'">{{ user.role }}</Badge>
@@ -197,7 +219,7 @@ function restore() {
                   <Badge variant="outline">{{ t.type }}</Badge>
                 </td>
                 <td class="px-3 py-2">{{ t.is_public ? 'Yes' : 'No' }}</td>
-                <td class="px-3 py-2 text-muted-foreground">{{ t.created_at }}</td>
+                <td class="px-3 py-2 text-muted-foreground">{{ formatDateTime(t.created_at) }}</td>
               </tr>
               <EmptyState v-if="recentTemplates.length === 0" :colspan="4" message="No templates." />
             </tbody>
@@ -223,7 +245,7 @@ function restore() {
                   <Badge :variant="t.is_active ? 'default' : 'secondary'">{{ t.is_active ? 'active' : 'inactive' }} </Badge>
                 </td>
                 <td class="px-3 py-2">{{ t.access_count }}</td>
-                <td class="px-3 py-2 text-muted-foreground">{{ t.expires_at ?? 'Never' }}</td>
+                <td class="px-3 py-2 text-muted-foreground">{{ formatDateTime(t.expires_at, 'Never') }}</td>
               </tr>
               <EmptyState v-if="accessTokens.length === 0" :colspan="5" message="No tokens." />
             </tbody>
@@ -238,7 +260,7 @@ function restore() {
                   <span class="font-medium">{{ entry.admin?.name ?? 'Unknown' }}</span>
                   <span class="ml-1 text-muted-foreground">{{ entry.action }}</span>
                 </div>
-                <span class="text-xs text-muted-foreground">{{ entry.created_at }}</span>
+                <span class="text-xs text-muted-foreground">{{ formatDateTime(entry.created_at) }}</span>
               </div>
               <pre v-if="entry.metadata" class="mt-1 text-xs text-muted-foreground">{{ JSON.stringify(entry.metadata, null, 2) }}</pre>
             </div>
@@ -315,9 +337,9 @@ function restore() {
                   <div class="font-medium text-destructive">This user is currently banned</div>
                   <div v-if="activeBan.comment" class="text-muted-foreground">Reason: {{ activeBan.comment }}</div>
                   <div class="text-muted-foreground">
-                    {{ activeBan.expired_at ? `Expires: ${new Date(activeBan.expired_at).toLocaleString()}` : 'Permanent ban' }}
+                    {{ activeBan.expired_at ? `Expires: ${formatDateTime(activeBan.expired_at)}` : 'Permanent ban' }}
                   </div>
-                  <div class="text-muted-foreground">Banned on: {{ new Date(activeBan.created_at).toLocaleString() }}</div>
+                  <div class="text-muted-foreground">Banned on: {{ formatDateTime(activeBan.created_at) }}</div>
                 </div>
                 <Button variant="outline" class="cursor-pointer" size="sm" @click="unban">Remove Ban</Button>
               </div>

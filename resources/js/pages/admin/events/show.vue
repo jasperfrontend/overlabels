@@ -5,6 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ref } from 'vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface TwitchEvent {
   id: number;
@@ -60,11 +63,11 @@ function submitDelete() {
           </div>
           <div>
             <span class="text-muted-foreground">Created</span>
-            <div>{{ event.created_at }}</div>
+            <div>{{ formatDateTime(event.created_at) }}</div>
           </div>
           <div v-if="event.twitch_timestamp">
             <span class="text-muted-foreground">Twitch Timestamp</span>
-            <div>{{ event.twitch_timestamp }}</div>
+            <div>{{ formatDateTime(event.twitch_timestamp) }}</div>
           </div>
         </CardContent>
       </Card>

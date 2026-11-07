@@ -4,6 +4,9 @@ import { Head, Link } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ref } from 'vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface ExternalEvent {
   id: number;
@@ -58,7 +61,7 @@ const showRawPayload = ref(false);
           </div>
           <div>
             <span class="text-muted-foreground">Created</span>
-            <div>{{ event.created_at }}</div>
+            <div>{{ formatDateTime(event.created_at) }}</div>
           </div>
           <div>
             <span class="text-muted-foreground">Controls Updated</span>

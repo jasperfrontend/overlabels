@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
 import type { AdminTemplate } from '@/types';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface Paginator {
   data: AdminTemplate[];
@@ -94,7 +97,7 @@ watch([search, type, owner], () => {
             </span>
             <span>{{ t.fork_count }} forks</span>
             <span>{{ t.view_count }} views</span>
-            <span>{{ t.created_at }}</span>
+            <span>{{ formatDateTime(t.created_at) }}</span>
           </div>
         </div>
       </div>
@@ -134,7 +137,7 @@ watch([search, type, owner], () => {
               </td>
               <td class="px-3 py-2">{{ t.fork_count }}</td>
               <td class="px-3 py-2">{{ t.view_count }}</td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ t.created_at }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(t.created_at) }}</td>
               <td class="px-3 py-2">
                 <a :href="route('admin.templates.show', t.id)" class="text-xs text-primary hover:underline">View</a>
               </td>

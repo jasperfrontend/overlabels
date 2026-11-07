@@ -4,6 +4,9 @@ import PageHeader from '@/components/PageHeader.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface AccessLog {
   id: number;
@@ -127,7 +130,7 @@ watch(prunePeriod, () => {
         <div v-for="log in logs.data" :key="`card-${log.id}`" class="rounded border p-3 text-sm">
           <div class="flex items-start justify-between gap-2">
             <div class="font-mono text-xs font-medium">{{ log.template_slug ?? '—' }}</div>
-            <span class="shrink-0 text-xs text-muted-foreground">{{ log.accessed_at }}</span>
+            <span class="shrink-0 text-xs text-muted-foreground">{{ formatDateTime(log.accessed_at) }}</span>
           </div>
           <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span v-if="log.token">{{ log.token.name }} ({{ log.token.user?.name ?? 'unknown' }})</span>
@@ -156,7 +159,7 @@ watch(prunePeriod, () => {
                 <span v-else class="text-muted-foreground">—</span>
               </td>
               <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.accessed_at }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(log.accessed_at) }}</td>
             </tr>
             <EmptyState v-if="logs.data.length === 0" :colspan="4" message="No logs found." />
           </tbody>

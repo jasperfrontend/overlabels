@@ -4,6 +4,9 @@ import PageHeader from '@/components/PageHeader.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface AuditLog {
   id: number;
@@ -78,7 +81,7 @@ watch([action, from, to], () => {
         <div v-for="log in logs.data" :key="`card-${log.id}`" class="rounded border p-3 text-sm">
           <div class="flex items-start justify-between gap-2">
             <div class="font-mono text-xs font-medium">{{ log.action }}</div>
-            <span class="shrink-0 text-xs text-muted-foreground">{{ log.created_at }}</span>
+            <span class="shrink-0 text-xs text-muted-foreground">{{ formatDateTime(log.created_at) }}</span>
           </div>
           <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span>{{ log.admin?.name ?? 'Unknown' }}</span>
@@ -109,7 +112,7 @@ watch([action, from, to], () => {
                 <span v-else>—</span>
               </td>
               <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ log.created_at }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(log.created_at) }}</td>
             </tr>
             <EmptyState v-if="logs.data.length === 0" :colspan="5" message="No audit entries found." />
           </tbody>

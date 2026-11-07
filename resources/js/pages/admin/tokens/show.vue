@@ -4,6 +4,9 @@ import { Head } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import EmptyState from '@/components/EmptyState.vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface Token {
   id: number;
@@ -67,15 +70,15 @@ const breadcrumbs = [
           </div>
           <div>
             <span class="text-muted-foreground">Expires</span>
-            <div>{{ token.expires_at ?? 'Never' }}</div>
+            <div>{{ formatDateTime(token.expires_at, 'Never') }}</div>
           </div>
           <div>
             <span class="text-muted-foreground">Last Used</span>
-            <div>{{ token.last_used_at ?? 'Never' }}</div>
+            <div>{{ formatDateTime(token.last_used_at, 'Never') }}</div>
           </div>
           <div>
             <span class="text-muted-foreground">Created</span>
-            <div>{{ token.created_at }}</div>
+            <div>{{ formatDateTime(token.created_at) }}</div>
           </div>
         </CardContent>
       </Card>
@@ -97,7 +100,7 @@ const breadcrumbs = [
               <tr v-for="log in accessLogs" :key="log.id" class="border-t">
                 <td class="py-1.5 font-mono">{{ log.template_slug ?? '—' }}</td>
                 <td class="py-1.5 text-muted-foreground">{{ log.ip_address ?? '—' }}</td>
-                <td class="py-1.5 text-muted-foreground">{{ log.accessed_at }}</td>
+                <td class="py-1.5 text-muted-foreground">{{ formatDateTime(log.accessed_at) }}</td>
               </tr>
               <EmptyState v-if="accessLogs.length === 0" :colspan="3" message="No access logs." />
             </tbody>

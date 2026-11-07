@@ -3,6 +3,9 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface LockdownStatus {
   active: boolean;
@@ -81,11 +84,6 @@ function submitLift() {
     },
   );
 }
-
-function formatDate(iso?: string) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString();
-}
 </script>
 
 <template>
@@ -116,7 +114,7 @@ function formatDate(iso?: string) {
             </div>
             <div class="flex gap-2">
               <dt class="w-32 shrink-0 font-medium text-gray-600 dark:text-gray-400">Activated at</dt>
-              <dd>{{ formatDate(props.lockdown.activated_at) }}</dd>
+              <dd>{{ formatDateTime(props.lockdown.activated_at) }}</dd>
             </div>
             <div class="flex gap-2">
               <dt class="w-32 shrink-0 font-medium text-gray-600 dark:text-gray-400">Reason</dt>

@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ref, watch } from 'vue';
 import { CheckIcon } from '@lucide/vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 interface User {
   id: number;
@@ -117,7 +120,7 @@ watch([search, role, includeDeleted], () => {
             <span v-if="user.twitch_id">Twitch: {{ user.twitch_id }}</span>
             <span>{{ user.overlay_templates_count }} templates</span>
             <span>{{ user.overlay_access_tokens_count }} tokens</span>
-            <span>Joined {{ user.created_at }}</span>
+            <span>Joined {{ formatDateTime(user.created_at) }}</span>
             <span v-if="user.bot_enabled">Bot enabled</span>
           </div>
         </div>
@@ -154,7 +157,7 @@ watch([search, role, includeDeleted], () => {
               </td>
               <td class="px-3 py-2">{{ user.overlay_templates_count }}</td>
               <td class="px-3 py-2">{{ user.overlay_access_tokens_count }}</td>
-              <td class="px-3 py-2 text-xs">{{ user.created_at }}</td>
+              <td class="px-3 py-2 text-xs">{{ formatDateTime(user.created_at) }}</td>
               <td class="px-3 py-2">
                 <span v-if="user.bot_enabled"><CheckIcon class="size-5 text-green-400" /></span>
                 <span v-else>-</span>

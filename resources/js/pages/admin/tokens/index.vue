@@ -6,6 +6,9 @@ import { Head, router } from '@inertiajs/vue3';
 import { Badge } from '@/components/ui/badge';
 import { ref, watch } from 'vue';
 import { useConfirm } from '@/composables/useConfirm';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 const { confirm } = useConfirm();
 interface Token {
@@ -122,7 +125,7 @@ watch(prunePeriod, () => {
               Owner: <a :href="route('admin.users.show', token.user.id)" class="hover:underline">{{ token.user.name }}</a>
             </span>
             <span>{{ token.access_count }} uses</span>
-            <span>Expires: {{ token.expires_at ?? 'Never' }}</span>
+            <span>Expires: {{ formatDateTime(token.expires_at, 'Never') }}</span>
           </div>
         </div>
       </div>
@@ -154,7 +157,7 @@ watch(prunePeriod, () => {
                 <Badge :variant="token.is_active ? 'default' : 'secondary'">{{ token.is_active ? 'active' : 'inactive' }} </Badge>
               </td>
               <td class="px-3 py-2">{{ token.access_count }}</td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ token.expires_at ?? 'Never' }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(token.expires_at, 'Never') }}</td>
               <td class="flex gap-2 px-3 py-2">
                 <a :href="route('admin.tokens.show', token.id)" class="text-xs text-primary hover:underline">View</a>
                 <button @click="deleteToken(token.id)" class="text-xs text-destructive hover:underline">Delete</button>

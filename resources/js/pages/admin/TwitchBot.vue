@@ -2,6 +2,9 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { computed } from 'vue';
+import { useDateTimeFormat } from '@/composables/useDateTimeFormat';
+
+const { formatDateTime } = useDateTimeFormat();
 
 const props = defineProps<{
   connected: boolean;
@@ -14,12 +17,12 @@ const props = defineProps<{
 
 const expiresAt = computed(() => {
   if (!props.expires_at) return null;
-  return new Date(props.expires_at * 1000).toLocaleString();
+  return formatDateTime(props.expires_at);
 });
 
 const obtainedAt = computed(() => {
   if (!props.obtained_at) return null;
-  return new Date(props.obtained_at * 1000).toLocaleString();
+  return formatDateTime(props.obtained_at);
 });
 
 const canConnect = computed(() => props.client_id_configured && props.listener_secret_configured);
