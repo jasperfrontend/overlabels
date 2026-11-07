@@ -95,7 +95,7 @@ const description = computed(
         <h2 class="text-lg font-semibold text-foreground">{{ shelf.label }}</h2>
         <p
           v-if="shelf.key === 'alert'"
-          class="my-2 flex max-w-prose items-start gap-2 border border-cyan-500/60 px-3 py-2 text-sm font-medium text-foreground"
+          class="my-2 flex w-full items-start gap-2 border border-cyan-500/60 px-3 py-2 text-sm font-medium text-foreground lg:w-2/3"
         >
           <TriangleAlert class="mt-0.5 size-4 shrink-0 text-cyan-600 dark:text-cyan-300" />
           <span>
@@ -110,7 +110,7 @@ const description = computed(
             </a>
           </span>
         </p>
-        <p class="mt-1 mb-4 max-w-prose text-sm text-foreground">{{ shelf.lead }}</p>
+        <p class="mt-1 mb-4 text-sm text-foreground" :class="shelf.key === 'alert' ? 'w-full lg:w-2/3' : 'max-w-prose'">{{ shelf.lead }}</p>
 
         <!-- The Alerts shelf is the quieter one on purpose. An alert is a
            plain thing (connect a service, its support lands on stream), so
@@ -140,7 +140,11 @@ const description = computed(
                 <Eye class="size-4" />
                 View product
               </Link>
-              <Link :href="`/products/${product.slug}/install`" class="btn btn-sm btn-primary cursor-pointer gap-1.5">
+              <Link
+                :href="`/products/${product.slug}/install`"
+                class="btn btn-sm cursor-pointer gap-1.5"
+                :class="product.installed ? 'btn-secondary' : 'btn-primary'"
+              >
                 <component :is="product.installed ? Settings2 : Download" class="size-4" />
                 {{ product.installed ? 'Manage product' : 'Install product' }}
               </Link>
@@ -209,7 +213,11 @@ const description = computed(
                   <Eye class="size-4" />
                   View product
                 </Link>
-                <Link :href="`/products/${product.slug}/install`" class="btn btn-primary cursor-pointer gap-2">
+                <Link
+                  :href="`/products/${product.slug}/install`"
+                  class="btn cursor-pointer gap-2"
+                  :class="product.installed ? 'btn-secondary' : 'btn-primary'"
+                >
                   <component :is="product.installed ? Settings2 : Download" class="size-4" />
                   {{ product.installed ? 'Manage product' : 'Install product' }}
                 </Link>
