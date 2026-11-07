@@ -76,7 +76,19 @@ afterEach(function () {
         unlink($file);
     }
     if (is_dir($dir)) {
-        rmdir($dir);
+        // On Windows a deleted file that another process still has open (an
+        // IDE indexer, the dev server's file watcher) is only marked for
+        // deletion: it no longer lists, but the folder counts as non-empty
+        // until that process lets go. Measured: the folder lists empty when
+        // rmdir fails and removes fine 200 ms later. So retry for up to a
+        // second, then try once more without the @ so a real failure (a
+        // file that is actually still there) fails the test as before.
+        for ($attempt = 0; $attempt < 20 && ! @rmdir($dir); $attempt++) {
+            usleep(50_000);
+        }
+        if (is_dir($dir)) {
+            rmdir($dir);
+        }
     }
 });
 
