@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from '@lucide/vue';
 
-const lastUpdated = 'September 18, 2026';
+const lastUpdated = 'November 7, 2026';
 </script>
 
 <template>
@@ -126,6 +126,24 @@ const lastUpdated = 'September 18, 2026';
               <li><strong>Business Transfers:</strong> In connection with a merger, sale, or acquisition</li>
               <li><strong>Your Consent:</strong> With your explicit permission</li>
             </ul>
+
+            <h3 class="mt-6 mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">Who at Overlabels can see your content</h3>
+            <p class="mb-4 text-gray-600 dark:text-gray-400">
+              Overlabels administrators can see the contents of your account, whether you made something private or not. That includes the source
+              code, screenshots and controls of your overlays and alerts, your kits, your Lists, your bot commands, the events on your account, the
+              names and access logs of your overlay access tokens (including IP addresses), and your login sessions. Making an overlay or kit private
+              hides it from other users and from the public. It does not hide it from administrators.
+            </p>
+            <p class="mb-4 text-gray-600 dark:text-gray-400">
+              Administrators can also sign in as you. While they do, they see and can do exactly what you can, including editing your overlays and
+              acting on your Twitch channel. Starting and stopping this is recorded in an audit log with the administrator's identity and IP address.
+              They cannot see your overlay access tokens themselves: we only store a fingerprint of each token, not the token.
+            </p>
+            <p class="text-gray-600 dark:text-gray-400">
+              We look at your content to answer your support requests, to investigate reports and abuse, and to keep the service working. The
+              administrator role is held by the people who run Overlabels, and is given to as few accounts as possible. More detail is on
+              <a href="/help/your-data" class="text-purple-600 hover:underline dark:text-purple-400">Your data on Overlabels</a>.
+            </p>
           </section>
 
           <section>

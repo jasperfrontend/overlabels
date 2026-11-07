@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\OverlayTemplate;
 use App\Services\AdminAuditService;
+use App\Services\OverlayShareService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,7 +50,12 @@ class AdminTemplateController extends Controller
         ]);
     }
 
-    public function show(OverlayTemplate $template): Response
+    /**
+     * Everything the public preview shows, for any template, public or not.
+     * Admins see private overlays too; the privacy policy says so (section 4).
+     * No view is recorded: view_count is a public-interest metric.
+     */
+    public function show(OverlayTemplate $template, OverlayShareService $share): Response
     {
         $template->load('owner:id,name,twitch_id');
 
@@ -59,6 +65,7 @@ class AdminTemplateController extends Controller
 
         return Inertia::render('admin/templates/show', [
             'template' => $template,
+            'share' => $share->document($template),
             'forksCount' => $forksCount,
             'controlsCount' => $controlsCount,
             'eventMappingsCount' => $eventMappingsCount,
