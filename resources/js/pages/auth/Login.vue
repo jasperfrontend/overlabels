@@ -16,14 +16,24 @@ defineProps<{
 <template>
   <AuthBase title="Connect with Twitch" description="Overlabels has been created for the Twitch community">
     <Head title="Connect with Twitch" />
-    <div v-if="installing" class="mt-6 flex max-w-sm items-start gap-4 border border-teal-600/40 bg-teal-500/10 p-4 text-left dark:border-teal-400/40">
-      <div v-if="hasProductIcon(installing.slug)" class="flex size-12 shrink-0 items-center justify-center bg-teal-500 text-teal-950 dark:bg-teal-400">
+    <div
+      v-if="installing"
+      class="mt-6 flex max-w-sm items-start gap-4 border border-teal-600/40 bg-teal-500/10 p-4 text-left dark:border-teal-400/40"
+    >
+      <div
+        v-if="hasProductIcon(installing.slug)"
+        class="flex size-12 shrink-0 items-center justify-center bg-teal-500 text-teal-950 dark:bg-teal-400"
+      >
         <ProductIcon :slug="installing.slug" class="size-7" />
       </div>
       <p class="text-sm leading-relaxed text-foreground">
-        To install <strong class="font-semibold">{{ installing.name }}</strong>, you'll need to connect your Twitch account with Overlabels. Connecting is
-        safe and free, and you can revoke it anytime in your
-        <a href="https://www.twitch.tv/settings/connections" target="_blank" rel="noopener noreferrer" class="cursor-pointer text-teal-600 hover:underline dark:text-teal-400"
+        To install <strong class="font-semibold">{{ installing.name }}</strong
+        >, you'll need to connect your Twitch account with Overlabels. Connecting is safe and free, and you can revoke it anytime in your
+        <a
+          href="https://www.twitch.tv/settings/connections"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="cursor-pointer text-teal-600 hover:underline dark:text-teal-400"
           >Twitch settings</a
         >.
       </p>
