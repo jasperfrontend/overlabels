@@ -557,13 +557,23 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
         // JSON-returning endpoints (api/, etc.) must never be used here - they
         // get stored as url.intended when fetch() follows a 302 redirect to
         // /login, which would land the user on a raw JSON response.
+        //
+        // It must also be OUR site. url.intended comes straight from the
+        // login page's ?redirect_to=, which anyone can write into a link, so
+        // without this a link to /login?redirect_to=https://evil.example
+        // landed people on that site right after a genuine Twitch login.
+        // Resolving it through url() first means a plain /path counts as ours,
+        // and //host or a backslash trick resolves to the foreign host it is.
         $intended = session()->pull('url.intended');
-        if ($intended) {
-            $path = parse_url($intended, PHP_URL_PATH) ?? '';
+        if (is_string($intended) && $intended !== '') {
+            $target = url($intended);
+            $isOurs = in_array(parse_url($target, PHP_URL_SCHEME), ['http', 'https'], true)
+                && parse_url($target, PHP_URL_HOST) === request()->getHost();
+            $path = parse_url($target, PHP_URL_PATH) ?? '';
             $jsonPaths = ['/api/'];
-            $isSafe = ! collect($jsonPaths)->contains(fn ($prefix) => str_starts_with($path, $prefix));
+            $isSafe = $isOurs && ! collect($jsonPaths)->contains(fn ($prefix) => str_starts_with($path, $prefix));
             if ($isSafe) {
-                return redirect($intended);
+                return redirect($target);
             }
         }
 
