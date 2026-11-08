@@ -327,6 +327,14 @@ env:
     # URL - anyone holding it can fake a successful ping - so it lives here
     # rather than in env.clear.
     - HC_PING_URL
+    # Paddle store (merchant of record). All four are secrets so that moving
+    # from the sandbox account to the live one is a GitHub-secrets swap with no
+    # code change: environment, API key, client token and webhook signing
+    # secret always change together.
+    - PADDLE_ENVIRONMENT
+    - PADDLE_API_KEY
+    - PADDLE_CLIENT_TOKEN
+    - PADDLE_WEBHOOK_SECRET
 
 aliases:
   console: app exec --interactive --reuse "php artisan tinker"
