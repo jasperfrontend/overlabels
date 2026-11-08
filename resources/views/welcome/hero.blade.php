@@ -56,30 +56,61 @@
       </x-brand-icons>
       </div>
 
-      {{-- Two across on a phone, then as many as fit at 11rem or wider:
-           five fills one row on desktop, and a sixth still fits it.
-           A card's small line is the chat command its product answers to; a
-           product chat does not type into says what it does have instead. --}}
+      {{-- Two across at every width, so six products make three rows: the
+           products are what sells, so they get the room. A card's small line
+           is the chat command its product answers to; a product chat does not
+           type into says what it does have instead. Hovering (or focusing) a
+           card grows its caption box up over the image to show the product's
+           description; it stays inside the card, so it never lands under the
+           sticky nav. No hover on a phone, so no description there. --}}
       @php
           $cardLabels = [
               'chat-emote-bubbles' => '3 design presets',
               'twitch-chat-overlay' => '10+ design presets',
           ];
+          // Hover copy, hand-kept: written to earn the click, so no setup
+          // steps. A product missing here falls back to its catalogue description.
+          $cardBlurbs = [
+              'chat-checkin' => 'Viewers type !checkin and a city, and a pin with their name drops on a spinning globe. Watch your chat light up the map, and see who is watching from farthest away.',
+              'chat-emote-bubbles' => 'Every emote your chat types floats across your stream in a bubble. Five PogChamps in chat, five PogChamps drifting up. Nothing to connect, no bot to add.',
+              'chat-tower' => 'Your whole chat builds one tower together with !stack. It sways more with every block, and when it falls, everyone sees who toppled it. How high can your chat go?',
+              'follower-bowling' => 'Your ten newest followers get racked up as pins. Chat lines up with !bowl and takes turns rolling at them. Can your chat bowl a strike?',
+              'twitch-chat-overlay' => 'Your chat on stream, badges and emotes included, with nothing to connect and no bot to add. Pick one of ten looks, from a terminal to speech bubbles to a news ticker, and make it yours.',
+              'twitch-chat-plinko' => 'Chat types !drop and a ball with their name bounces down a Plinko board on stream. Most land on 5. The edges pay 1000. Who is feeling lucky?',
+          ];
+          // These lead the grid in this order; everything else follows in
+          // catalogue order. Hero cards only: the rows further down keep theirs.
+          $cardsFirst = ['twitch-chat-plinko', 'twitch-chat-overlay'];
+          $cards = collect($games)->sortBy(fn ($game) => array_search($game['slug'], $cardsFirst, true) === false
+              ? count($cardsFirst)
+              : array_search($game['slug'], $cardsFirst, true))->values();
+          // A "New" badge, hand-kept. It stays until someone takes it off.
+          $cardsNew = ['twitch-chat-plinko'];
       @endphp
-      <ul class="mt-14 grid grid-cols-2 gap-3 sm:mt-20 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] sm:gap-4" aria-label="Products">
-        @foreach ($games as $game)
+      <ul class="mt-14 grid grid-cols-2 gap-3 sm:mt-20 sm:gap-6 lg:gap-8" aria-label="Products">
+        @foreach ($cards as $game)
           @php $cmd = $command($game['description']); @endphp
-          <li class="min-w-0">
-            <a href="#{{ $game['slug'] }}" class="group flex h-full cursor-pointer flex-col overflow-hidden rounded-sm border border-sidebar-border bg-card transition-colors hover:border-sky-500 focus-visible:border-sky-500 focus-visible:outline-none">
+          <li class="group min-w-0">
+            <a href="#{{ $game['slug'] }}" aria-describedby="product-desc-{{ $game['slug'] }}" class="flex h-full cursor-pointer flex-col overflow-hidden border border-sidebar-border bg-card transition-[border-color,box-shadow] duration-200 group-hover:border-sky-500 group-hover:shadow-[0_0_0_1px_var(--color-sky-500)] focus-visible:border-sky-500 focus-visible:shadow-[0_0_0_1px_var(--color-sky-500)] focus-visible:outline-none">
               @if (!empty($game['hero']))
-                <img src="{{ $game['hero'] }}" alt="" class="block aspect-video w-full border-b border-sidebar-border object-cover transition-transform duration-300 group-hover:scale-[1.03]" width="1280" height="720" loading="lazy" />
+                <img src="{{ $game['hero'] }}" alt="" class="block aspect-video w-full border-b border-sidebar-border object-cover transition-colors duration-200 sm:group-focus-within:border-b-transparent sm:group-hover:border-b-transparent" width="1280" height="720" loading="lazy" />
               @endif
-              <span class="flex flex-1 flex-col gap-1 p-3">
-                <span class="font-mono text-xs text-violet-600 dark:text-violet-300">{{ $cardLabels[$game['slug']] ?? $cmd ?? 'no bot needed' }}</span>
-                <span class="flex items-center justify-between gap-2 text-sm font-semibold group-hover:text-sky-500">
-                  {{ $game['name'] }}
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-y-0.5 group-hover:text-sky-500" aria-hidden="true"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+              <span class="relative flex flex-1 items-center justify-between gap-3 p-3 sm:px-5 sm:py-4">
+                <span id="product-desc-{{ $game['slug'] }}" aria-hidden="true" class="absolute inset-x-0 bottom-full hidden grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-focus-within:grid-rows-[1fr] group-hover:grid-rows-[1fr] sm:grid">
+                  <span class="min-h-0 overflow-hidden">
+                    <span class="block border-t-2 border-sky-500 bg-card px-5 pt-4 pb-1 text-[15px] leading-relaxed text-foreground">{{ $cardBlurbs[$game['slug']] ?? $game['description'] }}</span>
+                  </span>
                 </span>
+                <span class="flex min-w-0 flex-col gap-1">
+                  <span class="font-mono text-xs text-violet-600 sm:text-sm dark:text-violet-300">{{ $cardLabels[$game['slug']] ?? $cmd ?? 'no bot needed' }}</span>
+                  <span class="text-sm font-semibold group-hover:text-sky-500 sm:text-xl">
+                    {{ $game['name'] }}
+                    @if (in_array($game['slug'], $cardsNew, true))
+                      <span class="ml-1.5 inline-block border border-green-600 px-1.5 py-0.5 align-middle font-mono text-[10px] leading-none font-semibold tracking-wider text-green-600 sm:ml-3 sm:px-2 sm:py-1 sm:text-xs dark:border-green-400 dark:text-green-400">NEW</span>
+                    @endif
+                  </span>
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-y-0.5 group-hover:text-sky-500 sm:h-5 sm:w-5" aria-hidden="true"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
               </span>
             </a>
           </li>
