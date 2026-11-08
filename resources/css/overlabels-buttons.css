@@ -39,6 +39,18 @@
     @apply focus-visible:ring-violet-500 dark:focus-visible:ring-violet-400;
   }
 
+  /* Cyan — primary's shape in the installed-product banner's colour, for a
+     primary action that sits inside that banner (products/page.blade.php).
+     The banner is Tailwind teal, so this is too: "cyan" is what it looks like.
+     Use instead of .btn-primary, not beside it. */
+  .btn-cyan {
+    @apply border-teal-600 bg-teal-600/35 dark:border-teal-400 dark:bg-teal-400/35;
+    @apply text-teal-950 dark:text-teal-50;
+    @apply hover:bg-teal-600/45 dark:hover:bg-teal-400/45;
+    @apply active:bg-teal-600/55 dark:active:bg-teal-400/55;
+    @apply focus-visible:ring-teal-500 dark:focus-visible:ring-teal-400;
+  }
+
   /* Secondary — violet outline. Same colour as primary, a step quieter. */
   .btn-secondary {
     @apply border-current bg-transparent;

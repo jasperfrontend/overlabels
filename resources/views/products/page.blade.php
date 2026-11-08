@@ -52,7 +52,8 @@
                     <div class="mb-10 max-w-3xl">
                         <h1 class="pp-kicker pp-kicker--title">{{ $product['name'] }}</h1>
                         <h2 class="mb-5 text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-5xl lg:text-6xl">{{ $page['tagline'] }}</h2>
-                        <p class="mb-7 max-w-2xl text-lg leading-relaxed text-foreground sm:text-xl">{!! $md($page['lede']) !!}</p>
+                        {{-- Installed: an /install link in the lede takes the banner's teal, so the sentence, the banner and its button read as one. --}}
+                        <p @class(['mb-7 max-w-2xl text-lg leading-relaxed text-foreground sm:text-xl', '[&_a[href$=install]]:text-teal-600 dark:[&_a[href$=install]]:text-teal-400' => $installed])>{!! $md($page['lede']) !!}</p>
                         @if ($installed)
                             <div class="flex flex-col gap-4 border border-teal-600/40 bg-teal-500/10 p-5 sm:flex-row sm:items-center sm:gap-5 dark:border-teal-400/40">
                                 <div class="flex min-w-0 flex-1 items-center gap-4">
@@ -64,7 +65,7 @@
                                         <p class="text-[15px] text-balance text-muted-foreground">Manage its settings whenever you like.</p>
                                     </div>
                                 </div>
-                                <a href="{{ $ctaUrl }}" class="btn btn-primary w-full shrink-0 cursor-pointer sm:w-auto">{{ $cta }}{!! $arrow !!}</a>
+                                <a href="{{ $ctaUrl }}" class="btn btn-cyan w-full shrink-0 cursor-pointer sm:w-auto">{{ $cta }}{!! $arrow !!}</a>
                             </div>
                         @else
                             <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
