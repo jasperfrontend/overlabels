@@ -24,21 +24,11 @@
           and chat has something to do until you're back.
         </p>
 
-        <div class="flex flex-wrap items-center gap-4">
-          <a href="#products" class="btn btn-primary cursor-pointer">
-            See the products
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 h-4 w-4"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+        <div class="flex flex-col items-start gap-4">
+          <a href="#products" class="btn btn-primary btn-xl w-full cursor-pointer sm:w-auto sm:px-20">
+            Browse Free Twitch Chat Games
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 h-5 w-5"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
           </a>
-          @guest
-            <a href="/login" class="btn btn-secondary gap-2 cursor-pointer">
-              <svg viewBox="0 0 24 24" fill="currentColor" class="size-4"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0 1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z" /></svg>
-              Log in with Twitch
-            </a>
-          @endguest
-          <p class="flex max-w-md items-start gap-2.5 text-sm text-foreground">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 size-5 shrink-0 text-green-500" aria-hidden="true"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-            <span>Free forever. No registration required. Overlabels never sells your data or uses it to train AI. <a href="/ai" class="cursor-pointer text-sky-500 hover:underline">Promised</a>.</span>
-          </p>
         </div>
       </div>
 
@@ -48,9 +38,11 @@
            nothing in it talks to StreamElements. --}}
       <x-brand-icons title="Every Overlabels product works with" :icons="['twitch', 'obs', 'streamlabs', 'streamelements']" size="lg" align="left" align-lg="center">
         <x-slot:footer>
-          <p class="text-sm text-foreground lg:max-w-sm lg:text-base">
-            Always 100% free and <a href="https://github.com/jasperfrontend/overlabels" class="cursor-pointer text-sky-500 hover:underline" target="_blank" rel="noopener noreferrer">open source</a>.
-            Created by <a href="https://www.twitch.tv/jasperdiscovers" class="cursor-pointer font-semibold whitespace-nowrap text-sky-500 hover:underline" target="_blank" rel="noopener noreferrer">/JasperDiscovers</a> for Twitch streamers.
+          <p class="text-sm text-balance text-foreground lg:max-w-md lg:text-base">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 inline-block size-5 -translate-y-px align-middle text-green-500" aria-hidden="true"><path d="M19.414 14.414C21 12.828 22 11.5 22 9.5a5.5 5.5 0 0 0-9.591-3.676.6.6 0 0 1-.818.001A5.5 5.5 0 0 0 2 9.5c0 2.3 1.5 4 3 5.5l5.535 5.362a2 2 0 0 0 2.879.052 2.12 2.12 0 0 0-.004-3 2.124 2.124 0 1 0 3-3 2.124 2.124 0 0 0 3.004 0 2 2 0 0 0 0-2.828l-1.881-1.882a2.41 2.41 0 0 0-3.409 0l-1.71 1.71a2 2 0 0 1-2.828 0 2 2 0 0 1 0-2.828l2.823-2.762"/></svg>
+            Always 100% free and <a href="https://github.com/jasperfrontend/overlabels" class="cursor-pointer text-sky-500 hover:underline" target="_blank" rel="noopener noreferrer">open source</a>, no registration required.
+            Created by <a href="https://www.twitch.tv/jasperdiscovers" class="cursor-pointer font-semibold whitespace-nowrap text-sky-500 hover:underline" target="_blank" rel="noopener noreferrer">JasperDiscovers</a> for Twitch streamers.
+            Overlabels never sells your data or uses it to train AI. <a href="/ai" class="cursor-pointer text-sky-500 hover:underline" target="_blank" rel="noopener">Promised</a>.
           </p>
         </x-slot:footer>
       </x-brand-icons>
