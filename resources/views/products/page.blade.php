@@ -50,15 +50,28 @@
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-5xl">
                     <div class="mb-10 max-w-3xl">
-                        <p class="pp-kicker">{{ $product['name'] }}</p>
-                        <h1 class="mb-5 text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-5xl lg:text-6xl">{{ $page['tagline'] }}</h1>
+                        <h1 class="pp-kicker pp-kicker--title">{{ $product['name'] }}</h1>
+                        <h2 class="mb-5 text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-5xl lg:text-6xl">{{ $page['tagline'] }}</h2>
                         <p class="mb-7 max-w-2xl text-lg leading-relaxed text-foreground sm:text-xl">{!! $md($page['lede']) !!}</p>
-                        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
-                            <a href="{{ $ctaUrl }}" class="btn btn-primary w-full cursor-pointer sm:w-auto">{{ $cta }}{!! $arrow !!}</a>
-                            @unless ($installed)
+                        @if ($installed)
+                            <div class="flex flex-col gap-4 border border-teal-600/40 bg-teal-500/10 p-5 sm:flex-row sm:items-center sm:gap-5 dark:border-teal-400/40">
+                                <div class="flex min-w-0 flex-1 items-center gap-4">
+                                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-500 text-teal-950 dark:bg-teal-400" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M20 6 9 17l-5-5"/></svg>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <p class="font-bold">{{ $product['name'] }} is installed</p>
+                                        <p class="text-[15px] text-balance text-muted-foreground">Manage its settings whenever you like.</p>
+                                    </div>
+                                </div>
+                                <a href="{{ $ctaUrl }}" class="btn btn-primary w-full shrink-0 cursor-pointer sm:w-auto">{{ $cta }}{!! $arrow !!}</a>
+                            </div>
+                        @else
+                            <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
+                                <a href="{{ $ctaUrl }}" class="btn btn-primary w-full cursor-pointer sm:w-auto">{{ $cta }}{!! $arrow !!}</a>
                                 <span class="text-sm text-muted-foreground">Free. {{ ucfirst($page['steps_word']) }} steps.</span>
-                            @endunless
-                        </div>
+                            </div>
+                        @endif
                         @include('products._works-with', ['class' => 'mt-14 sm:mt-16'])
                     </div>
 

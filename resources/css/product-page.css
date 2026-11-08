@@ -19,6 +19,15 @@
 .dark .pp-kicker {
   color: #2dd4bf;
 }
+/* The product name in the hero is the page's h1, drawn as the kicker. */
+.pp-kicker--title {
+  font-size: 0.875rem;
+}
+@media (min-width: 640px) {
+  .pp-kicker--title {
+    font-size: 1rem;
+  }
+}
 .pp-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.9em;
