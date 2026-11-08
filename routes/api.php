@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\ListReadController;
 use App\Http\Controllers\ExpressionTagController;
 use App\Http\Controllers\OverlayBroadcastingAuthController;
 use App\Http\Controllers\OverlayTemplateController;
+use App\Http\Controllers\PaddleWebhookController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TwitchEventSubController;
 use App\Http\Middleware\CheckBanned;
@@ -199,6 +200,11 @@ Route::prefix('/map')->group(function () {
 // Twitch webhook endpoint - must be accessible without authentication or CSRF
 Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
+
+// Paddle webhook (store fulfillment) - no auth/CSRF, verified by Paddle-Signature
+Route::post('/paddle/webhook', [PaddleWebhookController::class, 'handle'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])
+    ->name('webhooks.paddle');
 
 // Internal endpoint for StreamLabs Node.js listener to fetch active integrations
 Route::get('/internal/streamlabs/integrations', function () {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\AccountController;
+use App\Http\Controllers\Settings\BillingPortalController;
 use App\Http\Controllers\Settings\BMACIntegrationController;
 use App\Http\Controllers\Settings\BotAliasesController;
 use App\Http\Controllers\Settings\BotBuiltinsController;
@@ -35,6 +36,10 @@ Route::middleware('auth.redirect')->group(function () {
 
     Route::delete('/settings/account', [AccountController::class, 'destroy'])
         ->name('settings.account.destroy');
+
+    Route::get('/settings/billing/portal', BillingPortalController::class)
+        ->middleware('throttle:10,1')
+        ->name('settings.billing.portal');
 
     Route::get('/settings/usage', [UsageController::class, 'index'])
         ->name('settings.usage');

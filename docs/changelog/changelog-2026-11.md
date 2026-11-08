@@ -1,5 +1,29 @@
 # Changelog - November 2026
 
+## OL-2611-004 - November 8th, 2026 - feat(store): Paddle fulfillment backend for one-off product purchases
+
+The groundwork for selling paid products. Paddle is the merchant of record: it takes the payment,
+charges the VAT, handles refunds and chargebacks, and issues the invoice as "Overlabels via
+Paddle.com". Overlabels only has to know who bought what, and this is that half. There is no Buy
+button yet, on purpose.
+
+- Paddle reports every sale to `POST /api/paddle/webhook`. The signature is checked on the raw body
+  before anything is read. A delivery that fails the check, or fails to save, is answered with an
+  error so Paddle tries again (up to 60 times over about two days on live).
+- A sale is tied to an Overlabels account through the checkout's `custom_data`
+  (`overlabels_user_id`). Verified in the sandbox: the value survives to `transaction.completed`
+  unchanged. A sale that names no real account is still recorded, with no user, so it can be
+  matched by hand.
+- Purchases are one-off. There are no plans and no subscription state; subscription events are
+  acknowledged and ignored. An approved full refund or chargeback takes the product back, a
+  reversed chargeback gives it back. `PaddlePurchase::userOwns($user, $productId)` is the check.
+- Nothing about the buyer is stored beyond the Paddle customer id and which account it belongs to.
+  No email, no address: Paddle keeps the billing details.
+- `/settings/billing/portal` sends a buyer to their Paddle customer portal for their purchases and
+  invoices. Nothing links to it yet.
+- Prod needs `PADDLE_ENVIRONMENT`, `PADDLE_API_KEY`, `PADDLE_CLIENT_TOKEN` and
+  `PADDLE_WEBHOOK_SECRET` before it can take a delivery.
+
 ## OL-2611-003 - November 7th, 2026 - feat(chat): let chatters redact their message on the chat overlay with !hide
 
 A chatter types `!hide my message here` and the chat overlay draws "my message here" in the Redacted

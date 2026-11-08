@@ -23,6 +23,17 @@ return [
         'cache_ttl' => (int) env('TWITCH_CACHE_TTL', 10),
     ],
 
+    // Paddle is the merchant of record for the Overlabels store (one-off
+    // product purchases, no subscriptions). The webhook secret belongs to ONE
+    // notification destination and is not the API key. Sandbox and live are
+    // separate accounts with separate keys, secrets and ids.
+    'paddle' => [
+        'environment' => env('PADDLE_ENVIRONMENT', 'sandbox'),
+        'api_key' => env('PADDLE_API_KEY'),
+        'client_token' => env('PADDLE_CLIENT_TOKEN'),
+        'webhook_secret' => env('PADDLE_WEBHOOK_SECRET'),
+    ],
+
     'streamlabs' => [
         'client_id' => env('STREAMLABS_CLIENT_ID'),
         'client_secret' => env('STREAMLABS_CLIENT_SECRET'),
