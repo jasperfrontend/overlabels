@@ -87,6 +87,7 @@ class ExternalAlertService
                 ttsText: $ttsText,
                 ttsDelayMs: (int) ($template->tts_delay_ms ?? 0),
                 alertSoundUrl: $template->alert_sound_url,
+                head: $template->head,
             );
             if ($alert->hasOverlayWork()) {
                 // The worker closes the ledger row by this id once Reverb answers.

@@ -605,6 +605,22 @@ constraint, not a preference.
 - `OverlayRenderer.vue` early-exits in `handleAlertTriggered()`: if targetSlugs !== null and slug not in list, return
 - Semantic: empty pivot = null slugs = fires on ALL overlays (backward-compatible default)
 
+### Alert sources (Nov 2026, OL-2611-005)
+
+- **An alert's source does not have to ride its broadcast.** Reverb refuses an events request over
+  10 KB, and alerts used to carry html + css on every fire, so a bigger alert could be saved and
+  never show. The render payload now ships `alert_sources` (head, html, css + `version`, a content
+  hash from `OverlayTemplate::sourceVersion()`) for every alert that can fire on the overlay.
+- `AlertTriggered` always carries `alert_template_slug` + `alert_template_version`, and inlines the
+  source only under `INLINE_SOURCE_BUDGET`. Over it, html/css/head go out as EMPTY STRINGS with
+  `source_omitted: true` - never null, the pre-change renderer throws on a null html. The overlay uses, in order: the inlined source, a
+  mount-time copy with the same version, a fetch from `api.overlay.alert-source`
+  (`utils/alertSources.ts`). Do not move the template back onto every broadcast, and do not chunk.
+- `api.overlay.alert-source` is a read in the same shape as the render call: token in the body,
+  nothing written, no `recordAccess()`. Keep it that way (overlays never phone home).
+- An alert's `head` now applies (it was never broadcast before). One slot, `[data-alert-head]`,
+  replaced per alert; head stylesheets are warmed with `rel=preload` at mount.
+
 ## Provider Icons (Implemented Jul 2026)
 
 - 4x4 grid SVG icons identify the source service in the events feed (`EventsTable.vue`). Shape is the PRIMARY identity channel - legible in sunlight and under color vision deficiency even with no color at all. Replaced the color-only `eventDotClass` dot (which mixed event-type + source color).

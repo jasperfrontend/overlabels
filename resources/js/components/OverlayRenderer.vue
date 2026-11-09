@@ -43,6 +43,7 @@ import { useEmoteParser } from '@/composables/useEmoteParser';
 import { useTwitchChat } from '@/composables/useTwitchChat';
 import { type BadgeManifest, EMPTY_BADGE_MANIFEST, badgeImages, toBadgeManifest } from '@/utils/badgeRenderer';
 import { toChatFilters } from '@/utils/chatFilters';
+import { type AlertSource, type AlertSourceMap, headStylesheetHrefs, planAlertSource, toAlertSource, toAlertSourceMap } from '@/utils/alertSources';
 import { redactedHtml, toRedactCommand } from '@/utils/chatRedact';
 import type { ChatSampleFeed } from '@/utils/chatSample';
 import { withChatSlots } from '@/utils/chatSlots';
@@ -125,6 +126,13 @@ const alertCssPreload = ref<Record<string, string>>({});
 // tags up front. Tested empirically as ~1s faster first-play vs. instantiating
 // Audio() lazily on alert dispatch.
 const alertSoundPreload = ref<Record<string, string>>({});
+// Alert template sources (head, html, css + version), keyed by slug. Loaded
+// at mount for every alert that can fire here, kept current from broadcasts
+// and fetches. Not reactive: only read at fire time. See utils/alertSources.
+let alertSources: AlertSourceMap = {};
+// Bumped per fired alert, so a source fetch that resolves after a newer
+// alert has already shown does not paint over it.
+let alertSequence = 0;
 const data = ref<Record<string, any> | undefined>(undefined);
 const userLocale = ref<string>('en-US');
 const error = ref('');
@@ -1026,6 +1034,9 @@ function showAlert(alertData: AlertData) {
     alertTimeout.value = null;
   }
 
+  // The alert's own head (font links, mostly). Before the CSS that uses it.
+  injectAlertHead(alertData.head);
+
   // Inject alert CSS. Compiled (utility) CSS goes first so the author's inline
   // alert CSS can override it when rules collide.
   injectAlertCompiledStyle(alertData.compiledCss);
@@ -1061,6 +1072,68 @@ function injectAlertStyle(styleString: string) {
   style.id = 'alert-style';
   style.textContent = styleString;
   document.head.appendChild(style);
+}
+
+// An alert's head, in one slot that the next alert's head replaces. Left in
+// place when the next alert brings the same head, so a font stylesheet is not
+// torn out and re-added between two alerts that both use it.
+let injectedAlertHead = '';
+function injectAlertHead(headString: string) {
+  if (headString === injectedAlertHead) return;
+  injectedAlertHead = headString;
+  document.querySelectorAll('[data-alert-head]').forEach((el) => el.remove());
+  if (!headString) return;
+  const doc = new DOMParser().parseFromString(`<head>${headString}</head>`, 'text/html');
+  for (const element of Array.from(doc.head.children)) {
+    const clone = element.cloneNode(true) as Element;
+    clone.setAttribute('data-alert-head', 'true');
+    document.head.appendChild(clone);
+  }
+}
+
+// Fetch the stylesheets alert heads link (web fonts) at mount, so the first
+// alert of the stream does not paint in a fallback font while they load.
+function warmAlertHeadStylesheets(sources: AlertSourceMap) {
+  const hrefs = new Set(Object.values(sources).flatMap((s) => headStylesheetHrefs(s.head)));
+  for (const href of hrefs) {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'style';
+    link.href = href;
+    document.head.appendChild(link);
+  }
+}
+
+// One alert's source from api.overlay.alert-source, for an alert this overlay
+// has no current copy of. A read, like the render call: nothing is written.
+async function fetchAlertSource(slug: string): Promise<AlertSource | null> {
+  const csrfToken = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  try {
+    const response = await fetch('/api/overlay/alert-source', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken || '',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ slug, token: props.token }),
+    });
+    if (!response.ok) {
+      console.warn(`Alert source for ${slug} could not be loaded (${response.status})`);
+      return null;
+    }
+    const json = await response.json();
+    const source = toAlertSource(json);
+    if (source) {
+      alertSources[slug] = source;
+      alertCssPreload.value = { ...alertCssPreload.value, [slug]: typeof json.compiled_css === 'string' ? json.compiled_css : '' };
+    }
+    return source;
+  } catch (err) {
+    console.warn(`Alert source for ${slug} could not be loaded`, err);
+    return null;
+  }
 }
 
 // Compiled utility CSS for an alert template, resolved from the preload map
@@ -1113,6 +1186,8 @@ onMounted(async () => {
     alertCssPreload.value = json.alert_css_preload ?? {};
     alertSoundPreload.value = json.alert_sound_preload ?? {};
     installAudioPreloadLinks(alertSoundPreload.value);
+    alertSources = toAlertSourceMap(json.alert_sources);
+    warmAlertHeadStylesheets(alertSources);
     data.value = json.data ?? {};
 
     // Mirror every Twitch template-tag value from the initial snapshot into the
@@ -1685,22 +1760,34 @@ function handleAlertTriggered(event: any) {
     ...processedData,
   };
 
-  // Compiled utility CSS is not inlined on the broadcast - we look it up in
-  // the preload map by alert_template_slug. Miss case (brand-new alert created
-  // mid-session, not yet in the map) falls back to empty string, which still
-  // renders correctly with only the author's inline CSS.
   const alertSlug: string | undefined = alertData.alert_template_slug;
-  const compiledCss = alertSlug ? (alertCssPreload.value[alertSlug] ?? '') : '';
+  const sequence = ++alertSequence;
 
-  showAlert({
-    head: alertData.head,
-    html: alertData.html,
-    css: alertData.css,
-    compiledCss,
-    data: mergedData,
-    duration: alertData.duration,
-    timestamp: alertData.timestamp || Date.now(),
-  });
+  // Compiled utility CSS is never inlined on the broadcast - it comes from the
+  // preload map by slug (filled by a source fetch too). A miss renders with the
+  // author's own CSS only.
+  const show = (source: AlertSource) =>
+    showAlert({
+      head: source.head,
+      html: source.html,
+      css: source.css,
+      compiledCss: alertSlug ? (alertCssPreload.value[alertSlug] ?? '') : '',
+      data: mergedData,
+      duration: alertData.duration,
+      timestamp: alertData.timestamp || Date.now(),
+    });
+
+  // The source rode the broadcast, or the mount-time copy is current, or it
+  // has to be fetched. See utils/alertSources.
+  const plan = planAlertSource(alertSources, alertData);
+  if (plan.kind === 'ready') {
+    if (plan.remember && alertSlug) alertSources[alertSlug] = plan.source;
+    show(plan.source);
+  } else if (plan.kind === 'fetch') {
+    void fetchAlertSource(plan.slug).then((source) => {
+      if (source && sequence === alertSequence) show(source);
+    });
+  }
 
   // Sound URL comes from the broadcast - it's the canonical "current" value
   // and self-updates when the streamer edits their alert template (no overlay

@@ -158,6 +158,37 @@ class OverlayTemplate extends Model
     }
 
     /**
+     * A short content hash of the three fields an alert renders from.
+     *
+     * An overlay loads the source of every alert that can fire on it once, at
+     * mount (`alert_sources` in the render payload), and each AlertTriggered
+     * carries this version. A match means the overlay's copy is current; a
+     * mismatch means the alert was edited since the overlay loaded, and the
+     * overlay fetches it again. A hash rather than updated_at so an unrelated
+     * save (a rename, a view count) never invalidates anything.
+     */
+    public static function sourceVersion(?string $head, ?string $html, ?string $css): string
+    {
+        return substr(hash('sha256', ($head ?? '')."\0".($html ?? '')."\0".($css ?? '')), 0, 16);
+    }
+
+    /**
+     * What an overlay needs to render this alert without it riding the
+     * broadcast. See sourceVersion().
+     *
+     * @return array{head:string,html:string,css:string,version:string}
+     */
+    public function alertSource(): array
+    {
+        return [
+            'head' => $this->head ?? '',
+            'html' => $this->html ?? '',
+            'css' => $this->css ?? '',
+            'version' => self::sourceVersion($this->head, $this->html, $this->css),
+        ];
+    }
+
+    /**
      * Extract template tags from HTML/CSS.
      *
      * @param  array<string,int>|null  $caps  Per-user foreach caps keyed by

@@ -755,6 +755,7 @@ class TwitchEventSubController extends Controller
                 $ttsText,
                 (int) ($mapping->template->tts_delay_ms ?? 0),
                 $mapping->template->alert_sound_url,
+                $mapping->template->head,
             );
             if ($alert->hasOverlayWork()) {
                 // The worker closes the ledger row by this id once Reverb answers.

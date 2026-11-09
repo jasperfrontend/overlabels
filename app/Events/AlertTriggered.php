@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\OverlayTemplate;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -34,6 +35,18 @@ class AlertTriggered implements ShouldBroadcast
 
     public ?string $alertSoundUrl;
 
+    public string $head;
+
+    /**
+     * Reverb refuses an events request over 10 000 bytes (`max_request_size`,
+     * the whole wrapped request, with the payload JSON-encoded a second time
+     * inside it). The alert's own source rides along only while the escaped
+     * payload stays under this, leaving room for the request envelope. Past
+     * it the overlay renders from its mount-time copy or fetches the source,
+     * so an alert of any size fires. See OverlayTemplate::sourceVersion().
+     */
+    public const INLINE_SOURCE_BUDGET = 9000;
+
     /**
      * Create a new event instance.
      *
@@ -52,7 +65,8 @@ class AlertTriggered implements ShouldBroadcast
         ?string $alertTemplateSlug = null,
         ?string $ttsText = null,
         int $ttsDelayMs = 0,
-        ?string $alertSoundUrl = null
+        ?string $alertSoundUrl = null,
+        ?string $head = null,
     ) {
         $this->alertId = $alertId;
         $this->html = $html;
@@ -65,6 +79,7 @@ class AlertTriggered implements ShouldBroadcast
         $this->ttsText = $ttsText;
         $this->ttsDelayMs = max(0, $ttsDelayMs);
         $this->alertSoundUrl = $alertSoundUrl;
+        $this->head = $head ?? '';
     }
 
     /**
@@ -98,33 +113,48 @@ class AlertTriggered implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
+        $alert = [
+            'alert_id' => $this->alertId,
+            'data' => $this->data,
+            'duration' => $this->duration,
+            'timestamp' => now()->timestamp,
+            'target_overlay_slugs' => $this->targetOverlaySlugs,
+            // The alert template this fired. The overlay resolves its source
+            // (html, css, head) and compiled utility CSS by this slug from the
+            // maps it loaded at mount, so neither has to ride every broadcast.
+            'alert_template_slug' => $this->alertTemplateSlug,
+            // Content hash of the source as it is NOW. The overlay's mount-time
+            // copy is used only when it matches; otherwise the source inlined
+            // below wins, or the overlay fetches it. Edits made after OBS
+            // loaded the overlay therefore show on the next fire.
+            'alert_template_version' => OverlayTemplate::sourceVersion($this->head, $this->html, $this->css),
+            // Milliseconds to wait after the alert fires before playing TTS
+            // audio, so alert sounds/animations can play first. The overlay
+            // schedules playback relative to this delay when the matching
+            // TtsAudioReady broadcast arrives. 0 = play as soon as audio is
+            // ready. The resolved TTS string itself is NOT broadcast - it's
+            // pre-synthesized server-side by SynthesizeAlertTts.
+            'tts_delay_ms' => $this->ttsDelayMs,
+            // The canonical sound URL at fire time. The mount-time sound map
+            // only pre-warms the HTTP cache; this is what plays.
+            'alert_sound_url' => $this->alertSoundUrl,
+        ];
+
+        // Inline the source while it fits: it saves the overlay a lookup, and
+        // an overlay still running the JS from before alert_sources existed
+        // can only render what arrives here. Without a slug there is nothing
+        // to look the source up by, so it always rides.
+        $withSource = $alert + ['html' => $this->html, 'css' => $this->css, 'head' => $this->head, 'source_omitted' => false];
+        $fits = strlen(json_encode(json_encode(['alert' => $withSource]))) <= self::INLINE_SOURCE_BUDGET;
+
+        // Left out: empty strings, not nulls, because the pre-alert_sources
+        // renderer runs the html through processTemplate() and would throw on
+        // null. `source_omitted` is what tells the current renderer to look the
+        // source up instead of rendering the empty string.
         return [
-            'alert' => [
-                'alert_id' => $this->alertId,
-                'html' => $this->html,
-                'css' => $this->css,
-                'data' => $this->data,
-                'duration' => $this->duration,
-                'timestamp' => now()->timestamp,
-                'target_overlay_slugs' => $this->targetOverlaySlugs,
-                // Reference to the alert template's compiled utility CSS. The
-                // overlay preloads a { slug: compiled_css } map on mount so we
-                // keep this broadcast payload small even when the template
-                // carries a large utility stylesheet.
-                'alert_template_slug' => $this->alertTemplateSlug,
-                // Milliseconds to wait after the alert fires before playing TTS
-                // audio, so alert sounds/animations can play first. The overlay
-                // schedules playback relative to this delay when the matching
-                // TtsAudioReady broadcast arrives. 0 = play as soon as audio is
-                // ready. The resolved TTS string itself is NOT broadcast - it's
-                // pre-synthesized server-side by SynthesizeAlertTts.
-                'tts_delay_ms' => $this->ttsDelayMs,
-                // Fallback URL for the alert sound. Normally the overlay reads
-                // the sound URL from the mount-time preload map (keyed by
-                // alert_template_slug). This field covers the case where a
-                // template was created mid-session and isn't in that map yet.
-                'alert_sound_url' => $this->alertSoundUrl,
-            ],
+            'alert' => $fits || $this->alertTemplateSlug === null
+                ? $withSource
+                : $alert + ['html' => '', 'css' => '', 'head' => '', 'source_omitted' => true],
         ];
     }
 

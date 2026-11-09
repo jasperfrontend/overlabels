@@ -1,5 +1,33 @@
 # Changelog - November 2026
 
+## OL-2611-005 - November 9th, 2026 - feat(alerts): alerts of any size fire, and an alert's head finally applies
+
+An alert used to travel to the overlay whole, html and css included, on every single fire. Reverb
+refuses any broadcast over 10 KB, so an alert bigger than that could be saved, mapped and tested in
+the editor, and then never appear on stream. The delivery ledger marked it `failed` and nothing said
+why. Found while building the "Stamped" donation alerts kit, whose first draft was 10.2-11.6 KB per
+alert and would never have shown.
+
+- The overlay now loads the source of every alert that can fire on it when it opens (`alert_sources`
+  in the render payload: head, html, css and a content-hash version), the same way it already
+  preloaded compiled CSS and alert sounds.
+- A broadcast carries the alert's slug, its version and the event data. The source rides along only
+  while the whole message stays under 9000 bytes; past that it is sent as empty strings with
+  `source_omitted: true`. A small alert therefore still arrives complete, which keeps overlays that
+  were open in OBS during the deploy working without a reload.
+- An alert the overlay has no current copy of (created or edited after OBS loaded it, and too big to
+  inline) is fetched once from `POST /api/overlay/alert-source`, a token-authenticated read in the
+  same shape as the render call. It writes nothing and records no access. Only the token owner's
+  own alerts resolve.
+- An alert's `head` field now works. It was never in the broadcast, so a font `<link>` in an alert's
+  head did nothing and authors had to `@import` instead. Head stylesheets are also warmed when the
+  overlay opens, so the first alert of a stream does not paint in a fallback font.
+- Verified end to end on local Reverb in Firefox with a 21.9 KB alert: it fired from the mount-time
+  copy, then again after an edit through the fetch, and a small alert still arrived inline.
+- Chunking the broadcast across several messages was considered and rejected: it would keep
+  resending a template that never changes between fires, add ordering and loss handling, and
+  multiply the metered message count.
+
 ## OL-2611-004 - November 8th, 2026 - feat(store): Paddle fulfillment backend for one-off product purchases
 
 The groundwork for selling paid products. Paddle is the merchant of record: it takes the payment,

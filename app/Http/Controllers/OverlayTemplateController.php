@@ -892,16 +892,20 @@ class OverlayTemplateController extends Controller
                 $finalData = array_merge($finalData, $this->buildTowerData($user));
             }
 
-            // Preload compiled_css for every alert template owned by this user that
-            // could fire on this static overlay (no targeting = fires everywhere, or
-            // explicitly targets this overlay). Shipped once on overlay mount so the
-            // per-alert Reverb payload stays slim - AlertTriggered carries only a slug
-            // reference and this map resolves it client-side.
+            // Preload every alert template owned by this user that could fire on
+            // this static overlay (no targeting = fires everywhere, or explicitly
+            // targets this overlay): its source (head, html, css + a content-hash
+            // version) and its compiled_css. Shipped once on overlay mount so an
+            // AlertTriggered can carry a slug and a version instead of the whole
+            // template - Reverb refuses a broadcast over 10 KB, so a template that
+            // only travelled on the broadcast could never be bigger than that.
+            // A stale or missing copy is refetched via api.overlay.alert-source.
             // alert_sound_url for the same set is shipped alongside so the renderer
             // can emit <link rel="preload" as="audio"> tags on mount, shaving ~1s
             // off first-play latency vs. instantiating Audio() lazily on dispatch.
             $alertCssPreload = [];
             $alertSoundPreload = [];
+            $alertSources = [];
             // Whether the emote library is worth downloading for this overlay.
             //
             // The library exists for exactly two alert fields (event.message.text
@@ -914,12 +918,10 @@ class OverlayTemplateController extends Controller
             // whether an alert can fire here (almost always yes) but whether any
             // alert that can fire here actually renders an emote-parsed field.
             //
-            // Computed in Postgres so the html blobs never leave the database.
             $alertsNeedEmotes = false;
             if ($template->type === 'static') {
                 $alertTemplates = OverlayTemplate::query()
-                    ->select(['id', 'slug', 'compiled_css', 'alert_sound_url'])
-                    ->selectRaw("(html LIKE '%event.message.text%' OR html LIKE '%event.user_input%') AS uses_emote_fields")
+                    ->select(['id', 'slug', 'head', 'html', 'css', 'compiled_css', 'alert_sound_url'])
                     ->where('owner_id', $user->id)
                     ->where('type', 'alert')
                     ->with(['targetStaticOverlays:id'])
@@ -931,9 +933,11 @@ class OverlayTemplateController extends Controller
                     if (! $firesHere) {
                         continue;
                     }
-                    if ($alertTemplate->uses_emote_fields) {
+                    $html = (string) $alertTemplate->html;
+                    if (str_contains($html, 'event.message.text') || str_contains($html, 'event.user_input')) {
                         $alertsNeedEmotes = true;
                     }
+                    $alertSources[$alertTemplate->slug] = $alertTemplate->alertSource();
                     if (! empty($alertTemplate->compiled_css)) {
                         $alertCssPreload[$alertTemplate->slug] = $alertTemplate->compiled_css;
                     }
@@ -952,6 +956,7 @@ class OverlayTemplateController extends Controller
                     'compiled_css' => $template->compiled_css,
                     'tags' => $template->template_tags,
                 ],
+                'alert_sources' => (object) $alertSources,
                 'alert_css_preload' => $alertCssPreload,
                 'alert_sound_preload' => $alertSoundPreload,
                 // Tells the overlay whether to preload the emote library. Only a

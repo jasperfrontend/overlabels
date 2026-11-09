@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\Internal\BotSettingsController;
 use App\Http\Controllers\Api\Internal\BotTokenController;
 use App\Http\Controllers\Api\Internal\BotTowerController;
 use App\Http\Controllers\Api\ListReadController;
+use App\Http\Controllers\Api\OverlayAlertSourceController;
 use App\Http\Controllers\ExpressionTagController;
 use App\Http\Controllers\OverlayBroadcastingAuthController;
 use App\Http\Controllers\OverlayTemplateController;
@@ -86,6 +87,13 @@ Route::prefix('/overlay')->group(function () {
     Route::post('/render', [OverlayTemplateController::class, 'renderAuthenticated'])
         ->name('api.overlay.render')
         ->middleware(['throttle:overlay', 'rate.limit.overlay', 'lockdown'])
+        ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
+
+    // One alert template's source, for an overlay whose mount-time copy is
+    // missing or stale. Read-only. See OverlayAlertSourceController.
+    Route::post('/alert-source', OverlayAlertSourceController::class)
+        ->name('api.overlay.alert-source')
+        ->middleware(['throttle:overlay', 'lockdown'])
         ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 
     // Overlay-token-authenticated broadcasting auth endpoint. Lets a session-

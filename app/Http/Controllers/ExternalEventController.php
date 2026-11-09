@@ -90,6 +90,7 @@ class ExternalEventController extends Controller
             ttsText: $ttsText,
             ttsDelayMs: (int) ($template->tts_delay_ms ?? 0),
             alertSoundUrl: $template->alert_sound_url,
+            head: $template->head,
         );
         if ($alert->hasOverlayWork()) {
             broadcast($alert);
