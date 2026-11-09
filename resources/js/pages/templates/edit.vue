@@ -902,15 +902,15 @@ onMounted(() => {
                     id="chat_message"
                     v-model="form.chat_message"
                     rows="3"
-                    maxlength="500"
+                    maxlength="2000"
                     class="input-border w-full font-mono text-sm"
                     placeholder="[[[event.user_name]]] just resubscribed for [[[event.streak_months]]] month[[[if:event.streak_months != 1]]]s[[[endif]]]! Thank you!"
                   />
                   <div v-if="form.errors.chat_message" class="mt-1 text-sm text-red-600">{{ form.errors.chat_message }}</div>
                   <p class="mt-1 text-xs text-foreground/70">
                     Same tags as TTS. <code class="rounded bg-muted px-1">[[[if]]]</code>, <code class="rounded bg-muted px-1">[[[else]]]</code> and
-                    <code class="rounded bg-muted px-1">[[[endif]]]</code> work here like they do in an overlay. Capped at 500 characters (Twitch's
-                    chat limit).
+                    <code class="rounded bg-muted px-1">[[[endif]]]</code> work here like they do in an overlay. Twitch shows up to 500 characters per
+                    message, so longer output is posted as up to 3 messages. Anything past that is left out.
                   </p>
 
                   <div v-if="template.template_tags && template.template_tags.length" class="mt-3">

@@ -775,12 +775,12 @@ class TwitchEventSubController extends Controller
             // Optional bot chat message - queued for the bot to post. Gated on
             // bot_enabled so we never enqueue a message the bot can't deliver
             // (it only joins channels where the flag is on).
+            // One row per part, in order: the bot posts rows oldest first.
             if ($user->bot_enabled) {
-                $botMessage = $rendered['chat'];
-                if ($botMessage !== null) {
+                foreach (AlertMessageRenderer::chatParts($rendered['chat']) as $part) {
                     BotChatOutbox::create([
                         'user_id' => $user->id,
-                        'message' => $botMessage,
+                        'message' => $part,
                     ]);
                 }
             }

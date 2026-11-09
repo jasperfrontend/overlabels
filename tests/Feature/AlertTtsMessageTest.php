@@ -490,3 +490,16 @@ test('alert renderer fills an absent value with its default, and a present value
         ->and($renderer->renderMessage($user, $command, ['event.user_name' => 'Alice']))
         ->toBe('thanks Alice');
 });
+
+test('a TTS line longer than 500 characters is spoken whole', function () {
+    Event::fake([AlertTriggered::class]);
+
+    [$user] = makeUserWithAlertTemplate('[[[event.from_name]]] says: [[[event.message]]] Thank you!');
+
+    $note = trim(str_repeat('lorem ipsum dolor ', 40)); // ~720 chars
+    $event = makeKofiDonationEvent($user, ['event.from_name' => 'Kim', 'event.message' => $note]);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    Event::assertDispatched(AlertTriggered::class, fn (AlertTriggered $e) => $e->ttsText === "Kim says: {$note} Thank you!");
+});

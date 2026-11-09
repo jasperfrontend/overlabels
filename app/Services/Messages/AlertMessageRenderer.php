@@ -53,7 +53,23 @@ class AlertMessageRenderer
         return Dsl::tagPattern();
     }
 
-    private const int MAX_RESOLVED_LENGTH = 500;
+    /**
+     * Ceiling on a resolved TTS line. Same number as the source cap on
+     * `tts_message`, so a line that fits the editor is never cut short by
+     * a few expanded tags. It still bounds what one alert can spend on
+     * synthesis when a tag value (a supporter's note) runs long.
+     */
+    private const int MAX_TTS_LENGTH = 2000;
+
+    /** Twitch rejects a chat message over 500 characters; it never splits one. */
+    public const int CHAT_PART_LENGTH = 500;
+
+    /**
+     * How many chat messages one alert may post. Longer output is split
+     * into this many parts and the rest is dropped, so a long note cannot
+     * flood chat. The editor's help text states this number.
+     */
+    public const int CHAT_MAX_PARTS = 3;
 
     public function __construct(
         private readonly ExpressionControlHydrator $expressions,
@@ -71,20 +87,69 @@ class AlertMessageRenderer
             return null;
         }
 
-        return $this->resolve($user, $message, $templateData);
+        return $this->resolve($user, $message, $templateData, self::MAX_TTS_LENGTH);
     }
 
     /**
      * Render a message for posting to chat via BotChatOutbox. Identical tag
      * resolution to render(), but WITHOUT the `tts` mute gate - bot chat
      * messages are gated only by the user's `bot_enabled` flag, checked at the
-     * dispatch site. The 500-char cap doubles as a fit for Twitch's chat limit.
+     * dispatch site. Not length-capped: chatParts() fits it to Twitch.
      *
      * @param  array<string,mixed>  $templateData
      */
     public function renderMessage(User $user, ?string $message, array $templateData): ?string
     {
-        return $this->resolve($user, $message, $templateData);
+        return $this->resolve($user, $message, $templateData, null);
+    }
+
+    /**
+     * Split a rendered chat message into the messages the bot posts, in
+     * order. Twitch refuses anything over CHAT_PART_LENGTH, so longer output
+     * is broken at the last space that fits (a hard cut only for a single
+     * word longer than a whole message) and capped at CHAT_MAX_PARTS.
+     *
+     * @return list<string>
+     */
+    public static function chatParts(?string $message): array
+    {
+        $rest = trim((string) $message);
+        $parts = [];
+
+        while ($rest !== '' && count($parts) < self::CHAT_MAX_PARTS) {
+            if (mb_strlen($rest) <= self::CHAT_PART_LENGTH) {
+                $parts[] = $rest;
+                break;
+            }
+
+            // The character just past the limit counts: a space there means
+            // the whole first CHAT_PART_LENGTH characters fit as they are.
+            $window = mb_substr($rest, 0, self::CHAT_PART_LENGTH + 1);
+            $cut = self::lastWhitespace($window);
+            if ($cut === null || $cut === 0) {
+                $cut = self::CHAT_PART_LENGTH;
+            }
+
+            $part = rtrim(mb_substr($rest, 0, $cut));
+            if ($part !== '') {
+                $parts[] = $part;
+            }
+            $rest = ltrim(mb_substr($rest, $cut));
+        }
+
+        return $parts;
+    }
+
+    /** Character offset of the last whitespace in $text, or null. */
+    private static function lastWhitespace(string $text): ?int
+    {
+        if (! preg_match_all('/\s/u', $text, $matches, PREG_OFFSET_CAPTURE)) {
+            return null;
+        }
+
+        $byteOffset = end($matches[0])[1];
+
+        return mb_strlen(substr($text, 0, $byteOffset));
     }
 
     /**
@@ -110,8 +175,8 @@ class AlertMessageRenderer
         $data = array_merge($templateData, $snapshot->rolls);
 
         return [
-            'tts' => $this->isGatedOff($user) ? null : $this->resolveWith($user, $ttsMessage, $snapshot->values, $data),
-            'chat' => $this->resolveWith($user, $chatMessage, $snapshot->values, $data),
+            'tts' => $this->isGatedOff($user) ? null : $this->resolveWith($user, $ttsMessage, $snapshot->values, $data, self::MAX_TTS_LENGTH),
+            'chat' => $this->resolveWith($user, $chatMessage, $snapshot->values, $data, null),
             'data' => $data,
         ];
     }
@@ -122,22 +187,24 @@ class AlertMessageRenderer
      *
      * @param  array<string,mixed>  $templateData
      */
-    private function resolve(User $user, ?string $message, array $templateData): ?string
+    private function resolve(User $user, ?string $message, array $templateData, ?int $maxLength): ?string
     {
         if ($message === null || trim($message) === '') {
             return null;
         }
 
-        return $this->resolveWith($user, $message, ControlSnapshot::for($user)->values, $templateData);
+        return $this->resolveWith($user, $message, ControlSnapshot::for($user)->values, $templateData, $maxLength);
     }
 
     /**
      * Core single-pass tag substitution. $controls is a snapshot's `values`.
+     * $maxLength cuts the result (TTS); null leaves it whole (chat, which
+     * chatParts() splits instead of cutting).
      *
      * @param  array<string,string>  $controls
      * @param  array<string,mixed>  $templateData
      */
-    private function resolveWith(User $user, ?string $message, array $controls, array $templateData): ?string
+    private function resolveWith(User $user, ?string $message, array $controls, array $templateData, ?int $maxLength): ?string
     {
         if ($message === null || trim($message) === '') {
             return null;
@@ -177,8 +244,8 @@ class AlertMessageRenderer
             $message
         );
 
-        if (mb_strlen($resolved) > self::MAX_RESOLVED_LENGTH) {
-            $resolved = mb_substr($resolved, 0, self::MAX_RESOLVED_LENGTH);
+        if ($maxLength !== null && mb_strlen($resolved) > $maxLength) {
+            $resolved = mb_substr($resolved, 0, $maxLength);
         }
 
         $resolved = trim($resolved);

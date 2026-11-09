@@ -118,3 +118,33 @@ test('the tts mute control does NOT suppress the bot chat message', function () 
     expect($row)->not->toBeNull()
         ->and($row->message)->toBe('Hello Jules');
 });
+
+test('a chat message longer than Twitch allows is queued as several messages, in order', function () {
+    // The source is short; the tag value is what makes the output long.
+    [$user] = makeUserWithBotAlert('Thanks [[[event.from_name]]]! Note: [[[event.message]]] END');
+
+    $note = trim(str_repeat('lorem ipsum dolor ', 40)); // ~720 chars
+    $event = makeBotKofiEvent($user, ['event.from_name' => 'Kim', 'event.message' => $note]);
+
+    $this->actingAs($user)->post("/external-events/{$event->id}/replay");
+
+    $messages = BotChatOutbox::where('user_id', $user->id)->orderBy('id')->pluck('message')->all();
+
+    expect($messages)->toHaveCount(2)
+        ->and(mb_strlen($messages[0]))->toBeLessThanOrEqual(500)
+        ->and($messages[0])->toStartWith('Thanks Kim! Note: lorem')
+        ->and($messages[1])->toEndWith('END')
+        // Split on a word boundary: rejoining with one space restores the text.
+        ->and(implode(' ', $messages))->toBe("Thanks Kim! Note: {$note} END");
+});
+
+test('a chat message source longer than 500 characters can be saved', function () {
+    [$user, $alert] = makeUserWithBotAlert('short');
+    $long = trim(str_repeat('[[[event.from_name]]] ', 50)); // 1099 chars
+
+    $this->actingAs($user)
+        ->put(route('templates.update', $alert), ['chat_message' => $long])
+        ->assertSessionHasNoErrors();
+
+    expect($alert->fresh()->chat_message)->toBe($long);
+});
