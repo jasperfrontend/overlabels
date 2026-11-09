@@ -387,10 +387,12 @@ class KitController extends Controller
     private function authorTriggers(User $user): array
     {
         $out = [];
-        foreach (EventTemplateMapping::where('user_id', $user->id)->orderBy('id')->get() as $m) {
+        // A trigger whose alert was deleted keeps its row with no alert
+        // (nullOnDelete); it points at nothing and prefills nothing.
+        foreach (EventTemplateMapping::where('user_id', $user->id)->whereNotNull('template_id')->orderBy('id')->get() as $m) {
             $out[(int) $m->template_id][] = ['service' => AlertEventSamples::TWITCH, 'event_type' => $m->event_type, 'duration_ms' => (int) $m->duration_ms];
         }
-        foreach (ExternalEventTemplateMapping::where('user_id', $user->id)->orderBy('id')->get() as $m) {
+        foreach (ExternalEventTemplateMapping::where('user_id', $user->id)->whereNotNull('overlay_template_id')->orderBy('id')->get() as $m) {
             $out[(int) $m->overlay_template_id][] = ['service' => $m->service, 'event_type' => $m->event_type, 'duration_ms' => (int) $m->duration_ms];
         }
 

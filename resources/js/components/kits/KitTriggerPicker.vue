@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { X } from '@lucide/vue';
 import { serviceLabel } from '@/utils/services';
 
@@ -32,6 +32,19 @@ const props = defineProps<{
 
 const model = defineModel<KitTrigger[]>({ required: true });
 
+// Every edit reads and writes this list, then hands it to the parent. Reading
+// `model.value` instead returns the parent's prop, which only catches up after
+// a re-render, so two edits in the same tick both started from the old list
+// and the second erased the first.
+const triggers = ref<KitTrigger[]>([...model.value]);
+watch(model, (value) => {
+  if (value !== triggers.value) triggers.value = [...value];
+});
+function commit(next: KitTrigger[]) {
+  triggers.value = next;
+  model.value = next;
+}
+
 const DEFAULT_MS = 5000;
 const keyOf = (service: string, eventType: string) => `${service}:${eventType}`;
 
@@ -41,14 +54,14 @@ const labels = computed(() => {
   return out;
 });
 
-const claimed = computed(() => new Set(model.value.map((t) => keyOf(t.service, t.event_type))));
+const claimed = computed(() => new Set(triggers.value.map((t) => keyOf(t.service, t.event_type))));
 
 // An alert entering the kit starts from how its author uses it; one leaving
 // takes its triggers with it.
 watch(
   () => props.alerts.map((a) => a.id),
   (ids, before) => {
-    const kept = model.value.filter((t) => ids.includes(t.template_id));
+    const kept = triggers.value.filter((t) => ids.includes(t.template_id));
     const previous = before ?? (props.prefillOnLoad === false ? ids : []);
     const fresh = ids.filter((id) => !previous.includes(id) && !kept.some((t) => t.template_id === id));
     const taken = new Set(kept.map((t) => keyOf(t.service, t.event_type)));
@@ -60,13 +73,13 @@ watch(
         kept.push({ template_id: id, service: t.service, event_type: t.event_type, duration_ms: t.duration_ms || DEFAULT_MS });
       }
     }
-    if (kept.length !== model.value.length || fresh.length) model.value = kept;
+    if (kept.length !== triggers.value.length || fresh.length) commit(kept);
   },
   { immediate: true },
 );
 
 function triggersOf(id: number) {
-  return model.value.filter((t) => t.template_id === id);
+  return triggers.value.filter((t) => t.template_id === id);
 }
 
 function secondsOf(id: number): number {
@@ -75,18 +88,18 @@ function secondsOf(id: number): number {
 
 function setSeconds(id: number, value: string) {
   const ms = Math.min(60, Math.max(1, Number(value) || DEFAULT_MS / 1000)) * 1000;
-  model.value = model.value.map((t) => (t.template_id === id ? { ...t, duration_ms: ms } : t));
+  commit(triggers.value.map((t) => (t.template_id === id ? { ...t, duration_ms: ms } : t)));
 }
 
 function add(id: number, value: string) {
   if (!value) return;
   const [service, eventType] = value.split('|');
   if (claimed.value.has(keyOf(service, eventType))) return;
-  model.value = [...model.value, { template_id: id, service, event_type: eventType, duration_ms: secondsOf(id) * 1000 }];
+  commit([...triggers.value, { template_id: id, service, event_type: eventType, duration_ms: secondsOf(id) * 1000 }]);
 }
 
 function remove(t: KitTrigger) {
-  model.value = model.value.filter((x) => x !== t);
+  commit(triggers.value.filter((x) => x !== t));
 }
 </script>
 

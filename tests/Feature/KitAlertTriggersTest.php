@@ -216,6 +216,18 @@ test('the owner sees what is wired and what is left to connect', function () {
     );
 });
 
+test('a trigger whose alert was deleted does not prefill the kit form', function () {
+    $user = kitTrigUser();
+    $alert = kitTrigTemplate($user, 'alert');
+    ExternalEventTemplateMapping::create(['user_id' => $user->id, 'service' => 'kofi', 'event_type' => 'donation', 'overlay_template_id' => $alert->id, 'enabled' => true, 'duration_ms' => 8000]);
+    ExternalEventTemplateMapping::create(['user_id' => $user->id, 'service' => 'throne', 'event_type' => 'donation', 'overlay_template_id' => null, 'enabled' => true, 'duration_ms' => 5000]);
+    EventTemplateMapping::create(['user_id' => $user->id, 'event_type' => 'channel.follow', 'template_id' => null, 'enabled' => true, 'duration_ms' => 5000]);
+
+    $this->actingAs($user)->get('/kits/create')->assertInertia(fn (Assert $page) => $page
+        ->where('authorTriggers', [$alert->id => [['service' => 'kofi', 'event_type' => 'donation', 'duration_ms' => 8000]]])
+    );
+});
+
 test('a kit with no alerts has no preview', function () {
     $author = kitTrigUser();
     $kit = Kit::factory()->create(['owner_id' => $author->id, 'is_public' => true]);
