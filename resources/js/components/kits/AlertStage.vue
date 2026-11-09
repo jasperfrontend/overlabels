@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { Play, Volume2, VolumeX } from '@lucide/vue';
+import { Pause, Play, Volume2, VolumeX } from '@lucide/vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
 import { playables, stageDocument, STAGE_SIZE, type KitPreviewData, type PlayingAlert } from '@/utils/alertPreview';
 import { serviceLabel } from '@/utils/services';
@@ -19,6 +19,10 @@ const current = ref<string | null>(null);
 const nonce = ref(0);
 const soundOn = ref(true);
 const touched = ref(false);
+// Not remembered anywhere: a pause left over from another visit would read
+// as a broken preview.
+const paused = ref(false);
+const FADE_MS = 300;
 
 const doc = computed(() => stageDocument(props.preview, playing.value, nonce.value));
 
@@ -29,6 +33,7 @@ let observer: ResizeObserver | null = null;
 
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 let demoTimer: ReturnType<typeof setTimeout> | null = null;
+let fadeTimer: ReturnType<typeof setTimeout> | null = null;
 let demoIndex = 0;
 let audio: HTMLAudioElement | null = null;
 
@@ -64,8 +69,33 @@ function show(index: number, withSound: boolean) {
 
 function play(index: number) {
   touched.value = true;
+  paused.value = false;
+  if (fadeTimer) clearTimeout(fadeTimer);
   if (demoTimer) clearTimeout(demoTimer);
   show(index, true);
+}
+
+// The frame runs no script, so nothing can freeze an alert mid-motion. Pause
+// fades the stage out under a notice instead, and once it is out of sight
+// clears it, so nothing keeps moving behind the notice. Resume picks the
+// cycle back up where it was.
+function pause() {
+  paused.value = true;
+  if (hideTimer) clearTimeout(hideTimer);
+  if (demoTimer) clearTimeout(demoTimer);
+  audio?.pause();
+  fadeTimer = setTimeout(() => {
+    playing.value = null;
+    current.value = null;
+  }, FADE_MS);
+}
+
+function resume() {
+  if (fadeTimer) clearTimeout(fadeTimer);
+  paused.value = false;
+  playing.value = null;
+  current.value = null;
+  if (!touched.value) demo();
 }
 
 function demo() {
@@ -90,6 +120,7 @@ onBeforeUnmount(() => {
   observer?.disconnect();
   if (hideTimer) clearTimeout(hideTimer);
   if (demoTimer) clearTimeout(demoTimer);
+  if (fadeTimer) clearTimeout(fadeTimer);
   audio?.pause();
 });
 
@@ -141,10 +172,25 @@ const hasSound = computed(() => props.preview.alerts.some((a) => a.sound_url));
         sandbox=""
         tabindex="-1"
         title="Alert preview"
-        class="pointer-events-none absolute top-0 left-0 origin-top-left border-0"
+        class="pointer-events-none absolute top-0 left-0 origin-top-left border-0 transition-opacity duration-300"
+        :class="paused ? 'opacity-0' : 'opacity-100'"
         :style="{ width: `${STAGE_SIZE.w}px`, height: `${STAGE_SIZE.h}px`, transform: `scale(${scale})` }"
       />
       <span class="absolute right-3 bottom-2 font-mono text-[11px] tracking-widest text-white/40 uppercase">Preview, sample data</span>
+      <Transition
+        enter-active-class="transition-opacity duration-300"
+        enter-from-class="opacity-0"
+        leave-active-class="transition-opacity duration-300"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="paused" class="absolute inset-0 flex flex-wrap items-center justify-center gap-3 bg-black/60 p-4" role="status">
+          <span class="text-sm text-white">Animation paused.</span>
+          <button type="button" class="btn btn-secondary btn-xs cursor-pointer" @click="resume">
+            <Play class="h-3 w-3" />
+            Resume
+          </button>
+        </div>
+      </Transition>
     </div>
 
     <div class="space-y-3 p-4">
@@ -153,10 +199,22 @@ const hasSound = computed(() => props.preview.alerts.some((a) => a.sound_url));
           <span v-if="!touched">Click an event to fire its alert.</span>
           <span v-else>Fire another, or the same one again.</span>
         </p>
-        <button v-if="hasSound" type="button" class="btn btn-chill btn-xs cursor-pointer" :aria-pressed="soundOn" @click="soundOn = !soundOn">
-          <component :is="soundOn ? Volume2 : VolumeX" class="h-4 w-4" />
-          {{ soundOn ? 'Sound on' : 'Sound off' }}
-        </button>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="btn btn-xs cursor-pointer"
+            :class="paused ? 'btn-secondary' : 'btn-chill'"
+            :aria-pressed="paused"
+            @click="paused ? resume() : pause()"
+          >
+            <component :is="paused ? Play : Pause" class="h-4 w-4" />
+            {{ paused ? 'Play' : 'Pause' }}
+          </button>
+          <button v-if="hasSound" type="button" class="btn btn-chill btn-xs cursor-pointer" :aria-pressed="soundOn" @click="soundOn = !soundOn">
+            <component :is="soundOn ? Volume2 : VolumeX" class="h-4 w-4" />
+            {{ soundOn ? 'Sound on' : 'Sound off' }}
+          </button>
+        </div>
       </div>
 
       <div v-for="group in groups" :key="group.service ?? 'none'" class="grid items-start gap-2 sm:grid-cols-[9.5rem_minmax(0,1fr)]">
