@@ -43,6 +43,7 @@ export interface PreviewVariant {
 export interface PreviewWiring {
   state: 'wired' | 'off' | 'other' | 'free';
   other_alert: string | null;
+  other_alert_id: number | null;
   connected: boolean;
   connect_url: string | null;
 }

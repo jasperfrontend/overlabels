@@ -171,6 +171,7 @@ final class KitPreview
             $trigger['wiring'] = [
                 'state' => $existing === null ? 'free' : ($templateId === $trigger['template_id'] ? ($existing->enabled ? 'wired' : 'off') : 'other'),
                 'other_alert' => $existing !== null && $templateId !== $trigger['template_id'] ? $existing->template->name : null,
+                'other_alert_id' => $existing !== null && $templateId !== $trigger['template_id'] ? $templateId : null,
                 'connected' => $trigger['service'] === AlertEventSamples::TWITCH ? true : in_array($trigger['service'], $connected, true),
                 'connect_url' => Route::has($route) ? route($route) : null,
             ];

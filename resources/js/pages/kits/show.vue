@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import type { BreadcrumbItem, OverlayTemplate } from '@/types';
 import { computed, ref } from 'vue';
 import { useConfirm } from '@/composables/useConfirm';
+import { urlWithTab } from '@/composables/useAddressableTabs';
 
 const { confirm, alert } = useConfirm();
 interface Kit {
@@ -311,7 +312,13 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <span class="text-muted-foreground">fires {{ row.alert }}</span>
                 <span v-if="row.wiring.state === 'other'" class="w-full pl-6 text-muted-foreground">
                   Your alert "{{ row.wiring.other_alert }}" handles this event now.
-                  <Link :href="route('templates.index', { type: 'alert' })" class="underline underline-offset-2 hover:text-foreground"
+                  <Link
+                    :href="
+                      row.wiring.other_alert_id
+                        ? urlWithTab(route('templates.show', row.wiring.other_alert_id), 'triggers')
+                        : route('templates.index', { type: 'alert' })
+                    "
+                    class="underline underline-offset-2 hover:text-foreground"
                     >Change it on its Triggers tab</Link
                   >
                 </span>
