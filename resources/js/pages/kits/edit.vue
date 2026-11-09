@@ -197,12 +197,12 @@ const breadcrumbs: BreadcrumbItem[] = [
         </Card>
 
         <!-- Which event fires each alert: what the kit page previews with,
-             and what copying the kit wires onto the copier's Triggers. -->
+             and what a copier can assign onto their Triggers. -->
         <Card v-if="selectedAlerts.length > 0">
           <CardHeader>
             <HeadingSmall
               title="Alert triggers"
-              description="Which events fire each alert. Visitors can play them on the kit page before copying, and copying the kit wires these events to the copied alerts."
+              description="Which events fire each alert. Visitors can play them on the kit page before copying, and after copying they can assign these events to the copied alerts."
             />
           </CardHeader>
           <CardContent>

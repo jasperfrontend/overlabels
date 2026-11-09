@@ -628,11 +628,14 @@ constraint, not a preference.
   tag bags. A new event type needs a sample (`AlertEventSamplesTest` fails otherwise), and a Twitch
   sample must produce every tag its `eventsub-tags` reference page documents.
 - **Kits declare `alert_triggers`** (`[{template_id, service, event_type, duration_ms}]`, same
-  shape as a recipe's `alert_triggers`). They drive the preview buttons AND what copying wires.
-  `Kit::alertTriggers()` is the only reader and drops stale rows.
-- **Copy = use.** `KitController::fork` calls `wireAlertTriggers()`: free events get mappings, an
-  event the copier already has an alert for (on or off) is kept and reported, never taken over.
-  `OnboardNewUser` deliberately does not wire.
+  shape as a recipe's `alert_triggers`). They drive the preview buttons AND what the owner can
+  assign. `Kit::alertTriggers()` is the only reader and drops stale rows.
+- **Copying assigns nothing** (Jasper, 2026-11-09; it used to wire every free event on copy). Which
+  alert fires on someone's stream is their call: the kit page's "On your stream" list has Assign per
+  event and Assign all, both confirming first and naming any alert they replace.
+  `POST kits.assign` -> `Kit::assignAlertTriggers($keys)` takes the event over: every other mapping
+  on it is deleted, variant ladders included, and the kit's alert is switched on. The confirm names
+  only the FIRST other alert on an event (`wiring.other_alert` is one name).
 - **The preview is sample-data only, in a `sandbox=""` srcdoc frame,** through
   `renderTemplateSource()` (`utils/alertPreview.ts`). Never the overlay renderer with a token: that
   would render the kit AUTHOR's live data to a stranger. No live-value tier, ever.

@@ -13,9 +13,9 @@ uses(RefreshDatabase::class);
 
 /*
  * A kit declares which event fires each of its alerts. The kit page plays
- * them with sample events before anyone installs anything, and copying the
- * kit points the copier's events at the copied alerts, never over an alert
- * they already have.
+ * them with sample events before anyone installs anything. Copying the kit
+ * assigns nothing: its owner assigns events from the kit page, and only that
+ * explicit ask takes an event over from an alert they already have.
  */
 
 function kitTrigUser(): User
@@ -107,43 +107,59 @@ test('an edit that does not send triggers leaves them alone, and one that does r
     expect($kit->fresh()->alert_triggers)->toBe([['template_id' => $kofi->id, 'service' => 'streamlabs', 'event_type' => 'donation', 'duration_ms' => 4000]]);
 });
 
-test('copying a kit wires its events to the copied alerts', function () {
+test('copying a kit assigns nothing, but carries its triggers repointed at the copies', function () {
     [, $kit, $kofi, $follow] = kitTrigKit();
     $copier = kitTrigUser();
 
     $this->actingAs($copier)->post("/kits/{$kit->id}/fork")->assertRedirect()
-        ->assertSessionHas('success', 'Kit copied! 3 events now fire their alerts.');
+        ->assertSessionHas('success', 'Kit copied!');
 
     $copy = Kit::where('owner_id', $copier->id)->firstOrFail();
     $copiedKofi = $copy->templates->firstWhere('fork_of_id', $kofi->id);
     $copiedFollow = $copy->templates->firstWhere('fork_of_id', $follow->id);
 
-    expect(ExternalEventTemplateMapping::where('user_id', $copier->id)->orderBy('event_type')->get(['event_type', 'overlay_template_id', 'duration_ms', 'enabled'])->toArray())
-        ->toBe([
-            ['event_type' => 'donation', 'overlay_template_id' => $copiedKofi->id, 'duration_ms' => 8000, 'enabled' => true],
-            ['event_type' => 'subscription', 'overlay_template_id' => $copiedKofi->id, 'duration_ms' => 8000, 'enabled' => true],
-        ])
-        ->and(EventTemplateMapping::where('user_id', $copier->id)->where('event_type', 'channel.follow')->value('template_id'))->toBe($copiedFollow->id)
+    expect(ExternalEventTemplateMapping::where('user_id', $copier->id)->count())->toBe(0)
+        ->and(EventTemplateMapping::where('user_id', $copier->id)->count())->toBe(0)
         // The copy's own triggers point at the copies, so a copy of a copy still works.
         ->and(collect($copy->alert_triggers)->pluck('template_id')->unique()->sort()->values()->all())
         ->toBe(collect([$copiedKofi->id, $copiedFollow->id])->sort()->values()->all());
 });
 
-test('copying a kit never takes over an event the copier already has an alert for', function () {
+test('assigning points only the picked events at the kit\'s alerts', function () {
+    [$author, $kit, $kofi, $follow] = kitTrigKit();
+
+    $this->actingAs($author)->post("/kits/{$kit->id}/assign", ['keys' => ['kofi:donation', 'twitch:channel.follow']])->assertRedirect();
+
+    expect(ExternalEventTemplateMapping::where('user_id', $author->id)->get(['event_type', 'overlay_template_id', 'duration_ms', 'enabled'])->toArray())
+        ->toBe([['event_type' => 'donation', 'overlay_template_id' => $kofi->id, 'duration_ms' => 8000, 'enabled' => true]])
+        ->and(EventTemplateMapping::where('user_id', $author->id)->where('event_type', 'channel.follow')->value('template_id'))->toBe($follow->id);
+});
+
+test('assigning takes the event over from the owner\'s other alerts, and switches a switched-off one on', function () {
+    [$author, $kit, $kofi] = kitTrigKit();
+    $theirs = kitTrigTemplate($author, 'alert', ['name' => 'My tip alert']);
+    $big = kitTrigTemplate($author, 'alert', ['name' => 'My big tip alert']);
+    ExternalEventTemplateMapping::create(['user_id' => $author->id, 'service' => 'kofi', 'event_type' => 'donation', 'overlay_template_id' => $theirs->id, 'enabled' => true, 'duration_ms' => 3000]);
+    ExternalEventTemplateMapping::create(['user_id' => $author->id, 'service' => 'kofi', 'event_type' => 'donation', 'overlay_template_id' => $big->id, 'condition_type' => 'at_least', 'condition_value' => 50, 'enabled' => true, 'duration_ms' => 3000]);
+    ExternalEventTemplateMapping::create(['user_id' => $author->id, 'service' => 'kofi', 'event_type' => 'subscription', 'overlay_template_id' => $kofi->id, 'enabled' => false, 'duration_ms' => 3000]);
+    $untouched = ExternalEventTemplateMapping::create(['user_id' => $author->id, 'service' => 'throne', 'event_type' => 'donation', 'overlay_template_id' => $theirs->id, 'enabled' => true, 'duration_ms' => 3000]);
+
+    $this->actingAs($author)->post("/kits/{$kit->id}/assign", ['keys' => ['kofi:donation', 'kofi:subscription']])->assertRedirect();
+
+    expect(ExternalEventTemplateMapping::where('user_id', $author->id)->where('service', 'kofi')->orderBy('event_type')->get(['event_type', 'overlay_template_id', 'duration_ms', 'enabled'])->toArray())
+        ->toBe([
+            ['event_type' => 'donation', 'overlay_template_id' => $kofi->id, 'duration_ms' => 8000, 'enabled' => true],
+            ['event_type' => 'subscription', 'overlay_template_id' => $kofi->id, 'duration_ms' => 8000, 'enabled' => true],
+        ])
+        ->and($untouched->fresh())->not->toBeNull();
+});
+
+test('only the kit\'s owner can assign its alerts', function () {
     [, $kit] = kitTrigKit();
-    $copier = kitTrigUser();
-    $theirs = kitTrigTemplate($copier, 'alert', ['name' => 'My tip alert']);
-    $mine = ExternalEventTemplateMapping::create([
-        'user_id' => $copier->id, 'service' => 'kofi', 'event_type' => 'donation',
-        'overlay_template_id' => $theirs->id, 'enabled' => false, 'duration_ms' => 3000,
-    ]);
+    $stranger = kitTrigUser();
 
-    $this->actingAs($copier)->post("/kits/{$kit->id}/fork")
-        ->assertSessionHas('success', 'Kit copied! 2 events now fire their alerts. 1 left alone because you already have an alert for it.');
-
-    expect($mine->fresh()->only(['overlay_template_id', 'enabled', 'duration_ms']))
-        ->toBe(['overlay_template_id' => $theirs->id, 'enabled' => false, 'duration_ms' => 3000])
-        ->and(ExternalEventTemplateMapping::where('user_id', $copier->id)->where('event_type', 'donation')->count())->toBe(1);
+    $this->actingAs($stranger)->post("/kits/{$kit->id}/assign", ['keys' => ['kofi:donation']])->assertForbidden();
+    expect(ExternalEventTemplateMapping::count())->toBe(0);
 });
 
 test('the onboarding copy of a starter kit wires nothing', function () {
@@ -205,6 +221,11 @@ test('the owner sees what is wired and what is left to connect', function () {
     $copier = kitTrigUser();
     $this->actingAs($copier)->post("/kits/{$kit->id}/fork");
     $copy = Kit::where('owner_id', $copier->id)->firstOrFail();
+    $this->actingAs($copier)->get("/kits/{$copy->id}")->assertInertia(fn (Assert $page) => $page
+        ->where('preview.triggers.0.wiring.state', 'free')
+    );
+
+    $this->actingAs($copier)->post("/kits/{$copy->id}/assign", ['keys' => ['kofi:donation', 'kofi:subscription', 'twitch:channel.follow']]);
     ExternalIntegration::factory()->create(['user_id' => $copier->id, 'service' => 'streamlabs', 'enabled' => true]);
 
     $this->actingAs($copier)->get("/kits/{$copy->id}")->assertInertia(fn (Assert $page) => $page

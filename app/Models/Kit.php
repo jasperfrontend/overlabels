@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -233,59 +234,55 @@ class Kit extends Model
 
     /**
      * Point the owner's events at this kit's alerts, the way the kit's author
-     * declared them. Run on a kit just copied, so "copy" means "use".
+     * declared them, for the events the owner picked on the kit page.
      *
-     * An event the owner already has an alert for, switched on or off, is left
-     * exactly as it is and reported: copying a kit must never take over an
-     * alert someone already relies on. Same rule as a product install, which
-     * refuses outright; a kit copies anyway and wires what it can.
+     * Copying a kit assigns nothing: which alert fires on someone's stream is
+     * their call, so the kit page offers Assign per event and Assign all, and
+     * confirms first when an event already has an alert. By the time this
+     * runs the owner has said yes, so the event is taken over: every other
+     * alert on it is released, the same release the Triggers tab does when it
+     * claims an event, and this one is switched on.
      *
-     * @return array{wired:list<array{label:string,alert:string}>,kept:list<array{label:string,alert:string,existing:string}>}
+     * @param  list<string>  $keys  "service:event_type" for each event to assign
+     * @return int how many events were assigned
      */
-    public function wireAlertTriggers(): array
+    public function assignAlertTriggers(array $keys): int
     {
-        $this->loadMissing('templates');
-        $names = $this->templates->pluck('name', 'id');
-        $result = ['wired' => [], 'kept' => []];
+        $assigned = 0;
 
-        foreach ($this->alertTriggers() as $trigger) {
-            $label = AlertEventSamples::label($trigger['service'], $trigger['event_type']);
-            $alert = (string) ($names[$trigger['template_id']] ?? '');
+        DB::transaction(function () use ($keys, &$assigned) {
+            foreach ($this->alertTriggers() as $trigger) {
+                if (! in_array($trigger['service'].':'.$trigger['event_type'], $keys, true)) {
+                    continue;
+                }
 
-            $existing = $trigger['service'] === AlertEventSamples::TWITCH
-                ? EventTemplateMapping::with('template')->where('user_id', $this->owner_id)
-                    ->where('event_type', $trigger['event_type'])->get()->first(fn ($m) => $m->template !== null)
-                : ExternalEventTemplateMapping::with('template')->where('user_id', $this->owner_id)
-                    ->where('service', $trigger['service'])->where('event_type', $trigger['event_type'])->get()->first(fn ($m) => $m->template !== null);
+                $id = $trigger['template_id'];
 
-            if ($existing !== null) {
-                $result['kept'][] = ['label' => $label, 'alert' => $alert, 'existing' => (string) $existing->template->name];
-
-                continue;
+                if ($trigger['service'] === AlertEventSamples::TWITCH) {
+                    EventTemplateMapping::where('user_id', $this->owner_id)
+                        ->where('event_type', $trigger['event_type'])
+                        ->where(fn ($q) => $q->whereNull('template_id')->orWhere('template_id', '!=', $id))
+                        ->delete();
+                    EventTemplateMapping::updateOrCreate(
+                        ['user_id' => $this->owner_id, 'template_id' => $id, 'event_type' => $trigger['event_type']],
+                        ['condition_type' => null, 'condition_value' => null, 'duration_ms' => $trigger['duration_ms'], 'enabled' => true],
+                    );
+                } else {
+                    ExternalEventTemplateMapping::where('user_id', $this->owner_id)
+                        ->where('service', $trigger['service'])
+                        ->where('event_type', $trigger['event_type'])
+                        ->where(fn ($q) => $q->whereNull('overlay_template_id')->orWhere('overlay_template_id', '!=', $id))
+                        ->delete();
+                    ExternalEventTemplateMapping::updateOrCreate(
+                        ['user_id' => $this->owner_id, 'overlay_template_id' => $id, 'service' => $trigger['service'], 'event_type' => $trigger['event_type']],
+                        ['condition_type' => null, 'condition_value' => null, 'duration_ms' => $trigger['duration_ms'], 'enabled' => true],
+                    );
+                }
+                $assigned++;
             }
+        });
 
-            if ($trigger['service'] === AlertEventSamples::TWITCH) {
-                EventTemplateMapping::create([
-                    'user_id' => $this->owner_id,
-                    'event_type' => $trigger['event_type'],
-                    'template_id' => $trigger['template_id'],
-                    'duration_ms' => $trigger['duration_ms'],
-                    'enabled' => true,
-                ]);
-            } else {
-                ExternalEventTemplateMapping::create([
-                    'user_id' => $this->owner_id,
-                    'service' => $trigger['service'],
-                    'event_type' => $trigger['event_type'],
-                    'overlay_template_id' => $trigger['template_id'],
-                    'duration_ms' => $trigger['duration_ms'],
-                    'enabled' => true,
-                ]);
-            }
-            $result['wired'][] = ['label' => $label, 'alert' => $alert];
-        }
-
-        return $result;
+        return $assigned;
     }
 
     /**
@@ -339,8 +336,8 @@ class Kit extends Model
 
         // The declared triggers travel with the copy, repointed at the copied
         // alerts, so a copy of a copy still knows what its alerts are for.
-        // Wiring them onto the copier's Triggers is wireAlertTriggers(), which
-        // the copy action calls; onboarding's starter-kit copy does not.
+        // Putting them on the copier's Triggers is assignAlertTriggers(), run
+        // only when the copier asks for it from the kit page.
         $fork->alert_triggers = array_map(
             fn (array $t) => [...$t, 'template_id' => $templateMap[$t['template_id']]],
             $this->alertTriggers(),

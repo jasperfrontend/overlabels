@@ -750,6 +750,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::delete('/{kit}', [KitController::class, 'destroy'])->name('destroy');
         Route::post('/{kit}/fork', [KitController::class, 'fork'])
             ->middleware('throttle:kit-fork')->name('fork');
+        Route::post('/{kit}/assign', [KitController::class, 'assignTriggers'])->name('assign');
     });
 
     // Installing a product. The pitch is public, above.

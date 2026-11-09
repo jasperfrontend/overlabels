@@ -306,27 +306,35 @@ class KitController extends Controller
         }
 
         try {
+            // Copying touches nothing on the copier's Triggers. Which alert
+            // fires on their stream is theirs to decide, on the kit page.
             $forkedKit = $kit->fork($request->user());
 
-            // Copying a kit means wanting to use it: point the copier's events
-            // at the copied alerts. Events they already have an alert for are
-            // left alone, and the kit page shows which.
-            $wiring = $forkedKit->wireAlertTriggers();
-            $wired = count($wiring['wired']);
-            $kept = count($wiring['kept']);
-            $message = 'Kit copied!';
-            if ($wired > 0) {
-                $message .= " {$wired} ".($wired === 1 ? 'event now fires its alert' : 'events now fire their alerts').'.';
-            }
-            if ($kept > 0) {
-                $message .= " {$kept} left alone because you already have an alert for ".($kept === 1 ? 'it' : 'them').'.';
-            }
-
             return redirect()->route('kits.show', $forkedKit)
-                ->with('success', $message);
+                ->with('success', 'Kit copied!');
         } catch (Exception $e) {
             return back()->withErrors(['error' => 'Failed to fork kit: '.$e->getMessage()]);
         }
+    }
+
+    /**
+     * Point the owner's events at the kit's alerts: the events picked on the
+     * kit page, one row's Assign or every row at once. The page has already
+     * confirmed any alert this replaces. The rows turning green is the
+     * receipt, so there is no flash message.
+     */
+    public function assignTriggers(Request $request, Kit $kit)
+    {
+        abort_unless($kit->owner_id === auth()->id(), 403);
+
+        $validated = $request->validate([
+            'keys' => 'required|array|min:1|max:200',
+            'keys.*' => 'required|string|max:100',
+        ]);
+
+        $kit->assignAlertTriggers($validated['keys']);
+
+        return back();
     }
 
     /**

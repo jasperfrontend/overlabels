@@ -119,7 +119,7 @@ const copyPitch = computed(() => {
   const services = previewServices.value;
   if (services.length === 0) return `Copies the ${what} to your account.`;
   const list = services.length === 1 ? services[0] : `${services.slice(0, -1).join(', ')} and ${services.at(-1)}`;
-  return `Copies the ${what} to your account and points your ${list} events at them. Any event you already have an alert for stays exactly as it is.`;
+  return `Copies the ${what} to your account. Nothing changes on your stream until you assign them to your ${list} events, one at a time or all at once.`;
 });
 
 // For the owner: is each event actually wired, and is its service connected.
@@ -134,6 +134,52 @@ const wiringRows = computed(() =>
       wiring: t.wiring!,
     })),
 );
+
+type WiringRow = (typeof wiringRows.value)[number];
+
+// Copying assigns nothing: the owner picks which events this kit's alerts
+// take over, and is asked first wherever that replaces an alert of theirs.
+const assignableRows = computed(() => wiringRows.value.filter((r) => r.wiring.state !== 'wired'));
+const assigning = ref(false);
+
+function assign(keys: string[]) {
+  assigning.value = true;
+  router.post(`/kits/${props.kit.id}/assign`, { keys }, { preserveScroll: true, onFinish: () => (assigning.value = false) });
+}
+
+async function assignOne(row: WiringRow) {
+  if (
+    row.wiring.state === 'other' &&
+    !(await confirm({
+      title: 'Replace your alert?',
+      message: `"${row.alert}" will fire on ${row.label} instead of your alert "${row.wiring.other_alert}".`,
+      confirmLabel: 'Replace',
+      tone: 'neutral',
+    }))
+  ) {
+    return;
+  }
+  assign([row.key]);
+}
+
+async function assignAll() {
+  const rows = assignableRows.value;
+  const replaced = rows.filter((r) => r.wiring.state === 'other');
+  const switchedOff = rows.filter((r) => r.wiring.state === 'off').length;
+  const lines = [`Assign this kit's alerts to ${rows.length} event${rows.length === 1 ? '' : 's'}?`];
+  if (replaced.length) {
+    lines.push('', 'This replaces your current alert on:', ...replaced.map((r) => `- ${r.label}: "${r.wiring.other_alert}"`));
+  } else {
+    lines.push('', 'None of these events has another alert on it, so nothing of yours is replaced.');
+  }
+  if (switchedOff) {
+    lines.push('', `${switchedOff} event${switchedOff === 1 ? ' you switched off is' : 's you switched off are'} switched back on.`);
+  }
+
+  if (await confirm({ title: 'Assign all', message: lines.join('\n'), confirmLabel: 'Assign all', tone: 'neutral' })) {
+    assign(rows.map((r) => r.key));
+  }
+}
 
 const typeFilter = ref<'all' | 'static' | 'alert'>('all');
 
@@ -310,6 +356,15 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <CircleDashed v-else class="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span class="font-medium text-foreground">{{ row.label }}</span>
                 <span class="text-muted-foreground">fires {{ row.alert }}</span>
+                <button
+                  v-if="row.wiring.state !== 'wired'"
+                  type="button"
+                  class="btn btn-chill btn-xs ml-auto cursor-pointer"
+                  :disabled="assigning"
+                  @click="assignOne(row)"
+                >
+                  Assign
+                </button>
                 <span v-if="row.wiring.state === 'other'" class="w-full pl-6 text-muted-foreground">
                   Your alert "{{ row.wiring.other_alert }}" handles this event now.
                   <Link
@@ -335,6 +390,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </a>
               </li>
             </ul>
+            <div v-if="assignableRows.length > 1" class="mt-4 flex">
+              <button type="button" class="btn btn-primary btn-sm cursor-pointer" :disabled="assigning" @click="assignAll">Assign all</button>
+            </div>
           </div>
         </section>
       </div>

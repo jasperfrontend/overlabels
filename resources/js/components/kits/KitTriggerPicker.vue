@@ -5,7 +5,7 @@ import { serviceLabel } from '@/utils/services';
 
 /**
  * Which event fires each alert in a kit. It is what the kit page previews
- * with, and what copying the kit wires onto the copier's Triggers. An alert
+ * with, and what a copier can assign onto their Triggers. An alert
  * entering the kit starts from the author's own Triggers for it; one event can
  * belong to one alert only, because a copier can only have one alert per event.
  */
