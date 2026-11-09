@@ -86,7 +86,7 @@ const formatDate = (date: string) => {
     </div>
 
     <CardHeader class="px-4 py-4 pb-4">
-      <div class="space-y-2">
+      <div class="min-w-0 space-y-2">
         <div class="flex items-start justify-between gap-2">
           <CardTitle class="min-w-0 flex-1 text-base">
             <span class="block truncate transition-colors group-hover:text-accent-foreground/80">{{ kit.title }}</span>
