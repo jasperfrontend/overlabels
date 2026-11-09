@@ -474,14 +474,6 @@ class OverlayTemplate extends Model
             }
         }
 
-        // Create the forked name and limit to 100 characters
-        $copiedName = 'Copy: '.$this->owner->name.' - '.$this->name;
-        if (strlen($copiedName) > 70) {
-            // If it's too long, truncate and add ellipsis
-            $copiedName = substr($copiedName, 0, 97).'...';
-        }
-        $fork->name = $copiedName;
-
         $fork->version = 1;
         $fork->view_count = 0;
         $fork->fork_count = 0;

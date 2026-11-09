@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 /**
  * @property int $id
@@ -298,7 +297,6 @@ class Kit extends Model
         $fork = $this->replicate();
         $fork->owner_id = $user->id;
         $fork->forked_from_id = $this->id;
-        $fork->title = 'Copy of '.Str::limit($this->title, 80);
         $fork->fork_count = 0;
         $fork->is_starter_kit = false;
         $fork->save();
