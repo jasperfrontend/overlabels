@@ -1,5 +1,35 @@
 # Changelog - November 2026
 
+## OL-2611-006 - November 9th, 2026 - feat(kits): play a kit's alerts before installing it, and copying a kit wires them up
+
+A kit page used to be a thumbnail and a list of names. Now a kit with alerts has a stage beside its
+header: the alerts play over a stand-in stream, one button per event they fire on, with sound on
+click. Before anyone clicks, it cycles through them silently so the page is never a still picture.
+
+- **Sample events for everything.** `AlertEventSamples` holds a sample for every event the Triggers
+  page offers: 27 Twitch events and every external service event, with variants where alerts
+  usually branch (a Ko-fi first month and a renewal, a Throne surprise gift and a crowdfunded one).
+  Each is a canned raw payload run through the real code a live event goes through: the service
+  driver's `normalizeEvent()` and locale formatting, or the Twitch event mapper. A test reads the
+  reference page of every Twitch event and fails if a sample does not produce a tag it documents.
+- **Kits declare their triggers.** The kit form has an "Alert triggers" section: for each alert,
+  which events fire it and for how long. It starts from the author's own Triggers page. One event
+  belongs to one alert.
+- **Copying a kit wires it.** "Copy this kit" now points the copier's events at the copied alerts.
+  An event they already have an alert for, on or off, is left exactly as it is, and the toast says
+  how many were wired and how many were left alone. The copy keeps its triggers, so a copy of a
+  copy works the same. Onboarding's starter-kit copy wires nothing, as before.
+- **The owner sees the state.** Under the stage, a kit's owner sees each event: wired, switched
+  off, handled by another of their alerts, or not wired, plus a Connect button for a service that
+  is not connected yet.
+- **Private means not shared, not unusable.** A private alert in a public kit plays in the
+  preview. The kit page no longer sends every template's full source to every visitor, though:
+  the listing carries names only, and source goes out solely to render the preview.
+- Older kits that declare nothing preview from their author's own Triggers, and an alert nothing
+  points at plays with a sample Ko-fi tip.
+- Not covered: motion driven by Expression Controls (no engine runs in the preview) and live
+  values, which never appear by design.
+
 ## OL-2611-005 - November 9th, 2026 - feat(alerts): alerts of any size fire, and an alert's head finally applies
 
 An alert used to travel to the overlay whole, html and css included, on every single fire. Reverb

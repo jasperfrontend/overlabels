@@ -621,6 +621,26 @@ constraint, not a preference.
 - An alert's `head` now applies (it was never broadcast before). One slot, `[data-alert-head]`,
   replaced per alert; head stylesheets are warmed with `rel=preload` at mount.
 
+### Kit preview and kit triggers (Nov 2026, OL-2611-006)
+
+- **`AlertEventSamples` is the one source of sample events** for every trigger the Triggers page
+  offers. Samples are RAW payloads run through the real driver / Twitch mapper, never hand-written
+  tag bags. A new event type needs a sample (`AlertEventSamplesTest` fails otherwise), and a Twitch
+  sample must produce every tag its `eventsub-tags` reference page documents.
+- **Kits declare `alert_triggers`** (`[{template_id, service, event_type, duration_ms}]`, same
+  shape as a recipe's `alert_triggers`). They drive the preview buttons AND what copying wires.
+  `Kit::alertTriggers()` is the only reader and drops stale rows.
+- **Copy = use.** `KitController::fork` calls `wireAlertTriggers()`: free events get mappings, an
+  event the copier already has an alert for (on or off) is kept and reported, never taken over.
+  `OnboardNewUser` deliberately does not wire.
+- **The preview is sample-data only, in a `sandbox=""` srcdoc frame,** through
+  `renderTemplateSource()` (`utils/alertPreview.ts`). Never the overlay renderer with a token: that
+  would render the kit AUTHOR's live data to a stranger. No live-value tier, ever.
+- **Private = not shared, not unusable** (Jasper, 2026-11-09). Private alerts in a public kit play
+  in the preview; their source still stays out of the kit `.md` and the template listing.
+- `AlertStage.vue` and the samples are deliberately generic: the alert editor's preview and the
+  product pages are the next obvious homes for them.
+
 ## Provider Icons (Implemented Jul 2026)
 
 - 4x4 grid SVG icons identify the source service in the events feed (`EventsTable.vue`). Shape is the PRIMARY identity channel - legible in sunlight and under color vision deficiency even with no color at all. Replaced the color-only `eventDotClass` dot (which mixed event-type + source color).

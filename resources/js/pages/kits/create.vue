@@ -12,9 +12,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import EmptyState from '@/components/EmptyState.vue';
 import ImageDropZone from '@/components/ImageDropZone.vue';
 import type { OverlayTemplate } from '@/types';
+import KitTriggerPicker, { type KitTrigger } from '@/components/kits/KitTriggerPicker.vue';
 
 interface Props {
   templates: OverlayTemplate[];
+  alertEvents: Array<{ service: string; events: Array<{ event_type: string; label: string }> }>;
+  authorTriggers: Record<string, Array<{ service: string; event_type: string; duration_ms: number }>>;
 }
 
 const props = defineProps<Props>();
@@ -25,10 +28,20 @@ const form = useForm({
   is_public: false,
   thumbnail_url: '' as string,
   template_ids: [] as number[],
+  alert_triggers: [] as KitTrigger[],
 });
 
 const selectedTemplates = computed(() => {
   return props.templates.filter((t) => form.template_ids.includes(t.id));
+});
+
+const selectedAlerts = computed(() => selectedTemplates.value.filter((t) => t.type === 'alert').map((t) => ({ id: t.id, name: t.name })));
+
+// Validation errors arrive keyed per row (alert_triggers.2.event_type).
+const triggerError = computed(() => {
+  const errors = form.errors as Record<string, string>;
+  const key = Object.keys(errors).find((k) => k.startsWith('alert_triggers'));
+  return key ? errors[key] : '';
 });
 
 const toggleTemplate = (templateId: number, checked: boolean) => {
@@ -156,6 +169,22 @@ const submit = () => {
             <div v-if="selectedTemplates.length > 0" class="mt-4 rounded-lg bg-muted p-3">
               <p class="text-sm font-medium">Selected: {{ selectedTemplates.length }} template{{ selectedTemplates.length !== 1 ? 's' : '' }}</p>
             </div>
+          </CardContent>
+        </Card>
+
+        <!-- Which event fires each alert: what the kit page previews with,
+             and what copying the kit wires onto the copier's Triggers. -->
+        <Card v-if="selectedAlerts.length > 0">
+          <CardHeader>
+            <CardTitle>Alert triggers</CardTitle>
+            <CardDescription>
+              Which events fire each alert. Visitors can play them on the kit page before copying, and copying the kit wires these events to the
+              copied alerts.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <KitTriggerPicker v-model="form.alert_triggers" :alerts="selectedAlerts" :events="alertEvents" :author-triggers="authorTriggers" />
+            <p v-if="triggerError" class="mt-2 text-sm text-red-500">{{ triggerError }}</p>
           </CardContent>
         </Card>
 

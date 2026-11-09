@@ -1,8 +1,25 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { PencilIcon, BookCopy, Package, Globe, Lock, ArrowLeft, Trash2Icon, Layers, Zap, FileText } from '@lucide/vue';
+import {
+  PencilIcon,
+  BookCopy,
+  Package,
+  Globe,
+  Lock,
+  ArrowLeft,
+  Trash2Icon,
+  Layers,
+  Zap,
+  FileText,
+  CircleCheck,
+  CircleAlert,
+  CircleDashed,
+} from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import AlertStage from '@/components/kits/AlertStage.vue';
+import type { KitPreviewData } from '@/utils/alertPreview';
+import { serviceLabel } from '@/utils/services';
 import { Badge } from '@/components/ui/badge';
 import type { BreadcrumbItem, OverlayTemplate } from '@/types';
 import { computed, ref } from 'vue';
@@ -33,6 +50,8 @@ interface Kit {
 
 interface Props {
   kit: Kit;
+  // Null when the kit has no alerts. See App\Services\Kits\KitPreview.
+  preview: KitPreviewData | null;
   canEdit: boolean;
   canFork: boolean;
   // Null for a private kit: the markdown route is gated on is_public, so there
@@ -85,6 +104,36 @@ const handleDelete = async () => {
     });
   }
 };
+const hasPreview = computed(() => (props.preview?.triggers.length ?? 0) > 0);
+
+// What copying does, in the words of the services it touches.
+const previewServices = computed(() => {
+  const seen = new Set<string>();
+  for (const t of props.preview?.triggers ?? []) if (t.service) seen.add(serviceLabel(t.service));
+  return [...seen];
+});
+const copyPitch = computed(() => {
+  const alerts = props.preview?.alerts.length ?? 0;
+  const what = `${alerts} alert${alerts === 1 ? '' : 's'}`;
+  const services = previewServices.value;
+  if (services.length === 0) return `Copies the ${what} to your account.`;
+  const list = services.length === 1 ? services[0] : `${services.slice(0, -1).join(', ')} and ${services.at(-1)}`;
+  return `Copies the ${what} to your account and points your ${list} events at them. Any event you already have an alert for stays exactly as it is.`;
+});
+
+// For the owner: is each event actually wired, and is its service connected.
+const wiringRows = computed(() =>
+  (props.preview?.triggers ?? [])
+    .filter((t) => t.wiring)
+    .map((t) => ({
+      key: `${t.service}:${t.event_type}`,
+      label: t.label,
+      alert: props.preview?.alerts.find((a) => a.id === t.template_id)?.name ?? '',
+      service: t.service as string,
+      wiring: t.wiring!,
+    })),
+);
+
 const typeFilter = ref<'all' | 'static' | 'alert'>('all');
 
 const hasMultipleTypes = computed(() => {
@@ -160,73 +209,127 @@ const breadcrumbs: BreadcrumbItem[] = [
         Back to Kits
       </Link>
 
-      <!-- Kit header -->
-      <div class="mb-8 overflow-hidden rounded-lg border border-sidebar bg-card lg:max-w-[55%]">
-        <!-- Thumbnail -->
-        <div v-if="kit.thumbnail_url" class="aspect-video w-full overflow-hidden bg-muted lg:aspect-video">
-          <img :src="kit.thumbnail_url" :alt="kit.title" class="h-full w-full object-cover" />
-        </div>
-        <div v-else class="flex aspect-video w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5 lg:aspect-21/9">
-          <Package class="h-16 w-16 text-primary/40" />
-        </div>
+      <!-- With a preview, the header and the stage sit side by side on a wide
+           screen, so the alerts are playing above the fold. -->
+      <div :class="hasPreview ? 'mb-8 grid items-start gap-6 xl:grid-cols-2' : ''">
+        <!-- Kit header -->
+        <div class="overflow-hidden rounded-lg border border-sidebar bg-card" :class="hasPreview ? '' : 'mb-8 lg:max-w-[55%]'">
+          <!-- Thumbnail -->
+          <div v-if="kit.thumbnail_url" class="aspect-video w-full overflow-hidden bg-muted lg:aspect-video">
+            <img :src="kit.thumbnail_url" :alt="kit.title" class="h-full w-full object-cover" />
+          </div>
+          <div v-else class="flex aspect-video w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5 lg:aspect-21/9">
+            <Package class="h-16 w-16 text-primary/40" />
+          </div>
 
-        <div class="p-6 lg:p-8">
-          <div class="mb-4 flex flex-wrap items-start justify-between gap-4">
-            <div class="flex-1">
-              <div class="mb-2 flex items-center gap-3">
-                <h1 class="text-3xl font-bold">{{ kit.title }}</h1>
-                <Badge
-                  :variant="kit.is_public ? 'default' : 'secondary'"
-                  class="flex items-center gap-1"
-                  :class="kit.is_public ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+          <div class="p-6 lg:p-8">
+            <div class="mb-4 flex flex-wrap items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="mb-2 flex items-center gap-3">
+                  <h1 class="text-3xl font-bold">{{ kit.title }}</h1>
+                  <Badge
+                    :variant="kit.is_public ? 'default' : 'secondary'"
+                    class="flex items-center gap-1"
+                    :class="kit.is_public ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+                  >
+                    <component :is="kit.is_public ? Globe : Lock" class="h-3 w-3" />
+                    {{ kit.is_public ? 'Public' : 'Private' }}
+                  </Badge>
+                </div>
+
+                <p v-if="kit.description" class="mb-4 text-muted-foreground">
+                  {{ kit.description }}
+                </p>
+
+                <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                  <div v-if="kit.owner" class="flex items-center gap-2">
+                    <img v-if="kit.owner.avatar" :src="kit.owner.avatar" :alt="kit.owner.name" class="h-6 w-6 rounded-full" />
+                    <span>by {{ kit.owner.name }}</span>
+                  </div>
+
+                  <div v-if="kit.forked_from" class="flex items-center gap-1">
+                    <BookCopy class="h-4 w-4" />
+                    <span>Copied from</span>
+                    <Link :href="`/kits/${kit.forked_from.id}`" class="font-medium hover:underline">
+                      {{ kit.forked_from.title }}
+                    </Link>
+                  </div>
+
+                  <div class="flex items-center gap-1">
+                    <BookCopy class="h-4 w-4" />
+                    <span>{{ kit.fork_count }} cop{{ kit.fork_count !== 1 ? 'ies' : 'y' }}</span>
+                  </div>
+
+                  <div>Created {{ formatDate(kit.created_at) }}</div>
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <Link v-if="canEdit" :href="`/kits/${kit.id}/edit`" class="btn btn-primary" title="Edit kit">
+                  <PencilIcon class="h-4 w-4" />
+                </Link>
+
+                <button
+                  v-if="canFork"
+                  @click="handleFork"
+                  class="btn btn-warning"
+                  :disabled="!kit.is_public"
+                  title="Copy this kit to your own account"
                 >
-                  <component :is="kit.is_public ? Globe : Lock" class="h-3 w-3" />
-                  {{ kit.is_public ? 'Public' : 'Private' }}
-                </Badge>
-              </div>
-
-              <p v-if="kit.description" class="mb-4 text-muted-foreground">
-                {{ kit.description }}
-              </p>
-
-              <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <div v-if="kit.owner" class="flex items-center gap-2">
-                  <img v-if="kit.owner.avatar" :src="kit.owner.avatar" :alt="kit.owner.name" class="h-6 w-6 rounded-full" />
-                  <span>by {{ kit.owner.name }}</span>
-                </div>
-
-                <div v-if="kit.forked_from" class="flex items-center gap-1">
                   <BookCopy class="h-4 w-4" />
-                  <span>Copied from</span>
-                  <Link :href="`/kits/${kit.forked_from.id}`" class="font-medium hover:underline">
-                    {{ kit.forked_from.title }}
-                  </Link>
-                </div>
+                </button>
 
-                <div class="flex items-center gap-1">
-                  <BookCopy class="h-4 w-4" />
-                  <span>{{ kit.fork_count }} cop{{ kit.fork_count !== 1 ? 'ies' : 'y' }}</span>
-                </div>
-
-                <div>Created {{ formatDate(kit.created_at) }}</div>
+                <button v-if="canEdit && kit.fork_count === 0" @click="handleDelete" class="btn btn-danger" title="Delete kit">
+                  <Trash2Icon class="h-4 w-4" />
+                </button>
               </div>
-            </div>
-
-            <div class="flex gap-2">
-              <Link v-if="canEdit" :href="`/kits/${kit.id}/edit`" class="btn btn-primary" title="Edit kit">
-                <PencilIcon class="h-4 w-4" />
-              </Link>
-
-              <button v-if="canFork" @click="handleFork" class="btn btn-warning" :disabled="!kit.is_public" title="Copy this kit to your own account">
-                <BookCopy class="h-4 w-4" />
-              </button>
-
-              <button v-if="canEdit && kit.fork_count === 0" @click="handleDelete" class="btn btn-danger" title="Delete kit">
-                <Trash2Icon class="h-4 w-4" />
-              </button>
             </div>
           </div>
         </div>
+
+        <!-- Play the kit's alerts before installing anything. -->
+        <section v-if="hasPreview && preview" class="space-y-3">
+          <h2 class="sr-only">See it live</h2>
+          <AlertStage :preview="preview" />
+
+          <div v-if="canFork && !canEdit && kit.is_public" class="flex flex-wrap items-center gap-4 rounded-lg border border-sidebar bg-card p-4">
+            <p class="flex-1 text-sm text-foreground">{{ copyPitch }}</p>
+            <button type="button" class="btn btn-primary cursor-pointer" @click="handleFork">
+              <BookCopy class="h-4 w-4" />
+              Copy this kit
+            </button>
+          </div>
+
+          <div v-if="wiringRows.length" class="rounded-lg border border-sidebar bg-card p-4">
+            <h3 class="mb-3 text-sm font-semibold">On your stream</h3>
+            <ul class="space-y-2 text-sm">
+              <li v-for="row in wiringRows" :key="row.key" class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <CircleCheck v-if="row.wiring.state === 'wired' && row.wiring.connected" class="h-4 w-4 shrink-0 text-green-500" />
+                <CircleAlert v-else-if="row.wiring.state === 'other' || row.wiring.state === 'off'" class="h-4 w-4 shrink-0 text-cyan-500" />
+                <CircleDashed v-else class="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span class="font-medium text-foreground">{{ row.label }}</span>
+                <span class="text-muted-foreground">fires {{ row.alert }}</span>
+                <span v-if="row.wiring.state === 'other'" class="w-full pl-6 text-muted-foreground">
+                  Your alert "{{ row.wiring.other_alert }}" handles this event now.
+                  <Link :href="route('templates.index', { type: 'alert' })" class="underline underline-offset-2 hover:text-foreground"
+                    >Change it on its Triggers tab</Link
+                  >
+                </span>
+                <span v-else-if="row.wiring.state === 'off'" class="w-full pl-6 text-muted-foreground"
+                  >Wired, but switched off on its Triggers tab.</span
+                >
+                <span v-else-if="row.wiring.state === 'free'" class="w-full pl-6 text-muted-foreground">Not wired to your events yet.</span>
+                <a
+                  v-if="!row.wiring.connected && row.wiring.connect_url"
+                  :href="row.wiring.connect_url"
+                  class="btn btn-chill btn-xs ml-auto cursor-pointer"
+                >
+                  Connect {{ serviceLabel(row.service) }}
+                </a>
+              </li>
+            </ul>
+          </div>
+        </section>
       </div>
 
       <!--

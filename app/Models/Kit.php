@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Alerts\AlertEventSamples;
 use Database\Factories\KitFactory;
 use Eloquent;
 use Exception;
@@ -28,6 +29,7 @@ use Illuminate\Support\Str;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property bool $is_starter_kit
+ * @property array|null $alert_triggers
  * @property-read Kit|null $forkedFrom
  * @property-read Collection<int, Kit> $forks
  * @property-read int|null $forks_count
@@ -84,13 +86,21 @@ class Kit extends Model
         'is_starter_kit',
         'forked_from_id',
         'fork_count',
+        'alert_triggers',
     ];
 
     protected $casts = [
         'is_public' => 'boolean',
         'is_starter_kit' => 'boolean',
         'fork_count' => 'integer',
+        'alert_triggers' => 'array',
     ];
+
+    /**
+     * What a trigger gets when its author did not say, matching the column
+     * default on both mapping tables.
+     */
+    public const int DEFAULT_TRIGGER_DURATION_MS = 5000;
 
     protected $appends = [
         'thumbnail_url',
@@ -184,6 +194,102 @@ class Kit extends Model
     }
 
     /**
+     * The kit's declared alert triggers, cleaned: anything malformed, naming an
+     * event alerts cannot be triggered by, or pointing at a template that is
+     * not an alert in this kit, is dropped rather than trusted. The column is
+     * written through validation, but templates leave kits and the event list
+     * changes, and a stale row must never become a mapping.
+     *
+     * @return list<array{template_id:int,service:string,event_type:string,duration_ms:int}>
+     */
+    public function alertTriggers(): array
+    {
+        $alertIds = $this->templates->where('type', 'alert')->pluck('id')->all();
+        $out = [];
+        $seen = [];
+
+        foreach ($this->alert_triggers ?? [] as $trigger) {
+            $templateId = (int) ($trigger['template_id'] ?? 0);
+            $service = (string) ($trigger['service'] ?? '');
+            $eventType = (string) ($trigger['event_type'] ?? '');
+            if (! in_array($templateId, $alertIds, true) || ! AlertEventSamples::isKnown($service, $eventType)) {
+                continue;
+            }
+            // One alert per event: a second claim on the same event could
+            // never be wired anyway, so the first one stands.
+            if (isset($seen["{$service}:{$eventType}"])) {
+                continue;
+            }
+            $seen["{$service}:{$eventType}"] = true;
+            $out[] = [
+                'template_id' => $templateId,
+                'service' => $service,
+                'event_type' => $eventType,
+                'duration_ms' => max(1000, min(60000, (int) ($trigger['duration_ms'] ?? self::DEFAULT_TRIGGER_DURATION_MS))),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Point the owner's events at this kit's alerts, the way the kit's author
+     * declared them. Run on a kit just copied, so "copy" means "use".
+     *
+     * An event the owner already has an alert for, switched on or off, is left
+     * exactly as it is and reported: copying a kit must never take over an
+     * alert someone already relies on. Same rule as a product install, which
+     * refuses outright; a kit copies anyway and wires what it can.
+     *
+     * @return array{wired:list<array{label:string,alert:string}>,kept:list<array{label:string,alert:string,existing:string}>}
+     */
+    public function wireAlertTriggers(): array
+    {
+        $this->loadMissing('templates');
+        $names = $this->templates->pluck('name', 'id');
+        $result = ['wired' => [], 'kept' => []];
+
+        foreach ($this->alertTriggers() as $trigger) {
+            $label = AlertEventSamples::label($trigger['service'], $trigger['event_type']);
+            $alert = (string) ($names[$trigger['template_id']] ?? '');
+
+            $existing = $trigger['service'] === AlertEventSamples::TWITCH
+                ? EventTemplateMapping::with('template')->where('user_id', $this->owner_id)
+                    ->where('event_type', $trigger['event_type'])->get()->first(fn ($m) => $m->template !== null)
+                : ExternalEventTemplateMapping::with('template')->where('user_id', $this->owner_id)
+                    ->where('service', $trigger['service'])->where('event_type', $trigger['event_type'])->get()->first(fn ($m) => $m->template !== null);
+
+            if ($existing !== null) {
+                $result['kept'][] = ['label' => $label, 'alert' => $alert, 'existing' => (string) $existing->template->name];
+
+                continue;
+            }
+
+            if ($trigger['service'] === AlertEventSamples::TWITCH) {
+                EventTemplateMapping::create([
+                    'user_id' => $this->owner_id,
+                    'event_type' => $trigger['event_type'],
+                    'template_id' => $trigger['template_id'],
+                    'duration_ms' => $trigger['duration_ms'],
+                    'enabled' => true,
+                ]);
+            } else {
+                ExternalEventTemplateMapping::create([
+                    'user_id' => $this->owner_id,
+                    'service' => $trigger['service'],
+                    'event_type' => $trigger['event_type'],
+                    'overlay_template_id' => $trigger['template_id'],
+                    'duration_ms' => $trigger['duration_ms'],
+                    'enabled' => true,
+                ]);
+            }
+            $result['wired'][] = ['label' => $label, 'alert' => $alert];
+        }
+
+        return $result;
+    }
+
+    /**
      * Fork this kit for a user
      */
     public function fork(User $user): self
@@ -199,6 +305,7 @@ class Kit extends Model
 
         // Fork all templates in the kit
         $forkedTemplates = [];
+        $templateMap = [];
         foreach ($this->templates as $template) {
             $forkedTemplate = $template->fork($user);
 
@@ -226,10 +333,21 @@ class Kit extends Model
                 });
 
             $forkedTemplates[] = $forkedTemplate->id;
+            $templateMap[$template->id] = $forkedTemplate->id;
         }
 
         // Attach forked templates to the new kit
         $fork->templates()->attach($forkedTemplates);
+
+        // The declared triggers travel with the copy, repointed at the copied
+        // alerts, so a copy of a copy still knows what its alerts are for.
+        // Wiring them onto the copier's Triggers is wireAlertTriggers(), which
+        // the copy action calls; onboarding's starter-kit copy does not.
+        $fork->alert_triggers = array_map(
+            fn (array $t) => [...$t, 'template_id' => $templateMap[$t['template_id']]],
+            $this->alertTriggers(),
+        ) ?: null;
+        $fork->save();
 
         // Increment fork count on original
         $this->increment('fork_count');
