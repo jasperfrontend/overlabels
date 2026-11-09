@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+import PublicToggle from '@/components/PublicToggle.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import EmptyState from '@/components/EmptyState.vue';
@@ -99,13 +99,7 @@ const submit = () => {
               <p v-if="form.errors.description" class="mt-1 text-sm text-red-500">{{ form.errors.description }}</p>
             </div>
 
-            <div class="flex items-center justify-between rounded-lg border p-4">
-              <div class="space-y-0.5">
-                <Label for="is_public">Make this kit public</Label>
-                <p class="text-sm text-muted-foreground">Public kits can be discovered and copied by other users</p>
-              </div>
-              <Switch id="is_public" v-model:checked="form.is_public" />
-            </div>
+            <PublicToggle v-model="form.is_public" label="Kit" />
           </CardContent>
         </Card>
 
