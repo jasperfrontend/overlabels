@@ -95,6 +95,7 @@ class Kit extends Model
         'is_starter_kit' => 'boolean',
         'fork_count' => 'integer',
         'alert_triggers' => 'array',
+        'featured_at' => 'datetime',
     ];
 
     /**
@@ -297,6 +298,7 @@ class Kit extends Model
         $fork->forked_from_id = $this->id;
         $fork->fork_count = 0;
         $fork->is_starter_kit = false;
+        $fork->featured_at = null;
         $fork->save();
 
         // Fork all templates in the kit

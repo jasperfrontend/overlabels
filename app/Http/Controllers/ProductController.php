@@ -15,6 +15,7 @@ use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Models\UserChatPreset;
 use App\Services\BotModeratedChannels;
+use App\Services\Kits\FeaturedKits;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeIngredients;
 use App\Services\Recipes\RecipeInstaller;
@@ -130,6 +131,9 @@ class ProductController extends Controller
             'category' => $category,
             'shelf' => $shelf,
             'installed_count' => $user ? $this->installedCount($user) : null,
+            // The ready-made alert kits lead the Alerts shelf, so they ride
+            // along whenever that shelf is on the page.
+            'featured_kits' => in_array($category, [null, 'alert'], true) ? app(FeaturedKits::class)->cards() : [],
         ]);
     }
 

@@ -460,6 +460,7 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
             array_flip(['email', 'email_verified', 'verified'])
         );
 
+        $isNewAccount = false;
         if (! $user) {
             // Create a new user if not found
             $user = User::create([
@@ -477,6 +478,7 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
 
             // Dispatch event for new user registration
             UserRegistered::dispatch($user);
+            $isNewAccount = true;
         } else {
             // Existing user — update tokens and data
             $updateData = [
@@ -578,7 +580,9 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
             }
         }
 
-        return redirect('/dashboard');
+        // A brand new account with nowhere it was going starts on the kit
+        // picker: ready-made alerts it can watch play, then copy.
+        return redirect($isNewAccount ? route('kits.start', absolute: false) : '/dashboard');
 
     } catch (HttpException $e) {
         // A deliberate abort() is not an OAuth failure. Without this the
@@ -753,6 +757,9 @@ Route::middleware('auth.redirect')->group(function () {
             ->middleware('throttle:kit-fork')->name('fork');
         Route::post('/{kit}/assign', [KitController::class, 'assignTriggers'])->name('assign');
     });
+
+    // Where a new account lands after its first login: pick a ready-made kit.
+    Route::get('/start', [KitController::class, 'start'])->name('kits.start');
 
     // The account's one Alerts overlay, created on request. See AlertsOverlay.
     Route::post('/alerts-overlay', AlertsOverlayController::class)->name('alerts-overlay.store');

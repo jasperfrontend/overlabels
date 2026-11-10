@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { Bot, Check, Download, Ellipsis, Eye, Plug, Settings2, TriangleAlert } from '@lucide/vue';
 import EmptyState from '@/components/EmptyState.vue';
+import FeaturedKitCard, { type FeaturedKit } from '@/components/kits/FeaturedKitCard.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
 import ProductIcon from '@/components/product-icons/ProductIcon.vue';
 import { hasProductIcon } from '@/components/product-icons/registry';
@@ -40,6 +41,8 @@ const props = defineProps<{
   shelf: { label: string; lead: string } | null;
   // Null for a visitor, who has no Installed link.
   installed_count: number | null;
+  // Official ready-made kits, leading the Alerts shelf. Empty when it is not on the page.
+  featured_kits: FeaturedKit[];
 }>();
 
 const { eventTypeDotClass } = useEventColors();
@@ -93,6 +96,20 @@ const description = computed(
     <div data-tab-start>
       <section v-for="shelf in shelves" :key="shelf.key" class="mb-12 last:mb-0">
         <h2 class="text-lg font-semibold text-foreground">{{ shelf.label }}</h2>
+
+        <!-- Ready-made kits lead the Alerts shelf: a styled set that plays
+           before it is copied beats a bare alert that needs HTML and CSS. -->
+        <template v-if="shelf.key === 'alert' && featured_kits.length">
+          <h3 class="mt-3 text-sm font-semibold text-foreground">Ready-made alert kits</h3>
+          <p class="mt-1 mb-3 max-w-prose text-sm text-foreground">
+            Complete sets in one style, one alert per service. Watch them play, copy the kit, and they are yours.
+          </p>
+          <ul class="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <FeaturedKitCard v-for="kit in featured_kits" :key="kit.id" :kit="kit" />
+          </ul>
+          <h3 class="text-sm font-semibold text-foreground">Basic alerts</h3>
+        </template>
+
         <p
           v-if="shelf.key === 'alert'"
           class="my-2 flex w-full items-start gap-2 border border-cyan-500/60 px-3 py-2 text-sm font-medium text-foreground lg:w-2/3"

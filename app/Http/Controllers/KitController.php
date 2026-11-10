@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\Alerts\AlertEventSamples;
 use App\Services\Alerts\AlertsOverlay;
 use App\Services\ImageUploadService;
+use App\Services\Kits\FeaturedKits;
 use App\Services\Kits\KitPreview;
 use App\Services\KitShareService;
 use Exception;
@@ -60,6 +61,18 @@ class KitController extends Controller
             'templates' => $templates,
             'alertEvents' => AlertEventSamples::catalogue(),
             'authorTriggers' => $this->authorTriggers($request->user()),
+        ]);
+    }
+
+    /**
+     * The kit picker: the official ready-made kits, where a new account lands
+     * after its first login. Each card opens the kit page, where its alerts
+     * play before anything is copied.
+     */
+    public function start(FeaturedKits $featured)
+    {
+        return Inertia::render('kits/start', [
+            'kits' => $featured->cards(),
         ]);
     }
 

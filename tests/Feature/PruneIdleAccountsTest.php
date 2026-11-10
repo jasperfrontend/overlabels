@@ -40,14 +40,27 @@ beforeEach(function () {
 });
 
 /**
- * A signup exactly as the OAuth callback and onboarding leave it: the starter
- * Kit copied in, its controls, and the alert mappings onboarding wires up.
+ * A signup that copied the starter Kit from the kit picker and assigned its
+ * alerts to Twitch events: its overlays, their controls and the mappings.
+ * Onboarding no longer copies anything itself (OL-2611-009), but the starter
+ * copy must still count as nothing, so the prune rules are pinned against it.
  */
 function signedUp(int $hoursAgo = 49, array $attributes = []): User
 {
     $user = User::factory()->create(array_merge(['created_at' => now()->subHours($hoursAgo)], $attributes));
 
     (new OnboardNewUser($user))->handle();
+
+    $copy = test()->starter->fork($user);
+    foreach ($copy->templates()->where('type', 'alert')->get() as $i => $alert) {
+        EventTemplateMapping::create([
+            'user_id' => $user->id,
+            'event_type' => ['channel.follow', 'channel.raid'][$i],
+            'template_id' => $alert->id,
+            'enabled' => true,
+            'duration_ms' => 5000,
+        ]);
+    }
 
     return $user;
 }

@@ -628,6 +628,21 @@ constraint, not a preference.
   `importForkedControls()` 422 on an alert. TTS and chat lines read any of the user's controls, so
   nothing needs one on the alert. An existing standalone alert URL still renders; nothing blocks it.
 
+### Kits are the front door (Nov 2026, OL-2611-009)
+
+- **A new account lands on the kit picker, `/start` (`kits.start`), after its first Twitch login**,
+  unless the login was on its way somewhere (`url.intended` still wins). `OnboardNewUser` no longer
+  copies the starter kit or keyword-matches alert names onto Twitch events; it only makes the
+  webhook secret. A new account owns nothing until it picks.
+- **Featured kits = `kits.featured_at` set + public**, oldest feature first, read through
+  `App\Services\Kits\FeaturedKits::cards()` only. They fill `/start` and lead the Alerts shelf on
+  /products (`featured_kits` prop, sent only when that shelf is on the page). Set by hand; there is
+  no admin toggle. `Kit::fork()` clears it, so a copy is never featured.
+- A featured kit must declare its `alert_triggers`, or a copy has nothing to assign and its card
+  names no service.
+- `is_starter_kit` now only matters to `IdleAccountSweep`, which still treats a copy of the starter
+  kit as nothing, so an account that picked only the starter kit is pruned like the old silent copy.
+
 ### Alert sources (Nov 2026, OL-2611-005)
 
 - **An alert's source does not have to ride its broadcast.** Reverb refuses an events request over

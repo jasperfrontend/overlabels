@@ -1,5 +1,26 @@
 # Changelog - November 2026
 
+## OL-2611-009 - November 10th, 2026 - feat(kits): new accounts pick a kit, and ready-made kits lead the Alerts shelf
+
+Every new account used to get a silent copy of the starter kit, Midnight Purple, with its Twitch
+alerts wired by matching words in the alert names. Nobody chose it, and a streamer who wanted
+donation alerts was never shown that Stamped or Subtle existed. Kits are the quickest way to get
+something good-looking on stream, so they are now the front door.
+
+- **A kit picker for new accounts.** After their first Twitch login, a new account lands on
+  "Pick your alerts" (`/start`): the featured kits as cards with their thumbnail and what they
+  cover, each one opening the kit page where its alerts play before anything is copied. "Skip for
+  now" goes to the dashboard. Someone who signed up on their way to a product still goes there.
+- **No more silent copy.** Onboarding no longer copies the starter kit or guesses which alert goes
+  with which Twitch event. A new account owns nothing until it picks.
+- **Ready-made kits lead the Alerts shelf.** On /products, the Alerts shelf now opens with the
+  featured kits. The five single-service alerts stay underneath as "Basic alerts", with their
+  heads-up and description unchanged.
+- **Featured is a flag.** A kit shows up in both places when it is public and has `featured_at`
+  set. It is set by hand, and a copy of a featured kit never inherits it.
+- Not in this change: a featured section on the Kits page itself, and a way for existing accounts
+  to find the picker.
+
 ## OL-2611-008 - November 10th, 2026 - feat(alerts): alerts carry no controls and no Add to OBS; their pages show the Alerts overlay instead
 
 The alert editor was a copy of the static overlay editor: it offered Controls, Values and Add to
