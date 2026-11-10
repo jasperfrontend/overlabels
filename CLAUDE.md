@@ -619,8 +619,14 @@ constraint, not a preference.
   `Kit::fork()` instead of copying a second static overlay. That is how a kit ships settings for its
   alerts (Subtle's `subtle_position`): an alert's own controls never reach the screen in a host
   overlay, and alerts are not meant to carry controls.
-- The kit page shows the owner their Alerts overlay (create, Add to OBS, live or not) when the kit has
-  alerts. Product pages still say alerts show "inside every overlay you have in OBS".
+- `AlertsOverlayPanel.vue` is the ONE place that shows it (create, Add to OBS, live or not), fed by
+  `AlertsOverlay::pageState()` as the `alertsOverlay` prop: on a kit with alerts (owner), an alert's
+  "On stream" tab (edit and show), and creating an alert. Product pages still say alerts show
+  "inside every overlay you have in OBS".
+- **Alerts carry no controls and have no Add to OBS** (Jasper, 2026-11-10, OL-2611-008). The alert
+  pages have no Controls, Values or Add to OBS tabs, and `OverlayControlController::store()` /
+  `importForkedControls()` 422 on an alert. TTS and chat lines read any of the user's controls, so
+  nothing needs one on the alert. An existing standalone alert URL still renders; nothing blocks it.
 
 ### Alert sources (Nov 2026, OL-2611-005)
 

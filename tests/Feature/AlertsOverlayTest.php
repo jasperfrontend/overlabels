@@ -14,6 +14,7 @@ use App\Services\TwitchTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Event;
+use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
@@ -267,4 +268,46 @@ test('the create route makes the Alerts overlay and is safe to call twice', func
 
     expect(OverlayTemplate::where('owner_id', $user->id)->where('name', AlertsOverlay::NAME)->count())->toBe(1)
         ->and($user->fresh()->alerts_overlay_id)->not->toBeNull();
+});
+
+test('a control cannot be added to an alert, and still can to a static overlay', function () {
+    $user = aoUser();
+    $alert = aoTemplate($user, 'alert');
+    $static = aoTemplate($user, 'static');
+    $this->actingAs($user);
+
+    $this->postJson("/templates/{$alert->id}/controls", ['key' => 'corner', 'type' => 'text'])->assertStatus(422);
+    $this->postJson("/templates/{$static->id}/controls", ['key' => 'corner', 'type' => 'text'])->assertStatus(201);
+
+    expect(OverlayControl::where('overlay_template_id', $alert->id)->exists())->toBeFalse();
+});
+
+test('controls cannot be imported onto an alert', function () {
+    $user = aoUser();
+    $alert = aoTemplate($user, 'alert');
+    $this->actingAs($user);
+
+    $this->postJson("/templates/{$alert->id}/controls/import", [
+        'controls' => [['action' => 'create', 'key' => 'corner', 'type' => 'text', 'value' => 'x']],
+    ])->assertStatus(422);
+
+    expect(OverlayControl::where('overlay_template_id', $alert->id)->exists())->toBeFalse();
+});
+
+test('alert pages carry the Alerts overlay state, static pages do not', function () {
+    $user = aoUser();
+    $alert = aoTemplate($user, 'alert');
+    $static = aoTemplate($user, 'static');
+    $host = app(AlertsOverlay::class)->ensure($user);
+    $this->actingAs($user->fresh());
+
+    $this->get("/templates/{$alert->id}/edit")->assertInertia(fn (AssertableInertia $page) => $page
+        ->where('alertsOverlay.overlay.id', $host->id)
+        ->where('alertsOverlay.live', false));
+    $this->get("/templates/{$alert->id}")->assertInertia(fn (AssertableInertia $page) => $page
+        ->where('alertsOverlay.overlay.slug', $host->slug));
+    $this->get("/templates/{$static->id}/edit")->assertInertia(fn (AssertableInertia $page) => $page
+        ->where('alertsOverlay', null));
+    $this->get('/templates/create')->assertInertia(fn (AssertableInertia $page) => $page
+        ->where('alertsOverlay.overlay.id', $host->id));
 });

@@ -15,11 +15,14 @@ import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import { sanitizeHtmlFields } from '@/utils/sanitize';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import { renderTemplateSource } from '@/utils/renderTemplate';
+import AlertsOverlayPanel, { type AlertsOverlayState } from '@/components/AlertsOverlayPanel.vue';
 
 const props = defineProps<{
   sampleData: Record<string, string>;
   userScopedControls?: OverlayControl[];
   userLists?: Array<{ id: number; slug: string; label?: string | null }>;
+  // The account's Alerts overlay, shown when the new template is an alert.
+  alertsOverlay?: AlertsOverlayState | null;
 }>();
 
 const page = usePage<AppPageProps>();
@@ -326,6 +329,14 @@ onMounted(() => {
                   <li>Mix event tags with regular tags like <code class="rounded bg-sidebar-accent px-1">[[[followers_total]]]</code>.</li>
                   <li>Keep alert overlays simple: they only display briefly on screen.</li>
                 </ul>
+              </div>
+
+              <!-- Where a new alert shows: it never goes into OBS on its own -->
+              <div v-if="form.type === 'alert' && alertsOverlay" class="space-y-3">
+                <p class="text-sm text-foreground">
+                  An alert does not go into OBS on its own. It shows inside your Alerts overlay, so that one overlay in OBS is all your alerts need.
+                </p>
+                <AlertsOverlayPanel :state="alertsOverlay" />
               </div>
             </fieldset>
           </div>

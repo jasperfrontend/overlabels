@@ -132,6 +132,8 @@ class OverlayTemplateController extends Controller
             // gets the same set edit() hands it.
             'userScopedControls' => $this->userScopedControlsFor(auth()->id()),
             'userLists' => $this->userListsFor(auth()->id()),
+            // Shown when the new template is an alert: it renders inside this.
+            'alertsOverlay' => app(AlertsOverlay::class)->pageState(auth()->user()),
         ]);
     }
 
@@ -317,6 +319,7 @@ class OverlayTemplateController extends Controller
             'userScopedControls' => $userScopedControls,
             'userLists' => $userLists,
             'triggers' => $triggers,
+            'alertsOverlay' => ($canEdit && $template->type === 'alert') ? app(AlertsOverlay::class)->pageState(auth()->user()) : null,
         ]);
     }
 
@@ -413,6 +416,7 @@ class OverlayTemplateController extends Controller
             'userLists' => $userLists,
             'triggers' => $triggers,
             'freesoundLibrary' => $freesoundLibrary,
+            'alertsOverlay' => $template->type === 'alert' ? app(AlertsOverlay::class)->pageState(auth()->user()) : null,
             // Builder-composed overlays get the grid editor on the Code tab;
             // everything else skips these to keep the payload light.
             'sampleData' => $template->isBuilderComposed()

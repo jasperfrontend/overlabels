@@ -155,6 +155,23 @@ class AlertsOverlay
         return $live === null || $live->id === $static->id;
     }
 
+    /**
+     * What a page shows about the account's Alerts overlay
+     * (AlertsOverlayPanel.vue): the overlay, or null until it is created,
+     * and whether OBS has loaded it.
+     *
+     * @return array{overlay: array{id: int, name: string, slug: string, type: string}|null, live: bool}
+     */
+    public function pageState(User $user): array
+    {
+        $overlay = $user->alertsOverlay;
+
+        return [
+            'overlay' => $overlay ? $overlay->only(['id', 'name', 'slug', 'type']) : null,
+            'live' => $overlay !== null && $user->alerts_overlay_live_at !== null,
+        ];
+    }
+
     private function liveOverlay(User $user): ?OverlayTemplate
     {
         if ($user->alerts_overlay_id === null || $user->alerts_overlay_live_at === null) {

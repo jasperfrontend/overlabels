@@ -9,6 +9,7 @@ import RekaToast from '@/components/RekaToast.vue';
 import TemplateTagsList from '@/components/TemplateTagsList.vue';
 import TemplateCodeEditor from '@/components/templates/TemplateCodeEditor.vue';
 import AddToObsPanel from '@/components/templates/AddToObsPanel.vue';
+import AlertsOverlayPanel, { type AlertsOverlayState } from '@/components/AlertsOverlayPanel.vue';
 import AlertTargetOverlaySelector from '@/components/AlertTargetOverlaySelector.vue';
 import TemplateScreenshot from '@/components/templates/TemplateScreenshot.vue';
 import ControlsManager from '@/components/ControlsManager.vue';
@@ -124,6 +125,8 @@ interface Props {
   // Present only when the overlay was composed in the Builder.
   sampleData?: Record<string, string>;
   builderBlocks?: LibraryBlock[];
+  // Alerts only: the account's Alerts overlay, which the alert renders in.
+  alertsOverlay?: AlertsOverlayState | null;
 }
 
 const FREESOUND_LIBRARY_CAP = 100;
@@ -223,22 +226,28 @@ const { eventTypeDotClass } = useEventColors();
 const boundEvent = computed(() => firstAssignedEvent(props.triggers));
 
 const mainTabs = computed(() => {
+  const isAlert = props.template.type === 'alert';
   const tabs: TabStripItem[] = [
     { key: 'code', label: 'Code', icon: Code },
     { key: 'meta', label: 'Meta', icon: InfoIcon },
     { key: 'tags', label: 'Tags', icon: Brackets },
-    { key: 'controls', label: 'Controls', icon: SlidersHorizontal },
-    { key: 'panel', label: 'Values', icon: SquarePenIcon },
-    { key: 'screenshot', label: 'Screenshot', icon: ImageIcon },
   ];
-  if (props.template.type === 'alert') {
+  // Alerts carry no controls: they render inside the Alerts overlay, and only
+  // that overlay's controls reach the screen (see AlertsOverlay).
+  if (!isAlert) {
+    tabs.push({ key: 'controls', label: 'Controls', icon: SlidersHorizontal });
+    tabs.push({ key: 'panel', label: 'Values', icon: SquarePenIcon });
+  }
+  tabs.push({ key: 'screenshot', label: 'Screenshot', icon: ImageIcon });
+  if (isAlert) {
     tabs.push({ key: 'triggers', label: 'Triggers', icon: Zap });
     tabs.push({ key: 'targeting', label: 'Targeting', icon: Target });
     tabs.push({ key: 'tts', label: 'Effects', icon: Volume2 });
-  }
-  // Always last. Blocks are Builder ingredients, not standalone overlays, so
-  // they never get a browser-source URL.
-  if (props.template.type !== 'block') {
+    // Always last. An alert never goes into OBS itself; this is the overlay it shows in.
+    tabs.push({ key: 'stream', label: 'On stream', icon: Video });
+  } else if (props.template.type !== 'block') {
+    // Always last. Blocks are Builder ingredients, not standalone overlays, so
+    // they never get a browser-source URL.
     tabs.push({ key: 'obs', label: 'Add to OBS', icon: Video });
   }
   return tabs;
@@ -993,6 +1002,14 @@ onMounted(() => {
           <!-- Add to OBS Tab -->
           <div v-if="mainTab === 'obs'" class="p-4 pt-6">
             <AddToObsPanel :template="props.template" />
+          </div>
+
+          <!-- On stream Tab (alerts only): the overlay this alert renders in -->
+          <div v-if="mainTab === 'stream' && alertsOverlay" class="max-w-2xl space-y-3 p-4 pt-6">
+            <p class="text-sm text-foreground">
+              An alert does not go into OBS on its own. It shows inside your Alerts overlay, so that one overlay in OBS is all your alerts need.
+            </p>
+            <AlertsOverlayPanel :state="alertsOverlay" />
           </div>
         </div>
 

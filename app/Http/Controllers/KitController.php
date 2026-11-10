@@ -8,6 +8,7 @@ use App\Models\Kit;
 use App\Models\OverlayTemplate;
 use App\Models\User;
 use App\Services\Alerts\AlertEventSamples;
+use App\Services\Alerts\AlertsOverlay;
 use App\Services\ImageUploadService;
 use App\Services\Kits\KitPreview;
 use App\Services\KitShareService;
@@ -136,14 +137,9 @@ class KitController extends Controller
         // The owner of a kit with alerts gets their Alerts overlay on the page:
         // without it in OBS, assigned alerts have nowhere to show.
         $user = auth()->user();
-        $alertsOverlay = null;
-        if ($user && $kit->owner_id === $user->id && $preview !== null) {
-            $overlay = $user->alertsOverlay;
-            $alertsOverlay = [
-                'overlay' => $overlay ? $overlay->only(['id', 'name', 'slug', 'type']) : null,
-                'live' => $overlay !== null && $user->alerts_overlay_live_at !== null,
-            ];
-        }
+        $alertsOverlay = ($user && $kit->owner_id === $user->id && $preview !== null)
+            ? app(AlertsOverlay::class)->pageState($user)
+            : null;
 
         return Inertia::render('kits/show', [
             'kit' => $kit,

@@ -1,5 +1,24 @@
 # Changelog - November 2026
 
+## OL-2611-008 - November 10th, 2026 - feat(alerts): alerts carry no controls and no Add to OBS; their pages show the Alerts overlay instead
+
+The alert editor was a copy of the static overlay editor: it offered Controls, Values and Add to
+OBS, none of which make sense for an alert. A control on an alert never reached the screen, since
+an alert renders inside a static overlay and only that overlay's controls are sent. And adding an
+alert to OBS on its own sidestepped the Alerts overlay that OL-2611-007 introduced.
+
+- **No more Controls, Values or Add to OBS on alerts.** An alert's edit and view pages end with an
+  "On stream" tab instead. It says that an alert does not go into OBS on its own, and shows the
+  account's Alerts overlay: create it, add it to OBS, and whether OBS has loaded it.
+- **Creating an alert shows the same panel.** Picking "Event Alert" on the create page puts the
+  Alerts overlay right under the tips, and creating it there keeps the half-written alert.
+- **The server agrees.** Adding or importing a control on an alert is refused. TTS and chat lines
+  keep reading any of the account's controls, so nothing they did needed one on the alert.
+- **One panel everywhere.** The kit page's Alerts overlay block became `AlertsOverlayPanel`, used on
+  the kit page, both alert pages and the create page.
+- Left alone: an alert already added to OBS on its own still renders, and controls already on an
+  alert stay where they are.
+
 ## OL-2611-007 - November 10th, 2026 - feat(alerts): one Alerts overlay per account, and untargeted alerts render only there once OBS has it
 
 An alert never renders on its own: it renders inside a static overlay that is in OBS. Until now an

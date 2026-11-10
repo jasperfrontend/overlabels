@@ -19,6 +19,15 @@ use Random\RandomException;
 class OverlayControlController extends Controller
 {
     /**
+     * An alert renders inside a static overlay and only that overlay's
+     * controls reach the screen, so a control on an alert would show
+     * nothing. A kit's settings for its alerts live on the Alerts overlay
+     * (see AlertsOverlay). TTS and chat lines read any of the user's
+     * controls, so they never needed one on the alert either.
+     */
+    private const string ALERTS_CARRY_NO_CONTROLS = 'Alerts do not carry controls. Put the control on your Alerts overlay, where the alert shows.';
+
+    /**
      * List controls for a template.
      */
     public function index(OverlayTemplate $template): JsonResponse
@@ -36,6 +45,7 @@ class OverlayControlController extends Controller
     public function store(Request $request, OverlayTemplate $template): JsonResponse
     {
         abort_if($template->owner_id !== auth()->id(), 403);
+        abort_if($template->type === 'alert', 422, self::ALERTS_CARRY_NO_CONTROLS);
         abort_if($template->controls()->count() >= 50, 422, 'Templates are limited to 50 controls.');
 
         $validated = $request->validate([
@@ -513,6 +523,7 @@ class OverlayControlController extends Controller
     public function importForkedControls(Request $request, OverlayTemplate $template): JsonResponse
     {
         abort_if($template->owner_id !== auth()->id(), 403);
+        abort_if($template->type === 'alert', 422, self::ALERTS_CARRY_NO_CONTROLS);
 
         $validated = $request->validate([
             'controls' => 'required|array',
