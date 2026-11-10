@@ -8,6 +8,7 @@ use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -262,6 +263,7 @@ class User extends Authenticatable
             'bot_settings' => 'array',
             'preferences' => 'array',
             'is_system_user' => 'boolean',
+            'alerts_overlay_live_at' => 'datetime',
         ];
     }
 
@@ -480,6 +482,15 @@ class User extends Authenticatable
     public function overlayTemplates(): User|HasMany
     {
         return $this->hasMany(OverlayTemplate::class, 'owner_id');
+    }
+
+    /**
+     * The account's Alerts overlay: the static overlay untargeted alerts
+     * render in once OBS has loaded it. See App\Services\Alerts\AlertsOverlay.
+     */
+    public function alertsOverlay(): BelongsTo
+    {
+        return $this->belongsTo(OverlayTemplate::class, 'alerts_overlay_id');
     }
 
     public function eventsubSubscriptions(): User|HasMany

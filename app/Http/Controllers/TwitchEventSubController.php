@@ -14,6 +14,7 @@ use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
 use App\Services\AlertMuteService;
+use App\Services\Alerts\AlertsOverlay;
 use App\Services\DeliveryLedger;
 use App\Services\EventMeter;
 use App\Services\LivingTitleService;
@@ -722,11 +723,9 @@ class TwitchEventSubController extends Controller
                 $eventData // Pass event data for event.* tags
             );
 
-            // Resolve target static overlay slugs (null = fire on all)
-            $mapping->template->loadMissing('targetStaticOverlays');
-            $targetSlugs = $mapping->template->targetStaticOverlays->isNotEmpty()
-                ? $mapping->template->targetStaticOverlays->pluck('slug')->all()
-                : null;
+            // Where it renders: its targets, else the live Alerts overlay,
+            // else every static overlay (null). See AlertsOverlay.
+            $targetSlugs = app(AlertsOverlay::class)->targetSlugs($mapping->template, $user);
 
             // One snapshot for everything this alert says: TTS, chat and
             // the payload the overlay renders. See renderAlert().

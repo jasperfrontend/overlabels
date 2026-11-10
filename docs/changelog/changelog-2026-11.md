@@ -1,5 +1,28 @@
 # Changelog - November 2026
 
+## OL-2611-007 - November 10th, 2026 - feat(alerts): one Alerts overlay per account, and untargeted alerts render only there once OBS has it
+
+An alert never renders on its own: it renders inside a static overlay that is in OBS. Until now an
+alert with no targeting rendered in every static overlay of the account, so a streamer with two
+overlays in OBS saw every alert twice, and a new streamer who installed an alert product with no
+overlay in OBS saw nothing at all. Kits and alert products had no answer to "where do these show
+up".
+
+- **Every account can have one Alerts overlay.** A transparent, private static overlay that exists to
+  hold alerts. A kit's owner creates it from the kit page and adds it to OBS with the usual Add to
+  OBS button.
+- **Once OBS has loaded it, untargeted alerts render there only.** The first load is stamped on the
+  account. Before that, nothing changes: alerts keep rendering in every overlay, so creating the
+  overlay can never take alerts off a stream before it is in OBS. Alerts with explicit targets keep
+  them.
+- **Kits can ship settings for their alerts.** A kit that contains its author's Alerts overlay
+  merges that overlay's controls into the copier's own Alerts overlay when copied, instead of adding
+  a second overlay. The Subtle kit's corner picker works this way.
+- **The kit page shows where alerts go.** Above "On your stream", the owner of a kit with alerts sees
+  their Alerts overlay: a create button, Add to OBS, and whether OBS has loaded it yet.
+- Not in this change: the alert editor still has Controls, Values and Add to OBS tabs, and the alert
+  products still say alerts show in every overlay. Both are next.
+
 ## OL-2611-006 - November 9th, 2026 - feat(kits): play a kit's alerts before installing it, and copying a kit wires them up
 
 A kit page used to be a thumbnail and a list of names. Now a kit with alerts has a stage beside its

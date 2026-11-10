@@ -10,6 +10,7 @@ use App\Models\ExternalEvent;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\User;
 use App\Services\AlertMuteService;
+use App\Services\Alerts\AlertsOverlay;
 use App\Services\DeliveryLedger;
 use App\Services\Messages\AlertMessageRenderer;
 use Illuminate\Support\Facades\Log;
@@ -53,11 +54,9 @@ class ExternalAlertService
         // Build data map: event tags only (no Twitch static data for external events)
         $data = $event->getTemplateTags();
 
-        // Resolve target static overlay slugs (null = fire on all)
-        $template->loadMissing('targetStaticOverlays');
-        $targetSlugs = $template->targetStaticOverlays->isNotEmpty()
-            ? $template->targetStaticOverlays->pluck('slug')->all()
-            : null;
+        // Where it renders: its targets, else the live Alerts overlay,
+        // else every static overlay (null). See AlertsOverlay.
+        $targetSlugs = app(AlertsOverlay::class)->targetSlugs($template, $user);
 
         try {
             // One snapshot for everything this alert says: TTS, chat and

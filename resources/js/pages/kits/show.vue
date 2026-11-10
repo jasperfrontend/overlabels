@@ -18,6 +18,7 @@ import {
 import AppLayout from '@/layouts/AppLayout.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import AlertStage from '@/components/kits/AlertStage.vue';
+import AddToObsButton from '@/components/AddToObsButton.vue';
 import type { KitPreviewData } from '@/utils/alertPreview';
 import { serviceLabel } from '@/utils/services';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +54,9 @@ interface Props {
   kit: Kit;
   // Null when the kit has no alerts. See App\Services\Kits\KitPreview.
   preview: KitPreviewData | null;
+  // The owner's Alerts overlay, for a kit with alerts; null otherwise.
+  // `overlay` is null until they create it. `live` = OBS has loaded it.
+  alertsOverlay: { overlay: { id: number; name: string; slug: string; type: string } | null; live: boolean } | null;
   canEdit: boolean;
   canFork: boolean;
   // Null for a private kit: the markdown route is gated on is_public, so there
@@ -106,6 +110,16 @@ const handleDelete = async () => {
   }
 };
 const hasPreview = computed(() => (props.preview?.triggers.length ?? 0) > 0);
+
+const creatingAlertsOverlay = ref(false);
+function createAlertsOverlay() {
+  creatingAlertsOverlay.value = true;
+  router.post(route('alerts-overlay.store'), {}, { preserveScroll: true, onFinish: () => (creatingAlertsOverlay.value = false) });
+}
+// After the OBS dialog closes, look again: the first load is what moves alerts in.
+function refreshAlertsOverlay() {
+  router.reload({ only: ['alertsOverlay'] });
+}
 
 // What copying does, in the words of the services it touches.
 const previewServices = computed(() => {
@@ -345,6 +359,27 @@ const breadcrumbs: BreadcrumbItem[] = [
               <BookCopy class="h-4 w-4" />
               Copy this kit
             </button>
+          </div>
+
+          <div v-if="alertsOverlay" class="rounded-lg border border-sidebar bg-card p-4">
+            <h3 class="mb-2 text-sm font-semibold">Alerts overlay</h3>
+            <div v-if="!alertsOverlay.overlay" class="flex flex-wrap items-center gap-4">
+              <p class="flex-1 text-sm text-foreground">
+                Your alerts show up in one overlay in OBS. Create it once, add it to OBS, and every alert you assign appears there.
+              </p>
+              <button type="button" class="btn btn-primary btn-sm cursor-pointer" :disabled="creatingAlertsOverlay" @click="createAlertsOverlay">
+                Create my Alerts overlay
+              </button>
+            </div>
+            <div v-else class="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
+              <CircleCheck v-if="alertsOverlay.live" class="h-4 w-4 shrink-0 text-green-500" />
+              <CircleDashed v-else class="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span v-if="alertsOverlay.live" class="flex-1 text-foreground">In OBS. Your alerts show here.</span>
+              <span v-else class="flex-1 text-foreground">
+                Not in OBS yet. Add it as a browser source on top of your scene. Until then, your alerts keep showing in all your overlays.
+              </span>
+              <AddToObsButton :template="alertsOverlay.overlay" :variant="alertsOverlay.live ? 'again' : 'compact'" @done="refreshAlertsOverlay" />
+            </div>
           </div>
 
           <div v-if="wiringRows.length" class="rounded-lg border border-sidebar bg-card p-4">

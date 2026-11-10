@@ -14,6 +14,7 @@ use App\Models\OverlayTemplate;
 use App\Models\TowerBlock;
 use App\Models\User;
 use App\Models\UserFreesoundSound;
+use App\Services\Alerts\AlertsOverlay;
 use App\Services\HtmlSanitizationService;
 use App\Services\ImageUploadService;
 use App\Services\OverlayShareService;
@@ -659,6 +660,11 @@ class OverlayTemplateController extends Controller
                 $template->slug
             );
 
+            // The first load of the account's Alerts overlay is the moment
+            // untargeted alerts move into it. See AlertsOverlay.
+            $alertsOverlay = app(AlertsOverlay::class);
+            $alertsOverlay->markLive($user, $template);
+
             // Inject control values: template-scoped + user-scoped (source_managed)
             $controls = OverlayControl::where(function ($q) use ($template, $user) {
                 $q->where('overlay_template_id', $template->id)
@@ -928,9 +934,8 @@ class OverlayTemplateController extends Controller
                     ->get();
 
                 foreach ($alertTemplates as $alertTemplate) {
-                    $targetIds = $alertTemplate->targetStaticOverlays->pluck('id')->all();
-                    $firesHere = empty($targetIds) || in_array($template->id, $targetIds, true);
-                    if (! $firesHere) {
+                    // Same rule the broadcast sites address alerts by.
+                    if (! $alertsOverlay->firesOn($alertTemplate, $template, $user)) {
                         continue;
                     }
                     $html = (string) $alertTemplate->html;

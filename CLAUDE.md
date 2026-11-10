@@ -603,7 +603,24 @@ constraint, not a preference.
 - `broadcastWith()` includes `target_overlay_slugs` in the `alert` array
 - All broadcast points: TwitchEventSubController::renderEventAlert, ExternalAlertService::dispatch, ExternalEventController::replay
 - `OverlayRenderer.vue` early-exits in `handleAlertTriggered()`: if targetSlugs !== null and slug not in list, return
-- Semantic: empty pivot = null slugs = fires on ALL overlays (backward-compatible default)
+- Semantic: empty pivot = the account's live Alerts overlay if it has one, else null slugs = fires on ALL overlays (see below)
+
+### One Alerts overlay per account (Nov 2026, OL-2611-007)
+
+- `users.alerts_overlay_id` names the account's Alerts overlay, a transparent private static overlay
+  made by `App\Services\Alerts\AlertsOverlay::ensure()`. `users.alerts_overlay_live_at` is stamped by
+  the render endpoint the first time OBS loads it (`markLive()`).
+- **An untargeted alert renders only in the Alerts overlay, and only once it is live.** Before that it
+  renders everywhere, as it always did: creating the overlay must never take alerts off a stream
+  before it is in OBS. Explicit targets always win. `AlertsOverlay::targetSlugs()` (the three
+  broadcast sites) and `firesOn()` (render payload `alert_sources`) are the one rule; never inline
+  the old `isNotEmpty() ? pluck('slug') : null` again.
+- **A kit that holds its author's Alerts overlay merges its controls into the copier's** in
+  `Kit::fork()` instead of copying a second static overlay. That is how a kit ships settings for its
+  alerts (Subtle's `subtle_position`): an alert's own controls never reach the screen in a host
+  overlay, and alerts are not meant to carry controls.
+- The kit page shows the owner their Alerts overlay (create, Add to OBS, live or not) when the kit has
+  alerts. Product pages still say alerts show "inside every overlay you have in OBS".
 
 ### Alert sources (Nov 2026, OL-2611-005)
 

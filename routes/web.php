@@ -2,6 +2,7 @@
 
 use App\Events\UserRegistered;
 use App\Http\Controllers\AlertMuteController;
+use App\Http\Controllers\AlertsOverlayController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventDeletionController;
 use App\Http\Controllers\EventTemplateMappingController;
@@ -752,6 +753,9 @@ Route::middleware('auth.redirect')->group(function () {
             ->middleware('throttle:kit-fork')->name('fork');
         Route::post('/{kit}/assign', [KitController::class, 'assignTriggers'])->name('assign');
     });
+
+    // The account's one Alerts overlay, created on request. See AlertsOverlay.
+    Route::post('/alerts-overlay', AlertsOverlayController::class)->name('alerts-overlay.store');
 
     // Installing a product. The pitch is public, above.
     Route::post('/products/{slug}/install', [ProductController::class, 'install'])

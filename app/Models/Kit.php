@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\Alerts\AlertEventSamples;
+use App\Services\Alerts\AlertsOverlay;
 use Database\Factories\KitFactory;
 use Eloquent;
 use Exception;
@@ -301,7 +302,24 @@ class Kit extends Model
         // Fork all templates in the kit
         $forkedTemplates = [];
         $templateMap = [];
+        $authorAlertsOverlayId = User::whereKey($this->owner_id)->value('alerts_overlay_id');
         foreach ($this->templates as $template) {
+            // The author's Alerts overlay is not copied as a second overlay:
+            // an account has one, and every alert renders in it. Its controls
+            // (a kit's settings for its alerts, like Subtle's Position) join
+            // the copier's own Alerts overlay instead, which takes its place
+            // in the copied kit.
+            if ($authorAlertsOverlayId !== null && $template->id === $authorAlertsOverlayId) {
+                $own = app(AlertsOverlay::class)->mergeControls(
+                    $user,
+                    $template->controls()->whereNull('source')->orderBy('sort_order')->get(),
+                );
+                $forkedTemplates[] = $own->id;
+                $templateMap[$template->id] = $own->id;
+
+                continue;
+            }
+
             $forkedTemplate = $template->fork($user);
 
             // Copy non-service-managed controls to the forked template.

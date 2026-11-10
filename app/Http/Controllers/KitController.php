@@ -133,9 +133,22 @@ class KitController extends Controller
         ));
         $kit->makeHidden('alert_triggers');
 
+        // The owner of a kit with alerts gets their Alerts overlay on the page:
+        // without it in OBS, assigned alerts have nowhere to show.
+        $user = auth()->user();
+        $alertsOverlay = null;
+        if ($user && $kit->owner_id === $user->id && $preview !== null) {
+            $overlay = $user->alertsOverlay;
+            $alertsOverlay = [
+                'overlay' => $overlay ? $overlay->only(['id', 'name', 'slug', 'type']) : null,
+                'live' => $overlay !== null && $user->alerts_overlay_live_at !== null,
+            ];
+        }
+
         return Inertia::render('kits/show', [
             'kit' => $kit,
             'preview' => $preview,
+            'alertsOverlay' => $alertsOverlay,
             'canEdit' => $kit->owner_id === auth()->id(),
             'canFork' => auth()->check(),
             // Only public kits have a markdown twin, so the affordance only
