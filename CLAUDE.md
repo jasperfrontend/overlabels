@@ -621,8 +621,12 @@ constraint, not a preference.
   overlay, and alerts are not meant to carry controls.
 - `AlertsOverlayPanel.vue` is the ONE place that shows it (create, Add to OBS, live or not), fed by
   `AlertsOverlay::pageState()` as the `alertsOverlay` prop: on a kit with alerts (owner), an alert's
-  "On stream" tab (edit and show), and creating an alert. Product pages still say alerts show
-  "inside every overlay you have in OBS".
+  "On stream" tab (edit and show), creating an alert, and an alert product's OBS step. Its `reload`
+  prop names the page prop that carries the state (`installed` on a product page).
+- **An alert product's OBS step** (`ProductController::yourOverlays()`, OL-2611-010) is done when the
+  Alerts overlay is live, or when a real overlay link served any static overlay in the last 30 days
+  (until the Alerts overlay is live, alerts really do show there). Otherwise it asks for the Alerts
+  overlay. It no longer offers the person's newest overlays.
 - **Alerts carry no controls and have no Add to OBS** (Jasper, 2026-11-10, OL-2611-008). The alert
   pages have no Controls, Values or Add to OBS tabs, and `OverlayControlController::store()` /
   `importForkedControls()` 422 on an alert. TTS and chat lines read any of the user's controls, so
@@ -635,8 +639,9 @@ constraint, not a preference.
   copies the starter kit or keyword-matches alert names onto Twitch events; it only makes the
   webhook secret. A new account owns nothing until it picks.
 - **Featured kits = `kits.featured_at` set + public**, oldest feature first, read through
-  `App\Services\Kits\FeaturedKits::cards()` only. They fill `/start` and lead the Alerts shelf on
-  /products (`featured_kits` prop, sent only when that shelf is on the page). Set by hand; there is
+  `App\Services\Kits\FeaturedKits::cards()` only. They fill `/start`, open `/kits` as "Ready-made
+  kits" (and are left out of its public list), and lead the Alerts shelf on /products
+  (`featured_kits` prop, sent only when that shelf is on the page). Set by hand; there is
   no admin toggle. `Kit::fork()` clears it, so a copy is never featured.
 - A featured kit must declare its `alert_triggers`, or a copy has nothing to assign and its card
   names no service.

@@ -125,3 +125,17 @@ test('a brand new account that was going somewhere still goes there', function (
 
     pickerLoginAsNewAccount($target)->assertRedirect($target);
 });
+
+test('the kits page leads with the featured kits and keeps them out of the public list', function () {
+    $featured = pickerKit(['featured_at' => now()]);
+    $plain = pickerKit();
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('kits.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('kits/index')
+            ->has('featuredKits', 1)
+            ->where('featuredKits.0.id', $featured->id)
+            ->has('recentPublicKits', 1)
+            ->where('recentPublicKits.0.id', $plain->id));
+});

@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { PlusIcon, Package, LayoutGrid } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import KitCard from '@/components/KitCard.vue';
+import FeaturedKitCard, { type FeaturedKit } from '@/components/kits/FeaturedKitCard.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import Heading from '@/components/Heading.vue';
 import { BreadcrumbItem } from '@/types';
@@ -38,6 +39,8 @@ interface Props {
     total: number;
   };
   recentPublicKits?: Kit[];
+  // The official ready-made kits, the same cards the kit picker shows.
+  featuredKits?: FeaturedKit[];
   auth?: {
     user?: {
       id: number;
@@ -71,6 +74,16 @@ defineProps<Props>();
         </Link>
       </div>
 
+      <!-- Ready-made kits: the kit picker's cards, for every account past its first login. -->
+      <section v-if="featuredKits && featuredKits.length > 0" class="mb-8">
+        <h2 class="text-base font-semibold text-foreground">Ready-made kits</h2>
+        <p class="mt-1 mb-3 max-w-prose text-sm text-foreground">Complete sets in one style. Watch them play, copy one, and it is yours.</p>
+        <ul class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <FeaturedKitCard v-for="kit in featuredKits" :key="kit.id" :kit="kit" />
+        </ul>
+      </section>
+
+      <h2 v-if="featuredKits && featuredKits.length > 0" class="text-base font-semibold text-foreground">Your kits</h2>
       <div v-if="kits.data.length > 0" data-tab-start class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <KitCard v-for="kit in kits.data" :key="kit.id" :kit="kit" :current-user-id="auth?.user?.id" :allow-delete="true" />
       </div>

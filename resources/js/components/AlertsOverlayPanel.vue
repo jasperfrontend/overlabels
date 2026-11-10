@@ -14,7 +14,14 @@ export interface AlertsOverlayState {
   live: boolean;
 }
 
-defineProps<{ state: AlertsOverlayState }>();
+const props = withDefaults(
+  defineProps<{
+    state: AlertsOverlayState;
+    // The page props that carry `state`, reloaded after the OBS dialog closes.
+    reload?: string[];
+  }>(),
+  { reload: () => ['alertsOverlay'] },
+);
 
 const creating = ref(false);
 function create() {
@@ -25,7 +32,7 @@ function create() {
 
 // After the OBS dialog closes, look again: the first load is what moves alerts in.
 function refresh() {
-  router.reload({ only: ['alertsOverlay'] });
+  router.reload({ only: props.reload });
 }
 </script>
 

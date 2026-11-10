@@ -1,5 +1,19 @@
 # Changelog - November 2026
 
+## OL-2611-010 - November 10th, 2026 - feat(alerts): alert products ask for the Alerts overlay, and /kits leads with the ready-made kits
+
+The loose ends of the Alerts overlay (OL-2611-007) and the kit picker (OL-2611-009).
+
+- **Alert products point at the Alerts overlay.** The OBS step of the five donation alert products
+  used to offer the person's five newest overlays, or send them off to make one. It now asks for the
+  Alerts overlay with the same create and Add to OBS panel as everywhere else. It still counts as
+  done when another overlay of theirs has been in OBS lately, because until the Alerts overlay is
+  live the alert really does show there.
+- **The products say so.** The five alert products and their alert documents now say the alert
+  shows inside the Alerts overlay, not in every overlay in OBS.
+- **/kits opens with the ready-made kits.** The same cards as the kit picker, above "Your kits",
+  so an account past its first login finds them too. They no longer repeat in the public list.
+
 ## OL-2611-009 - November 10th, 2026 - feat(kits): new accounts pick a kit, and ready-made kits lead the Alerts shelf
 
 Every new account used to get a silent copy of the starter kit, Midnight Purple, with its Twitch

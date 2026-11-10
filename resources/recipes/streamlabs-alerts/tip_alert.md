@@ -12,7 +12,7 @@ An Overlabels **alert overlay** by Overlabels.
 
 Overlabels overlays are plain HTML and CSS containing `[[[triple-bracket tags]]]` that resolve against live stream data and update over WebSockets. There is no JavaScript in an overlay - the template language does the work. The complete language specification is at <https://overlabels.com/llms.txt>; read it first if you are not already familiar with the syntax.
 
-This is an alert overlay: it renders when an event fires and is removed after its duration. It is targeted at nothing in particular, so it renders inside every static overlay you have in OBS, on top of whatever is there.
+This is an alert overlay: it renders when an event fires and is removed after its duration. It is targeted at nothing in particular, so it renders inside your Alerts overlay once OBS has loaded it, and inside every static overlay you have in OBS until then, on top of whatever is there.
 
 ## Source
 

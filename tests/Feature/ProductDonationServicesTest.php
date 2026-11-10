@@ -8,6 +8,7 @@ use App\Models\OverlayAccessToken;
 use App\Models\OverlayTemplate;
 use App\Models\RecipeInstance;
 use App\Models\User;
+use App\Services\Alerts\AlertsOverlay;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
 use App\Support\OverlayMarkdown;
@@ -164,7 +165,7 @@ it('installs beside an alert on another service, and two products install side b
         ->and(ExternalIntegration::where('user_id', $user->id)->pluck('service')->sort()->values()->all())->toBe(['kofi', 'streamlabs']);
 });
 
-it('shows the alert wired to its one service, the person\'s own overlays for OBS, one service row and its test guide', function () {
+it('shows the alert wired to its one service, the Alerts overlay for OBS, one service row and its test guide', function () {
     $user = donationProductUser();
     OverlayTemplate::factory()->create(['owner_id' => $user->id, 'type' => 'static', 'name' => 'My scene']);
     $this->actingAs($user)->post('/products/ko-fi-alerts/install');
@@ -181,10 +182,11 @@ it('shows the alert wired to its one service, the person\'s own overlays for OBS
             ->where('installed.overlays.0.more_events', ['Ko-fi Subscription', 'Ko-fi Shop Order', 'Ko-fi Commission'])
             // An alert never goes into OBS itself, so it says nothing about loading.
             ->missing('installed.overlays.0.loaded_ago')
+            // An overlay of theirs OBS never loaded is not offered: the beat
+            // asks for the Alerts overlay instead (OL-2611-010).
             ->where('installed.your_overlays.loaded', false)
-            ->has('installed.your_overlays.overlays', 1)
-            ->where('installed.your_overlays.overlays.0.name', 'My scene')
-            ->where('installed.your_overlays.total', 1)
+            ->where('installed.your_overlays.overlays', [])
+            ->where('installed.your_overlays.alerts_overlay', ['overlay' => null, 'live' => false])
             ->has('installed.services', 1)
             ->where('installed.services.0.service', 'kofi')
             ->where('installed.services.0.kind', 'token')
@@ -203,7 +205,7 @@ it('has nothing more to offer for a service with one event type, and no overlays
         ->get('/products/streamlabs-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.overlays.0.more_events', [])
-            ->where('installed.your_overlays', ['loaded' => false, 'overlays' => [], 'total' => 0])
+            ->where('installed.your_overlays', ['loaded' => false, 'overlays' => [], 'alerts_overlay' => ['overlay' => null, 'live' => false]])
             ->where('installed.test_guide.service', 'streamlabs')
         );
 });
@@ -215,10 +217,10 @@ it('offers no overlays of the person\'s own for a product that ships its own sta
 
     $this->actingAs($user->fresh())
         ->get('/products/chat-tower/install')
-        ->assertInertia(fn (Assert $page) => $page->where('installed.your_overlays', ['loaded' => false, 'overlays' => [], 'total' => 0]));
+        ->assertInertia(fn (Assert $page) => $page->where('installed.your_overlays', ['loaded' => false, 'overlays' => [], 'alerts_overlay' => null]));
 });
 
-it('names the overlays an overlay link has served lately, and otherwise offers the five most recently edited', function () {
+it('names the overlays an overlay link has served lately, and otherwise offers none of them', function () {
     $user = donationProductUser();
     $scenes = collect(range(1, 7))->map(fn (int $i) => OverlayTemplate::factory()->create([
         'owner_id' => $user->id,
@@ -228,14 +230,12 @@ it('names the overlays an overlay link has served lately, and otherwise offers t
     ]));
     $this->actingAs($user)->post('/products/ko-fi-alerts/install');
 
-    // Nothing served yet: the five newest, and a count of the rest.
+    // Nothing served yet: no overlay of theirs is offered.
     $this->actingAs($user->fresh())
         ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.your_overlays.loaded', false)
-            ->has('installed.your_overlays.overlays', 5)
-            ->where('installed.your_overlays.overlays.0.name', 'Scene 7')
-            ->where('installed.your_overlays.total', 7)
+            ->where('installed.your_overlays.overlays', [])
         );
 
     // A link served Scene 2 this month and Scene 5 long ago: only Scene 2 counts.
@@ -255,7 +255,22 @@ it('names the overlays an overlay link has served lately, and otherwise offers t
             ->where('installed.your_overlays.loaded', true)
             ->has('installed.your_overlays.overlays', 1)
             ->where('installed.your_overlays.overlays.0.name', 'Scene 2')
-            ->where('installed.your_overlays.total', 7)
+        );
+});
+
+it('is done with OBS once the Alerts overlay is live, and names only that', function () {
+    $user = donationProductUser();
+    OverlayTemplate::factory()->create(['owner_id' => $user->id, 'type' => 'static', 'name' => 'My scene']);
+    $this->actingAs($user)->post('/products/ko-fi-alerts/install');
+    $host = app(AlertsOverlay::class)->ensure($user);
+    $user->forceFill(['alerts_overlay_live_at' => now()])->save();
+
+    $this->actingAs($user->fresh())
+        ->get('/products/ko-fi-alerts/install')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('installed.your_overlays.loaded', true)
+            ->where('installed.your_overlays.overlays', [['id' => $host->id, 'name' => 'Alerts', 'slug' => $host->slug]])
+            ->where('installed.your_overlays.alerts_overlay.live', true)
         );
 });
 
@@ -280,7 +295,7 @@ it('does not count the designer preview as an overlay link serving an overlay', 
         ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page
             ->where('installed.your_overlays.loaded', false)
-            ->where('installed.your_overlays.overlays.0.name', 'Chat')
+            ->where('installed.your_overlays.overlays', [])
         );
 });
 

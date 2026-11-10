@@ -15,6 +15,7 @@ import ProductsLayout, { type ProductCategory } from '@/layouts/ProductsLayout.v
 import ProductServices from '@/components/ProductServices.vue';
 import type { ProductService } from '@/components/ProductServices.vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
+import AlertsOverlayPanel, { type AlertsOverlayState } from '@/components/AlertsOverlayPanel.vue';
 import { productMoves, type MoveKey, type Moves } from '@/utils/productMoves';
 
 type WireState = 'satisfied' | 'missing' | 'not_applicable';
@@ -114,11 +115,13 @@ interface Installed {
   /** Every donation service the product's alerts fire on, each with its connect. Empty for a product with no such alert. */
   services: ProductService[];
   /**
-   * For a product that installs an alert and nothing of its own for OBS: the
-   * overlays an overlay link has served lately (`loaded`), else up to five of
-   * the person's own, with the total. Empty for a product with its own stage.
+   * For a product that installs an alert and nothing of its own for OBS:
+   * `loaded` when the Alerts overlay is live or an overlay link has served a
+   * static overlay lately, and those overlays by name; `alerts_overlay` is
+   * the Alerts overlay the beat asks for otherwise. Empty (and
+   * `alerts_overlay` null) for a product with its own stage.
    */
-  your_overlays: { loaded: boolean; overlays: { id: number; name: string; slug: string }[]; total: number };
+  your_overlays: { loaded: boolean; overlays: { id: number; name: string; slug: string }[]; alerts_overlay: AlertsOverlayState | null };
   test_guide: TestGuide | null;
   landed: Landed | null;
   removes: string[];
@@ -201,9 +204,9 @@ const testGuides = computed<TestGuide[]>(() => {
 });
 
 // A product that installs only an alert has nothing of its own for OBS: the
-// alert renders inside every static overlay the person has there. The OBS
-// move offers their own overlays instead, any one of which is enough.
-const yourOverlays = computed(() => props.installed?.your_overlays ?? { loaded: false, overlays: [], total: 0 });
+// alert renders inside the Alerts overlay (every static overlay until that is
+// live). The OBS move asks for the Alerts overlay.
+const yourOverlays = computed(() => props.installed?.your_overlays ?? { loaded: false, overlays: [], alerts_overlay: null });
 
 // Up to three names, then a count: "Scene, Clock, Chat and 4 more".
 const loadedNames = computed(() => {
@@ -708,41 +711,17 @@ async function uninstall(): Promise<void> {
             </template>
 
             <!-- An alert-only product has nothing of its own for OBS. The
-                 alert renders inside every static overlay in OBS, so the move
-                 offers the person's own overlays, each by name: any one of
-                 them is enough. -->
-            <template v-else-if="move.key === 'obs' && yourOverlays.overlays.length">
+                 alert shows inside the account's Alerts overlay, so the move
+                 asks for that one overlay, created and added right here. -->
+            <template v-else-if="move.key === 'obs' && yourOverlays.alerts_overlay">
               <div class="flex flex-col gap-1">
-                <h3 class="text-xl leading-tight font-semibold text-foreground">Put one of your overlays in OBS</h3>
+                <h3 class="text-xl leading-tight font-semibold text-foreground">Add your Alerts overlay to OBS</h3>
                 <p class="text-sm leading-relaxed text-pretty text-foreground">
-                  The alert shows inside every overlay of yours that is in OBS, on top of whatever is there. One is enough, and the alert itself needs
-                  nothing added.
+                  The alert shows inside your Alerts overlay, one overlay that all your alerts share. Add it to OBS once, on top of your scene, and
+                  the alert itself needs nothing added.
                 </p>
               </div>
-              <ul class="flex w-full flex-col divide-y divide-sidebar-border">
-                <li
-                  v-for="overlay in yourOverlays.overlays"
-                  :key="overlay.id"
-                  class="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
-                >
-                  <span class="min-w-0 truncate text-sm font-medium text-foreground">{{ overlay.name }}</span>
-                  <AddToObsButton :template="overlay" variant="compact" @done="recheck" />
-                </li>
-              </ul>
-              <p v-if="yourOverlays.total > yourOverlays.overlays.length" class="text-[13px] leading-relaxed text-muted-foreground">
-                And {{ yourOverlays.total - yourOverlays.overlays.length }} more on
-                <Link :href="route('templates.index', { type: 'static' })" :class="noteLink">your overlays page</Link>.
-              </p>
-            </template>
-
-            <template v-else-if="move.key === 'obs'">
-              <div class="flex flex-col gap-1">
-                <h3 class="text-xl leading-tight font-semibold text-foreground">Make an overlay for the alert to show in</h3>
-                <p class="text-sm leading-relaxed text-pretty text-foreground">
-                  The alert shows inside an overlay of yours that is in OBS. You have none yet.
-                </p>
-              </div>
-              <Link :href="withLastMileHint(route('templates.create'), product.slug)" class="btn btn-secondary cursor-pointer">Make an overlay</Link>
+              <AlertsOverlayPanel :state="yourOverlays.alerts_overlay" :reload="['installed']" class="w-full sm:max-w-xl" />
             </template>
 
             <!-- A real test event, from the service's own site, opened in a

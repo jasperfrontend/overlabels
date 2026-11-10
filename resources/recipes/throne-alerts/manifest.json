@@ -4,7 +4,7 @@
   "url_aliases": ["throne_alert"],
   "name": "Throne Alerts",
   "version": 1,
-  "description": "A Throne gift lands on your stream as an alert: who sent it and what it was worth, written the way you write money, with a sound, a spoken line and a message in chat. It shows inside every overlay you have in OBS. Installs the alert and connects Throne: paste the link this gives you into Throne's webhook settings, then send yourself a test delivery and watch it land.",
+  "description": "A Throne gift lands on your stream as an alert: who sent it and what it was worth, written the way you write money, with a sound, a spoken line and a message in chat. It shows inside your Alerts overlay, the one overlay all your alerts share in OBS. Installs the alert and connects Throne: paste the link this gives you into Throne's webhook settings, then send yourself a test delivery and watch it land.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"

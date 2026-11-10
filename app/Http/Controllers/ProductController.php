@@ -14,6 +14,7 @@ use App\Models\Recipe;
 use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Models\UserChatPreset;
+use App\Services\Alerts\AlertsOverlay;
 use App\Services\BotModeratedChannels;
 use App\Services\Kits\FeaturedKits;
 use App\Services\Recipes\RecipeCatalog;
@@ -927,32 +928,34 @@ class ProductController extends Controller
 
     /**
      * For a product that installs an alert and no static overlay: what the
-     * OBS beat can say. The alert renders inside every static overlay the
-     * person has in OBS, and an overlay link is per account, so the only
-     * sign of which overlays OBS actually loads is the access log: the
-     * slugs a link has served lately. When that names any, the beat says
-     * the alert already shows inside them and offers nothing; otherwise it
-     * offers the five most recently edited, and says how many more there
-     * are. A product with a stage of its own gets an empty answer.
+     * OBS beat can say. The alert renders inside a static overlay in OBS
+     * (AlertsOverlay): the account's Alerts overlay once OBS has loaded it,
+     * every static overlay until then.
+     *
+     * So the beat is done when the Alerts overlay is live, and also when an
+     * overlay link has served any static overlay lately (the access log is
+     * the only sign of what OBS loads), because until the Alerts overlay is
+     * live the alert really does show in those. Otherwise the beat asks for
+     * the Alerts overlay, through `alerts_overlay` (AlertsOverlayPanel).
+     * A product with a stage of its own gets an empty answer.
      *
      * @param  list<array<string, mixed>>  $overlays
-     * @return array{loaded: bool, overlays: list<array{id: int, name: string, slug: string}>, total: int}
+     * @return array{loaded: bool, overlays: list<array{id: int, name: string, slug: string}>, alerts_overlay: ?array}
      */
     private function yourOverlays(RecipeInstance $instance, array $overlays): array
     {
-        $none = ['loaded' => false, 'overlays' => [], 'total' => 0];
+        $none = ['loaded' => false, 'overlays' => [], 'alerts_overlay' => null];
 
         if (collect($overlays)->contains(fn (array $overlay) => $overlay['type'] !== 'alert')) {
             return $none;
         }
 
-        $statics = OverlayTemplate::where('owner_id', $instance->user_id)
-            ->where('type', 'static')
-            ->orderByDesc('updated_at')
-            ->get(['id', 'name', 'slug']);
+        $user = User::findOrFail($instance->user_id);
+        $state = app(AlertsOverlay::class)->pageState($user);
+        $only = fn ($template) => ['id' => $template->id, 'name' => $template->name, 'slug' => $template->slug];
 
-        if ($statics->isEmpty()) {
-            return $none;
+        if ($state['live']) {
+            return ['loaded' => true, 'overlays' => [$only($user->alertsOverlay)], 'alerts_overlay' => $state];
         }
 
         $served = OverlayAccessLog::query()
@@ -963,13 +966,16 @@ class ProductController extends Controller
             ->pluck('template_slug')
             ->all();
 
-        $loaded = $statics->filter(fn (OverlayTemplate $template) => in_array($template->slug, $served, true));
-        $pick = $loaded->isNotEmpty() ? $loaded : $statics->take(5);
+        $loaded = OverlayTemplate::where('owner_id', $instance->user_id)
+            ->where('type', 'static')
+            ->whereIn('slug', $served)
+            ->orderByDesc('updated_at')
+            ->get(['id', 'name', 'slug']);
 
         return [
             'loaded' => $loaded->isNotEmpty(),
-            'overlays' => $pick->map(fn (OverlayTemplate $template) => ['id' => $template->id, 'name' => $template->name, 'slug' => $template->slug])->values()->all(),
-            'total' => $statics->count(),
+            'overlays' => $loaded->map($only)->values()->all(),
+            'alerts_overlay' => $state,
         ];
     }
 

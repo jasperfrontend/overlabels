@@ -24,7 +24,7 @@ class KitController extends Controller
     /**
      * Display a listing of the kits.
      */
-    public function index(Request $request)
+    public function index(Request $request, FeaturedKits $featured)
     {
         $kits = Kit::with(['owner', 'templates'])
             ->where('owner_id', $request->user()->id)
@@ -38,6 +38,8 @@ class KitController extends Controller
             ->public()
             ->where('owner_id', '!=', $request->user()->id)
             ->whereNull('forked_from_id')
+            // Featured kits have their own section at the top.
+            ->whereNull('featured_at')
             ->latest()
             ->limit(10)
             ->get();
@@ -45,6 +47,8 @@ class KitController extends Controller
         return Inertia::render('kits/index', [
             'kits' => $kits,
             'recentPublicKits' => $recentPublicKits,
+            // The kit picker's cards, so an account past its first login finds them too.
+            'featuredKits' => $featured->cards(),
         ]);
     }
 
