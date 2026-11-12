@@ -25,7 +25,7 @@
         </p>
 
         <div class="flex flex-col items-start gap-4">
-          <a href="#products" class="btn btn-primary btn-xl w-full cursor-pointer sm:w-auto sm:px-20">
+          <a href="#product-cards" class="btn btn-primary btn-xl w-full cursor-pointer sm:w-auto sm:px-20">
             Browse free Twitch chat games and overlays
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 h-5 w-5"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
           </a>
@@ -81,7 +81,7 @@
           // A "New" badge, hand-kept. It stays until someone takes it off.
           $cardsNew = ['twitch-chat-plinko'];
       @endphp
-      <ul class="mt-14 grid grid-cols-2 gap-3 sm:mt-20 sm:gap-6 lg:gap-8" aria-label="Products">
+      <ul id="product-cards" class="mt-14 grid scroll-mt-(--ol-nav-h) grid-cols-2 gap-3 sm:mt-20 sm:gap-6 lg:gap-8" aria-label="Products">
         @foreach ($cards as $game)
           @php $cmd = $command($game['description']); @endphp
           <li class="group min-w-0">

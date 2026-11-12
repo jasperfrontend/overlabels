@@ -114,8 +114,8 @@ test('onboarding no longer copies the starter kit or wires any alert', function 
         ->and($user->fresh()->webhook_secret)->not->toBeNull();
 });
 
-test('a brand new account lands on the kit picker after its first login', function () {
-    pickerLoginAsNewAccount()->assertRedirect(route('kits.start', absolute: false));
+test('a brand new account lands on the dashboard after its first login, not the kit picker', function () {
+    pickerLoginAsNewAccount()->assertRedirect('/dashboard');
 
     expect(User::where('twitch_id', '987654321')->exists())->toBeTrue();
 });

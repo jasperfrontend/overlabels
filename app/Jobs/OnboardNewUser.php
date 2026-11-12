@@ -12,9 +12,9 @@ use Random\RandomException;
  * Runs once for a new account.
  *
  * It used to copy the starter kit into every new account and wire its alerts
- * to Twitch events by matching words in the alert names. A new account now
- * lands on the kit picker instead (`kits.start`) and chooses its alerts, so
- * nothing is copied here any more (Nov 2026, OL-2611-009).
+ * to Twitch events by matching words in the alert names. Nothing is copied
+ * here any more (Nov 2026, OL-2611-009): a new account lands on the dashboard
+ * and picks a product from there.
  */
 class OnboardNewUser implements ShouldQueue
 {

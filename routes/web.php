@@ -460,7 +460,6 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
             array_flip(['email', 'email_verified', 'verified'])
         );
 
-        $isNewAccount = false;
         if (! $user) {
             // Create a new user if not found
             $user = User::create([
@@ -478,7 +477,6 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
 
             // Dispatch event for new user registration
             UserRegistered::dispatch($user);
-            $isNewAccount = true;
         } else {
             // Existing user — update tokens and data
             $updateData = [
@@ -580,9 +578,10 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
             }
         }
 
-        // A brand new account with nowhere it was going starts on the kit
-        // picker: ready-made alerts it can watch play, then copy.
-        return redirect($isNewAccount ? route('kits.start', absolute: false) : '/dashboard');
+        // Every account, new or not, lands on the dashboard; a new one sees
+        // the welcome banner there. Alerts are one product among many, so a
+        // new account is not sent to the kit picker (reverted Nov 13th 2026).
+        return redirect('/dashboard');
 
     } catch (HttpException $e) {
         // A deliberate abort() is not an OAuth failure. Without this the

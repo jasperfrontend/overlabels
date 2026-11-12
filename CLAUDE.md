@@ -634,10 +634,12 @@ constraint, not a preference.
 
 ### Kits are the front door (Nov 2026, OL-2611-009)
 
-- **A new account lands on the kit picker, `/start` (`kits.start`), after its first Twitch login**,
-  unless the login was on its way somewhere (`url.intended` still wins). `OnboardNewUser` no longer
-  copies the starter kit or keyword-matches alert names onto Twitch events; it only makes the
-  webhook secret. A new account owns nothing until it picks.
+- **A new account lands on `/dashboard` after its first Twitch login, NOT on the kit picker**
+  (unless `url.intended` says otherwise). Sending new sign-ups to `/start` shipped Nov 10th and was
+  reverted Nov 13th 2026 by Jasper: alerts are one product among many, and a new account belongs
+  on the dashboard with the welcome banner like everyone else. `/start` still exists, linked from
+  nowhere. `OnboardNewUser` no longer copies the starter kit or keyword-matches alert names onto
+  Twitch events; it only makes the webhook secret. A new account owns nothing until it picks.
 - **Featured kits = `kits.featured_at` set + public**, oldest feature first, read through
   `App\Services\Kits\FeaturedKits::cards()` only. They fill `/start`, open `/kits` as "Ready-made
   kits" (and are left out of its public list), and lead the Alerts shelf on /products
