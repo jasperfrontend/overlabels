@@ -152,15 +152,10 @@ The expressions output plain numbers; CSS turns them into geometry.
 
 ## Reading the export
 
-Two things in the `.md` export are easy to misread, and worth knowing about for any overlay you
-inspect this way:
-
-- The *"Live data tags used"* section lists `[[[else]]]`, `[[[endforeach]]]`, `[[[loop.index]]]`
-  and friends. Those are template language keywords the exporter's tag extractor picked up, not
-  data. The real data tags here are the three `f.*` follower fields.
-- The root element carries `data-last-throw="[[[c:list:lane:last_removed_at]]]"`. That is a change
-  stamp: it gives the markup something that mutates on every throw, and doubles as a debugging
-  handle when you inspect the overlay inside OBS.
+One thing in the `.md` export is easy to misread, and worth knowing about for any overlay you
+inspect this way: the root element carries `data-last-throw="[[[c:list:lane:last_removed_at]]]"`.
+That is a change stamp: it gives the markup something that mutates on every throw, and doubles as a
+debugging handle when you inspect the overlay inside OBS.
 
 ## Build it yourself
 

@@ -320,6 +320,109 @@ it('separates live data tags from control tags', function () {
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Block syntax: conditions and loops are read the way the renderer reads them
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('reads an overlay full of conditions and loops the way the renderer does', function () {
+    // Trimmed from the prod overlay that exposed the bug: the old scan listed
+    // every [[[else]]] and [[[if:...]]] as a data tag, listed loop aliases as
+    // top-level data, missed both iterables, and marked both controls unused.
+    $template = shareTemplate([
+        'html' => <<<'HTML'
+            [[[if:c:toggle_existence]]]
+            <div class="last-subs slide-in-[[[if:c:left_or_right]]]right[[[else]]]left[[[endif]]]">
+              [[[foreach:channel_followers as follower]]]
+                [[[if:loop.index < 5]]]
+                  <div class="[[[if:loop.first]]]first[[[elseif:loop.last]]]last[[[endif]]]">
+                    <img src="[[[follower.user_profile_image_url]]]"> [[[follower.user_name]]] #[[[loop.index]]]
+                  </div>
+                [[[endif]]]
+              [[[endforeach]]]
+              [[[foreach:subscribers as sub]]]
+                [[[if:sub.tier >= 2000]]][[[sub.user_name]]][[[endif]]] [[[raw]]]
+              [[[endforeach]]]
+            </div>
+            [[[endif]]]
+            HTML,
+        'css' => '.x { justify-content: flex-[[[if:c:left_or_right]]]end[[[else]]]start[[[endif]]]; }',
+    ]);
+
+    foreach (['left_or_right', 'toggle_existence'] as $key) {
+        OverlayControl::factory()->create([
+            'overlay_template_id' => $template->id,
+            'user_id' => $template->owner_id,
+            'key' => $key,
+            'type' => 'boolean',
+            'value' => '1',
+            'source' => null,
+        ]);
+    }
+
+    $document = app(OverlayShareService::class)->document($template);
+
+    expect($document['dataTags'])->toBe(['channel_followers', 'subscribers'])
+        ->and(collect($document['controls'])->pluck('used', 'key')->all())
+        ->toBe(['left_or_right' => true, 'toggle_existence' => true]);
+});
+
+it('takes the key from a condition with every comparison operator', function () {
+    $template = shareTemplate([
+        'html' => '[[[if:a >= 1]]][[[elseif:b<=2]]][[[elseif:c_d != x]]][[[elseif:e > 1]]]'
+            .'[[[elseif:f< 2]]][[[elseif:g = Prime]]][[[endif]]]',
+    ]);
+
+    $document = app(OverlayShareService::class)->document($template);
+
+    expect($document['dataTags'])->toBe(['a', 'b', 'c_d', 'e', 'f', 'g']);
+});
+
+it('strips pipes and spaced defaults, and finds a control used only in css', function () {
+    $template = shareTemplate([
+        'html' => '<div>[[[followers_total|number]]] [[[channel_title ?? Offline for now]]]</div>',
+        'css' => '.bar { width: [[[c:bar_width]]]px; }',
+    ]);
+
+    OverlayControl::factory()->create([
+        'overlay_template_id' => $template->id,
+        'user_id' => $template->owner_id,
+        'key' => 'bar_width',
+        'type' => 'number',
+        'value' => '10',
+        'source' => null,
+    ]);
+
+    $document = app(OverlayShareService::class)->document($template);
+
+    expect($document['dataTags'])->toBe(['channel_title', 'followers_total'])
+        ->and($document['controls'][0]['used'])->toBeTrue();
+});
+
+it('reads a list that is only ever looped over as a list dependency', function () {
+    $template = shareTemplate([
+        'html' => '[[[foreach:c:list:song_requests as song]]][[[song]]][[[endforeach]]]',
+    ]);
+
+    $document = app(OverlayShareService::class)->document($template);
+
+    expect($document['lists'])->toBe([['slug' => 'song_requests', 'tag' => 'c:list:song_requests']])
+        ->and($document['dataTags'])->toBe([]);
+});
+
+it('counts only real data tags in the markdown', function () {
+    $template = shareTemplate([
+        'type' => 'alert',
+        'html' => '[[[event.reward.prompt]]][[[if:event.user_input]]]: [[[event.user_input]]][[[endif]]]',
+    ]);
+
+    $markdown = shareMarkdown($template);
+
+    expect($markdown)->toContain('reads 2 data tag(s)')
+        ->and($markdown)->toContain('- `[[[event.user_input]]]`')
+        ->and($markdown)->not->toContain('[[[endif]]]`')
+        ->and($markdown)->not->toContain('- `[[[if:');
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Alerts
 // ──────────────────────────────────────────────────────────────────────────────
 

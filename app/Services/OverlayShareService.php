@@ -77,15 +77,47 @@ class OverlayShareService
      * `<style>` in head is legitimate, and an expanded loop would list
      * `subscribers.0.name` ten times where the author wrote one tag.
      *
+     * Block tokens are read the way useConditionalTemplates.ts reads them: a
+     * condition contributes its left-hand key (the right is always a literal),
+     * a foreach contributes its iterable, and the keywords contribute nothing.
+     * Value tags are matched only after the block tokens are cut out, because
+     * the key class admits `:` and would otherwise take `if:c:foo` for a key.
+     * Loop-local names (each alias, `loop`, `raw`) are dropped: the loop's
+     * dependency is its iterable. Aliases are treated as local everywhere,
+     * not just inside their own body - a top-level tag sharing an alias's
+     * name is not worth a scope walker for a descriptive document.
+     *
      * @return array{controls: string[], lists: string[], data: string[]}
      */
     private function referencedKeys(OverlayTemplate $template): array
     {
-        $pattern = Dsl::tagKeyPattern();
+        $blockPattern = Dsl::blockTokenPattern();
+        $conditionBody = Dsl::conditionBodyPattern();
         $keys = [];
+        $locals = ['loop', 'raw'];
 
         foreach (['head', 'html', 'css'] as $field) {
-            preg_match_all($pattern, $template->{$field} ?? '', $matches);
+            $source = $template->{$field} ?? '';
+
+            preg_match_all($blockPattern, $source, $tokens, PREG_SET_ORDER);
+
+            foreach ($tokens as $token) {
+                $condition = trim(($token[2] ?? '') !== '' ? $token[2] : ($token[3] ?? ''));
+
+                if ($condition !== '') {
+                    $keys[] = preg_match($conditionBody, $condition, $parts) ? $parts[1] : $condition;
+
+                    continue;
+                }
+
+                if (($token[4] ?? '') !== '') {
+                    $parts = preg_split('/\s+as\s+/', $token[4]);
+                    $keys[] = trim($parts[0]);
+                    $locals[] = trim($parts[1] ?? 'item');
+                }
+            }
+
+            preg_match_all(Dsl::tagKeyPattern(), preg_replace($blockPattern, '', $source), $matches);
             $keys = array_merge($keys, $matches[1] ?? []);
         }
 
@@ -94,6 +126,10 @@ class OverlayShareService
         $data = [];
 
         foreach (array_unique($keys) as $key) {
+            if (in_array(explode('.', $key)[0], $locals, true)) {
+                continue;
+            }
+
             $segments = Dsl::segments($key);
 
             if (($segments[0] ?? null) !== 'c' || count($segments) < 2) {
