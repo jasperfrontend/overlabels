@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { Pause, Play, Volume2, VolumeX } from '@lucide/vue';
+import { Maximize, Minimize, Pause, Play, Volume2, VolumeX } from '@lucide/vue';
 import ProviderIcon from '@/components/ProviderIcon.vue';
 import { playables, stageDocument, STAGE_SIZE, type KitPreviewData, type PlayingAlert } from '@/utils/alertPreview';
 import { serviceLabel } from '@/utils/services';
@@ -26,10 +26,38 @@ const FADE_MS = 300;
 
 const doc = computed(() => stageDocument(props.preview, playing.value, nonce.value));
 
-// Fit the 1920x1080 frame to the width it is given.
+// Fit the 1920x1080 frame inside the box it is given, centred. On the page
+// the box is 16:9 so only the width matters; in full screen it is whatever
+// the screen leaves above the event buttons.
+const rootEl = ref<HTMLElement | null>(null);
 const stageEl = ref<HTMLElement | null>(null);
 const scale = ref(0.5);
+const offset = ref({ x: 0, y: 0 });
 let observer: ResizeObserver | null = null;
+
+// Full screen exists because a quiet kit (Subtle) shrinks to a stamp at the
+// page's ~40% and cannot be judged there. iPhone Safari has no element full
+// screen, so the button is simply not offered there.
+//
+// The event buttons stay a fixed strip BELOW the frame, never on top of it:
+// an alert can land anywhere on the frame and nothing outside can know where
+// (the frame runs no script), so anything floating over it will cover one
+// sooner or later. Costs a little scale on a 1080p screen; tried and dropped
+// a fading overlay for exactly that reason.
+const canFullscreen = ref(false);
+const isFullscreen = ref(false);
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    void document.exitFullscreen().catch(() => {});
+  } else {
+    void rootEl.value?.requestFullscreen().catch(() => {});
+  }
+}
+
+function onFullscreenChange() {
+  isFullscreen.value = document.fullscreenElement === rootEl.value && rootEl.value !== null;
+}
 
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 let demoTimer: ReturnType<typeof setTimeout> | null = null;
@@ -108,16 +136,22 @@ function demo() {
 onMounted(() => {
   if (stageEl.value) {
     observer = new ResizeObserver(([entry]) => {
-      scale.value = entry.contentRect.width / STAGE_SIZE.w;
+      const { width, height } = entry.contentRect;
+      const s = Math.min(width / STAGE_SIZE.w, height / STAGE_SIZE.h);
+      scale.value = s;
+      offset.value = { x: (width - STAGE_SIZE.w * s) / 2, y: (height - STAGE_SIZE.h * s) / 2 };
     });
     observer.observe(stageEl.value);
   }
+  canFullscreen.value = Boolean(document.fullscreenEnabled && rootEl.value?.requestFullscreen);
+  document.addEventListener('fullscreenchange', onFullscreenChange);
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   if (!reduced) demoTimer = setTimeout(demo, 600);
 });
 
 onBeforeUnmount(() => {
   observer?.disconnect();
+  document.removeEventListener('fullscreenchange', onFullscreenChange);
   if (hideTimer) clearTimeout(hideTimer);
   if (demoTimer) clearTimeout(demoTimer);
   if (fadeTimer) clearTimeout(fadeTimer);
@@ -165,18 +199,24 @@ const hasSound = computed(() => props.preview.alerts.some((a) => a.sound_url));
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-lg border border-sidebar bg-card">
-    <div ref="stageEl" class="ol-alert-stage relative aspect-video w-full overflow-hidden">
+  <div ref="rootEl" class="overflow-hidden rounded-lg border border-sidebar bg-card" :class="{ 'flex flex-col rounded-none border-0': isFullscreen }">
+    <!-- In full screen the box is wider than 16:9; it goes black so the
+         frame's own edges, which corner alerts are placed against, still read. -->
+    <div ref="stageEl" class="relative w-full overflow-hidden" :class="isFullscreen ? 'min-h-0 flex-1 bg-black' : 'ol-alert-stage aspect-video'">
       <iframe
         :srcdoc="doc"
         sandbox=""
         tabindex="-1"
         title="Alert preview"
         class="pointer-events-none absolute top-0 left-0 origin-top-left border-0 transition-opacity duration-300"
-        :class="paused ? 'opacity-0' : 'opacity-100'"
-        :style="{ width: `${STAGE_SIZE.w}px`, height: `${STAGE_SIZE.h}px`, transform: `scale(${scale})` }"
+        :class="[paused ? 'opacity-0' : 'opacity-100', { 'ol-alert-stage': isFullscreen }]"
+        :style="{
+          width: `${STAGE_SIZE.w}px`,
+          height: `${STAGE_SIZE.h}px`,
+          transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+        }"
       />
-      <span class="absolute right-3 bottom-2 font-mono text-[11px] tracking-widest text-white/40 uppercase">Preview, sample data</span>
+      <span class="absolute top-2 right-3 font-mono text-[11px] tracking-widest text-white/40 uppercase">Preview, sample data</span>
       <Transition
         enter-active-class="transition-opacity duration-300"
         enter-from-class="opacity-0"
@@ -193,7 +233,7 @@ const hasSound = computed(() => props.preview.alerts.some((a) => a.sound_url));
       </Transition>
     </div>
 
-    <div class="space-y-3 p-4">
+    <div class="space-y-3 p-4" :class="{ 'max-h-[40vh] shrink-0 overflow-y-auto border-t border-sidebar': isFullscreen }">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <p class="text-sm text-foreground">
           <span v-if="!touched">Click an event to fire its alert.</span>
@@ -213,6 +253,17 @@ const hasSound = computed(() => props.preview.alerts.some((a) => a.sound_url));
           <button v-if="hasSound" type="button" class="btn btn-chill btn-xs cursor-pointer" :aria-pressed="soundOn" @click="soundOn = !soundOn">
             <component :is="soundOn ? Volume2 : VolumeX" class="h-4 w-4" />
             {{ soundOn ? 'Sound on' : 'Sound off' }}
+          </button>
+          <button
+            v-if="canFullscreen"
+            type="button"
+            class="btn btn-chill btn-xs cursor-pointer"
+            :aria-pressed="isFullscreen"
+            :title="isFullscreen ? 'Exit full screen (Esc)' : 'See it at stream size'"
+            @click="toggleFullscreen"
+          >
+            <component :is="isFullscreen ? Minimize : Maximize" class="h-4 w-4" />
+            {{ isFullscreen ? 'Exit full screen' : 'Full screen' }}
           </button>
         </div>
       </div>
