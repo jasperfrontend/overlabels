@@ -50,14 +50,14 @@
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-5xl">
                     <div class="mb-10 max-w-3xl">
-                        <h1 class="pp-kicker pp-kicker--title">{{ $product['name'] }}</h1>
+                        {{-- Installed is green here, as it is on the install page this banner's button opens: the same colour on both sides of the click. --}}
+                        <h1 @class(['pp-kicker pp-kicker--title', 'pp-kicker--installed' => $installed])>{{ $product['name'] }}</h1>
                         <h2 class="mb-5 text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-5xl lg:text-6xl">{{ $page['tagline'] }}</h2>
-                        {{-- Installed: an /install link in the lede takes the banner's teal, so the sentence, the banner and its button read as one. --}}
-                        <p @class(['mb-7 max-w-2xl text-lg leading-relaxed text-foreground sm:text-xl', '[&_a[href$=install]]:text-teal-600 dark:[&_a[href$=install]]:text-teal-400' => $installed])>{!! $md($page['lede']) !!}</p>
+                        <p class="mb-7 max-w-2xl text-lg leading-relaxed text-foreground sm:text-xl">{!! $md($page['lede']) !!}</p>
                         @if ($installed)
-                            <div class="flex flex-col gap-4 border border-teal-600/40 bg-teal-500/10 p-5 sm:flex-row sm:items-center sm:gap-5 dark:border-teal-400/40">
+                            <div class="flex flex-col gap-4 border border-green-600/60 bg-green-50 p-5 sm:flex-row sm:items-center sm:gap-5 dark:border-green-500/60 dark:bg-green-950/40">
                                 <div class="flex min-w-0 flex-1 items-center gap-4">
-                                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-500 text-teal-950 dark:bg-teal-400" aria-hidden="true">
+                                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-500 text-white" aria-hidden="true">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M20 6 9 17l-5-5"/></svg>
                                     </span>
                                     <div class="min-w-0">
@@ -65,7 +65,7 @@
                                         <p class="text-[15px] text-balance text-muted-foreground">Manage its settings whenever you like.</p>
                                     </div>
                                 </div>
-                                <a href="{{ $ctaUrl }}" class="btn btn-cyan w-full shrink-0 cursor-pointer sm:w-auto">{{ $cta }}{!! $arrow !!}</a>
+                                <a href="{{ $ctaUrl }}" class="btn btn-green w-full shrink-0 cursor-pointer sm:w-auto">{{ $cta }}{!! $arrow !!}</a>
                             </div>
                         @else
                             <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">

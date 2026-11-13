@@ -115,10 +115,9 @@
     "closing": "Roll your newest followers tonight."
   },
   "notes": [
-    "The lane runs itself: while gobowl is on and someone is in line, the next bowler goes every fifteen seconds and the bot says nothing. Switch gobowl off and the line waits.",
-    "Mods can skip ahead: !fbfirst sends the next person in line, !fbdraw picks one at random. Both are aliases for !list lane pop first and !list lane draw, and you can rename them under Settings, Bot aliases.",
-    "The overlay is hidden until you switch on its gobowl control, so it can sit in OBS all stream and only show when you say so.",
-    "Every throw is decided by the moment the bowler was taken off the list. No randomness, no scripts."
+    "The lane runs itself. While gobowl is on and someone is waiting, the next bowler goes every fifteen seconds and the bot stays quiet. Switch gobowl off and the line waits.",
+    "Mods can skip ahead: !fbfirst sends the next person in line. You can rename it under Settings, Bot aliases.",
+    "The overlay is hidden until you switch on its gobowl control, so it can sit in OBS all stream and only show when you say so."
   ],
   "max_instances_per_user": 1,
   "installs": {

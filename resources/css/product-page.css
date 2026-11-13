@@ -28,6 +28,14 @@
     font-size: 1rem;
   }
 }
+/* Installed: the name takes the installed banner's green (Tailwind green-600 /
+   green-400), the colour the install page ticks its steps in. */
+.pp-kicker--installed {
+  color: #16a34a;
+}
+.dark .pp-kicker--installed {
+  color: #4ade80;
+}
 .pp-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.9em;

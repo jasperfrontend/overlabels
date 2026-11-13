@@ -39,16 +39,27 @@
     @apply focus-visible:ring-violet-500 dark:focus-visible:ring-violet-400;
   }
 
-  /* Cyan — primary's shape in the installed-product banner's colour, for a
-     primary action that sits inside that banner (products/page.blade.php).
-     The banner is Tailwind teal, so this is too: "cyan" is what it looks like.
-     Use instead of .btn-primary, not beside it. */
+  /* Cyan — primary's shape in Tailwind teal, for a primary action that sits
+     inside a teal banner (the login page's install banner, LoginSocial.vue).
+     "Cyan" is what it looks like. Use instead of .btn-primary, not beside it. */
   .btn-cyan {
     @apply border-teal-600 bg-teal-600/35 dark:border-teal-400 dark:bg-teal-400/35;
     @apply text-teal-950 dark:text-teal-50;
     @apply hover:bg-teal-600/45 dark:hover:bg-teal-400/45;
     @apply active:bg-teal-600/55 dark:active:bg-teal-400/55;
     @apply focus-visible:ring-teal-500 dark:focus-visible:ring-teal-400;
+  }
+
+  /* Green — primary's shape in the installed-product banner's green, for the
+     one primary action inside that banner (products/page.blade.php). Green is
+     installed, on that page and on the install page its button opens. Use
+     instead of .btn-primary, not beside it. */
+  .btn-green {
+    @apply border-green-600 bg-green-600/35 dark:border-green-400 dark:bg-green-400/35;
+    @apply text-green-950 dark:text-green-50;
+    @apply hover:bg-green-600/45 dark:hover:bg-green-400/45;
+    @apply active:bg-green-600/55 dark:active:bg-green-400/55;
+    @apply focus-visible:ring-green-500 dark:focus-visible:ring-green-400;
   }
 
   /* Secondary — violet outline. Same colour as primary, a step quieter. */

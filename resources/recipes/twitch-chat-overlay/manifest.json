@@ -158,8 +158,7 @@
     "closing": "Get your Twitch Chat Overlay"
   },
   "notes": [
-    "Every message comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels.",
-    "The feed keeps the most recent 50 messages, which is more than fits on screen. The Chat messages loop limit under Settings, Account shortens it; reload the browser source in OBS after changing it."
+    "The feed keeps the latest 50 messages, more than fits on screen. To show fewer, lower the Chat messages loop limit under Settings, Account. Reload the browser source in OBS after changing it."
   ],
   "max_instances_per_user": 1,
   "designer": {

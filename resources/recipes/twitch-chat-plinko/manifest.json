@@ -129,11 +129,9 @@
     "closing": "Let your chat drop the first ball tonight."
   },
   "notes": [
-    "Every drop comes from Twitch directly, over the same public connection any chat viewer uses. Nothing passes through Overlabels.",
-    "The chat feed setting that hides commands starting with `!` does not stop Plinko: it only hides them from a chat feed. Chatters you have hidden never get a ball.",
+    "Hiding commands in the chat feed does not stop Plinko, since that setting only hides them from the feed. Chatters on your hidden list never get a ball.",
     "Scores count from when the overlay loaded. Reloading the browser source starts a new game.",
-    "The command is `!drop` unless you choose another word on the Plinko page in your settings, under Integrations. Reload the browser source in OBS after changing it.",
-    "The number of rows, how many balls fall at once and the colours are CSS custom properties on `.ol-plinko` in the overlay's CSS."
+    "The command is !drop unless you pick another word on the Plinko page (Settings, Integrations). Reload the browser source in OBS after changing it."
   ],
   "max_instances_per_user": 1,
   "installs": {

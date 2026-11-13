@@ -16,7 +16,6 @@
   "category": "alert",
   "ready_message": "Your Throne alert is built and listening for tips.",
   "notes": [
-    "A test delivery from Throne's webhook page travels the whole way, so it proves more than anything Overlabels could fake.",
     "Once Throne is connected, its gift counter and latest gifter are controls of yours for any overlay you write: [[[c:throne:donations_received]]] and [[[c:throne:latest_donor_name]]]."
   ],
   "max_instances_per_user": 1,

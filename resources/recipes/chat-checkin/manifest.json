@@ -147,9 +147,9 @@
     "closing": "Put your chat on the map tonight."
   },
   "notes": [
-    "Set a home place under Settings, Integrations, Chat Checkin and the HUD shows how far away the farthest checkin is. Without one, distances stay empty.",
-    "Pins clear at the start of every stream by default. The same page can keep them forever instead.",
-    "The overlay has two toggles, HUD and pin list, both off. Switch them on from the overlay's Controls tab."
+    "Without a home place (Settings, Integrations, Chat Checkin), distances stay empty. Set one and the HUD shows how far away the farthest checkin is.",
+    "Pins clear when each stream starts by default. The same settings page can keep them forever.",
+    "The HUD and pin list both start off. Turn them on in the overlay's Controls tab."
   ],
   "max_instances_per_user": 1,
   "installs": {
