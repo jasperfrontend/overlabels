@@ -191,6 +191,7 @@ final class AlertEventSamples
             'channel.subscription.gift' => [
                 'five' => ['5 gifts', [...$b, ...self::user('CozyCartographer', '200000001'), 'total' => 5, 'tier' => '1000', 'cumulative_total' => 23, 'is_anonymous' => false]],
                 'anonymous' => ['anonymous', [...$b, 'user_id' => null, 'user_login' => null, 'user_name' => null, 'total' => 1, 'tier' => '1000', 'cumulative_total' => null, 'is_anonymous' => true]],
+                'huge' => ['10,000 gifts', [...$b, ...self::user('PixelPaloma', '200000003'), 'total' => 10000, 'tier' => '1000', 'cumulative_total' => 10023, 'is_anonymous' => false]],
             ],
             'channel.subscription.message' => ['resub' => [null, [...$b, ...self::user('NightOwlNora', '200000002'), 'tier' => '1000',
                 'message' => ['text' => 'Two years already! Best community on Twitch.', 'emotes' => []],
@@ -198,12 +199,22 @@ final class AlertEventSamples
             'channel.cheer' => [
                 'small' => ['100 bits', [...$b, ...self::user('PixelPaloma', '200000003'), 'is_anonymous' => false, 'message' => 'Cheer100 let us go!', 'bits' => 100]],
                 'big' => ['1000 bits', [...$b, ...self::user('CozyCartographer', '200000001'), 'is_anonymous' => false, 'message' => 'Cheer1000 for the clutch play', 'bits' => 1000]],
+                'huge' => ['100,000 bits', [...$b, ...self::user('NightOwlNora', '200000002'), 'is_anonymous' => false, 'message' => 'Cheer100000 retire the old mic', 'bits' => 100000]],
             ],
-            'channel.raid' => ['raid' => [null, [
-                ...self::user('NightOwlNora', '200000002', 'from_broadcaster_user'),
-                ...self::user('YourChannel', '100000001', 'to_broadcaster_user'),
-                'viewers' => 128,
-            ]]],
+            // The huge samples exist to show a kit's layout holding up under a
+            // number far bigger than a channel normally sees.
+            'channel.raid' => [
+                'raid' => ['100 raiders', [
+                    ...self::user('NightOwlNora', '200000002', 'from_broadcaster_user'),
+                    ...self::user('YourChannel', '100000001', 'to_broadcaster_user'),
+                    'viewers' => 100,
+                ]],
+                'huge' => ['100,000 raiders', [
+                    ...self::user('CozyCartographer', '200000001', 'from_broadcaster_user'),
+                    ...self::user('YourChannel', '100000001', 'to_broadcaster_user'),
+                    'viewers' => 100000,
+                ]],
+            ],
             'channel.channel_points_custom_reward_redemption.add' => ['redeem' => [null, [...$b, ...self::user('PixelPaloma', '200000003'),
                 'id' => 'redemption-1', 'user_input' => 'Play the victory song!', 'status' => 'unfulfilled',
                 'reward' => ['id' => 'reward-1', 'title' => 'Song request', 'cost' => 500, 'prompt' => 'Pick the next song'],
