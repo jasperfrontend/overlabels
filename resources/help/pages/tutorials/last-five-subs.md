@@ -39,8 +39,8 @@ Each subscriber carries more than a name:
 | `user_name` | Display name |
 | `user_login` | Lowercase login - use this for comparisons |
 | `user_profile_image_url` | Their avatar |
-| `tier` | `1000`, `2000`, `3000` or `Prime` |
-| `plan_name` | Readable label, like "Tier 1" |
+| `tier` | `1000`, `2000` or `3000` - a Prime sub is `1000` |
+| `plan_name` | The name your channel gave the plan |
 | `is_gift` | True when the sub was gifted |
 | `gifter_name` | Who gifted it - empty when `is_gift` is false |
 
@@ -96,19 +96,22 @@ A gifted sub has two people in it, and showing only the recipient quietly drops 
 
 ## Styling by tier
 
-`[[[sub.tier]]]` is a value you can compare, so a Tier 3 sub can look different from a Prime one:
+`[[[sub.tier]]]` is a value you can compare, so a Tier 3 sub can look different from a Tier 2 one:
 
 ```
 [[[foreach:subscribers as sub]]]
   [[[if:sub.tier = 3000]]]
     <div class="sub-row tier-3">[[[sub.user_name]]]</div>
-  [[[elseif:sub.tier = Prime]]]
-    <div class="sub-row tier-prime">[[[sub.user_name]]]</div>
+  [[[elseif:sub.tier = 2000]]]
+    <div class="sub-row tier-2">[[[sub.user_name]]]</div>
   [[[else]]]
     <div class="sub-row">[[[sub.user_name]]]</div>
   [[[endif]]]
 [[[endforeach]]]
 ```
+
+Prime subs land in the `else` branch with Tier 1: Twitch reports both as `1000` and gives no way to
+tell them apart.
 
 You can also put the tier straight into a class and do the whole thing in CSS, which stays readable as
 the list of cases grows:

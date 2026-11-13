@@ -191,8 +191,8 @@ Capped at 3 items (fixed). For just the single latest contributor use
 - `is_gift` - `true` if the sub was gifted
 - `gifter_id`, `gifter_login`, `gifter_name` - empty string when `is_gift` is false
 - `gifter_profile_image_url` - the gifter's avatar (enriched)
-- `tier` - `"1000"`, `"2000"`, `"3000"`, or `"Prime"`
-- `plan_name` - human-readable tier label (e.g. `"Tier 1"`)
+- `tier` - `"1000"`, `"2000"` or `"3000"`. A Prime sub is `"1000"`; Twitch does not tell the two apart here
+- `plan_name` - the name the channel gave the plan (e.g. `"Channel Subscription (yourname)"`)
 
 ##### `channel_followers` - someone who follows you
 
