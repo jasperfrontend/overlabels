@@ -55,5 +55,9 @@ test('a PHP Error thrown while handling a notification is logged, not swallowed'
             && ($context['event_type'] ?? null) === 'channel.follow')
         ->once();
 
-    expect(TwitchEvent::count())->toBe(0);
+    // The row is stored before enrichment now: the webhook answers Twitch as
+    // soon as it is (it is the duplicate guard), and enrichment runs after,
+    // in ProcessTwitchEvent. So the event is on record even when the work it
+    // sets off fails. It used to be 0, when enrichment ran before the insert.
+    expect(TwitchEvent::count())->toBe(1);
 });

@@ -1,5 +1,21 @@
 # Changelog - November 2026
 
+## OL-2611-013 - November 14th, 2026 - perf(twitch): answer the webhook first, process on a dedicated twitch-events worker
+
+A stress test of the new alert queue turned up a slow webhook: 30 follows posted at once took prod 17
+seconds to get through, and 14 of the calls never got their 200. Each notification did all its work
+before answering Twitch: avatar lookups, counters, the alert with its own Twitch API calls. About
+1.4 seconds per follow, on a web server that runs only a few PHP threads. Twitch revokes a
+subscription that keeps failing to answer, so a follow-bot wave could have cost a streamer their
+alerts.
+
+- **The webhook answers straight away.** It checks the signature, removes what we must not keep,
+  stores the event (which is also the guard against Twitch's redeliveries) and answers. Everything
+  else happens a moment later.
+- **A worker of its own.** The rest runs on a new `events` worker that only handles Twitch events,
+  one at a time and in the order Twitch sent them, so a gift bomb's recipients still meet their
+  gift first. Alerts never wait behind a text-to-speech job on the main worker.
+
 ## OL-2611-011 - November 14th, 2026 - feat(alerts): alerts take turns, and a gift bomb is one alert
 
 Three raids fired a second apart showed the first and the last: every alert replaced whatever was on

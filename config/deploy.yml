@@ -97,6 +97,20 @@ servers:
         ROLE: queue
         ENTRYPOINT_SKIP_CACHE: "0"
 
+  # Twitch notifications, after the webhook has answered (ProcessTwitchEvent).
+  # Its own worker so alerts never wait behind a TTS job on `queue`, and
+  # exactly ONE process so events are handled in delivery order - the gift
+  # absorber needs a gift handled before its recipients. Without this role
+  # nothing consumes the twitch-events queue and every alert stops.
+  events:
+    hosts:
+      - 172.235.171.209
+    cmd: php artisan queue:work --queue=twitch-events --verbose --tries=1 --timeout=120 --sleep=1 --max-jobs=1000 --max-time=3600
+    env:
+      clear:
+        ROLE: events
+        ENTRYPOINT_SKIP_CACHE: "0"
+
   scheduler:
     hosts:
       - 172.235.171.209

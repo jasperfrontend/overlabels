@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\LivingTitleChanged;
+use App\Jobs\ProcessTwitchEvent;
 use App\Jobs\SyncLivingTitle;
 use App\Models\OverlayControl;
 use App\Models\User;
@@ -163,7 +164,9 @@ test('foreach and an unclosed if are refused in the shared save-gate voice', fun
 });
 
 test('saving an enabled template dispatches a render at once and clears a pause', function () {
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
     livingTitleOn($this->user, 'old', ['paused' => true, 'paused_title' => 'Someone typed this']);
 
     $this->actingAs($this->user)
@@ -181,7 +184,9 @@ test('saving an enabled template dispatches a render at once and clears a pause'
 });
 
 test('switching off forgets what was written, so the next switch-on always writes', function () {
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
     livingTitleOn($this->user, 'x', ['last_written' => 'x']);
 
     $this->actingAs($this->user)->patch('/settings/title', ['enabled' => false, 'template' => 'x'])->assertRedirect();
@@ -191,7 +196,9 @@ test('switching off forgets what was written, so the next switch-on always write
 });
 
 test('an empty template cannot be enabled', function () {
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
 
     $this->actingAs($this->user)->patch('/settings/title', ['enabled' => true, 'template' => '   '])->assertRedirect();
 
@@ -283,7 +290,9 @@ test('a rejected write puts the previous title back as last_written', function (
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('a channel.update carrying a foreign title pauses the feature and dispatches no render', function () {
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
     Http::fake();
     livingTitleOn($this->user, '[[[followers_total]]]', ['last_written' => '1234']);
 
@@ -322,7 +331,9 @@ test('a channel.update before anything was written, or while off, does not pause
 
 test('a pause and a resume are both broadcast to the account, state only, never the template', function () {
     Event::fake([LivingTitleChanged::class]);
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
     Http::fake();
     livingTitleOn($this->user, '[[[followers_total]]]', ['last_written' => '1234']);
 
@@ -377,7 +388,9 @@ test('saving after a pause writes again even when the template renders the same 
 });
 
 test('resume clears the pause and renders at once', function () {
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
     livingTitleOn($this->user, '[[[followers_total]]]', ['paused' => true, 'paused_title' => 'Foreign', 'last_written' => 'Old']);
 
     $this->actingAs($this->user)->post('/settings/title/resume')->assertRedirect()->assertSessionHas('success');
@@ -393,7 +406,9 @@ test('resume clears the pause and renders at once', function () {
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('a stored event queues one render, and a burst of events still queues one', function () {
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
     Http::fake();
     livingTitleOn($this->user, '[[[followers_total]]]');
 
@@ -407,7 +422,9 @@ test('a stored event queues one render, and a burst of events still queues one',
 });
 
 test('the debounce window closes when the job runs, so a later event opens a new one', function () {
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
     livingTitleOn($this->user, '[[[followers_total]]]');
     $service = app(LivingTitleService::class);
 
@@ -423,7 +440,9 @@ test('the debounce window closes when the job runs, so a later event opens a new
 });
 
 test('no render is queued for an account with the title switched off', function () {
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
     Http::fake();
 
     postTwitchEventForTitle($this->user, 'channel.follow', [
@@ -434,7 +453,9 @@ test('no render is queued for an account with the title switched off', function 
 });
 
 test('a control write queues a render', function () {
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
     livingTitleOn($this->user, 'Wins: [[[c:wins]]]');
 
     $control = OverlayControl::create([
@@ -454,7 +475,9 @@ test('a control write queues a render', function () {
 });
 
 test('a control write on another account queues nothing here', function () {
-    Queue::fake();
+    // The webhook queues ProcessTwitchEvent and answers; let that run so the
+    // render it schedules is what the test sees. Everything else stays faked.
+    Queue::fake()->except([ProcessTwitchEvent::class]);
     livingTitleOn($this->user, 'Wins: [[[c:wins]]]');
     $other = User::factory()->create();
 

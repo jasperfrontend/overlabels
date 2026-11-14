@@ -6,6 +6,7 @@ use App\Enums\DeliveryOutcome;
 use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
 use App\Jobs\DeleteTestTwitchEvent;
+use App\Jobs\ProcessTwitchEvent;
 use App\Jobs\SynthesizeAlertTts;
 use App\Models\BotChatOutbox;
 use App\Models\EventTemplateMapping;
@@ -503,15 +504,6 @@ class TwitchEventSubController extends Controller
 
             $user = $broadcasterId ? User::where('twitch_id', $broadcasterId)->first() : null;
 
-            // Everything below builds with the stored access token and nothing
-            // else on this path refreshes it. An expired one is refreshed once,
-            // here, before enrichment and the alert. Never ensureValidToken():
-            // it calls Twitch's validate endpoint whenever the stored expiry is
-            // not past, which on this path is one HTTP call per event.
-            if ($user && $user->token_expires_at?->isPast()) {
-                $this->refreshExpiredToken($user);
-            }
-
             // Twitch poll payloads ship per-choice votes but no winner. Compute it
             // server-side once so the same value flows through DB persist, alert
             // render, and broadcast - and templates can iterate it via foreach.
@@ -540,18 +532,6 @@ class TwitchEventSubController extends Controller
             );
             $data['event'] = $event;
 
-            // Decorate the payload with profile_image_url for every user the
-            // event references (acting user, broadcaster, raid source, hype
-            // train top_contributions[] and last_contribution, ...). Single
-            // batched lookup, memoised per user id, then mutates $event so
-            // DB persist, alert render, raw broadcast, and tts message
-            // all see the same `<prefix>_avatar` keys.
-            $enrichmentToken = $user?->access_token ?: $this->eventSubService->getAppAccessToken();
-            if ($enrichmentToken) {
-                $event = $this->twitchService->enrichEventWithUserAvatars($enrichmentToken, $event);
-                $data['event'] = $event;
-            }
-
             // Store the event in the database. Twitch retries on any non-2xx or
             // timeout with the same message id; the unique index turns a
             // redelivery into a no-op instead of a second row and a second alert.
@@ -575,6 +555,81 @@ class TwitchEventSubController extends Controller
 
                 return;
             }
+
+            // Answer Twitch now; everything with an outbound call or alert
+            // work happens on the twitch-events queue. See ProcessTwitchEvent.
+            ProcessTwitchEvent::dispatch($twitchEvent->id, $data);
+
+        } catch (Exception $e) {
+            Log::error("Failed to store Twitch event: {$e->getMessage()}", [
+                'event_type' => $eventType,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Still broadcast the event even if database storage fails
+            if (! empty($broadcasterId)) {
+                broadcast(new TwitchEventReceived($eventType, $event, (string) $broadcasterId));
+            }
+        } catch (Throwable $e) {
+            // A PHP Error (TypeError, a ShouldBroadcastNow handler throwing, ...) is
+            // not an Exception and used to land here silently: no log, no row, and a
+            // 200 to Twitch so it never retried. Still swallow it - a 5xx makes Twitch
+            // redeliver, and twitch_events has no message_id to dedup the redelivery
+            // against - but say so.
+            Log::error("Unhandled error while handling Twitch event: {$e->getMessage()}", [
+                'event_type' => $eventType,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+        }
+    }
+
+    /**
+     * Everything a stored notification sets off: token refresh, avatar
+     * enrichment, metering, caches, counters, the alert and the broadcasts.
+     * Called by ProcessTwitchEvent on the twitch-events queue, after the
+     * webhook has answered.
+     */
+    public function processStoredEvent(TwitchEvent $twitchEvent, array $data): void
+    {
+        $eventType = $data['subscription']['type'] ?? 'unknown';
+        $event = $data['event'] ?? [];
+
+        try {
+            // Find the broadcaster user
+            // For raid events, the broadcaster is in 'to_broadcaster_user_id'
+            $broadcasterId = $eventType === 'channel.raid'
+                ? ($event['to_broadcaster_user_id'] ?? null)
+                : ($event['broadcaster_user_id'] ?? null);
+
+            $user = $broadcasterId ? User::where('twitch_id', $broadcasterId)->first() : null;
+
+            // Everything below builds with the stored access token and nothing
+            // else on this path refreshes it. An expired one is refreshed once,
+            // here, before enrichment and the alert. Never ensureValidToken():
+            // it calls Twitch's validate endpoint whenever the stored expiry is
+            // not past, which on this path is one HTTP call per event.
+            if ($user && $user->token_expires_at?->isPast()) {
+                $this->refreshExpiredToken($user);
+            }
+
+            // Decorate the payload with profile_image_url for every user the
+            // event references (acting user, broadcaster, raid source, hype
+            // train top_contributions[] and last_contribution, ...). Single
+            // batched lookup, memoised per user id, then mutates $event so
+            // DB persist, alert render, raw broadcast, and tts message
+            // all see the same `<prefix>_avatar` keys.
+            $enrichmentToken = $user?->access_token ?: $this->eventSubService->getAppAccessToken();
+            if ($enrichmentToken) {
+                $event = $this->twitchService->enrichEventWithUserAvatars($enrichmentToken, $event);
+                $data['event'] = $event;
+            }
+
+            // The row was stored before enrichment, so the webhook could
+            // answer without waiting on Helix. Keep it in step with what the
+            // alert and the broadcast below see.
+            $twitchEvent->forceFill(['event_data' => $event])->save();
 
             // Meter the inbound event (the usage unit pricing is set against).
             // testCheer() synthetic events use a different path and are not counted.
