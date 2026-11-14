@@ -1,5 +1,31 @@
 # Changelog - November 2026
 
+## OL-2611-011 - November 14th, 2026 - feat(alerts): alerts take turns, and a gift bomb is one alert
+
+Three raids fired a second apart showed the first and the last: every alert replaced whatever was on
+screen, and an alert whose source had to be fetched was dropped if another arrived before the fetch
+finished. A busy moment on stream lost alerts. They now take turns, the way StreamElements and
+others play them.
+
+- **Alerts queue.** An alert that arrives while another is showing waits for it, in timestamp order,
+  with a short gap in between. One that is still loading keeps its place in line. Nothing jumps the
+  line. At most 25 wait, and one that waited 3 minutes is dropped rather than shown late.
+- **Live alerts still update in place.** Poll, prediction, hype train, goal and charity progress
+  arrive over and over for one ongoing thing; those update the alert on screen instead of queueing
+  copies. The alert broadcast now names its event type, because the alert's data only holds the
+  tags its template uses.
+- **Sound and TTS play when the alert shows**, not when it arrives, so a queued alert never talks
+  over another. A dropped alert stays silent.
+- **A gift bomb is one alert.** Twitch sends the gifter's message with the final number first
+  ("gifted 25 subs"), then one gifted-sub message per recipient over the next seconds, 13 of them for
+  25 gifts on prod. Each recipient used to fire its own New Subscriber alert, which would now queue
+  for minutes. When a Gift Subscription alert fires, the next that-many gifted subs are absorbed: no
+  alert, no TTS, no chat line, but they still count in counters, sub lists and tags. The countdown
+  expires 2 minutes after the last gift or recipient, subs people pay for themselves are never
+  absorbed, and without a Gift Subscription alert nothing changes.
+- **The delivery log says so.** Absorbed subs are recorded as "part of a gift alert" on the stream
+  sessions page.
+
 ## OL-2611-010 - November 10th, 2026 - feat(alerts): alert products ask for the Alerts overlay, and /kits leads with the ready-made kits
 
 The loose ends of the Alerts overlay (OL-2611-007) and the kit picker (OL-2611-009).

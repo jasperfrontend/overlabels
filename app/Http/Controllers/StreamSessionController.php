@@ -317,6 +317,7 @@ class StreamSessionController extends Controller
                 COUNT(*) FILTER (WHERE outcome = 'no_mapping') AS no_mapping,
                 COUNT(*) FILTER (WHERE outcome = 'muted') AS muted,
                 COUNT(*) FILTER (WHERE outcome = 'chat_only') AS chat_only,
+                COUNT(*) FILTER (WHERE outcome = 'gift_absorbed') AS gift_absorbed,
                 COUNT(*) FILTER (WHERE outcome = 'unknown_user') AS unknown_user,
                 MIN(created_at) FILTER (WHERE outcome = 'no_listener') AS first_no_listener_at,
                 percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (delivered_at - created_at)) * 1000)
@@ -345,7 +346,8 @@ class StreamSessionController extends Controller
                     'muted' => (int) $r->muted,
                     'chat_only' => (int) $r->chat_only,
                     'unknown_user' => (int) $r->unknown_user,
-                    'total' => (int) $r->no_mapping + (int) $r->muted + (int) $r->chat_only + (int) $r->unknown_user,
+                    'gift_absorbed' => (int) $r->gift_absorbed,
+                    'total' => (int) $r->no_mapping + (int) $r->muted + (int) $r->chat_only + (int) $r->unknown_user + (int) $r->gift_absorbed,
                 ],
                 'first_no_listener_at' => $r->first_no_listener_at ? Carbon::parse($r->first_no_listener_at)->toIso8601String() : null,
                 'latency_p50_ms' => $r->latency_p50_ms !== null ? (int) round((float) $r->latency_p50_ms) : null,

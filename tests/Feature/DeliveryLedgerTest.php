@@ -282,8 +282,8 @@ test('a failed job of any other kind is ignored', function () {
 
 test('the outcome vocabulary is pinned and only the delivery family is scored', function () {
     expect(array_map(fn ($c) => $c->value, DeliveryOutcome::cases()))
-        ->toBe(['delivered', 'no_listener', 'failed', 'token_invalid', 'render_failed', 'no_mapping', 'muted', 'chat_only', 'unknown_user']);
+        ->toBe(['delivered', 'no_listener', 'failed', 'token_invalid', 'render_failed', 'no_mapping', 'muted', 'chat_only', 'unknown_user', 'gift_absorbed']);
 
     expect(array_map(fn ($c) => $c->isScored(), DeliveryOutcome::cases()))
-        ->toBe([true, true, true, true, true, false, false, false, false]);
+        ->toBe([true, true, true, true, true, false, false, false, false, false]);
 });

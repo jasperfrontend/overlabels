@@ -89,7 +89,7 @@ it('scores the delivery family and reports no_target as context', function () {
         ->and($d['delivered'])->toBe(3)
         ->and($d['no_listener'])->toBe(1)
         ->and($d['failed'])->toBe(1)
-        ->and($d['no_target'])->toBe(['no_mapping' => 1, 'muted' => 0, 'chat_only' => 1, 'unknown_user' => 0, 'total' => 2])
+        ->and($d['no_target'])->toBe(['no_mapping' => 1, 'muted' => 0, 'chat_only' => 1, 'unknown_user' => 0, 'gift_absorbed' => 0, 'total' => 2])
         ->and($d['latency_p50_ms'])->toBe(2000)
         ->and($d['latency_p95_ms'])->toBe(2900)
         ->and($d['first_no_listener_at'])->not->toBeNull()

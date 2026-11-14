@@ -43,6 +43,7 @@ import { useEmoteParser } from '@/composables/useEmoteParser';
 import { useTwitchChat } from '@/composables/useTwitchChat';
 import { type BadgeManifest, EMPTY_BADGE_MANIFEST, badgeImages, toBadgeManifest } from '@/utils/badgeRenderer';
 import { toChatFilters } from '@/utils/chatFilters';
+import { createAlertQueue } from '@/utils/alertQueue';
 import { type AlertSource, type AlertSourceMap, headStylesheetHrefs, planAlertSource, toAlertSource, toAlertSourceMap } from '@/utils/alertSources';
 import { redactedHtml, toRedactCommand } from '@/utils/chatRedact';
 import type { ChatSampleFeed } from '@/utils/chatSample';
@@ -130,9 +131,6 @@ const alertSoundPreload = ref<Record<string, string>>({});
 // at mount for every alert that can fire here, kept current from broadcasts
 // and fetches. Not reactive: only read at fire time. See utils/alertSources.
 let alertSources: AlertSourceMap = {};
-// Bumped per fired alert, so a source fetch that resolves after a newer
-// alert has already shown does not paint over it.
-let alertSequence = 0;
 const data = ref<Record<string, any> | undefined>(undefined);
 const userLocale = ref<string>('en-US');
 const error = ref('');
@@ -542,7 +540,43 @@ function stopTimerTick(key: string) {
 
 // Alert system state
 const currentAlert = ref<AlertData | null>(null);
-const alertTimeout = ref<number | null>(null);
+
+// What an alert needs to reach the screen once its turn comes. The data is
+// merged when the alert ARRIVES, so a queued alert shows the event as it was.
+interface QueuedAlert {
+  alertSlug: string | undefined;
+  data: Record<string, any>;
+  duration: number;
+  timestamp: number;
+  soundUrl: unknown;
+  alertId: string | null;
+}
+
+// Alerts take turns instead of replacing each other. See utils/alertQueue.
+const alertQueue = createAlertQueue<QueuedAlert, AlertSource>({
+  show: (alert, source) => {
+    showAlert({
+      head: source.head,
+      html: source.html,
+      css: source.css,
+      // Compiled utility CSS is never inlined on the broadcast - it comes from
+      // the preload map by slug (filled by a source fetch too). Read at show
+      // time so a fetch that finished while the alert waited still counts.
+      compiledCss: alert.alertSlug ? (alertCssPreload.value[alert.alertSlug] ?? '') : '',
+      data: alert.data,
+      duration: alert.duration,
+      timestamp: alert.timestamp,
+    });
+    // Sound and voice belong to the moment the alert is on screen, not to
+    // when it arrived - a queued alert would otherwise talk over another.
+    playAlertSound(alert.soundUrl);
+    if (alert.alertId) markTtsShown(alert.alertId);
+  },
+  hide: () => dismissAlert(),
+  onDrop: (alert) => {
+    if (alert.alertId) markTtsDropped(alert.alertId);
+  },
+});
 const userId = ref<string | null>(null);
 
 /**
@@ -1027,13 +1061,8 @@ watchEffect(
 );
 
 // Alert management functions
+// Puts an alert on screen. How long it stays is the queue's call.
 function showAlert(alertData: AlertData) {
-  // Clear any existing alert
-  if (alertTimeout.value) {
-    clearTimeout(alertTimeout.value);
-    alertTimeout.value = null;
-  }
-
   // The alert's own head (font links, mostly). Before the CSS that uses it.
   injectAlertHead(alertData.head);
 
@@ -1046,21 +1075,12 @@ function showAlert(alertData: AlertData) {
 
   // Show the alert
   currentAlert.value = alertData;
-
-  // Auto-hide after duration
-  alertTimeout.value = window.setTimeout(() => {
-    dismissAlert();
-  }, alertData.duration);
 }
 
 function dismissAlert() {
   if (currentAlert.value) {
     currentAlert.value = null;
     eventStore.clearOverlayTriggers();
-  }
-  if (alertTimeout.value) {
-    clearTimeout(alertTimeout.value);
-    alertTimeout.value = null;
   }
 }
 
@@ -1380,6 +1400,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  alertQueue.clear();
   health.destroy();
   expressionEngine.destroy();
   cssApplier.teardown();
@@ -1761,33 +1782,12 @@ function handleAlertTriggered(event: any) {
   };
 
   const alertSlug: string | undefined = alertData.alert_template_slug;
-  const sequence = ++alertSequence;
+  const alertId = typeof alertData.alert_id === 'string' && alertData.alert_id ? alertData.alert_id : null;
 
-  // Compiled utility CSS is never inlined on the broadcast - it comes from the
-  // preload map by slug (filled by a source fetch too). A miss renders with the
-  // author's own CSS only.
-  const show = (source: AlertSource) =>
-    showAlert({
-      head: source.head,
-      html: source.html,
-      css: source.css,
-      compiledCss: alertSlug ? (alertCssPreload.value[alertSlug] ?? '') : '',
-      data: mergedData,
-      duration: alertData.duration,
-      timestamp: alertData.timestamp || Date.now(),
-    });
-
-  // The source rode the broadcast, or the mount-time copy is current, or it
-  // has to be fetched. See utils/alertSources.
-  const plan = planAlertSource(alertSources, alertData);
-  if (plan.kind === 'ready') {
-    if (plan.remember && alertSlug) alertSources[alertSlug] = plan.source;
-    show(plan.source);
-  } else if (plan.kind === 'fetch') {
-    void fetchAlertSource(plan.slug).then((source) => {
-      if (source && sequence === alertSequence) show(source);
-    });
-  }
+  // Record the alert so when its TtsAudioReady broadcast arrives (after
+  // server-side ElevenLabs synthesis) we can schedule playback at the right
+  // offset from when this alert reaches the screen.
+  if (alertId) rememberPendingTts(alertId, alertData.tts_delay_ms);
 
   // Sound URL comes from the broadcast - it's the canonical "current" value
   // and self-updates when the streamer edits their alert template (no overlay
@@ -1795,14 +1795,46 @@ function handleAlertTriggered(event: any) {
   // tags on mount that pre-warm the browser's HTTP cache for URLs that haven't
   // changed since the overlay loaded; it must NOT be used as the source of
   // truth for which URL to play, or stale preloads beat fresh broadcasts.
-  playAlertSound(alertData.alert_sound_url);
+  const soundUrl: unknown = alertData.alert_sound_url;
 
-  // Record the alert so when its TtsAudioReady broadcast arrives (after
-  // server-side ElevenLabs synthesis) we can schedule playback at the right
-  // offset from when this alert fired.
-  if (typeof alertData.alert_id === 'string' && alertData.alert_id) {
-    rememberPendingTts(alertData.alert_id, alertData.tts_delay_ms);
+  // The source rode the broadcast, or the mount-time copy is current, or it
+  // has to be fetched. See utils/alertSources.
+  const plan = planAlertSource(alertSources, alertData);
+  let source: AlertSource | Promise<AlertSource | null>;
+  if (plan.kind === 'ready') {
+    if (plan.remember && alertSlug) alertSources[alertSlug] = plan.source;
+    source = plan.source;
+  } else if (plan.kind === 'fetch') {
+    // Started now, not at its turn, so it is usually ready by then.
+    source = fetchAlertSource(plan.slug);
+  } else {
+    // Nothing to put on screen (a server that predates slugs sent no html).
+    // The sound and voice still play, as they always did.
+    playAlertSound(soundUrl);
+    if (alertId) markTtsShown(alertId);
+    return;
   }
+
+  // Progress events (poll, prediction, hype train, goal, charity) are one
+  // ongoing thing told again and again: they update the alert in place. The
+  // type rides the broadcast; `data` is pruned to the template's own tags.
+  const eventType = alertData.event_type;
+  const key = typeof eventType === 'string' && eventType.endsWith('.progress') ? `${eventType}:${alertSlug ?? ''}` : undefined;
+
+  alertQueue.enqueue({
+    context: {
+      alertSlug,
+      data: mergedData,
+      duration: alertData.duration,
+      timestamp: alertData.timestamp || Date.now(),
+      soundUrl,
+      alertId,
+    },
+    timestamp: typeof alertData.timestamp === 'number' ? alertData.timestamp : Math.floor(Date.now() / 1000),
+    duration: alertData.duration,
+    source,
+    key,
+  });
 }
 
 // Singleton audio element: one shared player for all alert sounds. New alerts
@@ -1866,17 +1898,24 @@ function installAudioPreloadLinks(map: Record<string, string>): void {
 
 // TTS is server-rendered: ElevenLabs synthesizes the resolved sentence on the
 // queue, then broadcasts TtsAudioReady with a public mp3 URL. The overlay
-// records every alert's fire-time + tts_delay_ms in `pendingTts` so it can
-// schedule playback at the right offset whenever the audio shows up.
-// Synthesis often beats the delay window (so audio plays at tts_delay_ms);
-// when it doesn't, audio plays as soon as it arrives.
+// records every alert in `pendingTts` and times the voice from the moment the
+// alert reaches the screen + tts_delay_ms. Audio that arrives while its alert
+// still waits its turn is held until then; audio for an alert that was dropped
+// from the queue is thrown away. Synthesis often beats the delay window (so
+// audio plays at tts_delay_ms); when it doesn't, it plays as soon as it arrives.
 interface PendingTtsEntry {
-  firedAt: number;
+  createdAt: number;
+  // When the alert reached the screen; null while it waits in the queue.
+  shownAt: number | null;
   delayMs: number;
+  // Audio that arrived before the alert was shown.
+  audioUrl: string | null;
+  dropped: boolean;
 }
 
 const pendingTts = new Map<string, PendingTtsEntry>();
-const PENDING_TTS_MAX_AGE_MS = 60_000;
+// Longer than the alert queue's maximum wait, so a queued alert keeps its entry.
+const PENDING_TTS_MAX_AGE_MS = 300_000;
 
 // Singleton player mirrors playAlertSound's pattern: a rapid second TTS
 // cancels the first instead of stacking voices.
@@ -1885,15 +1924,34 @@ let ttsPendingTimer: ReturnType<typeof setTimeout> | null = null;
 
 function rememberPendingTts(alertId: string, delayMsRaw: unknown): void {
   const delayMs = typeof delayMsRaw === 'number' && delayMsRaw > 0 ? Math.min(delayMsRaw, 60_000) : 0;
-  pendingTts.set(alertId, { firedAt: Date.now(), delayMs });
+  pendingTts.set(alertId, { createdAt: Date.now(), shownAt: null, delayMs, audioUrl: null, dropped: false });
 
   // Evict anything older than the max-age cap. Cheap because the map only
   // ever holds a handful of entries (one per recent alert) - guards against
   // synthesis failures leaving zombie entries.
   const cutoff = Date.now() - PENDING_TTS_MAX_AGE_MS;
   for (const [id, entry] of pendingTts) {
-    if (entry.firedAt < cutoff) pendingTts.delete(id);
+    if (entry.createdAt < cutoff) pendingTts.delete(id);
   }
+}
+
+// The alert is on screen: its voice is due tts_delay_ms from now.
+function markTtsShown(alertId: string): void {
+  const entry = pendingTts.get(alertId);
+  if (!entry) return;
+  entry.shownAt = Date.now();
+  if (entry.audioUrl) {
+    pendingTts.delete(alertId);
+    scheduleTts(entry.audioUrl, entry.delayMs);
+  }
+}
+
+// The alert left the queue without being shown: its voice must not play.
+function markTtsDropped(alertId: string): void {
+  const entry = pendingTts.get(alertId);
+  if (!entry) return;
+  entry.dropped = true;
+  entry.audioUrl = null;
 }
 
 function handleTtsAudioReady(event: any): void {
@@ -1910,12 +1968,24 @@ function handleTtsAudioReady(event: any): void {
   if (targetSlugs !== null && !targetSlugs.includes(props.slug)) return;
 
   const entry = pendingTts.get(alertId);
+  if (entry?.dropped) {
+    pendingTts.delete(alertId);
+    return;
+  }
+  // Its alert is still waiting its turn: hold the audio until it shows.
+  if (entry && entry.shownAt === null) {
+    entry.audioUrl = audioUrl;
+    return;
+  }
   // Late-arriving audio for an alert we've forgotten about: play immediately.
   // No record means no scheduled SFX to wait for either.
-  const elapsed = entry ? Date.now() - entry.firedAt : Infinity;
+  const elapsed = entry && entry.shownAt !== null ? Date.now() - entry.shownAt : Infinity;
   const remaining = entry ? Math.max(0, entry.delayMs - elapsed) : 0;
   pendingTts.delete(alertId);
+  scheduleTts(audioUrl, remaining);
+}
 
+function scheduleTts(audioUrl: string, remaining: number): void {
   if (ttsPendingTimer !== null) {
     clearTimeout(ttsPendingTimer);
     ttsPendingTimer = null;

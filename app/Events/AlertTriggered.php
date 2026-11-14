@@ -38,6 +38,14 @@ class AlertTriggered implements ShouldBroadcast
     public string $head;
 
     /**
+     * The event that fired the alert (`channel.poll.progress`), Twitch only.
+     * The overlay queues alerts, and updates a `*.progress` alert already on
+     * screen in place instead of queueing it again. It cannot read this from
+     * `data`, which is pruned to the tags the alert's template uses.
+     */
+    public ?string $eventType;
+
+    /**
      * Reverb refuses an events request over 10 000 bytes (`max_request_size`,
      * the whole wrapped request, with the payload JSON-encoded a second time
      * inside it). The alert's own source rides along only while the escaped
@@ -67,7 +75,9 @@ class AlertTriggered implements ShouldBroadcast
         int $ttsDelayMs = 0,
         ?string $alertSoundUrl = null,
         ?string $head = null,
+        ?string $eventType = null,
     ) {
+        $this->eventType = $eventType;
         $this->alertId = $alertId;
         $this->html = $html;
         $this->css = $css;
@@ -138,6 +148,7 @@ class AlertTriggered implements ShouldBroadcast
             // The canonical sound URL at fire time. The mount-time sound map
             // only pre-warms the HTTP cache; this is what plays.
             'alert_sound_url' => $this->alertSoundUrl,
+            'event_type' => $this->eventType,
         ];
 
         // Inline the source while it fits: it saves the overlay a lookup, and

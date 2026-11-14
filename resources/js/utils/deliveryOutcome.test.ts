@@ -2,9 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { OUTCOME_LABELS, SCORED_OUTCOMES, isScoredOutcome, outcomeLabel } from './deliveryOutcome';
 
 describe('deliveryOutcome', () => {
-  it('mirrors the nine outcomes of App\\Enums\\DeliveryOutcome', () => {
+  it('mirrors the ten outcomes of App\\Enums\\DeliveryOutcome', () => {
     expect(Object.keys(OUTCOME_LABELS).sort()).toEqual(
-      ['delivered', 'no_listener', 'failed', 'token_invalid', 'render_failed', 'no_mapping', 'muted', 'chat_only', 'unknown_user'].sort(),
+      [
+        'delivered',
+        'no_listener',
+        'failed',
+        'token_invalid',
+        'render_failed',
+        'no_mapping',
+        'muted',
+        'chat_only',
+        'unknown_user',
+        'gift_absorbed',
+      ].sort(),
     );
   });
 

@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\UserEventsubSubscription;
 use App\Services\AlertMuteService;
 use App\Services\Alerts\AlertsOverlay;
+use App\Services\Alerts\GiftSubAbsorber;
 use App\Services\DeliveryLedger;
 use App\Services\EventMeter;
 use App\Services\LivingTitleService;
@@ -611,12 +612,22 @@ class TwitchEventSubController extends Controller
             }
 
             if ($broadcasterId) {
-                if ($user) {
+                if ($user && $eventType === 'channel.subscribe' && app(GiftSubAbsorber::class)->absorb($user, $event)) {
+                    // A recipient of a gift bomb whose gift alert already
+                    // announced the whole batch. See GiftSubAbsorber.
+                    app(DeliveryLedger::class)->record($twitchEvent, DeliveryOutcome::GiftAbsorbed);
+                } elseif ($user) {
                     // Pick the alert template for this event, honoring variant
                     // conditions (e.g. cheer at_least/exactly bits thresholds).
                     $mapping = EventTemplateMapping::resolveForEvent($user->id, $eventType, $event);
 
                     if ($mapping && $mapping->template) {
+                        // The gift alert announces the whole batch, so its
+                        // recipients' own sub alerts are absorbed. Set before
+                        // rendering: recipients arrive while it renders.
+                        if ($eventType === 'channel.subscription.gift') {
+                            app(GiftSubAbsorber::class)->expect($user, (int) ($event['total'] ?? 0));
+                        }
 
                         // Render the user's custom alert template
                         $this->renderEventAlert($user, $mapping, $data, $twitchEvent);
@@ -755,6 +766,7 @@ class TwitchEventSubController extends Controller
                 (int) ($mapping->template->tts_delay_ms ?? 0),
                 $mapping->template->alert_sound_url,
                 $mapping->template->head,
+                $mapping->event_type,
             );
             if ($alert->hasOverlayWork()) {
                 // The worker closes the ledger row by this id once Reverb answers.

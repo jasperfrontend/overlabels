@@ -157,7 +157,7 @@ interface Delivery {
   failed: number;
   token_invalid: number;
   render_failed: number;
-  no_target: { no_mapping: number; muted: number; chat_only: number; unknown_user: number; total: number };
+  no_target: { no_mapping: number; muted: number; chat_only: number; unknown_user: number; gift_absorbed: number; total: number };
   first_no_listener_at: string | null;
   latency_p50_ms: number | null;
   latency_p95_ms: number | null;
@@ -419,8 +419,9 @@ function noTargetSentence(d: Delivery): string | null {
   if (d.no_target.muted) parts.push(`muted: ${fmtNum(d.no_target.muted)}`);
   if (d.no_target.chat_only) parts.push(`chat only: ${fmtNum(d.no_target.chat_only)}`);
   if (d.no_target.unknown_user) parts.push(`unknown user: ${fmtNum(d.no_target.unknown_user)}`);
+  if (d.no_target.gift_absorbed) parts.push(`part of a gift alert: ${fmtNum(d.no_target.gift_absorbed)}`);
   const detail = parts.length ? ` (${parts.join(', ')})` : '';
-  return `${fmtNum(d.no_target.total)} ${d.no_target.total === 1 ? 'event' : 'events'} had no alert set up${detail}.`;
+  return `${fmtNum(d.no_target.total)} ${d.no_target.total === 1 ? 'event' : 'events'} had no alert of their own${detail}.`;
 }
 
 const sectionHeading = 'text-xs font-semibold uppercase tracking-wider text-foreground/60';
