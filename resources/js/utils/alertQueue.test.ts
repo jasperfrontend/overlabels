@@ -36,12 +36,20 @@ describe('alertQueue', () => {
     add('c', 101);
     expect(log).toEqual(['show a (a)']);
 
-    vi.advanceTimersByTime(6000);
-    expect(log).toEqual(['show a (a)', 'hide']);
-    vi.advanceTimersByTime(500);
-    expect(log.at(-1)).toBe('show b (b)');
-    vi.advanceTimersByTime(6500);
-    expect(log.at(-1)).toBe('show c (c)');
+    // Every hand-over, not just the first: each alert stays its full duration,
+    // then the gap passes, and only then does the next one show.
+    const handOver = (shown: string[], next: string) => {
+      vi.advanceTimersByTime(5999);
+      expect(log).toEqual(shown);
+      vi.advanceTimersByTime(1);
+      expect(log).toEqual([...shown, 'hide']);
+      vi.advanceTimersByTime(499);
+      expect(log).toEqual([...shown, 'hide']);
+      vi.advanceTimersByTime(1);
+      expect(log).toEqual([...shown, 'hide', next]);
+    };
+    handOver(['show a (a)'], 'show b (b)');
+    handOver(['show a (a)', 'hide', 'show b (b)'], 'show c (c)');
     vi.advanceTimersByTime(6000);
     expect(log).toEqual(['show a (a)', 'hide', 'show b (b)', 'hide', 'show c (c)', 'hide']);
   });
