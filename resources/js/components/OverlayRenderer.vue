@@ -36,7 +36,6 @@ import morphdom from 'morphdom';
 import { useEventSub } from '@/composables/useEventSub';
 import { useEventsStore } from '@/stores/overlayState';
 import { useEventHandler } from '@/composables/useEventHandler';
-import { useGiftBombDetector } from '@/composables/useGiftBombDetector';
 import { useConditionalTemplates } from '@/composables/useConditionalTemplates';
 import { useOverlayHealth } from '@/composables/useOverlayHealth';
 import { useEmoteParser } from '@/composables/useEmoteParser';
@@ -137,7 +136,6 @@ const error = ref('');
 const templateTags = ref<string[]>([]);
 const eventStore = useEventsStore();
 const eventHandler = useEventHandler();
-const giftBombDetector = useGiftBombDetector();
 const { processTemplate } = useConditionalTemplates();
 const health = useOverlayHealth();
 const emoteParser = useEmoteParser();
@@ -1387,15 +1385,19 @@ onMounted(async () => {
     // First, we normalise the event
     const normalisedEvent = eventHandler.processRawEvent(restructuredEvent);
 
-    giftBombDetector.processEvent(normalisedEvent, (processedEvent) => {
-      // Dispatch the processed event for notifications
-      eventHandler.dispatchEvent(processedEvent);
-      // Update the store
-      eventStore.addEvent(processedEvent);
-      // Update template data
-      data.value = { ...data.value, ...(processedEvent.raw?.event || {}) };
-      bump();
-    });
+    // Straight through, gifted subs included. A gift bomb detector used to sit
+    // here; it grouped gifted subs by RECIPIENT (the only user a gifted sub
+    // names), so it never merged a real bomb, held every gifted sub back 8 s,
+    // and invented a "gifted 2" event naming the recipient as gifter when one
+    // viewer got two gifts in a row. Twitch's own gift event carries the
+    // total, and the server makes one alert per bomb (GiftSubAbsorber).
+    // Dispatch the event for notifications
+    eventHandler.dispatchEvent(normalisedEvent);
+    // Update the store
+    eventStore.addEvent(normalisedEvent);
+    // Update template data
+    data.value = { ...data.value, ...(normalisedEvent.raw?.event || {}) };
+    bump();
   });
 });
 
