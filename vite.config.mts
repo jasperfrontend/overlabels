@@ -37,6 +37,19 @@ export default defineConfig(() => ({
             },
         }),
     ],
+    server: {
+        watch: {
+            // Nothing the frontend builds is read from resources/recipes - the
+            // recipe documents are read by PHP. Three Pest tests create and
+            // delete fixture folders in there, and on Windows the dev
+            // server's watcher holds a handle on every folder it watches: if
+            // it misses the delete, the folder stays "delete pending" until
+            // the dev server stops, and every following mkdir is refused.
+            // That failed the whole RecipeAlertWiringTest file in the ship
+            // gate twice while `composer run dev` was running.
+            ignored: ['**/resources/recipes/**'],
+        },
+    },
     build: {
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
