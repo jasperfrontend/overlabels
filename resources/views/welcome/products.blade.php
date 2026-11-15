@@ -27,6 +27,7 @@
         'chat-checkin' => 'checkin',
         'twitch-chat-overlay' => 'chat',
         'chat-emote-bubbles' => 'bubbles',
+        'twitch-chat-plinko' => 'plinko',
     ];
 @endphp
 <section id="products" class="scroll-mt-(--ol-nav-h) border-b border-b-sidebar-border bg-card py-20 sm:py-24">
@@ -63,7 +64,7 @@
                 @if ($demo)
                   @include('welcome.demos.'.$demo, ['bare' => true])
                 @elseif (!empty($game['hero']))
-                  <img src="{{ $game['hero'] }}" alt="" class="block aspect-video w-full rounded-sm border border-sidebar-border object-cover" width="1280" height="720" loading="lazy" />
+                  <img src="{{ $game['hero'] }}" alt="{{ $game['hero_alt'] ?? $game['name'].' on a Twitch stream' }}" class="block aspect-video w-full rounded-sm border border-sidebar-border object-cover" width="1280" height="720" loading="lazy" />
                 @endif
               </div>
 

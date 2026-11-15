@@ -15,6 +15,7 @@
   "listed": true,
   "category": "product",
   "hero": "/products/chat-emote-bubbles-hero.jpg",
+  "hero_alt": "Chat Emote Bubbles on stream: emotes typed in Twitch chat float up the screen inside soap bubbles",
   "obs_hint": "Make the browser source your whole canvas, 1920 by 1080, and put it above your camera.",
   "ready_message": "Every emote your chat types becomes a bubble. The designer below sets the look, the speed and where they appear.",
   "highlights": [

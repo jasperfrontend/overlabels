@@ -16,6 +16,7 @@
   "listed": true,
   "category": "product",
   "hero": "/products/twitch-chat-hero.jpg",
+  "hero_alt": "Twitch Chat Overlay on stream: chat messages with names, badges and emotes in an OBS browser source",
   "obs_hint": "The feed fills whatever box you give it: make the browser source 500 by 800 for a stacked feed, or 1920 by 80 for the ticker.",
   "ready_message": "Your chat feed is ready. Design its look below, and once it is in OBS every change shows there as you make it.",
   "highlights": [

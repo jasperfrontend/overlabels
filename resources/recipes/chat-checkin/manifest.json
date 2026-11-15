@@ -16,6 +16,7 @@
   "listed": true,
   "category": "product",
   "hero": "/products/chat-checkin-hero.jpg",
+  "hero_alt": "Chat Checkin on stream: a glowing globe with a chatter's name pinned on the city they checked in from",
   "ready_message": "Your chat can type !checkin right now.",
   "highlights": [
     "!checkin and a city drops a pin on a spinning globe.",

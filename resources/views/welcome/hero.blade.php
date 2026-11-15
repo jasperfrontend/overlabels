@@ -87,7 +87,7 @@
           <li class="group min-w-0">
             <a href="#{{ $game['slug'] }}" aria-describedby="product-desc-{{ $game['slug'] }}" class="flex h-full cursor-pointer flex-col overflow-hidden border border-sidebar-border bg-card transition-[border-color,box-shadow] duration-200 group-hover:border-sky-500 group-hover:shadow-[0_0_0_1px_var(--color-sky-500)] focus-visible:border-sky-500 focus-visible:shadow-[0_0_0_1px_var(--color-sky-500)] focus-visible:outline-none">
               @if (!empty($game['hero']))
-                <img src="{{ $game['hero'] }}" alt="" class="block aspect-video w-full border-b border-sidebar-border object-cover transition-colors duration-200 sm:group-focus-within:border-b-transparent sm:group-hover:border-b-transparent" width="1280" height="720" loading="lazy" />
+                <img src="{{ $game['hero'] }}" alt="{{ $game['hero_alt'] ?? $game['name'].' on a Twitch stream' }}" class="block aspect-video w-full border-b border-sidebar-border object-cover transition-colors duration-200 sm:group-focus-within:border-b-transparent sm:group-hover:border-b-transparent" width="1280" height="720" loading="lazy" />
               @endif
               <span class="relative flex flex-1 items-center justify-between gap-3 p-3 sm:px-5 sm:py-4">
                 <span id="product-desc-{{ $game['slug'] }}" aria-hidden="true" class="absolute inset-x-0 bottom-full hidden grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-focus-within:grid-rows-[1fr] group-hover:grid-rows-[1fr] sm:grid">

@@ -15,6 +15,7 @@
   "listed": true,
   "category": "product",
   "hero": "/products/twitch-chat-plinko-hero.jpg",
+  "hero_alt": "Twitch Chat Plinko on stream: balls carrying chatters' names bounce down a Plinko board into slots worth 5 to 1000 points",
   "obs_hint": "Make the browser source your whole canvas, 1920 by 1080. It is a full scene, made for BRB and downtime.",
   "ready_message": "Every !drop in your chat drops a ball. Type it in your own chat to see the first one land.",
   "highlights": [
@@ -24,9 +25,9 @@
   ],
   "pitch": {
     "meta_title": "Twitch Chat Plinko - a Plinko game your chat plays",
-    "meta_description": "It's Plinko, and now it lives on your Twitch stream. Your chat types one command and their name bounces down the board. Free, one click, no bot.",
+    "meta_description": "Twitch Chat Plinko puts Plinko on your stream as an OBS browser source. Chat types !drop and their name bounces down the board. Free, no bot, no points.",
     "tagline": "It's Plinko. You know it already. Now it lives on your stream.",
-    "lede": "Drop a ball, watch it bounce off the pegs, hope for the edge. Same game, except your Twitch chat is playing: every `!drop` (or the word you pick) sends a ball with that chatter's name on it down the board, and the best scores go up beside it.",
+    "lede": "Drop a ball, watch it bounce off the pegs, hope for the edge. Twitch Chat Plinko is the same game, except your chat is playing: every `!drop` (or the word you pick) sends a ball with that chatter's name on it down the board, and the best scores go up beside it.",
     "plays": [
       {
         "title": "Chat types !drop",
@@ -76,7 +77,7 @@
         }
       }
     ],
-    "reasons_heading": "The Plinko you know, played by your chat.",
+    "reasons_heading": "Twitch Chat Plinko: the Plinko you know, played by your chat.",
     "reasons": [
       {
         "icon": "people",
@@ -85,13 +86,13 @@
       },
       {
         "icon": "trophy",
-        "title": "Scores on screen",
+        "title": "Twitch Chat Plinko keeps score",
         "body": "The six latest drops and the five best totals fill in beside the board as the balls land."
       },
       {
         "icon": "zap",
         "title": "Nothing to set up",
-        "body": "No bot and no account to connect. It reads your Twitch chat directly, like any viewer does."
+        "body": "No bot and no account to connect. Twitch Chat Plinko reads your chat directly, like any viewer does."
       },
       {
         "icon": "shield",
@@ -99,7 +100,7 @@
         "body": "When a mod deletes a drop or times someone out, their ball leaves the board. Chatters you have hidden never get one."
       }
     ],
-    "setup_note": "Size the browser source to your whole canvas, 1920 by 1080. It is a full scene, made for BRB and downtime.",
+    "setup_note": "Size the browser source to your whole canvas, 1920 by 1080. Twitch Chat Plinko is a full scene, made for BRB and downtime.",
     "faq": [
       {
         "q": "What do my viewers type?",
@@ -123,7 +124,7 @@
       },
       {
         "q": "Does it need the Overlabels bot?",
-        "a": "No. It reads your chat directly. The bot never has to be in your channel."
+        "a": "No. Twitch Chat Plinko reads your chat directly. The bot never has to be in your channel."
       }
     ],
     "closing": "Let your chat drop the first ball tonight."

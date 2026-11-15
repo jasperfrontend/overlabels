@@ -80,6 +80,7 @@ class ProductController extends Controller
                 'category' => $manifest['category'] ?? null,
                 'requires_bot' => (bool) ($manifest['requires_bot'] ?? false),
                 'hero' => $manifest['hero'] ?? null,
+                'hero_alt' => $manifest['hero_alt'] ?? $manifest['name'].' on a Twitch stream',
                 // The one service a product connects, for the card's icon
                 // and its "Connects Ko-fi" line. A product connecting two
                 // would need a second visual; none does.
@@ -256,6 +257,7 @@ class ProductController extends Controller
                 'description' => $manifest['description'],
                 'highlights' => $manifest['highlights'] ?? [],
                 'hero' => $manifest['hero'] ?? null,
+                'hero_alt' => $manifest['hero_alt'] ?? $manifest['name'].' on a Twitch stream',
                 'version' => $manifest['version'],
             ],
             'installed' => $this->installedFor($request->user(), $slug),
@@ -615,8 +617,13 @@ class ProductController extends Controller
             $note['link_url'] = $route !== null && Route::has($route) ? route($route) : null;
         }
 
-        $more = collect($this->catalog->listed())
-            ->filter(fn (array $other) => isset($other['pitch']) && $other['slug'] !== $manifest['slug'])
+        // The three products AFTER this one, wrapping round to the start. A
+        // plain take(3) gave every page the first three in alphabetical order,
+        // so the products at the end of the catalogue were linked from no
+        // product page at all. Rotating links every product from three others.
+        $pitched = collect($this->catalog->listed())->filter(fn (array $other) => isset($other['pitch']))->values();
+        $at = $pitched->search(fn (array $other) => $other['slug'] === $manifest['slug']);
+        $more = $pitched->slice($at + 1)->concat($pitched->take($at))
             ->take(3)
             ->map(fn (array $other) => [
                 'name' => $other['name'],

@@ -16,6 +16,7 @@
   "listed": true,
   "category": "product",
   "hero": "/products/follower-bowling-hero.jpg",
+  "hero_alt": "Follower Bowling on stream: a bowling ball rolls at ten pins, each named after one of the channel's newest followers",
   "follower_pins": 10,
   "auto_play": { "list": "lane", "switch": "gobowl", "seconds": 15 },
   "ready_message": "Your chat can type !bowl right now. Switch on gobowl when you want the lane on screen; it runs itself from there.",

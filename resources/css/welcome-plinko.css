@@ -1,0 +1,191 @@
+/*
+  Twitch Chat Plinko demo (product page and homepage): the product's real
+  board in the demo scene, a chat column of !drop lines on the left, the
+  board's own scoreboard on the right, and the chat box under the scene
+  (the .ol-ck__prompt styles from welcome-checkin.css). Hand-written.
+
+  The scene sits on .ol-demo (16:9) from welcome-demos.css and sizes in cqw
+  against .ol-demo-frame like the other demos. Colours and fonts are the
+  product overlay's exact values (resources/recipes/twitch-chat-plinko/plinko.md);
+  the board reads the --plinko-* properties once, when it mounts.
+*/
+
+.ol-pk {
+  background: #120720;
+  color: #fafafa;
+  font-family: 'Albert Sans', system-ui, sans-serif;
+}
+
+/* The hero artwork stands in until the board is live. */
+.ol-pk__fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ol-pk__board {
+  position: absolute;
+  inset: 0;
+  --plinko-rows: 14;
+  --plinko-max-balls: 150;
+  --plinko-rate: 10;
+  --plinko-peg-color: #a78bfa;
+  --plinko-accent: #f472b6;
+  --plinko-ball-color: #f472b6;
+  --plinko-label-bg: #120720;
+  --plinko-label-color: #fafafa;
+  --plinko-slot-color: #a78bfa;
+  --plinko-font: 'Albert Sans', system-ui, sans-serif;
+}
+
+/* ---- left: the chat column, newest at the bottom ---- */
+.ol-pk__chat {
+  position: absolute;
+  left: 3%;
+  top: 6%;
+  bottom: 14%;
+  width: 22%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.35em;
+  overflow: hidden;
+  font-size: clamp(8px, 1.5cqw, 14px);
+  line-height: 1.4;
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom, transparent, #000 30%);
+}
+.ol-pk__line {
+  overflow-wrap: anywhere;
+  animation: ol-pk-rise 0.3s ease-out both;
+}
+.ol-pk__name {
+  font-weight: 700;
+}
+.ol-pk__cmd {
+  color: #e9d5ff;
+}
+.ol-pk__line--you .ol-pk__name {
+  color: #1daaff;
+}
+@keyframes ol-pk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.6em);
+  }
+}
+
+/* ---- the board's own scoreboard ---- */
+.ol-pk .ol-plinko-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ol-pk .ol-plinko-count {
+  position: absolute;
+  left: 3%;
+  bottom: 5%;
+  width: 22%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(7px, 1.25cqw, 12px);
+  color: #a78bfa;
+}
+.ol-pk .ol-plinko-count b {
+  color: #fafafa;
+  font-weight: 600;
+}
+/* The chat column already shows who typed !drop. */
+.ol-pk .ol-plinko-next {
+  display: none;
+}
+.ol-pk .ol-plinko-hud ol {
+  position: absolute;
+  right: 3%;
+  width: 21%;
+  list-style: none;
+}
+.ol-pk .ol-plinko-hud ol::before {
+  display: block;
+  margin-bottom: 0.5em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(7px, 1.1cqw, 11px);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a78bfa;
+}
+.ol-pk .ol-plinko-hud li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75em;
+  padding: 0.3em 0;
+  border-top: 1px solid rgb(167 139 250 / 0.35);
+  font-size: clamp(8px, 1.4cqw, 14px);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ol-pk .ol-plinko-hud li:last-child {
+  border-bottom: 1px solid rgb(167 139 250 / 0.35);
+}
+.ol-pk .ol-plinko-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ol-pk .ol-plinko-points {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #f472b6;
+}
+.ol-pk .ol-plinko-recent {
+  top: 6%;
+}
+.ol-pk .ol-plinko-recent::before {
+  content: 'Just landed';
+}
+.ol-pk .ol-plinko-top {
+  top: 52%;
+}
+.ol-pk .ol-plinko-top::before {
+  content: 'Top scores';
+}
+
+/* ---- a phone: the board on top, the two score lists under it, no chat column ---- */
+@container (max-width: 560px) {
+  .ol-pk {
+    aspect-ratio: 4 / 5;
+  }
+  .ol-pk__board {
+    inset: 0 0 32% 0;
+  }
+  .ol-pk__chat,
+  .ol-pk .ol-plinko-count {
+    display: none;
+  }
+  .ol-pk .ol-plinko-hud ol {
+    top: calc(100% + 3cqw);
+    width: 44%;
+  }
+  .ol-pk .ol-plinko-recent {
+    right: auto;
+    left: 4%;
+  }
+  .ol-pk .ol-plinko-top {
+    right: 4%;
+  }
+  .ol-pk .ol-plinko-hud ol::before {
+    font-size: 10px;
+  }
+  .ol-pk .ol-plinko-hud li {
+    font-size: 12px;
+  }
+  .ol-pk .ol-plinko-hud li:nth-child(n + 5) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ol-pk__line {
+    animation: none;
+  }
+}

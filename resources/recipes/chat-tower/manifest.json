@@ -16,6 +16,7 @@
   "listed": true,
   "category": "product",
   "hero": "/products/chat-tower-hero.jpg",
+  "hero_alt": "Chat Tower on stream: a tower of blocks, each named after the chatter who stacked it, with the height and the record above it",
   "ready_message": "Your chat can type !stack right now.",
   "highlights": [
     "Twitch chat types !stack, or !stack left and !stack right to fight the lean.",

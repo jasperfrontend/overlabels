@@ -20,6 +20,7 @@ interface ProductSummary {
   category: string | null;
   requires_bot: boolean;
   hero: string | null;
+  hero_alt: string;
   service: string | null;
   installs: string[];
   installed: boolean;
@@ -178,7 +179,7 @@ const description = computed(
                are the ways in. -->
             <!-- Not positioned: the Installed tag anchors to the card. -->
             <div class="mb-4">
-              <img v-if="product.hero" :src="product.hero" alt="" class="block aspect-video w-full object-cover" />
+              <img v-if="product.hero" :src="product.hero" :alt="product.hero_alt" class="block aspect-video w-full object-cover" />
               <div
                 v-else-if="product.service"
                 class="flex aspect-video w-full items-center justify-center border border-border bg-muted/30"

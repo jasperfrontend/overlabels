@@ -13,6 +13,7 @@
                 'chat-checkin' => 'checkin',
                 'twitch-chat-overlay' => 'chat',
                 'chat-emote-bubbles' => 'bubbles',
+                'twitch-chat-plinko' => 'plinko',
             ];
             $demo = $demos[$product['slug']] ?? null;
             $command = preg_match('/!\w+/', $product['description'], $m) ? $m[0] : null;
@@ -25,7 +26,7 @@
                         @if ($demo)
                             @include('welcome.demos.'.$demo)
                         @elseif (!empty($product['hero']))
-                            <img src="{{ $product['hero'] }}" alt="" class="block aspect-video w-full rounded-sm border border-sidebar-border object-cover" width="1280" height="720" loading="lazy" />
+                            <img src="{{ $product['hero'] }}" alt="{{ $product['hero_alt'] }}" class="block aspect-video w-full rounded-sm border border-sidebar-border object-cover" width="1280" height="720" loading="lazy" />
                         @endif
                     </div>
 

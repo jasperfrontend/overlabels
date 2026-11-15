@@ -2,10 +2,12 @@ import '../../css/app.css';
 import '../../css/product-page.css';
 import '../../css/welcome-checkin.css';
 import '../../css/welcome-demos.css';
+import '../../css/welcome-plinko.css';
 import '../../css/welcome.css';
 import { wireThemeMenus } from '../utils/themeMenu';
 import { initCheckinDemo } from './checkinDemo';
 import { initLooksTeasers } from './looksTeaser';
+import { initPlinkoDemo } from './plinkoDemo';
 
 // The homepage is a static blade page - this entry only wires up the handful
 // of interactive bits: theme switching, the mobile menu, tab groups and the
@@ -120,4 +122,5 @@ document.addEventListener('DOMContentLoaded', () => {
   wireProductNav();
   initCheckinDemo();
   initLooksTeasers();
+  initPlinkoDemo();
 });
