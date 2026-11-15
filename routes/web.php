@@ -76,8 +76,6 @@ Route::get('/terms', function () {
     return Inertia::render('Terms');
 })->name('terms');
 
-Route::get('/kaylin', fn () => response('Kaylin is the voice of Overlabels.', 200, ['Content-Type' => 'text/plain']));
-
 // Help pages are markdown files in resources/help/pages. Both the URL and the
 // route name are derived from the slug, so adding a page is adding a file - no
 // route, no controller, no Vue component. A slug ending in `index` maps to its
