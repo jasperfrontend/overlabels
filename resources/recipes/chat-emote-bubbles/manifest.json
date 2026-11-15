@@ -3,7 +3,7 @@
   "slug": "chat-emote-bubbles",
   "name": "Chat Emote Bubbles",
   "version": 1,
-  "description": "Every emote your chat types floats across your stream in a soap bubble. Type PogChamp five times and five PogChamps drift up and away. Twitch, 7TV, BTTV and FFZ emotes all count, read straight from Twitch chat with nothing to connect and no bot to add. Ten controls set the look (bubble, snowflake or heart), the speed, the direction, how many can be on screen, where they appear and whether they pop.",
+  "description": "Every emote your chat types floats across your stream in a soap bubble. Type PogChamp five times and five PogChamps drift up and away. Twitch, 7TV, BTTV and FFZ emotes all count, read straight from Twitch chat with nothing to connect and no bot to add. Twelve controls set the look (bubble, snowflake or heart), a two-color gradient, the speed, the direction, how many can be on screen, where they appear and whether they pop.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"
@@ -20,7 +20,7 @@
   "ready_message": "Every emote your chat types becomes a bubble. The designer below sets the look, the speed and where they appear.",
   "highlights": [
     "Every emote your Twitch chat types floats across your stream in a bubble. Five PogChamps in one message are five bubbles.",
-    "Three looks: soap bubble, snowflake, heart. Speed, direction, size, color, how many at once, and where they appear.",
+    "Three looks: soap bubble, snowflake, heart. Speed, direction, size, a two-color gradient, how many at once, and where they appear.",
     "Nothing to connect and no bot to add. Every change lands in OBS as you make it."
   ],
   "pitch": {
@@ -123,7 +123,7 @@
     "groups": [
       {
         "title": "Look",
-        "keys": ["look", "bubble_size", "bubble_color"]
+        "keys": ["look", "bubble_size", "bubble_color", "bubble_color_2", "gradient_angle"]
       },
       {
         "title": "Motion",
@@ -147,6 +147,8 @@
           "look": "bubble",
           "bubble_size": "96",
           "bubble_color": "#ffffff",
+          "bubble_color_2": "#ffffff",
+          "gradient_angle": "0",
           "direction": "up",
           "speed": "4",
           "pop_after": "0",
@@ -164,6 +166,8 @@
           "look": "snow",
           "bubble_size": "88",
           "bubble_color": "#bfe3ff",
+          "bubble_color_2": "#bfe3ff",
+          "gradient_angle": "0",
           "direction": "down",
           "speed": "2",
           "pop_after": "0",
@@ -181,6 +185,8 @@
           "look": "heart",
           "bubble_size": "96",
           "bubble_color": "#ff7eb6",
+          "bubble_color_2": "#ff7eb6",
+          "gradient_angle": "0",
           "direction": "up",
           "speed": "5",
           "pop_after": "0",

@@ -1,5 +1,29 @@
 # Changelog - November 2026
 
+## OL-2611-014 - November 15th, 2026 - feat(products): two-color gradient bubbles, a real color picker and calmer saves in the designer
+
+Chat Emote Bubbles was one color. Every look - soap bubble, snowflake, heart - now paints a gradient
+between two colors, turned by an angle: 0 runs top to bottom, 90 right to left, 180 bottom to top.
+The same day showed why the designer felt slow while tuning it: every pause in a slider drag sent
+its own save, each one queued a broadcast and covered the preview with "Applying settings" until it
+arrived. Six pauses, six saves.
+
+- **Two colors and an angle.** New controls Second color and Gradient angle, under Bubble color.
+  The CSS used to tint everything through `color-mix()`, which only takes one color, so each look
+  now paints the gradient and cuts it to shape with a mask. With both colors the same, the looks
+  are what they were.
+- **Every existing install gets it.** A migration adds the two controls (second color copied from
+  the first, angle 0, so nothing changes on stream) and patches the five CSS rules involved, leaving
+  the rest of a streamer's own edits alone. An install whose patched rules were rewritten by hand is
+  left exactly as it is and named in the log.
+- **One save per drag.** Sliders and color pickers move freely and save when you let go. Keys held
+  down on a slider send at most two saves, and an older save can no longer land after a newer one
+  and pull the knob back.
+- **The designer and the Values tab use the app's own color picker**, with the presets and the
+  transparency slider, instead of the browser's.
+- **A plain stage.** The preview sits on the page's own background, dark or light with the theme,
+  instead of a checkerboard that was hard on the eyes when following a moving bubble.
+
 ## OL-2611-013 - November 14th, 2026 - perf(twitch): answer the webhook first, process on a dedicated twitch-events worker
 
 A stress test of the new alert queue turned up a slow webhook: 30 follows posted at once took prod 17

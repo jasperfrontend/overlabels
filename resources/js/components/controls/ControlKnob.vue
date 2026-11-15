@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import FontPicker from '@/components/products/FontPicker.vue';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { choiceHint, controlChoices } from '@/utils/controlChoices';
 
 /**
@@ -19,7 +20,7 @@ import { choiceHint, controlChoices } from '@/utils/controlChoices';
  *
  * Two events, because the two pages persist differently. `input` fires
  * continuously while a slider or picker is dragged and is for the caller
- * that wants to move optimistically and debounce (the designer). `commit`
+ * that wants the knob to move before anything is written (the designer). `commit`
  * fires once per finished change - a pick, a tick, a release, a typed value
  * left - and is the one to write on. A caller that only listens to `commit`
  * misses nothing but the drag.
@@ -129,16 +130,9 @@ function valueOf(event: Event): string {
          is valid, including colors the picker cannot read - and the picker
          beside it is an offer. -->
     <div v-else-if="kind === 'color'" class="flex items-center gap-2">
+      <ColorPicker :model-value="value" :label="label" @update:model-value="emit('input', $event)" @commit="emit('commit', $event)" />
       <input
         :id="id"
-        type="color"
-        class="size-8 shrink-0 cursor-pointer rounded-sm border border-border bg-transparent p-0.5"
-        :value="value"
-        :aria-label="`${label} picker`"
-        @input="emit('input', valueOf($event))"
-        @change="emit('commit', valueOf($event))"
-      />
-      <input
         type="text"
         class="input-border min-w-0 flex-1 font-mono text-xs"
         :value="value"

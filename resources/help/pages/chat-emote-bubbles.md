@@ -1,7 +1,7 @@
 ---
 title: Chat Emote Bubbles - every emote your chat types floats across your stream - Overlabels
 section: Bot & chat
-description: Every emote your Twitch chat types floats across your stream in a soap bubble, a snowflake or a heart. One click to install, nothing to connect, no bot. The ten controls, the emotes loop it is built on, and how to build your own.
+description: Every emote your Twitch chat types floats across your stream in a soap bubble, a snowflake or a heart. One click to install, nothing to connect, no bot. The twelve controls, the emotes loop it is built on, and how to build your own.
 heading: Chat Emote Bubbles
 lead: Every emote your chat types floats across your stream in a bubble, one bubble per emote. Type PogChamp five times and five PogChamps drift up and away. Nothing to connect, no bot to add.
 keywords: emote bubbles, bubble trouble, floating emotes, emote rain, emote widget, soap bubbles, snowflakes, hearts, pogchamp
@@ -12,7 +12,7 @@ click. Put it in OBS as a browser source the size of your canvas, above your cam
 your chat types is a bubble on your stream. Twitch emotes and the 7TV, BTTV and FFZ emotes enabled in
 your channel all count.
 
-Everything the product does is ten controls on the overlay's Controls tab, and every change lands in
+Everything the product does is twelve controls on the overlay's Controls tab, and every change lands in
 OBS the moment it is made.
 
 ## The controls
@@ -22,6 +22,10 @@ OBS the moment it is made.
 - **Bubble size** - width and height in pixels, 32 to 240. The emote inside scales with it.
 - **Bubble color** - the ring and shine, the snowflake, or the heart. White reads as soap; try a pale
   pink on the heart and a pale blue on the snowflake.
+- **Second color** - turns the color into a gradient that runs from Bubble color to this one. Set
+  both to the same color for one plain color.
+- **Gradient angle** - turns the gradient, 0 to 360 degrees. 0 runs from Bubble color at the top to
+  Second color at the bottom, 90 runs right to left, 180 bottom to top, 270 left to right.
 - **Float speed** - 1 to 10. At 1 a bubble takes 24 seconds to cross the screen, at 10 under three.
 - **Direction** - `up` floats bubbles toward the top of the screen, `down` sinks them toward the
   bottom. Where they appear follows.

@@ -94,7 +94,7 @@ const controls = reactive<Record<string, Control>>(JSON.parse(JSON.stringify(pro
 // What the server last confirmed, key by key, tracked apart from `controls`.
 // A knob writes its own value the moment it moves, so the local value is what
 // was ASKED for, not what was saved. Comparing a write against the local value
-// is what made every debounced knob a silent no-op: writeControlSoon had
+// is what made every debounced knob a silent no-op: the mid-drag write had
 // already assigned it, so writeControl saw no change and never posted, and
 // every slider and color picker on the page moved without saving anything.
 const saved = reactive<Record<string, string>>(Object.fromEntries(Object.entries(props.controls).map(([key, control]) => [key, control.value])));
@@ -135,7 +135,9 @@ function valueOf(key: string): string {
   return controls[key]?.value ?? '';
 }
 
-const debounces: Record<string, ReturnType<typeof setTimeout>> = {};
+// Per key: is a write on its way, and the newest value asked for meanwhile.
+const writing: Record<string, boolean> = {};
+const waiting: Record<string, string> = {};
 
 /**
  * One knob, one control, one POST, through the endpoint the Values tab uses.
@@ -144,39 +146,61 @@ const debounces: Record<string, ReturnType<typeof setTimeout>> = {};
  * broadcasts, and both the preview frame and OBS are listening. That is the
  * whole demo, and it is why the designer writes controls directly rather than
  * collecting a form and saving it.
+ *
+ * At most one write per key is on its way. Anything asked for meanwhile
+ * replaces whatever was already waiting, and only the newest is sent once the
+ * first answers, so arrow keys held on a slider cost two requests rather than
+ * one per press, and an older answer can never land after a newer one and
+ * drag the knob back.
  */
 async function writeControl(key: string, value: string): Promise<void> {
   const control = controls[key];
-  if (!control || saved[key] === value) return;
+  if (!control) return;
 
-  const previous = saved[key] ?? control.value;
   // Moved before the request, so a slider feels immediate and the preset
   // strip re-derives as you drag rather than a beat later.
   control.value = value;
-  saved[key] = value;
+
+  if (writing[key]) {
+    waiting[key] = value;
+    return;
+  }
+  if (saved[key] === value) return;
+
+  writing[key] = true;
 
   try {
     const { data } = await axios.post(`/templates/${props.overlay.id}/controls/${control.id}/value`, { value });
     // The server clamps numbers to the control's own min/max, so its answer
-    // wins over what the input sent.
-    if (typeof data?.value === 'string') {
-      control.value = data.value;
-      saved[key] = data.value;
-    }
+    // wins over what the input sent - unless a newer value is already waiting.
+    saved[key] = typeof data?.value === 'string' ? data.value : value;
+    if (!(key in waiting)) control.value = saved[key];
     remember(`controls.${key}.value`, saved[key]);
-    expectInFrame([key]);
+    // Veil only for the value that will stay. One still waiting brings its own.
+    if (!(key in waiting)) expectInFrame([key]);
   } catch (error: unknown) {
-    control.value = previous;
-    saved[key] = previous;
+    if (!(key in waiting)) control.value = saved[key];
     fail(axios.isAxiosError(error) ? (error.response?.data?.message ?? 'That control did not save.') : 'That control did not save.');
+  } finally {
+    writing[key] = false;
+    if (key in waiting) {
+      const next = waiting[key];
+      delete waiting[key];
+      void writeControl(key, next);
+    }
   }
 }
 
-/** For inputs that fire continuously: color pickers and range sliders. */
-function writeControlSoon(key: string, value: string): void {
+/**
+ * Mid-drag on a slider or color picker: move the knob, write nothing.
+ *
+ * The write waits for the release (the knob's `commit`). Writing on every
+ * pause in a drag sent one POST, one queued broadcast and one "Applying
+ * settings" veil per pause - six pauses, six of each, measured 2026-11-15 -
+ * and the preview spent the drag covered while they caught up.
+ */
+function moveKnob(key: string, value: string): void {
   if (controls[key]) controls[key].value = value;
-  clearTimeout(debounces[key]);
-  debounces[key] = setTimeout(() => void writeControl(key, value), 250);
 }
 
 /* ---------------------------------------------------------------- presets */
@@ -625,7 +649,6 @@ onBeforeUnmount(() => {
   clearTimeout(filtersDebounce);
   clearTimeout(savedFlash);
   clearTimeout(veilBackstop);
-  for (const timer of Object.values(debounces)) clearTimeout(timer);
 });
 
 /** Groups render whatever controls the overlay actually has, never a blank row. */
@@ -794,7 +817,7 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
                 :value="valueOf(key)"
                 :suggested-fonts="suggested_fonts"
                 :fonts-url="fonts_url"
-                @input="writeControlSoon(key, $event)"
+                @input="moveKnob(key, $event)"
                 @commit="writeControl(key, $event)"
               />
             </div>
@@ -909,7 +932,7 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
 
           <div
             ref="stageEl"
-            class="ol-design-stage relative flex h-[min(72vh,820px)] items-center justify-center overflow-hidden rounded-sm border border-border p-2"
+            class="relative flex h-[min(72vh,820px)] items-center justify-center overflow-hidden rounded-sm border border-border bg-background p-2"
           >
             <div :style="{ width: `${sourceSize.w * scale}px`, height: `${sourceSize.h * scale}px` }" class="relative shrink-0">
               <iframe
@@ -940,7 +963,6 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
           <p class="pr-12 text-sm text-muted-foreground">
             The real overlay, at {{ sourceSize.w }}&times;{{ sourceSize.h }} - the browser source size this look wants.
             <template v-if="has('sample_chat')">The chat in it is invented, so it reads the same whether or not you are live.</template>
-            The checkerboard is this page; your overlay is transparent.
           </p>
         </div>
       </div>
@@ -949,21 +971,3 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
 
   <RekaToast v-if="problem" :key="problemKey" :message="problem" type="error" @dismiss="problem = null" />
 </template>
-
-<style scoped>
-/* An overlay is transparent and sits on a game. A flat panel behind it would
-   quietly flatter a look that has no contrast of its own, so the preview
-   admits there is something underneath. */
-.ol-design-stage {
-  background-color: #1b1b20;
-  background-image:
-    linear-gradient(45deg, #26262d 25%, transparent 25%), linear-gradient(-45deg, #26262d 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #26262d 75%), linear-gradient(-45deg, transparent 75%, #26262d 75%);
-  background-size: 24px 24px;
-  background-position:
-    0 0,
-    0 12px,
-    12px -12px,
-    -12px 0;
-}
-</style>

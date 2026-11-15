@@ -6,7 +6,7 @@ author: Overlabels
 
 # Chat Emote Bubbles
 
-Every emote your chat types floats across the stream in a soap bubble, one bubble per emote, in the order they were typed. Ten controls set the look (bubble, snowflake or heart), the size, the color, the speed, the direction, how many bubbles can be on screen at once, where they appear and whether they pop at the edge or float off it. Every change lands in OBS the moment it is made.
+Every emote your chat types floats across the stream in a soap bubble, one bubble per emote, in the order they were typed. Twelve controls set the look (bubble, snowflake or heart), the size, the two colors and the angle of the gradient between them, the speed, the direction, how many bubbles can be on screen at once, where they appear and whether they pop at the edge or float off it. Every change lands in OBS the moment it is made.
 
 An Overlabels **static overlay** by Overlabels.
 
@@ -50,6 +50,12 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: trans
 .ol-bubbles {
   --size: [[[c:bubble_size]]]px;
   --tint: [[[c:bubble_color]]];
+  --tint2: [[[c:bubble_color_2]]];
+  /* The gradient runs from the first color at the top to the second at the
+     bottom, and the angle turns that clockwise: 90 runs right to left, 180
+     bottom to top. CSS's own 0deg points up, hence the 180deg. */
+  --flow: calc(180deg + [[[c:gradient_angle]]]deg);
+  --fill: linear-gradient(var(--flow), var(--tint), var(--tint2));
   --speed: [[[c:speed]]];
   --pop: [[[c:pop_after]]]s;
   --cx: [[[c:spawn_x]]];
@@ -131,17 +137,37 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: trans
   transform: translate(-50%, -50%);
 }
 
-/* Looks. */
+/* Looks. Each one paints the two-color gradient and cuts it to shape with a
+   mask, because a gradient cannot be mixed, shadowed or bordered the way a
+   single color can. */
 .look-bubble .skin {
   border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--tint) 45%, transparent), color-mix(in srgb, var(--tint) 6%, transparent) 40%, color-mix(in srgb, var(--tint) 3%, transparent) 62%, color-mix(in srgb, var(--tint) 24%, transparent) 100%);
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tint) 78%, transparent), inset -5px -7px 12px color-mix(in srgb, var(--tint) 16%, transparent), 0 2px 10px rgba(0, 0, 0, 0.14);
+  box-shadow: inset -5px -7px 12px color-mix(in srgb, color-mix(in srgb, var(--tint), var(--tint2)) 16%, transparent), 0 2px 10px rgba(0, 0, 0, 0.14);
+}
+.look-bubble .skin::before,
+.look-bubble .skin::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--fill);
+}
+/* The film: strongest at the shine, thin across the middle, thicker at the rim. */
+.look-bubble .skin::before {
+  -webkit-mask: radial-gradient(circle at 32% 28%, rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.06) 40%, rgb(0 0 0 / 0.03) 62%, rgb(0 0 0 / 0.24) 100%);
+  mask: radial-gradient(circle at 32% 28%, rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.06) 40%, rgb(0 0 0 / 0.03) 62%, rgb(0 0 0 / 0.24) 100%);
+}
+/* The ring. */
+.look-bubble .skin::after {
+  opacity: 0.78;
+  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 2px), #000 calc(100% - 0.5px));
+  mask: radial-gradient(closest-side, transparent calc(100% - 2px), #000 calc(100% - 0.5px));
 }
 .look-snow .skin::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--tint);
+  background: var(--fill);
   opacity: 0.92;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg stroke='%23fff' stroke-width='4.5' stroke-linecap='round' fill='none'%3E%3Cg id='a'%3E%3Cpath d='M50 5v90M50 5l-9 9M50 5l9 9M50 95l-9-9M50 95l9-9M50 27l-8 8M50 27l8 8M50 73l-8-8M50 73l8-8'/%3E%3C/g%3E%3Cuse href='%23a' transform='rotate(60 50 50)'/%3E%3Cuse href='%23a' transform='rotate(120 50 50)'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg stroke='%23fff' stroke-width='4.5' stroke-linecap='round' fill='none'%3E%3Cg id='a'%3E%3Cpath d='M50 5v90M50 5l-9 9M50 5l9 9M50 95l-9-9M50 95l9-9M50 27l-8 8M50 27l8 8M50 73l-8-8M50 73l8-8'/%3E%3C/g%3E%3Cuse href='%23a' transform='rotate(60 50 50)'/%3E%3Cuse href='%23a' transform='rotate(120 50 50)'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
@@ -156,9 +182,10 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: trans
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 90C22 68 6 52 6 33A20 20 0 0 1 50 21A20 20 0 0 1 94 33C94 52 78 68 50 90Z'/%3E%3C/svg%3E") center / contain no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 90C22 68 6 52 6 33A20 20 0 0 1 50 21A20 20 0 0 1 94 33C94 52 78 68 50 90Z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-.look-heart .skin::before { background: color-mix(in srgb, var(--tint) 30%, transparent); }
+.look-heart .skin::before { background: var(--fill); opacity: 0.3; }
 .look-heart .skin::after {
-  background: color-mix(in srgb, var(--tint) 85%, transparent);
+  background: var(--fill);
+  opacity: 0.85;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 90C22 68 6 52 6 33A20 20 0 0 1 50 21A20 20 0 0 1 94 33C94 52 78 68 50 90Z' fill='none' stroke='%23fff' stroke-width='5'/%3E%3C/svg%3E") center / contain no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 90C22 68 6 52 6 33A20 20 0 0 1 50 21A20 20 0 0 1 94 33C94 52 78 68 50 90Z' fill='none' stroke='%23fff' stroke-width='5'/%3E%3C/svg%3E") center / contain no-repeat;
 }
@@ -184,13 +211,15 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: trans
 
 ## Controls
 
-Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 10 are defined by the overlay itself and are recreated, with the default values shown, for anyone who copies it.
+Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 12 are defined by the overlay itself and are recreated, with the default values shown, for anyone who copies it.
 
 | Tag | Type | Label | Default | Referenced in source |
 |---|---|---|---|---|
 | `[[[c:look]]]` | text | Look | `bubble` | yes |
 | `[[[c:bubble_size]]]` | number | Bubble size | `96` | yes |
 | `[[[c:bubble_color]]]` | color | Bubble color | `#ffffff` | yes |
+| `[[[c:bubble_color_2]]]` | color | Second color | `#ffffff` | yes |
+| `[[[c:gradient_angle]]]` | number | Gradient angle | `0` | yes |
 | `[[[c:speed]]]` | number | Float speed | `4` | yes |
 | `[[[c:direction]]]` | text | Direction | `up` | yes |
 | `[[[c:max_bubbles]]]` | number | Bubbles on screen at most | `40` | yes |
@@ -205,7 +234,10 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
   - choices=[{"value":"bubble","label":"Bubble","hint":"A soap bubble."},{"value":"snow","label":"Snowflake","hint":"A snowflake behind the emote."},{"value":"heart","label":"Heart","hint":"A heart-shaped bubble."}]
 - `c:bubble_size` - Width and height of a bubble in pixels. The emote inside scales with it.
   - min=32, max=240, step=1, reset_value=96, random=false, random_interval=null
-- `c:bubble_color` - The color of the bubble's ring and glow, the snowflake, or the heart. White reads as soap; try a pale pink on the heart.
+- `c:bubble_color` - The color of the bubble's ring and glow, the snowflake, or the heart, where the gradient starts. White reads as soap; try a pale pink on the heart.
+- `c:bubble_color_2` - Where the gradient ends. The same as Bubble color gives one plain color.
+- `c:gradient_angle` - Turns the gradient, in degrees. 0 runs from Bubble color at the top to Second color at the bottom, 90 runs right to left, 180 bottom to top, 270 left to right.
+  - min=0, max=360, step=1, reset_value=0, random=false, random_interval=null
 - `c:speed` - How fast a bubble travels, 1 to 10. At 1 a bubble takes 24 seconds to cross the screen, at 10 under three.
   - min=1, max=10, step=1, reset_value=4, random=false, random_interval=null
 - `c:direction` - `up` floats bubbles toward the top of the screen, `down` sinks them toward the bottom. The spawn edge follows.
@@ -238,4 +270,4 @@ Beyond its controls, this overlay reads the emotes loop: every emote typed in ch
 
 ## Copying this overlay
 
-Installed by the Chat Emote Bubbles product at <https://overlabels.com/products/chat-emote-bubbles>. The install creates your own editable copy of the source above, along with the ten controls listed under Controls.
+Installed by the Chat Emote Bubbles product at <https://overlabels.com/products/chat-emote-bubbles>. The install creates your own editable copy of the source above, along with the twelve controls listed under Controls.

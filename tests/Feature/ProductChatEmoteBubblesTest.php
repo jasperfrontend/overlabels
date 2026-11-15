@@ -24,7 +24,7 @@ uses(DatabaseTransactions::class);
  * Chat Emote Bubbles is the fifth product and the second that installs nothing
  * but an overlay. It is the Twitch Chat product's sibling: the same direct
  * Twitch connection, read through the `emotes` loop instead of `chat`, and its
- * whole behaviour is ten template-scoped controls landing in CSS.
+ * whole behaviour is twelve template-scoped controls landing in CSS.
  */
 function bubblesUser(array $attrs = []): User
 {
@@ -76,7 +76,7 @@ it('installs one overlay and nothing else to connect', function () {
         ->and($manifest['requires_bot'] ?? false)->toBeFalse();
 });
 
-it('installs the bubbles overlay with its ten controls and no other rows', function () {
+it('installs the bubbles overlay with its twelve controls and no other rows', function () {
     $user = bubblesUser();
 
     $instance = app(RecipeInstaller::class)->install(bubblesRecipe(), $user, 'chat_emote_bubbles');
@@ -91,7 +91,7 @@ it('installs the bubbles overlay with its ten controls and no other rows', funct
 
     $controls = OverlayControl::where('overlay_template_id', $template->id)->orderBy('sort_order')->get();
     expect($controls->pluck('key')->all())->toBe([
-        'look', 'bubble_size', 'bubble_color', 'speed', 'direction',
+        'look', 'bubble_size', 'bubble_color', 'bubble_color_2', 'gradient_angle', 'speed', 'direction',
         'max_bubbles', 'pop_after', 'spawn', 'spawn_x', 'spawn_y',
     ])
         ->and($controls->where('type', 'expression')->count())->toBe(0)
@@ -116,7 +116,23 @@ it('reads every control it declares, and every control it reads is declared', fu
     $read = collect($m[1])->unique()->sort()->values()->all();
 
     expect($read)->toBe($declared)
-        ->and(count($declared))->toBe(10);
+        ->and(count($declared))->toBe(12);
+});
+
+it('paints every look with the two-color gradient, turned clockwise from top to bottom by the angle', function () {
+    $css = bubblesDocument()['css'];
+
+    // CSS's 0deg points up, so 180deg + the angle makes 0 run top to bottom,
+    // 90 right to left and 180 bottom to top.
+    expect($css)->toContain('--flow: calc(180deg + [[[c:gradient_angle]]]deg);')
+        ->and($css)->toContain('--fill: linear-gradient(var(--flow), var(--tint), var(--tint2));');
+
+    // A gradient cannot go inside color-mix(), so no look may tint with one
+    // color alone any more: each paints --fill and masks it to shape.
+    foreach (['bubble', 'snow', 'heart'] as $look) {
+        preg_match_all('/\.look-'.$look.' [^{]*\{([^}]*)\}/', $css, $rules);
+        expect(implode('', $rules[1]))->toContain('background: var(--fill)');
+    }
 });
 
 it('caps the bubbles on screen through a selector, which is the one tag in the CSS that cannot be a custom property', function () {
@@ -239,7 +255,7 @@ it('opens the designer for an install, with the bubbles controls and no chat win
             ->component('products/design')
             ->where('product.slug', 'chat-emote-bubbles')
             ->where('overlay.id', $instance->primitive_map['overlays']['bubbles'])
-            ->has('controls', 10)
+            ->has('controls', 12)
             ->where('controls.look.value', 'bubble')
             ->where('controls.spawn_x.type', 'number')
             ->has('presets', 3)
@@ -294,7 +310,7 @@ it('shows the designer card on the product page once installed, and applies a lo
         ->and($values['spawn'])->toBe('random')
         ->and($values['max_bubbles'])->toBe('60');
 
-    Event::assertDispatchedTimes(ControlValueUpdated::class, 10);
+    Event::assertDispatchedTimes(ControlValueUpdated::class, 12);
 
     $this->actingAs($user)->get('/products/chat-emote-bubbles/install')
         ->assertInertia(fn (Assert $page) => $page
