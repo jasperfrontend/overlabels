@@ -1,5 +1,25 @@
 # Changelog - November 2026
 
+## OL-2611-015 - November 15th, 2026 - feat(tower): test mode, so a streamer can try !stack offline without counting anything
+
+Chat Tower only takes a `!stack` while the stream is live, which made it impossible to try out
+before going live. Twitch Chat Plinko never had that problem, because the overlay reads chat itself
+and runs the game in the browser source. The tower's blocks, records and counters live on the
+server, so every stack passes the live check there. That check stays. The Chat Tower settings page
+now has a Test mode switch that steps around it while you are offline.
+
+- **Same tower, nothing kept.** In test mode an offline `!stack` lands and the tower sways and falls
+  on the overlay exactly as on stream, and the bot speaks its usual lines. No event is stored,
+  nothing counts toward usage, and blocks stacked, topples, tallest tower and the all-time record
+  stay where they were. A test tower never counts as a record, so the record roster is untouched.
+- **One-second cooldown** in test mode, whatever the streamer's own setting, so it can be stacked
+  quickly by one person.
+- **Only offline.** Once the stream is confidently live, test mode is ignored and every stack counts
+  with the normal cooldown, so a switch left on cannot quietly stop a real stream counting.
+- **Switching it off knocks the tower down**, so no test block is left standing for a real stream.
+  The last stacker and last topple names written while testing stay until the next real ones.
+- The switch uses the same yellow as the donation integrations' test mode.
+
 ## OL-2611-014 - November 15th, 2026 - feat(products): two-color gradient bubbles, a real color picker and calmer saves in the designer
 
 Chat Emote Bubbles was one color. Every look - soap bubble, snowflake, heart - now paints a gradient

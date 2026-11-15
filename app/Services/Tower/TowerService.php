@@ -47,11 +47,13 @@ class TowerService
      *
      * @param  array{chatter_id: string, chatter_login: string, chatter_display_name: string, chatter_color: ?string}  $chatter
      * @param  float|null  $u  Deterministic landing draw in [0, 1); tests only.
+     * @param  bool  $testing  Test mode: the physics is the same, but no
+     *                         block ever counts as a record, so the roster is never rewritten.
      * @return array<string, mixed> The facts the driver maps onto controls.
      */
-    public function stack(User $user, array $chatter, ?string $aim, ?float $u = null): array
+    public function stack(User $user, array $chatter, ?string $aim, ?float $u = null, bool $testing = false): array
     {
-        return Cache::lock("tower:stack:{$user->id}", 5)->block(3, function () use ($user, $chatter, $aim, $u) {
+        return Cache::lock("tower:stack:{$user->id}", 5)->block(3, function () use ($user, $chatter, $aim, $u, $testing) {
             $top = TowerBlock::topFor($user);
             $position = ($top?->position ?? 0) + 1;
             $offset = TowerPhysics::offsetFor($aim, $u);
@@ -60,7 +62,7 @@ class TowerService
             $topples = TowerPhysics::topples($x, $position);
             // Only a STANDING tower counts for the record, so the block that
             // brings the tower down sets none.
-            $newRecord = ! $topples && $position > $recordHeight;
+            $newRecord = ! $testing && ! $topples && $position > $recordHeight;
             $now = now();
 
             $block = [

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, useForm, Link, usePage, router } from '@inertiajs/vue3';
+import { FlaskConical } from '@lucide/vue';
 import { TOWER_PRESETS } from '@/components/controls/controlPresets';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
@@ -17,6 +18,7 @@ const { confirm } = useConfirm();
 interface IntegrationData {
   connected: boolean;
   enabled: boolean;
+  test_mode: boolean;
   tower_lifetime: 'per_stream' | 'persistent';
   cooldown_seconds: number;
   last_received_at: string | null;
@@ -53,6 +55,18 @@ async function resetTower() {
   ) {
     router.post('/settings/integrations/tower/reset', {}, { preserveScroll: true });
   }
+}
+
+const testModeSaving = ref(false);
+
+function toggleTestMode() {
+  if (testModeSaving.value) return;
+  testModeSaving.value = true;
+  router.patch(
+    '/settings/integrations/tower/test-mode',
+    { test_mode: !props.integration.test_mode },
+    { preserveScroll: true, onFinish: () => (testModeSaving.value = false) },
+  );
 }
 
 async function disconnect() {
@@ -175,6 +189,47 @@ function formatDate(iso: string | null): string {
         </form>
 
         <template v-if="integration.connected">
+          <Separator />
+          <div class="space-y-3">
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="integration.test_mode"
+                :disabled="testModeSaving"
+                class="relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
+                :class="integration.test_mode ? 'bg-yellow-500' : 'bg-muted-foreground/30'"
+                @click="toggleTestMode"
+              >
+                <span
+                  class="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform"
+                  :class="integration.test_mode ? 'translate-x-4.5' : 'translate-x-0.5'"
+                />
+              </button>
+              <button
+                type="button"
+                class="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-foreground"
+                :disabled="testModeSaving"
+                @click="toggleTestMode"
+              >
+                <FlaskConical
+                  class="size-4 shrink-0"
+                  :class="integration.test_mode ? 'text-yellow-500' : 'text-muted-foreground'"
+                  aria-hidden="true"
+                />
+                Test mode is {{ integration.test_mode ? 'on' : 'off' }}
+              </button>
+            </div>
+            <p class="text-sm text-foreground">
+              Want to try the tower before you go live? Turn this on and !stack works while you are offline, with a one-second cooldown so you can
+              stack as fast as you like. Blocks land and the tower falls on your overlay like the real thing, but nothing counts: no blocks stacked,
+              no topples, no records.
+            </p>
+            <p v-if="integration.test_mode" class="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+              Test mode only works while you are offline. Once you are live, !stack counts as normal. Switching it off knocks the test tower down.
+            </p>
+          </div>
+
           <Separator />
           <div class="space-y-2">
             <p class="text-sm font-medium">Clear the tower</p>

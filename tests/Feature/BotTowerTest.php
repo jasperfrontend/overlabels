@@ -143,6 +143,109 @@ test('stack is refused while the stream is offline, with a reply saying so', fun
         ->and(towerControlValue($this->user, 'blocks_stacked_this_stream'))->toBe('0');
 });
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Test mode
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('in test mode an offline stack lands but nothing is counted or stored', function () {
+    $integration = connectTower($this->user, ['cooldown_seconds' => 30]);
+    $integration->update(['test_mode' => true]);
+    towerLiveState($this->user, StreamState::STATE_OFFLINE);
+
+    postStack()->assertOk()->assertJson(['reply' => null]);
+
+    expect(TowerBlock::count())->toBe(1)
+        ->and(towerControlValue($this->user, 'tower_height'))->toBe('1')
+        ->and(towerControlValue($this->user, 'last_stacker_name'))->toBe('ViewerOne')
+        ->and(towerControlValue($this->user, 'blocks_stacked_this_stream'))->toBe('0')
+        ->and(towerControlValue($this->user, 'blocks_stacked_total'))->toBe('0')
+        ->and(towerControlValue($this->user, 'tallest_tower_this_stream'))->toBe('0')
+        ->and(towerControlValue($this->user, 'tallest_tower_record'))->toBe('0')
+        ->and(ExternalEvent::count())->toBe(0)
+        ->and($integration->fresh()->last_received_at)->toBeNull();
+});
+
+test('in test mode the cooldown is one second whatever the setting says', function () {
+    connectTower($this->user, ['cooldown_seconds' => 30])->update(['test_mode' => true]);
+    towerLiveState($this->user, StreamState::STATE_OFFLINE);
+
+    postStack()->assertOk();
+    postStack()->assertOk();
+
+    expect(TowerBlock::count())->toBe(1);
+
+    $this->travel(2)->seconds();
+
+    postStack()->assertOk();
+
+    expect(TowerBlock::count())->toBe(2);
+});
+
+test('a test-mode tower past the record sets no record and leaves the roster alone', function () {
+    connectTower($this->user)->update(['test_mode' => true]);
+    towerLiveState($this->user, StreamState::STATE_OFFLINE);
+    setTowerControl($this->user, 'tallest_tower_record', '2');
+    OptionSet::create([
+        'user_id' => $this->user->id,
+        'slug' => TowerService::RECORD_LIST_SLUG,
+        'label' => 'Tallest tower',
+        'items' => [['id' => 1, 'value' => 'RealBuilder']],
+        'next_item_id' => 2,
+    ]);
+    standTower($this->user, 2);
+
+    $reply = postStack()->assertOk()->json('reply');
+
+    $roster = OptionSet::where('user_id', $this->user->id)->where('slug', TowerService::RECORD_LIST_SLUG)->first();
+
+    expect($reply)->toBeNull()
+        ->and(towerControlValue($this->user, 'tallest_tower_record'))->toBe('2')
+        ->and(TowerBlock::where('user_id', $this->user->id)->where('record', true)->count())->toBe(0)
+        ->and(array_column($roster->items, 'value'))->toBe(['RealBuilder']);
+});
+
+test('a test-mode topple shows on the overlay controls without counting', function () {
+    connectTower($this->user)->update(['test_mode' => true]);
+    towerLiveState($this->user, StreamState::STATE_OFFLINE);
+    standTower($this->user, 5, topX: 3.9);
+
+    $reply = postStack(['args' => 'right'])->assertOk()->json('reply');
+
+    expect($reply)->toContain('fell at 6')
+        ->and(TowerBlock::count())->toBe(0)
+        ->and(towerControlValue($this->user, 'tower_height'))->toBe('0')
+        ->and(towerControlValue($this->user, 'last_topple_by'))->toBe('ViewerOne')
+        ->and(towerControlValue($this->user, 'last_topple_height'))->toBe('6')
+        ->and(towerControlValue($this->user, 'topples_this_stream'))->toBe('0')
+        ->and(ExternalEvent::count())->toBe(0);
+});
+
+test('test mode is ignored while live, so a live stack counts as normal', function () {
+    connectTower($this->user, ['cooldown_seconds' => 30])->update(['test_mode' => true]);
+
+    postStack()->assertOk();
+    postStack()->assertOk();
+
+    expect(TowerBlock::count())->toBe(1)
+        ->and(towerControlValue($this->user, 'blocks_stacked_this_stream'))->toBe('1')
+        ->and(ExternalEvent::count())->toBe(1);
+});
+
+test('switching test mode off knocks the test tower down, switching it on does not', function () {
+    connectTower($this->user);
+    standTower($this->user, 3);
+    $this->actingAs($this->user);
+
+    $this->patch('/settings/integrations/tower/test-mode', ['test_mode' => true])->assertRedirect();
+
+    expect(TowerBlock::count())->toBe(3);
+
+    $this->patch('/settings/integrations/tower/test-mode', ['test_mode' => false])->assertRedirect();
+
+    expect(TowerBlock::count())->toBe(0)
+        ->and(ExternalIntegration::where('user_id', $this->user->id)->value('test_mode'))->toBeFalse();
+});
+
 test('a second stack by the same viewer inside the cooldown is silently dropped', function () {
     connectTower($this->user, ['cooldown_seconds' => 30]);
 

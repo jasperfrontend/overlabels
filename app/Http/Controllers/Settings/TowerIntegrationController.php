@@ -15,9 +15,10 @@ use Inertia\Response;
 
 /**
  * First-party, non-donation integration - like GPS and checkin it
- * deliberately does NOT extend DonationIntegrationController: no test mode,
- * no donation seed, no webhook URL (the only entry point is the bot's
- * internal endpoint).
+ * deliberately does NOT extend DonationIntegrationController: no donation
+ * seed, no webhook URL (the only entry point is the bot's internal
+ * endpoint). Its test mode is its own: it lets !stack work offline without
+ * keeping anything (BotTowerController), not a duplicate-event switch.
  */
 class TowerIntegrationController extends Controller
 {
@@ -40,6 +41,7 @@ class TowerIntegrationController extends Controller
             'integration' => [
                 'connected' => $integration !== null,
                 'enabled' => (bool) ($integration?->enabled ?? false),
+                'test_mode' => (bool) ($integration?->test_mode ?? false),
                 'tower_lifetime' => $settings['tower_lifetime'] ?? 'per_stream',
                 'cooldown_seconds' => (int) ($settings['cooldown_seconds'] ?? 5),
                 'last_received_at' => $integration?->last_received_at?->toIso8601String(),
@@ -92,6 +94,31 @@ class TowerIntegrationController extends Controller
         $this->tower->clear(auth()->user());
 
         return back()->with('success', 'Tower cleared.');
+    }
+
+    /**
+     * Test mode lets !stack work while offline, with a one-second cooldown
+     * and nothing counted. Switching it OFF knocks the tower down, so no
+     * test block is left standing for a real stream.
+     */
+    public function setTestMode(Request $request): RedirectResponse
+    {
+        $validated = $request->validate(['test_mode' => 'required|boolean']);
+
+        $user = auth()->user();
+
+        $integration = ExternalIntegration::where('user_id', $user->id)
+            ->where('service', 'tower')
+            ->firstOrFail();
+
+        $wasOn = $integration->test_mode;
+        $integration->update(['test_mode' => $validated['test_mode']]);
+
+        if ($wasOn && ! $validated['test_mode']) {
+            $this->tower->clear($user);
+        }
+
+        return back();
     }
 
     public function disconnect(): RedirectResponse

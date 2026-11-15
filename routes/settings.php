@@ -217,6 +217,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::get('/tower', [TowerIntegrationController::class, 'show'])->name('tower.show');
         Route::post('/tower', [TowerIntegrationController::class, 'save'])->name('tower.save');
         Route::post('/tower/reset', [TowerIntegrationController::class, 'reset'])->name('tower.reset');
+        Route::patch('/tower/test-mode', [TowerIntegrationController::class, 'setTestMode'])->name('tower.test-mode');
         Route::delete('/tower', [TowerIntegrationController::class, 'disconnect'])->name('tower.disconnect');
 
         Route::get('/streamlabs', [StreamLabsIntegrationController::class, 'show'])->name('streamlabs.show');

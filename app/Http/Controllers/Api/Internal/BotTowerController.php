@@ -28,6 +28,20 @@ class BotTowerController extends Controller
     /** Seconds between `!tower` replies per chatter - a read, so short. */
     private const int STATUS_COOLDOWN = 10;
 
+    /**
+     * What a test-mode stack writes: the standing tower plus the names the
+     * overlay shows for the last block and the last fall. Every counter,
+     * total and record is left alone.
+     */
+    private const array TEST_MODE_CONTROLS = [
+        'tower_height',
+        'tower_lean',
+        'tower_room',
+        'last_stacker_name',
+        'last_topple_by',
+        'last_topple_height',
+    ];
+
     public function __construct(
         private readonly TowerService $tower,
         private readonly ExternalControlService $controlService,
@@ -93,15 +107,22 @@ class BotTowerController extends Controller
             return response()->json(['reply' => null]);
         }
 
+        // Test mode lets a streamer try the tower OFFLINE. It is ignored
+        // while live, so a toggle left on can never quietly stop a real
+        // stream's stacks from counting.
+        $live = StreamSessionService::isLive($user);
+        $testing = ! $live && $integration->test_mode;
+
         // Server-side cooldown backstop (the bot has its own command cooldown,
         // but this endpoint must defend itself). Silent: a cooldown reply per
         // spammed command would itself be spam.
         //
         // The floor is 1, not 0: the TTL here is the whole cooldown, and a
         // zero-second Cache::add stores nothing, which would remove the
-        // backstop entirely rather than shorten it.
+        // backstop entirely rather than shorten it. Test mode sits on that
+        // floor whatever the streamer's setting.
         $settings = $integration->settings ?? [];
-        $cooldown = max(1, (int) ($settings['cooldown_seconds'] ?? 5));
+        $cooldown = $testing ? 1 : max(1, (int) ($settings['cooldown_seconds'] ?? 5));
 
         if (! Cache::add("tower:cooldown:{$user->id}:{$data['chatter_id']}", 1, $cooldown)) {
             return response()->json(['reply' => null]);
@@ -113,7 +134,7 @@ class BotTowerController extends Controller
         // command means the viewer retypes it later and hands Twitch's
         // repeated-message filter a reason to eat it. The reply sits behind
         // the cooldown above, so offline spam stays quiet.
-        if (! StreamSessionService::isLive($user)) {
+        if (! $live && ! $testing) {
             return response()->json(['reply' => 'The tower only stands while the stream is live. Come back then!']);
         }
 
@@ -122,9 +143,13 @@ class BotTowerController extends Controller
             'chatter_login' => $data['chatter_login'],
             'chatter_display_name' => $data['chatter_display_name'],
             'chatter_color' => self::normalizeColor($data['chatter_color'] ?? null),
-        ], TowerPhysics::normalizeAim($data['args'] ?? null));
+        ], TowerPhysics::normalizeAim($data['args'] ?? null), testing: $testing);
 
-        $this->runPipeline($user, $integration, $facts);
+        if ($testing) {
+            $this->runTestPipeline($user, $facts);
+        } else {
+            $this->runPipeline($user, $integration, $facts);
+        }
 
         $reply = $this->replyFor($facts);
 
@@ -228,6 +253,33 @@ class BotTowerController extends Controller
         }
 
         $integration->update(['last_received_at' => now()]);
+    }
+
+    /**
+     * The test-mode half of runPipeline: the overlay sees the block land and
+     * the tower fall, and an alert mapped to the tower still fires, but
+     * nothing is kept. No stored event, no usage meter, no feed lists, no
+     * counters, totals or records, no last_received_at. Only the controls
+     * the overlay draws the test with are written, and switching test mode
+     * off puts the standing ones back (TowerIntegrationController).
+     *
+     * @param  array<string, mixed>  $facts
+     */
+    private function runTestPipeline(User $user, array $facts): void
+    {
+        $driver = ExternalServiceRegistry::driver('tower');
+        $normalizedEvent = $driver->normalizeEvent($facts, $facts['type']);
+
+        $controlUpdates = array_intersect_key(
+            $driver->getControlUpdates($normalizedEvent),
+            array_flip(self::TEST_MODE_CONTROLS),
+        );
+
+        if (! empty($controlUpdates)) {
+            $this->controlService->applyUpdates($user, 'tower', $controlUpdates);
+        }
+
+        $this->alertService->dispatch($normalizedEvent, $user);
     }
 
     /**
