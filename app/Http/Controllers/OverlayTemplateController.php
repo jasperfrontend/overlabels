@@ -11,6 +11,7 @@ use App\Models\OptionSet;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
+use App\Models\ProductInstall;
 use App\Models\TowerBlock;
 use App\Models\User;
 use App\Models\UserFreesoundSound;
@@ -668,6 +669,9 @@ class OverlayTemplateController extends Controller
             // untargeted alerts move into it. See AlertsOverlay.
             $alertsOverlay = app(AlertsOverlay::class);
             $alertsOverlay->markLive($user, $template);
+
+            // The first load of a product install, for the admin funnel.
+            ProductInstall::loaded($token, $template);
 
             // Inject control values: template-scoped + user-scoped (source_managed)
             $controls = OverlayControl::where(function ($q) use ($template, $user) {

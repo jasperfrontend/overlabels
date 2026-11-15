@@ -13,6 +13,7 @@ use App\Models\OptionSet;
 use App\Models\OverlayControl;
 use App\Models\OverlayTemplate;
 use App\Models\Picker;
+use App\Models\ProductInstall;
 use App\Models\Recipe;
 use App\Models\RecipeChatTrigger;
 use App\Models\RecipeInstance;
@@ -309,6 +310,8 @@ class RecipeInstaller
                     'enabled' => true,
                 ]);
             }
+
+            ProductInstall::opened($instance, $recipe->slug);
 
             return $instance->fresh(['recipe', 'optionSets', 'pickers', 'overlayControls', 'chatTriggers']);
         });
@@ -704,6 +707,7 @@ class RecipeInstaller
                 }
             }
 
+            ProductInstall::closed($instance);
             $instance->delete();
         });
     }
