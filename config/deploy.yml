@@ -114,7 +114,11 @@ servers:
   scheduler:
     hosts:
       - 172.235.171.209
-    cmd: bash -c 'while true; do php artisan schedule:run --no-interaction --verbose; sleep 60; done'
+    # schedule:work starts each schedule:run at second 0 of the minute by the
+    # clock. The old `schedule:run; sleep 60` loop drifted by each pass's
+    # runtime and skipped a whole minute about every 80 minutes - on
+    # 2026-11-15 that minute was 16:00 and the daily backup never ran.
+    cmd: php artisan schedule:work
     options:
       volume:
         - "overlabels-tts-storage:/app/storage/app/public/tts"
