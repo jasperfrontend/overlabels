@@ -29,6 +29,15 @@ class BotTowerController extends Controller
     private const int STATUS_COOLDOWN = 10;
 
     /**
+     * Seconds after a topple during which `!stack` is ignored. The product
+     * overlay plays the fall and then names the culprit in a banner for this
+     * long (its `banner` control is `topple_age < 9`); a block landing inside
+     * the window would start a new tower under that banner. Keep the two in
+     * step.
+     */
+    public const int SETTLE_SECONDS = 9;
+
+    /**
      * What a test-mode stack writes: the standing tower plus the names the
      * overlay shows for the last block and the last fall. Every counter,
      * total and record is left alone.
@@ -107,6 +116,13 @@ class BotTowerController extends Controller
             return response()->json(['reply' => null]);
         }
 
+        // A topple is still playing out on the overlay. Silent, and checked
+        // BEFORE the cooldown so an ignored stack does not burn it: the
+        // viewer can stack the moment the window closes.
+        if (Cache::has("tower:settling:{$user->id}")) {
+            return response()->json(['reply' => null]);
+        }
+
         // Test mode lets a streamer try the tower OFFLINE. It is ignored
         // while live, so a toggle left on can never quietly stop a real
         // stream's stacks from counting.
@@ -144,6 +160,10 @@ class BotTowerController extends Controller
             'chatter_display_name' => $data['chatter_display_name'],
             'chatter_color' => self::normalizeColor($data['chatter_color'] ?? null),
         ], TowerPhysics::normalizeAim($data['args'] ?? null), testing: $testing);
+
+        if ($facts['type'] === 'topple') {
+            Cache::put("tower:settling:{$user->id}", 1, self::SETTLE_SECONDS);
+        }
 
         if ($testing) {
             $this->runTestPipeline($user, $facts);

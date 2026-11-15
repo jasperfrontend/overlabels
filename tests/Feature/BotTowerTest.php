@@ -382,6 +382,31 @@ test('a block that crosses the fall line brings the tower down and names the vie
         && $e->block['position'] === '10');
 });
 
+// The overlay plays the fall and then names the culprit in a banner for nine
+// seconds. A block landing inside that window would start a new tower under
+// the banner, so the endpoint ignores !stack until it is over - and an
+// ignored stack must not burn the viewer's cooldown, or a 30 second cooldown
+// would keep them out long after the window closed.
+test('stacks are ignored while a topple plays out, then land again', function () {
+    connectTower($this->user, ['cooldown_seconds' => 30]);
+    standTower($this->user, 9, 3.4);
+    $viewerTwo = ['chatter_id' => '222', 'chatter_login' => 'viewer_two', 'chatter_display_name' => 'ViewerTwo'];
+
+    postStack(['args' => 'right'])->assertOk();
+
+    expect(TowerBlock::where('user_id', $this->user->id)->count())->toBe(0);
+
+    $this->travel(5)->seconds();
+    postStack($viewerTwo)->assertOk()->assertJson(['reply' => null]);
+
+    expect(TowerBlock::where('user_id', $this->user->id)->count())->toBe(0);
+
+    $this->travel(5)->seconds();
+    postStack($viewerTwo)->assertOk();
+
+    expect(TowerBlock::where('user_id', $this->user->id)->count())->toBe(1);
+});
+
 test('toppling the record tower says so', function () {
     connectTower($this->user);
     setTowerControl($this->user, 'tallest_tower_record', '9');

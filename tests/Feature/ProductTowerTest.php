@@ -77,8 +77,8 @@ it('installs the tower overlay, connects the integration and creates the record 
         ->and($template->html)->toContain('[[[foreach:tower as block]]]')
         ->and($template->html)->toContain('[[[foreach:c:list:tower_record as name]]]')
         ->and($template->html)->toContain('data-falling="[[[tower.falling]]]"');
-    expect(OverlayControl::where('overlay_template_id', $template->id)->count())->toBe(11)
-        ->and(OverlayControl::where('overlay_template_id', $template->id)->where('type', 'expression')->count())->toBe(10);
+    expect(OverlayControl::where('overlay_template_id', $template->id)->count())->toBe(10)
+        ->and(OverlayControl::where('overlay_template_id', $template->id)->where('type', 'expression')->count())->toBe(9);
 
     $integration = ExternalIntegration::where('user_id', $user->id)->where('service', 'tower')->first();
     expect($integration)->not->toBeNull()

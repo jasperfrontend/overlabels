@@ -1,5 +1,38 @@
 # Changelog - November 2026
 
+## OL-2611-016 - November 15th, 2026 - feat(tower): full-screen redesign and Coyote Time for whoever topples it
+
+Chat Tower's overlay was a small column on the right edge of a transparent canvas, and it broke on a
+light background. It is now a full-screen scene in Twitch Chat Plinko's look: a deep violet field,
+how to play on the left, the tower big in the middle between its two fall lines, height and record
+on the right. The `!stack` commands are pink text, no longer pills. Testing it on tall towers showed
+the topple itself was wrong, so the fall was rebuilt too.
+
+- **Bigger and readable.** Blocks are 240x60 with the chatter's name in bold white, darkened enough
+  to read on any chat colour. The lean gauge sits under the ground and runs exactly from one fall
+  line to the other. Fall lines, gauge pin and status turn orange when the tower is close to falling
+  and pink when it is about to.
+- **Tall towers no longer shoot up before they fall.** The camera followed the height control, which
+  drops to 0 the instant the tower topples, so the whole stack slid upward half a screen while it
+  started falling. The camera now follows the blocks on screen and holds still for the whole fall.
+  The sway had the same flaw and snapped the tower straight at the moment of the topple; it now
+  comes from each block's own position.
+- **Coyote Time.** The block that knocks the tower over now actually appears. It used to arrive in
+  the same instant as the fall and was never seen. It stays put in mid-air while the tower drops out
+  from under it, each block toward the side it leaned, flashes red twice, then drops on its own and
+  shrinks into the distance.
+- **The culprit is the headline.** The banner after a topple leads with their name, "toppled the
+  tower at N" under it, and waits until the culprit has dropped. While it is up, the status under
+  Height reads "tower collapsed!" and the empty-ground placeholder stays out of the way.
+- **`!stack` waits for the endgame.** For nine seconds after a topple, as long as the banner shows,
+  `!stack` is silently ignored, so a new tower cannot start under the banner. An ignored stack does
+  not use up the viewer's cooldown.
+- The banner, record flash and empty ground each sit in their own wrapper, because one appearing
+  next to another restarted the banner's delayed fade-in, and the banner briefly showed, vanished
+  and came back.
+- Only new installs get the new overlay. An existing install keeps the old one until it is
+  reinstalled or the new overlay is imported.
+
 ## OL-2611-015 - November 15th, 2026 - feat(tower): test mode, so a streamer can try !stack offline without counting anything
 
 Chat Tower only takes a `!stack` while the stream is live, which made it impossible to try out

@@ -24,7 +24,7 @@ Fonts and `<style>` blocks. No scripts - they are stripped on save.
 
 ```html
 <meta name="generator" content="Overlabels /engine">
-<meta name="overlabels:engine" content="v1 2026-09-10 controls:11 sha256:76be735a970d">
+<meta name="overlabels:engine" content="v1 2026-11-15 controls:10 sha256:830ffa3e2228">
 <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
 <link href="https://fonts.bunny.net/css2?family=Albert+Sans:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 ```
@@ -34,62 +34,74 @@ Fonts and `<style>` blocks. No scripts - they are stripped on save.
 The markup.
 
 ```html
-<div data-overlabels-engine="v1" class="tower-stage" id="tower-stage" data-falling="[[[tower.falling]]]" style="--count: [[[tower.count]]]">
-  <div class="hud">
-    <div class="hud-top">
-      <div class="hud-height">
-        <span class="hud-label">Height</span>
-        <span class="hud-number" id="height">[[[c:tower:tower_height]]]</span>
-        <span class="hud-sub">[[[if:c:danger = 2]]]about to fall[[[elseif:c:danger = 1]]][[[c:tower:tower_room|round:1]]] from falling[[[else]]]standing[[[endif]]]</span>
-      </div>
-      <div class="hud-record">
-        <span class="hud-label">Record</span>
-        <span class="hud-number hud-number-record" id="record">[[[c:tower:tallest_tower_record]]]</span>
-        <span class="hud-sub hud-roster">[[[foreach:c:list:tower_record as name]]][[[if:loop.index <= 3]]]<span class="roster-name">[[[name]]]</span>[[[endif]]][[[endforeach]]][[[if:c:list:tower_record:count > 4]]]<span class="roster-more">[[[c:list:tower_record:count]]] builders</span>[[[endif]]]</span>
-      </div>
-    </div>
-    <div class="gauge">
-      <div class="gauge-band"></div>
-      <div class="gauge-pin [[[if:c:danger = 2]]]bad[[[elseif:c:danger = 1]]]warn[[[endif]]]"></div>
-    </div>
-    <div class="hud-foot">
-      <span class="hud-last">[[[if:c:tower:last_stacker_name]]]last block <b>[[[c:tower:last_stacker_name]]]</b>[[[endif]]]</span>
-      <span class="hud-topples">[[[c:tower:topples_this_stream]]] topple[[[if:c:tower:topples_this_stream != 1]]]s[[[endif]]] this stream</span>
-    </div>
+<div data-overlabels-engine="v1" class="stage" data-falling="[[[tower.falling]]]" data-danger="[[[c:danger]]]" data-banner="[[[c:banner]]]" style="--count: [[[tower.count]]]">
+  [[[if:c:show_hint]]]
+  <div class="intro">
+    <p class="eyebrow">Chat Tower</p>
+    <h1>Type <span class="cmd">!stack</span> in chat</h1>
+    <p class="sub">Your name goes on the block. Aim with <span class="cmd">!stack left</span> or <span class="cmd">!stack right</span> to fight the lean. Whoever knocks it over gets named.</p>
   </div>
+  [[[endif]]]
+
+  <dl class="facts">
+    [[[if:c:tower:last_stacker_name]]]<div class="fact"><dt>Last block</dt><dd>[[[c:tower:last_stacker_name]]]</dd></div>[[[endif]]]
+    <div class="fact"><dt>Topples this stream</dt><dd class="num">[[[c:tower:topples_this_stream]]]</dd></div>
+  </dl>
 
   <div class="field">
     <div class="fallline left"><span>fall line</span></div>
     <div class="fallline right"><span>fall line</span></div>
+    <div class="cam">
+      [[[foreach:tower as block]]]<div class="block" data-key="[[[block.position]]]" style="--p: [[[block.position]]]; --x: [[[block.x]]]; --c: [[[block.color ?? #9146ff]]]"><span>[[[block.name]]]</span></div>[[[endforeach]]]
+    </div>
     <div class="ground"></div>
-    <div class="cam" id="cam">
-      [[[foreach:tower as block]]]<div class="block" data-key="[[[block.position]]]" style="--p: [[[block.position]]]; --x: [[[block.x]]]; background: [[[block.color ?? #9146ff]]]">[[[block.name]]]</div>[[[endforeach]]]
+    <div class="gauge">
+      <div class="gauge-band"></div>
+      <div class="gauge-pin"></div>
     </div>
-    [[[if:tower.count = 0]]]
-    <div class="empty">
-      <div class="ghost"></div>
-      [[[if:c:show_hint]]]<div class="hint"><span class="chip">!stack</span><span class="hint-text">lays the first block</span></div>[[[endif]]]
-    </div>
-    [[[endif]]]
 
-    [[[if:c:banner]]]
-    <div class="banner" id="banner">
-      <div class="banner-big">TOPPLED AT [[[c:tower:last_topple_height]]]</div>
-      <div class="banner-mid">last block by <b>[[[c:tower:last_topple_by]]]</b></div>
-      <div class="banner-small">record stands at [[[c:tower:tallest_tower_record]]]</div>
+    <!-- each pop-up lives in its own wrapper that is always there, so one
+         appearing never moves another: a moved element restarts its CSS
+         animation, which replayed the banner's delayed fade-in -->
+    <div class="slot" id="slot-empty">
+      [[[if:tower.count = 0]]]
+      <div class="empty" id="tower-empty">
+        <div class="ghost"></div>
+        <p>Waiting for the first block</p>
+      </div>
+      [[[endif]]]
     </div>
-    [[[endif]]]
 
-    [[[if:c:record_flash]]]
-    <div class="record-flash" id="record-flash">NEW RECORD <b>[[[c:tower:tallest_tower_record]]]</b></div>
-    [[[endif]]]
+    <div class="slot" id="slot-record">
+      [[[if:c:record_flash]]]
+      <div class="record-flash" id="record-flash">New record <b>[[[c:tower:tallest_tower_record]]]</b></div>
+      [[[endif]]]
+    </div>
+
+    <div class="slot" id="slot-banner">
+      [[[if:c:banner]]]
+      <div class="banner" id="topple-banner">
+        <div class="banner-name">[[[c:tower:last_topple_by]]]</div>
+        <div class="banner-mid">toppled the tower at <b>[[[c:tower:last_topple_height]]]</b></div>
+        <div class="banner-small">record stands at [[[c:tower:tallest_tower_record]]]</div>
+      </div>
+      [[[endif]]]
+    </div>
   </div>
 
-  [[[if:c:show_hint]]]
-  <div class="legend">
-    <span class="chip">!stack</span><span class="chip">!stack left</span><span class="chip">!stack right</span><span class="legend-text">to build</span>
+  <div class="score">
+    <section class="height">
+      <p class="label">Height</p>
+      <p class="big num">[[[c:tower:tower_height]]]</p>
+      <p class="status">[[[if:c:banner]]]tower collapsed![[[elseif:tower.count = 0]]]no tower yet[[[elseif:c:danger = 2]]]about to fall[[[elseif:c:danger = 1]]][[[c:tower:tower_room|round:1]]] from falling[[[else]]]standing[[[endif]]]</p>
+    </section>
+    <section class="record">
+      <p class="label">Record</p>
+      <p class="big num">[[[c:tower:tallest_tower_record]]]</p>
+      <ol class="roster">[[[foreach:c:list:tower_record as name]]][[[if:loop.index <= 4]]]<li>[[[name]]]</li>[[[endif]]][[[endforeach]]]</ol>
+      [[[if:c:list:tower_record:count > 5]]]<p class="more">[[[c:list:tower_record:count]]] builders in all</p>[[[endif]]]
+    </section>
   </div>
-  [[[endif]]]
 </div>
 ```
 
@@ -99,16 +111,15 @@ The stylesheet. Tags work in here too.
 
 ```css
 :root {
-  --sway: [[[c:sway|round:3]]];
-  --cam: [[[c:cam|round:0]]]px;
+  --wave: [[[c:sway|round:3]]];
+  --flash: #ff2d55;
   --pin: [[[c:lean_pct|round:1]]]%;
   --band: [[[c:band_pct|round:1]]]%;
 
-  /* the hero's palette: deep violet field, pink accent, one orange for danger */
+  /* the Plinko palette: deep violet field, pink accent, orange and hot pink for danger */
   --ink: #fafafa;
   --ink-soft: #e9d5ff;
   --ink-muted: #a78bfa;
-  --violet: #a78bfa;
   --pink: #f472b6;
   --pink-deep: #ec4899;
   --orange: #f97316;
@@ -118,243 +129,187 @@ The stylesheet. Tags work in here too.
   --line: rgb(167 139 250 / 0.35);
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* one block is 4 units wide and 1 unit tall; a unit is 40px */
-  --unit: 40px;
+  /* one block is 4 units wide and 1 unit tall */
+  --unit: 60px;
+  /* rows that fit above the ground before the camera starts following the top */
+  --rows: 13;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html,
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; }
 body {
-  width: 1920px;
-  height: 1080px;
-  overflow: hidden;
-  background: transparent;
-}
-
-body {
+  background: var(--field-deep);
   color: var(--ink);
   font-family: "Albert Sans", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* a 560 x 1000 column on the right edge of a 1080p canvas */
-.tower-stage {
-  position: absolute;
-  right: 40px;
-  top: 40px;
-  width: 560px;
-  height: 1000px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
+.stage { position: relative; width: 1920px; height: 1080px; background: var(--field-deep); }
+.num { font-variant-numeric: tabular-nums; }
+.cmd { font-family: var(--mono); color: var(--pink); white-space: nowrap; }
 
-/* ---------- the HUD ---------- */
-.hud {
-  flex: none;
-  padding: 20px 24px 18px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgb(18 7 32 / 0.82);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.hud-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-}
-
-.hud-height,
-.hud-record {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.hud-record {
-  text-align: right;
-  align-items: flex-end;
-}
-
-.hud-label {
+/* ---------- left: how to play, then the running facts ---------- */
+.intro { position: absolute; left: 64px; top: 64px; width: 380px; }
+.eyebrow,
+.label,
+.facts dt {
   font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.2em;
+  font-size: 16px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--pink);
-}
-
-.hud-number {
-  font-size: 68px;
-  font-weight: 800;
-  line-height: 0.95;
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-}
-
-.hud-number-record {
-  color: var(--pink);
-  font-size: 44px;
-  line-height: 1.1;
-}
-
-.hud-sub {
-  font-size: 15px;
-  color: var(--ink-soft);
-}
-
-.hud-roster {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 4px 8px;
-  max-width: 260px;
-  font-family: var(--mono);
-  font-size: 12px;
   color: var(--ink-muted);
-  line-height: 1.4;
+}
+h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
+.sub { margin-top: 20px; font-size: 21px; line-height: 1.5; color: var(--ink-soft); }
+
+.facts { position: absolute; left: 64px; bottom: 64px; width: 380px; }
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.fact:last-child { border-bottom: 1px solid var(--line); }
+.facts dd {
+  font-size: 28px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.roster-more {
-  color: var(--pink);
+/* ---------- right: height and record ---------- */
+.score { position: absolute; right: 64px; top: 64px; width: 380px; text-align: center; }
+.record { margin-top: 56px; }
+.big { margin-top: 4px; font-size: 144px; font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; }
+.record .big { font-size: 96px; color: var(--pink); }
+.status { margin-top: 8px; font-size: 24px; font-weight: 600; color: var(--ink-soft); }
+.stage[data-danger="1"] .status { color: var(--orange); }
+.stage[data-danger="2"] .status { color: var(--pink-deep); animation: pulse 0.8s ease-in-out infinite alternate; }
+/* for as long as the topple banner is up (the fall included) */
+.stage[data-banner="1"] .status { color: var(--pink); animation: none; }
+
+.roster { margin-top: 20px; list-style: none; }
+.roster li {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 21px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.roster li:last-child { border-bottom: 1px solid var(--line); }
+.roster:empty { display: none; }
+.more { margin-top: 12px; font-family: var(--mono); font-size: 16px; color: var(--ink-muted); }
+
+/* ---------- centre: the field ---------- */
+.field {
+  position: absolute;
+  left: 480px;
+  top: 0;
+  width: 960px;
+  height: 1080px;
+  overflow: hidden;
 }
 
-/* the lean gauge: 0% is the left fall line, 100% the right one; the band is
-   the sway, the pin the top block */
+/* both lines sit 4 units either side of the base centre: the top block
+   falls when its sway carries it past one */
+.fallline {
+  position: absolute;
+  top: 64px;
+  bottom: 160px;
+  width: 0;
+  border-left: 2px dashed var(--line);
+  transition: border-color 0.3s ease;
+}
+.fallline.left { left: calc(50% - var(--unit) * 4 - 1px); }
+.fallline.right { left: calc(50% + var(--unit) * 4 - 1px); }
+.fallline span {
+  position: absolute;
+  top: -4px;
+  left: 14px;
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.fallline.left span { left: auto; right: 14px; }
+.stage[data-danger="1"] .fallline { border-color: var(--orange); }
+.stage[data-danger="1"] .fallline span { color: var(--orange); }
+.stage[data-danger="2"] .fallline { border-color: var(--pink-deep); }
+.stage[data-danger="2"] .fallline span { color: var(--pink-deep); }
+
+.ground {
+  position: absolute;
+  left: 48px;
+  right: 48px;
+  bottom: 156px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ink-muted);
+}
+
+/* the lean gauge spans exactly fall line to fall line: the pin is the top
+   block, the band either side of it is how far the sway carries it */
 .gauge {
-  position: relative;
-  height: 10px;
+  position: absolute;
+  left: calc(50% - var(--unit) * 4);
+  width: calc(var(--unit) * 8);
+  bottom: 104px;
+  height: 14px;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  background: rgb(29 11 48 / 0.9);
+  border-radius: 7px;
+  background: var(--field);
 }
-
 .gauge::before {
   content: "";
   position: absolute;
   left: 50%;
-  top: -3px;
-  bottom: -3px;
-  width: 1px;
+  top: -6px;
+  bottom: -6px;
+  width: 2px;
+  margin-left: -1px;
   background: var(--line);
 }
-
 .gauge-band {
   position: absolute;
   top: 0;
   bottom: 0;
   left: calc(var(--pin) - var(--band));
   width: calc(var(--band) * 2);
-  border-radius: 6px;
-  background: rgb(244 114 182 / 0.22);
+  border-radius: 7px;
+  background: rgb(244 114 182 / 0.3);
 }
-
 .gauge-pin {
   position: absolute;
-  top: -5px;
-  width: 5px;
-  height: 18px;
-  margin-left: -2px;
+  top: -8px;
   left: var(--pin);
-  border-radius: 3px;
+  width: 8px;
+  height: 28px;
+  margin-left: -4px;
+  border-radius: 4px;
   background: var(--ink);
   transition: left 0.35s ease;
 }
-
-.gauge-pin.warn {
-  background: var(--orange);
-  box-shadow: 0 0 12px rgb(249 115 22 / 0.7);
-}
-
-.gauge-pin.bad {
-  background: var(--pink-deep);
-  box-shadow: 0 0 16px rgb(236 72 153 / 0.9);
-}
-
-.hud-foot {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--ink-muted);
-}
-
-.hud-foot b {
-  color: var(--ink-soft);
-  font-weight: 700;
-}
-
-/* ---------- the field: fall lines, ground, the tower ---------- */
-.field {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.fallline {
-  position: absolute;
-  top: 0;
-  bottom: 34px;
-  width: 0;
-  border-left: 1px dashed var(--line);
-}
-
-.fallline.left {
-  left: calc(50% - var(--unit) * 4);
-}
-
-.fallline.right {
-  left: calc(50% + var(--unit) * 4);
-}
-
-.fallline span {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-  white-space: nowrap;
-}
-
-.fallline.left span {
-  left: auto;
-  right: 8px;
-}
-
-.ground {
-  position: absolute;
-  left: 40px;
-  right: 40px;
-  bottom: 34px;
-  height: 2px;
-  background: var(--line);
-}
+.stage[data-danger="1"] .gauge-pin { background: var(--orange); box-shadow: 0 0 16px rgb(249 115 22 / 0.8); }
+.stage[data-danger="2"] .gauge-pin { background: var(--pink-deep); box-shadow: 0 0 20px rgb(236 72 153 / 0.9); }
 
 /* the camera follows the top: once the tower is taller than the field the
-   whole stack slides down, block by block */
+   whole stack slides down, block by block. It reads the number of blocks on
+   screen, not the height control: during a topple the fallen blocks stay in
+   the data for three seconds while the height is already 0, so the camera
+   holds still and the tower falls from where it stood */
 .cam {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 34px;
+  bottom: 160px;
   height: 0;
-  transform: translateY(var(--cam));
+  transform: translateY(calc(max(0, var(--count) - var(--rows)) * var(--unit)));
   transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
@@ -364,51 +319,91 @@ body {
 .block {
   position: absolute;
   width: calc(var(--unit) * 4);
-  height: var(--unit);
+  height: calc(var(--unit) - 4px);
   left: calc(50% - var(--unit) * 2 + var(--x) * var(--unit));
   bottom: calc((var(--p) - 1) * var(--unit));
-  transform: translateX(calc(var(--sway) * var(--p) / max(var(--count), 1) * var(--unit)));
-  border-radius: 4px;
-  box-shadow:
-    inset 0 -3px 0 rgb(0 0 0 / 0.35),
-    inset 0 1px 0 rgb(255 255 255 / 0.22),
-    0 2px 0 rgb(0 0 0 / 0.45);
+  /* each block swings 0.055 block widths per row it sits above the ground,
+     so the top swings 0.055 x height, the physics' sway. Built from the
+     block's own position and not the height control, which drops to 0 the
+     instant the tower topples and would snap the tower straight */
+  transform: translateX(calc(0.055 * var(--p) * var(--wave) * var(--unit)));
+  /* a block the camera has slid below the ground is hidden: 1 above, 0 below */
+  opacity: clamp(0, var(--p) - max(0, var(--count) - var(--rows)), 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 12px;
-  font-family: var(--mono);
-  font-size: 15px;
-  font-weight: 700;
+  padding: 0 14px;
+  border-radius: 6px;
+  background: var(--c);
+  /* the first shadow darkens any chat colour enough for white text to read */
+  box-shadow:
+    inset 0 0 0 100px rgb(18 7 32 / 0.28),
+    inset 0 -5px 0 rgb(0 0 0 / 0.3),
+    inset 0 2px 0 rgb(255 255 255 / 0.3),
+    0 4px 0 rgb(0 0 0 / 0.45);
+  font-size: 23px;
+  font-weight: 800;
   color: #fff;
-  text-shadow: 0 1px 0 rgb(0 0 0 / 0.7);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-shadow: 0 0 2px rgb(0 0 0 / 0.9), 0 1px 2px rgb(0 0 0 / 0.9), 0 0 8px rgb(0 0 0 / 0.45);
   animation: land 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.3);
 }
+.block span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 @keyframes land {
-  from {
-    margin-bottom: 18px;
-    opacity: 0.3;
-  }
-
-  to {
-    margin-bottom: 0;
-    opacity: 1;
-  }
+  from { margin-bottom: 28px; opacity: 0.3; }
+  to { margin-bottom: 0; opacity: 1; }
 }
 
-/* the topple: tower.falling is set for three seconds after the fall, the
-   blocks tumble toward their own side, top first, then the data clears */
-.tower-stage[data-falling="1"] .block {
-  animation: none;
-  transform: translate(calc(var(--x) * 120px + 40px), 820px) rotate(calc(var(--x) * 90deg + 35deg));
-  opacity: 0;
-  transition:
-    transform 1.4s cubic-bezier(0.45, 0, 0.9, 0.45) calc((var(--count) - var(--p)) * 30ms),
-    opacity 0.5s ease-in calc(1.1s + (var(--count) - var(--p)) * 30ms);
+/* the topple, Coyote Time. tower.falling is set for three seconds (the
+   renderer's hold). The block that did it lands on top and stays put while
+   the tower drops out from under it, top first, each block toward the side
+   it leaned. Left hanging in mid-air, the culprit flashes red twice, then
+   drops straight down on its own, shrinking into the distance. The banner
+   naming them lands after that.
+
+   Keyframes, not transitions: the culprit arrives in the same render as the
+   fall, and a transition on a brand new element jumps straight to its end
+   state. The tower's stagger is capped so a 50-block window still clears
+   before the culprit goes.
+
+   0.00s  culprit lands                  0.25s  tower starts dropping
+   0.90s  first red flash                1.25s  second red flash
+   ~1.85s tower gone (tallest case)      1.90s  culprit drops
+   2.45s  culprit gone                   2.40s  banner lands */
+.stage[data-falling="1"] .block {
+  --wait: calc(250ms + min((var(--count) - 1 - var(--p)) * 25ms, 600ms));
+  animation:
+    fall 1s cubic-bezier(0.45, 0, 0.9, 0.45) var(--wait) both,
+    fade 0.3s ease-in calc(var(--wait) + 0.75s) both;
+}
+
+@keyframes fall {
+  to { transform: translate(calc(var(--x) * 220px), 1100px) rotate(calc(var(--x) * 30deg)); }
+}
+
+@keyframes fade {
+  to { opacity: 0; }
+}
+
+/* the culprit is always the last block: it sits on top of the held tower */
+.stage[data-falling="1"] .block:last-child {
+  transform: none;
+  animation:
+    land 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.3),
+    coyote-flash 0.7s linear 0.9s forwards,
+    coyote-drop 0.55s cubic-bezier(0.55, 0, 1, 0.45) 1.9s both,
+    fade 0.15s ease-in 2.3s both;
+}
+
+/* two hard flashes: off, ON, off, ON, off. "forwards", never "both": a
+   backwards fill would paint the first keyframe during the 0.9 s wait */
+@keyframes coyote-flash {
+  0%, 38%, 58%, 96%, 100% { background: var(--c); }
+  8%, 30%, 66%, 88% { background: var(--flash); box-shadow: inset 0 -5px 0 rgb(0 0 0 / 0.3), 0 0 32px rgb(255 45 85 / 0.95), 0 4px 0 rgb(0 0 0 / 0.45); }
+}
+
+@keyframes coyote-drop {
+  to { transform: translateY(700px) scale(0.12); }
 }
 
 /* ---------- empty ground ---------- */
@@ -416,161 +411,118 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 34px;
+  bottom: 160px;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
+  animation: empty-in 0.5s ease-out both;
 }
-
+/* the empty ground waits until the topple banner has gone, so the banner
+   keeps the screen to itself; it fades in fresh when it comes back */
+.stage[data-banner="1"] .empty { display: none; }
+@keyframes empty-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
 .ghost {
   width: calc(var(--unit) * 4);
-  height: var(--unit);
-  border: 2px dashed var(--line);
-  border-radius: 4px;
+  height: calc(var(--unit) - 4px);
+  border: 2px dashed var(--ink-muted);
+  border-radius: 6px;
+  animation: pulse 1.6s ease-in-out infinite alternate;
 }
+.empty p { font-family: var(--mono); font-size: 18px; color: var(--ink-muted); }
 
-.hint {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.hint-text {
-  font-size: 15px;
-  color: var(--ink-soft);
-}
-
-/* ---------- the moment ---------- */
+/* ---------- the moments ---------- */
 .banner {
   position: absolute;
   left: 0;
   right: 0;
-  top: 46%;
+  top: 40%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 26px 20px;
-  background: rgb(18 7 32 / 0.86);
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  gap: 10px;
+  padding: 36px 24px;
+  background: rgb(18 7 32 / 0.92);
+  border-top: 2px solid var(--pink);
+  border-bottom: 2px solid var(--pink);
   text-align: center;
-  animation: banner-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  /* held back until the culprit has dropped out of sight */
+  animation: banner-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.4) 2.4s both;
 }
-
 @keyframes banner-in {
-  from {
-    opacity: 0;
-    transform: translateY(-50%) scale(0.92);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(-50%) scale(1);
-  }
+  from { opacity: 0; transform: translateY(-50%) scale(0.6); }
+  to { opacity: 1; transform: translateY(-50%) scale(1); }
 }
-
-.banner-big {
-  font-size: 44px;
+.banner-name {
+  max-width: 100%;
+  font-size: 64px;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  line-height: 1.1;
   color: var(--pink);
-  text-shadow: 0 0 24px rgb(244 114 182 / 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-.banner-mid {
-  font-size: 20px;
-  color: var(--ink);
-}
-
-.banner-mid b {
-  font-weight: 800;
-}
-
-.banner-small {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--ink-muted);
-}
+.banner-mid { font-size: 28px; color: var(--ink); }
+.banner-mid b { font-weight: 800; }
+.banner-small { font-family: var(--mono); font-size: 18px; color: var(--ink-muted); }
 
 .record-flash {
   position: absolute;
-  left: 50%;
-  top: 40px;
-  transform: translateX(-50%);
-  padding: 10px 22px;
-  border: 1px solid rgb(74 222 128 / 0.6);
-  border-radius: 9999px;
-  background: rgb(18 7 32 / 0.86);
+  left: 0;
+  right: 0;
+  top: 120px;
+  padding: 18px 24px;
+  background: rgb(18 7 32 / 0.92);
+  border-top: 2px solid var(--green);
+  border-bottom: 2px solid var(--green);
+  text-align: center;
   font-family: var(--mono);
-  font-size: 15px;
+  font-size: 22px;
   letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--green);
-  white-space: nowrap;
-  animation: land 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+  animation: banner-in-top 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+.record-flash b { font-size: 32px; margin-left: 8px; }
+@keyframes banner-in-top {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-.record-flash b {
-  font-size: 18px;
-}
-
-/* ---------- chips ---------- */
-.legend {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 36px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--mono);
-  font-size: 14px;
-  padding: 7px 14px;
-  border-radius: 9999px;
-  color: var(--ink-soft);
-  background: rgb(18 7 32 / 0.82);
-  border: 1px solid var(--line);
-}
-
-.legend-text {
-  margin-left: 4px;
-  font-size: 14px;
-  color: var(--ink-muted);
+@keyframes pulse {
+  from { opacity: 1; }
+  to { opacity: 0.45; }
 }
 ```
 
 ## Controls
 
-Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 11 are defined by the overlay itself and are recreated, with the default values shown, for anyone who copies it.
+Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 10 are defined by the overlay itself and are recreated, with the default values shown, for anyone who copies it.
 
 | Tag | Type | Label | Default | Referenced in source |
 |---|---|---|---|---|
 | `[[[c:amp]]]` | expression | Sway amplitude |  | no |
-| `[[[c:sway]]]` | expression | Sway |  | yes |
-| `[[[c:cam]]]` | expression | Camera |  | yes |
+| `[[[c:sway]]]` | expression | Sway wave |  | yes |
 | `[[[c:lean_pct]]]` | expression | Gauge pin |  | yes |
 | `[[[c:band_pct]]]` | expression | Gauge band |  | yes |
-| `[[[c:danger]]]` | expression | Danger |  | no |
+| `[[[c:danger]]]` | expression | Danger |  | yes |
 | `[[[c:topple_age]]]` | expression | Seconds since the last topple |  | no |
-| `[[[c:banner]]]` | expression | Topple banner visible |  | no |
+| `[[[c:banner]]]` | expression | Topple banner visible |  | yes |
 | `[[[c:record_age]]]` | expression | Seconds since the record moved |  | no |
-| `[[[c:record_flash]]]` | expression | Record flash visible |  | no |
-| `[[[c:show_hint]]]` | boolean | Show the command hints | `1` | no |
+| `[[[c:record_flash]]]` | expression | Record flash visible |  | yes |
+| `[[[c:show_hint]]]` | boolean | Show how to play | `1` | yes |
 
 ### Control detail
 
 - `c:amp` - How far the top of the tower swings, in block widths. Grows with height, so the safe zone shrinks the taller it gets.
   - expression: `0.055 * c.tower.tower_height`
-- `c:sway` - Where the top block is in its swing right now, in block widths. A 2.6 second wave.
-  - expression: `c.amp * sin(2 * PI * now_ms() / 2600)`
-- `c:cam` - Pixels the whole tower slides down once it is taller than the field, so the top stays in view.
-  - expression: `max(0, c.tower.tower_height - 17) * 40`
+- `c:sway` - Where the tower is in its swing, from -1 to 1. A 2.6 second wave. Each block swings 0.055 block widths for every row it sits above the ground.
+  - expression: `sin(2 * PI * now_ms() / 2600)`
 - `c:lean_pct` - The top block on the gauge: 0 is the left fall line, 100 the right one, 50 dead centre.
   - expression: `clamp(50 + c.tower.tower_lean / 4 * 50, 0, 100)`
 - `c:band_pct` - Half the sway as a share of the gauge, drawn either side of the pin.
@@ -585,7 +537,7 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
   - expression: `(now_ms() - c.tower.tallest_tower_record_at * 1000) / 1000`
 - `c:record_flash` - Six seconds after the record moves. Not for the very first block.
   - expression: `c.tower.tallest_tower_record > 1 && c.record_age > -1 && c.record_age < 6 ? 1 : 0`
-- `c:show_hint` - The !stack chips under the tower and on the empty ground. Switch off once your chat knows the game.
+- `c:show_hint` - The how-to-play text on the left: type !stack, aim left or right. Switch off once your chat knows the game.
   - min=null, max=null, step=1, reset_value=1, random=false, random_interval=null
 
 Every control also exposes a companion `[[[c:<key>_at]]]` holding the Unix timestamp in seconds of when it last changed.
@@ -608,31 +560,20 @@ This overlay reads live data from: **Chat Tower**. Those integrations must be co
 
 ### Lists
 
-This overlay reads 1 List(s). Lists hold their own data and are not copied with an overlay - create one with a matching slug under /dashboard/lists.
+This overlay reads 1 List(s). Lists hold their own data and are not copied with an overlay - create one with a matching slug under /lists.
 
 - `[[[c:list:tower_record]]]` - list slug `tower_record`
 
 ## Live data tags used
 
-Beyond its controls, this overlay reads 14 data tag(s). These resolve against Twitch channel data and, for alerts, the firing event. A tag with no data renders as nothing unless it carries a `?? default`.
+Beyond its controls, this overlay reads 3 data tag(s). These resolve against Twitch channel data and, for alerts, the firing event. A tag with no data renders as nothing unless it carries a `?? default`.
 
-- `[[[block.color]]]`
-- `[[[block.name]]]`
-- `[[[block.position]]]`
-- `[[[block.x]]]`
-- `[[[else]]]`
-- `[[[endforeach]]]`
-- `[[[endif]]]`
-- `[[[if:c:banner]]]`
-- `[[[if:c:record_flash]]]`
-- `[[[if:c:show_hint]]]`
-- `[[[if:c:tower:last_stacker_name]]]`
-- `[[[name]]]`
+- `[[[tower]]]`
 - `[[[tower.count]]]`
 - `[[[tower.falling]]]`
 
 ## Copying this overlay
 
-Open <https://overlabels.test/overlay/triglav-bologna-arran-ebro/public> while logged in to Overlabels and press **Copy**. That creates your own editable copy of the source above, along with the controls listed under Controls. It does not copy the author's integrations, Lists.
+Open <https://overlabels.test/overlay/jura-patmos-volga-jaipur/public> while logged in to Overlabels and press **Copy**. That creates your own editable copy of the source above, along with the controls listed under Controls. It does not copy the author's integrations, Lists.
 
 You can also paste the source into a new overlay by hand at <https://overlabels.test/templates/create>.
