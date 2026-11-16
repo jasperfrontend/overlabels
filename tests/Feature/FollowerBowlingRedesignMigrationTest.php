@@ -117,6 +117,46 @@ it('leaves aliases the install did not create alone', function () {
         ->and(BotAlias::find($theirs->id))->not->toBeNull();
 });
 
+function bowlingAliasCleanup(): Migration
+{
+    return require base_path('database/migrations/2026_11_16_210000_drop_follower_bowling_aliases_left_behind_by_the_redesign_move.php');
+}
+
+it('drops the aliases of an install the move skipped because its lane overlay is gone', function () {
+    $user = bowlingMoveUser();
+    $instance = makeOldLane(bowlingMoveInstall($user));
+    $aliasIds = array_values($instance->primitive_map['bot_aliases']);
+    OverlayTemplate::whereKey($instance->primitive_map['overlays']['lane'])->delete();
+    $mine = BotAlias::create(['user_id' => $user->id, 'command' => 'next', 'target_template' => 'list lane pop first', 'permission_level' => 'moderator']);
+
+    bowlingMove()->up();
+
+    // The move returns early on a missing overlay, aliases and all.
+    expect(BotAlias::whereIn('id', $aliasIds)->count())->toBe(2);
+
+    bowlingAliasCleanup()->up();
+    bowlingAliasCleanup()->up();
+
+    expect(BotAlias::whereIn('id', $aliasIds)->exists())->toBeFalse()
+        ->and($instance->fresh()->primitive_map)->not->toHaveKey('bot_aliases')
+        ->and(BotAlias::find($mine->id))->not->toBeNull();
+});
+
+it('drops the aliases of an install the move skipped because it names no lane', function () {
+    $user = bowlingMoveUser();
+    $instance = makeOldLane(bowlingMoveInstall($user));
+    $aliasIds = array_values($instance->primitive_map['bot_aliases']);
+    $map = $instance->primitive_map;
+    unset($map['overlays']['lane']);
+    $instance->update(['primitive_map' => $map]);
+
+    bowlingMove()->up();
+    bowlingAliasCleanup()->up();
+
+    expect(BotAlias::whereIn('id', $aliasIds)->exists())->toBeFalse()
+        ->and($instance->fresh()->primitive_map)->not->toHaveKey('bot_aliases');
+});
+
 it('leaves a fresh install untouched and is safe to run twice', function () {
     $user = bowlingMoveUser();
     $fresh = bowlingMoveInstall($user);
