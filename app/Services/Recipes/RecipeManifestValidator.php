@@ -276,6 +276,11 @@ class RecipeManifestValidator
      * keeps adding a look to one list rather than two; so a preset's value
      * for the skin key must be its own key.
      *
+     * A group marked `personal` holds the streamer's own settings (a
+     * hometown, which panels show): its keys have a home on the page like any
+     * other, but they are not part of a look, so a preset must NOT set them
+     * and "complete look" means every non-personal designer key.
+     *
      * @param  array<string, mixed>  $manifest
      * @return list<array{pointer: string, message: string}>
      */
@@ -304,6 +309,7 @@ class RecipeManifestValidator
         // The block's own consistency: a key grouped twice, a skin key in a
         // group, a preset key used twice, a group title used twice.
         $grouped = [];
+        $personal = [];
         $titles = [];
         foreach ($designer['groups'] ?? [] as $g => $group) {
             $title = $group['title'] ?? null;
@@ -324,6 +330,9 @@ class RecipeManifestValidator
                     $errors[] = ['pointer' => "/designer/groups/{$g}/keys/{$k}", 'message' => "Control \"{$key}\" is the skin_key and has the strip above the groups, not a row in one."];
                 }
                 $grouped[$key] = "/designer/groups/{$g}/keys/{$k}";
+                if (($group['personal'] ?? false) === true) {
+                    $personal[] = $key;
+                }
             }
         }
 
@@ -331,6 +340,7 @@ class RecipeManifestValidator
         if (is_string($skinKey)) {
             array_unshift($designerKeys, $skinKey);
         }
+        $lookKeys = array_values(array_diff($designerKeys, $personal));
 
         $presetKeys = [];
         foreach ($designer['presets'] ?? [] as $p => $preset) {
@@ -346,13 +356,15 @@ class RecipeManifestValidator
             if (! is_array($values)) {
                 continue;
             }
-            foreach ($designerKeys as $designerKey) {
+            foreach ($lookKeys as $designerKey) {
                 if (! array_key_exists($designerKey, $values)) {
                     $errors[] = ['pointer' => "/designer/presets/{$p}/values", 'message' => "Preset \"{$key}\" does not set \"{$designerKey}\". A preset is a complete look."];
                 }
             }
             foreach ($values as $valueKey => $value) {
-                if (! in_array($valueKey, $designerKeys, true)) {
+                if (in_array($valueKey, $personal, true)) {
+                    $errors[] = ['pointer' => "/designer/presets/{$p}/values/{$valueKey}", 'message' => "Preset \"{$key}\" sets \"{$valueKey}\", which is in a personal group. A look never changes the streamer's own settings."];
+                } elseif (! in_array($valueKey, $designerKeys, true)) {
                     $errors[] = ['pointer' => "/designer/presets/{$p}/values/{$valueKey}", 'message' => "Preset \"{$key}\" sets \"{$valueKey}\", which is not a designer key."];
                 }
             }

@@ -422,6 +422,10 @@
             "required": ["title", "keys"],
             "properties": {
               "title": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "personal": {
+                "type": "boolean",
+                "description": "The streamer's own settings rather than part of a look (a hometown, which panels show). Rendered like any group, but presets must not set its keys and saved looks do not capture them."
+              },
               "keys": {
                 "type": "array",
                 "minItems": 1,
@@ -433,7 +437,7 @@
         },
         "presets": {
           "type": "array",
-          "description": "The built-in looks, in the order the page offers them. A preset is a complete look: its values name every designer key (every grouped key plus the skin_key) and nothing else, and a value for a control with choices must be one of them. Which preset is active is never stored; it is derived by comparing the overlay's controls to each bundle.",
+          "description": "The built-in looks, in the order the page offers them. A preset is a complete look: its values name every designer key (every grouped key plus the skin_key) except those in a personal group, and nothing else, and a value for a control with choices must be one of them. Which preset is active is never stored; it is derived by comparing the overlay's controls to each bundle.",
           "minItems": 1,
           "items": {
             "type": "object",

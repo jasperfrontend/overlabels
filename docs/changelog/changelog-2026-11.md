@@ -1,5 +1,33 @@
 # Changelog - November 2026
 
+## OL-2611-018 - November 16th, 2026 - feat(checkin): a designer for the globe, with seven looks and your location
+
+Chat Checkin's globe had two switches and a look that could only change if you knew CSS. It now has
+a designer like Twitch Chat and Chat Emote Bubbles: seven looks to start from (Default, Classic,
+Night, Day, Monotone, Warm, Cold), then every color, the dot size, the spin, the tilt, the pins and
+the font are yours to change, and every change lands in OBS as you make it.
+
+- **Your location lives in the designer.** The farthest checkin used to be measured from a home
+  place on the Chat Checkin settings page. It is now a control on the globe, under Settings in the
+  designer, and the server measures from it. The settings page points there when the product is
+  installed. An account using the integration without the product keeps the old setting.
+- **A look never touches your settings.** A preset used to have to set every knob on the page, so
+  picking "Night" would have wiped your location. A designer group can now be marked personal:
+  presets and saved looks leave it alone. Chat Checkin's Settings group holds the location and the
+  HUD and pin list switches.
+- **The globe follows the designer live.** It read its colors once when it loaded; it now re-reads
+  them twice a second.
+- **Continents on any globe color.** The globe body was drawn over the near-side continents. At the
+  old 50% black that only dimmed them; at any solid color they vanished.
+- **Existing installs are moved to Classic**, the exact look they had, with their old home place
+  copied in as their location. The font becomes JetBrains Mono (the old generic monospace is not a
+  web font), the near side is brighter and the far side no longer shows through faintly. An install
+  whose CSS was edited by hand is left alone and logged.
+- **Two globe bugs fixed on the way.** With a timer control running, toggling the HUD made the globe
+  rebuild its name labels four times a second, so a name on the far side flickered instead of
+  hiding. And the first control change after loading moved the globe, because the re-render
+  stripped a position the globe had set on itself.
+
 ## OL-2611-016 - November 15th, 2026 - feat(tower): full-screen redesign and Coyote Time for whoever topples it
 
 Chat Tower's overlay was a small column on the right edge of a transparent canvas, and it broke on a

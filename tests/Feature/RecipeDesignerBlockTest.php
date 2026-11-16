@@ -30,8 +30,8 @@ function designerBlockMessages(array $manifest, string $slug = 'twitch-chat-over
     return array_column(designerBlockErrors($manifest, $slug), 'message');
 }
 
-it('accepts both shipped designer blocks next to their documents', function () {
-    foreach (['twitch-chat-overlay', 'chat-emote-bubbles'] as $slug) {
+it('accepts every shipped designer block next to its document', function () {
+    foreach (['twitch-chat-overlay', 'chat-emote-bubbles', 'chat-checkin'] as $slug) {
         expect(designerBlockErrors(designerBlockManifest($slug), $slug))->toBe([]);
     }
 });
@@ -94,6 +94,38 @@ it('rejects a preset that is not a complete look', function () {
     $messages = designerBlockMessages($m);
     expect($messages)->toContain('Preset "bubbles" does not set "accent". A preset is a complete look.')
         ->and($messages)->toContain('Preset "bubbles" sets "sparkle", which is not a designer key.');
+});
+
+// A personal group holds the streamer's own settings (Chat Checkin's
+// hometown and its two panel switches). A look must never write them, and
+// "complete look" no longer asks for them.
+it('lets a preset leave out a personal key and rejects one that sets it', function () {
+    $m = designerBlockManifest('chat-checkin');
+
+    expect(designerBlockErrors($m, 'chat-checkin'))->toBe([]);
+
+    $m['designer']['presets'][0]['values']['hometown'] = 'Rotterdam, NL';
+
+    expect(designerBlockMessages($m, 'chat-checkin'))
+        ->toContain('Preset "default" sets "hometown", which is in a personal group. A look never changes the streamer\'s own settings.');
+});
+
+it('renders personal keys as knobs but leaves them out of a look', function () {
+    $designer = designerBlockManifest('chat-checkin')['designer'];
+
+    expect(ProductDesigner::keys($designer))->toContain('hometown', 'toggle_hud', 'land_color')
+        ->and(ProductDesigner::lookKeys($designer))->toContain('land_color')
+        ->and(ProductDesigner::lookKeys($designer))->not->toContain('hometown')
+        ->and(ProductDesigner::lookKeys($designer))->not->toContain('toggle_hud');
+});
+
+it('still asks a preset for a key once its group is no longer personal', function () {
+    $m = designerBlockManifest('chat-checkin');
+    $last = array_key_last($m['designer']['groups']);
+    unset($m['designer']['groups'][$last]['personal']);
+
+    expect(designerBlockMessages($m, 'chat-checkin'))
+        ->toContain('Preset "default" does not set "hometown". A preset is a complete look.');
 });
 
 it('rejects a preset value outside the control\'s declared choices', function () {

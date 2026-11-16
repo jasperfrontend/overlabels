@@ -81,8 +81,8 @@ class ProductDesigner
 
     /**
      * Every key the designer edits: the skin key first, then each group's
-     * keys in page order. This is what a preset writes and what a saved look
-     * captures.
+     * keys in page order. These are the knobs the page renders; what a look
+     * is made of is lookKeys().
      *
      * @param  array<string, mixed>  $designer
      * @return list<string>
@@ -100,6 +100,29 @@ class ProductDesigner
         }
 
         return $keys;
+    }
+
+    /**
+     * The keys that make up a look: every designer key except those in a
+     * `personal` group. A personal group holds the streamer's own settings
+     * (a hometown, which panels show), so a preset never writes them and a
+     * saved look never captures them - clicking a look must not move your
+     * hometown or switch your HUD off. RecipeManifestValidator holds presets
+     * to exactly these keys.
+     *
+     * @param  array<string, mixed>  $designer
+     * @return list<string>
+     */
+    public static function lookKeys(array $designer): array
+    {
+        $personal = [];
+        foreach ($designer['groups'] ?? [] as $group) {
+            if (($group['personal'] ?? false) === true) {
+                array_push($personal, ...($group['keys'] ?? []));
+            }
+        }
+
+        return array_values(array_diff(self::keys($designer), $personal));
     }
 
     /**
@@ -179,13 +202,14 @@ class ProductDesigner
      * The groups as the page renders them.
      *
      * @param  array<string, mixed>  $designer
-     * @return list<array{title: string, keys: list<string>}>
+     * @return list<array{title: string, keys: list<string>, personal: bool}>
      */
     public static function groups(array $designer): array
     {
         return array_values(array_map(fn (array $group) => [
             'title' => $group['title'],
             'keys' => array_values($group['keys']),
+            'personal' => ($group['personal'] ?? false) === true,
         ], $designer['groups'] ?? []));
     }
 
@@ -233,7 +257,7 @@ class ProductDesigner
         $current = [];
         if ($instance && ($template = self::overlayFor($designer, $instance))) {
             $current = $template->controls()
-                ->whereIn('key', self::keys($designer))
+                ->whereIn('key', self::lookKeys($designer))
                 ->pluck('value', 'key')
                 ->all();
         }
@@ -279,14 +303,14 @@ class ProductDesigner
     /**
      * The overlay's look as it stands, in the shape a preset bundle holds it:
      * keyed by control key, in designer-key order, only the keys the overlay
-     * has. This is what a saved look captures.
+     * has. This is what a saved look captures, so personal keys are left out.
      *
      * @param  array<string, mixed>  $designer
      * @return array<string, string>
      */
     public static function currentValues(array $designer, OverlayTemplate $template): array
     {
-        $keys = self::keys($designer);
+        $keys = self::lookKeys($designer);
         $current = $template->controls()
             ->whereIn('key', $keys)
             ->pluck('value', 'key')

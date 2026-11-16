@@ -17,6 +17,10 @@
  *   --globe-rotation-seconds seconds per revolution    (default 90, 0 = still)
  *   --globe-tilt-degrees     axis tilt toward viewer   (default 18)
  *
+ * They are re-read twice a second and applied in place, so a control bound
+ * to one (the Chat Checkin designer binds all seven) changes the globe live
+ * in OBS without a reload. Before that they were read once at mount.
+ *
  * Labels carry class `ol-globe-label` (+ `is-hidden` on the far side) and a
  * `data-login` attribute; the default look is intentionally minimal so
  * template CSS owns it.
@@ -47,6 +51,19 @@ interface PinObject {
 const SPHERE_RADIUS = 1;
 const PIN_TIP_RADIUS = 1.14;
 
+/** How often the custom properties are re-read, in ms. */
+const STYLE_POLL_MS = 500;
+
+interface GlobeStyle {
+  dotColor: string;
+  dotSize: number;
+  pinColor: string;
+  shellColor: string;
+  shellOpacity: number;
+  rotationSeconds: number;
+  tiltDegrees: number;
+}
+
 function cssNumber(styles: CSSStyleDeclaration, name: string, fallback: number): number {
   const raw = styles.getPropertyValue(name).trim();
   const n = Number(raw);
@@ -76,17 +93,29 @@ function dotTexture(): THREE.Texture {
   return texture;
 }
 
-export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
-  el.style.position = el.style.position || 'relative';
-
+function readStyle(el: HTMLElement): GlobeStyle {
   const styles = getComputedStyle(el);
-  const dotColor = cssColor(styles, '--globe-dot-color', '#8f8f8f');
-  const dotSize = cssNumber(styles, '--globe-dot-size', 2.2);
-  const pinColor = cssColor(styles, '--globe-pin-color', '#ffd166');
-  const shellColor = cssColor(styles, '--globe-shell-color', '#000000');
-  const shellOpacity = cssNumber(styles, '--globe-shell-opacity', 0.85);
-  const rotationSeconds = cssNumber(styles, '--globe-rotation-seconds', 90);
-  const tiltDegrees = cssNumber(styles, '--globe-tilt-degrees', 18);
+  return {
+    dotColor: cssColor(styles, '--globe-dot-color', '#8f8f8f'),
+    dotSize: cssNumber(styles, '--globe-dot-size', 2.2),
+    pinColor: cssColor(styles, '--globe-pin-color', '#ffd166'),
+    shellColor: cssColor(styles, '--globe-shell-color', '#000000'),
+    shellOpacity: cssNumber(styles, '--globe-shell-opacity', 0.85),
+    rotationSeconds: cssNumber(styles, '--globe-rotation-seconds', 90),
+    tiltDegrees: cssNumber(styles, '--globe-tilt-degrees', 18),
+  };
+}
+
+export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
+  // Only when the template gave the placeholder no position of its own: the
+  // label layer needs a positioned parent. An inline style here would be
+  // stripped by the renderer's next morphdom pass (it resets attributes to
+  // the template's), moving the globe the first time any control changed.
+  if (getComputedStyle(el).position === 'static') {
+    el.style.position = 'relative';
+  }
+
+  let style = readStyle(el);
 
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -111,7 +140,7 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
   // rotation stays a clean spin around the (tilted) axis.
   const spin = new THREE.Group();
   const tilted = new THREE.Group();
-  tilted.rotation.x = (tiltDegrees * Math.PI) / 180;
+  tilted.rotation.x = (style.tiltDegrees * Math.PI) / 180;
   tilted.add(spin);
   scene.add(tilted);
 
@@ -128,15 +157,23 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
   const dotGeometry = new THREE.BufferGeometry();
   dotGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   const dotMaterial = new THREE.PointsMaterial({
-    color: dotColor,
-    size: dotSize,
+    color: style.dotColor,
+    size: style.dotSize,
     sizeAttenuation: false,
     map: sprite,
     transparent: true,
     alphaTest: 0.2,
     depthWrite: false,
   });
-  spin.add(new THREE.Points(dotGeometry, dotMaterial));
+  const landPoints = new THREE.Points(dotGeometry, dotMaterial);
+  // Drawn after the shell (renderOrder below). Both are transparent, and
+  // three.js draws same-order transparent objects in the order they were
+  // added, so the shell used to paint over the near-side continents: at
+  // Classic's 50% black that only dimmed them, at any solid color they
+  // vanished. Shell first, then dots: near-side dots draw on top, far-side
+  // dots fail the depth test against the shell and stay hidden.
+  landPoints.renderOrder = 1;
+  spin.add(landPoints);
 
   // An occlusion shell so far-side dots and pins read as "behind" instead of
   // floating in space. Verified visually: 0.55 let far-side pin heads punch
@@ -144,16 +181,45 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
   // the globe starts to look see-through. It keeps occluding either way - the
   // shell writes depth whatever its opacity, so 0 is an invisible occluder
   // rather than "no shell".
-  const shellMaterial = new THREE.MeshBasicMaterial({ color: shellColor, transparent: true, opacity: shellOpacity });
+  const shellMaterial = new THREE.MeshBasicMaterial({ color: style.shellColor, transparent: true, opacity: style.shellOpacity });
   const shell = new THREE.Mesh(new THREE.SphereGeometry(SPHERE_RADIUS * 0.98, 48, 32), shellMaterial);
   spin.add(shell);
 
   const pinGroup = new THREE.Group();
   spin.add(pinGroup);
 
+  // Shared by every pin and kept for the globe's lifetime, so a pin colour
+  // change is one material update rather than a rebuild.
+  const headGeometry = new THREE.SphereGeometry(0.014, 12, 8);
+  const headMaterial = new THREE.MeshBasicMaterial({ color: style.pinColor });
+  const stalkMaterial = new THREE.LineBasicMaterial({ color: style.pinColor, transparent: true, opacity: 0.8 });
+
   let pinObjects: PinObject[] = [];
-  const disposables: Array<{ dispose(): void }> = [dotGeometry, dotMaterial, shellMaterial, shell.geometry, sprite];
+  const disposables: Array<{ dispose(): void }> = [
+    dotGeometry,
+    dotMaterial,
+    shellMaterial,
+    shell.geometry,
+    sprite,
+    headGeometry,
+    headMaterial,
+    stalkMaterial,
+  ];
   let pinDisposables: Array<{ dispose(): void }> = [];
+
+  /** Apply whatever changed since the last read. Cheap when nothing did. */
+  function applyStyle(next: GlobeStyle): void {
+    if (next.dotColor !== style.dotColor) dotMaterial.color.set(next.dotColor);
+    if (next.dotSize !== style.dotSize) dotMaterial.size = next.dotSize;
+    if (next.shellColor !== style.shellColor) shellMaterial.color.set(next.shellColor);
+    if (next.shellOpacity !== style.shellOpacity) shellMaterial.opacity = next.shellOpacity;
+    if (next.pinColor !== style.pinColor) {
+      headMaterial.color.set(next.pinColor);
+      stalkMaterial.color.set(next.pinColor);
+    }
+    if (next.tiltDegrees !== style.tiltDegrees) tilted.rotation.x = (next.tiltDegrees * Math.PI) / 180;
+    style = next;
+  }
 
   function rebuildPins(pins: CheckinPin[]): void {
     pinGroup.clear();
@@ -161,11 +227,6 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
     pinDisposables = [];
     for (const obj of pinObjects) obj.label.remove();
     pinObjects = [];
-
-    const headGeometry = new THREE.SphereGeometry(0.014, 12, 8);
-    const headMaterial = new THREE.MeshBasicMaterial({ color: pinColor });
-    const stalkMaterial = new THREE.LineBasicMaterial({ color: pinColor, transparent: true, opacity: 0.8 });
-    pinDisposables.push(headGeometry, headMaterial, stalkMaterial);
 
     for (const pin of pins) {
       const lat = Number(pin.lat);
@@ -231,6 +292,7 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
 
   let raf = 0;
   let last = performance.now();
+  let lastStyleRead = last;
   let destroyed = false;
   let paused = false;
 
@@ -239,8 +301,13 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
     const delta = Math.min(0.1, (now - last) / 1000);
     last = now;
 
-    if (rotationSeconds > 0) {
-      spin.rotation.y += (delta * Math.PI * 2) / rotationSeconds;
+    if (now - lastStyleRead >= STYLE_POLL_MS) {
+      lastStyleRead = now;
+      applyStyle(readStyle(el));
+    }
+
+    if (style.rotationSeconds > 0) {
+      spin.rotation.y += (delta * Math.PI * 2) / style.rotationSeconds;
     }
 
     spin.updateMatrixWorld();
@@ -250,10 +317,21 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
   }
   raf = requestAnimationFrame(frame);
 
+  // What the pins were last built from. update() is called on every render
+  // the overlay makes, and a running timer control renders four times a
+  // second; rebuilding then recreated every label, and a fresh label starts
+  // visible and fades out over the label transition, so far-side names
+  // flickered. Same pins, nothing to rebuild.
+  let builtFrom = '';
+
   return {
     update(pins: CheckinPin[]): void {
       // Every globe carries the maker's mark - see brandPin.ts.
-      rebuildPins(withBrandPin(pins));
+      const next = withBrandPin(pins);
+      const key = JSON.stringify(next.map((p) => [p.login, p.name, p.place, p.lat, p.lng]));
+      if (key === builtFrom) return;
+      builtFrom = key;
+      rebuildPins(next);
     },
     setPaused(next: boolean): void {
       if (destroyed || paused === next) return;

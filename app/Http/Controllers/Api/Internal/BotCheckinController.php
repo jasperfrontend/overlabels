@@ -9,6 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Checkin;
 use App\Models\ExternalEvent;
 use App\Models\ExternalIntegration;
+use App\Models\OverlayControl;
+use App\Models\RecipeInstance;
 use App\Models\StreamSession;
 use App\Models\User;
 use App\Services\EventMeter;
@@ -136,6 +138,44 @@ class BotCheckinController extends Controller
     }
 
     /**
+     * Where distances are measured from, as [lat, lng], or null for nowhere.
+     *
+     * An install of the Chat Checkin product keeps the streamer's hometown as
+     * the `hometown` control on its globe overlay, set in the designer, and
+     * that control is the whole answer once it exists: empty means measure
+     * nothing, and a place the gazetteer cannot find measures nothing too.
+     * An account using the integration without the product (or an install
+     * from before the control) keeps the home in the integration settings.
+     *
+     * @param  array<string, mixed>  $settings
+     * @return array{0: float, 1: float}|null
+     */
+    private function homeFor(User $user, array $settings): ?array
+    {
+        $instance = RecipeInstance::where('user_id', $user->id)
+            ->whereHas('recipe', fn ($q) => $q->where('slug', 'chat-checkin'))
+            ->first();
+        $overlayIds = array_values($instance->primitive_map['overlays'] ?? []);
+
+        $control = $overlayIds === [] ? null : OverlayControl::whereIn('overlay_template_id', $overlayIds)
+            ->where('key', 'hometown')
+            ->first();
+
+        if ($control !== null) {
+            $query = trim((string) $control->value);
+            $place = $query === '' ? null : $this->resolver->resolve($query);
+
+            return $place ? [$place->lat, $place->lng] : null;
+        }
+
+        if (isset($settings['home_lat'], $settings['home_lng'])) {
+            return [(float) $settings['home_lat'], (float) $settings['home_lng']];
+        }
+
+        return null;
+    }
+
+    /**
      * Upsert the pin (latest wins) and assemble the enriched payload the
      * checkin driver normalizes. All derived facts are computed here, once:
      * the driver maps them onto controls and never re-derives.
@@ -145,14 +185,10 @@ class BotCheckinController extends Controller
     private function applyCheckin(User $user, array $settings, ResolvedPlace $place, array $data): array
     {
         $distanceKm = null;
+        $home = $this->homeFor($user, $settings);
 
-        if (isset($settings['home_lat'], $settings['home_lng'])) {
-            $distanceKm = round(GeoMath::haversineDistance(
-                (float) $settings['home_lat'],
-                (float) $settings['home_lng'],
-                $place->lat,
-                $place->lng,
-            ), 1);
+        if ($home !== null) {
+            $distanceKm = round(GeoMath::haversineDistance($home[0], $home[1], $place->lat, $place->lng), 1);
         }
 
         $existing = Checkin::where('user_id', $user->id)

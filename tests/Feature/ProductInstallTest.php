@@ -108,7 +108,7 @@ it('still installs a picker-only manifest with no installs section', function ()
 // The install
 // ---------------------------------------------------------------------------
 
-it('creates the globe overlay with its two controls on install', function () {
+it('creates the globe overlay with its designer controls on install', function () {
     $user = productUser();
 
     $instance = app(RecipeInstaller::class)->install(chatCheckinRecipe(), $user, 'chat_checkin');
@@ -125,7 +125,10 @@ it('creates the globe overlay with its two controls on install', function () {
         ->and($template->template_tags)->toContain('checkin_globe');
 
     $keys = OverlayControl::where('overlay_template_id', $template->id)->pluck('key')->sort()->values()->all();
-    expect($keys)->toBe(['toggle_hud', 'toggle_pinlist']);
+    expect($keys)->toBe([
+        'accent_color', 'font', 'globe_color', 'globe_opacity', 'hometown', 'label_color', 'label_size',
+        'land_color', 'land_dot_size', 'pin_color', 'spin_seconds', 'text_color', 'tilt', 'toggle_hud', 'toggle_pinlist',
+    ]);
 });
 
 it('connects the checkin integration and provisions its controls on install', function () {

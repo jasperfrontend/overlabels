@@ -19,6 +19,7 @@ interface IntegrationData {
   enabled: boolean;
   pin_lifetime: 'per_stream' | 'persistent';
   home_place_label: string | null;
+  home_in_designer: boolean;
   cooldown_seconds: number;
   last_received_at: string | null;
   total_pins: number;
@@ -134,7 +135,16 @@ function formatDate(iso: string | null): string {
             </select>
           </div>
 
-          <div class="space-y-2">
+          <div v-if="integration.home_in_designer" class="space-y-2">
+            <Label>Home location</Label>
+            <p class="text-sm text-foreground">
+              Your location is set in the
+              <Link href="/products/chat-checkin/design" class="cursor-pointer underline underline-offset-2">Chat Checkin designer</Link>, under
+              Settings. Distances are measured from there.
+            </p>
+          </div>
+
+          <div v-else class="space-y-2">
             <Label for="home_place">Home location</Label>
             <p class="text-sm text-muted-foreground">
               Your own city, so checkins get a distance. Powers

@@ -17,7 +17,7 @@
   "category": "product",
   "hero": "/products/chat-checkin-hero.jpg",
   "hero_alt": "Chat Checkin on stream: a glowing globe with a chatter's name pinned on the city they checked in from",
-  "ready_message": "Your chat can type !checkin right now.",
+  "ready_message": "Your chat can type !checkin right now. The designer below sets the globe's colors and your location.",
   "highlights": [
     "!checkin and a city drops a pin on a spinning globe.",
     "Counts every checkin, the countries this stream, and who checked in from farthest away.",
@@ -142,16 +142,179 @@
       },
       {
         "q": "Can I change how it looks?",
-        "a": "Switch the numbers and the list of names on or off from the overlay's Controls tab. The globe's colours, size and spin speed can be changed too if you know a little CSS."
+        "a": "Yes. The designer has seven looks to start from, then every color, the dot size, the spin, the tilt and the font are yours to change, and the numbers and the list of names each switch on or off."
       }
     ],
     "closing": "Put your chat on the map tonight."
   },
   "notes": [
-    "Without a home place (Settings, Integrations, Chat Checkin), distances stay empty. Set one and the HUD shows how far away the farthest checkin is.",
-    "Pins clear when each stream starts by default. The same settings page can keep them forever.",
-    "The HUD and pin list both start off. Turn them on in the overlay's Controls tab."
+    "Without a location (in the designer), distances stay empty. Set one and the HUD shows how far away the farthest checkin is.",
+    "Pins clear when each stream starts by default. Settings, Integrations, Chat Checkin can keep them forever.",
+    "The HUD and pin list both start off. Turn them on in the designer."
   ],
+  "designer": {
+    "overlay": "globe",
+    "groups": [
+      {
+        "title": "Globe",
+        "keys": ["land_color", "land_dot_size", "globe_color", "globe_opacity", "spin_seconds", "tilt"]
+      },
+      {
+        "title": "Pins",
+        "keys": ["pin_color", "label_color", "label_size"]
+      },
+      {
+        "title": "Text",
+        "keys": ["font", "text_color", "accent_color"]
+      },
+      {
+        "title": "Settings",
+        "personal": true,
+        "keys": ["hometown", "toggle_hud", "toggle_pinlist"]
+      }
+    ],
+    "presets": [
+      {
+        "key": "default",
+        "label": "Default",
+        "blurb": "Close to the real thing: green continents on a deep blue ocean. The one you start with.",
+        "values": {
+          "land_color": "#4caf50",
+          "land_dot_size": "5",
+          "globe_color": "#0b3d91",
+          "globe_opacity": "0.92",
+          "spin_seconds": "60",
+          "tilt": "18",
+          "pin_color": "#ffffff",
+          "label_color": "#ffffff",
+          "label_size": "14",
+          "font": "Albert Sans",
+          "text_color": "#e8f1ff",
+          "accent_color": "#7cc4ff"
+        }
+      },
+      {
+        "key": "classic",
+        "label": "Classic",
+        "blurb": "The original look: teal dots on a see-through black globe, spinning fast.",
+        "values": {
+          "land_color": "#2dd4bf",
+          "land_dot_size": "5",
+          "globe_color": "#000000",
+          "globe_opacity": "0.5",
+          "spin_seconds": "30",
+          "tilt": "18",
+          "pin_color": "#bfe3e0",
+          "label_color": "#dfe8e8",
+          "label_size": "13",
+          "font": "JetBrains Mono",
+          "text_color": "#8fb6b3",
+          "accent_color": "#1daaff"
+        }
+      },
+      {
+        "key": "night",
+        "label": "Night",
+        "blurb": "Pale indigo continents on a near-black globe, turning slowly. For late streams.",
+        "values": {
+          "land_color": "#8b9cff",
+          "land_dot_size": "3",
+          "globe_color": "#05070f",
+          "globe_opacity": "0.9",
+          "spin_seconds": "90",
+          "tilt": "23",
+          "pin_color": "#e0e7ff",
+          "label_color": "#e0e7ff",
+          "label_size": "14",
+          "font": "Space Grotesk",
+          "text_color": "#a5b4fc",
+          "accent_color": "#c4b5fd"
+        }
+      },
+      {
+        "key": "day",
+        "label": "Day",
+        "blurb": "White continents on a bright sky-blue globe with navy pins.",
+        "values": {
+          "land_color": "#f8fafc",
+          "land_dot_size": "4",
+          "globe_color": "#4fa8e8",
+          "globe_opacity": "0.95",
+          "spin_seconds": "60",
+          "tilt": "18",
+          "pin_color": "#0b3d91",
+          "label_color": "#ffffff",
+          "label_size": "14",
+          "font": "Fredoka",
+          "text_color": "#f0f9ff",
+          "accent_color": "#bae6fd"
+        }
+      },
+      {
+        "key": "monotone",
+        "label": "Monotone",
+        "blurb": "A dark globe with off-white dots and nothing else. Quiet next to a busy game.",
+        "values": {
+          "land_color": "#f2efe6",
+          "land_dot_size": "4",
+          "globe_color": "#111111",
+          "globe_opacity": "0.95",
+          "spin_seconds": "60",
+          "tilt": "18",
+          "pin_color": "#f2efe6",
+          "label_color": "#f2efe6",
+          "label_size": "14",
+          "font": "Inter",
+          "text_color": "#bdbab2",
+          "accent_color": "#f2efe6"
+        }
+      },
+      {
+        "key": "warm",
+        "label": "Warm",
+        "blurb": "Orange continents and rose pins on a dark ember globe.",
+        "values": {
+          "land_color": "#f97316",
+          "land_dot_size": "4",
+          "globe_color": "#2a0f05",
+          "globe_opacity": "0.9",
+          "spin_seconds": "60",
+          "tilt": "18",
+          "pin_color": "#fda4af",
+          "label_color": "#ffe4e6",
+          "label_size": "14",
+          "font": "Albert Sans",
+          "text_color": "#fed7aa",
+          "accent_color": "#fb7185"
+        }
+      },
+      {
+        "key": "cold",
+        "label": "Cold",
+        "blurb": "Icy blue continents on a deep sea globe, turning a little slower.",
+        "values": {
+          "land_color": "#bae6fd",
+          "land_dot_size": "3.5",
+          "globe_color": "#031627",
+          "globe_opacity": "0.85",
+          "spin_seconds": "75",
+          "tilt": "18",
+          "pin_color": "#e0f7ff",
+          "label_color": "#e0f2fe",
+          "label_size": "14",
+          "font": "Space Grotesk",
+          "text_color": "#7dd3fc",
+          "accent_color": "#38bdf8"
+        }
+      }
+    ],
+    "stage": [
+      {
+        "w": 1920,
+        "h": 1080
+      }
+    ]
+  },
   "max_instances_per_user": 1,
   "installs": {
     "overlays": [{ "ref": "globe", "file": "globe.md" }],

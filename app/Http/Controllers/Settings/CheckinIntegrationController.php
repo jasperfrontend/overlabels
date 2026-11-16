@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\Checkin;
 use App\Models\ExternalIntegration;
+use App\Models\RecipeInstance;
+use App\Models\User;
 use App\Services\External\ExternalControlService;
 use App\Services\External\ExternalServiceRegistry;
 use App\Services\Geo\PlaceResolverService;
@@ -41,6 +43,10 @@ class CheckinIntegrationController extends Controller
                 'enabled' => (bool) ($integration?->enabled ?? false),
                 'pin_lifetime' => $settings['pin_lifetime'] ?? 'per_stream',
                 'home_place_label' => $settings['home_place_label'] ?? null,
+                // With the product installed the hometown is a control on its
+                // globe, set in the designer, and the field here would do
+                // nothing - BotCheckinController reads the control instead.
+                'home_in_designer' => $this->productInstalled($user),
                 'cooldown_seconds' => (int) ($settings['cooldown_seconds'] ?? 30),
                 'last_received_at' => $integration?->last_received_at?->toIso8601String(),
                 'total_pins' => $integration ? Checkin::where('user_id', $user->id)->count() : 0,
@@ -60,7 +66,8 @@ class CheckinIntegrationController extends Controller
         ]);
 
         $home = null;
-        $homeQuery = trim($validated['home_place'] ?? '');
+        $homeInDesigner = $this->productInstalled($user);
+        $homeQuery = $homeInDesigner ? '' : trim($validated['home_place'] ?? '');
 
         if ($homeQuery !== '') {
             $home = $this->resolver->resolve($homeQuery);
@@ -88,12 +95,15 @@ class CheckinIntegrationController extends Controller
 
         // Home is what distance_km measures against. Set it, move it, or clear
         // it - already-stamped pins keep the distance they were made with.
-        if ($home) {
-            $settings['home_place_label'] = $home->label();
-            $settings['home_lat'] = $home->lat;
-            $settings['home_lng'] = $home->lng;
-        } else {
-            unset($settings['home_place_label'], $settings['home_lat'], $settings['home_lng']);
+        // Left alone while the product is installed: the designer owns it.
+        if (! $homeInDesigner) {
+            if ($home) {
+                $settings['home_place_label'] = $home->label();
+                $settings['home_lat'] = $home->lat;
+                $settings['home_lng'] = $home->lng;
+            } else {
+                unset($settings['home_place_label'], $settings['home_lat'], $settings['home_lng']);
+            }
         }
 
         $integration->settings = $settings;
@@ -105,6 +115,14 @@ class CheckinIntegrationController extends Controller
         $this->controlService->provision($user, ExternalServiceRegistry::driver('checkin'));
 
         return back()->with('success', 'Chat Checkin integration saved.');
+    }
+
+    /** Whether this account has the Chat Checkin product installed. */
+    private function productInstalled(User $user): bool
+    {
+        return RecipeInstance::where('user_id', $user->id)
+            ->whereHas('recipe', fn ($q) => $q->where('slug', 'chat-checkin'))
+            ->exists();
     }
 
     public function disconnect(): RedirectResponse

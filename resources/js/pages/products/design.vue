@@ -55,7 +55,7 @@ const props = defineProps<{
   presets: Preset[];
   skins: Choice[];
   skin_key: string | null;
-  groups: { title: string; keys: string[] }[];
+  groups: { title: string; keys: string[]; personal?: boolean }[];
   controls: Record<string, Control>;
   suggested_fonts: { value: string; hint: string }[];
   fonts_url: string;
@@ -777,7 +777,9 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
               </button>
             </div>
             <p class="text-sm text-muted-foreground">
-              <template v-if="activePreset">A preset, unchanged. Turn any knob below and it becomes your own.</template>
+              <template v-if="activePreset"
+                >Pick one of the presets above for a quick start or if you feel adventurous, start tweaking the design below.</template
+              >
               <template v-else>Your own settings. Pick a preset to start over from one.</template>
             </p>
           </section>
@@ -809,6 +811,9 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
 
           <section v-for="group in groups" :key="group.title" class="flex flex-col gap-3">
             <h2 class="text-sm font-semibold text-foreground">{{ group.title }}</h2>
+            <p v-if="group.personal" class="-mt-2 text-xs text-muted-foreground">
+              Set your location here and toggle options you don't want. You can of course set any location you like, we're not judging!
+            </p>
 
             <div v-for="key in keysIn(group)" :key="key" class="flex flex-col gap-1.5">
               <ControlKnob
@@ -894,7 +899,8 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
               <h2 class="text-base font-bold text-foreground">Happy with your design?</h2>
               <p class="mt-1 text-sm text-foreground">
                 Click the button below and follow the steps to add {{ product.name }} to OBS as a browser source. You can come back and change your
-                design any time.
+                design any time. You don't need to add this overlay again once installed! Changes you make on this page will directly reflect on the
+                overlay you already have installed. Also, do not click the ADD TO OBS button when you're live, okay?
               </p>
             </div>
             <AddToObsButton :template="overlay" />

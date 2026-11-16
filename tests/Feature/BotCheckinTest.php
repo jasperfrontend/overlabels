@@ -6,12 +6,15 @@ use App\Models\ExternalEvent;
 use App\Models\ExternalIntegration;
 use App\Models\GeoPlace;
 use App\Models\OverlayControl;
+use App\Models\OverlayTemplate;
 use App\Models\StreamSession;
 use App\Models\StreamState;
 use App\Models\User;
 use App\Services\External\ExternalControlService;
 use App\Services\External\ExternalServiceRegistry;
 use App\Services\Geo\PlaceResolverService;
+use App\Services\Recipes\RecipeCatalog;
+use App\Services\Recipes\RecipeInstaller;
 use App\Services\StreamSessionService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
@@ -265,6 +268,46 @@ test('a home location gives checkins a distance', function () {
         ->and($response->json('reply'))->toContain((string) $pin->distance_km)
         ->and((float) checkinControlValue($this->user, 'latest_checkin_distance'))->toBeGreaterThan(400)
         ->and((float) checkinControlValue($this->user, 'farthest_checkin_this_stream'))->toBeGreaterThan(400);
+});
+
+/**
+ * Install the Chat Checkin product (which connects the integration), give
+ * the integration an old-style home in its settings, and go live. Returns
+ * the installed globe overlay.
+ */
+function installCheckinProductWithSettingsHome(User $user, array $home): OverlayTemplate
+{
+    $catalog = app(RecipeCatalog::class);
+    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat-checkin')), $user, 'chat_checkin');
+
+    $integration = ExternalIntegration::where('user_id', $user->id)->where('service', 'checkin')->firstOrFail();
+    $integration->settings = array_merge(['pin_lifetime' => 'per_stream', 'cooldown_seconds' => 30], $home);
+    $integration->save();
+
+    checkinLiveState($user, StreamState::STATE_LIVE);
+
+    return OverlayTemplate::findOrFail($instance->primitive_map['overlays']['globe']);
+}
+
+// The designer keeps the hometown as a control on the installed globe, and
+// that control is the answer once it exists - the integration's old home
+// setting must not leak through behind it.
+test('an installed globe measures from its hometown control, not the old setting', function () {
+    $globe = installCheckinProductWithSettingsHome($this->user, ['home_place_label' => 'Paris, FR', 'home_lat' => 48.85341, 'home_lng' => 2.3488]);
+    $globe->controls()->where('key', 'hometown')->update(['value' => 'Amsterdam, NL']);
+
+    postCheckin(['args' => 'Paris'])->assertOk();
+
+    // From the old setting (Paris) this would be 0 km; from Amsterdam it is ~430.
+    expect(Checkin::first()->distance_km)->toBeGreaterThan(400)->toBeLessThan(460);
+});
+
+test('an empty hometown on an installed globe measures nothing', function () {
+    installCheckinProductWithSettingsHome($this->user, ['home_place_label' => 'Paris, FR', 'home_lat' => 48.85341, 'home_lng' => 2.3488]);
+
+    postCheckin(['args' => 'Amsterdam'])->assertOk();
+
+    expect(Checkin::first()->distance_km)->toBeNull();
 });
 
 test('farthest checkin only ever moves up', function () {
