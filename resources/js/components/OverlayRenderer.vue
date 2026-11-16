@@ -520,9 +520,23 @@ function startTimerTick(key: string, state: any) {
 
   if (!state.running && state.mode !== 'countto') return;
 
+  // Ticks four times a second so a second boundary lands on time, but writes
+  // only when the value moved: every write replaces data.value and re-runs
+  // everything that reads it, and three ticks in four change nothing. A
+  // countdown to a moment stops once it reaches 0 - it used to keep writing
+  // that 0 four times a second for as long as the overlay stayed open, which
+  // for a List whose expiry was months ago was forever.
   timerIntervals[key] = window.setInterval(() => {
     if (!data.value) return;
-    data.value = { ...data.value, [`c:${key}`]: String(computeTimerSeconds(timerStates.value[key])), [`c:${key}:running`]: runningVal };
+    const seconds = computeTimerSeconds(timerStates.value[key]);
+    const value = String(seconds);
+    if (data.value[`c:${key}`] !== value || data.value[`c:${key}:running`] !== runningVal) {
+      data.value = { ...data.value, [`c:${key}`]: value, [`c:${key}:running`]: runningVal };
+    }
+    if (timerStates.value[key]?.mode === 'countto' && seconds <= 0) {
+      clearInterval(timerIntervals[key]);
+      delete timerIntervals[key];
+    }
   }, 250);
 }
 
@@ -1670,7 +1684,11 @@ function handleListUpdated(event: any) {
   const expiresAt: number | null = typeof event.expires_at === 'number' ? event.expires_at : null;
   patch[`${baseKey}:expires_at`] = expiresAt !== null ? String(expiresAt) : '';
   const countdownKey = `list:${event.slug}:countdown`;
-  if (expiresAt !== null) {
+  // Only an overlay that reads the countdown ticks it: in its own tags, or
+  // through an expression the server shipped it for (then it arrived in
+  // timer_states at load). The render endpoint applies the same rule.
+  const readsCountdown = templateTags.value.includes(`c:${countdownKey}`) || countdownKey in timerStates.value;
+  if (expiresAt !== null && readsCountdown) {
     startTimerTick(countdownKey, {
       mode: 'countto',
       base_seconds: 0,

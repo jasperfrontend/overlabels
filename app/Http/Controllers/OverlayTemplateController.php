@@ -746,6 +746,7 @@ class OverlayTemplateController extends Controller
             // convenience without needing a foreach.
             $userLists = OptionSet::where('user_id', $user->id)->get();
             $listData = [];
+            $listCountdowns = [];
             foreach ($userLists as $list) {
                 // Items are objects ({id,value,...}); every scalar list tag
                 // (.N, :first, :last, :random, :sum, the bare JSON-array
@@ -797,8 +798,10 @@ class OverlayTemplateController extends Controller
                     ? (string) $list->expires_at->timestamp
                     : '';
 
+                // Only a candidate here: it ships below, once the expression
+                // controls are resolved, and only to an overlay that reads it.
                 if ($list->expires_at !== null) {
-                    $timerStates['list:'.$list->slug.':countdown'] = [
+                    $listCountdowns['list:'.$list->slug.':countdown'] = [
                         'mode' => 'countto',
                         'base_seconds' => 0,
                         'offset_seconds' => 0,
@@ -851,6 +854,25 @@ class OverlayTemplateController extends Controller
                     'key' => $key,
                     'expression' => $expressionsByKey[$key]['expression'],
                 ];
+            }
+
+            // A List's countdown ticks four times a second in the renderer,
+            // and every tick rewrites the overlay's data, so it ships only to
+            // an overlay that reads it: in its own tags, or through an
+            // expression it ships. Before this, every overlay ticked every
+            // expiring List the account had, for as long as the List existed.
+            $readsKey = $referencedControlKeys;
+            foreach (array_keys($registeredExpressionKeys) as $key) {
+                foreach ($expressionsByKey[$key]['dependencies'] as $dep) {
+                    if (is_string($dep)) {
+                        $readsKey[$dep] = true;
+                    }
+                }
+            }
+            foreach ($listCountdowns as $countdownKey => $state) {
+                if (isset($readsKey[$countdownKey])) {
+                    $timerStates[$countdownKey] = $state;
+                }
             }
 
             // Expand the template-tag allowlist with any `t.<name>` references
