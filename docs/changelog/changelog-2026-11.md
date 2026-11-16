@@ -1,5 +1,29 @@
 # Changelog - November 2026
 
+## OL-2611-021 - November 17th, 2026 - feat(bot): !forgetme asks first, and !unforgetme is the way back
+
+`!forgetme` did exactly what it said, the moment it was typed: everything Overlabels held about that
+viewer deleted, everywhere, and every Overlabels channel ignoring them from then on. That is right
+for someone who means it. It is not right for someone typing `!forgetme I hate this chat` at the end
+of a bad night, who wakes up the next day to find check-ins and chat games silently doing nothing,
+with no idea why and no way back short of an email nobody would find.
+
+- **It asks first.** A bare `!forgetme`, or one with anything after it, now deletes nothing. The bot
+  explains that the deletion cannot be undone, says `!unforgetme` exists, and waits for
+  `!forgetme confirm` from the same viewer within two minutes. "Type it again" was rejected: Twitch
+  drops a non-mod's identical message inside 30 seconds, so the repeat would often never arrive.
+- **`!unforgetme` is the way back**, with the same two steps. It lifts the "ignore me" and nothing
+  else: what was deleted stays deleted, because there was never a copy. Platform-owned and
+  everyone-tier like `!forgetme`, so no channel can switch it off.
+- **Still silent.** A viewer who opted out is never told so when a check-in does nothing. They asked
+  to be left alone, and announcing it in chat would undo that. `!unforgetme` is mentioned in exactly
+  two places: the confirmation question and `/viewers`.
+- **The bot forwards only the first word** after the command. Whatever else someone typed never
+  leaves the bot.
+
+The bot shipped first, deliberately: the app now waits for a `confirm` that only the new bot passes
+along, so the other order would have made `!forgetme` impossible to complete in the gap.
+
 ## OL-2611-019 - November 16th, 2026 - feat(bowling): a full-screen lane that runs itself, first come first served
 
 Follower Bowling was the last game from before the products settled into what they are now:

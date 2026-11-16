@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\Internal\BotRecipeTriggerController;
 use App\Http\Controllers\Api\Internal\BotSettingsController;
 use App\Http\Controllers\Api\Internal\BotTokenController;
 use App\Http\Controllers\Api\Internal\BotTowerController;
+use App\Http\Controllers\Api\Internal\BotUnforgetMeController;
 use App\Http\Controllers\Api\ListReadController;
 use App\Http\Controllers\Api\OverlayAlertSourceController;
 use App\Http\Controllers\ExpressionTagController;
@@ -267,6 +268,7 @@ Route::prefix('/internal/bot')
             // No {login}: a viewer asking to be forgotten is asking the
             // platform, not one channel. See BotForgetMeController.
             Route::post('/forgetme', [BotForgetMeController::class, 'handle']);
+            Route::post('/unforgetme', [BotUnforgetMeController::class, 'handle']);
             Route::get('/controls/{login}/{key}', [BotControlController::class, 'show'])
                 ->where(['login' => '[a-z0-9_]+', 'key' => '[a-z][a-z0-9_]{0,49}']);
             Route::post('/controls/{login}/{key}', [BotControlController::class, 'update'])

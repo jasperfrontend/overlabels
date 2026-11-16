@@ -98,6 +98,20 @@ class ViewerErasureService
     }
 
     /**
+     * Lift the suppression: the viewer may be stored again, like anyone else.
+     *
+     * Restores nothing. What erase() deleted is gone for good; this only
+     * removes the one row that makes ingest ignore them, so a !forgetme typed
+     * in a bad moment is not a lifelong lockout.
+     *
+     * @return bool whether they were suppressed
+     */
+    public function unerase(string $twitchId): bool
+    {
+        return DB::table('viewer_erasures')->where('twitch_id', $twitchId)->delete() > 0;
+    }
+
+    /**
      * Blank any Overlabels-managed "latest name" control currently showing
      * this person. Exact match only: a partial match would blank a different
      * viewer whose name contains theirs.

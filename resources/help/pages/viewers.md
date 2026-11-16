@@ -60,7 +60,8 @@ to a text-to-speech service to be turned into audio. That audio file is deleted 
 
 ## How to have your data removed
 
-**Type `!forgetme` in any chat where the Overlabels bot is present.** That is the whole thing. It
+**Type `!forgetme` in any chat where the Overlabels bot is present.** The bot asks if you are sure,
+because the deletion cannot be undone. Type `!forgetme confirm` within two minutes and it is done. It
 deletes what we hold about you, everywhere, not only in that channel, and it tells us not to store you
 again. You do not need to give a reason, quote a law, or explain yourself.
 
@@ -89,6 +90,17 @@ their content, not ours to quietly delete.
 > To do that we keep one thing, and only this: your Twitch ID and the date, so we know to keep
 > ignoring you. No name, no channel, no reason. Remembering that we were asked to forget you is the
 > only way to actually do it.
+
+## Changed your mind?
+
+**Type `!unforgetme`, then `!unforgetme confirm` within two minutes.** That deletes the one row
+described above, and from then on we treat you like anyone else again: check-ins and chat games work
+for you, and your name comes along with your follows and subs.
+
+It does not bring anything back. What `!forgetme` deleted stays deleted, because we never kept a copy.
+
+Nothing will remind you that you used `!forgetme`. You asked us to leave you alone, so the bot stays
+quiet rather than telling the whole chat why your check-in did nothing.
 
 ## What we cannot remove
 

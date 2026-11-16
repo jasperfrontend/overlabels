@@ -79,8 +79,13 @@ The one command in the bot that belongs to your viewers rather than to you.
 | Command | Tier | What it does |
 |---|---|---|
 | `!forgetme` | Everyone | Deletes everything Overlabels holds about that viewer, across every channel, and stops storing them in future. |
+| `!unforgetme` | Everyone | The way back: Overlabels may store that viewer again. Nothing deleted earlier comes back. |
 
-A viewer who types it has their check-ins, their blocks in any chat game, the record of anything they
+Both ask first. The bot explains what is about to happen and waits for `!forgetme confirm` (or
+`!unforgetme confirm`) from the same viewer within two minutes, so a `!forgetme` typed at the end of a
+bad night does nothing on its own.
+
+A viewer who confirms has their check-ins, their blocks in any chat game, the record of anything they
 added to a list and the Twitch events about them deleted, everywhere, not only in your channel.
 
 From then on they are invisible rather than absent. `!checkin` and `!stack` quietly do nothing for
@@ -266,5 +271,5 @@ Two kinds stay as they are. A command a product installed - `!stack` and `!tower
 cooldown included; switching it off from somewhere else would quietly break the thing you installed.
 And `!enablecontrols` / `!disablecontrols` are always on, because they are the switch for every
 chat control command and turning them off would leave you no way to turn controls back on from chat.
-`!forgetme` is always on for the same structural reason, from the other direction: it is your viewers'
-only way to reach us.
+`!forgetme` and `!unforgetme` are always on for the same structural reason, from the other direction:
+they are your viewers' only way to reach us.

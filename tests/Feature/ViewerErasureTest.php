@@ -26,7 +26,7 @@ beforeEach(function () {
 // !forgetme is the only route they have to us from the place the data was
 // collected, which is why the builtin is platform-owned and everyone-tier.
 
-function forgetMe(array $overrides = []): TestResponse
+function forgetMeRequest(array $overrides = []): TestResponse
 {
     return test()->withHeaders(['X-Internal-Secret' => 'test-bot-secret'])
         ->postJson('/api/internal/bot/forgetme', array_merge([
@@ -35,6 +35,147 @@ function forgetMe(array $overrides = []): TestResponse
             'chatter_display_name' => 'Alice',
         ], $overrides));
 }
+
+/**
+ * The whole two-step: ask, then confirm. Returns the confirm response.
+ */
+function forgetMe(array $overrides = []): TestResponse
+{
+    forgetMeRequest($overrides)->assertOk();
+
+    return forgetMeRequest(array_merge($overrides, ['answer' => 'confirm']));
+}
+
+function unforgetMeRequest(array $overrides = []): TestResponse
+{
+    return test()->withHeaders(['X-Internal-Secret' => 'test-bot-secret'])
+        ->postJson('/api/internal/bot/unforgetme', array_merge(['chatter_id' => '555000'], $overrides));
+}
+
+// ── The confirmation step ───────────────────────────────────────────────────
+//
+// The deletion cannot be undone, so a bare !forgetme only asks. Someone typing
+// "!forgetme I hate this chat" at the end of a bad night must not wake up
+// erased and ignored.
+
+it('only asks on a bare forgetme, and deletes nothing', function () {
+    Checkin::create([
+        'user_id' => User::factory()->create()->id,
+        'chatter_twitch_id' => '555000',
+        'chatter_login' => 'alice',
+        'chatter_display_name' => 'Alice',
+        'place_label' => 'Amsterdam, NL',
+        'country_code' => 'NL',
+        'lat' => 52.37,
+        'lng' => 4.89,
+        'checked_in_at' => now(),
+    ]);
+
+    $response = forgetMeRequest();
+
+    $response->assertOk();
+    expect($response->json('reply'))->toContain('!forgetme confirm')
+        ->and($response->json('reply'))->toContain('!unforgetme')
+        ->and($response->json('removed'))->toBeNull()
+        ->and(Checkin::where('chatter_twitch_id', '555000')->exists())->toBeTrue()
+        ->and(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeFalse();
+});
+
+it('treats any other words after forgetme as a bare ask', function () {
+    forgetMeRequest()->assertOk();
+    forgetMeRequest(['answer' => 'I'])->assertOk();
+
+    expect(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeFalse();
+});
+
+it('asks rather than erases on a confirm with no ask before it', function () {
+    $response = forgetMeRequest(['answer' => 'confirm']);
+
+    expect($response->json('removed'))->toBeNull()
+        ->and(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeFalse();
+});
+
+it('erases on confirm after an ask, case-insensitively', function () {
+    forgetMeRequest()->assertOk();
+    forgetMeRequest(['answer' => 'CONFIRM'])->assertOk();
+
+    expect(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeTrue();
+});
+
+it('does not let one viewer confirm another viewer ask', function () {
+    forgetMeRequest(['chatter_id' => '999'])->assertOk();
+    forgetMeRequest(['answer' => 'confirm'])->assertOk();
+
+    expect(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeFalse()
+        ->and(app(ViewerErasureService::class)->isSuppressed('999'))->toBeFalse();
+});
+
+it('lets the ask expire', function () {
+    forgetMeRequest()->assertOk();
+    $this->travel(121)->seconds();
+    forgetMeRequest(['answer' => 'confirm'])->assertOk();
+
+    expect(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeFalse();
+});
+
+// ── !unforgetme ─────────────────────────────────────────────────────────────
+
+it('lifts the suppression after an ask and a confirm, restoring nothing', function () {
+    forgetMe()->assertOk();
+
+    $ask = unforgetMeRequest();
+    expect($ask->json('reply'))->toContain('!unforgetme confirm')
+        ->and(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeTrue();
+
+    $done = unforgetMeRequest(['answer' => 'confirm']);
+    expect($done->json('lifted'))->toBeTrue()
+        ->and(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeFalse();
+});
+
+it('does not lift on a confirm with no ask before it', function () {
+    forgetMe()->assertOk();
+
+    unforgetMeRequest(['answer' => 'confirm'])->assertOk();
+
+    expect(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeTrue();
+});
+
+it('keeps a forgetme ask and an unforgetme ask apart', function () {
+    forgetMe()->assertOk();
+    forgetMeRequest()->assertOk();
+
+    unforgetMeRequest(['answer' => 'confirm'])->assertOk();
+
+    expect(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeTrue();
+});
+
+it('says there is nothing to undo for a viewer who never opted out', function () {
+    $response = unforgetMeRequest();
+
+    expect($response->json('lifted'))->toBeFalse()
+        ->and($response->json('reply'))->toContain('Nothing to undo');
+});
+
+it('refuses unforgetme without the internal secret', function () {
+    $this->postJson('/api/internal/bot/unforgetme', ['chatter_id' => '555000'])
+        ->assertStatus(403);
+});
+
+it('declares unforgetme as a platform-owned everyone-tier builtin', function () {
+    $declared = collect(BotBuiltin::DEFAULTS)->firstWhere('command', 'unforgetme');
+
+    expect($declared)->not->toBeNull()
+        ->and($declared['permission_level'])->toBe('everyone')
+        ->and($declared['owner'])->toBe(BotBuiltin::OWNER_PLATFORM)
+        ->and(BotBuiltin::isEditable('unforgetme'))->toBeFalse();
+});
+
+it('seeds unforgetme for an account that opts into the bot', function () {
+    $user = User::factory()->create(['bot_enabled' => false]);
+    $user->update(['bot_enabled' => true]);
+
+    expect(BotBuiltin::where('user_id', $user->id)->where('command', 'unforgetme')->exists())->toBeTrue();
+});
 
 it('deletes the viewer from every table that is keyed to them', function () {
     $user = User::factory()->create();

@@ -7,10 +7,31 @@ use App\Services\ViewerErasureService;
 use App\Services\ViewerNoticeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class BotForgetMeController extends Controller
 {
+    public const CONFIRM_WORD = 'confirm';
+
+    /** How long an ask stays open for its `confirm`, in seconds. */
+    public const CONFIRM_WINDOW = 120;
+
+    /**
+     * Holds a Twitch id for two minutes and nothing else. Not a table: a
+     * pending request is not something worth remembering past its window.
+     */
+    private const PENDING_PREFIX = 'forgetme:pending:';
+
+    /**
+     * The one place a viewer is told `!unforgetme` exists, apart from
+     * /viewers. A suppressed viewer is never told they are suppressed: they
+     * asked for silence, and saying so in public chat would announce it.
+     */
+    public const ASK_REPLY = 'This deletes everything Overlabels holds about you, in every channel, and it cannot be brought back.'
+        .' After that we stop storing you until you type !unforgetme.'
+        .' To go ahead, type !forgetme confirm within 2 minutes. overlabels.com/viewers';
+
     /**
      * Handle one `!forgetme` from chat.
      *
@@ -25,6 +46,16 @@ class BotForgetMeController extends Controller
      * is from a channel that has the bot. No live gate, no cooldown on the
      * useful path: someone asking to be erased should never be told to come
      * back when the stream is live.
+     *
+     * Two steps, because the deletion cannot be undone. A bare `!forgetme`
+     * (or `!forgetme I hate this chat`, typed at 3am) only asks; the erasure
+     * runs on `!forgetme confirm` within CONFIRM_WINDOW of that ask. Without
+     * an ask on record, `confirm` asks too: the point is that they have seen
+     * the warning, not that they know the magic word. "Type it again" was
+     * rejected because Twitch drops a non-mod's identical message inside 30s.
+     *
+     * The bot sends only the first word after the command, as `answer`. It
+     * decides nothing: an older bot that sends no answer simply always asks.
      */
     public function handle(Request $request, ViewerErasureService $erasures, ViewerNoticeService $notices): JsonResponse
     {
@@ -32,7 +63,17 @@ class BotForgetMeController extends Controller
             'chatter_id' => 'required|string|max:32',
             'chatter_login' => 'nullable|string|max:64',
             'chatter_display_name' => 'nullable|string|max:64',
+            'answer' => 'nullable|string|max:64',
         ]);
+
+        $confirming = mb_strtolower(trim($data['answer'] ?? '')) === self::CONFIRM_WORD;
+        $pendingKey = self::PENDING_PREFIX.$data['chatter_id'];
+
+        if (! $confirming || ! Cache::pull($pendingKey)) {
+            Cache::put($pendingKey, true, self::CONFIRM_WINDOW);
+
+            return response()->json(['reply' => self::ASK_REPLY, 'removed' => null]);
+        }
 
         $removed = $erasures->erase(
             $data['chatter_id'],

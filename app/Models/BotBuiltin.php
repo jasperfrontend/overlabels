@@ -74,6 +74,9 @@ class BotBuiltin extends Model
         // chat route a viewer has to ask Overlabels to delete them, so a channel
         // must not be able to switch it off or raise it above their tier.
         ['command' => 'forgetme', 'permission_level' => 'everyone', 'owner' => self::OWNER_PLATFORM],
+        // The way back from !forgetme, frozen for the same reason: a channel
+        // closing it would turn one bad moment into a lifelong lockout.
+        ['command' => 'unforgetme', 'permission_level' => 'everyone', 'owner' => self::OWNER_PLATFORM],
         ['command' => 'ol', 'permission_level' => 'moderator', 'owner' => self::OWNER_USER],
         ['command' => 'followage', 'permission_level' => 'everyone', 'owner' => self::OWNER_USER],
         ['command' => 'accountage', 'permission_level' => 'everyone', 'owner' => self::OWNER_USER],
