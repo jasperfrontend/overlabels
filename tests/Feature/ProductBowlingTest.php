@@ -21,8 +21,8 @@ uses(DatabaseTransactions::class);
 
 /**
  * Follower Bowling is the second product and the first to install a List
- * and a chat command. Its overlay carries twenty expression controls and a
- * gobowl toggle; the lane list and the !bowl appender are what the deep
+ * and a chat command. Its overlay carries twenty expression controls and no
+ * on/off toggle; the lane list and the !bowl appender are what the deep
  * dive told a streamer to make by hand.
  */
 function bowlingUser(array $attrs = []): User
@@ -61,12 +61,11 @@ it('installs the list and the command it will create', function () {
 
     expect($manifest['installs']['lists'][0]['slug'] ?? null)->toBe('lane')
         ->and($manifest['installs']['list_appenders'][0]['command'] ?? null)->toBe('!bowl')
-        ->and($manifest['installs']['bot_aliases'][0]['command'] ?? null)->toBe('!fbfirst')
-        ->and($manifest['installs']['bot_aliases'][1]['command'] ?? null)->toBe('!fbdraw')
+        ->and($manifest['installs'])->not->toHaveKey('bot_aliases')
         ->and($manifest['installs']['overlays'] ?? [])->toHaveCount(1);
 });
 
-it('installs the lane overlay with all 21 controls, the lane list and the !bowl appender', function () {
+it('installs the lane overlay with its 20 controls, the lane list and the !bowl appender', function () {
     $user = bowlingUser();
 
     $instance = app(RecipeInstaller::class)->install(bowlingRecipe(), $user, 'follower_bowling');
@@ -75,7 +74,7 @@ it('installs the lane overlay with all 21 controls, the lane list and the !bowl 
     expect($template)->not->toBeNull()
         ->and($template->html)->toContain('[[[foreach:c:list:lane as p]]]')
         ->and($template->html)->not->toContain('DO NOT DELETE');
-    expect(OverlayControl::where('overlay_template_id', $template->id)->count())->toBe(21)
+    expect(OverlayControl::where('overlay_template_id', $template->id)->count())->toBe(20)
         ->and(OverlayControl::where('overlay_template_id', $template->id)->where('type', 'expression')->count())->toBe(20);
 
     $list = OptionSet::find($instance->primitive_map['lists']['lane']);

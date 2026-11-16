@@ -15,9 +15,9 @@ use Illuminate\Queue\InteractsWithQueue;
  * which is the debounce; deliberately NOT ShouldBeUnique (see
  * SyncLivingTitle for why a uniqueness lock on a delayed job is wrong).
  *
- * Carries the list id, not the model: the loop reads the switch and the
- * queue as they are when the job RUNS, so switching the lane off or the
- * queue draining ends it with nothing to cancel.
+ * Carries the list id, not the model: the loop reads the queue as it is
+ * when the job RUNS, so the queue draining or the list being disabled ends
+ * it with nothing to cancel.
  */
 class AutoPlayNext implements ShouldQueue
 {

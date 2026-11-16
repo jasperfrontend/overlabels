@@ -1,5 +1,27 @@
 # Changelog - November 2026
 
+## OL-2611-019 - November 16th, 2026 - feat(bowling): a full-screen lane that runs itself, first come first served
+
+Follower Bowling was the last game from before the products settled into what they are now:
+full-screen scenes a streamer puts on their own OBS scene for a break or some downtime. It was a
+strip along the bottom of a transparent canvas, hard to read on a light background, hidden behind a
+`gobowl` switch, and it shipped two moderator commands to skip the line. It now looks and works like
+Chat Tower and Twitch Chat Plinko.
+
+- **One full-screen scene.** How to play and who is next on the left, a vertical lane in the middle
+  with the ten newest followers racked as pins (avatar and name, readable on the dark field), and on
+  the right who is bowling and how many pins went down. A strike gets a banner naming the bowler.
+  Between throws the ball rests dimly on the approach.
+- **`!bowl` and nothing else.** One spot per viewer, first come first served, and the next one in
+  line bowls every fifteen seconds whenever someone is waiting. No switch: the lane is on screen
+  when the streamer switches to its scene. `!fbfirst` and `!fbdraw` are gone; `!list lane pop first`
+  and `draw` still work by hand.
+- **The bowling itself is unchanged.** Same twenty expression controls, same dice roll from the
+  moment a bowler leaves the line, same timing.
+- **Every existing install is moved over**, edited or not: the new lane, no `gobowl` control, and
+  the two aliases the old install created removed. Nobody but the author had the lane running.
+- A new product hero showing the vertical lane mid-strike.
+
 ## OL-2611-018 - November 16th, 2026 - feat(checkin): a designer for the globe, with seven looks and your location
 
 Chat Checkin's globe had two switches and a look that could only change if you knew CSS. It now has

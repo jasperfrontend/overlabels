@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\BotAlias;
 use App\Models\ExternalIntegration;
 use App\Models\Kit;
 use App\Models\ListAppender;
@@ -47,8 +46,6 @@ it('removes everything Follower Bowling created, and the instance', function () 
     expect(OverlayTemplate::find($map['overlays']['lane']))->toBeNull()
         ->and(OptionSet::find($map['lists']['lane']))->toBeNull()
         ->and(ListAppender::find($map['list_appenders']['bowl']))->toBeNull()
-        ->and(BotAlias::find($map['bot_aliases']['fbfirst']))->toBeNull()
-        ->and(BotAlias::find($map['bot_aliases']['fbdraw']))->toBeNull()
         ->and(RecipeInstance::find($instance->id))->toBeNull();
 });
 
@@ -86,15 +83,13 @@ it('names what it will remove, and skips what the streamer already deleted', fun
     $instance = installProduct($user, 'follower-bowling');
 
     $before = app(RecipeInstaller::class)->removals($instance);
-    expect($before)->toContain('The overlay Follower bowling lane', 'The list Bowling lane and everything in it', 'The !bowl chat command', 'The !fbfirst alias', 'The !fbdraw alias');
+    expect($before)->toContain('The overlay Follower bowling lane', 'The list Bowling lane and everything in it', 'The !bowl chat command');
 
-    BotAlias::find($instance->primitive_map['bot_aliases']['fbdraw'])->delete();
     OverlayTemplate::find($instance->primitive_map['overlays']['lane'])->delete();
 
     $after = app(RecipeInstaller::class)->removals($instance->fresh());
-    expect($after)->not->toContain('The !fbdraw alias')
-        ->and($after)->not->toContain('The overlay Follower bowling lane')
-        ->and($after)->toContain('The !fbfirst alias');
+    expect($after)->not->toContain('The overlay Follower bowling lane')
+        ->and($after)->toContain('The !bowl chat command');
 
     app(RecipeInstaller::class)->uninstall($instance->fresh());
     expect(RecipeInstance::find($instance->id))->toBeNull();
@@ -111,7 +106,7 @@ it('refuses when the overlay is in a kit, and removes nothing', function () {
 
     expect(RecipeInstance::find($instance->id))->not->toBeNull()
         ->and(OptionSet::find($instance->primitive_map['lists']['lane']))->not->toBeNull()
-        ->and(BotAlias::find($instance->primitive_map['bot_aliases']['fbfirst']))->not->toBeNull();
+        ->and(ListAppender::find($instance->primitive_map['list_appenders']['bowl']))->not->toBeNull();
 });
 
 it('installs again cleanly after an uninstall', function () {
@@ -123,7 +118,7 @@ it('installs again cleanly after an uninstall', function () {
 
     expect($second->id)->not->toBe($first->id)
         ->and(OptionSet::where('user_id', $user->id)->where('slug', 'lane')->count())->toBe(1)
-        ->and(BotAlias::where('user_id', $user->id)->where('command', 'fbfirst')->count())->toBe(1);
+        ->and(ListAppender::where('user_id', $user->id)->where('command', 'bowl')->count())->toBe(1);
 });
 
 it('uninstalls from the product page and shows the page uninstalled', function () {
@@ -132,7 +127,7 @@ it('uninstalls from the product page and shows the page uninstalled', function (
 
     $this->actingAs($user)
         ->get('/products/follower-bowling/install')
-        ->assertInertia(fn (Assert $page) => $page->has('installed.removes', 5));
+        ->assertInertia(fn (Assert $page) => $page->has('installed.removes', 3));
 
     $this->actingAs($user)
         ->post('/products/follower-bowling/uninstall')

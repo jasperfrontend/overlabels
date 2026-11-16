@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Services\LivingTitleService;
-use App\Services\Recipes\AutoPlayService;
 use Carbon\Carbon;
 use Database\Factories\OverlayControlFactory;
 use Eloquent;
@@ -95,9 +94,6 @@ class OverlayControl extends Model
     {
         static::saved(function (OverlayControl $control): void {
             app(LivingTitleService::class)->controlChanged($control);
-            // Same door, second listener: a product's auto-play switch
-            // (AutoPlayService) starts its loop from the control write.
-            app(AutoPlayService::class)->controlChanged($control);
         });
     }
 

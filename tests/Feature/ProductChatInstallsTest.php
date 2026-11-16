@@ -49,31 +49,44 @@ function chatRecipe(array $installs): Recipe
     return app(RecipeCatalog::class)->sync($manifest);
 }
 
-it('installs the bowling aliases pointing at the list commands, for moderators', function () {
+it('installs aliases pointing at their targets, and uninstalls them again', function () {
     $user = chatUser();
-    $catalog = app(RecipeCatalog::class);
+    $recipe = chatRecipe([
+        'lists' => [['ref' => 'q', 'slug' => 'chat_test_queue']],
+        'bot_aliases' => [
+            ['command' => '!next', 'target' => '!list chat_test_queue pop first', 'permissions' => 'moderator'],
+            ['command' => '!raffle', 'target' => '!list chat_test_queue draw', 'permissions' => 'moderator'],
+        ],
+    ]);
 
-    $instance = app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower-bowling')), $user, 'follower_bowling');
+    $instance = app(RecipeInstaller::class)->install($recipe, $user, 'chat_test');
 
-    $first = BotAlias::find($instance->primitive_map['bot_aliases']['fbfirst']);
-    $draw = BotAlias::find($instance->primitive_map['bot_aliases']['fbdraw']);
+    $first = BotAlias::find($instance->primitive_map['bot_aliases']['next']);
+    $draw = BotAlias::find($instance->primitive_map['bot_aliases']['raffle']);
 
     expect($first)->not->toBeNull()
-        ->and($first->target_template)->toBe('list lane pop first')
+        ->and($first->target_template)->toBe('list chat_test_queue pop first')
         ->and($first->targetCommand())->toBe('list')
         ->and($first->permission_level)->toBe('moderator')
         ->and($first->enabled)->toBeTrue()
         ->and($first->hidden)->toBeFalse()
-        ->and($draw?->target_template)->toBe('list lane draw');
+        ->and($draw?->target_template)->toBe('list chat_test_queue draw');
+
+    app(RecipeInstaller::class)->uninstall($instance);
+
+    expect(BotAlias::find($first->id))->toBeNull()
+        ->and(BotAlias::find($draw->id))->toBeNull();
 });
 
-it('refuses the bowling install when the account already has an alias called fbfirst', function () {
+it('refuses the install when the account already has an alias by that name', function () {
     $user = chatUser();
-    BotAlias::create(['user_id' => $user->id, 'command' => 'fbfirst', 'target_template' => 'ping', 'permission_level' => 'everyone']);
-    $catalog = app(RecipeCatalog::class);
+    BotAlias::create(['user_id' => $user->id, 'command' => 'next', 'target_template' => 'ping', 'permission_level' => 'everyone']);
+    $recipe = chatRecipe([
+        'bot_aliases' => [['command' => '!next', 'target' => '!ping']],
+    ]);
 
-    expect(fn () => app(RecipeInstaller::class)->install($catalog->sync($catalog->find('follower-bowling')), $user, 'follower_bowling'))
-        ->toThrow(RuntimeException::class, '!fbfirst');
+    expect(fn () => app(RecipeInstaller::class)->install($recipe, $user, 'chat_test'))
+        ->toThrow(RuntimeException::class, '!next');
 
     expect(RecipeInstance::where('user_id', $user->id)->count())->toBe(0);
 });

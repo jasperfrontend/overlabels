@@ -6,7 +6,6 @@ use App\Models\BotChatOutbox;
 use App\Models\ListAppender;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
-use App\Models\OverlayTemplate;
 use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Services\Lists\ListAppendService;
@@ -23,11 +22,12 @@ use Illuminate\Support\Facades\Event;
 uses(DatabaseTransactions::class);
 
 /**
- * Follower Bowling runs itself. While `gobowl` is on and someone is in
- * line, the product pops the front of the lane List every fifteen seconds
- * and says nothing in chat; the mod aliases stay as a way to skip ahead.
- * The loop is declared in the manifest (`auto_play`) and driven by
- * AutoPlayService from two hooks: a list append and a control write.
+ * Follower Bowling runs itself. Whenever someone is in line, the product
+ * pops the front of the lane List every fifteen seconds and says nothing in
+ * chat. There is no on/off switch: the lane is a full-screen scene that is
+ * on screen when the streamer switches to its OBS scene. The loop is
+ * declared in the manifest (`auto_play`) and started by AutoPlayService
+ * from one hook, a list append.
  */
 function autoPlayUser(): User
 {
@@ -51,13 +51,6 @@ function autoPlayInstall(User $user): RecipeInstance
 function laneOf(RecipeInstance $instance): OptionSet
 {
     return OptionSet::findOrFail($instance->primitive_map['lists']['lane']);
-}
-
-function gobowlOf(RecipeInstance $instance): OverlayControl
-{
-    return OverlayControl::where('overlay_template_id', $instance->primitive_map['overlays']['lane'])
-        ->where('key', 'gobowl')
-        ->firstOrFail();
 }
 
 function bowl(User $user, RecipeInstance $instance, string $login): array
@@ -89,7 +82,7 @@ beforeEach(function () {
 it('declares the loop in the manifest', function () {
     $manifest = json_decode(file_get_contents(base_path('resources/recipes/follower-bowling/manifest.json')), true);
 
-    expect($manifest['auto_play'])->toBe(['list' => 'lane', 'switch' => 'gobowl', 'seconds' => 15]);
+    expect($manifest['auto_play'])->toBe(['list' => 'lane', 'seconds' => 15]);
 });
 
 it('refuses a manifest whose loop names a list the product does not install', function () {
@@ -105,11 +98,10 @@ it('refuses a manifest whose loop names a list the product does not install', fu
         ->and(collect($result['errors'])->pluck('pointer'))->toContain('/auto_play/list');
 });
 
-it('arms the first pop at once when a chatter joins an idle lane that is switched on', function () {
+it('arms the first pop at once when a chatter joins an idle lane', function () {
     Bus::fake([AutoPlayNext::class]);
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
-    gobowlOf($instance)->writeValue('1');
     $lane = laneOf($instance);
 
     expect(bowl($user, $instance, 'ana')['fired'])->toBeTrue();
@@ -118,33 +110,22 @@ it('arms the first pop at once when a chatter joins an idle lane that is switche
         && (int) now()->diffInSeconds($job->delay, false) <= 0);
 });
 
-it('arms nothing while the lane is switched off', function () {
-    Bus::fake([AutoPlayNext::class]);
+it('installs no on/off switch on the lane overlay', function () {
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
 
-    expect(bowl($user, $instance, 'ana')['fired'])->toBeTrue();
-
-    Bus::assertNotDispatched(AutoPlayNext::class);
+    expect(OverlayControl::where('overlay_template_id', $instance->primitive_map['overlays']['lane'])
+        ->where('key', 'gobowl')->exists())->toBeFalse();
 });
 
-it('starts the loop from the switch when people are already in line', function () {
+it('arms nothing while the lane list is disabled', function () {
     Bus::fake([AutoPlayNext::class]);
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
-    fillLane(laneOf($instance), ['ana', 'bo']);
+    $lane = fillLane(laneOf($instance), ['ana']);
+    $lane->update(['disabled_at' => now()]);
 
-    gobowlOf($instance)->writeValue('1');
-
-    Bus::assertDispatched(AutoPlayNext::class, 1);
-});
-
-it('does not start the loop from the switch when the line is empty', function () {
-    Bus::fake([AutoPlayNext::class]);
-    $user = autoPlayUser();
-    $instance = autoPlayInstall($user);
-
-    gobowlOf($instance)->writeValue('1');
+    app(AutoPlayService::class)->schedule($lane->fresh());
 
     Bus::assertNotDispatched(AutoPlayNext::class);
 });
@@ -153,7 +134,6 @@ it('arms one pending pop however many chatters join', function () {
     Bus::fake([AutoPlayNext::class]);
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
-    gobowlOf($instance)->writeValue('1');
 
     bowl($user, $instance, 'ana');
     bowl($user, $instance, 'bo');
@@ -171,8 +151,7 @@ it('waits out a throw still playing before joining the queue arms the next pop',
     Bus::fake([AutoPlayNext::class]);
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
-    gobowlOf($instance)->writeValue('1');
-    // A mod popped five seconds ago: the ball is mid-lane.
+    // A pop five seconds ago: the ball is mid-lane.
     laneOf($instance)->update(['last_removed' => 'zed', 'last_removed_at' => now()->subSeconds(5)]);
 
     bowl($user, $instance, 'ana');
@@ -189,7 +168,6 @@ it('pops the front of the line, broadcasts it, says nothing in chat and arms the
     Event::fake([ListUpdated::class]);
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
-    gobowlOf($instance)->writeValue('1');
     $lane = fillLane(laneOf($instance), ['ana', 'bo']);
 
     app(AutoPlayService::class)->run($lane);
@@ -211,7 +189,6 @@ it('ends the loop when the last bowler has gone', function () {
     Bus::fake([AutoPlayNext::class]);
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
-    gobowlOf($instance)->writeValue('1');
     $lane = fillLane(laneOf($instance), ['ana']);
 
     app(AutoPlayService::class)->run($lane);
@@ -220,24 +197,24 @@ it('ends the loop when the last bowler has gone', function () {
     Bus::assertNotDispatched(AutoPlayNext::class);
 });
 
-it('pops nothing once the lane has been switched off', function () {
+it('pops nothing once the lane list has been disabled', function () {
     Bus::fake([AutoPlayNext::class]);
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
     $lane = fillLane(laneOf($instance), ['ana', 'bo']);
+    $lane->update(['disabled_at' => now()]);
 
-    app(AutoPlayService::class)->run($lane);
+    app(AutoPlayService::class)->run($lane->fresh());
 
     expect(ListItems::values($lane->fresh()->items))->toBe(['ana', 'bo'])
         ->and($lane->fresh()->last_removed)->toBeNull();
     Bus::assertNotDispatched(AutoPlayNext::class);
 });
 
-it('holds a pop that lands while a mod-started throw is still playing', function () {
+it('holds a pop that lands while a hand-started throw is still playing', function () {
     Bus::fake([AutoPlayNext::class]);
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
-    gobowlOf($instance)->writeValue('1');
     $lane = fillLane(laneOf($instance), ['ana', 'bo']);
     $lane->update(['last_removed' => 'zed', 'last_removed_at' => now()->subSeconds(3)]);
 
@@ -282,21 +259,5 @@ it('leaves a list that belongs to no product alone', function () {
     app(AutoPlayService::class)->run($list->fresh());
 
     expect(app(AutoPlayService::class)->loopFor($list->fresh()))->toBeNull();
-    Bus::assertNotDispatched(AutoPlayNext::class);
-});
-
-it('ignores a boolean control that is not the switch', function () {
-    Bus::fake([AutoPlayNext::class]);
-    $user = autoPlayUser();
-    $instance = autoPlayInstall($user);
-    fillLane(laneOf($instance), ['ana']);
-    $other = OverlayControl::createForTemplate(
-        OverlayTemplate::findOrFail($instance->primitive_map['overlays']['lane']),
-        $user,
-        ['key' => 'lights', 'label' => 'Lights', 'type' => 'boolean', 'value' => '0'],
-    );
-
-    $other->writeValue('1');
-
     Bus::assertNotDispatched(AutoPlayNext::class);
 });

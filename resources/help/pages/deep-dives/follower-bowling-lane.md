@@ -32,8 +32,8 @@ properties, and plain CSS does the rest.
    pushes the chatter's own name onto the `lane` List. The queue panel on the left just reads
    `[[[c:list:lane:count]]]` and loops the first three names with a `foreach`.
 2. `!list lane pop first` (take the front of the queue) or `!list lane draw` (raffle) removes one
-   entry. The installed product does the pop itself, one every fifteen seconds while `gobowl` is
-   on and someone is in line, so the mod commands are there to skip ahead, not to run the lane.
+   entry. The installed product does the pop itself, one every fifteen seconds whenever someone
+   is in line, first come first served; a hand-built copy is driven by those two commands.
    Either way the writer is the same. A List remembers what pop and draw took out: the removal broadcasts two companion
    controls, `[[[c:list:lane:last_removed]]]` (the name) and `[[[c:list:lane:last_removed_at]]]`
    (a Unix timestamp in seconds).

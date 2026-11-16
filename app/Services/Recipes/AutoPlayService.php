@@ -4,7 +4,6 @@ namespace App\Services\Recipes;
 
 use App\Jobs\AutoPlayNext;
 use App\Models\OptionSet;
-use App\Models\OverlayControl;
 use App\Models\RecipeInstance;
 use App\Services\Lists\ListActionService;
 use Illuminate\Support\Facades\Cache;
@@ -12,19 +11,19 @@ use Illuminate\Support\Facades\Cache;
 /**
  * The auto-play loop a product declares in its manifest:
  *
- *   "auto_play": { "list": "lane", "switch": "gobowl", "seconds": 15 }
+ *   "auto_play": { "list": "lane", "seconds": 15 }
  *
- * While the switch control is on and the list has people in it, the next
- * one in line is popped every `seconds`, and nothing is said in chat. The
- * overlay reads the same two fields a mod's `!list lane pop first` writes
- * (`last_removed`, `last_removed_at`), so the loop and the mod commands
- * drive the same throw and can be mixed: a pop from either side restarts
- * the window.
+ * While the list has people in it, the next one in line is popped every
+ * `seconds`, and nothing is said in chat. There is no on/off switch: a
+ * product overlay is a full-screen scene that lives on its own OBS scene,
+ * so it is on screen exactly when the streamer switches to it. The overlay
+ * reads the same two fields `!list lane pop first` writes (`last_removed`,
+ * `last_removed_at`), so a pop by hand still drives the same throw and
+ * restarts the window.
  *
- * Two hooks start it, not a list of events: a successful list append
- * (ListAppendService::fire) and a control write (OverlayControl's saved
- * hook). Both land in schedule(), which is a no-op unless the list belongs
- * to an install that declares a loop AND the loop is playing right now.
+ * One hook starts it: a successful list append (ListAppendService::fire).
+ * It lands in schedule(), which is a no-op unless the list belongs to an
+ * install that declares a loop AND someone is in line.
  *
  * The cache key is the debounce: one pending job per list, whatever arrives
  * in between is absorbed, and the job forgets the key as its first act so a
@@ -54,39 +53,6 @@ class AutoPlayService
     }
 
     /**
-     * Hook: a control was written. Every control write on the platform
-     * passes through here, so the cheap exits come first: only a boolean
-     * control on an overlay can be a switch, and only an account with a
-     * product installed can own one.
-     */
-    public function controlChanged(OverlayControl $control): void
-    {
-        if ($control->type !== 'boolean' || $control->overlay_template_id === null) {
-            return;
-        }
-
-        $instances = RecipeInstance::with('recipe')->where('user_id', $control->user_id)->get();
-
-        foreach ($instances as $instance) {
-            $loop = $this->loopOf($instance);
-            if ($loop === null || $loop['switch'] !== $control->key) {
-                continue;
-            }
-
-            $overlayIds = array_values($instance->primitive_map['overlays'] ?? []);
-            if (! in_array((int) $control->overlay_template_id, array_map('intval', $overlayIds), true)) {
-                continue;
-            }
-
-            $listId = $instance->primitive_map['lists'][$loop['list']] ?? null;
-            $list = $listId ? OptionSet::find($listId) : null;
-            if ($list) {
-                $this->schedule($list);
-            }
-        }
-    }
-
-    /**
      * Arm the next pop for this list, if it belongs to a playing loop. The
      * delay is whatever is left of the window since the last pop, so a
      * bowler joining mid-throw waits for the throw to finish and a bowler
@@ -95,7 +61,7 @@ class AutoPlayService
     public function schedule(OptionSet $list): void
     {
         $loop = $this->loopFor($list);
-        if ($loop === null || ! $this->isPlaying($list, $loop)) {
+        if ($loop === null || ! $this->isPlaying($list)) {
             return;
         }
 
@@ -119,12 +85,12 @@ class AutoPlayService
         Cache::forget(self::pendingKey($list->id));
 
         $loop = $this->loopFor($list);
-        if ($loop === null || ! $this->isPlaying($list, $loop)) {
+        if ($loop === null || ! $this->isPlaying($list)) {
             return;
         }
 
         if ($this->remainingWindow($list, $loop['seconds']) > 0) {
-            // A mod popped in the meantime; wait the throw out.
+            // Someone popped by hand in the meantime; wait the throw out.
             $this->schedule($list);
 
             return;
@@ -141,7 +107,7 @@ class AutoPlayService
     }
 
     /**
-     * @return array{list: string, switch: string, seconds: int}|null
+     * @return array{list: string, seconds: int}|null
      */
     public function loopFor(OptionSet $list): ?array
     {
@@ -161,28 +127,11 @@ class AutoPlayService
     }
 
     /**
-     * The switch is on, the list is enabled and someone is in line.
-     *
-     * @param  array{list: string, switch: string, seconds: int}  $loop
+     * The list is enabled and someone is in line.
      */
-    public function isPlaying(OptionSet $list, array $loop): bool
+    public function isPlaying(OptionSet $list): bool
     {
-        if ($list->disabled_at !== null || array_values($list->items ?? []) === []) {
-            return false;
-        }
-
-        $instance = $list->recipeInstance;
-        $overlayIds = array_values($instance?->primitive_map['overlays'] ?? []);
-        if ($overlayIds === []) {
-            return false;
-        }
-
-        $switch = OverlayControl::whereIn('overlay_template_id', $overlayIds)
-            ->where('user_id', $list->user_id)
-            ->where('key', $loop['switch'])
-            ->first();
-
-        return $switch !== null && $switch->value === '1';
+        return $list->disabled_at === null && array_values($list->items ?? []) !== [];
     }
 
     public static function pendingKey(int $listId): string
@@ -205,18 +154,17 @@ class AutoPlayService
     }
 
     /**
-     * @return array{list: string, switch: string, seconds: int}|null
+     * @return array{list: string, seconds: int}|null
      */
     private function loopOf(RecipeInstance $instance): ?array
     {
         $declared = $instance->resolvedManifest()[self::MANIFEST_KEY] ?? null;
-        if (! is_array($declared) || ! is_string($declared['list'] ?? null) || ! is_string($declared['switch'] ?? null)) {
+        if (! is_array($declared) || ! is_string($declared['list'] ?? null)) {
             return null;
         }
 
         return [
             'list' => $declared['list'],
-            'switch' => $declared['switch'],
             'seconds' => max(self::MIN_SECONDS, (int) ($declared['seconds'] ?? self::MIN_SECONDS)),
         ];
     }
