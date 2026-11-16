@@ -23,7 +23,8 @@ the font are yours to change, and every change lands in OBS as you make it.
   copied in as their location. The font becomes JetBrains Mono (the old generic monospace is not a
   web font), the near side is brighter and the far side no longer shows through faintly. An install
   whose CSS was edited by hand is left alone and logged.
-- **Two globe bugs fixed on the way.** With a timer control running, toggling the HUD made the globe
+- **Two globe bugs fixed on the way.** With anything ticking in the overlay's data (a timer, or a
+  List's expiry countdown), toggling the HUD made the globe
   rebuild its name labels four times a second, so a name on the far side flickered instead of
   hiding. And the first control change after loading moved the globe, because the re-render
   stripped a position the globe had set on itself.

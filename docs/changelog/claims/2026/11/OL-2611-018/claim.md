@@ -34,7 +34,7 @@
 - **C11** [code] The land `THREE.Points` has `renderOrder = 1`; the shell keeps the default 0.
 - **C12** [code] `update()` in `checkinGlobe.ts` returns without calling `rebuildPins()` when the brand-pinned list's login, name, place, lat and lng are unchanged since the last build.
 - **C13** [code] `mountCheckinGlobe()` sets an inline `position: relative` only when the placeholder's computed position is `static`.
-- **C14** [unverified] Before C12, a HUD toggle on an account with a running timer control rebuilt the globe's labels about four times a second (33 rebuilds in 8 s, measured in Firefox); after C12 the same toggle produced 0 rebuilds in 6 s.
+- **C14** [unverified] Before C12, a HUD toggle on a local account whose render payload carried a `countto` List expiry countdown (`list:main_segments:countdown`, expired 2026-05-20, ticking every 250 ms in `startTimerTick()`) rebuilt the globe's labels about four times a second (33 rebuilds in 8 s, measured in Firefox); after C12 the same toggle produced 0 rebuilds in 6 s.
 - **C15** [code] `BotCheckinController::homeFor()` returns the resolved place of the `hometown` control on the overlays in the account's chat-checkin install's `primitive_map.overlays` when that control exists, null when its value is empty or unresolvable, and the integration settings' `home_lat`/`home_lng` only when no such control exists.
 - **C16** [test] `BotCheckinTest` "an installed globe measures from its hometown control, not the old setting" and "an empty hometown on an installed globe measures nothing" assert C15.
 - **C17** [unverified] Both tests in C16 failed against `BotCheckinController.php` as it stood before this change.

@@ -318,10 +318,11 @@ export function mountCheckinGlobe(el: HTMLElement): GlobeInstance {
   raf = requestAnimationFrame(frame);
 
   // What the pins were last built from. update() is called on every render
-  // the overlay makes, and a running timer control renders four times a
-  // second; rebuilding then recreated every label, and a fresh label starts
-  // visible and fades out over the label transition, so far-side names
-  // flickered. Same pins, nothing to rebuild.
+  // the overlay makes, and anything ticking in the render data renders four
+  // times a second (a timer, or a List expiry countdown, which ticks every
+  // 250 ms even long after it ran out); rebuilding then recreated every
+  // label, and a fresh label starts visible and fades out over the label
+  // transition, so far-side names flickered. Same pins, nothing to rebuild.
   let builtFrom = '';
 
   return {
