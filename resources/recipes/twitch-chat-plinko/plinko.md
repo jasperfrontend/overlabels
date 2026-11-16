@@ -91,7 +91,7 @@ body {
   position: absolute;
   left: 64px;
   top: 64px;
-  width: 360px;
+  width: 380px;
 }
 .eyebrow {
   font-family: var(--mono);
@@ -100,9 +100,9 @@ body {
   text-transform: uppercase;
   color: var(--ink-muted);
 }
-h1 { margin-top: 12px; font-size: 48px; line-height: 1.05; font-weight: 800; }
-.cmd { font-family: var(--mono); color: var(--pink); }
-.sub { margin-top: 16px; font-size: 19px; line-height: 1.45; color: var(--ink-soft); }
+h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
+.cmd { font-family: var(--mono); color: var(--pink); white-space: nowrap; }
+.sub { margin-top: 20px; font-size: 21px; line-height: 1.5; color: var(--ink-soft); }
 
 /* ---------- the module's scoreboard ---------- */
 .ol-plinko-hud { position: absolute; inset: 0; pointer-events: none; }
