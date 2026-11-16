@@ -42,6 +42,7 @@ const props = defineProps<{
   shelf: { label: string; lead: string } | null;
   // Null for a visitor, who has no Installed link.
   installed_count: number | null;
+  not_installed_count: number | null;
   // Official ready-made kits, leading the Alerts shelf. Empty when it is not on the page.
   featured_kits: FeaturedKit[];
 }>();
@@ -92,7 +93,7 @@ const description = computed(
     <meta name="description" :content="description" />
   </Head>
 
-  <ProductsLayout :categories="categories" :category="category" :installed-count="installed_count">
+  <ProductsLayout :categories="categories" :category="category" :installed-count="installed_count" :not-installed-count="not_installed_count">
     <!-- Where Tab starts on this page: the first shelf's first card. -->
     <div data-tab-start>
       <section v-for="shelf in shelves" :key="shelf.key" class="mb-12 last:mb-0">
@@ -253,7 +254,13 @@ const description = computed(
         <EmptyState
           v-else
           dashed
-          :message="shelf.key === 'installed' ? 'Nothing installed yet. Everything here installs in one click.' : 'Nothing here yet.'"
+          :message="
+            shelf.key === 'installed'
+              ? 'Nothing installed yet. Everything here installs in one click.'
+              : shelf.key === 'not-installed'
+                ? 'You have every game installed. Nothing left to add!'
+                : 'Nothing here yet.'
+          "
         >
           <template #action>
             <Link href="/products" class="text-sm text-violet-400 hover:underline">Show all</Link>

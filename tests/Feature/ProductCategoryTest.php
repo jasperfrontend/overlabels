@@ -200,6 +200,45 @@ it('offers Installed only to an account, and shows what it installed', function 
         ->assertInertia(fn (Assert $page) => $page->where('installed_count', 1)->has('products', 5));
 });
 
+it('offers Not installed only to an account, and shows only the games it has not installed', function () {
+    $this->get('/products?category=not-installed')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('category', null)
+            ->where('not_installed_count', null)
+            ->has('products', 11)
+        );
+
+    $user = categoryProductUser();
+
+    $this->actingAs($user)
+        ->get('/products?category=not-installed')
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('category', 'not-installed')
+            ->where('shelf.label', 'Not installed')
+            ->where('not_installed_count', 6)
+            ->has('products', 6)
+            ->where('products.0.category', 'product')
+            ->where('products.5.category', 'product')
+        );
+
+    $this->actingAs($user)->post('/products/chat-checkin/install');
+    $this->actingAs($user)->post('/products/ko-fi-alerts/install');
+
+    // The alert install moves neither number: alerts are not on this shelf.
+    $this->actingAs($user)
+        ->get('/products?category=not-installed')
+        ->assertInertia(function (Assert $page) {
+            $page->where('category', 'not-installed')->where('not_installed_count', 5)->has('products', 5);
+
+            expect(shelfSlugs($page))->not->toContain('chat-checkin');
+        });
+
+    $this->actingAs($user)
+        ->get('/products/chat-checkin/install')
+        ->assertInertia(fn (Assert $page) => $page->where('not_installed_count', 5));
+});
+
 it('exposes no installed filter constant beyond the one the page reads', function () {
     // The Installed filter is per account and not a manifest category. If it
     // ever lands in CATEGORIES the schema enum would let a manifest declare

@@ -6,10 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import TabStrip, { type TabStripItem } from '@/components/TabStrip.vue';
 import { useAddressableTabs, tabKeysOf } from '@/composables/useAddressableTabs';
 import TemplateCollection from '@/components/TemplateCollection.vue';
-import UpdatesList from '@/components/UpdatesList.vue';
 import EventsTable from '@/components/EventsTable.vue';
 import { Bell, Layers, List, Newspaper, Package, Plus } from '@lucide/vue';
-import DashboardSectionHeader from '@/components/DashboardSectionHeader.vue';
 import type { AppPageProps, InstalledProduct, OverlayTemplate, Update, UsageSummary, WhatsNew } from '@/types';
 import CollectionList from '@/components/CollectionList.vue';
 import InstalledProductsBox from '@/components/InstalledProductsBox.vue';
@@ -44,8 +42,6 @@ const props = defineProps<{
   gamesLeft: number;
   showWelcomeDialog: boolean;
 }>();
-
-const isAdmin = computed(() => page.props.isAdmin);
 
 const mainTabs: TabStripItem[] = [
   { key: 'products', label: 'My products', icon: Package },
@@ -189,15 +185,14 @@ const breadcrumbs = [
         </div>
 
         <!-- 40% -->
-        <section v-if="props.recentUpdates && props.recentUpdates.length > 0" class="p-4 lg:col-span-2">
-          <DashboardSectionHeader
-            title="Recent updates"
-            :view-href="route('updates.index')"
-            view-title="See all platform updates"
-            :create-href="isAdmin ? route('admin.updates.create') : undefined"
-            create-title="Write a new update"
-          />
-          <UpdatesList :updates="props.recentUpdates" :is-admin="isAdmin" class="mt-4" />
+        <section class="flex flex-col items-center justify-start gap-6 p-4 text-center lg:col-span-2">
+          <p class="max-w-sm text-base leading-relaxed text-foreground">
+            Overlabels is constantly changing for good! If you want to read the latest updates to the platform, hit the button below.
+          </p>
+          <a class="btn btn-sm btn-chill" :href="route('updates.index')">
+            <Newspaper class="mr-2 h-4 w-4" />
+            Read the latest updates
+          </a>
         </section>
       </div>
 

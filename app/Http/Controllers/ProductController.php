@@ -66,6 +66,13 @@ class ProductController extends Controller
      */
     private const INSTALLED_FILTER = 'installed';
 
+    /**
+     * The games this account could still install: the dashboard's "Want
+     * more?!" lands here. Games only, so alerts are not pitched as more
+     * things for chat to do. Same rules as Installed otherwise.
+     */
+    private const NOT_INSTALLED_FILTER = 'not-installed';
+
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -103,6 +110,7 @@ class ProductController extends Controller
             ->filter(fn (array $product) => match ($category) {
                 null => true,
                 self::INSTALLED_FILTER => $product['installed'],
+                self::NOT_INSTALLED_FILTER => ! $product['installed'] && $product['category'] === 'product',
                 default => $product['category'] === $category,
             })
             ->values()
@@ -120,7 +128,7 @@ class ProductController extends Controller
         // different set for every reader and nothing for a crawler, so it must
         // not compete with the listing for the same words. A real shelf is real
         // content and stays indexable, pointing at itself.
-        if ($category === self::INSTALLED_FILTER) {
+        if (in_array($category, [self::INSTALLED_FILTER, self::NOT_INSTALLED_FILTER], true)) {
             view()->share('robots', 'noindex, follow');
             view()->share('canonical', route('products.index'));
         } else {
@@ -133,6 +141,7 @@ class ProductController extends Controller
             'category' => $category,
             'shelf' => $shelf,
             'installed_count' => $user ? $this->installedCount($user) : null,
+            'not_installed_count' => $user ? $this->notInstalledCount($user) : null,
             // The ready-made alert kits lead the Alerts shelf, so they ride
             // along whenever that shelf is on the page.
             'featured_kits' => in_array($category, [null, 'alert'], true) ? app(FeaturedKits::class)->cards() : [],
@@ -162,7 +171,7 @@ class ProductController extends Controller
 
     private function isFilter(string $category, bool $authed): bool
     {
-        if ($category === self::INSTALLED_FILTER) {
+        if ($category === self::INSTALLED_FILTER || $category === self::NOT_INSTALLED_FILTER) {
             return $authed;
         }
 
@@ -176,6 +185,10 @@ class ProductController extends Controller
     {
         if ($category === self::INSTALLED_FILTER) {
             return ['label' => 'Installed', 'lead' => 'What you have installed on your Twitch stream.'];
+        }
+
+        if ($category === self::NOT_INSTALLED_FILTER) {
+            return ['label' => 'Not installed', 'lead' => "There's more to discover on Overlabels! All Twitch chat games below are free to add to your stream in a few clicks."];
         }
 
         return RecipeCatalog::CATEGORIES[$category];
@@ -380,6 +393,7 @@ class ProductController extends Controller
             'arrived' => $arrived,
             'categories' => $this->categories(),
             'installed_count' => $this->installedCount($user),
+            'not_installed_count' => $this->notInstalledCount($user),
         ]);
     }
 
@@ -784,6 +798,14 @@ class ProductController extends Controller
     private function installedCount(User $user): int
     {
         return count(array_intersect($this->installedSlugs($user), array_keys($this->catalog->listed())));
+    }
+
+    /** How many listed games the account has not installed: the Not installed link's count. */
+    private function notInstalledCount(User $user): int
+    {
+        $games = collect($this->catalog->listed())->where('category', 'product')->keys()->all();
+
+        return count(array_diff($games, $this->installedSlugs($user)));
     }
 
     private function installedSlugs(User $user): array

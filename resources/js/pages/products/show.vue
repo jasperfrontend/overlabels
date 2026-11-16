@@ -139,6 +139,7 @@ const props = defineProps<{
   arrived: boolean;
   categories: ProductCategory[];
   installed_count: number | null;
+  not_installed_count: number | null;
   /**
    * The Twitch Chat Overlay's redacted-messages setting (`!hide`), for the
    * card that opens its settings page. Null for every other product.
@@ -551,6 +552,7 @@ async function uninstall(): Promise<void> {
     :categories="categories"
     :category="product.category"
     :installed-count="installed_count"
+    :not-installed-count="not_installed_count"
     :crumb="product.name"
     :heading="product.name"
     :slug="product.slug"

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BellRing, Blocks, Gamepad2, LayoutGrid, PackageCheck } from '@lucide/vue';
+import { BellRing, Blocks, Gamepad2, LayoutGrid, PackageCheck, PackagePlus } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
 import ProductIcon from '@/components/product-icons/ProductIcon.vue';
@@ -29,6 +29,8 @@ const props = defineProps<{
   category: string | null;
   // Null for a visitor, who has no Installed link.
   installedCount: number | null;
+  // Games not installed yet. Null for a visitor, like installedCount.
+  notInstalledCount: number | null;
   // The page after Products in the breadcrumb: a product's name. Omitted on the listing.
   crumb?: string;
   // A product's page wears the product at the top: its own name and its own
@@ -93,6 +95,16 @@ const entries = computed<MenuEntry[]>(() => {
       href: '/products?category=installed',
       icon: PackageCheck,
       separated: true,
+    });
+  }
+
+  if (props.notInstalledCount !== null) {
+    items.push({
+      key: 'not-installed',
+      label: 'Not installed',
+      count: props.notInstalledCount,
+      href: '/products?category=not-installed',
+      icon: PackagePlus,
     });
   }
 
