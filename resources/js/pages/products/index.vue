@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { Bot, Check, Download, Ellipsis, Eye, Plug, Settings2, TriangleAlert } from '@lucide/vue';
+import { Bot, BotOff, Check, Download, Ellipsis, Eye, Plug, Settings2, TriangleAlert } from '@lucide/vue';
 import EmptyState from '@/components/EmptyState.vue';
 import FeaturedKitCard, { type FeaturedKit } from '@/components/kits/FeaturedKitCard.vue';
 import ProductBadge from '@/components/ProductBadge.vue';
@@ -171,8 +171,8 @@ const description = computed(
           </li>
         </ul>
 
-        <ul v-else-if="shelf.products.length > 0 || shelf.key === 'product'" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <li v-for="product in shelf.products" :key="product.slug" class="relative flex flex-col border border-border p-4">
+        <ul v-else-if="shelf.products.length > 0 || shelf.key === 'product'" class="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+          <li v-for="product in shelf.products" :key="product.slug" class="relative flex flex-col bg-sidebar-accent">
             <!-- A hero is the product's own artwork, 16:9, sitting above the
                copy inside the same card. Without one, the service's icon in
                its brand colour fills the same box, so the two shelves line
@@ -199,47 +199,53 @@ const description = computed(
                 Installed
               </span>
             </div>
-            <h3 class="inline-flex items-center gap-2 text-lg font-medium text-foreground">
-              <!-- A product wears its own icon, in the heading's colour. The
-                 badge ("an official Overlabels product") is the fallback for a
-                 product without one, so only the Products shelf gets either. An
-                 alert is a service's API inside Overlabels, not one of ours. -->
-              <ProductIcon v-if="product.category === 'product' && hasProductIcon(product.slug)" :slug="product.slug" class="size-5 shrink-0" />
-              <ProductBadge
-                v-else-if="product.category === 'product'"
-                label="An official Overlabels product"
-                class="relative z-10 size-5 shrink-0 text-cyan-300"
-              />
-              {{ product.name }}
-            </h3>
-            <p class="mt-1 max-w-prose text-sm text-foreground">{{ product.description }}</p>
-            <ul v-if="product.installs.length > 0" class="mt-3 flex flex-wrap gap-1.5" aria-label="What it installs">
-              <li v-for="chip in product.installs" :key="chip" class="border border-border px-1.5 py-0.5 text-xs text-muted-foreground">
-                {{ chip }}
-              </li>
-            </ul>
-            <div class="mt-auto flex flex-col gap-1 pt-2">
-              <p v-if="product.category === 'alert' && product.service" class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Plug class="size-3.5" />
-                Connects {{ serviceLabel(product.service) }}
-              </p>
-              <p v-if="product.requires_bot" class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Bot class="size-3.5" />
-                Works through the Overlabels bot in your chat
-              </p>
-              <div class="mt-3 flex flex-wrap justify-between gap-2">
-                <Link :href="`/products/${product.slug}`" class="btn btn-chill cursor-pointer gap-2">
-                  <Eye class="size-4" />
-                  View product
-                </Link>
-                <Link
-                  :href="`/products/${product.slug}/install`"
-                  class="btn cursor-pointer gap-2"
-                  :class="product.installed ? 'btn-secondary' : 'btn-primary'"
-                >
-                  <component :is="product.installed ? Settings2 : Download" class="size-4" />
-                  {{ product.installed ? 'Manage product' : 'Install product' }}
-                </Link>
+            <div class="p-4 pt-0">
+              <h3 class="inline-flex items-center gap-2 text-lg font-medium text-foreground">
+                <!-- A product wears its own icon, in the heading's colour. The
+                   badge ("an official Overlabels product") is the fallback for a
+                   product without one, so only the Products shelf gets either. An
+                   alert is a service's API inside Overlabels, not one of ours. -->
+                <ProductIcon v-if="product.category === 'product' && hasProductIcon(product.slug)" :slug="product.slug" class="size-5 shrink-0" />
+                <ProductBadge
+                  v-else-if="product.category === 'product'"
+                  label="An official Overlabels product"
+                  class="relative z-10 size-5 shrink-0 text-cyan-300"
+                />
+                {{ product.name }}
+              </h3>
+              <p class="mt-1 max-w-prose text-sm text-foreground max-h-20 scrollbar-thin overflow-y-scroll">{{ product.description }}</p>
+              <ul v-if="product.installs.length > 0" class="mt-3 flex flex-wrap gap-1.5" aria-label="What it installs">
+                <li v-for="chip in product.installs" :key="chip" class="border border-border px-1.5 py-0.5 text-xs text-muted-foreground">
+                  {{ chip }}
+                </li>
+              </ul>
+              <div class="mt-auto flex flex-col gap-1 pt-2">
+                <p v-if="product.category === 'alert' && product.service" class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Plug class="size-3.5" />
+                  Connects {{ serviceLabel(product.service) }}
+                </p>
+                <p v-if="product.requires_bot" class="inline-flex items-center mb-4 gap-1.5 text-xs text-accent-foreground">
+                  <Bot class="size-3.5" />
+                  Uses the Overlabels bot
+                </p>
+                <p v-else class="inline-flex items-center mb-4 gap-1.5 text-xs text-accent-foreground">
+                  <BotOff class="size-3.5" />
+                  Doesn't need the Overlabels bot
+                </p>
+                <div class="mt-3 flex flex-wrap justify-between gap-2">
+                  <Link :href="`/products/${product.slug}`" class="btn btn-chill cursor-pointer gap-2">
+                    <Eye class="size-4" />
+                    View product
+                  </Link>
+                  <Link
+                    :href="`/products/${product.slug}/install`"
+                    class="btn cursor-pointer gap-2"
+                    :class="product.installed ? 'btn-secondary' : 'btn-primary'"
+                  >
+                    <component :is="product.installed ? Settings2 : Download" class="size-4" />
+                    {{ product.installed ? 'Manage product' : 'Install product' }}
+                  </Link>
+                </div>
               </div>
             </div>
           </li>
