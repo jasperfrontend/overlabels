@@ -129,7 +129,7 @@ const description = computed(
             </a>
           </span>
         </p>
-        <p class="mt-1 mb-4 text-sm text-foreground" :class="shelf.key === 'alert' ? 'w-full lg:w-2/3' : 'max-w-prose'">{{ shelf.lead }}</p>
+        <p class="mt-1 mb-4 text-sm text-foreground">{{ shelf.lead }}</p>
 
         <!-- The Alerts shelf is the quieter one on purpose. An alert is a
            plain thing (connect a service, its support lands on stream), so
@@ -213,7 +213,7 @@ const description = computed(
                 />
                 {{ product.name }}
               </h3>
-              <p class="mt-1 max-h-20 max-w-prose scrollbar-thin overflow-y-scroll text-sm text-foreground">{{ product.description }}</p>
+              <p class="mt-1 h-30 max-w-prose scrollbar-thin overflow-y-auto pr-2 text-sm text-foreground">{{ product.description }}</p>
               <ul v-if="product.installs.length > 0" class="mt-3 flex flex-wrap gap-1.5" aria-label="What it installs">
                 <li v-for="chip in product.installs" :key="chip" class="border border-border px-1.5 py-0.5 text-xs text-muted-foreground">
                   {{ chip }}

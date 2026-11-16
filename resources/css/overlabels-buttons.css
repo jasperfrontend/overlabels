@@ -19,11 +19,12 @@
     @apply focus-visible:ring-black dark:focus-visible:ring-white;
   }
 
-  /* Chill — View button, neutral/secondary action */
+  /* Chill — View button, neutral/secondary action. Hover turns it into
+     .btn-secondary at rest: violet text and border, no fill. */
   .btn-chill {
     @apply border-current bg-transparent;
     @apply text-mauve-500;
-    @apply hover:bg-mauve-500/10 hover:text-mauve-900 dark:hover:text-mauve-400;
+    @apply hover:bg-transparent hover:text-violet-700 dark:hover:text-violet-300;
     @apply active:bg-mauve-500/20;
     @apply focus-visible:ring-mauve-500 dark:focus-visible:ring-mauve-400;
   }
@@ -102,6 +103,29 @@
     @apply focus-visible:ring-slate-500 dark:focus-visible:ring-slate-400;
   }
 
+  /* Shine - a modifier, not a variant: add it beside one (btn btn-primary
+     btn-shine) on the ONE button that is the next thing to look at. A faint
+     band of light passes over the button from left to right, like a
+     flashlight swept across it, slowly, every ten seconds; hovering sweeps
+     it once more. Keep it faint enough to be almost subliminal, and never on
+     more than one button per page. */
+  .btn-shine {
+    @apply relative isolate overflow-hidden;
+  }
+  .btn-shine::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 45%;
+    pointer-events: none;
+    background: linear-gradient(100deg, transparent 0%, rgb(255 255 255 / 0.14) 50%, transparent 100%);
+    transform: translateX(-120%);
+    animation: btn-shine 10s ease-in-out 0.8s infinite;
+  }
+  .btn-shine:hover::after {
+    animation: btn-shine-again 4s ease-in-out 1;
+  }
+
   /* Sizes. No modifier is the default. .btn pins leading-4, so a size whose
      text outgrows 16px brings its own line height. */
   .btn-xs {
@@ -119,4 +143,74 @@
     @apply focus:border focus:border-violet-400 focus:text-accent-foreground focus:ring-2 focus:ring-violet-400 focus-visible:border-violet-400 focus-visible:ring-2 focus-visible:ring-violet-400;
     @apply aria-invalid:border-destructive aria-invalid:ring-destructive dark:aria-invalid:ring-destructive;
   }
+}
+
+/* .btn-shine. The load sweep spends seven seconds of each 10 s cycle
+   crossing the button, slowly, and rests off to the right for three. Hover
+   needs a second name, because only a change of animation-name restarts an
+   animation. */
+@keyframes btn-shine {
+  0% {
+    transform: translateX(-120%);
+  }
+  70%,
+  100% {
+    transform: translateX(240%);
+  }
+}
+@keyframes btn-shine-again {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(240%);
+  }
+}
+
+/* Color drift - the hue turns all the way round the colour wheel, at one
+   constant speed, forever: never easing, never pausing on a colour. You do
+   not see it move, but look away and back and it is another colour.
+   `.color-drift` goes on a container and owns the clock; everything inside
+   that reads `--drift` turns in step. Readers: `.btn-drift` on a button
+   (border and fill, beside btn-primary) and `.drift-ring` on a ring (border
+   and icon colour).
+
+   It turns the HUE of one oklch colour, rather than stepping between
+   colour stops: oklch hue is even to the eye, so equal time is an equal
+   change everywhere on the wheel, and lightness and chroma never move.
+   Starts at violet (293deg), the primary's own hue. Unlayered on purpose,
+   so it beats the variant and the utility classes it sits beside. */
+@property --drift-hue {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 293;
+}
+.color-drift {
+  --drift: oklch(0.56 0.2 var(--drift-hue));
+  animation: color-drift 60s linear infinite;
+}
+.dark .color-drift {
+  --drift: oklch(0.72 0.16 var(--drift-hue));
+}
+@keyframes color-drift {
+  from {
+    --drift-hue: 293;
+  }
+  to {
+    --drift-hue: 653;
+  }
+}
+.color-drift .btn-drift {
+  border-color: var(--drift);
+  background-color: color-mix(in oklab, var(--drift) 35%, transparent);
+}
+.color-drift .btn-drift:hover {
+  background-color: color-mix(in oklab, var(--drift) 45%, transparent);
+}
+.color-drift .btn-drift:active {
+  background-color: color-mix(in oklab, var(--drift) 55%, transparent);
+}
+.color-drift .drift-ring {
+  border-color: var(--drift);
+  color: var(--drift);
 }

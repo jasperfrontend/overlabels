@@ -9,7 +9,9 @@ import { Check } from '@lucide/vue';
  * ring for a step still ahead, and a violet ring (with the step's own icon)
  * for an optional extra.
  *
- *   done     - finished, green tick; `ticked` lands the tick with a pop
+ *   done     - finished, a green tick in a green ring (outlined, like the
+ *              extra steps' rings, so the page's one filled tick is the
+ *              "installed" badge above the rail); `ticked` lands it with a pop
  *   current  - the step to do now; the page's one glow
  *   open     - still to do, but not the one to do first
  *   upcoming - known to come later, not doable yet; greyed by the caller
@@ -32,11 +34,11 @@ withDefaults(
     <div class="flex flex-col items-center">
       <span
         v-if="state === 'done'"
-        class="flex size-7 shrink-0 items-center justify-center rounded-full bg-green-500 text-white"
+        class="flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-green-500 text-green-600 dark:border-green-400 dark:text-green-400"
         :class="{ 'rail-tick': ticked }"
         aria-hidden="true"
       >
-        <Check class="size-4" stroke-width="3" />
+        <Check class="size-3.5" />
       </span>
       <span
         v-else-if="state === 'current'"
@@ -47,7 +49,7 @@ withDefaults(
       </span>
       <span
         v-else-if="state === 'extra' || state === 'later'"
-        class="flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-violet-600 dark:text-violet-300"
+        class="drift-ring flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-violet-600 dark:text-violet-300"
         :class="state === 'later' ? 'border-violet-500/45 opacity-60 dark:border-violet-400/45' : 'border-violet-500 dark:border-violet-400'"
         aria-hidden="true"
       >

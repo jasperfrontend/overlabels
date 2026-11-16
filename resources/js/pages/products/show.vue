@@ -366,7 +366,7 @@ function countWord(n: number): string {
 
 const heading = computed(() => {
   if (!props.installed) return `On stream in ${countWord(stepsLeft.value)} steps`;
-  if (stepsLeft.value === 0) return 'Everything is in place';
+  if (stepsLeft.value === 0) return `${props.product.name} is installed on your stream!`;
   const word = countWord(stepsLeft.value);
   return `${word.charAt(0).toUpperCase()}${word.slice(1)} ${stepsLeft.value === 1 ? 'step' : 'steps'} left`;
 });
@@ -561,9 +561,6 @@ async function uninstall(): Promise<void> {
     <!-- The product's own column keeps the measure it was written for; the
          layout's grid is wider than a page of prose wants to be. -->
     <div class="max-w-4xl">
-      <!-- The same artwork as the listing card, full width, as the page's hero. -->
-      <img v-if="product.hero" :src="product.hero" alt="" class="mb-4 block aspect-video w-full object-cover" />
-
       <!-- The page is one rail in every state: before the install it is the
            plan, while setting up it is the progress, and once done it is the
            record. The heading counts what is left, and only when nothing is
@@ -862,7 +859,12 @@ async function uninstall(): Promise<void> {
           Make it yours<span v-if="!installed" class="font-medium tracking-normal normal-case"> - after install</span>
         </p>
         <ol class="flex flex-col">
-          <ProductRailStep v-if="designer" :state="installed ? 'extra' : 'later'" :last="!(installed && chat_redact)">
+          <ProductRailStep
+            v-if="designer"
+            :state="installed ? 'extra' : 'later'"
+            :last="!(installed && chat_redact)"
+            :class="{ 'color-drift': designerPrimary }"
+          >
             <template #icon><Sliders class="size-3.5" /></template>
             <h3 class="text-lg leading-[1.3] font-semibold" :class="installed ? 'text-foreground' : 'text-muted-foreground'">Design its look</h3>
             <p class="max-w-[620px] text-sm leading-relaxed text-pretty" :class="installed ? 'text-foreground' : 'text-muted-foreground'">
@@ -872,10 +874,10 @@ async function uninstall(): Promise<void> {
               v-if="installed"
               :href="withLastMileHint(route('products.design', product.slug), product.slug)"
               class="btn cursor-pointer"
-              :class="designerPrimary ? 'btn-primary' : 'btn-secondary'"
+              :class="designerPrimary ? 'btn-primary btn-drift btn-shine' : 'btn-secondary'"
             >
               Open the designer
-              <ArrowRight v-if="designerPrimary" class="ml-2 size-4" />
+              <ArrowRight class="ml-2 size-4" />
             </Link>
           </ProductRailStep>
 
@@ -941,6 +943,11 @@ async function uninstall(): Promise<void> {
         </div>
       </section>
 
+      <div class="mt-8">
+        <h3 class="text-2xl" v-if="finished && (alerts.length || product.notes.length)">Thank you for installing {{ product.name }}!</h3>
+        <!-- The same artwork as the listing card, full width, as the page's hero. -->
+        <img v-if="product.hero" :src="product.hero" alt="" class="mt-8 block aspect-video w-full object-cover" />
+      </div>
       <!-- The foot of an installed page: the overlay's own controls, and the
            one destructive action, as far from the win as the page allows. -->
       <footer v-if="installed" class="mt-10 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-sidebar-border pt-5">
@@ -958,8 +965,9 @@ async function uninstall(): Promise<void> {
             <ArrowRight class="ml-1 size-3.5" />
           </Link>
         </div>
-        <div class="ml-auto flex flex-col items-end gap-2">
-          <button type="button" class="btn btn-sm btn-chill cursor-pointer" @click="uninstall">
+        <div class="ml-auto flex items-center gap-2">
+          <p class="pr-2 text-sm text-red-500 dark:text-red-200">Don't want {{ product.name }} anymore?</p>
+          <button type="button" class="btn btn-sm btn-danger ml-auto cursor-pointer" @click="uninstall">
             <Trash2 class="mr-2 size-4" />
             Uninstall
           </button>
