@@ -31,7 +31,7 @@
     />
   </div>
   <form class="ol-ck__prompt" data-plinko-demo-form hidden>
-    <label for="plinko-demo-input" class="ol-ck__prompt-hint">You are in chat now. Type !drop and your name rides the ball. One ball each, so wait for yours to land.</label>
+    <label for="plinko-demo-input" class="ol-ck__prompt-hint">You are in a simulated chat now. Type !drop and your name rides the ball. One ball each, so wait for yours to land.</label>
     <div class="ol-ck__prompt-row">
       <input
         id="plinko-demo-input"

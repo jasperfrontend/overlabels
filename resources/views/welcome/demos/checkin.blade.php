@@ -71,7 +71,7 @@
     </div>
   </div>
   <form class="ol-ck__prompt" data-checkin-form hidden>
-    <label for="checkin-demo-input-{{ $checkinId ?? 'row' }}" class="ol-ck__prompt-hint">You are in chat now. Type !checkin and a city.</label>
+    <label for="checkin-demo-input-{{ $checkinId ?? 'row' }}" class="ol-ck__prompt-hint">You are in a simulated chat now. Type !checkin and a city.</label>
     <div class="ol-ck__prompt-row">
       <input
         id="checkin-demo-input-{{ $checkinId ?? 'row' }}"
