@@ -29,6 +29,10 @@
     @apply hover:border-l-rose-400;
     @apply active:border-l-rose-500 active:from-rose-400/20;
   }
+  .collection-row-success {
+    @apply hover:border-l-green-400;
+    @apply active:border-l-green-500 active:from-green-400/20;
+  }
 
   /**
    * Text twin of the accent bar. Put this on any element inside a row (the

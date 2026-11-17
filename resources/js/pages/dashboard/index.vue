@@ -121,7 +121,6 @@ const breadcrumbs = [
           <!-- No close button: it stays until the first product is installed, for
                everyone who closed the welcome dialog without reading it. -->
           <WelcomeBanner v-if="props.isNewUser" class="mb-6" :name="page.props.auth.user.name" :avatar="page.props.auth.user.avatar" />
-
           <!-- The banner already says "go install something"; the box and its
                button would say it twice. -->
           <InstalledProductsBox v-else class="mb-6" :products="props.installedProducts" :games-left="props.gamesLeft" />
