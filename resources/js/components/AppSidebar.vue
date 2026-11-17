@@ -18,6 +18,7 @@ import {
   Heart,
   House,
   Layers,
+  LayoutDashboard,
   LayoutGrid,
   LogIn,
   MapPin,
@@ -50,6 +51,7 @@ const commitHash = __COMMIT_HASH__;
 const mainNavItems = computed<NavItem[]>(() =>
   user.value
     ? [
+        { title: 'Dashboard', href: route('dashboard.index'), icon: LayoutDashboard, shortcut: 'd' },
         { title: 'Products', href: '/products', icon: Package, shortcut: 'p' },
         { title: 'Overlays', href: '/templates?filter=mine&type=static', icon: Layers, shortcut: 'o' },
         { title: 'Alerts', href: '/templates?filter=mine&type=alert', icon: Bell, shortcut: 'a' },
@@ -77,7 +79,7 @@ const learnNavItems = computed<NavItem[]>(() =>
         { title: 'Help', href: route('help'), target: '_blank', icon: BookOpen, shortcut: 'h' },
         // Alt+R opens the reference search; G then R opens the reference itself.
         { title: 'Reference', href: route('help.reference'), target: '_blank', icon: Brackets, shortcut: 'r' },
-        { title: 'Updates', href: route('updates.index'), icon: Newspaper, shortcut: 'd' },
+        { title: 'Updates', href: route('updates.index'), icon: Newspaper, shortcut: 'u' },
       ]
     : [],
 );
