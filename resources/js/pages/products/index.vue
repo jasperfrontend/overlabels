@@ -155,15 +155,11 @@ const description = computed(
               Connects {{ serviceLabel(product.service) }}
             </p>
             <div class="mt-auto flex flex-wrap justify-between gap-2 pt-1">
-              <Link :href="`/products/${product.slug}`" class="btn btn-sm btn-chill cursor-pointer gap-1.5">
+              <Link :href="`/products/${product.slug}`" class="btn btn-sm btn-secondary cursor-pointer gap-1.5">
                 <Eye class="size-4" />
                 View product
               </Link>
-              <Link
-                :href="`/products/${product.slug}/install`"
-                class="btn btn-sm cursor-pointer gap-1.5"
-                :class="product.installed ? 'btn-secondary' : 'btn-primary'"
-              >
+              <Link :href="`/products/${product.slug}/install`" class="btn btn-sm btn-primary cursor-pointer gap-1.5">
                 <component :is="product.installed ? Settings2 : Download" class="size-4" />
                 {{ product.installed ? 'Manage product' : 'Install product' }}
               </Link>
@@ -233,15 +229,11 @@ const description = computed(
                   Doesn't need the Overlabels bot
                 </p>
                 <div class="mt-3 flex flex-wrap justify-between gap-2">
-                  <Link :href="`/products/${product.slug}`" class="btn btn-chill cursor-pointer gap-2">
+                  <Link :href="`/products/${product.slug}`" class="btn btn-secondary cursor-pointer gap-2">
                     <Eye class="size-4" />
                     View product
                   </Link>
-                  <Link
-                    :href="`/products/${product.slug}/install`"
-                    class="btn cursor-pointer gap-2"
-                    :class="product.installed ? 'btn-secondary' : 'btn-primary'"
-                  >
+                  <Link :href="`/products/${product.slug}/install`" class="btn btn-primary cursor-pointer gap-2">
                     <component :is="product.installed ? Settings2 : Download" class="size-4" />
                     {{ product.installed ? 'Manage product' : 'Install product' }}
                   </Link>

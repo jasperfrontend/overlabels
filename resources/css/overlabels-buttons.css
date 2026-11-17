@@ -29,15 +29,16 @@
     @apply focus-visible:ring-mauve-500 dark:focus-visible:ring-mauve-400;
   }
 
-  /* Primary — Save / confirm. The one filled button: a solid violet border
-     around a translucent violet fill, so it is louder than the outlines
-     without being a solid block. Hover and press deepen the fill. */
+  /* Primary — the one action per surface. Solid #1DAAFF in both themes: a
+     colour foreign to the violet, so it wins on a violet card without a fight,
+     where the old translucent violet fill vanished into it. Dark text, because
+     white on this blue is about 2.55:1 and near-black about 7.8:1. One hex has
+     no scale, so hover and press move brightness instead of picking shades. */
   .btn-primary {
-    @apply border-violet-600 bg-violet-600/35 dark:border-violet-400 dark:bg-violet-400/35;
-    @apply text-violet-900 dark:text-violet-50;
-    @apply hover:bg-violet-600/45 dark:hover:bg-violet-400/45;
-    @apply active:bg-violet-600/55 dark:active:bg-violet-400/55;
-    @apply focus-visible:ring-violet-500 dark:focus-visible:ring-violet-400;
+    @apply border-[#1DAAFF] bg-[#1DAAFF] text-neutral-950;
+    @apply hover:brightness-110;
+    @apply active:brightness-95;
+    @apply focus-visible:ring-[#1DAAFF];
   }
 
   /* Cyan — primary's shape in Tailwind teal, for a primary action that sits

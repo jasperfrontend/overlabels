@@ -14,6 +14,12 @@ const sizes = [
   { cls: '', label: 'default' },
   { cls: 'btn-xl', label: 'xl' },
 ];
+// The /products card skin, so the primary is judged on the surface it has to win on.
+const mockCards = [
+  { label: 'Installed', name: 'Chat Tower', installed: true },
+  { label: 'Not installed', name: 'Chat Tower', installed: false },
+];
+
 const themes = [
   { key: 'light', cls: '', label: 'Light (switch the app to light mode to see this one)' },
   { key: 'dark', cls: 'dark', label: 'Dark' },
@@ -39,6 +45,26 @@ const themes = [
         <section v-for="theme in themes" :key="theme.key" :class="theme.cls">
           <div class="space-y-8 border border-border bg-background p-6 text-foreground">
             <h2 class="text-lg font-semibold">{{ theme.label }}</h2>
+
+            <div>
+              <h3 class="mb-3 text-sm font-medium text-muted-foreground">Primary on a /products card</h3>
+              <div class="grid gap-3 md:grid-cols-2">
+                <div v-for="card in mockCards" :key="card.label" class="flex flex-col gap-3">
+                  <span class="font-mono text-xs text-muted-foreground">{{ card.label }}</span>
+                  <div class="flex flex-col gap-3 bg-sidebar-accent p-4">
+                    <h4 class="font-medium">{{ card.name }}</h4>
+                    <p class="text-sm text-foreground">One shared tower your whole chat builds with !stack.</p>
+                    <div class="mt-2 flex flex-wrap justify-between gap-2">
+                      <button type="button" class="btn btn-sm btn-secondary gap-1.5"><Eye class="size-4" /> View product</button>
+                      <button type="button" class="btn btn-sm btn-primary gap-1.5">
+                        <component :is="card.installed ? Settings2 : Download" class="size-4" />
+                        {{ card.installed ? 'Manage product' : 'Install product' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <div>
               <h3 class="mb-3 text-sm font-medium text-muted-foreground">Variants: text, icon, disabled</h3>
