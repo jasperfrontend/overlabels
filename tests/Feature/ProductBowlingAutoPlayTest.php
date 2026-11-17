@@ -164,6 +164,9 @@ it('waits out a throw still playing before joining the queue arms the next pop',
 });
 
 it('pops the front of the line, broadcasts it, says nothing in chat and arms the next pop', function () {
+    // Frozen for the same reason as the hand-started throw test below: the
+    // delay is measured against the clock it was stamped from.
+    $this->freezeSecond();
     Bus::fake([AutoPlayNext::class]);
     Event::fake([ListUpdated::class]);
     $user = autoPlayUser();
@@ -212,6 +215,10 @@ it('pops nothing once the lane list has been disabled', function () {
 });
 
 it('holds a pop that lands while a hand-started throw is still playing', function () {
+    // The service stamps the delay from the clock and the assertion reads it
+    // again, so on a slow suite the wall time in between shrank the measured
+    // delay below 11 and the test failed for nothing. Frozen, it is exact.
+    $this->freezeSecond();
     Bus::fake([AutoPlayNext::class]);
     $user = autoPlayUser();
     $instance = autoPlayInstall($user);
