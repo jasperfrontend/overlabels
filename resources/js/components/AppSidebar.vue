@@ -116,6 +116,26 @@ function holdKeyTip(letter: string, ms: number): () => void {
   return done;
 }
 
+// Whether a nav item points at the page already open: same path, and every
+// query param the item declares matches (undeclared ones like page or search
+// are ignored, the same rule NavMain uses to highlight the active item).
+function isCurrentPage(href: string): boolean {
+  const target = new URL(href, window.location.origin);
+  if (target.origin !== window.location.origin || target.pathname !== window.location.pathname) return false;
+  const current = new URLSearchParams(window.location.search);
+  let matches = true;
+  target.searchParams.forEach((value, key) => {
+    if (current.get(key) !== value) matches = false;
+  });
+  return matches;
+}
+
+// The chords are rate-limited to one at a time. A visit started by a chord
+// blocks the next until it finishes, and a new-tab chord blocks for the length
+// of its bounce, so repeating G then D (or G then H) cannot queue up a stream
+// of reloads or open a pile of tabs.
+let chordBusy = false;
+
 onMounted(() => {
   const items = [...mainNavItems.value, ...alertsNavItems.value, ...learnNavItems.value];
   for (const item of items) {
@@ -124,15 +144,35 @@ onMounted(() => {
       `go-to-${item.title.toLowerCase()}`,
       `g ${item.shortcut}`,
       () => {
+        if (chordBusy) return;
+
         // Same behaviour as clicking the item: the two Learn pages open in a
         // new tab, so there is no visit to wait on - just the bounce.
         if (item.target === '_blank') {
+          chordBusy = true;
           holdKeyTip(item.shortcut!, CONFIRM_NEW_TAB_MS);
+          setTimeout(() => (chordBusy = false), CONFIRM_NEW_TAB_MS);
           window.open(item.href, '_blank', 'noopener,noreferrer');
-        } else {
-          const done = holdKeyTip(item.shortcut!, CONFIRM_FALLBACK_MS);
-          router.visit(item.href, { onFinish: done, onCancel: done });
+          return;
         }
+
+        // Already there: bounce the tip so the keys visibly landed, and load nothing.
+        if (isCurrentPage(item.href)) {
+          holdKeyTip(item.shortcut!, CONFIRM_NEW_TAB_MS);
+          return;
+        }
+
+        chordBusy = true;
+        const tipDone = holdKeyTip(item.shortcut!, CONFIRM_FALLBACK_MS);
+        // Released when the visit settles, or by the same bounded fallback as
+        // the tip, so a visit that never reports back cannot lock the chords.
+        const release = setTimeout(() => (chordBusy = false), CONFIRM_FALLBACK_MS);
+        const done = () => {
+          clearTimeout(release);
+          chordBusy = false;
+          tipDone();
+        };
+        router.visit(item.href, { onFinish: done, onCancel: done });
       },
       { description: item.title, group: 'Go to' },
     );
