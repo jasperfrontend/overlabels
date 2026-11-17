@@ -2,7 +2,8 @@
 import Heading from '@/components/Heading.vue';
 import { Separator } from '@/components/ui/separator';
 import { type NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { LogOut } from '@lucide/vue';
 
 interface NavGroup {
   label: string | null;
@@ -73,6 +74,18 @@ const isActive = (href: string) => currentPath === href || currentPath.startsWit
               {{ item.title }}
             </Link>
           </template>
+
+          <!-- The one desktop route to logging out: it is rare enough not to need header space. -->
+          <Link
+            method="post"
+            :href="route('logout')"
+            as="button"
+            class="btn btn-sm btn-ghost mt-4 cursor-pointer justify-start border-l-2 border-transparent px-4 py-2 text-sm font-medium hover:border-sidebar-accent hover:bg-sidebar-accent/5"
+            @click="router.flushAll()"
+          >
+            <LogOut class="size-4" />
+            Log out
+          </Link>
         </nav>
       </aside>
 
