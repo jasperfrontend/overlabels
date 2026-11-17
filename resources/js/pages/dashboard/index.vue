@@ -220,13 +220,11 @@ const breadcrumbs = [{ title: 'Dashboard', href: '/dashboard' }];
             <h2 id="next-up-heading" class="text-3xl leading-tight font-bold tracking-tight text-foreground md:text-4xl">
               Everything is on your stream. Go have fun.
             </h2>
-            <p class="max-w-xl text-base text-foreground">
-              Every game is installed and set up. When you feel like building something of your own, the docs show how it all works.
-            </p>
-            <a href="/help/under-the-hood" target="_blank" class="btn btn-secondary self-start">
-              See how it works
+            <p class="max-w-xl text-base text-foreground">Every game is installed and set up.</p>
+            <Link :href="route('products.index', { category: 'installed' })" class="btn btn-secondary self-start">
+              View your installed products
               <ArrowRight class="size-4" />
-            </a>
+            </Link>
           </div>
         </section>
 
