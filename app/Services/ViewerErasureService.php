@@ -8,6 +8,7 @@ use App\Models\ListAppendHistory;
 use App\Models\OverlayControl;
 use App\Models\TowerBlock;
 use App\Models\TwitchEvent;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -57,6 +58,17 @@ class ViewerErasureService
         }
 
         return DB::table('viewer_erasures')->where('twitch_id', $twitchId)->exists();
+    }
+
+    /**
+     * When this viewer last confirmed !forgetme, or null if they are not
+     * suppressed. A repeat !forgetme moves it forward (erase() rewrites it).
+     */
+    public function erasedAt(string $twitchId): ?CarbonImmutable
+    {
+        $value = DB::table('viewer_erasures')->where('twitch_id', $twitchId)->value('erased_at');
+
+        return $value === null ? null : CarbonImmutable::parse($value);
     }
 
     /**

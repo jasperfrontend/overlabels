@@ -122,6 +122,7 @@ it('lets the ask expire', function () {
 
 it('lifts the suppression after an ask and a confirm, restoring nothing', function () {
     forgetMe()->assertOk();
+    $this->travel(24)->hours();
 
     $ask = unforgetMeRequest();
     expect($ask->json('reply'))->toContain('!unforgetme confirm')
@@ -134,6 +135,7 @@ it('lifts the suppression after an ask and a confirm, restoring nothing', functi
 
 it('does not lift on a confirm with no ask before it', function () {
     forgetMe()->assertOk();
+    $this->travel(24)->hours();
 
     unforgetMeRequest(['answer' => 'confirm'])->assertOk();
 
@@ -142,9 +144,56 @@ it('does not lift on a confirm with no ask before it', function () {
 
 it('keeps a forgetme ask and an unforgetme ask apart', function () {
     forgetMe()->assertOk();
+    $this->travel(24)->hours();
     forgetMeRequest()->assertOk();
 
     unforgetMeRequest(['answer' => 'confirm'])->assertOk();
+
+    expect(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeTrue();
+});
+
+// Without a cooldown a chatter flipped the two back and forth in a live
+// channel, four bot replies per round. !unforgetme stays closed for 24 hours
+// after a confirmed !forgetme; !forgetme itself never waits.
+
+it('refuses unforgetme within 24 hours of forgetme, without asking', function () {
+    forgetMe()->assertOk();
+    $this->travel(23)->hours();
+
+    $response = unforgetMeRequest();
+    unforgetMeRequest(['answer' => 'confirm'])->assertOk();
+
+    expect($response->json('lifted'))->toBeFalse()
+        ->and($response->json('reply'))->toContain('Try again in about 1 hour.')
+        ->and(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeTrue();
+});
+
+it('opens unforgetme once the 24 hours are up', function () {
+    forgetMe()->assertOk();
+    $this->travel(24)->hours();
+
+    unforgetMeRequest()->assertOk();
+    $done = unforgetMeRequest(['answer' => 'confirm']);
+
+    expect($done->json('lifted'))->toBeTrue();
+});
+
+it('restarts the 24 hours on a repeat forgetme', function () {
+    forgetMe()->assertOk();
+    $this->travel(20)->hours();
+    forgetMe()->assertOk();
+    $this->travel(20)->hours();
+
+    expect(unforgetMeRequest()->json('reply'))->toContain('Try again in about 4 hours.');
+});
+
+it('never makes a forgetme wait, even straight after an unforgetme', function () {
+    forgetMe()->assertOk();
+    $this->travel(24)->hours();
+    unforgetMeRequest()->assertOk();
+    unforgetMeRequest(['answer' => 'confirm'])->assertOk();
+
+    forgetMe()->assertOk();
 
     expect(app(ViewerErasureService::class)->isSuppressed('555000'))->toBeTrue();
 });

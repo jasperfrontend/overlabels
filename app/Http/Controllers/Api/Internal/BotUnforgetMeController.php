@@ -14,6 +14,15 @@ class BotUnforgetMeController extends Controller
     /** Holds a Twitch id for the confirm window and nothing else. */
     private const PENDING_PREFIX = 'unforgetme:pending:';
 
+    /**
+     * How long after a confirmed !forgetme the way back stays closed.
+     * Without it a chatter can flip the two forever, a bot reply per step,
+     * as a way to spam a channel. Read from `viewer_erasures.erased_at`, so
+     * it costs no extra storage. There is no cooldown the other way round:
+     * a request to be deleted must never be told to wait.
+     */
+    public const COOLDOWN_HOURS = 24;
+
     public const ASK_REPLY = 'This lets Overlabels store you again, like anyone else, in every channel. Nothing deleted before comes back.'
         .' To go ahead, type !unforgetme confirm within 2 minutes.';
 
@@ -38,8 +47,22 @@ class BotUnforgetMeController extends Controller
             'answer' => 'nullable|string|max:64',
         ]);
 
-        if (! $erasures->isSuppressed($data['chatter_id'])) {
+        $erasedAt = $erasures->erasedAt($data['chatter_id']);
+
+        if ($erasedAt === null) {
             return response()->json(['reply' => 'Nothing to undo - Overlabels was not ignoring you.', 'lifted' => false]);
+        }
+
+        $opensAt = $erasedAt->addHours(self::COOLDOWN_HOURS);
+
+        if ($opensAt->isFuture()) {
+            $hours = max(1, (int) ceil(now()->diffInSeconds($opensAt) / 3600));
+
+            return response()->json([
+                'reply' => '!unforgetme works '.self::COOLDOWN_HOURS.' hours after !forgetme. Try again in about '
+                    .$hours.' '.($hours === 1 ? 'hour' : 'hours').'.',
+                'lifted' => false,
+            ]);
         }
 
         $confirming = mb_strtolower(trim($data['answer'] ?? '')) === BotForgetMeController::CONFIRM_WORD;

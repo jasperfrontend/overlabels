@@ -79,7 +79,7 @@ The one command in the bot that belongs to your viewers rather than to you.
 | Command | Tier | What it does |
 |---|---|---|
 | `!forgetme` | Everyone | Deletes everything Overlabels holds about that viewer, across every channel, and stops storing them in future. |
-| `!unforgetme` | Everyone | The way back: Overlabels may store that viewer again. Nothing deleted earlier comes back. |
+| `!unforgetme` | Everyone | The way back: Overlabels may store that viewer again. Nothing deleted earlier comes back. Works 24 hours after their most recent `!forgetme`, so the pair cannot be flipped to spam your chat. |
 
 Both ask first. The bot explains what is about to happen and waits for `!forgetme confirm` (or
 `!unforgetme confirm`) from the same viewer within two minutes, so a `!forgetme` typed at the end of a

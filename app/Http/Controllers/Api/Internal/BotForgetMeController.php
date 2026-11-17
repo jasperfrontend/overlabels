@@ -29,7 +29,8 @@ class BotForgetMeController extends Controller
      * asked for silence, and saying so in public chat would announce it.
      */
     public const ASK_REPLY = 'This deletes everything Overlabels holds about you, in every channel, and it cannot be brought back.'
-        .' After that we stop storing you until you type !unforgetme.'
+        .' After that we stop storing you until you type !unforgetme, which works '
+        .BotUnforgetMeController::COOLDOWN_HOURS.' hours later at the earliest.'
         .' To go ahead, type !forgetme confirm within 2 minutes. overlabels.com/viewers';
 
     /**

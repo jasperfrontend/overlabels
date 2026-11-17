@@ -97,6 +97,10 @@ their content, not ours to quietly delete.
 described above, and from then on we treat you like anyone else again: check-ins and chat games work
 for you, and your name comes along with your follows and subs.
 
+It works 24 hours after your most recent `!forgetme`, not sooner. That gives you a night to sleep on
+it, and it stops anyone flipping the two back and forth to fill a chat with bot replies. `!forgetme`
+itself never makes you wait.
+
 It does not bring anything back. What `!forgetme` deleted stays deleted, because we never kept a copy.
 
 Nothing will remind you that you used `!forgetme`. You asked us to leave you alone, so the bot stays
