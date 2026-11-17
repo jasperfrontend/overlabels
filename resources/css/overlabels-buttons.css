@@ -204,9 +204,23 @@
     --drift-hue: 653;
   }
 }
+/* The drift owns its text and its hover too. It used to borrow both from
+   btn-primary, which stopped fitting when primary became solid #1DAAFF with
+   dark text: dark text on a translucent drift fill is unreadable in dark mode,
+   and primary's brightness hover would stack on the fill change below. */
 .color-drift .btn-drift {
   border-color: var(--drift);
   background-color: color-mix(in oklab, var(--drift) 35%, transparent);
+  filter: none;
+}
+/* btn-green brings its own text colour (dashboard "Browse all"); leave it.
+   Light mode is plain foreground: a violet tint clashes with every hue the
+   fill passes through. */
+.color-drift .btn-drift:not(.btn-green) {
+  color: var(--color-foreground);
+}
+.dark .color-drift .btn-drift:not(.btn-green) {
+  color: var(--color-violet-50);
 }
 .color-drift .btn-drift:hover {
   background-color: color-mix(in oklab, var(--drift) 45%, transparent);

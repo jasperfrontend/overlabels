@@ -123,7 +123,7 @@ const isActive = (key: string) => (props.category === null ? key === 'all' : key
           <ProductBadge
             v-else
             :label="heading ? 'An official Overlabels product' : 'Official Overlabels products'"
-            class="size-6 shrink-0 text-cyan-300"
+            class="size-6 shrink-0 text-[#1DAAFF]"
           />
           <h1 class="text-2xl font-semibold text-foreground">
             <template v-if="heading">{{ heading }}</template>

@@ -570,7 +570,7 @@ async function uninstall(): Promise<void> {
       <header class="flex items-start gap-4 pt-6 sm:gap-5">
         <span class="relative mt-0.5 flex shrink-0">
           <ProductIcon v-if="product.category === 'product' && hasProductIcon(product.slug)" :slug="product.slug" class="size-10 text-foreground" />
-          <ProductBadge v-else-if="product.category === 'product'" label="An official Overlabels product" class="size-10 text-cyan-300" />
+          <ProductBadge v-else-if="product.category === 'product'" label="An official Overlabels product" class="size-10 text-[#1DAAFF]" />
           <ServiceLogo
             v-else-if="product.integrations[0]"
             :source="product.integrations[0]"

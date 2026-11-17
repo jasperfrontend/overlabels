@@ -205,7 +205,7 @@ const description = computed(
                 <ProductBadge
                   v-else-if="product.category === 'product'"
                   label="An official Overlabels product"
-                  class="relative z-10 size-5 shrink-0 text-cyan-300"
+                  class="relative z-10 size-5 shrink-0 text-[#1DAAFF]"
                 />
                 {{ product.name }}
               </h3>
