@@ -7,14 +7,14 @@ use App\Models\ExternalEvent;
 use App\Models\OptionSet;
 use App\Models\OverlayTemplate;
 use App\Models\RecipeInstance;
+use App\Models\StreamSession;
 use App\Models\TwitchEvent;
-use App\Models\Update;
 use App\Models\User;
 use App\Services\AlertMuteService;
-use App\Services\BroadcastMeter;
-use App\Services\EventMeter;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\UnifiedEventFeedService;
+use App\Support\ProductSetup;
+use App\Support\WiringCatalog;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,58 +25,103 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        $userAlertTemplates = OverlayTemplate::where('owner_id', $user->id)
-            ->alert()
-            ->with('owner:id,name,avatar')
-            ->latest()
-            ->limit(10)
-            ->get();
-
-        $userStaticTemplates = OverlayTemplate::where('owner_id', $user->id)
-            ->static()
-            ->with('owner:id,name,avatar')
-            ->latest()
-            ->limit(10)
-            ->get();
-
-        $communityTemplates = OverlayTemplate::where('owner_id', '!=', $user->id)
-            ->where('is_public', true)
-            ->with('owner:id,name,avatar')
-            ->latest()
-            ->limit(5)
-            ->get();
-
-        $userRecentEvents = $this->mergeRecentEvents($user->id, 20);
-
-        $recentUpdates = Update::published()
-            ->orderByDesc('published_at')
-            ->limit(5)
-            ->get();
-
         // "New" is a state, not a signup date: an account with no product
         // installed has nothing on stream yet, however old it is. Overlays and
         // alerts cannot answer this - every signup gets the starter kit.
         $isNewUser = ! RecipeInstance::where('user_id', $user->id)->exists();
         $installedProducts = $isNewUser ? [] : $this->installedProducts($user->id);
 
+        // The dashboard is a lobby, not an inventory: who you are, the ONE
+        // thing worth doing next, what is on your stream, and what happened
+        // lately. Lists of overlays and alerts live on their own pages.
         return Inertia::render('dashboard/index', [
             'isNewUser' => $isNewUser,
             'installedProducts' => $installedProducts,
-            'gamesLeft' => $this->gamesLeft($installedProducts),
+            'nextUp' => $isNewUser ? null : $this->nextUp($installedProducts),
             // A closure so a partial reload that does not ask for it cannot
             // spend the dialog on a render that never shows it.
             'showWelcomeDialog' => fn () => $isNewUser && $this->claimWelcomeDialog($user),
-            'userId' => $user->id,
-            'userAlertTemplates' => $userAlertTemplates,
-            'userStaticTemplates' => $userStaticTemplates,
-            'communityTemplates' => $communityTemplates,
-            'userRecentEvents' => $userRecentEvents,
-            'recentUpdates' => $recentUpdates,
+            'lastStream' => $this->lastStream($user->id),
+            'recentEvents' => $this->mergeRecentEvents($user->id, 5),
             'whatsNew' => WhatsNewController::props($user),
-            'usage' => config('metering.meter_mode', 'both') === 'broadcast'
-                ? ($user->twitch_id ? app(BroadcastMeter::class)->summaryFor((string) $user->twitch_id) : null)
-                : app(EventMeter::class)->summaryFor($user->id),
         ]);
+    }
+
+    /**
+     * The one thing the dashboard points at. In order: an installed product
+     * that is not finished setting up (the newest first), then a game the
+     * account has not tried, then nothing - which the page shows as "all set".
+     * Never a list: a tired streamer gets one door, not a menu.
+     *
+     * @param  list<array<string, mixed>>  $installed
+     * @return array<string, mixed>|null
+     */
+    private function nextUp(array $installed): ?array
+    {
+        foreach ($installed as $product) {
+            if ($product['remaining'] > 0) {
+                return [
+                    'kind' => 'finish',
+                    'slug' => $product['slug'],
+                    'name' => $product['name'],
+                    'hero' => $product['hero'],
+                    'remaining' => $product['remaining'],
+                    'todo' => $product['todo'],
+                    'href' => route('products.manage', $product['slug']),
+                ];
+            }
+        }
+
+        $installedSlugs = array_column($installed, 'slug');
+        $game = collect(app(RecipeCatalog::class)->listed())
+            ->filter(fn (array $manifest) => ($manifest['category'] ?? null) === 'product')
+            ->reject(fn (array $manifest) => in_array($manifest['slug'], $installedSlugs, true))
+            ->first();
+
+        if ($game === null) {
+            return null;
+        }
+
+        return [
+            'kind' => 'try',
+            'slug' => $game['slug'],
+            'name' => $game['name'],
+            'hero' => $game['hero'] ?? null,
+            'description' => $game['description'],
+            'href' => '/products/'.$game['slug'],
+        ];
+    }
+
+    /**
+     * The latest stream session, live or ended, with how many moments landed
+     * in it. Counted by time window over created_at, not by the session FK:
+     * events arriving during a live stream are never stamped with it.
+     *
+     * @return array{started_at: string, ended_at: ?string, minutes: int, moments: int, live: bool}|null
+     */
+    private function lastStream(int $userId): ?array
+    {
+        $session = StreamSession::where('user_id', $userId)->latest('started_at')->first();
+
+        if ($session === null || $session->started_at === null) {
+            return null;
+        }
+
+        $end = $session->ended_at ?? now();
+        $window = fn ($query) => $query->where('user_id', $userId)->whereBetween('created_at', [$session->started_at, $end]);
+
+        $moments = $window(TwitchEvent::query())
+            ->whereNotIn('event_type', ['stream.online', 'stream.offline'])
+            ->count()
+            + $window(ExternalEvent::query())->where('service', '!=', 'gps')->count();
+
+        return [
+            'started_at' => $session->started_at->toIso8601String(),
+            'ended_at' => $session->ended_at?->toIso8601String(),
+            'minutes' => (int) $session->started_at->diffInMinutes($end),
+            'moments' => $moments,
+            'live' => $session->ended_at === null,
+        ];
     }
 
     /**
@@ -85,48 +130,42 @@ class DashboardController extends Controller
      * listing has no page to manage it from, so it is left out here too -
      * same rule as the Installed count on /products.
      *
-     * @return list<array{slug: string, name: string, description: string, hero: string|null, service: string|null, category: string|null}>
+     * `remaining` is how many setup steps are still missing (the same checklist
+     * the product page shows) and `todo` the first of them, in words.
+     *
+     * @return list<array{slug: string, name: string, description: string, hero: string|null, service: string|null, category: string|null, remaining: int, todo: string|null}>
      */
     private function installedProducts(int $userId): array
     {
         $listed = app(RecipeCatalog::class)->listed();
 
-        return RecipeInstance::query()
-            ->where('recipe_instances.user_id', $userId)
-            ->join('recipes', 'recipes.id', '=', 'recipe_instances.recipe_id')
-            ->orderByDesc('recipe_instances.created_at')
-            ->pluck('recipes.slug')
-            ->unique()
-            ->filter(fn (string $slug) => isset($listed[$slug]))
-            ->map(fn (string $slug) => [
-                'slug' => $slug,
-                'name' => $listed[$slug]['name'],
-                'description' => $listed[$slug]['description'],
-                'hero' => $listed[$slug]['hero'] ?? null,
-                'service' => $listed[$slug]['installs']['integrations'][0] ?? null,
-                'category' => $listed[$slug]['category'] ?? null,
-            ])
+        return RecipeInstance::with('recipe')
+            ->where('user_id', $userId)
+            ->orderByDesc('created_at')
+            ->get()
+            ->unique(fn (RecipeInstance $instance) => $instance->recipe?->slug)
+            ->filter(fn (RecipeInstance $instance) => isset($listed[$instance->recipe?->slug]))
+            ->map(function (RecipeInstance $instance) use ($listed) {
+                $slug = $instance->recipe->slug;
+                $missing = array_values(array_filter(
+                    ProductSetup::steps($instance),
+                    fn (array $wire) => $wire['state'] === WiringCatalog::MISSING,
+                ));
+                $first = $missing[0] ?? null;
+
+                return [
+                    'slug' => $slug,
+                    'name' => $listed[$slug]['name'],
+                    'description' => $listed[$slug]['description'],
+                    'hero' => $listed[$slug]['hero'] ?? null,
+                    'service' => $listed[$slug]['installs']['integrations'][0] ?? null,
+                    'category' => $listed[$slug]['category'] ?? null,
+                    'remaining' => count($missing),
+                    'todo' => $first === null ? null : (ProductSetup::STEPS[$first['key']]['todo'] ?? strtolower($first['label'])),
+                ];
+            })
             ->values()
             ->all();
-    }
-
-    /**
-     * How many listed games (the `product` shelf) this account has not
-     * installed yet. Zero swaps the dashboard's "more things for your chat"
-     * pitch for the you-beat-it note. Alerts are left out on purpose: nobody
-     * connects all five donation services, so counting them would make the
-     * note unreachable.
-     *
-     * @param  list<array{slug: string, category: string|null}>  $installed
-     */
-    private function gamesLeft(array $installed): int
-    {
-        $installedSlugs = array_column($installed, 'slug');
-
-        return collect(app(RecipeCatalog::class)->listed())
-            ->filter(fn (array $manifest) => ($manifest['category'] ?? null) === 'product')
-            ->reject(fn (array $manifest) => in_array($manifest['slug'], $installedSlugs, true))
-            ->count();
     }
 
     /**

@@ -1,5 +1,27 @@
 # Changelog - November 2026
 
+## OL-2611-022 - November 17th, 2026 - feat(dashboard): a lobby instead of an inventory
+
+The dashboard listed your data: installed products, then a tab strip of overlays, alerts and stream
+activity, then a column pointing at the updates page. Nobody lands on a dashboard to be told they own
+thirty overlays. A streamer opening it before a stream is tired, and the page made them more tired.
+It is now a lobby with four things on it, in the order someone actually wants them.
+
+- **Hello.** A big time-of-day greeting with your avatar, and one sentence about your stream: live
+  right now, or when you last went live and for how long. The newest unread post from Updates sits
+  beside it as a single link, when there is one.
+- **One door.** A single Next up card with one button. An installed product that is not finished
+  setting up comes first ("Chat Tower is one step from your stream"); otherwise a game you do not
+  have yet; otherwise "All set". Never a menu.
+- **On your stream.** Installed products as a row of art tiles, each saying Ready or how many steps
+  are left, ending in a tile to find something new.
+- **Lately.** Your last stream (how long, how many moments) and the five latest moments, each with a
+  link to its full page.
+
+New accounts see exactly what they saw before: the welcome dialog and the banner that points at the
+products. The old installed-products box is gone, and so are the overlay, alert and activity tabs;
+those all live on their own pages in the sidebar.
+
 ## OL-2611-021 - November 17th, 2026 - feat(bot): !forgetme asks first, and !unforgetme is the way back
 
 `!forgetme` did exactly what it said, the moment it was typed: everything Overlabels held about that

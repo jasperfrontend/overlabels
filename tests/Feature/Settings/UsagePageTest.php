@@ -27,18 +27,3 @@ test('the usage page renders with a usage summary and history', function () {
             ->has('history', 6)
         );
 });
-
-test('the dashboard provides a usage summary for its strip', function () {
-    $user = User::factory()->create();
-    $this->actingAs($user);
-
-    $this->get('/dashboard')
-        ->assertStatus(200)
-        ->assertInertia(fn (Assert $page) => $page
-            ->has('usage', fn (Assert $usage) => $usage
-                ->where('period', now()->format('Y-m'))
-                ->has('broadcasts')
-                ->has('limit')
-            )
-        );
-});
