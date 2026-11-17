@@ -64,13 +64,16 @@
     @apply focus-visible:ring-green-500 dark:focus-visible:ring-green-400;
   }
 
-  /* Secondary — violet outline. Same colour as primary, a step quieter. */
+  /* Secondary — primary's blue as an outline, a step quieter. Here the blue is
+     TEXT, so light mode takes a deeper shade of the same hue: #1DAAFF on a
+     light background is 2.55:1, #0A78BE about 4.7:1. Dark mode uses the real
+     thing. */
   .btn-secondary {
     @apply border-current bg-transparent;
-    @apply text-violet-700 dark:text-violet-300;
-    @apply hover:bg-violet-500/10 dark:hover:bg-violet-400/15;
-    @apply active:bg-violet-500/20 dark:active:bg-violet-400/25;
-    @apply focus-visible:ring-violet-500 dark:focus-visible:ring-violet-400;
+    @apply text-[#0A78BE] dark:text-[#1DAAFF];
+    @apply hover:bg-[#1DAAFF]/10 dark:hover:bg-[#1DAAFF]/15;
+    @apply active:bg-[#1DAAFF]/20 dark:active:bg-[#1DAAFF]/25;
+    @apply focus-visible:ring-[#1DAAFF];
   }
 
   /* Every variant below primary has the same shape as secondary and chill:
