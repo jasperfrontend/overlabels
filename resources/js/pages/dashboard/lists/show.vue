@@ -593,7 +593,7 @@ async function loadMeta() {
           Locked
         </span>
         <div class="flex-1"></div>
-        <button v-if="anythingDirty || saving" class="btn btn-primary btn-sm rounded-full" :disabled="saving" @click="saveAll">
+        <button v-if="anythingDirty || saving" class="btn btn-primary btn-sm" :disabled="saving" @click="saveAll">
           {{ saving ? 'Saving…' : 'Save changes' }}
         </button>
         <span v-else class="inline-flex items-center gap-1.5 text-xs text-green-700/80 dark:text-green-400/80">
@@ -618,16 +618,7 @@ async function loadMeta() {
       <div class="mb-6 flex flex-wrap items-center gap-2">
         <span class="text-xs text-muted-foreground">Template tag</span>
         <code class="px-2.5 py-0.5 text-xs">{{ list.tag }}</code>
-        <button
-          class="cursor-pointer rounded-full border bg-transparent px-3 py-1 text-[11px] font-medium"
-          :class="
-            tagCopied
-              ? 'border-green-500/60 text-green-700 dark:text-green-400'
-              : 'border-black/20 text-foreground hover:border-black/50 dark:border-white/20 dark:hover:border-white/60'
-          "
-          title="Copy template tag"
-          @click="copyTag(list.tag)"
-        >
+        <button class="btn btn-xs" :class="tagCopied ? 'btn-green' : 'btn-chill'" title="Copy template tag" @click="copyTag(list.tag)">
           {{ tagCopied ? 'Copied' : 'Copy' }}
         </button>
       </div>
@@ -693,7 +684,7 @@ async function loadMeta() {
                 <template v-if="item.pop">
                   <button
                     title="Pop first item"
-                    class="grid h-6 w-6 shrink-0 cursor-pointer place-items-center rounded-full border border-black/20 text-foreground/60 hover:border-green-600 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20 dark:hover:border-green-500 dark:hover:text-green-400"
+                    class="grid h-6 w-6 shrink-0 cursor-pointer place-items-center border border-black/20 text-foreground/60 hover:border-green-600 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20 dark:hover:border-green-500 dark:hover:text-green-400"
                     :disabled="runningAction !== null"
                     @click="() => runPop('first')"
                   >
@@ -701,7 +692,7 @@ async function loadMeta() {
                   </button>
                   <button
                     title="Pop last item"
-                    class="grid h-6 w-6 shrink-0 cursor-pointer place-items-center rounded-full border border-black/20 text-foreground/60 hover:border-green-600 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20 dark:hover:border-green-500 dark:hover:text-green-400"
+                    class="grid h-6 w-6 shrink-0 cursor-pointer place-items-center border border-black/20 text-foreground/60 hover:border-green-600 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20 dark:hover:border-green-500 dark:hover:text-green-400"
                     :disabled="runningAction !== null"
                     @click="() => runPop('last')"
                   >
@@ -711,7 +702,7 @@ async function loadMeta() {
                 <button
                   v-else
                   title="Run now"
-                  class="grid h-6 w-6 shrink-0 cursor-pointer place-items-center rounded-full border border-black/20 text-foreground/60 hover:border-green-600 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20 dark:hover:border-green-500 dark:hover:text-green-400"
+                  class="grid h-6 w-6 shrink-0 cursor-pointer place-items-center border border-black/20 text-foreground/60 hover:border-green-600 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/20 dark:hover:border-green-500 dark:hover:text-green-400"
                   :disabled="runningAction !== null"
                   @click="item.run?.()"
                 >
@@ -774,7 +765,7 @@ async function loadMeta() {
                 type="datetime-local"
                 class="input-border min-w-0 flex-1 cursor-pointer font-mono text-xs"
               />
-              <button v-if="expiresAtLocal" class="btn btn-chill btn-xs shrink-0 rounded-full" @click="clearExpiresAt">Clear</button>
+              <button v-if="expiresAtLocal" class="btn btn-chill btn-xs shrink-0" @click="clearExpiresAt">Clear</button>
             </div>
             <p class="mt-1.5 text-[11px]">
               <span v-if="expiryCountdown" class="text-foreground">
@@ -804,11 +795,7 @@ async function loadMeta() {
                     : 'Pause appends and chat actions. Items are kept.'
                 }}
               </p>
-              <button
-                class="btn btn-sm shrink-0 rounded-full"
-                :class="list.disabled_at !== null ? 'btn-cancel' : 'btn-warning'"
-                @click="toggleDisabled"
-              >
+              <button class="btn btn-sm shrink-0" :class="list.disabled_at !== null ? 'btn-cancel' : 'btn-warning'" @click="toggleDisabled">
                 {{ list.disabled_at !== null ? 'Enable list' : 'Disable list' }}
               </button>
             </div>
@@ -817,7 +804,7 @@ async function loadMeta() {
                 Delete the list, its items and its snapshots. There is no undo.
               </p>
               <button
-                class="btn btn-danger btn-sm shrink-0 rounded-full"
+                class="btn btn-danger btn-sm shrink-0"
                 :disabled="!!isActiveLocked || list.recipe_instance_id !== null"
                 :title="list.recipe_instance_id !== null ? 'Delete the recipe instance to remove this list.' : 'Delete this list permanently.'"
                 @click="deleteActive"

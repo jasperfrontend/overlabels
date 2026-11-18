@@ -122,7 +122,7 @@ function snapshotAge(ts: number): string {
           {{ snapshots.length }}
         </span>
       </h3>
-      <button class="btn btn-chill btn-xs shrink-0 rounded-full" @click="takeManualSnapshot">Save snapshot</button>
+      <button class="btn btn-chill btn-xs shrink-0" @click="takeManualSnapshot">Save snapshot</button>
     </div>
     <p class="mt-2 text-xs text-muted-foreground">
       {{
@@ -151,21 +151,21 @@ function snapshotAge(ts: number): string {
           <div class="flex-1"></div>
           <button
             :title="snap.pinned ? 'Unpin' : 'Pin (survives retention)'"
-            class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
+            class="grid h-6.5 w-6.5 cursor-pointer place-items-center border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
             @click="togglePin(snap)"
           >
             <PinIcon class="h-3 w-3" :class="snap.pinned ? 'fill-current' : ''" />
           </button>
           <button
             title="Restore to this snapshot"
-            class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
+            class="grid h-6.5 w-6.5 cursor-pointer place-items-center border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
             @click="restoreSnapshot(snap)"
           >
             <RotateCcwIcon class="h-3 w-3" />
           </button>
           <button
             title="Delete this snapshot"
-            class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-red-500/50 hover:text-red-600 dark:border-white/10 dark:hover:text-red-400"
+            class="grid h-6.5 w-6.5 cursor-pointer place-items-center border border-black/10 text-muted-foreground hover:border-red-500/50 hover:text-red-600 dark:border-white/10 dark:hover:text-red-400"
             @click="deleteSnapshot(snap)"
           >
             <Trash2Icon class="h-3 w-3" />

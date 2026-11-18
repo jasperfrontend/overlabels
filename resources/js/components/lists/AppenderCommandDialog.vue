@@ -238,8 +238,8 @@ async function save() {
       </div>
 
       <DialogFooter class="gap-2.5 border-t border-sidebar-border px-5 py-3.5 md:px-7 md:py-4">
-        <button class="btn btn-chill btn-sm cursor-pointer rounded-full" @click="emit('update:open', false)">Cancel</button>
-        <button class="btn btn-primary btn-sm cursor-pointer rounded-full" :disabled="saving" @click="save">
+        <button class="btn btn-chill btn-sm" @click="emit('update:open', false)">Cancel</button>
+        <button class="btn btn-primary btn-sm" :disabled="saving" @click="save">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
       </DialogFooter>

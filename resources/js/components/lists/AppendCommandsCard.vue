@@ -84,7 +84,7 @@ const DEDUP_LABELS: Record<string, string> = {
           Chat commands that append to this list when fired. Bot Command syntax like <code>[[[bot:from_user]]]</code> works in the value template.
         </p>
       </div>
-      <button class="btn btn-primary btn-sm shrink-0 rounded-full" @click="openAdd">
+      <button class="btn btn-primary btn-sm shrink-0" @click="openAdd">
         <PlusIcon class="h-3 w-3" />
         <span class="ml-1.5">Add command</span>
       </button>
@@ -119,14 +119,14 @@ const DEDUP_LABELS: Record<string, string> = {
           <div class="flex-1"></div>
           <button
             title="Edit command"
-            class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
+            class="grid h-6.5 w-6.5 cursor-pointer place-items-center border border-black/10 text-muted-foreground hover:border-black/35 hover:text-foreground dark:border-white/10 dark:hover:border-white/35"
             @click="openEdit(a)"
           >
             <PencilIcon class="h-3 w-3" />
           </button>
           <button
             title="Delete command"
-            class="grid h-6.5 w-6.5 cursor-pointer place-items-center rounded border border-black/10 text-muted-foreground hover:border-red-500/50 hover:text-red-600 dark:border-white/10 dark:hover:text-red-400"
+            class="grid h-6.5 w-6.5 cursor-pointer place-items-center border border-black/10 text-muted-foreground hover:border-red-500/50 hover:text-red-600 dark:border-white/10 dark:hover:text-red-400"
             @click="remove(a)"
           >
             <Trash2Icon class="h-3 w-3" />
