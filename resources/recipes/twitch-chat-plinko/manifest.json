@@ -14,6 +14,7 @@
   "requires_bot": false,
   "listed": true,
   "category": "product",
+  "game": true,
   "hero": "/products/twitch-chat-plinko-hero.jpg",
   "hero_alt": "Twitch Chat Plinko on stream: balls carrying chatters' names bounce down a Plinko board into slots worth 5 to 1000 points",
   "obs_hint": "Make the browser source your whole canvas, 1920 by 1080. It is a full scene, made for BRB and downtime.",

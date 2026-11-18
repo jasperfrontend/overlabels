@@ -97,6 +97,11 @@
       "description": "Which shelf of the /products page a listed recipe sits on. At most one, not hierarchical: `product` is something viewers do in chat and see on stream, `alert` is a service the streamer already uses landing on their stream. A listed recipe without one is shown after both shelves under Show all and under no filter. Optional.",
       "enum": ["product", "alert"]
     },
+    "game": {
+      "type": "boolean",
+      "description": "Whether chat plays this product, as opposed to it simply showing on stream (a chat feed, emote bubbles). The dashboard only invites a live streamer's viewers to play a product marked as a game. Optional.",
+      "default": false
+    },
     "requires_bot": {
       "type": "boolean",
       "description": "Whether the installed result only works with the Overlabels bot in the streamer's chat. Drives the human steps on the product page: it is not something the installer can do.",

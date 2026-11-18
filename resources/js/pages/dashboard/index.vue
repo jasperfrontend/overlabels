@@ -89,12 +89,28 @@ function relativeDay(iso: string): string {
   return `on ${new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric' }).format(then)}`;
 }
 
+// A live stream where nothing has happened yet suggests one installed game,
+// picked at random once per page load so the line does not change under you.
+// Ready games first; one still being set up beats suggesting an install.
+const pickSeed = Math.random();
+const liveGame = computed(() => {
+  const games = props.installedProducts.filter((p) => p.game);
+  const ready = games.filter((p) => (p.remaining ?? 0) === 0);
+  const pool = ready.length > 0 ? ready : games;
+  return pool.length > 0 ? pool[Math.floor(pickSeed * pool.length)] : null;
+});
+
+const suggestedGame = computed(() => (props.lastStream?.live && props.lastStream.moments === 0 ? liveGame.value : null));
+
 // One sentence under the greeting. Read from the server's session record, not
 // the live socket: useStreamState leaves the alerts channel when it unmounts,
 // and the header already holds the one live copy.
 const streamLine = computed(() => {
   const s = props.lastStream;
   if (!s) return 'Your stream has not gone live with Overlabels yet. Everything below is ready for when it does.';
+  // With a game to suggest, the template writes the line itself so the game's
+  // name can be a link (see suggestedGame).
+  if (s.live && s.moments === 0) return 'You are live right now. Why not install a game and create some chat interactivity!';
   if (s.live) return `You are live right now. ${s.moments === 1 ? 'One moment' : `${s.moments} moments`} so far - go have fun.`;
   const base = `You last went live ${relativeDay(s.started_at)}, for ${duration(s.minutes)}`;
   if (s.moments === 0) return `${base}.`;
@@ -203,7 +219,16 @@ function onClickCapture(e: MouseEvent) {
                   <span class="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75" />
                   <span class="relative inline-flex size-2.5 rounded-full bg-green-500" />
                 </span>
-                {{ streamLine }}
+                <span v-if="suggestedGame">
+                  You are live right now. Why not play a game of
+                  <Link
+                    :href="route('products.manage', suggestedGame.slug)"
+                    class="font-medium text-[#0A78BE] underline-offset-2 hover:underline dark:text-[#1DAAFF]"
+                    >{{ suggestedGame.name }}</Link
+                  >
+                  with your viewers?
+                </span>
+                <span v-else>{{ streamLine }}</span>
               </p>
             </div>
           </div>

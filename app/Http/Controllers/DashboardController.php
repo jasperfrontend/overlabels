@@ -160,6 +160,7 @@ class DashboardController extends Controller
                     'hero' => $listed[$slug]['hero'] ?? null,
                     'service' => $listed[$slug]['installs']['integrations'][0] ?? null,
                     'category' => $listed[$slug]['category'] ?? null,
+                    'game' => (bool) ($listed[$slug]['game'] ?? false),
                     'remaining' => count($missing),
                     'todo' => $first === null ? null : (ProductSetup::STEPS[$first['key']]['todo'] ?? strtolower($first['label'])),
                 ];

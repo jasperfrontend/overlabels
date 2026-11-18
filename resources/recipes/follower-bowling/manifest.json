@@ -15,6 +15,7 @@
   "requires_bot": true,
   "listed": true,
   "category": "product",
+  "game": true,
   "hero": "/products/follower-bowling-hero.jpg",
   "hero_alt": "Follower Bowling on stream: a bowling ball rolls at ten pins, each named after one of the channel's newest followers",
   "follower_pins": 10,

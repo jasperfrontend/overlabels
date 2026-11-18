@@ -253,6 +253,8 @@ export interface InstalledProduct {
   service: string | null;
   /** A RecipeCatalog::CATEGORIES key: 'product' or 'alert'. */
   category: string | null;
+  /** Chat plays it (the manifest's `game` flag). Dashboard only. */
+  game?: boolean;
   /** Setup steps still missing; 0 = on the stream. Dashboard only. */
   remaining?: number;
   /** The first missing step, in words ("make sure the bot is switched on"). */

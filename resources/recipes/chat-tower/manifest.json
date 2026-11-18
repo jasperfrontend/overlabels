@@ -15,6 +15,7 @@
   "requires_bot": true,
   "listed": true,
   "category": "product",
+  "game": true,
   "hero": "/products/chat-tower-hero.jpg",
   "hero_alt": "Chat Tower on stream: a tower of blocks, each named after the chatter who stacked it, with the height and the record above it",
   "ready_message": "Your chat can type !stack right now.",
