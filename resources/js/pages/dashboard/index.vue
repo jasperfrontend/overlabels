@@ -1,16 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { useEventListener, useResizeObserver } from '@vueuse/core';
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Plus, Radio, Sparkles, Zap } from '@lucide/vue';
+import { ArrowRight, Check, Radio, Sparkles, Zap } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import EventsTable from '@/components/EventsTable.vue';
 import ProductIcon from '@/components/product-icons/ProductIcon.vue';
 import { hasProductIcon } from '@/components/product-icons/registry';
-import ServiceLogo from '@/components/ServiceLogo.vue';
+import ProductStrip from '@/components/ProductStrip.vue';
 import WelcomeBanner from '@/components/WelcomeBanner.vue';
 import WelcomeDialog from '@/components/WelcomeDialog.vue';
-import { useEventColors } from '@/composables/useEventColors';
 import type { AppPageProps, InstalledProduct, WhatsNew } from '@/types';
 
 // The dashboard is a lobby, not an inventory. Four things, in the order a
@@ -119,72 +117,11 @@ const streamLine = computed(() => {
 
 const latestNews = computed(() => props.whatsNew.items[0] ?? null);
 
-const onStream = computed(() => props.installedProducts.filter((p) => (p.remaining ?? 0) === 0).length);
-
-const { eventTypeDotClass } = useEventColors();
-const serviceColor = (service: string) => eventTypeDotClass('product', service);
+// Two rows: what chat plays, and everything else that is on the stream.
+const games = computed(() => props.installedProducts.filter((p) => p.game));
+const others = computed(() => props.installedProducts.filter((p) => !p.game));
 
 const breadcrumbs = [{ title: 'Dashboard', href: '/dashboard' }];
-
-// The strip swipes on touch, but a mouse needs more than a thin scrollbar:
-// arrows on hover, and click-and-drag, which is what people try first.
-const strip = ref<HTMLElement | null>(null);
-const canLeft = ref(false);
-const canRight = ref(false);
-
-function updateArrows() {
-  const el = strip.value;
-  if (!el) return;
-  canLeft.value = el.scrollLeft > 1;
-  canRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
-}
-
-useResizeObserver(strip, updateArrows);
-
-function scrollStrip(direction: -1 | 1) {
-  const el = strip.value;
-  if (!el) return;
-  const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // Most of a screen, so the half-shown tile on the edge becomes the first one.
-  el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: smooth ? 'smooth' : 'auto' });
-}
-
-const dragging = ref(false);
-let dragStartX = 0;
-let dragStartScroll = 0;
-let dragPointer: number | null = null;
-let dragMoved = false;
-
-function onPointerDown(e: PointerEvent) {
-  if (e.pointerType !== 'mouse' || e.button !== 0 || !strip.value) return;
-  dragPointer = e.pointerId;
-  dragStartX = e.clientX;
-  dragStartScroll = strip.value.scrollLeft;
-  dragMoved = false;
-}
-
-useEventListener(window, 'pointermove', (e: PointerEvent) => {
-  if (e.pointerId !== dragPointer || !strip.value) return;
-  const dx = e.clientX - dragStartX;
-  if (!dragMoved && Math.abs(dx) < 6) return;
-  dragMoved = true;
-  dragging.value = true;
-  strip.value.scrollLeft = dragStartScroll - dx;
-});
-
-useEventListener(window, 'pointerup', (e: PointerEvent) => {
-  if (e.pointerId !== dragPointer) return;
-  dragPointer = null;
-  dragging.value = false;
-});
-
-// A drag that ends on a tile must not also open it.
-function onClickCapture(e: MouseEvent) {
-  if (!dragMoved) return;
-  dragMoved = false;
-  e.preventDefault();
-  e.stopPropagation();
-}
 </script>
 
 <template>
@@ -214,7 +151,7 @@ function onClickCapture(e: MouseEvent) {
               <h1 class="mt-1 text-4xl leading-none font-bold tracking-tight text-foreground md:text-6xl">
                 {{ greeting }}, <span class="name-fit">{{ user.name }}</span>
               </h1>
-              <p class="mt-3 flex max-w-2xl items-start gap-2 text-base text-foreground md:text-lg">
+              <p class="mt-3 flex items-start gap-2 text-base text-pretty text-foreground md:text-lg">
                 <span v-if="props.lastStream?.live" class="relative mt-2 flex size-2.5 shrink-0">
                   <span class="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75" />
                   <span class="relative inline-flex size-2.5 rounded-full bg-green-500" />
@@ -316,10 +253,13 @@ function onClickCapture(e: MouseEvent) {
               <Check class="size-4" />
               All set
             </p>
-            <h2 id="next-up-heading" class="text-3xl leading-tight font-bold tracking-tight text-foreground md:text-4xl">
-              Everything is on your stream. Go have fun.
-            </h2>
-            <p class="max-w-xl text-base text-foreground">Every game is installed and set up.</p>
+            <h2 id="next-up-heading" class="text-3xl leading-tight font-bold tracking-tight text-foreground md:text-4xl">Nothing left to set up</h2>
+            <!-- Read days later, so it states what is true about Overlabels, not
+                 what the streamer is about to do. A new product is not installed
+                 yet, so it really does take this card's place. -->
+            <p class="max-w-xl text-base text-foreground">
+              You have every Overlabels product installed and ready. When we release a new one, it shows up right here.
+            </p>
             <Link :href="route('products.index', { category: 'installed' })" class="btn btn-secondary self-start">
               View your installed products
               <ArrowRight class="size-4" />
@@ -327,107 +267,18 @@ function onClickCapture(e: MouseEvent) {
           </div>
         </section>
 
-        <!-- 3. What is on the stream. Art, not a list. -->
-        <section class="rise flex flex-col gap-4" style="--d: 180ms" aria-labelledby="on-stream-heading">
-          <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="on-stream-heading" class="text-2xl font-bold tracking-tight text-foreground">On your stream</h2>
-            <Link
-              :href="route('products.index', { category: 'installed' })"
-              class="inline-flex items-center gap-1 text-sm font-medium text-[#0A78BE] hover:underline dark:text-[#1DAAFF]"
-            >
-              {{ onStream }} of {{ props.installedProducts.length }} ready
-              <ArrowRight class="size-3.5" />
-            </Link>
-          </div>
-
-          <div class="strip-wrap relative">
-            <!-- Mouse-only extras: tab and arrow keys already reach every tile, so
-               these stay out of the tab order. -->
-            <button
-              type="button"
-              class="strip-arrow left-0 -translate-x-1/2"
-              :class="{ 'is-on': canLeft }"
-              tabindex="-1"
-              aria-hidden="true"
-              @click="scrollStrip(-1)"
-            >
-              <ChevronLeft class="size-6" />
-            </button>
-            <button
-              type="button"
-              class="strip-arrow right-0 translate-x-1/2"
-              :class="{ 'is-on': canRight }"
-              tabindex="-1"
-              aria-hidden="true"
-              @click="scrollStrip(1)"
-            >
-              <ChevronRight class="size-6" />
-            </button>
-
-            <ul
-              ref="strip"
-              class="stream-strip -mx-4 flex gap-4 overflow-x-auto px-4 pb-3 md:mx-0 md:px-0"
-              :class="dragging ? 'is-dragging' : 'snap-x'"
-              @scroll.passive="updateArrows"
-              @pointerdown="onPointerDown"
-              @click.capture="onClickCapture"
-              @dragstart.prevent
-            >
-              <li v-for="product in props.installedProducts" :key="product.slug" class="w-60 shrink-0 snap-start">
-                <Link
-                  :href="route('products.manage', product.slug)"
-                  class="tile group flex h-full flex-col border border-border bg-sidebar-accent transition-all duration-200 hover:-translate-y-1 hover:border-[#1DAAFF]"
-                >
-                  <div class="relative aspect-video overflow-hidden border-b border-border">
-                    <img
-                      v-if="product.hero"
-                      :src="product.hero"
-                      alt=""
-                      class="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div
-                      v-else
-                      class="flex size-full items-center justify-center bg-muted/30"
-                      :class="product.service ? serviceColor(product.service) : ''"
-                    >
-                      <ServiceLogo v-if="product.service" :source="product.service" class="size-12" />
-                    </div>
-                  </div>
-                  <div class="flex flex-1 items-center gap-3 p-3">
-                    <ProductIcon v-if="hasProductIcon(product.slug)" :slug="product.slug" class="size-5 shrink-0 text-foreground" />
-                    <ServiceLogo
-                      v-else-if="product.service"
-                      :source="product.service"
-                      class="size-5 shrink-0"
-                      :class="serviceColor(product.service)"
-                    />
-                    <div class="min-w-0">
-                      <p class="truncate text-sm font-semibold text-foreground">{{ product.name }}</p>
-                      <p v-if="(product.remaining ?? 0) === 0" class="inline-flex items-center gap-1.5 text-xs text-green-700 dark:text-green-400">
-                        <span class="size-1.5 rounded-full bg-green-500" />
-                        Ready
-                      </p>
-                      <p v-else class="inline-flex items-center gap-1.5 text-xs text-fuchsia-700 dark:text-fuchsia-400">
-                        <span class="size-1.5 rounded-full bg-fuchsia-500" />
-                        {{ product.remaining === 1 ? 'One step left' : `${product.remaining} steps left` }}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              </li>
-
-              <li class="w-60 shrink-0 snap-start">
-                <Link
-                  :href="route('products.index')"
-                  class="group flex h-full min-h-40 flex-col items-center justify-center gap-2 border border-dashed border-border text-muted-foreground transition-colors hover:border-[#1DAAFF] hover:text-foreground"
-                >
-                  <Plus class="size-6 transition-transform group-hover:rotate-90" />
-                  <span class="text-sm font-medium">Find something new</span>
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </section>
+        <!-- 3. What is on the stream: the games chat plays, then everything
+             else (chat feeds, emote bubbles, alerts). The second row only
+             appears when there is something in it. -->
+        <ProductStrip class="rise" style="--d: 180ms" title="Games on your stream" heading-id="games-heading" :products="games" />
+        <ProductStrip
+          v-if="others.length > 0"
+          class="rise"
+          style="--d: 225ms"
+          title="Also on your stream"
+          heading-id="others-heading"
+          :products="others"
+        />
 
         <!-- 4. Lately. -->
         <section class="rise grid gap-6 lg:grid-cols-[1fr_2fr]" style="--d: 270ms" aria-label="Lately">
@@ -533,57 +384,6 @@ function onClickCapture(e: MouseEvent) {
   vertical-align: bottom;
   padding-bottom: 0.12em;
   margin-bottom: -0.12em;
-}
-
-/* A row you can swipe, not a scrollbar you have to look at. */
-.stream-strip {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklab, #1daaff 45%, transparent) transparent;
-}
-
-.stream-strip.is-dragging {
-  cursor: grabbing;
-  user-select: none;
-}
-
-/* Square, bordered, the page's hard shadow: the arrows belong to the app,
-   not to a carousel library. Hidden until the strip is hovered, and only
-   where there is more to see in that direction. */
-.strip-arrow {
-  position: absolute;
-  top: calc(50% - 6px);
-  z-index: 10;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  margin-top: -1.375rem;
-  border: 2px solid color-mix(in oklab, var(--foreground) 90%, transparent);
-  background: var(--background);
-  color: var(--foreground);
-  box-shadow: 4px 4px 0 0 #1daaff;
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.strip-arrow:hover {
-  border-color: #1daaff;
-}
-
-/* Only where there is a real pointer to hover with; touch keeps the swipe. */
-@media (hover: hover) and (pointer: fine) {
-  .strip-arrow {
-    display: flex;
-  }
-  .strip-wrap:hover .strip-arrow.is-on {
-    opacity: 1;
-    pointer-events: auto;
-  }
 }
 
 .tile:hover {
