@@ -207,12 +207,12 @@ function onClickCapture(e: MouseEvent) {
       <template v-else>
         <!-- 1. Hello. -->
         <header class="rise flex flex-col gap-6 md:flex-row md:items-end md:justify-between" style="--d: 0ms">
-          <div class="flex items-center gap-5">
+          <div class="flex min-w-0 items-center gap-5">
             <img v-if="user.avatar" :src="user.avatar" alt="" class="hidden size-20 shrink-0 border-2 border-[#1DAAFF] object-cover sm:block" />
             <div class="min-w-0">
               <p class="font-mono text-xs tracking-widest text-[#0A78BE] uppercase dark:text-[#1DAAFF]">{{ today }}</p>
               <h1 class="mt-1 text-4xl leading-none font-bold tracking-tight text-foreground md:text-6xl">
-                {{ greeting }}, <span class="break-words">{{ user.name }}</span>
+                {{ greeting }}, <span class="name-fit">{{ user.name }}</span>
               </h1>
               <p class="mt-3 flex max-w-2xl items-start gap-2 text-base text-foreground md:text-lg">
                 <span v-if="props.lastStream?.live" class="relative mt-2 flex size-2.5 shrink-0">
@@ -518,6 +518,21 @@ function onClickCapture(e: MouseEvent) {
 .next-up-try:focus-visible {
   outline: none;
   box-shadow: 8px 8px 0 0 #1daaff;
+}
+
+/* Twitch names run to 25 characters with no break in them. The name keeps to
+   one line: beside the greeting when it fits, on its own line when it does
+   not, and cut with an ellipsis when even that is too narrow. The padding
+   makes room for descenders, which the heading's leading-none would clip. */
+.name-fit {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
 }
 
 /* A row you can swipe, not a scrollbar you have to look at. */
