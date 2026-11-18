@@ -118,7 +118,8 @@
   },
   "notes": [
     "The lane runs itself. Whenever someone is in line, the next bowler goes every fifteen seconds and the bot stays quiet.",
-    "It is a full-screen scene: put it on its own OBS scene for your break or downtime."
+    "It is a full-screen scene: put it on its own OBS scene for your break or downtime.",
+    "Don't have 10 followers yet? Don't worry, we'll substitute the followers you're missing up to 10 pins."
   ],
   "max_instances_per_user": 1,
   "installs": {
