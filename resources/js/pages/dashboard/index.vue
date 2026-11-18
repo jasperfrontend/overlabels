@@ -54,7 +54,10 @@ const props = defineProps<{
 
 const page = usePage<AppPageProps>();
 const user = computed(() => page.props.auth.user);
-const locale = computed(() => page.props.auth.user?.locale || undefined);
+// Day and month names here sit inside English sentences, so they are English.
+// The account locale is for what overlays print on stream, not for this copy:
+// with nl-NL it produced "woensdag 18 november" above "Good evening".
+const locale = 'en-US';
 
 // Said the way a person would say it, from the viewer's own clock.
 const greeting = computed(() => {
@@ -65,7 +68,7 @@ const greeting = computed(() => {
   return 'Good evening';
 });
 
-const today = computed(() => new Intl.DateTimeFormat(locale.value, { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date()));
+const today = computed(() => new Intl.DateTimeFormat(locale, { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date()));
 
 function duration(minutes: number, short = false): string {
   if (minutes < 1) return short ? '<1 min' : 'under a minute';
@@ -82,8 +85,8 @@ function relativeDay(iso: string): string {
   const days = Math.round((startOf(now) - startOf(then)) / 86_400_000);
   if (days <= 0) return 'today';
   if (days === 1) return 'yesterday';
-  if (days < 7) return `on ${new Intl.DateTimeFormat(locale.value, { weekday: 'long' }).format(then)}`;
-  return `on ${new Intl.DateTimeFormat(locale.value, { month: 'long', day: 'numeric' }).format(then)}`;
+  if (days < 7) return `on ${new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(then)}`;
+  return `on ${new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric' }).format(then)}`;
 }
 
 // One sentence under the greeting. Read from the server's session record, not
@@ -221,7 +224,16 @@ function onClickCapture(e: MouseEvent) {
 
         <!-- 2. The one door. -->
         <section class="rise" style="--d: 90ms" aria-labelledby="next-up-heading">
-          <div v-if="props.nextUp" class="next-up grid border-2 border-foreground/90 bg-sidebar-accent md:grid-cols-[1fr_1.1fr]">
+          <!-- A product to try is one big link: the shadow and the button's hover
+               arrive together when the card is hovered. A setup to finish keeps
+               its standing shadow and its own button. -->
+          <component
+            :is="props.nextUp.kind === 'try' ? Link : 'div'"
+            v-if="props.nextUp"
+            :href="props.nextUp.kind === 'try' ? props.nextUp.href : undefined"
+            class="grid border-2 border-foreground/90 bg-sidebar-accent md:grid-cols-[1fr_1.1fr]"
+            :class="props.nextUp.kind === 'try' ? 'next-up-try group' : 'next-up'"
+          >
             <div class="flex flex-col justify-center gap-4 p-6 md:p-10">
               <p class="inline-flex items-center gap-2 font-mono text-xs font-semibold tracking-widest text-[#0A78BE] uppercase dark:text-[#1DAAFF]">
                 <Zap class="size-4" />
@@ -245,32 +257,33 @@ function onClickCapture(e: MouseEvent) {
 
               <template v-else>
                 <h2 id="next-up-heading" class="text-3xl leading-tight font-bold tracking-tight text-foreground md:text-4xl">
-                  Your chat has not played {{ props.nextUp.name }} yet
+                  Have you tried our {{ props.nextUp.name }} yet?
                 </h2>
                 <p class="line-clamp-3 max-w-md text-base text-foreground">{{ props.nextUp.description }}</p>
-                <Link :href="props.nextUp.href" class="btn btn-xl btn-primary mt-2 self-start">
+                <span class="btn btn-xl btn-primary mt-2 self-start group-hover:brightness-110">
                   Take a look
-                  <ArrowRight class="size-5" />
-                </Link>
+                  <ArrowRight class="size-5 transition-transform group-hover:translate-x-1" />
+                </span>
               </template>
             </div>
 
-            <Link
-              :href="props.nextUp.href"
+            <component
+              :is="props.nextUp.kind === 'try' ? 'div' : Link"
+              :href="props.nextUp.kind === 'try' ? undefined : props.nextUp.href"
               class="group relative block overflow-hidden border-t-2 border-foreground/90 md:border-t-0 md:border-l-2"
-              tabindex="-1"
+              :tabindex="props.nextUp.kind === 'try' ? undefined : -1"
             >
               <img
                 v-if="props.nextUp.hero"
                 :src="props.nextUp.hero"
                 alt=""
-                class="aspect-video size-full object-cover transition-transform duration-500 group-hover:scale-[1.03] md:aspect-auto"
+                class="aspect-video size-full origin-left object-cover object-left transition-transform duration-500 group-hover:scale-[1.03] md:aspect-auto"
               />
               <div v-else class="flex aspect-video size-full items-center justify-center bg-muted/30">
                 <ProductIcon v-if="hasProductIcon(props.nextUp.slug)" :slug="props.nextUp.slug" class="size-24 text-foreground" />
               </div>
-            </Link>
-          </div>
+            </component>
+          </component>
 
           <!-- Nothing to finish, nothing left to try. -->
           <div v-else class="next-up flex flex-col items-start gap-4 border-2 border-foreground/90 bg-sidebar-accent p-6 md:p-10">
@@ -393,7 +406,13 @@ function onClickCapture(e: MouseEvent) {
 
         <!-- 4. Lately. -->
         <section class="rise grid gap-6 lg:grid-cols-[1fr_2fr]" style="--d: 270ms" aria-label="Lately">
-          <div class="flex flex-col gap-4 border border-border p-6">
+          <!-- The whole block is the link once there is a stream to open. -->
+          <component
+            :is="props.lastStream ? Link : 'div'"
+            :href="props.lastStream ? route('dashboard.stream-sessions') : undefined"
+            class="flex flex-col gap-4 border border-border p-6"
+            :class="props.lastStream ? 'tile group transition-all duration-200 hover:-translate-y-1 hover:border-[#1DAAFF]' : ''"
+          >
             <h2 class="inline-flex items-center gap-2 text-sm font-semibold tracking-widest text-muted-foreground uppercase">
               <Radio class="size-4" />
               {{ props.lastStream?.live ? 'This stream' : 'Last stream' }}
@@ -410,16 +429,13 @@ function onClickCapture(e: MouseEvent) {
                   <p class="text-xs text-muted-foreground">{{ props.lastStream.moments === 1 ? 'moment' : 'moments' }}</p>
                 </div>
               </div>
-              <Link
-                :href="route('dashboard.stream-sessions')"
-                class="mt-auto inline-flex items-center gap-1 text-sm font-medium text-[#0A78BE] hover:underline dark:text-[#1DAAFF]"
-              >
+              <span class="mt-auto inline-flex items-center gap-1 text-sm font-medium text-[#0A78BE] group-hover:underline dark:text-[#1DAAFF]">
                 All your streams
-                <ArrowRight class="size-3.5" />
-              </Link>
+                <ArrowRight class="size-3.5 transition-transform group-hover:translate-x-1" />
+              </span>
             </template>
             <p v-else class="text-sm text-foreground">Go live once and your stream shows up here: how long, and how much happened.</p>
-          </div>
+          </component>
 
           <div class="flex flex-col gap-4 border border-border p-6">
             <div class="flex flex-wrap items-baseline justify-between gap-2">
@@ -465,6 +481,17 @@ function onClickCapture(e: MouseEvent) {
    primary blue, the app's square-cornered style turned up rather than a soft
    glow. */
 .next-up {
+  box-shadow: 8px 8px 0 0 #1daaff;
+}
+
+/* A product to try earns the shadow on hover (and keyboard focus) only. */
+.next-up-try {
+  transition: box-shadow 0.2s ease;
+}
+
+.next-up-try:hover,
+.next-up-try:focus-visible {
+  outline: none;
   box-shadow: 8px 8px 0 0 #1daaff;
 }
 
