@@ -82,9 +82,11 @@ const lastUpdated = 'November 7, 2026';
               <li>Events Twitch sends us about your channel, which are deleted after 90 days</li>
             </ul>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
-              We do not run analytics or tracking of any kind. There is no Google Analytics, no Plausible, no Fathom, no PostHog, no Mixpanel, no
-              Hotjar, no Matomo and no advertising pixel, and we do not use tracking cookies. The only cookie we set is the one that keeps you logged
-              in. We do not geolocate your IP address or send it to any third party.
+              We use one analytics tool: Cloudflare Web Analytics, on this site and on the pages that serve your overlays. It counts page views and
+              measures how fast pages load. It sets no cookies, stores nothing in your browser and does not build a profile of you. It only reports
+              the address of a page without anything after a "#" or "?", so your overlay access token never reaches it. There is no Google Analytics,
+              no Plausible, no Fathom, no PostHog, no Mixpanel, no Hotjar, no Matomo and no advertising pixel, and we do not use tracking cookies. The
+              only cookie we set is the one that keeps you logged in. We do not geolocate your IP address or send it to any third party.
             </p>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
               For a complete, plain-language inventory of every table and how long each thing is kept, see
@@ -118,9 +120,9 @@ const lastUpdated = 'November 7, 2026';
             <p class="mb-4 text-gray-600 dark:text-gray-400">We do not sell your personal information. We may share your data with:</p>
             <ul class="list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
               <li>
-                <strong>Service providers we actually use:</strong> Linode (hosting, Frankfurt), Cloudflare (network and object storage, EU), Scaleway
-                (backup storage, Paris), Twitch, the donation service you connect, ElevenLabs (only the text of an alert you configured to be spoken)
-                and Freesound (only your search terms). There is no analytics provider
+                <strong>Service providers we actually use:</strong> Linode (hosting, Frankfurt), Cloudflare (network, object storage in the EU, and
+                the page analytics described above), Scaleway (backup storage, Paris), Twitch, the donation service you connect, ElevenLabs (only the
+                text of an alert you configured to be spoken) and Freesound (only your search terms)
               </li>
               <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
               <li><strong>Business Transfers:</strong> In connection with a merger, sale, or acquisition</li>

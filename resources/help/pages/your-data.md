@@ -219,9 +219,12 @@ code behind it.
 
 ## What we do not collect
 
-- **No analytics and no tracking.** There is no Google Analytics, no Plausible, no Fathom, no PostHog,
-  no Mixpanel, no Hotjar, no Matomo, no Facebook pixel. The application page loads one external thing:
-  a webfont.
+- **One page counter, and no tracking.** Overlabels uses Cloudflare Web Analytics, on the site and on
+  the pages that serve your overlays, to count page views and measure how fast pages load. It sets no
+  cookies and does not build a profile of you. It only ever sees a page's address without the part
+  after `#` or `?`, so your overlay token never reaches it. Beyond that there is no Google Analytics,
+  no Plausible, no Fathom, no PostHog, no Mixpanel, no Hotjar, no Matomo, no Facebook pixel. The
+  application page loads two external things: a webfont and that counter.
 - **No error reporting service.** No Sentry, no Bugsnag. Errors go to the server's own log.
 - **No debug capture in production.** Telescope, which records request contents, is switched off in
   production and is not even loaded outside local development.
