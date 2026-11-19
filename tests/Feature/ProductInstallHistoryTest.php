@@ -124,7 +124,12 @@ it('does not count the designer preview link as a load', function () {
     $user = historyUser();
     $overlay = historyOverlay(historyInstall($user, 'chat-tower'));
 
-    historyRender($overlay, historyToken($user, ['purpose' => ProductDesigner::TOKEN_PURPOSE]));
+    // A preview token renders only beside its binding cookie (ProductDesigner::admits).
+    $secret = bin2hex(random_bytes(32));
+    $token = historyToken($user, ['purpose' => ProductDesigner::TOKEN_PURPOSE, 'binding' => hash('sha256', $secret)]);
+    $this->withCredentials()->withUnencryptedCookie(ProductDesigner::BINDING_COOKIE, $secret);
+
+    historyRender($overlay, $token);
 
     expect(ProductInstall::where('user_id', $user->id)->sole()->first_loaded_at)->toBeNull();
 });

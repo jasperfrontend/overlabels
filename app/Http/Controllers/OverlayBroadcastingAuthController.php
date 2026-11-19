@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\OverlayAccessToken;
+use App\Support\ProductDesigner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -45,7 +46,7 @@ class OverlayBroadcastingAuthController extends Controller
         }
 
         $token = OverlayAccessToken::findByToken($validated['token'], $request->ip());
-        if (! $token || ! $token->user) {
+        if (! $token || ! $token->user || ! ProductDesigner::admits($token, $request)) {
             return response()->json(['error' => 'Invalid token.'], 401);
         }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\OptionSet;
 use App\Models\OverlayAccessToken;
+use App\Support\ProductDesigner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -45,7 +46,9 @@ class ListReadController extends Controller
         }
 
         $accessToken = OverlayAccessToken::findByToken($token, $request->ip());
-        if (! $accessToken) {
+        // A designer preview token only ever renders the preview frame; it
+        // never reads a List from here (ProductDesigner::admits()).
+        if (! $accessToken || ProductDesigner::isPreviewToken($accessToken)) {
             return response()->json(['error' => 'Invalid or expired token.'], 401);
         }
 

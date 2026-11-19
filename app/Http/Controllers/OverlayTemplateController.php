@@ -29,6 +29,7 @@ use App\Support\Conditionals;
 use App\Support\HelpContext;
 use App\Support\ListItems;
 use App\Support\OverlayMarkdown;
+use App\Support\ProductDesigner;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -627,7 +628,7 @@ class OverlayTemplateController extends Controller
         // Find and validate token
         $token = OverlayAccessToken::findByToken($validated['token'], $request->ip());
 
-        if (! $token) {
+        if (! $token || ! ProductDesigner::admits($token, $request)) {
             return response()->json(['error' => 'Invalid token.'], 401);
         }
 

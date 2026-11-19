@@ -1,5 +1,23 @@
 # Changelog - November 2026
 
+## OL-2611-026 - November 19th, 2026 - fix(designer): a preview token read off a stream works nowhere else
+
+The designer's preview is the real overlay in a frame, and the frame's address carries a token. In
+Firefox, "This Frame > Open Frame in New Tab" puts that address, token and all, in a tab of its own,
+and on stream that is one screenshot away from a viewer holding a day's read access to the account:
+every overlay, the live event channel, the events feed and the Lists.
+
+The token is now tied to the browser that opened the designer. Opening the designer sets a cookie
+that page scripts cannot read and that only goes to the overlay's own API, and the token's record
+keeps a fingerprint of it. Without that cookie the token renders nothing and joins no channel, and
+it never reads the events feed or a List at all, cookie or not. So the token can still show up in
+an address bar, but it does nothing anywhere else.
+
+It also lives two hours instead of a day. The open designer quietly renews it every twenty minutes
+and when you come back to the tab, keeping the same token, so the preview never reloads. A designer
+left past its token (a laptop that slept) gets a fresh one and reloads the frame once, as before.
+OBS links are untouched.
+
 ## OL-2611-025 - November 19th, 2026 - feat(controls): the gradient angle is a circle you drag
 
 Chat Emote Bubbles has two colors and an angle between them, and the angle was a slider from 0 to

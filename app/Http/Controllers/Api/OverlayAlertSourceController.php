@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\OverlayAccessToken;
 use App\Models\OverlayTemplate;
+use App\Support\ProductDesigner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,7 +34,7 @@ class OverlayAlertSourceController extends Controller
         ]);
 
         $token = OverlayAccessToken::findByToken($validated['token'], $request->ip());
-        if (! $token) {
+        if (! $token || ! ProductDesigner::admits($token, $request)) {
             return response()->json(['error' => 'Invalid token.'], 401);
         }
 

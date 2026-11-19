@@ -35,7 +35,9 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        // ol_preview is read by the stateless /api/overlay routes, which never
+        // decrypt (ProductDesigner::BINDING_COOKIE).
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'ol_preview']);
 
         // Lists are lists - preserve exactly what the user typed (empty
         // lines, trailing/leading whitespace, duplicates, all

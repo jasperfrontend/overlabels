@@ -782,6 +782,11 @@ Route::middleware('auth.redirect')->group(function () {
     Route::get('/products/{slug}/design', [ProductController::class, 'design'])
         ->name('products.design')
         ->where('slug', '[a-z][a-z0-9_-]*');
+    // The open designer keeps its preview token alive, so the frame never
+    // reloads (ProductDesigner::renewPreviewToken). 409 = recover instead.
+    Route::post('/products/{slug}/design/preview-token', [ProductController::class, 'renewPreviewToken'])
+        ->name('products.design.preview-token')
+        ->where('slug', '[a-z][a-z0-9_-]*');
     // A preset: one click writes every designer control on the product's
     // overlay. Same gate as the designer.
     Route::post('/products/{slug}/presets/{preset}', [ProductController::class, 'applyPreset'])

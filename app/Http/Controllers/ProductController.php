@@ -563,6 +563,17 @@ class ProductController extends Controller
         return Inertia::render('products/design', $props);
     }
 
+    /**
+     * The open designer's keep-alive for its preview token: 204 when this
+     * session's token got another TOKEN_LIFETIME_MINUTES, 409 when it is
+     * already gone and the frame has to recover onto a fresh one. The slug is
+     * only the address; the token is per session, not per product.
+     */
+    public function renewPreviewToken(Request $request): \Illuminate\Http\Response
+    {
+        return response()->noContent(ProductDesigner::renewPreviewToken($request->user()) ? 204 : 409);
+    }
+
     public function dismissSetup(Request $request): RedirectResponse
     {
         ProductSetup::end($request->user());

@@ -655,6 +655,34 @@ function recoverPreview(): void {
 }
 
 /**
+ * Keep the frame's token alive while the designer is open.
+ *
+ * The token runs out two hours after its last renewal
+ * (ProductDesigner::TOKEN_LIFETIME_MINUTES), so renewing every twenty minutes,
+ * and on coming back to a tab the browser may have throttled, means the frame
+ * never sees it expire and never reloads. A 409 says the token is already gone
+ * (a laptop that slept past it): recover onto a fresh one. Anything else, a
+ * dropped connection, is left for the next tick.
+ */
+const RENEW_EVERY_MS = 20 * 60_000;
+const RENEW_ON_RETURN_AFTER_MS = 5 * 60_000;
+let renewTimer: ReturnType<typeof setInterval> | undefined;
+let lastRenewAt = Date.now();
+
+async function renewPreviewToken(): Promise<void> {
+  lastRenewAt = Date.now();
+  try {
+    await axios.post(`/products/${props.product.slug}/design/preview-token`);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 409) recoverPreview();
+  }
+}
+
+function onVisibilityChange(): void {
+  if (document.visibilityState === 'visible' && Date.now() - lastRenewAt > RENEW_ON_RETURN_AFTER_MS) void renewPreviewToken();
+}
+
+/**
  * What the frame says: that its feed exists (until then a message would be
  * lost), which control it has just applied, and that its token has expired.
  */
@@ -671,6 +699,8 @@ function onFrameMessage(event: MessageEvent): void {
 
 onMounted(() => {
   window.addEventListener('message', onFrameMessage);
+  renewTimer = setInterval(() => void renewPreviewToken(), RENEW_EVERY_MS);
+  document.addEventListener('visibilitychange', onVisibilityChange);
 
   if (stageEl.value && typeof ResizeObserver !== 'undefined') {
     observer = new ResizeObserver(([entry]) => {
@@ -683,6 +713,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('message', onFrameMessage);
+  clearInterval(renewTimer);
+  document.removeEventListener('visibilitychange', onVisibilityChange);
   observer?.disconnect();
   clearTimeout(windowDebounce);
   clearTimeout(filtersDebounce);

@@ -8,6 +8,8 @@ use App\Models\OverlayTemplate;
 use App\Models\RecipeInstance;
 use App\Models\User;
 use App\Models\UserChatPreset;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 
 /**
  * A product's designer, read from the `designer` block of its manifest.
@@ -73,6 +75,26 @@ class ProductDesigner
 
     /** Where the plaintext lives between renders. See previewToken(). */
     public const TOKEN_SESSION_KEY = 'chat_designer_token';
+
+    /**
+     * A preview token lives this long past its mint or its last renewal. The
+     * open designer renews it (renewPreviewToken()), so it runs out two hours
+     * after the designer is closed, not two hours after it was opened.
+     */
+    public const TOKEN_LIFETIME_MINUTES = 120;
+
+    /**
+     * The cookie that ties a preview token to the browser it was minted for.
+     * See admits(). Excluded from cookie encryption (bootstrap/app.php),
+     * because the stateless /api/overlay routes that read it never decrypt.
+     */
+    public const BINDING_COOKIE = 'ol_preview';
+
+    /** Where the binding secret lives between renders, beside the token. */
+    public const BINDING_SESSION_KEY = 'chat_designer_binding';
+
+    /** The only paths the binding cookie is sent to: the overlay's own API. */
+    public const BINDING_COOKIE_PATH = '/api/overlay';
 
     /**
      * The block, or null for a product that has no designer.
@@ -405,24 +427,35 @@ class ProductDesigner
      * every product's designer: it is a read token on the account, and the
      * frame's URL says which overlay to render.
      *
-     * One per session, and a day at most. Minting a new one takes the account's
-     * EXPIRED preview tokens and their access rows with it, so the tokens page
-     * never fills up with them - and only the expired ones. Until 2026-09-22 it
-     * swept every preview token the account had, live or not, which made the
-     * designer open in two browsers a fight: each page load killed the other
-     * session's frame. A token that is still valid belongs to a session that
-     * may still be looking at it; it goes when it expires, a day at most.
+     * One per session, and TOKEN_LIFETIME_MINUTES past its last renewal.
+     * Minting a new one takes the account's EXPIRED preview tokens and their
+     * access rows with it, so the tokens page never fills up with them - and
+     * only the expired ones. Until 2026-09-22 it swept every preview token the
+     * account had, live or not, which made the designer open in two browsers a
+     * fight: each page load killed the other session's frame. A token that is
+     * still valid belongs to a session that may still be looking at it.
+     *
+     * The token is in the frame's URL, so "Open frame in New Tab" shows it in
+     * an address bar, possibly on stream. Since 2026-11-19 it is bound to this
+     * browser: the mint sets a random cookie, the row stores its sha256, and
+     * the overlay endpoints refuse the token without it (admits()). A token
+     * read off a stream is useless anywhere else. Every call re-sets the
+     * cookie, so a browser that lost it gets it back on the next recovery.
      */
     public static function previewToken(User $user): string
     {
         $held = session(self::TOKEN_SESSION_KEY);
+        $secret = session(self::BINDING_SESSION_KEY);
 
-        if (is_string($held) && strlen($held) === 64) {
+        if (is_string($held) && strlen($held) === 64 && is_string($secret) && $secret !== '') {
             // findByToken() already refuses an expired or inactive row, so a
-            // held token that has run out falls through to a fresh mint.
-            $token = OverlayAccessToken::findByToken($held);
+            // held token that has run out falls through to a fresh mint. So
+            // does one minted before the binding, which has no hash to match.
+            $token = self::heldPreviewToken($user, $held, $secret);
 
-            if ($token && $token->user_id === $user->id && ($token->metadata['purpose'] ?? null) === self::TOKEN_PURPOSE) {
+            if ($token) {
+                self::queueBindingCookie($secret);
+
                 return $held;
             }
         }
@@ -438,19 +471,104 @@ class ProductDesigner
         }
 
         $generated = OverlayAccessToken::generateToken();
+        $secret = bin2hex(random_bytes(32));
 
         $user->overlayAccessTokens()->create([
             'name' => self::TOKEN_NAME,
             'token_hash' => $generated['hash'],
             'token_prefix' => $generated['prefix'],
-            'expires_at' => now()->addDay(),
+            'expires_at' => now()->addMinutes(self::TOKEN_LIFETIME_MINUTES),
             'abilities' => 'read',
-            'metadata' => ['purpose' => self::TOKEN_PURPOSE],
+            'metadata' => ['purpose' => self::TOKEN_PURPOSE, 'binding' => hash('sha256', $secret)],
         ]);
 
-        session([self::TOKEN_SESSION_KEY => $generated['plain']]);
+        session([self::TOKEN_SESSION_KEY => $generated['plain'], self::BINDING_SESSION_KEY => $secret]);
+        self::queueBindingCookie($secret);
 
         return $generated['plain'];
+    }
+
+    /**
+     * Push this session's preview token another TOKEN_LIFETIME_MINUTES out,
+     * keeping the same token so the frame on screen never reloads. The open
+     * designer calls this on a timer. False when the held token is already
+     * gone (expired, revoked, another session's), which the designer answers
+     * by recovering the frame onto a fresh one.
+     */
+    public static function renewPreviewToken(User $user): bool
+    {
+        $held = session(self::TOKEN_SESSION_KEY);
+        $secret = session(self::BINDING_SESSION_KEY);
+
+        if (! is_string($held) || ! is_string($secret) || $secret === '') {
+            return false;
+        }
+
+        $token = self::heldPreviewToken($user, $held, $secret);
+
+        if (! $token) {
+            return false;
+        }
+
+        $token->update(['expires_at' => now()->addMinutes(self::TOKEN_LIFETIME_MINUTES)]);
+        self::queueBindingCookie($secret);
+
+        return true;
+    }
+
+    /** True for a token the designer minted. */
+    public static function isPreviewToken(OverlayAccessToken $token): bool
+    {
+        return ($token->metadata['purpose'] ?? null) === self::TOKEN_PURPOSE;
+    }
+
+    /**
+     * Whether a request may use this token on an overlay endpoint.
+     *
+     * Any other token passes untouched: an OBS link carries no cookie and
+     * must keep working. A preview token passes only with the binding cookie
+     * of the browser it was minted for. One minted before the binding has no
+     * hash and passes nowhere; the designer recovers onto a fresh one.
+     */
+    public static function admits(OverlayAccessToken $token, Request $request): bool
+    {
+        if (! self::isPreviewToken($token)) {
+            return true;
+        }
+
+        $binding = $token->metadata['binding'] ?? null;
+        $cookie = $request->cookies->get(self::BINDING_COOKIE);
+
+        return is_string($binding) && is_string($cookie) && $cookie !== ''
+            && hash_equals($binding, hash('sha256', $cookie));
+    }
+
+    private static function heldPreviewToken(User $user, string $held, string $secret): ?OverlayAccessToken
+    {
+        $token = OverlayAccessToken::findByToken($held);
+
+        if (! $token || $token->user_id !== $user->id || ! self::isPreviewToken($token)) {
+            return null;
+        }
+
+        $binding = $token->metadata['binding'] ?? null;
+
+        return is_string($binding) && hash_equals($binding, hash('sha256', $secret)) ? $token : null;
+    }
+
+    private static function queueBindingCookie(string $secret): void
+    {
+        Cookie::queue(Cookie::make(
+            self::BINDING_COOKIE,
+            $secret,
+            self::TOKEN_LIFETIME_MINUTES,
+            self::BINDING_COOKIE_PATH,
+            null,
+            null,
+            true,
+            false,
+            'strict',
+        ));
     }
 
     /**
