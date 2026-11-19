@@ -43,6 +43,12 @@ function enabledIfConfigs(OverlayTemplate $template): array
     return $template->controls()->orderBy('sort_order')->get()->mapWithKeys(fn (OverlayControl $c) => [$c->key => $c->config])->all();
 }
 
+/** Every row's value, keyed by control key. */
+function enabledIfValues(OverlayTemplate $template): array
+{
+    return $template->controls()->orderBy('sort_order')->pluck('value', 'key')->all();
+}
+
 /** An install from before: every enabled_if taken off its row. */
 function stripEnabledIf(OverlayTemplate $template): void
 {
@@ -65,14 +71,19 @@ it('gives installs from before exactly the declarations a fresh install has', fu
         expect(collect($expected)->filter(fn ($config) => isset($config['enabled_if'])))->not->toBeEmpty();
 
         stripEnabledIf($template);
-        $template->controls()->where('key', 'bubble_color')->update(['value' => '#ff7eb6']);
+        // A value the streamer chose on a row the backfill writes, so it
+        // differs from the recipe default the install put there.
+        $template->controls()->whereIn('key', ['bubble_color', 'background_color'])->update(['value' => '#ff7eb6']);
+        $values = enabledIfValues($template);
 
         enabledIfBackfill()->up();
 
-        expect(enabledIfConfigs($template))->toBe($expected);
+        expect(enabledIfConfigs($template))->toBe($expected)
+            ->and(enabledIfValues($template))->toBe($values);
     }
 
-    expect(OverlayControl::where('key', 'bubble_color')->where('user_id', $user->id)->value('value'))->toBe('#ff7eb6');
+    expect(OverlayControl::where('user_id', $user->id)->whereIn('key', ['bubble_color', 'background_color'])->pluck('value')->unique()->values()->all())
+        ->toBe(['#ff7eb6']);
 });
 
 it('leaves a row that already declares one, and a hand-made control with the same key, alone', function () {

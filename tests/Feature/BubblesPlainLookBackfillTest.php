@@ -80,10 +80,15 @@ it('runs twice without adding Plain twice', function () {
     makePrePlain($template);
 
     plainBackfill()->up();
+    $configAfterFirst = lookRow($template)->config;
+    $cssAfterFirst = $template->fresh()->css;
+
     plainBackfill()->up();
 
-    expect(array_column(lookRow($template)->config['choices'], 'value'))->toBe(['bubble', 'snow', 'heart', 'plain'])
-        ->and(substr_count($template->fresh()->css, '.look-plain'))->toBe(1);
+    expect(lookRow($template)->config)->toBe($configAfterFirst)
+        ->and($template->fresh()->css)->toBe($cssAfterFirst)
+        ->and(array_column($configAfterFirst['choices'], 'value'))->toBe(['bubble', 'snow', 'heart', 'plain'])
+        ->and(substr_count($cssAfterFirst, '.look-plain'))->toBe(1);
 });
 
 it('still offers Plain when the streamer rewrote the heart emote rule, and leaves their CSS alone', function () {

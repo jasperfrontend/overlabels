@@ -23,6 +23,9 @@ it('reads one condition or a list, and nothing else', function () {
         ->and(ControlConditions::of(['enabled_if' => []]))->toBeNull()
         ->and(ControlConditions::of(['enabled_if' => ['look' => 'plain']]))->toBeNull()
         ->and(ControlConditions::of(['enabled_if' => ['c:look != plain', 3]]))->toBeNull()
+        ->and(ControlConditions::of(['enabled_if' => ['c:look != plain', '']]))->toBeNull()
+        ->and(ControlConditions::of(['enabled_if' => ['c:look != plain', '   ']]))->toBeNull()
+        ->and(ControlConditions::of(['enabled_if' => '']))->toBeNull()
         ->and(ControlConditions::of(['min' => 1]))->toBeNull()
         ->and(ControlConditions::of(null))->toBeNull();
 });
@@ -50,8 +53,10 @@ it('refuses enabled_if on a control with no knob to grey out', function () {
         ->toBe(['Control "tint" is a counter control; only text, number, boolean and color controls can declare enabled_if.']);
 });
 
-it('refuses a value that is not one of the choices, which is a typo', function () {
+it('refuses a value that is not one of the choices, which is a typo, with = and with !=', function () {
     expect(ControlConditions::problems(conditionControls(['c:look != plian'])))
+        ->toBe(['Control "tint" compares look to "plian", which is not one of its choices (bubble, plain).'])
+        ->and(ControlConditions::problems(conditionControls(['c:look = plian'])))
         ->toBe(['Control "tint" compares look to "plian", which is not one of its choices (bubble, plain).']);
 });
 
