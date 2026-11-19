@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import AnglePicker from '@/components/controls/AnglePicker.vue';
 import FontPicker from '@/components/products/FontPicker.vue';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { angleColorKeys } from '@/utils/angleKnob';
 import { choiceHint, controlChoices } from '@/utils/controlChoices';
 
 /**
@@ -29,6 +31,11 @@ import { choiceHint, controlChoices } from '@/utils/controlChoices';
  * right-hand end of that label line, for whatever the page wants next to it
  * (the Values tab puts the tag key and its "Saved" receipt there).
  *
+ * A number control with `config.angle_colors` is an angle: a circle painted
+ * with those two colors and a line to drag (AnglePicker), with the exact box
+ * beside it. The caller resolves the two keys to live values and passes them
+ * as `angleColors`, because a knob only knows its own row.
+ *
  * `disabledReason` greys the whole knob out in place (a native disabled
  * fieldset, so every input inside it, the color picker and font search
  * included, stops taking changes) and shows the reason where the hint goes.
@@ -43,6 +50,7 @@ const props = defineProps<{
   suggestedFonts?: { value: string; hint: string }[];
   fontsUrl?: string;
   disabledReason?: string | null;
+  angleColors?: [string, string] | null;
 }>();
 
 const emit = defineEmits<{
@@ -55,12 +63,13 @@ const choices = computed(() => controlChoices(props.control.config));
 const hint = computed(() => choiceHint(choices.value, props.value));
 
 /** Which widget the row asks for. Text is the fallback: a free string, committed when left. */
-const kind = computed<'choices' | 'font' | 'boolean' | 'color' | 'number' | 'text'>(() => {
+const kind = computed<'choices' | 'font' | 'boolean' | 'color' | 'angle' | 'number' | 'text'>(() => {
   const type = props.control.type;
   if (type === 'text' && choices.value.length) return 'choices';
   if (type === 'text' && props.control.config?.webfont === true && props.fontsUrl) return 'font';
   if (type === 'boolean') return 'boolean';
   if (type === 'color') return 'color';
+  if (type === 'number' && angleColorKeys(props.control.config) && props.angleColors) return 'angle';
   if (type === 'number') return 'number';
   return 'text';
 });
@@ -152,6 +161,30 @@ function valueOf(event: Event): string {
             class="input-border min-w-0 flex-1 font-mono text-xs"
             :value="value"
             :aria-label="`${label} value`"
+            @change="emit('commit', valueOf($event))"
+          />
+        </div>
+
+        <!-- An angle: the line to drag, and the exact value beside it. -->
+        <div v-else-if="kind === 'angle' && angleColors" class="grid grid-cols-[7fr_3fr] items-center gap-3">
+          <AnglePicker
+            :id="id"
+            :label="label"
+            :value="Number(value) || 0"
+            :first="angleColors[0]"
+            :second="angleColors[1]"
+            :disabled="!!disabledReason"
+            @input="emit('input', String($event))"
+            @commit="emit('commit', String($event))"
+          />
+          <input
+            type="number"
+            class="input-border min-w-0 text-sm tabular-nums"
+            :min="min"
+            :max="max"
+            :step="step"
+            :value="value"
+            :aria-label="`${label} exact value`"
             @change="emit('commit', valueOf($event))"
           />
         </div>

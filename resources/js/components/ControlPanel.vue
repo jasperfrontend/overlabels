@@ -9,6 +9,7 @@ import type { OverlayControl, OverlayTemplate } from '@/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { SERVICE_LABELS } from '@/utils/services';
 import { controlChoices } from '@/utils/controlChoices';
+import { angleColorKeys } from '@/utils/angleKnob';
 import { type ConditionSubject, disabledReason } from '@/utils/controlConditions';
 
 const props = defineProps<{
@@ -190,6 +191,20 @@ function getLocalValue(ctrl: OverlayControl): string {
  * Every control by tag key, for `config.enabled_if`: the same reading the
  * product designer makes, so a knob greys out on both pages alike.
  */
+/**
+ * The two live colors an angle knob paints. The keys name controls of this
+ * overlay, so they are looked up among its own rows (no service source).
+ */
+function angleColorsFor(ctrl: OverlayControl): [string, string] | null {
+  const keys = angleColorKeys(ctrl.config);
+  if (!keys) return null;
+
+  const [first, second] = keys.map((key) => props.controls.find((c) => c.key === key && !c.source));
+  if (!first || !second) return null;
+
+  return [getLocalValue(first), getLocalValue(second)];
+}
+
 const conditionSubjects = computed<Record<string, ConditionSubject>>(() =>
   Object.fromEntries(
     props.controls.map((c) => [`c:${broadcastKeyFor(c)}`, { key: c.key, label: c.label, config: c.config ?? null, value: getLocalValue(c) }]),
@@ -474,6 +489,7 @@ const isTimerRunning = (ctrl: OverlayControl) => Boolean(ctrl.config?.running);
                   :suggested-fonts="fonts?.suggested"
                   :fonts-url="fonts?.url"
                   :disabled-reason="disabledReason(ctrl.config, conditionSubjects)"
+                  :angle-colors="angleColorsFor(ctrl)"
                   @input="localValues[ctrl.id] = $event"
                   @commit="commitKnob(ctrl, $event)"
                 >

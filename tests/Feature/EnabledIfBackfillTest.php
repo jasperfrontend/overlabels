@@ -37,10 +37,21 @@ function enabledIfInstall(User $user, string $slug): OverlayTemplate
     return OverlayTemplate::findOrFail(collect($instance->primitive_map['overlays'])->first());
 }
 
-/** Every row's config, keyed by control key. */
+/**
+ * Every row's config, keyed by control key, each config's keys sorted: the
+ * backfill appends `enabled_if`, so a row that carries a later key too (the
+ * angle knob's `angle_colors`) holds the same config in a different order.
+ */
 function enabledIfConfigs(OverlayTemplate $template): array
 {
-    return $template->controls()->orderBy('sort_order')->get()->mapWithKeys(fn (OverlayControl $c) => [$c->key => $c->config])->all();
+    return $template->controls()->orderBy('sort_order')->get()->mapWithKeys(function (OverlayControl $c) {
+        $config = $c->config;
+        if (is_array($config)) {
+            ksort($config);
+        }
+
+        return [$c->key => $config];
+    })->all();
 }
 
 /** Every row's value, keyed by control key. */

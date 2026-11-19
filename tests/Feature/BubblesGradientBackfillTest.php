@@ -84,9 +84,10 @@ it('gives an install from before the gradient exactly what a fresh install has n
         ->and($fresh->controls()->count())->toBe(10);
 
     gradientBackfill()->up();
-    // The two rows it creates are frozen without enabled_if; prod gets that
-    // from the 2026-11-19 backfill, which runs after it.
+    // The two rows it creates are frozen without enabled_if or angle_colors;
+    // prod gets those from the two 2026-11-19 backfills, which run after it.
     (require base_path('database/migrations/2026_11_19_130000_declare_enabled_if_on_installed_product_controls.php'))->up();
+    (require base_path('database/migrations/2026_11_19_150000_declare_angle_colors_on_installed_chat_emote_bubbles.php'))->up();
 
     $template = $fresh->fresh();
     expect($template->css)->toBe($expectedCss)

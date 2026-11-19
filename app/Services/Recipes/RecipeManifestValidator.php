@@ -6,6 +6,7 @@ use App\Models\EventTemplateMapping;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\OverlayTemplate;
 use App\Services\External\ExternalServiceRegistry;
+use App\Support\AngleKnob;
 use App\Support\ControlConditions;
 use App\Support\Dsl;
 use App\Support\OverlayMarkdown;
@@ -263,8 +264,9 @@ class RecipeManifestValidator
     }
 
     /**
-     * Every overlay document's `enabled_if` declarations, held against the
-     * controls the same document declares (ControlConditions::problems()).
+     * Every overlay document's `enabled_if` and `angle_colors` declarations,
+     * held against the controls the same document declares
+     * (ControlConditions::problems(), AngleKnob::problems()).
      * A document that does not parse is reported by ingredientErrors().
      *
      * @param  array<string, mixed>  $manifest
@@ -281,7 +283,7 @@ class RecipeManifestValidator
                 continue;
             }
 
-            foreach (ControlConditions::problems($doc['controls']) as $problem) {
+            foreach ([...ControlConditions::problems($doc['controls']), ...AngleKnob::problems($doc['controls'])] as $problem) {
                 $errors[] = ['pointer' => "/installs/overlays/{$i}", 'message' => "{$document['file']}: {$problem}"];
             }
         }

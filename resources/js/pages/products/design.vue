@@ -8,6 +8,7 @@ import AddToObsButton from '@/components/AddToObsButton.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import ControlKnob from '@/components/controls/ControlKnob.vue';
+import { angleColorKeys } from '@/utils/angleKnob';
 import { type ConditionSubject, disabledReason } from '@/utils/controlConditions';
 import { stageFor, type StageSize } from '@/utils/designerStage';
 import type { AppPageProps, BreadcrumbItem, ForeachCaps } from '@/types';
@@ -148,6 +149,14 @@ const conditionSubjects = computed<Record<string, ConditionSubject>>(() =>
 
 function reasonFor(key: string): string | null {
   return disabledReason(controls[key]?.config, conditionSubjects.value);
+}
+
+/** The two live colors an angle knob paints, when its row names two controls that are here. */
+function angleColorsFor(key: string): [string, string] | null {
+  const keys = angleColorKeys(controls[key]?.config);
+  if (!keys || !controls[keys[0]] || !controls[keys[1]]) return null;
+
+  return [valueOf(keys[0]), valueOf(keys[1])];
 }
 
 // Per key: is a write on its way, and the newest value asked for meanwhile.
@@ -853,6 +862,7 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
                 :suggested-fonts="suggested_fonts"
                 :fonts-url="fonts_url"
                 :disabled-reason="reasonFor(key)"
+                :angle-colors="angleColorsFor(key)"
                 @input="moveKnob(key, $event)"
                 @commit="writeControl(key, $event)"
               />

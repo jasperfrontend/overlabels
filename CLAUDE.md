@@ -964,6 +964,15 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
   recipe overlay to that through `RecipeManifestValidator`, plus: a `c:` key the overlay declares,
   not itself, and a `=`/`!=` value that is one of the subject's `choices`. The frontend ignores
   anything malformed, so a bad hand-written declaration can only leave a knob enabled.
+- **A number control can be an angle knob: `config.angle_colors`** (Nov 19th 2026, OL-2611-025),
+  two color keys of the same overlay, first color first. `ControlKnob` draws `AnglePicker.vue`
+  (a circle painted with the two live colors, a line to drag, the exact box beside it) instead of
+  a slider; the caller resolves the keys to values (`angleColors` prop), because a knob only knows
+  its own row. **The angle is where the FIRST color sits, clockwise from twelve o'clock** - the
+  overlay's `calc(180deg + angle)`, not CSS's own 0deg. That offset lives in `gradientCss()`
+  (`utils/angleKnob.ts`) and the bubbles CSS only, and `angleKnob.test.ts` reads `bubbles.md` to
+  hold them together. `AngleKnob::problems()` holds recipes to it (number control, two declared
+  color keys). Arrow keys step 1, Shift 15; Shift-drag snaps to 15.
 - **The control dialog sends back every config key it draws no field for** (fixed 2026-11-19,
   `utils/controlConfigPayload.ts`). It used to send `config: null` for text, color and boolean and
   six fields alone for a number, and the server stores config whole, so renaming a label wiped

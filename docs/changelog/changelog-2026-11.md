@@ -1,5 +1,21 @@
 # Changelog - November 2026
 
+## OL-2611-025 - November 19th, 2026 - feat(controls): the gradient angle is a circle you drag
+
+Chat Emote Bubbles has two colors and an angle between them, and the angle was a slider from 0 to
+360. Nobody pictures a direction from a number, so turning it meant dragging and squinting at the
+preview. It is now a circle painted with your two colors and a line through it. The big end of the
+line is your first color: drag it to where that color should be, and the circle shows exactly the
+gradient your bubbles get. The number box stays beside it for anyone who wants exactly 90.
+
+The circle reads the colors live, so changing Bubble color repaints it at once, and it greys out
+with them on the Plain look. Arrow keys turn it one degree at a time, Shift makes that fifteen, and
+holding Shift while you drag snaps to fifteen.
+
+Any number control can be one: it names the two color controls it turns
+(`angle_colors=["bubble_color","bubble_color_2"]`), the same way it names its choices. Existing
+installs get it from a backfill. The sketch it came from was Jasper's, built with Gemini and Claude.
+
 ## OL-2611-023 - November 19th, 2026 - feat(controls): a knob greys itself out while another holds a value
 
 Chat Emote Bubbles gained a fourth look, **Plain**: no bubble, snowflake or heart, just the emote,

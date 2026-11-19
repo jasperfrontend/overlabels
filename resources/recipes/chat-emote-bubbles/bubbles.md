@@ -242,7 +242,7 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 - `c:bubble_color_2` - Where the gradient ends. The same as Bubble color gives one plain color.
   - enabled_if=["c:look != plain"]
 - `c:gradient_angle` - Turns the gradient, in degrees. 0 runs from Bubble color at the top to Second color at the bottom, 90 runs right to left, 180 bottom to top, 270 left to right.
-  - min=0, max=360, step=1, reset_value=0, random=false, random_interval=null, enabled_if=["c:look != plain"]
+  - min=0, max=360, step=1, reset_value=0, random=false, random_interval=null, enabled_if=["c:look != plain"], angle_colors=["bubble_color","bubble_color_2"]
 - `c:speed` - How fast a bubble travels, 1 to 10. At 1 a bubble takes 24 seconds to cross the screen, at 10 under three.
   - min=1, max=10, step=1, reset_value=4, random=false, random_interval=null
 - `c:direction` - `up` floats bubbles toward the top of the screen, `down` sinks them toward the bottom. The spawn edge follows.
