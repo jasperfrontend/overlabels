@@ -33,8 +33,16 @@ function enabledIfInstall(User $user, string $slug): OverlayTemplate
     $catalog = app(RecipeCatalog::class);
     $recipe = $catalog->sync($catalog->find($slug));
     $instance = app(RecipeInstaller::class)->install($recipe, $user, RecipeInstance::instanceSlugFrom($slug));
+    $template = OverlayTemplate::findOrFail(collect($instance->primitive_map['overlays'])->first());
 
-    return OverlayTemplate::findOrFail(collect($instance->primitive_map['overlays'])->first());
+    // This backfill predates the bubbles shapes, so it is tested against the
+    // recipe as it stood then. The shapes backfill runs after it on prod and
+    // brings its own enabled_if.
+    if ($slug === 'chat-emote-bubbles') {
+        makePreShapes($template);
+    }
+
+    return $template->fresh();
 }
 
 /**

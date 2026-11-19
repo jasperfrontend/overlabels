@@ -35,8 +35,13 @@ function gradientInstall(User $user): OverlayTemplate
     $catalog = app(RecipeCatalog::class);
     $recipe = $catalog->sync($catalog->find('chat-emote-bubbles'));
     $instance = app(RecipeInstaller::class)->install($recipe, $user, RecipeInstance::instanceSlugFrom('chat-emote-bubbles'));
+    $template = OverlayTemplate::findOrFail($instance->primitive_map['overlays']['bubbles']);
 
-    return OverlayTemplate::findOrFail($instance->primitive_map['overlays']['bubbles']);
+    // This backfill predates the shapes, so it is tested against the recipe
+    // as it stood then. The shapes backfill runs after it on prod.
+    makePreShapes($template);
+
+    return $template->fresh();
 }
 
 /**
@@ -117,6 +122,9 @@ it('shows the active preset again on an install from before the gradient', funct
         ->assertInertia(fn (Assert $page) => $page->where('product.designer.presets.0.active', false));
 
     gradientBackfill()->up();
+    // The presets now name the shape keys too, which come from the shapes
+    // backfill, the next in line on prod.
+    shapesBackfill()->up();
 
     $this->actingAs($user)->get('/products/chat-emote-bubbles/install')
         ->assertInertia(fn (Assert $page) => $page->where('product.designer.presets.0.active', true));

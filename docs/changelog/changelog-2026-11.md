@@ -1,5 +1,35 @@
 # Changelog - November 2026
 
+## OL-2611-028 - November 19th, 2026 - feat(bubbles): twenty shapes for Chat Emote Bubbles
+
+Chat Emote Bubbles has a fifth look, **Choose another shape**, and with it twenty shapes to float
+emotes in: a ghost, a cat head, a Christmas bauble, a water drop, a paw print, a flame, a squircle,
+four stars, a starburst badge and a run of polygons from triangle to dodecagon. Pick one under
+Shape in the designer. Each is drawn in your two colors and your gradient angle, like every other
+look.
+
+The emote is the content and the shape is the frame, so the emote never shrinks to fit. Every shape
+grows around it instead, keeping the same breathing room on all sides, which is why a star or a
+triangle comes out bigger than a squircle. Three new controls set the frame:
+
+- **Border width** - the outline in pixels, 0 for none. A thicker outline grows the shape rather
+  than squeezing the emote.
+- **Fill strength** - how strongly the gradient fills the inside, from see-through to solid. The
+  outline stays at full strength.
+- **Breathing room** - the space between the emote and the outline.
+
+Making the shapes as tall as they need to be showed up something the soap bubble had always hidden:
+a bubble travelled exactly one bubble size past the edge before stopping. A paw print is taller
+than that, so with Pop after at 0 a row of toe tops stayed parked along the bottom of the screen.
+Bubbles now travel as far as their picture actually reaches, start far enough outside the screen
+that nothing peeks in early, and stop fully on screen when they gather to pop. The other looks move
+exactly as before.
+
+Existing installs get all of it from a backfill. An overlay whose markup or styles were edited
+where the backfill writes is left alone, and a select or description the streamer changed keeps
+their version. The product's hero image is new too. The shape library started as Jasper's
+prototype, sketched with Claude.
+
 ## OL-2611-026 - November 19th, 2026 - fix(designer): a preview token read off a stream works nowhere else
 
 The designer's preview is the real overlay in a frame, and the frame's address carries a token. In

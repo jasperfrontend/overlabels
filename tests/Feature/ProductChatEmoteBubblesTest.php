@@ -24,7 +24,7 @@ uses(DatabaseTransactions::class);
  * Chat Emote Bubbles is the fifth product and the second that installs nothing
  * but an overlay. It is the Twitch Chat product's sibling: the same direct
  * Twitch connection, read through the `emotes` loop instead of `chat`, and its
- * whole behaviour is twelve template-scoped controls landing in CSS.
+ * whole behaviour is sixteen template-scoped controls landing in CSS.
  */
 function bubblesUser(array $attrs = []): User
 {
@@ -76,7 +76,7 @@ it('installs one overlay and nothing else to connect', function () {
         ->and($manifest['requires_bot'] ?? false)->toBeFalse();
 });
 
-it('installs the bubbles overlay with its twelve controls and no other rows', function () {
+it('installs the bubbles overlay with its sixteen controls and no other rows', function () {
     $user = bubblesUser();
 
     $instance = app(RecipeInstaller::class)->install(bubblesRecipe(), $user, 'chat_emote_bubbles');
@@ -91,7 +91,8 @@ it('installs the bubbles overlay with its twelve controls and no other rows', fu
 
     $controls = OverlayControl::where('overlay_template_id', $template->id)->orderBy('sort_order')->get();
     expect($controls->pluck('key')->all())->toBe([
-        'look', 'bubble_size', 'bubble_color', 'bubble_color_2', 'gradient_angle', 'speed', 'direction',
+        'look', 'shape', 'bubble_size', 'bubble_color', 'bubble_color_2', 'gradient_angle', 'border_width',
+        'fill_strength', 'breathing_room', 'speed', 'direction',
         'max_bubbles', 'pop_after', 'spawn', 'spawn_x', 'spawn_y',
     ])
         ->and($controls->where('type', 'expression')->count())->toBe(0)
@@ -116,7 +117,7 @@ it('reads every control it declares, and every control it reads is declared', fu
     $read = collect($m[1])->unique()->sort()->values()->all();
 
     expect($read)->toBe($declared)
-        ->and(count($declared))->toBe(12);
+        ->and(count($declared))->toBe(16);
 });
 
 it('paints every look with the two-color gradient, turned clockwise from top to bottom by the angle', function () {
@@ -133,6 +134,41 @@ it('paints every look with the two-color gradient, turned clockwise from top to 
         preg_match_all('/\.look-'.$look.' [^{]*\{([^}]*)\}/', $css, $rules);
         expect(implode('', $rules[1]))->toContain('background: var(--fill)');
     }
+});
+
+it('draws every shape choice, and cuts each bubble out with the one mask', function () {
+    // A choice with no drawing renders as the bare emote, and one with no
+    // constants renders the gradient as nothing at all, both silently.
+    $doc = bubblesDocument();
+    $shapes = array_column(collect($doc['controls'])->firstWhere('key', 'shape')['config']['choices'], 'value');
+
+    expect($shapes)->toHaveCount(20);
+
+    foreach ($shapes as $shape) {
+        expect(substr_count($doc['html'], '<path id="ol-shape-'.$shape.'" '))->toBe(1)
+            ->and($doc['css'])->toMatch('/\.shape-'.$shape.' \{ --sr: [\d.]+; --ox: -?[\d.]+; --oy: -?[\d.]+; --bw: [\d.]+; --bh: [\d.]+; \}/');
+    }
+
+    // The defs sit before the loop: after it, they would be the last child
+    // and shift which bubbles `:nth-last-child` counts as the newest.
+    expect(strpos($doc['html'], 'class="ol-shape-defs"'))->toBeLessThan(strpos($doc['html'], '[[[foreach:emotes as e]]]'))
+        ->and(substr_count($doc['html'], 'href="#ol-shape-[[[c:shape]]]"'))->toBe(3)
+        ->and($doc['html'])->toContain('shape-[[[c:shape]]]')
+        ->and($doc['css'])->toContain('mask: url(#ol-shape-mask);')
+        // Firefox drops a unitless calc() for stroke-width and draws a hairline.
+        ->and($doc['css'])->toContain('stroke-width: calc(2px * var(--border) / var(--k));')
+        // A shape can be taller than the bubble's size. Travelling only one
+        // size past the edge left the top of a paw print parked on screen.
+        ->and($doc['css'])->toContain('--reach: var(--size);')
+        ->and($doc['css'])->toContain('--dist: calc(var(--edge) * 1vh + var(--offabs) + var(--reach));')
+        ->and($doc['css'])->toMatch('/\.look-shape \{[^}]*--reach: max\(var\(--size\),/')
+        // And on the side it travels toward: it peeked in before floating in
+        // from outside, and was cut off where it gathered at the edge to pop.
+        ->and($doc['css'])->toContain('--lead: calc(var(--size) / 2);')
+        ->and($doc['css'])->toContain('.spawn-outside .bubble { --offabs: calc(var(--lead) + 8px); }')
+        ->and($doc['css'])->toContain('.popping .bubble { --dist: calc(var(--edge) * 1vh + var(--offabs) - var(--lead)); }')
+        ->and($doc['css'])->toContain('.look-shape.dir-up { --lead:')
+        ->and($doc['css'])->toContain('.look-shape.dir-down { --lead:');
 });
 
 it('caps the bubbles on screen through a selector, which is the one tag in the CSS that cannot be a custom property', function () {
@@ -170,12 +206,12 @@ it('has no wires beyond the overlay and its OBS link', function () {
 });
 
 it('declares a vocabulary on each text control, styles every value in it, and defaults to one of them', function () {
-    // The three text controls are each a closed vocabulary the CSS keys on
-    // (`look-`, `dir-`, `spawn-` classes). The row says which values exist,
+    // The four text controls are each a closed vocabulary the CSS keys on
+    // (`look-`, `shape-`, `dir-`, `spawn-` classes). The row says which values exist,
     // so the Controls tab offers a select rather than a box to guess into,
     // and this holds the declaration against the CSS in both directions.
     $doc = bubblesDocument();
-    $prefixes = ['look' => '.look-', 'direction' => '.dir-', 'spawn' => '.spawn-'];
+    $prefixes = ['look' => '.look-', 'shape' => '.shape-', 'direction' => '.dir-', 'spawn' => '.spawn-'];
 
     $text = collect($doc['controls'])->where('type', 'text')->keyBy('key');
     expect($text->keys()->all())->toEqualCanonicalizing(array_keys($prefixes));
@@ -205,7 +241,7 @@ it('installs the vocabularies onto the rows', function () {
 
     $controls = OverlayControl::where('overlay_template_id', $instance->primitive_map['overlays']['bubbles'])->get()->keyBy('key');
 
-    foreach (['look', 'direction', 'spawn'] as $key) {
+    foreach (['look', 'shape', 'direction', 'spawn'] as $key) {
         expect($controls[$key]->config['choices'])->toBe($declared[$key]['config']['choices']);
     }
 
@@ -256,7 +292,7 @@ it('opens the designer for an install, with the bubbles controls and no chat win
             ->component('products/design')
             ->where('product.slug', 'chat-emote-bubbles')
             ->where('overlay.id', $instance->primitive_map['overlays']['bubbles'])
-            ->has('controls', 12)
+            ->has('controls', 16)
             ->where('controls.look.value', 'bubble')
             ->where('controls.spawn_x.type', 'number')
             ->has('presets', 4)
@@ -313,7 +349,7 @@ it('shows the designer card on the product page once installed, and applies a lo
         ->and($values['spawn'])->toBe('random')
         ->and($values['max_bubbles'])->toBe('60');
 
-    Event::assertDispatchedTimes(ControlValueUpdated::class, 12);
+    Event::assertDispatchedTimes(ControlValueUpdated::class, 16);
 
     $this->actingAs($user)->get('/products/chat-emote-bubbles/install')
         ->assertInertia(fn (Assert $page) => $page

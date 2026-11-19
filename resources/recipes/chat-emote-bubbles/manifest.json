@@ -3,7 +3,7 @@
   "slug": "chat-emote-bubbles",
   "name": "Chat Emote Bubbles",
   "version": 1,
-  "description": "Every emote your chat types floats across your stream in a soap bubble. Type PogChamp five times and five PogChamps drift up and away. Twitch, 7TV, BTTV and FFZ emotes all count, read straight from Twitch chat with nothing to connect and no bot to add. Twelve controls set the look (bubble, snowflake, heart or plain), a two-color gradient, the speed, the direction, how many can be on screen, where they appear and whether they pop.",
+  "description": "Every emote your chat types floats across your stream in a soap bubble. Type PogChamp five times and five PogChamps drift up and away. Twitch, 7TV, BTTV and FFZ emotes all count, read straight from Twitch chat with nothing to connect and no bot to add. Sixteen controls set the look (bubble, snowflake, heart, twenty shapes or plain), a two-color gradient, the speed, the direction, how many can be on screen, where they appear and whether they pop.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"
@@ -15,12 +15,12 @@
   "listed": true,
   "category": "product",
   "hero": "/products/chat-emote-bubbles-hero.jpg",
-  "hero_alt": "Chat Emote Bubbles on stream: emotes typed in Twitch chat float up the screen inside soap bubbles",
+  "hero_alt": "Chat Emote Bubbles: emotes typed in Twitch chat float up the screen inside cat-head bubbles, beside the designer's shape, border, fill and gradient controls",
   "obs_hint": "Make the browser source your whole canvas, 1920 by 1080, and put it above your camera.",
   "ready_message": "Every emote your chat types becomes a bubble. The designer below sets the look, the speed and where they appear.",
   "highlights": [
     "Every emote your Twitch chat types floats across your stream in a bubble. Five PogChamps in one message are five bubbles.",
-    "Four looks: soap bubble, snowflake, heart, or just the emote. Speed, direction, size, a two-color gradient, how many at once, and where they appear.",
+    "Five looks: soap bubble, snowflake, heart, twenty shapes, or just the emote. Speed, direction, size, a two-color gradient, how many at once, and where they appear.",
     "Nothing to connect and no bot to add. Every change lands in OBS as you make it."
   ],
   "pitch": {
@@ -80,7 +80,7 @@
       {
         "icon": "palette",
         "title": "Four looks to start from",
-        "body": "Soap bubbles, snowflakes or hearts in any colour, or just the emote on its own, rising, sinking or fired from one spot."
+        "body": "Soap bubbles, snowflakes, hearts or twenty shapes in any colour, or just the emote on its own, rising, sinking or fired from one spot."
       },
       {
         "icon": "zap",
@@ -123,7 +123,17 @@
     "groups": [
       {
         "title": "Look",
-        "keys": ["look", "bubble_size", "bubble_color", "bubble_color_2", "gradient_angle"]
+        "keys": [
+          "look",
+          "shape",
+          "bubble_size",
+          "bubble_color",
+          "bubble_color_2",
+          "gradient_angle",
+          "border_width",
+          "fill_strength",
+          "breathing_room"
+        ]
       },
       {
         "title": "Motion",
@@ -145,10 +155,14 @@
         "blurb": "A white soap bubble for every emote, floating in from below and off the top. The one you start with.",
         "values": {
           "look": "bubble",
+          "shape": "ghost",
           "bubble_size": "96",
           "bubble_color": "#ffffff",
           "bubble_color_2": "#ffffff",
           "gradient_angle": "0",
+          "border_width": "3",
+          "fill_strength": "30",
+          "breathing_room": "5",
           "direction": "up",
           "speed": "4",
           "pop_after": "0",
@@ -164,10 +178,14 @@
         "blurb": "Pale blue snowflakes, appearing anywhere on screen and sinking slowly. December, or a chilly game.",
         "values": {
           "look": "snow",
+          "shape": "ghost",
           "bubble_size": "88",
           "bubble_color": "#bfe3ff",
           "bubble_color_2": "#bfe3ff",
           "gradient_angle": "0",
+          "border_width": "3",
+          "fill_strength": "30",
+          "breathing_room": "5",
           "direction": "down",
           "speed": "2",
           "pop_after": "0",
@@ -183,10 +201,14 @@
         "blurb": "Pink hearts fired up from one point near the bottom. Aim the cannon with Spawn X and Spawn Y.",
         "values": {
           "look": "heart",
+          "shape": "ghost",
           "bubble_size": "96",
           "bubble_color": "#ff7eb6",
           "bubble_color_2": "#ff7eb6",
           "gradient_angle": "0",
+          "border_width": "3",
+          "fill_strength": "30",
+          "breathing_room": "5",
           "direction": "up",
           "speed": "5",
           "pop_after": "0",
@@ -202,10 +224,14 @@
         "blurb": "No bubble at all, just the emote itself, floating in from below and off the top.",
         "values": {
           "look": "plain",
+          "shape": "ghost",
           "bubble_size": "96",
           "bubble_color": "#ffffff",
           "bubble_color_2": "#ffffff",
           "gradient_angle": "0",
+          "border_width": "3",
+          "fill_strength": "30",
+          "breathing_room": "5",
           "direction": "up",
           "speed": "4",
           "pop_after": "0",

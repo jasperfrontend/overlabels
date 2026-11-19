@@ -34,8 +34,13 @@ function plainInstall(User $user): OverlayTemplate
     $catalog = app(RecipeCatalog::class);
     $recipe = $catalog->sync($catalog->find('chat-emote-bubbles'));
     $instance = app(RecipeInstaller::class)->install($recipe, $user, RecipeInstance::instanceSlugFrom('chat-emote-bubbles'));
+    $template = OverlayTemplate::findOrFail($instance->primitive_map['overlays']['bubbles']);
 
-    return OverlayTemplate::findOrFail($instance->primitive_map['overlays']['bubbles']);
+    // This backfill predates the shapes, so it is tested against the recipe
+    // as it stood then. The shapes backfill runs after it on prod.
+    makePreShapes($template);
+
+    return $template->fresh();
 }
 
 function lookRow(OverlayTemplate $template): OverlayControl
@@ -62,6 +67,8 @@ it('gives an install from before Plain exactly the choices a fresh install has n
     $expectedCss = $template->css;
     $declared = collect(OverlayMarkdown::parse(file_get_contents(RecipeInstaller::directoryFor('chat-emote-bubbles').DIRECTORY_SEPARATOR.'bubbles.md'))['controls'])
         ->keyBy('key')['look']['config']['choices'];
+    // The Shape choice came after Plain and has its own backfill.
+    $declared = array_values(array_filter($declared, fn ($c) => $c['value'] !== 'shape'));
 
     makePrePlain($template);
     lookRow($template)->update(['value' => 'heart']);

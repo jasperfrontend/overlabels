@@ -1,7 +1,7 @@
 ---
 title: Chat Emote Bubbles - every emote your chat types floats across your stream - Overlabels
 section: Bot & chat
-description: Every emote your Twitch chat types floats across your stream in a soap bubble, a snowflake or a heart. One click to install, nothing to connect, no bot. The twelve controls, the emotes loop it is built on, and how to build your own.
+description: Every emote your Twitch chat types floats across your stream in a soap bubble, a snowflake or a heart. One click to install, nothing to connect, no bot. The sixteen controls, the emotes loop it is built on, and how to build your own.
 heading: Chat Emote Bubbles
 lead: Every emote your chat types floats across your stream in a bubble, one bubble per emote. Type PogChamp five times and five PogChamps drift up and away. Nothing to connect, no bot to add.
 keywords: emote bubbles, bubble trouble, floating emotes, emote rain, emote widget, soap bubbles, snowflakes, hearts, pogchamp
@@ -12,20 +12,29 @@ click. Put it in OBS as a browser source the size of your canvas, above your cam
 your chat types is a bubble on your stream. Twitch emotes and the 7TV, BTTV and FFZ emotes enabled in
 your channel all count.
 
-Everything the product does is twelve controls on the overlay's Controls tab, and every change lands in
-OBS the moment it is made.
+Everything the product does is sixteen controls on the overlay's Controls tab, and every change lands
+in OBS the moment it is made.
 
 ## The controls
 
 - **Look** - `bubble` is a soap bubble, `snow` puts a snowflake behind the emote, `heart`
   is a heart-shaped bubble. Winter and Valentine's Day are the point of the second and third.
-- **Bubble size** - width and height in pixels, 32 to 240. The emote inside scales with it.
+  `shape` draws one of twenty shapes around the emote, picked under Shape.
+- **Shape** - for the Shape look: a ghost, a cat head, a Christmas bauble, a paw print, a flame,
+  stars and polygons, twenty in all. The emote is the same size in every shape; the shape grows
+  around it, so a star comes out bigger than a squircle.
+- **Bubble size** - width and height in pixels, 32 to 240. The emote inside scales with it. On the
+  Shape look it sets the emote's size.
 - **Bubble color** - the ring and shine, the snowflake, or the heart. White reads as soap; try a pale
   pink on the heart and a pale blue on the snowflake.
 - **Second color** - turns the color into a gradient that runs from Bubble color to this one. Set
   both to the same color for one plain color.
 - **Gradient angle** - turns the gradient, 0 to 360 degrees. 0 runs from Bubble color at the top to
   Second color at the bottom, 90 runs right to left, 180 bottom to top, 270 left to right.
+- **Border width**, **Fill strength** and **Breathing room** - for the Shape look: the outline in
+  pixels (0 for none), how strongly the gradient fills the inside (0 is see-through, 100 is solid),
+  and the space in pixels between the emote and the outline. A thicker outline grows the shape
+  rather than squeezing the emote.
 - **Float speed** - 1 to 10. At 1 a bubble takes 24 seconds to cross the screen, at 10 under three.
 - **Direction** - `up` floats bubbles toward the top of the screen, `down` sinks them toward the
   bottom. Where they appear follows.
