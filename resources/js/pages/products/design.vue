@@ -2,12 +2,13 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Eraser, Loader2, MessageSquarePlus } from '@lucide/vue';
+import { Eraser, Loader2, MessageSquarePlus, Pause, Play } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import ControlKnob from '@/components/controls/ControlKnob.vue';
+import { type ConditionSubject, disabledReason } from '@/utils/controlConditions';
 import { stageFor, type StageSize } from '@/utils/designerStage';
 import type { AppPageProps, BreadcrumbItem, ForeachCaps } from '@/types';
 
@@ -65,6 +66,8 @@ const props = defineProps<{
   stage: StageSize[];
   chat_window?: number;
   chat_window_max?: number;
+  /** Top of the sample-chat rate slider, per product; sent with `sample_chat`. */
+  sample_chat_max?: number;
   chat_filters?: { hide_commands: boolean; hidden_logins: string[] };
   max_hidden_logins?: number;
 }>();
@@ -133,6 +136,18 @@ function remember(prop: string, value: unknown): void {
 
 function valueOf(key: string): string {
   return controls[key]?.value ?? '';
+}
+
+/**
+ * Every knob by tag key, for `config.enabled_if`. Read off the live values,
+ * so a knob greys out while another one is still being dragged.
+ */
+const conditionSubjects = computed<Record<string, ConditionSubject>>(() =>
+  Object.fromEntries(Object.values(controls).map((c) => [`c:${c.key}`, { key: c.key, label: c.label, config: c.config, value: c.value ?? '' }])),
+);
+
+function reasonFor(key: string): string | null {
+  return disabledReason(controls[key]?.config, conditionSubjects.value);
 }
 
 // Per key: is a write on its way, and the newest value asked for meanwhile.
@@ -528,12 +543,27 @@ let observer: ResizeObserver | null = null;
 
 const rate = ref(0);
 
+// The slider's top, and the speed Play resumes at: the last one played, or
+// a quarter of the top on the first press.
+const rateMax = computed(() => props.sample_chat_max ?? 120);
+const lastRate = ref(0);
+
+function togglePlay(): void {
+  if (rate.value > 0) {
+    setRate(0);
+    return;
+  }
+
+  setRate(lastRate.value || Math.max(10, Math.round(rateMax.value / 4 / 10) * 10));
+}
+
 function postToFrame(payload: Record<string, unknown>): void {
   frame.value?.contentWindow?.postMessage({ ol: 'chat-sample', ...payload }, window.location.origin);
 }
 
 function setRate(perMinute: number): void {
   rate.value = perMinute;
+  if (perMinute > 0) lastRate.value = perMinute;
   postToFrame({ rate: perMinute });
 }
 
@@ -822,6 +852,7 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
                 :value="valueOf(key)"
                 :suggested-fonts="suggested_fonts"
                 :fonts-url="fonts_url"
+                :disabled-reason="reasonFor(key)"
                 @input="moveKnob(key, $event)"
                 @commit="writeControl(key, $event)"
               />
@@ -909,21 +940,44 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
 
         <!-- Preview -->
         <div class="flex flex-col gap-2 lg:sticky lg:top-4">
-          <div v-if="has('sample_chat')" class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <div class="flex items-center gap-2">
-              <label class="text-sm text-foreground" for="sample-rate">Sample chat</label>
+          <!-- The sample chat is what sets the preview moving, so it gets a
+               bar of its own joined to the stage: Play/Pause, a slider that
+               takes the spare width, and the rate read out large. The readout
+               has a fixed width so the slider never jumps as it changes. -->
+          <div
+            v-if="has('sample_chat')"
+            class="-mb-2 flex flex-col gap-3 rounded-t-sm border border-b-0 border-border bg-card p-3 sm:flex-row sm:items-center sm:gap-4"
+          >
+            <button
+              type="button"
+              class="btn min-w-48 shrink-0"
+              :class="rate === 0 ? 'btn-primary' : 'btn-secondary'"
+              :aria-pressed="rate > 0"
+              @click="togglePlay"
+            >
+              <Play v-if="rate === 0" class="size-4" />
+              <Pause v-else class="size-4" />
+              {{ rate === 0 ? 'Play sample chat' : 'Pause sample chat' }}
+            </button>
+
+            <div class="flex min-w-0 flex-1 items-center gap-3">
+              <label class="sr-only" for="sample-rate">Sample chat speed, messages per minute</label>
               <input
                 id="sample-rate"
                 type="range"
-                class="w-32 cursor-pointer"
+                class="min-w-0 flex-1 cursor-pointer accent-[#1DAAFF]"
                 min="0"
-                max="120"
+                :max="rateMax"
                 step="10"
                 :value="rate"
                 @input="setRate(Number(($event.target as HTMLInputElement).value))"
               />
-              <span class="text-xs text-muted-foreground tabular-nums">{{ rate === 0 ? 'paused' : `${rate}/min` }}</span>
+              <div class="w-24 shrink-0 text-right leading-tight" aria-live="polite">
+                <span class="block text-xl font-semibold text-foreground tabular-nums">{{ rate === 0 ? 'Paused' : rate }}</span>
+                <span class="block text-xs text-muted-foreground">{{ rate === 0 ? 'no chat' : 'messages / min' }}</span>
+              </div>
             </div>
+
             <div class="flex items-center gap-2">
               <button type="button" class="btn btn-sm btn-cancel cursor-pointer" @click="postToFrame({ burst: 6 })">
                 <MessageSquarePlus class="mr-1.5 size-3.5" />

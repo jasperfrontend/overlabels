@@ -59,7 +59,7 @@
            sticky nav. No hover on a phone, so no description there. --}}
       @php
           $cardLabels = [
-              'chat-emote-bubbles' => '3 design presets',
+              'chat-emote-bubbles' => '4 design presets',
               'twitch-chat-overlay' => '10+ design presets',
           ];
           // Hover copy, hand-kept: written to earn the click, so no setup

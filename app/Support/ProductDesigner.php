@@ -47,6 +47,14 @@ class ProductDesigner
      */
     public const EXTRAS = ['sample_chat', 'chat_window', 'chat_filters'];
 
+    /**
+     * The top of the sample-chat rate slider when the block declares no
+     * `sample_chat_max`, in messages per minute. A busy chat feed reads as
+     * noise past this; an emote overlay wants more, because only some sample
+     * messages carry an emote.
+     */
+    public const DEFAULT_SAMPLE_CHAT_MAX = 120;
+
     /** The preview's browser-source size when the block declares no stage. */
     public const DEFAULT_STAGE = ['w' => 1920, 'h' => 1080];
 
@@ -223,6 +231,16 @@ class ProductDesigner
             $designer['extras'] ?? [],
             fn ($extra) => in_array($extra, self::EXTRAS, true),
         ));
+    }
+
+    /**
+     * @param  array<string, mixed>  $designer
+     */
+    public static function sampleChatMax(array $designer): int
+    {
+        $max = $designer['sample_chat_max'] ?? null;
+
+        return is_int($max) && $max > 0 ? $max : self::DEFAULT_SAMPLE_CHAT_MAX;
     }
 
     /**

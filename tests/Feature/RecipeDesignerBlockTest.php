@@ -216,3 +216,37 @@ it('checks only the block itself without the recipe directory', function () {
         ->and($messages)->toContain('Control "layout" is in more than one group.')
         ->and($messages)->not->toContain('Control "glow" is not declared by chat.md.');
 });
+
+it('rejects an enabled_if that names a choice the control does not have', function () {
+    $slug = 'chat-emote-bubbles';
+    $dir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'enabled-if-'.uniqid();
+    mkdir($dir);
+    $source = RecipeInstaller::directoryFor($slug);
+    copy($source.'/manifest.json', $dir.'/manifest.json');
+    file_put_contents($dir.'/bubbles.md', str_replace('enabled_if=["c:spawn = cannon"]', 'enabled_if=["c:spawn = canon"]', file_get_contents($source.'/bubbles.md')));
+
+    try {
+        $messages = array_column((new RecipeManifestValidator)->validate(designerBlockManifest($slug), $dir)['errors'], 'message');
+    } finally {
+        array_map('unlink', glob($dir.'/*'));
+        rmdir($dir);
+    }
+
+    expect($messages)->toContain('bubbles.md: Control "spawn_x" compares spawn to "canon", which is not one of its choices (outside, edge, random, cannon).')
+        ->and($messages)->toContain('bubbles.md: Control "spawn_y" compares spawn to "canon", which is not one of its choices (outside, edge, random, cannon).');
+});
+
+it('rejects a sample_chat_max on a designer with no sample chat', function () {
+    $m = designerBlockManifest('chat-emote-bubbles');
+    $m['designer']['extras'] = ['chat_filters'];
+
+    expect(designerBlockMessages($m, 'chat-emote-bubbles'))
+        ->toContain('sample_chat_max sets the sample-chat slider, which only shows with "sample_chat" in extras.');
+});
+
+it('rejects a sample_chat_max past what the preview can send', function () {
+    $m = designerBlockManifest('chat-emote-bubbles');
+    $m['designer']['sample_chat_max'] = 1000;
+
+    expect(designerBlockErrors($m, 'chat-emote-bubbles'))->not->toBe([]);
+});

@@ -947,6 +947,30 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
   the bubbles overlay. The cap of 20 is per product. The table and model keep their `Chat` names.
 - Tower and Checkin integration settings stay on their settings pages; a designer edits overlay
   controls only. Ingredients are not settings either (baked at install).
+- **A knob can grey itself out: `config.enabled_if`** (Nov 19th 2026, OL-2611-023), declared like
+  `choices` (`- enabled_if=["c:look != plain"]`) and travelling with the row. Each entry is the
+  body of an `[[[if:...]]]`, parsed and evaluated by the overlay engine's own functions
+  (`utils/controlConditions.ts` calls `useConditionalTemplates`), a list means ALL must hold.
+  **Equality is a single `=`** - the DSL has no `==`, it reads as `=` against "= value", and the
+  validator refuses it. No `disabled_if`, no "or": `!=` covers it and two opposite keys could
+  contradict. Born from a pipe syntax (`[[[c:x|disabled:look:plain]]]`) that was rejected because
+  a pipe is per tag occurrence and "disabled" is a property of the control.
+- `ControlKnob` greys the knob out in place with a native `<fieldset disabled>` (color picker and
+  font search included) and shows the reason under it. Jasper chose grey-out over hide so nothing
+  moves. Disabling NEVER changes a value, so no condition can feed another and cycles cannot
+  matter. UI only, like `choices`: presets, chat and the overlay are untouched.
+- Both sides of a condition must be knob types (`ProductDesigner::KNOB_TYPES`), so a live counter
+  cannot make a field flicker mid-stream. `App\Support\ControlConditions::problems()` holds every
+  recipe overlay to that through `RecipeManifestValidator`, plus: a `c:` key the overlay declares,
+  not itself, and a `=`/`!=` value that is one of the subject's `choices`. The frontend ignores
+  anything malformed, so a bad hand-written declaration can only leave a knob enabled.
+- **The control dialog sends back every config key it draws no field for** (fixed 2026-11-19,
+  `utils/controlConfigPayload.ts`). It used to send `config: null` for text, color and boolean and
+  six fields alone for a number, and the server stores config whole, so renaming a label wiped
+  `choices` (a select became a text box), `webfont` and `enabled_if`. `DIALOG_KEYS` lists what the
+  dialog owns; a new config key that the dialog does NOT draw needs nothing, one it DOES draw goes
+  on that list. Every other config writer (fork import, template import, kit copy, install) already
+  copied config whole.
 
 ### Chat load testing (Aug 2026)
 

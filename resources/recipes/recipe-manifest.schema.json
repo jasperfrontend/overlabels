@@ -466,6 +466,12 @@
           "uniqueItems": true,
           "items": { "type": "string", "enum": ["sample_chat", "chat_window", "chat_filters"] }
         },
+        "sample_chat_max": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 400,
+          "description": "The top of the sample-chat rate slider, in messages per minute. Only with `sample_chat` in extras. Omitted, 120. The preview sends at most one message per 150 ms, so 400 is the most it can show."
+        },
         "stage": {
           "type": "array",
           "description": "The OBS browser-source size the preview renders at, in pixels. The first entry with no `when` is the default; an entry with `when` applies while every named control holds the given value, and the last matching entry wins. Omitted, the preview is 1920 by 1080.",

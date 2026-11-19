@@ -72,7 +72,8 @@ it('puts the declared vocabulary on installed product rows that lack one', funct
 
     expect($chat->controls()->where('key', 'layout')->firstOrFail()->config['choices'])->toBe(declaredChoices('twitch-chat-overlay', 'chat.md', 'layout'))
         ->and($chat->controls()->where('key', 'background')->firstOrFail()->config['choices'])->toBe(declaredChoices('twitch-chat-overlay', 'chat.md', 'background'))
-        ->and($bubbles->controls()->where('key', 'look')->firstOrFail()->config['choices'])->toBe(declaredChoices('chat-emote-bubbles', 'bubbles.md', 'look'))
+        // Frozen at three: Plain came later, with its own backfill (2026-11-19).
+        ->and($bubbles->controls()->where('key', 'look')->firstOrFail()->config['choices'])->toBe((new ReflectionClass(backfillMigration()))->getConstant('VOCABULARIES')['chat-emote-bubbles']['controls']['look'])
         ->and($bubbles->controls()->where('key', 'look')->firstOrFail()->value)->toBe('heart')
         ->and($bubbles->controls()->where('key', 'direction')->firstOrFail()->config['choices'])->toBe(declaredChoices('chat-emote-bubbles', 'bubbles.md', 'direction'))
         ->and($bubbles->controls()->where('key', 'spawn')->firstOrFail()->config['choices'])->toBe(declaredChoices('chat-emote-bubbles', 'bubbles.md', 'spawn'));

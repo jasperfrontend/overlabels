@@ -28,6 +28,13 @@ import { choiceHint, controlChoices } from '@/utils/controlChoices';
  * The knob renders its own label so the two pages read alike; `aside` is the
  * right-hand end of that label line, for whatever the page wants next to it
  * (the Values tab puts the tag key and its "Saved" receipt there).
+ *
+ * `disabledReason` greys the whole knob out in place (a native disabled
+ * fieldset, so every input inside it, the color picker and font search
+ * included, stops taking changes) and shows the reason where the hint goes.
+ * The caller works it out from the row's `config.enabled_if` with
+ * `disabledReason()` in `utils/controlConditions.ts`. Nothing moves or
+ * disappears, and the value stays what it was.
  */
 const props = defineProps<{
   id: string;
@@ -35,6 +42,7 @@ const props = defineProps<{
   value: string;
   suggestedFonts?: { value: string; hint: string }[];
   fontsUrl?: string;
+  disabledReason?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -73,103 +81,114 @@ function valueOf(event: Event): string {
 </script>
 
 <template>
-  <!-- On or off. The same switch the control's edit dialog draws, so one
+  <div class="flex min-w-0 flex-col gap-1.5">
+    <fieldset
+      :disabled="!!disabledReason"
+      class="m-0 flex min-w-0 flex-col gap-1.5 border-0 p-0"
+      :class="{ 'cursor-not-allowed opacity-50': disabledReason }"
+      :title="disabledReason ?? undefined"
+    >
+      <!-- On or off. The same switch the control's edit dialog draws, so one
        boolean has one look everywhere. The label is the switch's own. -->
-  <div v-if="kind === 'boolean'" class="flex items-center justify-between gap-3">
-    <label class="flex cursor-pointer items-center gap-3 text-sm text-foreground" :for="id">
-      <span class="relative inline-flex items-center">
-        <input
-          :id="id"
-          type="checkbox"
-          class="peer sr-only"
-          :checked="value === '1'"
-          @change="emit('commit', ($event.target as HTMLInputElement).checked ? '1' : '0')"
-        />
-        <span
-          class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-green-800 dark:after:bg-gray-100"
-        ></span>
-      </span>
-      {{ label }}
-    </label>
-    <slot name="aside" />
-  </div>
+      <div v-if="kind === 'boolean'" class="flex items-center justify-between gap-3">
+        <label class="flex cursor-pointer items-center gap-3 text-sm text-foreground" :for="id">
+          <span class="relative inline-flex items-center">
+            <input
+              :id="id"
+              type="checkbox"
+              class="peer sr-only"
+              :checked="value === '1'"
+              @change="emit('commit', ($event.target as HTMLInputElement).checked ? '1' : '0')"
+            />
+            <span
+              class="peer h-6 w-10 rounded-full bg-gray-300 peer-checked:bg-green-400 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:peer-checked:bg-green-800 dark:after:bg-gray-100"
+            ></span>
+          </span>
+          {{ label }}
+        </label>
+        <slot name="aside" />
+      </div>
 
-  <template v-else>
-    <div class="flex items-baseline justify-between gap-3">
-      <label class="text-sm text-foreground" :for="id">{{ label }}</label>
-      <slot name="aside" />
-    </div>
+      <template v-else>
+        <div class="flex items-baseline justify-between gap-3">
+          <label class="text-sm text-foreground" :for="id">{{ label }}</label>
+          <slot name="aside" />
+        </div>
 
-    <!-- A closed vocabulary, declared on the row. -->
-    <template v-if="kind === 'choices'">
-      <select
-        :id="id"
-        class="w-full cursor-pointer rounded-sm border border-border bg-background px-2 py-1.5 text-sm text-foreground"
-        :value="value"
-        @change="emit('commit', valueOf($event))"
-      >
-        <!-- A held value that is not one of the choices stays selectable as
+        <!-- A closed vocabulary, declared on the row. -->
+        <template v-if="kind === 'choices'">
+          <select
+            :id="id"
+            class="w-full cursor-pointer rounded-sm border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+            :value="value"
+            @change="emit('commit', valueOf($event))"
+          >
+            <!-- A held value that is not one of the choices stays selectable as
              itself, so the select never shows a value the row does not hold. -->
-        <option v-if="!choices.some((choice) => choice.value === value)" :value="value">{{ value }}</option>
-        <option v-for="choice in choices" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
-      </select>
-      <p v-if="hint" class="text-xs text-muted-foreground">{{ hint }}</p>
-    </template>
+            <option v-if="!choices.some((choice) => choice.value === value)" :value="value">{{ value }}</option>
+            <option v-for="choice in choices" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
+          </select>
+          <p v-if="hint && !disabledReason" class="text-xs text-muted-foreground">{{ hint }}</p>
+        </template>
 
-    <!-- An open vocabulary: every family Bunny Fonts serves. -->
-    <FontPicker
-      v-else-if="kind === 'font'"
-      :id="id"
-      :model-value="value"
-      :suggested="suggestedFonts ?? []"
-      :catalogue-url="fontsUrl ?? ''"
-      @update:model-value="emit('commit', $event)"
-    />
+        <!-- An open vocabulary: every family Bunny Fonts serves. -->
+        <FontPicker
+          v-else-if="kind === 'font'"
+          :id="id"
+          :model-value="value"
+          :suggested="suggestedFonts ?? []"
+          :catalogue-url="fontsUrl ?? ''"
+          @update:model-value="emit('commit', $event)"
+        />
 
-    <!-- A color. The field is the source of truth - anything CSS understands
+        <!-- A color. The field is the source of truth - anything CSS understands
          is valid, including colors the picker cannot read - and the picker
          beside it is an offer. -->
-    <div v-else-if="kind === 'color'" class="flex items-center gap-2">
-      <ColorPicker :model-value="value" :label="label" @update:model-value="emit('input', $event)" @commit="emit('commit', $event)" />
-      <input
-        :id="id"
-        type="text"
-        class="input-border min-w-0 flex-1 font-mono text-xs"
-        :value="value"
-        :aria-label="`${label} value`"
-        @change="emit('commit', valueOf($event))"
-      />
-    </div>
+        <div v-else-if="kind === 'color'" class="flex items-center gap-2">
+          <ColorPicker :model-value="value" :label="label" @update:model-value="emit('input', $event)" @commit="emit('commit', $event)" />
+          <input
+            :id="id"
+            type="text"
+            class="input-border min-w-0 flex-1 font-mono text-xs"
+            :value="value"
+            :aria-label="`${label} value`"
+            @change="emit('commit', valueOf($event))"
+          />
+        </div>
 
-    <!-- A number: a slider within the row's own bounds, and the exact value
+        <!-- A number: a slider within the row's own bounds, and the exact value
          beside it for anyone who knows the number they want. A grid, not
          flex: `input-border` carries `flex-1`, which would split the row in
          half; the slider is the knob and gets 70 of it. -->
-    <div v-else-if="kind === 'number'" class="grid grid-cols-[7fr_3fr] items-center gap-3">
-      <input
-        :id="id"
-        type="range"
-        class="min-w-0 cursor-pointer"
-        :min="min"
-        :max="max"
-        :step="step"
-        :value="value"
-        @input="emit('input', valueOf($event))"
-        @change="emit('commit', valueOf($event))"
-      />
-      <input
-        type="number"
-        class="input-border min-w-0 text-sm tabular-nums"
-        :min="min"
-        :max="max"
-        :step="step"
-        :value="value"
-        :aria-label="`${label} exact value`"
-        @change="emit('commit', valueOf($event))"
-      />
-    </div>
+        <div v-else-if="kind === 'number'" class="grid grid-cols-[7fr_3fr] items-center gap-3">
+          <input
+            :id="id"
+            type="range"
+            class="min-w-0 cursor-pointer"
+            :min="min"
+            :max="max"
+            :step="step"
+            :value="value"
+            @input="emit('input', valueOf($event))"
+            @change="emit('commit', valueOf($event))"
+          />
+          <input
+            type="number"
+            class="input-border min-w-0 text-sm tabular-nums"
+            :min="min"
+            :max="max"
+            :step="step"
+            :value="value"
+            :aria-label="`${label} exact value`"
+            @change="emit('commit', valueOf($event))"
+          />
+        </div>
 
-    <!-- A free string, written when the field is left. -->
-    <input v-else :id="id" type="text" class="input-border w-full text-sm" :value="value" @change="emit('commit', valueOf($event))" />
-  </template>
+        <!-- A free string, written when the field is left. -->
+        <input v-else :id="id" type="text" class="input-border w-full text-sm" :value="value" @change="emit('commit', valueOf($event))" />
+      </template>
+    </fieldset>
+    <!-- Outside the fieldset, so the reason is not dimmed with the knob. -->
+    <p v-if="disabledReason" class="text-xs text-muted-foreground">{{ disabledReason }}</p>
+  </div>
 </template>

@@ -538,6 +538,10 @@ class ProductController extends Controller
             'stage' => ProductDesigner::stage($designer),
         ];
 
+        if (in_array('sample_chat', $extras, true)) {
+            $props['sample_chat_max'] = ProductDesigner::sampleChatMax($designer);
+        }
+
         // The chat window is a foreach cap, not a control: it is "how many
         // items does this loop expand to", the same question the other four
         // caps answer, and it is written on /settings/account. The designer

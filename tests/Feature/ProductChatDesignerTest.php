@@ -178,6 +178,7 @@ it('hands the page every control the overlay has, with the presets, the groups, 
             ->where('stage.1', ['when' => ['layout' => 'ticker'], 'w' => 1920, 'h' => 80])
             ->where('chat_window', 50)
             ->where('chat_window_max', User::FOREACH_CAP_MAX)
+            ->where('sample_chat_max', ProductDesigner::DEFAULT_SAMPLE_CHAT_MAX)
             ->missing('choices')
         );
 });

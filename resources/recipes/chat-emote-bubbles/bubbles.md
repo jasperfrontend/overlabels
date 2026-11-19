@@ -6,7 +6,7 @@ author: Overlabels
 
 # Chat Emote Bubbles
 
-Every emote your chat types floats across the stream in a soap bubble, one bubble per emote, in the order they were typed. Twelve controls set the look (bubble, snowflake or heart), the size, the two colors and the angle of the gradient between them, the speed, the direction, how many bubbles can be on screen at once, where they appear and whether they pop at the edge or float off it. Every change lands in OBS the moment it is made.
+Every emote your chat types floats across the stream in a soap bubble, one bubble per emote, in the order they were typed. Twelve controls set the look (bubble, snowflake, heart or plain), the size, the two colors and the angle of the gradient between them, the speed, the direction, how many bubbles can be on screen at once, where they appear and whether they pop at the edge or float off it. Every change lands in OBS the moment it is made.
 
 An Overlabels **static overlay** by Overlabels.
 
@@ -191,6 +191,9 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: trans
 }
 .look-heart .skin img { height: calc(var(--size) * 0.44); max-width: calc(var(--size) * 0.56); transform: translate(-50%, -56%); }
 
+/* Plain: no shape at all, so the emote fills the box the bubble would have. */
+.look-plain .skin img { height: calc(var(--size) * 0.8); max-width: var(--size); }
+
 @keyframes ol-rise {
   to { transform: translateY(calc(var(--sign) * var(--dist))); }
 }
@@ -230,14 +233,16 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 
 ### Control detail
 
-- `c:look` - What each emote floats in. One of `bubble` (a soap bubble), `snow` (a snowflake behind the emote) or `heart` (a heart-shaped bubble).
-  - choices=[{"value":"bubble","label":"Bubble","hint":"A soap bubble."},{"value":"snow","label":"Snowflake","hint":"A snowflake behind the emote."},{"value":"heart","label":"Heart","hint":"A heart-shaped bubble."}]
+- `c:look` - What each emote floats in. One of `bubble` (a soap bubble), `snow` (a snowflake behind the emote), `heart` (a heart-shaped bubble) or `plain` (no bubble, just the emote).
+  - choices=[{"value":"bubble","label":"Bubble","hint":"A soap bubble."},{"value":"snow","label":"Snowflake","hint":"A snowflake behind the emote."},{"value":"heart","label":"Heart","hint":"A heart-shaped bubble."},{"value":"plain","label":"Plain","hint":"No bubble, just the emote."}]
 - `c:bubble_size` - Width and height of a bubble in pixels. The emote inside scales with it.
   - min=32, max=240, step=1, reset_value=96, random=false, random_interval=null
 - `c:bubble_color` - The color of the bubble's ring and glow, the snowflake, or the heart, where the gradient starts. White reads as soap; try a pale pink on the heart.
+  - enabled_if=["c:look != plain"]
 - `c:bubble_color_2` - Where the gradient ends. The same as Bubble color gives one plain color.
+  - enabled_if=["c:look != plain"]
 - `c:gradient_angle` - Turns the gradient, in degrees. 0 runs from Bubble color at the top to Second color at the bottom, 90 runs right to left, 180 bottom to top, 270 left to right.
-  - min=0, max=360, step=1, reset_value=0, random=false, random_interval=null
+  - min=0, max=360, step=1, reset_value=0, random=false, random_interval=null, enabled_if=["c:look != plain"]
 - `c:speed` - How fast a bubble travels, 1 to 10. At 1 a bubble takes 24 seconds to cross the screen, at 10 under three.
   - min=1, max=10, step=1, reset_value=4, random=false, random_interval=null
 - `c:direction` - `up` floats bubbles toward the top of the screen, `down` sinks them toward the bottom. The spawn edge follows.
@@ -249,9 +254,9 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 - `c:spawn` - Where a bubble appears. `outside` floats in from just past the edge it starts from, `edge` appears on that edge, `random` appears anywhere on screen, `cannon` appears at the point set by Spawn X and Spawn Y.
   - choices=[{"value":"outside","label":"Outside","hint":"Floats in from just past the edge it starts from."},{"value":"edge","label":"Edge","hint":"Appears on that edge."},{"value":"random","label":"Random","hint":"Appears anywhere on screen."},{"value":"cannon","label":"Cannon","hint":"Appears at the point set by Spawn X and Spawn Y."}]
 - `c:spawn_x` - For the cannon: how far across the screen a bubble appears, 0 at the left edge to 100 at the right.
-  - min=0, max=100, step=1, reset_value=50, random=false, random_interval=null
+  - min=0, max=100, step=1, reset_value=50, random=false, random_interval=null, enabled_if=["c:spawn = cannon"]
 - `c:spawn_y` - For the cannon: how far down the screen a bubble appears, 0 at the top edge to 100 at the bottom.
-  - min=0, max=100, step=1, reset_value=85, random=false, random_interval=null
+  - min=0, max=100, step=1, reset_value=85, random=false, random_interval=null, enabled_if=["c:spawn = cannon"]
 
 Every control also exposes a companion `[[[c:<key>_at]]]` holding the Unix timestamp in seconds of when it last changed.
 

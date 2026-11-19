@@ -12,6 +12,7 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { controlTypeMeta, PRESET_GROUPS, SERVICE_ACCENT } from '@/components/controls/controlTypeCatalog';
 import { getPresetsForSource, type ServicePreset } from '@/components/controls/controlPresets';
 import { serviceLabel } from '@/utils/services';
+import { controlConfigPayload } from '@/utils/controlConfigPayload';
 import type { OverlayControl, OverlayTemplate } from '@/types';
 
 interface UserList {
@@ -456,27 +457,9 @@ function buildPayload() {
     return payload;
   }
 
-  if (t === 'number' || t === 'counter') {
-    payload.config = {
-      min: form.value.config.min ?? null,
-      max: form.value.config.max ?? null,
-      step: form.value.config.step ?? null,
-      reset_value: form.value.config.reset_value,
-      random: form.value.config.random || false,
-      random_interval: form.value.config.random ? form.value.config.random_interval || 1000 : null,
-    };
-  } else if (t === 'timer') {
-    payload.config = {
-      mode: form.value.config.mode,
-      base_seconds: form.value.config.mode === 'countdown' ? form.value.config.base_seconds : 0,
-      target_datetime: form.value.config.mode === 'countto' ? form.value.config.target_datetime : null,
-      offset_seconds: 0,
-      running: false,
-      started_at: null,
-    };
-  } else {
-    payload.config = null;
-  }
+  // The row's own config (edit) or the one being copied, so keys this dialog
+  // draws no field for - choices, webfont, enabled_if - survive the save.
+  payload.config = controlConfigPayload(t, form.value.config, props.control?.config ?? props.copyFrom?.config ?? null);
 
   if (t !== 'timer') {
     if (t === 'boolean') {

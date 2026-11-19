@@ -1,5 +1,46 @@
 # Changelog - November 2026
 
+## OL-2611-023 - November 19th, 2026 - feat(controls): a knob greys itself out while another holds a value
+
+Chat Emote Bubbles gained a fourth look, **Plain**: no bubble, snowflake or heart, just the emote,
+drawn a little larger to fill the space. It is a "Start from" preset on the designer, and existing
+installs get the choice too.
+
+Plain made an old gap visible. The designer showed every knob all the time, so the two bubble
+colors and the gradient angle stayed editable on a look that draws no bubble, just as Spawn X and Y
+always had, though they only steer the cannon. Now a control can say when it is worth editing:
+
+```
+- `c:spawn_x` - For the cannon: how far across the screen a bubble appears...
+  - enabled_if=["c:spawn = cannon"]
+```
+
+Each entry is the inside of an `[[[if:...]]]`, read and judged by the same code that runs `if` in
+an overlay, so there is still one condition language in Overlabels. A list means every condition
+must hold. The designer and the Values tab grey the knob out where it stands, with the reason
+underneath ("Not used while Look is Plain."). Nothing moves, and nothing changes value: the colors
+you picked are still there when you switch back to Heart, and the overlay reads them as before.
+
+It started as a pipe, `[[[c:bubble_color|disabled:look:plain]]]`, which fell apart the moment it
+needed two conditions. The pipe was the wrong home: it sits on one place a tag is printed, and
+whether a knob is editable belongs to the control. The control's own detail line was already
+there, next to `choices`.
+
+Recipes are held to it when the catalogue loads: a condition must read another knob of the same
+overlay, written `c:key`, with a value that is one of its choices. Declared on Emote Bubbles (the
+three color knobs, Spawn X and Y) and Twitch Chat (Background color, unused with no background),
+with backfills for existing installs.
+
+Building it turned up an older bug: the control edit dialog threw away config it draws no field
+for. Renaming a text control's label sent an empty config, so a product's Look dropdown turned
+into a plain text box, and a number lost anything beyond its six fields. It now sends those keys
+back as they were.
+
+The designer's sample-chat slider stopped at 120 messages a minute for every product. A product
+now sets its own top in its designer block (`sample_chat_max`): Emote Bubbles goes to 300, because
+only some sample messages carry an emote and 120 never looked busy, and Twitch Chat stays at 120,
+where a feed already reads as noise.
+
 ## OL-2611-022 - November 17th, 2026 - feat(dashboard): a lobby instead of an inventory
 
 The dashboard listed your data: installed products, then a tab strip of overlays, alerts and stream

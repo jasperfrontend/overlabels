@@ -224,7 +224,7 @@ it('uninstalls the overlay and its controls together', function () {
         ->and(RecipeInstance::where('user_id', $user->id)->count())->toBe(0);
 });
 
-it('declares a designer with three looks, every control in a group and no skin strip', function () {
+it('declares a designer with four looks, every control in a group and no skin strip', function () {
     // The designer is the manifest's to declare, and this product's block is
     // the first written for a product other than Twitch Chat. Soap is the
     // install's own defaults, so a fresh install shows it active.
@@ -234,12 +234,13 @@ it('declares a designer with three looks, every control in a group and no skin s
     expect($designer['overlay'])->toBe('bubbles')
         ->and($designer)->not->toHaveKey('skin_key')
         ->and(ProductDesigner::skins($designer))->toBe([])
-        ->and(array_column(ProductDesigner::presets($designer), 'key'))->toBe(['soap', 'winter', 'valentine'])
+        ->and(array_column(ProductDesigner::presets($designer), 'key'))->toBe(['soap', 'winter', 'valentine', 'plain'])
         ->and(ProductDesigner::preset($designer, 'soap')['values'])->toEqual($defaults)
         ->and(ProductDesigner::preset($designer, 'winter')['values']['look'])->toBe('snow')
         ->and(ProductDesigner::preset($designer, 'winter')['values']['direction'])->toBe('down')
         ->and(ProductDesigner::preset($designer, 'valentine')['values']['look'])->toBe('heart')
         ->and(ProductDesigner::preset($designer, 'valentine')['values']['spawn'])->toBe('cannon')
+        ->and(ProductDesigner::preset($designer, 'plain')['values']['look'])->toBe('plain')
         ->and(collect(ProductDesigner::keys($designer))->sort()->values()->all())->toBe(collect(array_keys($defaults))->sort()->values()->all())
         ->and(ProductDesigner::extras($designer))->toBe(['sample_chat', 'chat_filters'])
         ->and(ProductDesigner::stage($designer))->toBe([['w' => 1920, 'h' => 1080]]);
@@ -258,7 +259,7 @@ it('opens the designer for an install, with the bubbles controls and no chat win
             ->has('controls', 12)
             ->where('controls.look.value', 'bubble')
             ->where('controls.spawn_x.type', 'number')
-            ->has('presets', 3)
+            ->has('presets', 4)
             ->where('presets.0.key', 'soap')
             ->where('skins', [])
             ->where('skin_key', null)
@@ -266,6 +267,8 @@ it('opens the designer for an install, with the bubbles controls and no chat win
             ->where('groups.0.title', 'Look')
             ->where('extras', ['sample_chat', 'chat_filters'])
             ->where('stage', [['w' => 1920, 'h' => 1080]])
+            // Only some sample messages carry an emote, so the slider goes higher than chat's.
+            ->where('sample_chat_max', 300)
             // The emote buffer is a fixed bound, not a foreach cap, so the
             // window slider has no business here; the filters do apply,
             // because a hidden chatter's emotes do not bubble.
@@ -288,7 +291,7 @@ it('shows the designer card on the product page once installed, and applies a lo
 
     $this->actingAs($user)->get('/products/chat-emote-bubbles/install')
         ->assertInertia(fn (Assert $page) => $page
-            ->has('product.designer.presets', 3)
+            ->has('product.designer.presets', 4)
             ->where('product.designer.presets.0.active', false)
             ->where('product.designer.groups', ['Look', 'Motion', 'Spawn', 'Crowd'])
         );

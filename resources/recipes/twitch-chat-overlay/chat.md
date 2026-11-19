@@ -251,6 +251,7 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 - `c:background` - What sits behind each message. `none` for text over the game with a shadow, `solid` for the Background color, `glass` for a translucent, blurred version of it.
   - choices=[{"value":"none","label":"None","hint":"Text straight over the game, with a shadow."},{"value":"solid","label":"Solid","hint":"The background color, flat."},{"value":"glass","label":"Glass","hint":"Translucent and blurred."}]
 - `c:background_color` - The color behind each message for the solid and glass backgrounds.
+  - enabled_if=["c:background != none"]
 - `c:lifetime` - How many seconds a message stays before fading out. 0 keeps every message until it scrolls off.
   - min=0, max=600, step=1, reset_value=0, random=false, random_interval=null
 - `c:show_badges` - Draw the Twitch badges in front of a name.

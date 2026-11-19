@@ -6,6 +6,7 @@ use App\Models\EventTemplateMapping;
 use App\Models\ExternalEventTemplateMapping;
 use App\Models\OverlayTemplate;
 use App\Services\External\ExternalServiceRegistry;
+use App\Support\ControlConditions;
 use App\Support\Dsl;
 use App\Support\OverlayMarkdown;
 use App\Support\ProductDesigner;
@@ -257,7 +258,35 @@ class RecipeManifestValidator
             $this->installsErrors($manifest),
             $this->ingredientErrors($manifest, $directory),
             $this->designerErrors($manifest, $directory),
+            $this->controlConditionErrors($manifest, $directory),
         );
+    }
+
+    /**
+     * Every overlay document's `enabled_if` declarations, held against the
+     * controls the same document declares (ControlConditions::problems()).
+     * A document that does not parse is reported by ingredientErrors().
+     *
+     * @param  array<string, mixed>  $manifest
+     * @return list<array{pointer: string, message: string}>
+     */
+    private function controlConditionErrors(array $manifest, ?string $directory): array
+    {
+        $errors = [];
+
+        foreach ($this->overlayDocuments($manifest, $directory) as $i => $document) {
+            try {
+                $doc = OverlayMarkdown::parse($document['text']);
+            } catch (InvalidArgumentException) {
+                continue;
+            }
+
+            foreach (ControlConditions::problems($doc['controls']) as $problem) {
+                $errors[] = ['pointer' => "/installs/overlays/{$i}", 'message' => "{$document['file']}: {$problem}"];
+            }
+        }
+
+        return $errors;
     }
 
     /**
@@ -371,6 +400,11 @@ class RecipeManifestValidator
             if (is_string($skinKey) && is_string($key) && array_key_exists($skinKey, $values) && $values[$skinKey] !== $key) {
                 $errors[] = ['pointer' => "/designer/presets/{$p}/values/{$skinKey}", 'message' => "Preset \"{$key}\" sets {$skinKey} to \"{$values[$skinKey]}\"; the strip is one button per preset, so it must be \"{$key}\"."];
             }
+        }
+
+        // A slider ceiling with no slider is a typo for something.
+        if (array_key_exists('sample_chat_max', $designer) && ! in_array('sample_chat', $designer['extras'] ?? [], true)) {
+            $errors[] = ['pointer' => '/designer/sample_chat_max', 'message' => 'sample_chat_max sets the sample-chat slider, which only shows with "sample_chat" in extras.'];
         }
 
         // The document side.

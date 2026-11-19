@@ -3,7 +3,7 @@
   "slug": "chat-emote-bubbles",
   "name": "Chat Emote Bubbles",
   "version": 1,
-  "description": "Every emote your chat types floats across your stream in a soap bubble. Type PogChamp five times and five PogChamps drift up and away. Twitch, 7TV, BTTV and FFZ emotes all count, read straight from Twitch chat with nothing to connect and no bot to add. Twelve controls set the look (bubble, snowflake or heart), a two-color gradient, the speed, the direction, how many can be on screen, where they appear and whether they pop.",
+  "description": "Every emote your chat types floats across your stream in a soap bubble. Type PogChamp five times and five PogChamps drift up and away. Twitch, 7TV, BTTV and FFZ emotes all count, read straight from Twitch chat with nothing to connect and no bot to add. Twelve controls set the look (bubble, snowflake, heart or plain), a two-color gradient, the speed, the direction, how many can be on screen, where they appear and whether they pop.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"
@@ -20,7 +20,7 @@
   "ready_message": "Every emote your chat types becomes a bubble. The designer below sets the look, the speed and where they appear.",
   "highlights": [
     "Every emote your Twitch chat types floats across your stream in a bubble. Five PogChamps in one message are five bubbles.",
-    "Three looks: soap bubble, snowflake, heart. Speed, direction, size, a two-color gradient, how many at once, and where they appear.",
+    "Four looks: soap bubble, snowflake, heart, or just the emote. Speed, direction, size, a two-color gradient, how many at once, and where they appear.",
     "Nothing to connect and no bot to add. Every change lands in OBS as you make it."
   ],
   "pitch": {
@@ -79,8 +79,8 @@
       },
       {
         "icon": "palette",
-        "title": "Three looks to start from",
-        "body": "Soap bubbles, snowflakes or hearts, in any colour, rising, sinking or fired from one spot."
+        "title": "Four looks to start from",
+        "body": "Soap bubbles, snowflakes or hearts in any colour, or just the emote on its own, rising, sinking or fired from one spot."
       },
       {
         "icon": "zap",
@@ -93,7 +93,7 @@
         "body": "When a mod deletes a message, its bubbles go with it. Chatters you have hidden and commands that start with `!` never put a bubble on screen."
       }
     ],
-    "looks_heading": "Three looks to start from.",
+    "looks_heading": "Four looks to start from.",
     "looks_lede": "Pick one in the designer, then change the colour, size, speed and direction to suit your stream.",
     "setup_note": "Size the browser source to your whole canvas, 1920 by 1080, and put it above your camera.",
     "faq": [
@@ -195,9 +195,29 @@
           "spawn_y": "85",
           "max_bubbles": "40"
         }
+      },
+      {
+        "key": "plain",
+        "label": "Plain",
+        "blurb": "No bubble at all, just the emote itself, floating in from below and off the top.",
+        "values": {
+          "look": "plain",
+          "bubble_size": "96",
+          "bubble_color": "#ffffff",
+          "bubble_color_2": "#ffffff",
+          "gradient_angle": "0",
+          "direction": "up",
+          "speed": "4",
+          "pop_after": "0",
+          "spawn": "outside",
+          "spawn_x": "50",
+          "spawn_y": "85",
+          "max_bubbles": "40"
+        }
       }
     ],
     "extras": ["sample_chat", "chat_filters"],
+    "sample_chat_max": 300,
     "stage": [
       {
         "w": 1920,

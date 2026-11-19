@@ -9,6 +9,7 @@ import type { OverlayControl, OverlayTemplate } from '@/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { SERVICE_LABELS } from '@/utils/services';
 import { controlChoices } from '@/utils/controlChoices';
+import { type ConditionSubject, disabledReason } from '@/utils/controlConditions';
 
 const props = defineProps<{
   template: OverlayTemplate;
@@ -184,6 +185,16 @@ function getLocalValue(ctrl: OverlayControl): string {
   if (ctrl.id in localValues.value) return localValues.value[ctrl.id];
   return ctrl.value ?? '';
 }
+
+/**
+ * Every control by tag key, for `config.enabled_if`: the same reading the
+ * product designer makes, so a knob greys out on both pages alike.
+ */
+const conditionSubjects = computed<Record<string, ConditionSubject>>(() =>
+  Object.fromEntries(
+    props.controls.map((c) => [`c:${broadcastKeyFor(c)}`, { key: c.key, label: c.label, config: c.config ?? null, value: getLocalValue(c) }]),
+  ),
+);
 
 function formatSeconds(secs: number): string {
   const s = Math.max(0, Math.floor(secs));
@@ -462,6 +473,7 @@ const isTimerRunning = (ctrl: OverlayControl) => Boolean(ctrl.config?.running);
                   :value="getLocalValue(ctrl)"
                   :suggested-fonts="fonts?.suggested"
                   :fonts-url="fonts?.url"
+                  :disabled-reason="disabledReason(ctrl.config, conditionSubjects)"
                   @input="localValues[ctrl.id] = $event"
                   @commit="commitKnob(ctrl, $event)"
                 >
