@@ -912,9 +912,9 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 - Existing installs were upgraded by
   `2026_11_20_120000_give_installed_fullscreen_products_their_palette_controls` ONLY when html and
   css matched a shipped version byte for byte; hand-edited ones were skipped and logged.
-- **The preview plays the game (OL-2611-030).** Plinko: the `sample_chat` extra, and
+- **The preview plays the game.** Plinko (commit 9985ab00, no claim): the `sample_chat` extra, and
   `createChatSampleFeed()`'s third argument (`SampleChatGame`) makes half the sample chat the drop
-  command. Tower and Bowling: `designer.scenes`, each a list of the events the server broadcasts
+  command. Tower and Bowling (OL-2611-030): `designer.scenes`, each a list of the events the server broadcasts
   (`control.updated`, `list.updated`, plus the `tower.stack` / `tower.topple` shorthands), expanded
   by `utils/previewScene.ts` and handed to the frame's REAL handlers by `handlePreviewScene()` in
   sample mode only. Expressions evaluate in the overlay, so a scene sets raw inputs and the rest
