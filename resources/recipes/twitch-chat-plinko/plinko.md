@@ -50,12 +50,12 @@ The stylesheet. Tags work in here too.
 
 ```css
 :root {
-  --ink: #fafafa;
-  --ink-soft: #e9d5ff;
-  --ink-muted: #a78bfa;
-  --highlight: #f472b6;
-  --field: #1d0b30;
-  --field-deep: #120720;
+  /* the palette, set from the designer */
+  --ink: [[[c:text_color]]];
+  --ink-soft: [[[c:soft_text_color]]];
+  --ink-muted: [[[c:muted_color]]];
+  --highlight: [[[c:highlight_color]]];
+  --field-deep: [[[c:background_color]]];
   --line: color-mix(in srgb, var(--ink-muted) 35%, transparent);
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
@@ -155,7 +155,25 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
 
 ## Controls
 
-This overlay defines no controls of its own.
+Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 5 are defined by the overlay itself and are recreated, with the default values shown, for anyone who copies it.
+
+| Tag | Type | Label | Default | Referenced in source |
+|---|---|---|---|---|
+| `[[[c:background_color]]]` | color | Background | `#120720` | yes |
+| `[[[c:text_color]]]` | color | Text | `#fafafa` | yes |
+| `[[[c:soft_text_color]]]` | color | Soft text | `#e9d5ff` | yes |
+| `[[[c:muted_color]]]` | color | Pegs and labels | `#a78bfa` | yes |
+| `[[[c:highlight_color]]]` | color | Highlight | `#f472b6` | yes |
+
+### Control detail
+
+- `c:background_color` - Behind everything, and the tag that carries a chatter's name on their ball.
+- `c:text_color` - The heading, the names in the lists, and the name on each ball.
+- `c:soft_text_color` - The how-to-play sentence under the heading.
+- `c:muted_color` - The pegs, the slot numbers and dividers, the list titles and the lines between rows.
+- `c:highlight_color` - The command, the points, a peg lighting up when a ball hits it, the landing flash, and the ball of a chatter who never picked a name color.
+
+Every control also exposes a companion `[[[c:<key>_at]]]` holding the Unix timestamp in seconds of when it last changed.
 
 ## Live data tags used
 

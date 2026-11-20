@@ -1,0 +1,321 @@
+:root {
+  --bx: [[[c:ball_x|round:3]]];
+  --by: [[[c:ball_y|round:3]]];
+  --pulse: [[[c:ball_pulse|round:3]]];
+  --on: [[[c:ball_on]]];
+  --show: [[[c:bowl_show]]];
+  --bowler: [[[c:bowler_show]]];
+  --pin0: [[[c:pin_0]]];
+  --pin1: [[[c:pin_1]]];
+  --pin2: [[[c:pin_2]]];
+  --pin3: [[[c:pin_3]]];
+  --pin4: [[[c:pin_4]]];
+  --pin5: [[[c:pin_5]]];
+  --pin6: [[[c:pin_6]]];
+  --pin7: [[[c:pin_7]]];
+  --pin8: [[[c:pin_8]]];
+  --pin9: [[[c:pin_9]]];
+
+  /* the Chat Tower and Plinko palette: deep violet field, pink accent */
+  --ink: #fafafa;
+  --ink-soft: #e9d5ff;
+  --ink-muted: #a78bfa;
+  --pink: #f472b6;
+  --pink-deep: #ec4899;
+  --field: #1d0b30;
+  --field-deep: #120720;
+  --line: rgb(167 139 250 / 0.35);
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; }
+body {
+  background: var(--field-deep);
+  color: var(--ink);
+  font-family: "Albert Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.stage { position: relative; width: 1920px; height: 1080px; background: var(--field-deep); }
+.num { font-variant-numeric: tabular-nums; }
+.cmd { font-family: var(--mono); color: var(--pink); white-space: nowrap; }
+
+.eyebrow,
+.label {
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* ---------- left: how to play, then the line ---------- */
+.intro { position: absolute; left: 64px; top: 64px; width: 380px; }
+h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
+.sub { margin-top: 20px; font-size: 21px; line-height: 1.5; color: var(--ink-soft); }
+
+.line { position: absolute; left: 64px; top: 440px; width: 380px; }
+.queue { margin-top: 10px; list-style: none; counter-reset: place; }
+.queue li {
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 21px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  counter-increment: place;
+}
+.queue li::before {
+  content: counter(place);
+  flex: none;
+  width: 22px;
+  font-family: var(--mono);
+  color: var(--ink-muted);
+}
+.queue li:first-child::before { color: var(--pink); }
+.queue li:last-child { border-bottom: 1px solid var(--line); }
+
+.count {
+  position: absolute;
+  left: 64px;
+  bottom: 64px;
+  width: 380px;
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--ink-muted);
+}
+.count b { color: var(--ink); font-weight: 700; }
+
+/* ---------- centre: the lane, seen from the bowler ---------- */
+.field {
+  position: absolute;
+  left: 480px;
+  top: 0;
+  width: 960px;
+  height: 1080px;
+  overflow: hidden;
+}
+
+.lane {
+  position: absolute;
+  left: 140px;
+  width: 680px;
+  top: 40px;
+  bottom: 40px;
+  border-left: 2px solid var(--line);
+  border-right: 2px solid var(--line);
+  background: var(--field);
+}
+
+.gutter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 56px;
+  background: var(--field-deep);
+}
+.gutter.left { left: 0; border-right: 1px solid var(--line); }
+.gutter.right { right: 0; border-left: 1px solid var(--line); }
+
+/* the foul line the ball waits behind */
+.foul {
+  position: absolute;
+  left: 56px;
+  right: 56px;
+  top: 760px;
+  height: 3px;
+  background: var(--ink-muted);
+}
+
+/* aiming arrows on the boards, pointing at the rack */
+.arrows {
+  position: absolute;
+  left: 56px;
+  right: 56px;
+  top: 600px;
+  display: flex;
+  justify-content: space-evenly;
+}
+.arrows i {
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 26px solid var(--line);
+}
+.arrows i:nth-child(2),
+.arrows i:nth-child(4) { margin-top: 36px; }
+.arrows i:nth-child(3) { margin-top: 72px; }
+
+/* ---------- pins: the head pin nearest the ball, the back row of four on top ---------- */
+.pins { position: absolute; inset: 0; }
+
+.pin {
+  position: absolute;
+  width: 128px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transform-origin: 50% 100%;
+  transform: translateY(calc(var(--fall) * -36px)) rotate(calc(var(--fall) * var(--dir, 1) * 80deg));
+  opacity: calc(1 - var(--fall) * 0.75);
+  transition:
+    transform 0.35s cubic-bezier(0.3, 1.4, 0.6, 1),
+    opacity 0.35s;
+}
+
+.pin img {
+  width: 80px;
+  height: 80px;
+  border-radius: 9999px;
+  border: 3px solid var(--ink-muted);
+  background: var(--field-deep);
+  object-fit: cover;
+}
+
+.pin span {
+  max-width: 128px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--field-deep);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* the head pin carries the pink ring */
+.pin:nth-child(1) img { border-color: var(--pink); }
+
+/* a stand-in for a follower the channel does not have yet, so a new
+   channel still bowls at ten: same physics, dimmer face; a real follower
+   takes its slot the moment they arrive */
+.pin-filler img {
+  border-style: dashed;
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+.pin-filler span { color: var(--ink-muted); }
+
+/* rows from the ball: 1, 2, 3, 4. --dir is the side a pin falls to */
+.pin:nth-child(1)  { left: 416px; top: 428px; --dir: 1; }
+.pin:nth-child(2)  { left: 348px; top: 312px; --dir: -1; }
+.pin:nth-child(3)  { left: 484px; top: 312px; --dir: 1; }
+.pin:nth-child(4)  { left: 280px; top: 196px; --dir: -1; }
+.pin:nth-child(5)  { left: 416px; top: 196px; --dir: 1; }
+.pin:nth-child(6)  { left: 552px; top: 196px; --dir: 1; }
+.pin:nth-child(7)  { left: 212px; top: 80px; --dir: -1; }
+.pin:nth-child(8)  { left: 348px; top: 80px; --dir: -1; }
+.pin:nth-child(9)  { left: 484px; top: 80px; --dir: 1; }
+.pin:nth-child(10) { left: 620px; top: 80px; --dir: 1; }
+
+/* the ball: waits behind the foul line pulsing, rolls up the lane into the
+   rack and gets smaller as it goes; on a gutter ball it curves off to the
+   right and drops into the gutter */
+.ball {
+  position: absolute;
+  left: 430px;
+  top: 840px;
+  width: 100px;
+  height: 100px;
+  border-radius: 9999px;
+  background: var(--pink);
+  box-shadow:
+    inset -10px -12px 0 rgb(0 0 0 / 0.22),
+    inset 6px 6px 0 rgb(255 255 255 / 0.25),
+    0 0 0 3px var(--field-deep);
+  transform:
+    translate(calc(var(--on) * var(--by) * 312px), calc(var(--on) * var(--bx) * -560px))
+    scale(calc(var(--pulse) * (1 - var(--on) * var(--bx) * 0.32)))
+    rotate(calc(var(--on) * var(--bx) * 1080deg));
+  /* between throws it rests on the approach, dimmed */
+  opacity: calc(0.3 + var(--on) * 0.7);
+  z-index: 2;
+}
+
+.hole {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--field-deep);
+}
+.hole-1 { left: 42px; top: 26px; width: 15px; height: 15px; }
+.hole-2 { left: 28px; top: 48px; }
+.hole-3 { left: 54px; top: 52px; }
+
+/* ---------- the strike moment ---------- */
+.strike {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 24px;
+  background: rgb(18 7 32 / 0.92);
+  border-top: 2px solid var(--pink);
+  border-bottom: 2px solid var(--pink);
+  text-align: center;
+  opacity: var(--show);
+  transform: scale(calc(0.6 + var(--show) * 0.4));
+  transition:
+    opacity 0.3s ease,
+    transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+  z-index: 3;
+}
+.strike-word { font-size: 96px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--pink); }
+.strike-name {
+  max-width: 100%;
+  font-size: 28px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- right: who bowls, and how it went ---------- */
+.score { position: absolute; right: 64px; top: 64px; width: 380px; text-align: center; }
+.result { margin-top: 56px; opacity: var(--bowler); transition: opacity 0.25s; }
+
+/* two lines in one place, one fading in as the other fades out */
+.swap { display: grid; }
+.swap > * { grid-area: 1 / 1; transition: opacity 0.25s; }
+
+.bowler {
+  margin-top: 8px;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--pink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: var(--bowler);
+}
+.bowler-idle {
+  margin-top: 8px;
+  align-self: center;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  opacity: calc(1 - var(--bowler));
+}
+
+.big { margin-top: 4px; font-size: 144px; font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; }
+#score { opacity: var(--show); }
+.dash { color: var(--ink-muted); opacity: calc(1 - var(--show)); }
+
+.status { margin-top: 8px; font-size: 24px; font-weight: 600; color: var(--ink-soft); }
+.status-result { opacity: var(--show); }
+.status-rolling { color: var(--ink-muted); opacity: calc(var(--bowler) - var(--show)); }
+.stage[data-knocked="10"] .status-result { color: var(--pink); font-weight: 800; }

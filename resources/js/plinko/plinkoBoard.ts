@@ -17,7 +17,9 @@
  * this module only ever sees drops.
  *
  * Styling is CSS: the module reads custom properties off the placeholder,
- * and the scoreboard is ordinary DOM the template's own CSS styles.
+ * and the scoreboard is ordinary DOM the template's own CSS styles. Rows and
+ * pace are read once at mount; the colours and font are re-read twice a
+ * second, so a control bound into them repaints the board live.
  * Recognised properties, all optional:
  *
  *   --plinko-rows        rows of pegs, 4-24                  (default 14)
@@ -118,6 +120,8 @@ const LANDED_HOLD = 1.6;
 const HUD_INTERVAL_MS = 250;
 /** Ignore a frame gap longer than this (a hidden tab) instead of fast-forwarding through it. */
 const MAX_FRAME_GAP = 0.1;
+/** How often the colours and font are re-read, so a designer change repaints the board without a reload. */
+const LOOK_INTERVAL_MS = 500;
 const NEXT_SHOWN = 5;
 const RECENT_SHOWN = 6;
 const TOP_SHOWN = 5;
@@ -225,6 +229,7 @@ export function mountPlinkoBoard(el: HTMLElement): PlinkoInstance {
   let raf = 0;
   let hudDirty = true;
   let lastHud = 0;
+  let lastLook = 0;
   let destroyed = false;
 
   function waiting(): number {
@@ -464,10 +469,20 @@ export function mountPlinkoBoard(el: HTMLElement): PlinkoInstance {
     topEl.replaceChildren(...top.map((s) => row(s.name, fmt(s.total))));
   }
 
+  /** Colours and font only: rows and pace shape the board and the game, so they stay as mounted. */
+  function refreshLook(): void {
+    const { pegColor, accent, ballColor, labelBg, labelColor, slotColor, font } = readConfig(el);
+    Object.assign(config, { pegColor, accent, ballColor, labelBg, labelColor, slotColor, font });
+  }
+
   function frame(now: number): void {
     if (destroyed) return;
     const dt = lastFrame === null ? 0 : Math.min(MAX_FRAME_GAP, (now - lastFrame) / 1000);
     lastFrame = now;
+    if (now - lastLook >= LOOK_INTERVAL_MS) {
+      lastLook = now;
+      refreshLook();
+    }
     simulate(dt);
     draw();
     if (hudDirty && now - lastHud >= HUD_INTERVAL_MS) {

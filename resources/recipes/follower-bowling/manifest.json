@@ -122,6 +122,56 @@
     "Don't have 10 followers yet? Don't worry, we'll substitute the followers you're missing up to 10 pins."
   ],
   "max_instances_per_user": 1,
+  "designer": {
+    "overlay": "lane",
+    "groups": [
+      {
+        "title": "Colors",
+        "keys": ["background_color", "panel_color", "text_color", "soft_text_color", "muted_color", "highlight_color"]
+      }
+    ],
+    "presets": [
+      {
+        "key": "twilight",
+        "label": "Twilight",
+        "blurb": "Deep violet with pink highlights. The colors the game started out in.",
+        "values": {
+          "background_color": "#120720",
+          "panel_color": "#1d0b30",
+          "text_color": "#fafafa",
+          "soft_text_color": "#e9d5ff",
+          "muted_color": "#a78bfa",
+          "highlight_color": "#f472b6"
+        }
+      },
+      {
+        "key": "nordic",
+        "label": "Nordic",
+        "blurb": "Night blue with yellow highlights. Cool and calm, with one warm color that stands out.",
+        "values": {
+          "background_color": "#06101f",
+          "panel_color": "#0b1a33",
+          "text_color": "#fafafa",
+          "soft_text_color": "#dbeafe",
+          "muted_color": "#60a5fa",
+          "highlight_color": "#facc15"
+        }
+      },
+      {
+        "key": "moss",
+        "label": "Moss",
+        "blurb": "Dark forest green with lime highlights. Easy on the eyes for a long stream.",
+        "values": {
+          "background_color": "#05140c",
+          "panel_color": "#0b2416",
+          "text_color": "#f0fdf4",
+          "soft_text_color": "#d1fae5",
+          "muted_color": "#34d399",
+          "highlight_color": "#bef264"
+        }
+      }
+    ]
+  },
   "installs": {
     "overlays": [{ "ref": "lane", "file": "lane.md" }],
     "lists": [{ "ref": "lane", "slug": "lane", "label": "Bowling lane" }],

@@ -3,7 +3,7 @@
   "slug": "twitch-chat-plinko",
   "name": "Twitch Chat Plinko",
   "version": 1,
-  "description": "Type !drop in chat, or the word your streamer picked, and a ball with your name on it drops through a Plinko board on stream. Every drop plays in the order chat sent it, one ball per chatter at a time, bouncing off every peg into a slot worth 5 in the middle and 1000 at the rare edges. Read straight from Twitch chat with nothing to connect and no bot to add.",
+  "description": "Type !drop in chat, or any command you choose yourself, and a ball with your name on it drops through a Plinko board on stream. Every drop plays in the order chat sent it, one ball per chatter at a time, bouncing off every peg into a slot worth 5 in the middle and 1000 at the rare edges. Read straight from Twitch chat with nothing to connect and no bot to add.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"
@@ -136,6 +136,53 @@
     "The command is !drop unless you pick another word on the Plinko page (Settings, Integrations). Reload the browser source in OBS after changing it."
   ],
   "max_instances_per_user": 1,
+  "designer": {
+    "overlay": "plinko",
+    "groups": [
+      {
+        "title": "Colors",
+        "keys": ["background_color", "text_color", "soft_text_color", "muted_color", "highlight_color"]
+      }
+    ],
+    "presets": [
+      {
+        "key": "twilight",
+        "label": "Twilight",
+        "blurb": "Deep violet with pink highlights. The colors the game started out in.",
+        "values": {
+          "background_color": "#120720",
+          "text_color": "#fafafa",
+          "soft_text_color": "#e9d5ff",
+          "muted_color": "#a78bfa",
+          "highlight_color": "#f472b6"
+        }
+      },
+      {
+        "key": "nordic",
+        "label": "Nordic",
+        "blurb": "Night blue with yellow highlights. Cool and calm, with one warm color that stands out.",
+        "values": {
+          "background_color": "#06101f",
+          "text_color": "#fafafa",
+          "soft_text_color": "#dbeafe",
+          "muted_color": "#60a5fa",
+          "highlight_color": "#facc15"
+        }
+      },
+      {
+        "key": "moss",
+        "label": "Moss",
+        "blurb": "Dark forest green with lime highlights. Easy on the eyes for a long stream.",
+        "values": {
+          "background_color": "#05140c",
+          "text_color": "#f0fdf4",
+          "soft_text_color": "#d1fae5",
+          "muted_color": "#34d399",
+          "highlight_color": "#bef264"
+        }
+      }
+    ]
+  },
   "installs": {
     "overlays": [
       {

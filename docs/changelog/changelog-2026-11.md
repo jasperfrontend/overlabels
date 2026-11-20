@@ -1,5 +1,34 @@
 # Changelog - November 2026
 
+## OL-2611-029 - November 20th, 2026 - feat(products): a color designer for Plinko, Chat Tower and Follower Bowling
+
+The three full-screen games can be recolored. Twitch Chat Plinko, Chat Tower and Follower Bowling
+each have a designer now, like Twitch Chat and Chat Emote Bubbles: pick one of three themes, change
+any single color, and save the result as a look of your own. The themes are the same three on all
+three games, so a stream can match them:
+
+- **Twilight** - deep violet with pink highlights, the colors the games have always had.
+- **Nordic** - night blue with yellow highlights. Jasper's own Plinko colors, which started this.
+- **Moss** - dark forest green with lime highlights.
+
+Plinko has five colors, Follower Bowling six (the lane gets its own), and Chat Tower ten: the same
+six plus the two warning colors for a tower close to falling and about to fall, the flash on the
+block that toppled it, and the new-record flash. Tower's "Show how to play" switch moved onto the
+designer page too.
+
+Under the hood each overlay's palette was already one block of CSS variables, cleaned up the same
+day so every color on screen is built from it, including the see-through glows and lines. Those
+variables now read color controls, and the variables that were named after a color are named after
+what they do: `--highlight`, `--warning`, `--danger`, `--record`. The Plinko board used to read its
+colors once when it loaded, so a change only showed after reloading the browser source. It now
+re-reads them twice a second, which is what makes the designer's preview recolor the pegs and balls
+live.
+
+Existing installs that nobody edited get the color controls from a migration, set to the colors
+they already had, so nothing on stream changes until someone picks a new one. An overlay whose
+markup or styles were edited by hand is left exactly as it is and logged; reinstalling gets it the
+designer.
+
 ## OL-2611-028 - November 19th, 2026 - feat(bubbles): twenty shapes for Chat Emote Bubbles
 
 Chat Emote Bubbles has a fifth look, **Choose another shape**, and with it twenty shapes to float

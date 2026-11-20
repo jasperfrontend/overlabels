@@ -115,7 +115,7 @@ it('publishes the designer on the product page with clean active right after an 
 it('publishes no designer for a product whose manifest declares none', function () {
     // The designer prop lives on manage() now, not the guest-readable pitch.
     $this->actingAs(presetUser())
-        ->get('/products/chat-tower/install')
+        ->get('/products/ko-fi-alerts/install')
         ->assertInertia(fn (Assert $page) => $page->where('product.designer', null));
 });
 

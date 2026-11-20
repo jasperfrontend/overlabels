@@ -65,7 +65,7 @@ it('installs the list and the command it will create', function () {
         ->and($manifest['installs']['overlays'] ?? [])->toHaveCount(1);
 });
 
-it('installs the lane overlay with its 20 controls, the lane list and the !bowl appender', function () {
+it('installs the lane overlay with its 26 controls, the lane list and the !bowl appender', function () {
     $user = bowlingUser();
 
     $instance = app(RecipeInstaller::class)->install(bowlingRecipe(), $user, 'follower_bowling');
@@ -74,8 +74,9 @@ it('installs the lane overlay with its 20 controls, the lane list and the !bowl 
     expect($template)->not->toBeNull()
         ->and($template->html)->toContain('[[[foreach:c:list:lane as p]]]')
         ->and($template->html)->not->toContain('DO NOT DELETE');
-    expect(OverlayControl::where('overlay_template_id', $template->id)->count())->toBe(20)
-        ->and(OverlayControl::where('overlay_template_id', $template->id)->where('type', 'expression')->count())->toBe(20);
+    expect(OverlayControl::where('overlay_template_id', $template->id)->count())->toBe(26)
+        ->and(OverlayControl::where('overlay_template_id', $template->id)->where('type', 'expression')->count())->toBe(20)
+        ->and(OverlayControl::where('overlay_template_id', $template->id)->where('type', 'color')->count())->toBe(6);
 
     $list = OptionSet::find($instance->primitive_map['lists']['lane']);
     expect($list)->not->toBeNull()

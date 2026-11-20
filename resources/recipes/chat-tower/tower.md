@@ -112,20 +112,20 @@ The stylesheet. Tags work in here too.
 ```css
 :root {
   --wave: [[[c:sway|round:3]]];
-  --flash: #ff2d55;
   --pin: [[[c:lean_pct|round:1]]]%;
   --band: [[[c:band_pct|round:1]]]%;
 
-  /* the Plinko palette: deep violet field, pink accent, orange and hot pink for danger */
-  --ink: #fafafa;
-  --ink-soft: #e9d5ff;
-  --ink-muted: #a78bfa;
-  --highlight: #f472b6;
-  --danger: #ec4899;
-  --warning: #f97316;
-  --green: #4ade80;
-  --field: #1d0b30;
-  --field-deep: #120720;
+  /* the palette, set from the designer */
+  --ink: [[[c:text_color]]];
+  --ink-soft: [[[c:soft_text_color]]];
+  --ink-muted: [[[c:muted_color]]];
+  --highlight: [[[c:highlight_color]]];
+  --warning: [[[c:warning_color]]];
+  --danger: [[[c:danger_color]]];
+  --flash: [[[c:flash_color]]];
+  --record: [[[c:record_color]]];
+  --field: [[[c:panel_color]]];
+  --field-deep: [[[c:background_color]]];
   --line: color-mix(in srgb, var(--ink-muted) 35%, transparent);
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
@@ -478,14 +478,14 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   top: 120px;
   padding: 18px 24px;
   background: color-mix(in srgb, var(--field-deep) 92%, transparent);
-  border-top: 2px solid var(--green);
-  border-bottom: 2px solid var(--green);
+  border-top: 2px solid var(--record);
+  border-bottom: 2px solid var(--record);
   text-align: center;
   font-family: var(--mono);
   font-size: 22px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--green);
+  color: var(--record);
   animation: banner-in-top 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 .record-flash b { font-size: 32px; margin-left: 8px; }
@@ -502,7 +502,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
 
 ## Controls
 
-Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 10 are defined by the overlay itself and are recreated, with the default values shown, for anyone who copies it.
+Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 20 are defined by the overlay itself and are recreated, with the default values shown, for anyone who copies it.
 
 | Tag | Type | Label | Default | Referenced in source |
 |---|---|---|---|---|
@@ -516,6 +516,16 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 | `[[[c:record_age]]]` | expression | Seconds since the record moved |  | no |
 | `[[[c:record_flash]]]` | expression | Record flash visible |  | yes |
 | `[[[c:show_hint]]]` | boolean | Show how to play | `1` | yes |
+| `[[[c:background_color]]]` | color | Background | `#120720` | yes |
+| `[[[c:panel_color]]]` | color | Gauge track | `#1d0b30` | yes |
+| `[[[c:text_color]]]` | color | Text | `#fafafa` | yes |
+| `[[[c:soft_text_color]]]` | color | Soft text | `#e9d5ff` | yes |
+| `[[[c:muted_color]]]` | color | Labels and lines | `#a78bfa` | yes |
+| `[[[c:highlight_color]]]` | color | Highlight | `#f472b6` | yes |
+| `[[[c:warning_color]]]` | color | Close to falling | `#f97316` | yes |
+| `[[[c:danger_color]]]` | color | About to fall | `#ec4899` | yes |
+| `[[[c:flash_color]]]` | color | Topple flash | `#ff2d55` | yes |
+| `[[[c:record_color]]]` | color | New record | `#4ade80` | yes |
 
 ### Control detail
 
@@ -539,6 +549,16 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
   - expression: `c.tower.tallest_tower_record > 1 && c.record_age > -1 && c.record_age < 6 ? 1 : 0`
 - `c:show_hint` - The how-to-play text on the left: type !stack, aim left or right. Switch off once your chat knows the game.
   - min=null, max=null, step=1, reset_value=1, random=false, random_interval=null
+- `c:background_color` - Behind everything and behind the topple and record banners, plus the light shade on every block that keeps the names readable.
+- `c:panel_color` - The lean gauge under the tower, behind the pin.
+- `c:text_color` - The heading, the stats, the gauge pin while the tower stands safe, and the line under the toppler's name.
+- `c:soft_text_color` - The how-to-play sentence, and the status line while the tower stands safe.
+- `c:muted_color` - Labels, the fall lines, the ground, the dashed block waiting for the first one, and the lines between rows.
+- `c:highlight_color` - The command, the record height, the band on the gauge, and the topple banner with the toppler's name.
+- `c:warning_color` - The status, fall lines and gauge pin when the tower gets close to falling.
+- `c:danger_color` - The status, fall lines and gauge pin when the next block could topple it.
+- `c:flash_color` - The block that toppled the tower, flashing before it falls.
+- `c:record_color` - The flash when a standing tower beats the record.
 
 Every control also exposes a companion `[[[c:<key>_at]]]` holding the Unix timestamp in seconds of when it last changed.
 

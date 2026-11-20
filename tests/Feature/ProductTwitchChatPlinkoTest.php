@@ -72,7 +72,7 @@ it('installs one overlay and nothing else to connect', function () {
         ->and($manifest['requires_bot'] ?? false)->toBeFalse();
 });
 
-it('installs the board overlay with no controls and no other rows', function () {
+it('installs the board overlay with its five color controls and no other rows', function () {
     $user = plinkoUser();
 
     $instance = app(RecipeInstaller::class)->install(plinkoRecipe(), $user, 'twitch_chat_plinko');
@@ -83,7 +83,8 @@ it('installs the board overlay with no controls and no other rows', function () 
         ->and($template->html)->toContain('[[[plinko_board]]]')
         ->and($template->html)->toContain('![[[plinko_command]]]')
         ->and($template->css)->not->toContain('--plinko-command')
-        ->and(OverlayControl::where('overlay_template_id', $template->id)->count())->toBe(0)
+        ->and(OverlayControl::where('overlay_template_id', $template->id)->count())->toBe(5)
+        ->and(OverlayControl::where('overlay_template_id', $template->id)->where('type', 'color')->count())->toBe(5)
         ->and(ExternalIntegration::where('user_id', $user->id)->count())->toBe(0)
         ->and(OptionSet::where('user_id', $user->id)->count())->toBe(0);
 });

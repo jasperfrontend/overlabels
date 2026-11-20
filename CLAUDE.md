@@ -890,14 +890,28 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
   chat designer's fixed-shape JSON endpoint. It ships as a
   top-level `plinko_command` in the render payload (the renderer matches messages against it) and as
   the `[[[plinko_command]]]` tag for the overlay's copy. Read at load: a change needs an OBS reload.
-- **Looks are CSS custom properties on `.ol-plinko`, read once at MOUNT.** Changing one needs the
-  browser source reloaded. There are no controls and no designer yet; adding a designer means binding
-  controls into those properties AND making the board re-read them.
+- **Looks are CSS custom properties on `.ol-plinko`.** Rows, ball cap and rate are read once at
+  MOUNT (a change needs the browser source reloaded); the colours and font are re-read every
+  `LOOK_INTERVAL_MS` (500), which is what lets the designer repaint the canvas live. Since
+  OL-2611-029 the board's colours point at the `:root` palette, which reads five `*_color` controls.
 - **Scores live in the overlay's memory and reset when it reloads.** Deliberate: nothing phones home.
 - Local testing: `overlabels.test` serves through the Vite dev server when `public/hot` exists, so a
   `VITE_CHAT_HOSE=1` build is never what the page runs. Fake Twitch instead, by replacing
   `window.WebSocket` for `irc-ws.chat.twitch.tv` before load (`evaluateOnNewDocument`) and feeding
   PRIVMSG lines to its `onmessage`. That exercises the real parser, tap and board.
+
+### Full-screen palette designer (Nov 20th 2026, OL-2611-029)
+
+- Plinko, Chat Tower and Follower Bowling each declare a manifest `designer` with the same three
+  themes (Twilight = the original violet/pink, Nordic, Moss). Their `:root` palette variables read
+  `[[[c:*_color]]]` controls; every other colour on screen (`--line`, the see-through glows) is
+  `color-mix()` of a palette variable, so a theme never leaves a stray hardcoded tint. Keep it so:
+  a new colour in these overlays is a palette variable, never a literal.
+- Palette variables are named by purpose, not by colour (`--highlight`, `--warning`, `--danger`,
+  `--record`). Do not reintroduce `--pink` and friends.
+- Existing installs were upgraded by
+  `2026_11_20_120000_give_installed_fullscreen_products_their_palette_controls` ONLY when html and
+  css matched a shipped version byte for byte; hand-edited ones were skipped and logged.
 
 ### Control vocabularies and the unified product designer (started Sept 27th 2026, OL-2609-140)
 

@@ -121,6 +121,79 @@
     "Everyone who had a block in the tallest tower ever is added to the Tallest tower list, bottom to top. It is a normal list on your Lists page, and an overlay can list its names."
   ],
   "max_instances_per_user": 1,
+  "designer": {
+    "overlay": "tower",
+    "groups": [
+      {
+        "title": "Colors",
+        "keys": ["background_color", "panel_color", "text_color", "soft_text_color", "muted_color", "highlight_color"]
+      },
+      {
+        "title": "Danger and records",
+        "keys": ["warning_color", "danger_color", "flash_color", "record_color"]
+      },
+      {
+        "title": "How to play",
+        "keys": ["show_hint"]
+      }
+    ],
+    "presets": [
+      {
+        "key": "twilight",
+        "label": "Twilight",
+        "blurb": "Deep violet with pink highlights. The colors the game started out in.",
+        "values": {
+          "background_color": "#120720",
+          "panel_color": "#1d0b30",
+          "text_color": "#fafafa",
+          "soft_text_color": "#e9d5ff",
+          "muted_color": "#a78bfa",
+          "highlight_color": "#f472b6",
+          "warning_color": "#f97316",
+          "danger_color": "#ec4899",
+          "flash_color": "#ff2d55",
+          "record_color": "#4ade80",
+          "show_hint": "1"
+        }
+      },
+      {
+        "key": "nordic",
+        "label": "Nordic",
+        "blurb": "Night blue with yellow highlights. Cool and calm, with one warm color that stands out.",
+        "values": {
+          "background_color": "#06101f",
+          "panel_color": "#0b1a33",
+          "text_color": "#fafafa",
+          "soft_text_color": "#dbeafe",
+          "muted_color": "#60a5fa",
+          "highlight_color": "#facc15",
+          "warning_color": "#fb923c",
+          "danger_color": "#f43f5e",
+          "flash_color": "#ef4444",
+          "record_color": "#4ade80",
+          "show_hint": "1"
+        }
+      },
+      {
+        "key": "moss",
+        "label": "Moss",
+        "blurb": "Dark forest green with lime highlights. Easy on the eyes for a long stream.",
+        "values": {
+          "background_color": "#05140c",
+          "panel_color": "#0b2416",
+          "text_color": "#f0fdf4",
+          "soft_text_color": "#d1fae5",
+          "muted_color": "#34d399",
+          "highlight_color": "#bef264",
+          "warning_color": "#fb923c",
+          "danger_color": "#f43f5e",
+          "flash_color": "#ef4444",
+          "record_color": "#38bdf8",
+          "show_hint": "1"
+        }
+      }
+    ]
+  },
   "installs": {
     "overlays": [{ "ref": "tower", "file": "tower.md" }],
     "integrations": ["tower"],

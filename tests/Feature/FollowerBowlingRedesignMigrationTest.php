@@ -82,7 +82,9 @@ it('ships exactly the source a fresh install gets', function () {
 
     // A superset of what the installer allows at this account's cap: the
     // followers loop is expanded to the largest cap any account can set.
-    expect(array_diff($template->template_tags, bowlingMoveConstant('TAGS')))->toBe([]);
+    // The palette controls arrived after this move (2026-11-20) and are not its business.
+    $tags = array_filter($template->template_tags, fn (string $tag) => ! str_ends_with($tag, '_color'));
+    expect(array_values(array_diff($tags, bowlingMoveConstant('TAGS'))))->toBe([]);
     expect(bowlingMoveConstant('TAGS'))->toContain('channel_followers.49.user_name');
 });
 

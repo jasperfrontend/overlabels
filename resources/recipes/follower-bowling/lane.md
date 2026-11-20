@@ -130,13 +130,13 @@ The stylesheet. Tags work in here too.
   --pin8: [[[c:pin_8]]];
   --pin9: [[[c:pin_9]]];
 
-  /* the Chat Tower and Plinko palette: deep violet field, pink accent */
-  --ink: #fafafa;
-  --ink-soft: #e9d5ff;
-  --ink-muted: #a78bfa;
-  --highlight: #f472b6;
-  --field: #1d0b30;
-  --field-deep: #120720;
+  /* the palette, set from the designer */
+  --ink: [[[c:text_color]]];
+  --ink-soft: [[[c:soft_text_color]]];
+  --ink-muted: [[[c:muted_color]]];
+  --highlight: [[[c:highlight_color]]];
+  --field: [[[c:panel_color]]];
+  --field-deep: [[[c:background_color]]];
   --line: color-mix(in srgb, var(--ink-muted) 35%, transparent);
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
@@ -436,7 +436,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
 
 ## Controls
 
-Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 20 are defined by the overlay itself and are recreated, with the default values shown, for anyone who copies it.
+Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 26 are defined by the overlay itself and are recreated, with the default values shown, for anyone who copies it.
 
 | Tag | Type | Label | Default | Referenced in source |
 |---|---|---|---|---|
@@ -460,6 +460,12 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 | `[[[c:pin_7]]]` | expression | Pin 8 down |  | yes |
 | `[[[c:pin_8]]]` | expression | Pin 9 down |  | yes |
 | `[[[c:pin_9]]]` | expression | Pin 10 down |  | yes |
+| `[[[c:background_color]]]` | color | Background | `#120720` | yes |
+| `[[[c:panel_color]]]` | color | Lane | `#1d0b30` | yes |
+| `[[[c:text_color]]]` | color | Text | `#fafafa` | yes |
+| `[[[c:soft_text_color]]]` | color | Soft text | `#e9d5ff` | yes |
+| `[[[c:muted_color]]]` | color | Labels and lines | `#a78bfa` | yes |
+| `[[[c:highlight_color]]]` | color | Highlight | `#f472b6` | yes |
 
 ### Control detail
 
@@ -503,5 +509,11 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
   - expression: `c.bowl_t > 0 && c.bowl_knocked > 8 && c.bowl_age > 5.5 && c.bowl_age < 12 ? 1 : 0`
 - `c:pin_9`
   - expression: `c.bowl_t > 0 && c.bowl_knocked > 9 && c.bowl_age > 5.55 && c.bowl_age < 12 ? 1 : 0`
+- `c:background_color` - Behind everything: the gutters, the holes the pins leave, and the edge around the ball and the pins.
+- `c:panel_color` - The lane the ball rolls down.
+- `c:text_color` - The heading, how many are in line, the follower names on the pins, and the name under a strike.
+- `c:soft_text_color` - The how-to-play sentence, the score line, and "Waiting for a bowler".
+- `c:muted_color` - Labels, the place numbers in line, the foul line, the ring around each follower's picture, and the lines between rows.
+- `c:highlight_color` - The command, first place in line, the bowler's name, the ball, the head pin's ring and the strike banner.
 
 Every control also exposes a companion `[[[c:<key>_at]]]` holding the Unix timestamp in seconds of when it last changed.
