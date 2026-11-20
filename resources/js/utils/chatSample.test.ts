@@ -1,3 +1,4 @@
+import { isDropCommand } from '@/plinko/plinkoTag';
 import { type ChatSampleOptions, clearchatLine, clearmsgLine, createChatSampleFeed, privmsgLine } from '@/utils/chatSample';
 import { parseIrcLine, toChatMessage, toModerationAction } from '@/utils/ircParser';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -259,6 +260,26 @@ describe('createChatSampleFeed', () => {
 
     expect(target.lines).toHaveLength(2);
     feed.stop();
+  });
+
+  it('plays a chat game: part of the chat is its command, which the game recognises', () => {
+    const target = sink();
+    createChatSampleFeed(target, {}, { command: () => '!plonk' }).burst(200);
+
+    const texts = target.lines.map((line) => toChatMessage(parseIrcLine(line)!)!.text);
+    const drops = texts.filter((text) => isDropCommand(text, 'plonk'));
+
+    // Half the messages roll for the command; first messages turn some of those into greetings.
+    expect(drops.length).toBeGreaterThan(50);
+    expect(drops.length).toBeLessThan(200);
+  });
+
+  it('sends no game command when the overlay plays no game', () => {
+    const target = sink();
+    createChatSampleFeed(target, {}, { command: () => null }).burst(200);
+
+    const texts = target.lines.map((line) => toChatMessage(parseIrcLine(line)!)!.text);
+    expect(texts.filter((text) => isDropCommand(text, 'drop'))).toEqual([]);
   });
 
   it('clears the window the way a moderator would', () => {

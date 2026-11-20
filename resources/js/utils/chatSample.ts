@@ -460,6 +460,25 @@ const FEED_FLAVOUR: Partial<ChatSampleOptions> = {
 const WAVE_CHANCE = 0.05;
 
 /**
+ * A chat game's command, typed the way chat types it. `{command}` is the whole
+ * thing, `!` included. Mostly bare, because that is what a game chat looks like.
+ */
+const COMMAND_LINES = ['{command}', '{command}', '{command}', '{command} come on edges', '{command} 1000 or bust', '{command} here we go'];
+
+/** Per message, when the overlay plays a chat game. Half the chat plays, half talks. */
+const COMMAND_CHANCE = 0.5;
+
+/** What a chat game on the overlay asks of the sample feed. */
+export interface SampleChatGame {
+  /**
+   * The command the game listens for, `!` included, or null when no game is
+   * running. Asked per message rather than once, because the game's word
+   * arrives with the render payload and its board mounts later.
+   */
+  command?: () => string | null;
+}
+
+/**
  * A human-paced sample feed, for showing a look while it is being chosen.
  *
  * Deliberately NOT the dev hose: no frame sampler, no batching, no console
@@ -478,13 +497,19 @@ const WAVE_CHANCE = 0.05;
  * Now and then a wave starts: for the next several messages, most chatters
  * repeat the same reaction, sometimes twice over. Preview only - the dev hose
  * keeps independent lines, because a load test wants an even spread.
+ *
+ * When the overlay plays a chat game (Plinko), half the messages are its
+ * command, so the preview plays the game through the same door real chat does.
  */
-export function createChatSampleFeed(sink: ChatSink, over: Partial<ChatSampleOptions> = {}): ChatSampleFeed {
+export function createChatSampleFeed(sink: ChatSink, over: Partial<ChatSampleOptions> = {}, game: SampleChatGame = {}): ChatSampleFeed {
   const options: ChatSampleOptions = { ...CHAT_SAMPLE_DEFAULTS, ...FEED_FLAVOUR, ...over };
   let timer: ReturnType<typeof setInterval> | null = null;
   let wave = { line: '', left: 0 };
 
   function nextText(): string | undefined {
+    const command = game.command?.() ?? null;
+    if (command && chance(COMMAND_CHANCE)) return pick(COMMAND_LINES).replace('{command}', command);
+
     if (wave.left === 0 && chance(WAVE_CHANCE)) {
       wave = { line: pick(WAVE_LINES), left: 4 + Math.floor(Math.random() * 7) };
     }

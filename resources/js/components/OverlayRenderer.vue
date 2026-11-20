@@ -250,7 +250,8 @@ watch(health.status, (status) => {
 async function startSampleChat(): Promise<void> {
   const { createChatSampleFeed } = await import('@/utils/chatSample');
 
-  sampleFeed = createChatSampleFeed(twitchChat);
+  // A Plinko board in the template turns half the sample chat into drops.
+  sampleFeed = createChatSampleFeed(twitchChat, {}, { command: () => (templateUsesPlinko.value ? `!${plinkoCommand.value}` : null) });
   // A burst before any rate is set, so the designer opens onto a full feed
   // rather than an empty box filling up one message at a time.
   sampleFeed.burst(SAMPLE_BURST);
@@ -800,10 +801,17 @@ function syncPlinkos() {
   if (!container) return;
 
   const present = new Set<HTMLElement>();
+  let mounted = false;
   for (const el of container.querySelectorAll<HTMLElement>(PLINKO_SELECTOR)) {
     present.add(el);
-    if (!plinkoInstances.has(el)) plinkoInstances.set(el, plinkoModule.mountPlinkoBoard(el));
+    if (!plinkoInstances.has(el)) {
+      plinkoInstances.set(el, plinkoModule.mountPlinkoBoard(el));
+      mounted = true;
+    }
   }
+  // The sample feed's opening burst can land before the lazy board is here to
+  // catch it, so a board that mounts into a running preview gets one of its own.
+  if (mounted) sampleFeed?.burst(SAMPLE_BURST);
   for (const [el, instance] of plinkoInstances) {
     if (!present.has(el)) {
       instance.destroy();

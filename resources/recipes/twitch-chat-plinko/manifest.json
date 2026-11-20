@@ -183,7 +183,8 @@
           "highlight_color": "#bef264"
         }
       }
-    ]
+    ],
+    "extras": ["sample_chat"]
   },
   "installs": {
     "overlays": [
