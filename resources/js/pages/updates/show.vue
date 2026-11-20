@@ -115,7 +115,8 @@ const breadcrumbs: BreadcrumbItem[] = [
              body, which are exactly the two sources the admin form compiles
              from. Everything outside is app chrome and must stay out of reach,
              so do not move the back link, title or tags in here. -->
-        <div :id="POST_SCOPE_ID">
+        <!-- The link colour: the help docs' violet, darker on a light page. -->
+        <div :id="POST_SCOPE_ID" class="[--post-link:var(--color-violet-700)] dark:[--post-link:var(--color-violet-400)]">
           <div v-if="renderedExcerpt" class="prose prose-invert mb-8 max-w-none text-lg text-foreground" v-html="renderedExcerpt" />
 
           <article class="prose prose-invert max-w-none text-foreground" v-html="renderedBody" />
@@ -152,9 +153,38 @@ const breadcrumbs: BreadcrumbItem[] = [
   margin-bottom: 1em;
   line-height: 1.7;
 }
+/* Links carry a colour of their own (--post-link, set on the post wrapper):
+   --primary is near-white in dark mode, which left a link telling itself apart
+   from body text by its underline alone. A soft underline at rest that firms up
+   on hover (the help docs' pattern), a ring for keyboard focus only, and the
+   foreground colour while pressed, so each state reads differently. */
 :deep(.prose a) {
-  color: var(--primary);
+  cursor: pointer;
+  border-radius: 0.2em;
+  color: var(--post-link);
   text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--post-link) 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+:deep(.prose a:hover) {
+  background-color: color-mix(in srgb, var(--post-link) 15%, transparent);
+  text-decoration-color: var(--post-link);
+  text-decoration-thickness: 2px;
+}
+:deep(.prose a:focus-visible) {
+  outline: 2px solid var(--post-link);
+  outline-offset: 2px;
+  text-decoration-color: var(--post-link);
+}
+:deep(.prose a:active) {
+  color: var(--foreground);
+  background-color: color-mix(in srgb, var(--post-link) 25%, transparent);
+  text-decoration-color: var(--foreground);
 }
 :deep(.prose ul),
 :deep(.prose ol) {
