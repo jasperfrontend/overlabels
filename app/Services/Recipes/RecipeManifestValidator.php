@@ -337,6 +337,16 @@ class RecipeManifestValidator
 
         $skinKey = $designer['skin_key'] ?? null;
 
+        // A scene is a button: two with one key would be one button doing two things.
+        $sceneKeys = [];
+        foreach ($designer['scenes'] ?? [] as $s => $scene) {
+            $key = $scene['key'] ?? null;
+            if (is_string($key) && isset($sceneKeys[$key])) {
+                $errors[] = ['pointer' => "/designer/scenes/{$s}/key", 'message' => "Duplicate scene key \"{$key}\"."];
+            }
+            $sceneKeys[$key] = true;
+        }
+
         // The block's own consistency: a key grouped twice, a skin key in a
         // group, a preset key used twice, a group title used twice.
         $grouped = [];

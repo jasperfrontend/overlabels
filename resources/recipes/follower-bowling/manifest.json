@@ -172,6 +172,22 @@
           "highlight_color": "#bef264"
         }
       }
+    ],
+    "scenes": [
+      {
+        "key": "bowl",
+        "label": "Bowl",
+        "blurb": "One throw, exactly as the lane plays it. The outcome is random, so a few throws show a strike or a gutter too.",
+        "events": [
+          {
+            "event": "list.updated",
+            "slug": "lane",
+            "items": ["PixelMoth", "tea_and_raids", "noodlebyte"],
+            "last_removed": "quietfox",
+            "last_removed_at": "now"
+          }
+        ]
+      }
     ]
   },
   "installs": {

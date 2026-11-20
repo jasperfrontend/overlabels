@@ -94,6 +94,24 @@ it('installs the tower overlay, connects the integration and creates the record 
         ->and($list->items)->toBe([]);
 });
 
+it('opens the designer with the colors, three themes and the five moments to preview', function () {
+    $user = towerUser();
+    app(RecipeInstaller::class)->install(towerRecipe(), $user, 'chat_tower');
+
+    $this->actingAs($user)->get('/products/chat-tower/design')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('products/design')
+            ->has('presets', 3)
+            ->has('groups', 3)
+            ->where('extras', [])
+            ->has('scenes', 5)
+            ->where('scenes.0.key', 'standing')
+            ->where('scenes.3.key', 'toppled')
+            ->has('scenes.3.events')
+        );
+});
+
 it('refuses to install over an existing list with the slug tower_record', function () {
     $user = towerUser();
     OptionSet::create([

@@ -912,6 +912,16 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 - Existing installs were upgraded by
   `2026_11_20_120000_give_installed_fullscreen_products_their_palette_controls` ONLY when html and
   css matched a shipped version byte for byte; hand-edited ones were skipped and logged.
+- **The preview plays the game (OL-2611-030).** Plinko: the `sample_chat` extra, and
+  `createChatSampleFeed()`'s third argument (`SampleChatGame`) makes half the sample chat the drop
+  command. Tower and Bowling: `designer.scenes`, each a list of the events the server broadcasts
+  (`control.updated`, `list.updated`, plus the `tower.stack` / `tower.topple` shorthands), expanded
+  by `utils/previewScene.ts` and handed to the frame's REAL handlers by `handlePreviewScene()` in
+  sample mode only. Expressions evaluate in the overlay, so a scene sets raw inputs and the rest
+  follows. Never write, broadcast or touch the record from a scene, and never add a button that
+  stacks or bowls for real. Bowling's outcome is seeded by the throw's second, so its scene cannot
+  promise a strike; do not copy the dice formula into the designer to force one.
+- `postMessage` of a Vue prop throws DataCloneError (props are reactive proxies): send a JSON copy.
 
 ### Control vocabularies and the unified product designer (started Sept 27th 2026, OL-2609-140)
 

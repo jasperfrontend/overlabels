@@ -266,6 +266,23 @@ class ProductDesigner
     }
 
     /**
+     * The preview's scene buttons, as declared. The events go to the frame
+     * untouched; resources/js/utils/previewScene.ts is what reads them.
+     *
+     * @param  array<string, mixed>  $designer
+     * @return list<array{key: string, label: string, blurb: string, events: list<array<string, mixed>>}>
+     */
+    public static function scenes(array $designer): array
+    {
+        return array_map(fn (array $scene) => [
+            'key' => $scene['key'],
+            'label' => $scene['label'],
+            'blurb' => $scene['blurb'] ?? '',
+            'events' => array_values($scene['events']),
+        ], array_values($designer['scenes'] ?? []));
+    }
+
+    /**
      * The preview sizes, defaulted. The page picks: the last entry whose
      * `when` the controls satisfy, else the first entry with no `when`.
      *

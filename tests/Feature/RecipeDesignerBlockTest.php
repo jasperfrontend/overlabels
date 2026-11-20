@@ -31,7 +31,7 @@ function designerBlockMessages(array $manifest, string $slug = 'twitch-chat-over
 }
 
 it('accepts every shipped designer block next to its document', function () {
-    foreach (['twitch-chat-overlay', 'chat-emote-bubbles', 'chat-checkin'] as $slug) {
+    foreach (['twitch-chat-overlay', 'chat-emote-bubbles', 'chat-checkin', 'twitch-chat-plinko', 'chat-tower', 'follower-bowling'] as $slug) {
         expect(designerBlockErrors(designerBlockManifest($slug), $slug))->toBe([]);
     }
 });
@@ -151,6 +151,16 @@ it('rejects a duplicate preset key and a duplicate group title', function () {
     $messages = designerBlockMessages($m);
     expect($messages)->toContain('Duplicate preset key "clean".')
         ->and($messages)->toContain('Duplicate group title "Layout".');
+});
+
+it('rejects a duplicate scene key and an event the preview cannot play', function () {
+    $m = designerBlockManifest('chat-tower');
+    $m['designer']['scenes'][1]['key'] = 'standing';
+    $m['designer']['scenes'][0]['events'][0]['event'] = 'tower.explode';
+
+    $errors = designerBlockErrors($m, 'chat-tower');
+    expect(array_column($errors, 'message'))->toContain('Duplicate scene key "standing".')
+        ->and(array_column($errors, 'pointer'))->toContain('/designer/scenes/0/events/0/event');
 });
 
 it('rejects a control of a type the designer has no knob for', function () {

@@ -194,6 +194,595 @@
           "show_hint": "1"
         }
       }
+    ],
+    "scenes": [
+      {
+        "key": "standing",
+        "label": "Standing",
+        "blurb": "A short tower, standing safe.",
+        "events": [
+          {
+            "event": "tower.stack",
+            "blocks": [
+              {
+                "name": "quietfox",
+                "color": "#f97316",
+                "offset": 0.3
+              },
+              {
+                "name": "PixelMoth",
+                "color": "#a3e635",
+                "offset": -0.4
+              },
+              {
+                "name": "tea_and_raids",
+                "color": "#38bdf8",
+                "offset": 0.5
+              },
+              {
+                "name": "noodlebyte",
+                "color": "#f472b6",
+                "offset": 0.2
+              },
+              {
+                "name": "pixel_kat",
+                "color": "#facc15",
+                "offset": -0.3
+              },
+              {
+                "name": "MidnightSnackAttack",
+                "color": "#a78bfa",
+                "offset": 0.4
+              },
+              {
+                "name": "ghostpepper",
+                "color": "#34d399",
+                "offset": 0.1
+              }
+            ]
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_height",
+            "value": "7"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_lean",
+            "value": "0.8"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_room",
+            "value": "2.81"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:last_stacker_name",
+            "value": "ghostpepper"
+          }
+        ]
+      },
+      {
+        "key": "close",
+        "label": "Close to falling",
+        "blurb": "Leaning far enough that the warning color takes over.",
+        "events": [
+          {
+            "event": "tower.stack",
+            "blocks": [
+              {
+                "name": "quietfox",
+                "color": "#f97316",
+                "offset": 0.4
+              },
+              {
+                "name": "PixelMoth",
+                "color": "#a3e635",
+                "offset": 0.3
+              },
+              {
+                "name": "tea_and_raids",
+                "color": "#38bdf8",
+                "offset": -0.2
+              },
+              {
+                "name": "noodlebyte",
+                "color": "#f472b6",
+                "offset": 0.5
+              },
+              {
+                "name": "pixel_kat",
+                "color": "#facc15",
+                "offset": 0.3
+              },
+              {
+                "name": "MidnightSnackAttack",
+                "color": "#a78bfa",
+                "offset": 0.2
+              },
+              {
+                "name": "ghostpepper",
+                "color": "#34d399",
+                "offset": -0.1
+              },
+              {
+                "name": "LunarLatte",
+                "color": "#fb7185",
+                "offset": 0.4
+              },
+              {
+                "name": "bytewitch",
+                "color": "#60a5fa",
+                "offset": 0.3
+              },
+              {
+                "name": "sockpuppet42",
+                "color": "#e879f9",
+                "offset": 0.2
+              },
+              {
+                "name": "CozyCactus",
+                "color": "#f97316",
+                "offset": 0.1
+              },
+              {
+                "name": "raidboss_rae",
+                "color": "#a3e635",
+                "offset": -0.2
+              },
+              {
+                "name": "Waffles",
+                "color": "#38bdf8",
+                "offset": -0.2
+              }
+            ]
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_height",
+            "value": "13"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_lean",
+            "value": "2.0"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_room",
+            "value": "1.29"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:last_stacker_name",
+            "value": "Waffles"
+          }
+        ]
+      },
+      {
+        "key": "about",
+        "label": "About to fall",
+        "blurb": "One more block could bring it down: the danger color.",
+        "events": [
+          {
+            "event": "tower.stack",
+            "blocks": [
+              {
+                "name": "quietfox",
+                "color": "#f97316",
+                "offset": 0.4
+              },
+              {
+                "name": "PixelMoth",
+                "color": "#a3e635",
+                "offset": 0.3
+              },
+              {
+                "name": "tea_and_raids",
+                "color": "#38bdf8",
+                "offset": -0.2
+              },
+              {
+                "name": "noodlebyte",
+                "color": "#f472b6",
+                "offset": 0.5
+              },
+              {
+                "name": "pixel_kat",
+                "color": "#facc15",
+                "offset": 0.3
+              },
+              {
+                "name": "MidnightSnackAttack",
+                "color": "#a78bfa",
+                "offset": 0.2
+              },
+              {
+                "name": "ghostpepper",
+                "color": "#34d399",
+                "offset": -0.1
+              },
+              {
+                "name": "LunarLatte",
+                "color": "#fb7185",
+                "offset": 0.4
+              },
+              {
+                "name": "bytewitch",
+                "color": "#60a5fa",
+                "offset": 0.3
+              },
+              {
+                "name": "sockpuppet42",
+                "color": "#e879f9",
+                "offset": 0.2
+              },
+              {
+                "name": "CozyCactus",
+                "color": "#f97316",
+                "offset": 0.1
+              },
+              {
+                "name": "raidboss_rae",
+                "color": "#a3e635",
+                "offset": -0.2
+              },
+              {
+                "name": "Waffles",
+                "color": "#38bdf8",
+                "offset": 0.3
+              },
+              {
+                "name": "snaccident",
+                "color": "#f472b6",
+                "offset": -0.1
+              },
+              {
+                "name": "Owlbear",
+                "color": "#facc15",
+                "offset": 0.1
+              },
+              {
+                "name": "mossymug",
+                "color": "#a78bfa",
+                "offset": 0.2
+              }
+            ]
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_height",
+            "value": "16"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_lean",
+            "value": "2.7"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_room",
+            "value": "0.42"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:last_stacker_name",
+            "value": "mossymug"
+          }
+        ]
+      },
+      {
+        "key": "toppled",
+        "label": "Toppled",
+        "blurb": "The flash on the block that did it, the fall, and the banner naming who.",
+        "events": [
+          {
+            "event": "tower.stack",
+            "blocks": [
+              {
+                "name": "quietfox",
+                "color": "#f97316",
+                "offset": 0.4
+              },
+              {
+                "name": "PixelMoth",
+                "color": "#a3e635",
+                "offset": 0.3
+              },
+              {
+                "name": "tea_and_raids",
+                "color": "#38bdf8",
+                "offset": -0.2
+              },
+              {
+                "name": "noodlebyte",
+                "color": "#f472b6",
+                "offset": 0.5
+              },
+              {
+                "name": "pixel_kat",
+                "color": "#facc15",
+                "offset": 0.3
+              },
+              {
+                "name": "MidnightSnackAttack",
+                "color": "#a78bfa",
+                "offset": 0.2
+              },
+              {
+                "name": "ghostpepper",
+                "color": "#34d399",
+                "offset": -0.1
+              },
+              {
+                "name": "LunarLatte",
+                "color": "#fb7185",
+                "offset": 0.4
+              },
+              {
+                "name": "bytewitch",
+                "color": "#60a5fa",
+                "offset": 0.3
+              },
+              {
+                "name": "sockpuppet42",
+                "color": "#e879f9",
+                "offset": 0.2
+              },
+              {
+                "name": "CozyCactus",
+                "color": "#f97316",
+                "offset": 0.1
+              },
+              {
+                "name": "raidboss_rae",
+                "color": "#a3e635",
+                "offset": -0.2
+              },
+              {
+                "name": "Waffles",
+                "color": "#38bdf8",
+                "offset": 0.3
+              },
+              {
+                "name": "snaccident",
+                "color": "#f472b6",
+                "offset": -0.1
+              },
+              {
+                "name": "Owlbear",
+                "color": "#facc15",
+                "offset": 0.1
+              },
+              {
+                "name": "mossymug",
+                "color": "#a78bfa",
+                "offset": 0.2
+              }
+            ]
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_height",
+            "value": "16"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_lean",
+            "value": "2.7"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_room",
+            "value": "0.42"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:last_stacker_name",
+            "value": "mossymug"
+          },
+          {
+            "event": "tower.topple",
+            "name": "Kettle",
+            "color": "#fb7185",
+            "offset": 1.4
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_height",
+            "value": "0"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_lean",
+            "value": "0"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_room",
+            "value": "4"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:last_stacker_name",
+            "value": "Kettle"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:last_topple_by",
+            "value": "Kettle"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:topples_this_stream",
+            "value": "1"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:last_topple_height",
+            "value": "17"
+          }
+        ]
+      },
+      {
+        "key": "record",
+        "label": "New record",
+        "blurb": "A standing tower passes the all-time record.",
+        "events": [
+          {
+            "event": "tower.stack",
+            "blocks": [
+              {
+                "name": "quietfox",
+                "color": "#f97316",
+                "offset": 0.3
+              },
+              {
+                "name": "PixelMoth",
+                "color": "#a3e635",
+                "offset": -0.3
+              },
+              {
+                "name": "tea_and_raids",
+                "color": "#38bdf8",
+                "offset": 0.4
+              },
+              {
+                "name": "noodlebyte",
+                "color": "#f472b6",
+                "offset": -0.2
+              },
+              {
+                "name": "pixel_kat",
+                "color": "#facc15",
+                "offset": 0.2
+              },
+              {
+                "name": "MidnightSnackAttack",
+                "color": "#a78bfa",
+                "offset": -0.4
+              },
+              {
+                "name": "ghostpepper",
+                "color": "#34d399",
+                "offset": 0.3
+              },
+              {
+                "name": "LunarLatte",
+                "color": "#fb7185",
+                "offset": 0.1
+              },
+              {
+                "name": "bytewitch",
+                "color": "#60a5fa",
+                "offset": -0.3
+              },
+              {
+                "name": "sockpuppet42",
+                "color": "#e879f9",
+                "offset": 0.2
+              },
+              {
+                "name": "CozyCactus",
+                "color": "#f97316",
+                "offset": 0.4
+              },
+              {
+                "name": "raidboss_rae",
+                "color": "#a3e635",
+                "offset": -0.2
+              },
+              {
+                "name": "Waffles",
+                "color": "#38bdf8",
+                "offset": 0.1
+              },
+              {
+                "name": "snaccident",
+                "color": "#f472b6",
+                "offset": -0.3
+              },
+              {
+                "name": "Owlbear",
+                "color": "#facc15",
+                "offset": 0.2
+              },
+              {
+                "name": "mossymug",
+                "color": "#a78bfa",
+                "offset": 0.3
+              },
+              {
+                "name": "Kettle",
+                "color": "#34d399",
+                "offset": -0.2
+              },
+              {
+                "name": "duskrunner",
+                "color": "#fb7185",
+                "offset": 0.1
+              },
+              {
+                "name": "PlinkoPete",
+                "color": "#60a5fa",
+                "offset": 0.2,
+                "record": true
+              }
+            ]
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_height",
+            "value": "19"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_lean",
+            "value": "0.9"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tower_room",
+            "value": "2.06"
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:last_stacker_name",
+            "value": "PlinkoPete"
+          },
+          {
+            "event": "list.updated",
+            "slug": "tower_record",
+            "items": [
+              "quietfox",
+              "PixelMoth",
+              "tea_and_raids",
+              "noodlebyte",
+              "pixel_kat",
+              "MidnightSnackAttack",
+              "ghostpepper",
+              "LunarLatte",
+              "bytewitch",
+              "sockpuppet42",
+              "CozyCactus",
+              "raidboss_rae",
+              "Waffles",
+              "snaccident",
+              "Owlbear",
+              "mossymug",
+              "Kettle",
+              "duskrunner",
+              "PlinkoPete"
+            ]
+          },
+          {
+            "event": "control.updated",
+            "key": "tower:tallest_tower_record",
+            "value": "19"
+          }
+        ]
+      }
     ]
   },
   "installs": {

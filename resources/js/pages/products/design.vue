@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Eraser, Loader2, MessageSquarePlus, Pause, Play } from '@lucide/vue';
+import { Eraser, Loader2, MessageSquarePlus, Pause, Play, RotateCcw } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
 import Heading from '@/components/Heading.vue';
@@ -50,6 +50,14 @@ interface SavedPreset {
  */
 type Extra = 'sample_chat' | 'chat_window' | 'chat_filters';
 
+/** A manifest scene. Its events are read by the frame (utils/previewScene.ts), never here. */
+interface Scene {
+  key: string;
+  label: string;
+  blurb: string;
+  events: unknown[];
+}
+
 const props = defineProps<{
   product: { slug: string; name: string };
   overlay: { id: number; name: string; slug: string };
@@ -65,6 +73,8 @@ const props = defineProps<{
   saved_presets_max: number;
   extras: Extra[];
   stage: StageSize[];
+  /** Moments of a server-driven game, played into the preview frame only. */
+  scenes: Scene[];
   chat_window?: number;
   chat_window_max?: number;
   /** Top of the sample-chat rate slider, per product; sent with `sample_chat`. */
@@ -576,6 +586,31 @@ function setRate(perMinute: number): void {
   postToFrame({ rate: perMinute });
 }
 
+/* ---------------------------------------------------------------- scenes */
+
+/** The last moment played, until Live puts the real game back. */
+const activeScene = ref<string | null>(null);
+
+function playScene(scene: Scene): void {
+  activeScene.value = scene.key;
+  // A plain copy: props are reactive proxies, and postMessage cannot clone a
+  // proxy (it throws DataCloneError and the frame hears nothing).
+  const events: unknown[] = JSON.parse(JSON.stringify(scene.events));
+  frame.value?.contentWindow?.postMessage({ ol: 'preview-scene', events }, window.location.origin);
+}
+
+/**
+ * A scene's values live only in the frame, so the real game comes back by
+ * loading the frame again. A nonce in the query string, because a src that
+ * differs only in its fragment does not load a new document.
+ */
+function backToLive(): void {
+  activeScene.value = null;
+  const [path, token] = frameSrc.value.split('#');
+  const base = path.replace(/[?&]reload=\d+/, '');
+  frameSrc.value = `${base}${base.includes('?') ? '&' : '?'}reload=${Date.now()}#${token}`;
+}
+
 /* ------------------------------------------------------------------ veil */
 
 /**
@@ -1030,6 +1065,37 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
                 Clear
               </button>
             </div>
+          </div>
+
+          <!-- Scenes: moments of a game the server drives, played into the
+               preview only, so every color can be seen where it shows up.
+               Live reloads the frame onto the real game. -->
+          <div
+            v-if="scenes.length > 0"
+            class="-mb-2 flex flex-col gap-2 rounded-t-sm border border-b-0 border-border bg-card p-3 sm:flex-row sm:items-center sm:gap-4"
+          >
+            <span class="shrink-0 text-sm font-semibold text-foreground">Show a moment</span>
+            <div class="flex min-w-0 flex-1 flex-wrap gap-1.5">
+              <button
+                v-for="scene in scenes"
+                :key="scene.key"
+                type="button"
+                class="cursor-pointer rounded-full border px-3 py-1 text-sm"
+                :class="
+                  activeScene === scene.key
+                    ? 'border-green-500/60 bg-green-500/10 text-green-700 dark:text-green-300'
+                    : 'border-border text-foreground hover:border-foreground/40'
+                "
+                :title="scene.blurb"
+                @click="playScene(scene)"
+              >
+                {{ scene.label }}
+              </button>
+            </div>
+            <button type="button" class="btn btn-sm btn-cancel shrink-0 cursor-pointer" :disabled="activeScene === null" @click="backToLive">
+              <RotateCcw class="mr-1.5 size-3.5" />
+              Live
+            </button>
           </div>
 
           <div

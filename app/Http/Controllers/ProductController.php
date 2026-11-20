@@ -536,6 +536,7 @@ class ProductController extends Controller
             'saved_presets_max' => UserChatPreset::MAX_PER_USER,
             'extras' => $extras,
             'stage' => ProductDesigner::stage($designer),
+            'scenes' => ProductDesigner::scenes($designer),
         ];
 
         if (in_array('sample_chat', $extras, true)) {

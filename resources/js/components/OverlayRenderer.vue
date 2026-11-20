@@ -46,6 +46,7 @@ import { createAlertQueue } from '@/utils/alertQueue';
 import { type AlertSource, type AlertSourceMap, headStylesheetHrefs, planAlertSource, toAlertSource, toAlertSourceMap } from '@/utils/alertSources';
 import { redactedHtml, toRedactCommand } from '@/utils/chatRedact';
 import type { ChatSampleFeed } from '@/utils/chatSample';
+import { expandScene } from '@/utils/previewScene';
 import { withChatSlots } from '@/utils/chatSlots';
 import { withEmoteSlots } from '@/utils/emoteSlots';
 import { DEFAULT_CHECKINS_WINDOW, clampCheckinsWindow, pinsFromData, toPin, upsertPin, withCheckinSlots } from '@/utils/checkinSlots';
@@ -1202,6 +1203,10 @@ onMounted(async () => {
   // own CSS arrives and lands after it.
   injectBaseStyle();
 
+  // The designer's scene buttons. Sample mode only: an overlay in OBS never
+  // listens, so nothing can stage a moment on a real stream.
+  if (props.sample) window.addEventListener('message', handlePreviewScene);
+
   // Synthetic chat firehose for load-testing the renderer. The condition is
   // inlined by Vite at build time, so an ordinary production build eliminates
   // this block entirely and the dev module never enters the graph. Build with
@@ -1436,6 +1441,7 @@ onUnmounted(() => {
   // flush. Without this an OBS source that reloads leaks a connection per
   // reload, and the backoff timer keeps reopening one after the component dies.
   twitchChat.disconnect();
+  window.removeEventListener('message', handlePreviewScene);
   if (sampleFeed) {
     sampleFeed.stop();
     window.removeEventListener('message', handleSampleMessage);
@@ -1646,6 +1652,24 @@ function handleTowerUpdated(event: any) {
 
   data.value = withTowerSlots(data.value, blocks, height);
   bump();
+}
+
+/**
+ * A moment of a chat game, sent by the designer (utils/previewScene.ts).
+ * Every step goes to the handler its broadcast would have reached, so the
+ * preview shows what the overlay really does with that moment. Only the
+ * framing page is heard, the same rule as the sample chat.
+ */
+function handlePreviewScene(event: MessageEvent): void {
+  if (event.source !== window.parent) return;
+  const payload = event.data as { ol?: string; events?: unknown } | null;
+  if (!payload || payload.ol !== 'preview-scene') return;
+
+  for (const step of expandScene(payload.events, Math.floor(Date.now() / 1000))) {
+    if (step.kind === 'control') applyControlUpdate(step.payload);
+    else if (step.kind === 'tower') handleTowerUpdated(step.payload);
+    else handleListUpdated(step.payload);
+  }
 }
 
 function handleListUpdated(event: any) {

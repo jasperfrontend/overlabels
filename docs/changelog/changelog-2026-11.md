@@ -1,5 +1,29 @@
 # Changelog - November 2026
 
+## OL-2611-030 - November 20th, 2026 - feat(designer): the preview plays the game while you pick its colors
+
+The color designer for the three full-screen games had one flaw the moment it shipped: the preview
+showed the game as it stood, which on a quiet channel is an empty board, no tower and nobody
+bowling. A streamer was asked to pick a "danger" color for a tower they had never seen lean.
+
+Now the preview plays. Plinko's designer has the same sample chat bar as Twitch Chat, and half the
+sample chat is the drop command, so balls fall, pegs light up and the scoreboard fills in the colors
+being picked. Chat Tower and Follower Bowling are driven by the server rather than by chat, so they
+get **moments** instead: a row of buttons above the preview.
+
+- **Chat Tower**: Standing, Close to falling, About to fall, Toppled and New record. Each one is
+  the tower at that point, built on the real physics, so the warning and danger colors, the flash
+  on the block that topples it and the record flash all show up where they will on stream.
+- **Follower Bowling**: Bowl. One throw exactly as the lane plays it, random outcome included, so a
+  few clicks show a strike or a gutter too.
+- **Live** puts the real game back.
+
+A moment is never real. It is declared in the product's manifest as the same events the server
+would broadcast, and the preview hands them to the overlay's own handlers in that one browser frame.
+Nothing is written, nothing is broadcast, the all-time record is never touched, and an overlay in
+OBS does not even listen. A "test" button that stacked or bowled for real was ruled out for exactly
+that reason.
+
 ## OL-2611-029 - November 20th, 2026 - feat(products): a color designer for Plinko, Chat Tower and Follower Bowling
 
 The three full-screen games can be recolored. Twitch Chat Plinko, Chat Tower and Follower Bowling
