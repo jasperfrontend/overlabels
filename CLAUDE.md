@@ -1142,6 +1142,11 @@ clobbered by a checkout, a stash, or a branch switch that a later step needs to 
   SKIPPED (with the reason), writes `remedy.md` beside the audit and a NEW claim. Shipped `claim.md`
   and `audit.md` are never edited; every correction is a new claim citing the old one inline. Remy
   commits locally and never pushes; his claim is unaudited until `/sally` runs on it.
+- **`/settle <ID>` is the standard way both run (Jasper, 2026-11-20)**, and `/ship` starts it after
+  pushing any commit with a `Changelog:` trailer: Sally once, Remy once on her findings, act on Remy
+  only if he found something broken, fix leftovers by hand, commit locally, never push. One pass per
+  ID: Remy's own claims and `(settles <ID>)` fixes are never settled again. That is what keeps the
+  claim loop closed. The skill is `~/.claude/skills/settle/SKILL.md`.
 - **The prose changelog is separate and keeps its higher bar: only a real feature, a big refactor
   or a substantial functionality change** (removing StreamElements, adding `channel_avatar`, a
   settings-page revamp), or when asked. Never for tiny or visual iterations: button borders, prose,
