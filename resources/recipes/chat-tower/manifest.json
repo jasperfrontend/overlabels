@@ -94,6 +94,8 @@
         "body": "The tower comes down at the start of every stream, or stays up between streams if you'd rather. The record carries over either way."
       }
     ],
+    "looks_heading": "Three themes to start from.",
+    "looks_lede": "Pick one in the designer, then change any of the ten colors, down to the warnings chat sees as the tower starts to lean.",
     "setup_note": "Blocks only land while you are live. Anyone can type `!tower` to see how tall it is and how close it is to falling.",
     "faq": [
       {

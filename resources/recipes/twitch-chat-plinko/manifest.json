@@ -101,6 +101,8 @@
         "body": "When a mod deletes a drop or times someone out, their ball leaves the board. Chatters you have hidden never get one."
       }
     ],
+    "looks_heading": "Three themes to start from.",
+    "looks_lede": "Pick one in the designer, then change any of the five colors, from the pegs to the highlight, to match your stream.",
     "setup_note": "Size the browser source to your whole canvas, 1920 by 1080. Twitch Chat Plinko is a full scene, made for BRB and downtime.",
     "faq": [
       {

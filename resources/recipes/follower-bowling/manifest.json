@@ -95,6 +95,8 @@
         "body": "One `!bowl` and you are in line. Everyone gets one spot, and the line goes in the order chat joined it."
       }
     ],
+    "looks_heading": "Three themes to start from.",
+    "looks_lede": "Pick one in the designer, then change any of the six colors, the lane included, to match your stream.",
     "setup_note": "Put the lane on its own scene in OBS, for your break or downtime. It runs itself whenever someone is in line.",
     "faq": [
       {
