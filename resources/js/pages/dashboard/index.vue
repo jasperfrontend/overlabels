@@ -8,8 +8,9 @@ import ProductIcon from '@/components/product-icons/ProductIcon.vue';
 import { hasProductIcon } from '@/components/product-icons/registry';
 import ProductStrip from '@/components/ProductStrip.vue';
 import WelcomeBanner from '@/components/WelcomeBanner.vue';
+import UpdatesList from '@/components/UpdatesList.vue';
 import WelcomeDialog from '@/components/WelcomeDialog.vue';
-import type { AppPageProps, InstalledProduct, WhatsNew } from '@/types';
+import type { AppPageProps, InstalledProduct, Update, WhatsNew } from '@/types';
 
 // The dashboard is a lobby, not an inventory. Four things, in the order a
 // tired streamer wants them: hello, the ONE thing worth doing next, what is on
@@ -48,6 +49,8 @@ const props = defineProps<{
   lastStream: LastStream | null;
   recentEvents: UnifiedEvent[];
   whatsNew: WhatsNew;
+  /** The five newest published posts from /updates. */
+  latestUpdates: Pick<Update, 'id' | 'slug' | 'title' | 'excerpt' | 'tags' | 'published_at'>[];
 }>();
 
 const page = usePage<AppPageProps>();
@@ -328,6 +331,21 @@ const breadcrumbs = [{ title: 'Dashboard', href: '/dashboard' }];
             <EventsTable v-if="props.recentEvents.length > 0" :events="props.recentEvents" />
             <p v-else class="text-sm text-foreground">Quiet so far. Follows, subs, raids and donations land here the moment they happen.</p>
           </div>
+        </section>
+
+        <!-- 5. The last five posts from /updates, in the /updates list design. -->
+        <section v-if="props.latestUpdates.length > 0" class="rise flex flex-col" style="--d: 315ms" aria-labelledby="nerdy-gritty-heading">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="nerdy-gritty-heading" class="text-sm font-semibold tracking-widest text-muted-foreground uppercase">The Nerdy Gritty</h2>
+            <Link
+              :href="route('updates.index')"
+              class="inline-flex items-center gap-1 text-sm font-medium text-[#0A78BE] hover:underline dark:text-[#1DAAFF]"
+            >
+              All updates
+              <ArrowRight class="size-3.5" />
+            </Link>
+          </div>
+          <UpdatesList :updates="props.latestUpdates" />
         </section>
       </template>
     </div>

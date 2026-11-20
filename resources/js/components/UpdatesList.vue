@@ -7,10 +7,13 @@ import CollectionList from '@/components/CollectionList.vue';
 import type { Update } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
 
+// Only what a row shows, so a caller (the dashboard) need not ship post bodies.
+type UpdateRow = Pick<Update, 'id' | 'slug' | 'title' | 'excerpt' | 'tags' | 'published_at'>;
+
 const { confirm } = useConfirm();
 const props = withDefaults(
   defineProps<{
-    updates: Update[];
+    updates: UpdateRow[];
     isAdmin?: boolean;
     /** Shown when there are no updates. */
     emptyMessage?: string;
@@ -18,10 +21,10 @@ const props = withDefaults(
   { emptyMessage: 'No updates yet.' },
 );
 
-function detailsHref(u: Update) {
+function detailsHref(u: UpdateRow) {
   return `/updates/${u.slug}`;
 }
-function editHref(u: Update) {
+function editHref(u: UpdateRow) {
   return `/admin/updates/${u.id}/edit`;
 }
 
@@ -35,7 +38,7 @@ function formatDateShort(iso: string) {
 
 const copiedId = ref<number | null>(null);
 
-async function copyLink(u: Update) {
+async function copyLink(u: UpdateRow) {
   try {
     await navigator.clipboard.writeText(location.origin + detailsHref(u));
     copiedId.value = u.id;
@@ -45,7 +48,7 @@ async function copyLink(u: Update) {
   }
 }
 
-async function handleDelete(u: Update) {
+async function handleDelete(u: UpdateRow) {
   if (await confirm({ message: `Delete "${u.title}"? This cannot be undone.`, confirmLabel: 'Delete' })) {
     router.delete(`/admin/updates/${u.id}`);
   }
@@ -55,9 +58,9 @@ async function handleDelete(u: Update) {
 <template>
   <CollectionList
     :items="props.updates"
-    :item-key="(u: Update) => u.id"
+    :item-key="(u: UpdateRow) => u.id"
     :href="detailsHref"
-    :label="(u: Update) => u.title"
+    :label="(u: UpdateRow) => u.title"
     class="my-4"
     :empty-message="props.emptyMessage"
   >

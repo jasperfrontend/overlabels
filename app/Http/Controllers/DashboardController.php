@@ -9,6 +9,7 @@ use App\Models\OverlayTemplate;
 use App\Models\RecipeInstance;
 use App\Models\StreamSession;
 use App\Models\TwitchEvent;
+use App\Models\Update;
 use App\Models\User;
 use App\Services\AlertMuteService;
 use App\Services\Recipes\RecipeCatalog;
@@ -44,6 +45,13 @@ class DashboardController extends Controller
             'lastStream' => $this->lastStream($user->id),
             'recentEvents' => $this->mergeRecentEvents($user->id, 5),
             'whatsNew' => WhatsNewController::props($user),
+            // The newest posts from /updates, seen or not - unlike whatsNew,
+            // which only holds what this account has not cleared yet.
+            'latestUpdates' => Update::query()
+                ->published()
+                ->orderByDesc('published_at')
+                ->limit(5)
+                ->get(['id', 'slug', 'title', 'excerpt', 'tags', 'published_at']),
         ]);
     }
 
