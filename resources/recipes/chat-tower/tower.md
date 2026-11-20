@@ -120,13 +120,13 @@ The stylesheet. Tags work in here too.
   --ink: #fafafa;
   --ink-soft: #e9d5ff;
   --ink-muted: #a78bfa;
-  --pink: #f472b6;
-  --pink-deep: #ec4899;
-  --orange: #f97316;
+  --highlight: #f472b6;
+  --danger: #ec4899;
+  --warning: #f97316;
   --green: #4ade80;
   --field: #1d0b30;
   --field-deep: #120720;
-  --line: rgb(167 139 250 / 0.35);
+  --line: color-mix(in srgb, var(--ink-muted) 35%, transparent);
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* one block is 4 units wide and 1 unit tall */
@@ -146,7 +146,7 @@ body {
 
 .stage { position: relative; width: 1920px; height: 1080px; background: var(--field-deep); }
 .num { font-variant-numeric: tabular-nums; }
-.cmd { font-family: var(--mono); color: var(--pink); white-space: nowrap; }
+.cmd { font-family: var(--mono); color: var(--highlight); white-space: nowrap; }
 
 /* ---------- left: how to play, then the running facts ---------- */
 .intro { position: absolute; left: 64px; top: 64px; width: 380px; }
@@ -183,12 +183,12 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
 .score { position: absolute; right: 64px; top: 64px; width: 380px; text-align: center; }
 .record { margin-top: 56px; }
 .big { margin-top: 4px; font-size: 144px; font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; }
-.record .big { font-size: 96px; color: var(--pink); }
+.record .big { font-size: 96px; color: var(--highlight); }
 .status { margin-top: 8px; font-size: 24px; font-weight: 600; color: var(--ink-soft); }
-.stage[data-danger="1"] .status { color: var(--orange); }
-.stage[data-danger="2"] .status { color: var(--pink-deep); animation: pulse 0.8s ease-in-out infinite alternate; }
+.stage[data-danger="1"] .status { color: var(--warning); }
+.stage[data-danger="2"] .status { color: var(--danger); animation: pulse 0.8s ease-in-out infinite alternate; }
 /* for as long as the topple banner is up (the fall included) */
-.stage[data-banner="1"] .status { color: var(--pink); animation: none; }
+.stage[data-banner="1"] .status { color: var(--highlight); animation: none; }
 
 .roster { margin-top: 20px; list-style: none; }
 .roster li {
@@ -238,10 +238,10 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   white-space: nowrap;
 }
 .fallline.left span { left: auto; right: 14px; }
-.stage[data-danger="1"] .fallline { border-color: var(--orange); }
-.stage[data-danger="1"] .fallline span { color: var(--orange); }
-.stage[data-danger="2"] .fallline { border-color: var(--pink-deep); }
-.stage[data-danger="2"] .fallline span { color: var(--pink-deep); }
+.stage[data-danger="1"] .fallline { border-color: var(--warning); }
+.stage[data-danger="1"] .fallline span { color: var(--warning); }
+.stage[data-danger="2"] .fallline { border-color: var(--danger); }
+.stage[data-danger="2"] .fallline span { color: var(--danger); }
 
 .ground {
   position: absolute;
@@ -282,7 +282,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   left: calc(var(--pin) - var(--band));
   width: calc(var(--band) * 2);
   border-radius: 7px;
-  background: rgb(244 114 182 / 0.3);
+  background: color-mix(in srgb, var(--highlight) 30%, transparent);
 }
 .gauge-pin {
   position: absolute;
@@ -295,8 +295,8 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   background: var(--ink);
   transition: left 0.35s ease;
 }
-.stage[data-danger="1"] .gauge-pin { background: var(--orange); box-shadow: 0 0 16px rgb(249 115 22 / 0.8); }
-.stage[data-danger="2"] .gauge-pin { background: var(--pink-deep); box-shadow: 0 0 20px rgb(236 72 153 / 0.9); }
+.stage[data-danger="1"] .gauge-pin { background: var(--warning); box-shadow: 0 0 16px color-mix(in srgb, var(--warning) 80%, transparent); }
+.stage[data-danger="2"] .gauge-pin { background: var(--danger); box-shadow: 0 0 20px color-mix(in srgb, var(--danger) 90%, transparent); }
 
 /* the camera follows the top: once the tower is taller than the field the
    whole stack slides down, block by block. It reads the number of blocks on
@@ -337,7 +337,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   background: var(--c);
   /* the first shadow darkens any chat colour enough for white text to read */
   box-shadow:
-    inset 0 0 0 100px rgb(18 7 32 / 0.28),
+    inset 0 0 0 100px color-mix(in srgb, var(--field-deep) 28%, transparent),
     inset 0 -5px 0 rgb(0 0 0 / 0.3),
     inset 0 2px 0 rgb(255 255 255 / 0.3),
     0 4px 0 rgb(0 0 0 / 0.45);
@@ -399,7 +399,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
    backwards fill would paint the first keyframe during the 0.9 s wait */
 @keyframes coyote-flash {
   0%, 38%, 58%, 96%, 100% { background: var(--c); }
-  8%, 30%, 66%, 88% { background: var(--flash); box-shadow: inset 0 -5px 0 rgb(0 0 0 / 0.3), 0 0 32px rgb(255 45 85 / 0.95), 0 4px 0 rgb(0 0 0 / 0.45); }
+  8%, 30%, 66%, 88% { background: var(--flash); box-shadow: inset 0 -5px 0 rgb(0 0 0 / 0.3), 0 0 32px color-mix(in srgb, var(--flash) 95%, transparent), 0 4px 0 rgb(0 0 0 / 0.45); }
 }
 
 @keyframes coyote-drop {
@@ -446,9 +446,9 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   align-items: center;
   gap: 10px;
   padding: 36px 24px;
-  background: rgb(18 7 32 / 0.92);
-  border-top: 2px solid var(--pink);
-  border-bottom: 2px solid var(--pink);
+  background: color-mix(in srgb, var(--field-deep) 92%, transparent);
+  border-top: 2px solid var(--highlight);
+  border-bottom: 2px solid var(--highlight);
   text-align: center;
   /* held back until the culprit has dropped out of sight */
   animation: banner-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.4) 2.4s both;
@@ -462,7 +462,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   font-size: 64px;
   font-weight: 800;
   line-height: 1.1;
-  color: var(--pink);
+  color: var(--highlight);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -477,7 +477,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   right: 0;
   top: 120px;
   padding: 18px 24px;
-  background: rgb(18 7 32 / 0.92);
+  background: color-mix(in srgb, var(--field-deep) 92%, transparent);
   border-top: 2px solid var(--green);
   border-bottom: 2px solid var(--green);
   text-align: center;

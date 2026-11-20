@@ -53,10 +53,10 @@ The stylesheet. Tags work in here too.
   --ink: #fafafa;
   --ink-soft: #e9d5ff;
   --ink-muted: #a78bfa;
-  --pink: #f472b6;
+  --highlight: #f472b6;
   --field: #1d0b30;
   --field-deep: #120720;
-  --line: rgb(167 139 250 / 0.35);
+  --line: color-mix(in srgb, var(--ink-muted) 35%, transparent);
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -77,12 +77,12 @@ body {
   --plinko-rows: 14;
   --plinko-max-balls: 150;
   --plinko-rate: 10;
-  --plinko-peg-color: #a78bfa;
-  --plinko-accent: #f472b6;
-  --plinko-ball-color: #f472b6;
-  --plinko-label-bg: #120720;
-  --plinko-label-color: #fafafa;
-  --plinko-slot-color: #a78bfa;
+  --plinko-peg-color: var(--ink-muted);
+  --plinko-accent: var(--highlight);
+  --plinko-ball-color: var(--highlight);
+  --plinko-label-bg: var(--field-deep);
+  --plinko-label-color: var(--ink);
+  --plinko-slot-color: var(--ink-muted);
   --plinko-font: "Albert Sans", system-ui, sans-serif;
 }
 
@@ -101,7 +101,7 @@ body {
   color: var(--ink-muted);
 }
 h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
-.cmd { font-family: var(--mono); color: var(--pink); white-space: nowrap; }
+.cmd { font-family: var(--mono); color: var(--highlight); white-space: nowrap; }
 .sub { margin-top: 20px; font-size: 21px; line-height: 1.5; color: var(--ink-soft); }
 
 /* ---------- the module's scoreboard ---------- */
@@ -140,7 +140,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   white-space: nowrap;
 }
 .ol-plinko-hud li:last-child { border-bottom: 1px solid var(--line); }
-.ol-plinko-points { font-family: var(--mono); color: var(--pink); }
+.ol-plinko-points { font-family: var(--mono); color: var(--highlight); }
 
 .ol-plinko-next { left: 64px; top: 420px; }
 .ol-plinko-next::before { content: "Next up"; }

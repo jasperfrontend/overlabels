@@ -134,11 +134,10 @@ The stylesheet. Tags work in here too.
   --ink: #fafafa;
   --ink-soft: #e9d5ff;
   --ink-muted: #a78bfa;
-  --pink: #f472b6;
-  --pink-deep: #ec4899;
+  --highlight: #f472b6;
   --field: #1d0b30;
   --field-deep: #120720;
-  --line: rgb(167 139 250 / 0.35);
+  --line: color-mix(in srgb, var(--ink-muted) 35%, transparent);
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -153,7 +152,7 @@ body {
 
 .stage { position: relative; width: 1920px; height: 1080px; background: var(--field-deep); }
 .num { font-variant-numeric: tabular-nums; }
-.cmd { font-family: var(--mono); color: var(--pink); white-space: nowrap; }
+.cmd { font-family: var(--mono); color: var(--highlight); white-space: nowrap; }
 
 .eyebrow,
 .label {
@@ -190,7 +189,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   font-family: var(--mono);
   color: var(--ink-muted);
 }
-.queue li:first-child::before { color: var(--pink); }
+.queue li:first-child::before { color: var(--highlight); }
 .queue li:last-child { border-bottom: 1px solid var(--line); }
 
 .count {
@@ -306,7 +305,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
 }
 
 /* the head pin carries the pink ring */
-.pin:nth-child(1) img { border-color: var(--pink); }
+.pin:nth-child(1) img { border-color: var(--highlight); }
 
 /* a stand-in for a follower the channel does not have yet, so a new
    channel still bowls at ten: same physics, dimmer face; a real follower
@@ -340,7 +339,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   width: 100px;
   height: 100px;
   border-radius: 9999px;
-  background: var(--pink);
+  background: var(--highlight);
   box-shadow:
     inset -10px -12px 0 rgb(0 0 0 / 0.22),
     inset 6px 6px 0 rgb(255 255 255 / 0.25),
@@ -376,9 +375,9 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   align-items: center;
   gap: 8px;
   padding: 28px 24px;
-  background: rgb(18 7 32 / 0.92);
-  border-top: 2px solid var(--pink);
-  border-bottom: 2px solid var(--pink);
+  background: color-mix(in srgb, var(--field-deep) 92%, transparent);
+  border-top: 2px solid var(--highlight);
+  border-bottom: 2px solid var(--highlight);
   text-align: center;
   opacity: var(--show);
   transform: scale(calc(0.6 + var(--show) * 0.4));
@@ -387,7 +386,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
     transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.4);
   z-index: 3;
 }
-.strike-word { font-size: 96px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--pink); }
+.strike-word { font-size: 96px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--highlight); }
 .strike-name {
   max-width: 100%;
   font-size: 28px;
@@ -410,7 +409,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
   font-size: 44px;
   font-weight: 800;
   line-height: 1.15;
-  color: var(--pink);
+  color: var(--highlight);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -432,7 +431,7 @@ h1 { margin-top: 12px; font-size: 56px; line-height: 1.05; font-weight: 800; }
 .status { margin-top: 8px; font-size: 24px; font-weight: 600; color: var(--ink-soft); }
 .status-result { opacity: var(--show); }
 .status-rolling { color: var(--ink-muted); opacity: calc(var(--bowler) - var(--show)); }
-.stage[data-knocked="10"] .status-result { color: var(--pink); font-weight: 800; }
+.stage[data-knocked="10"] .status-result { color: var(--highlight); font-weight: 800; }
 ```
 
 ## Controls

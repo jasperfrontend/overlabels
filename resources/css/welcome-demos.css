@@ -67,7 +67,7 @@
 .ol-bowl {
   --field: #1d0b30;
   --violet: #a78bfa;
-  --pink: #f472b6;
+  --highlight: #f472b6;
   --blue: #60a5fa;
   background: #120720;
 }
@@ -95,7 +95,7 @@
   margin-bottom: 0.3em;
 }
 .ol-bowl__qcount {
-  color: var(--pink);
+  color: var(--highlight);
   font-weight: 700;
 }
 .ol-bowl__qname {

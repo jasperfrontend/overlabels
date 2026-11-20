@@ -73,8 +73,10 @@ it('ships exactly the source a fresh install gets', function () {
     $instance = bowlingMoveInstall(bowlingMoveUser());
     $template = OverlayTemplate::findOrFail($instance->primitive_map['overlays']['lane']);
 
+    // CSS is not compared: the migration is frozen history and the recipe's
+    // stylesheet moves on (palette renames). The move recognises a fresh
+    // install by its HTML, so that one must still match.
     expect(bowlingMoveConstant('HTML'))->toBe($template->html)
-        ->and(bowlingMoveConstant('CSS'))->toBe($template->css)
         ->and(bowlingMoveConstant('HEAD'))->toBe($template->head)
         ->and(bowlingMoveConstant('DESCRIPTION'))->toBe($template->description);
 
