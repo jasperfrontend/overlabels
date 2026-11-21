@@ -393,9 +393,12 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   A `sub` notice arrives next to the `channel.subscribe` for the same viewer, so anything else
   double-counts. Pinned by `ChatNotificationSubscriptionTest` (7 tests; the store-only one was
   verified to fail with the guard disabled).
-- **Rolling a new event type out to existing accounts is manual.** `eventsub:monitor --fix` only
-  repairs accounts with NO subscriptions. Run `eventsub:backfill-goals` once on prod after the
-  deploy; it is generic and idempotent despite its name.
+- **Rolling a new event type out to existing accounts is manual.** `eventsub:monitor --fix` sets
+  up only accounts that were never connected, accounts with a failed subscription, and (since
+  OL-2611-032) accounts with a `not_found_on_twitch` row - a healthy account never gets a new
+  type from it. It has run report-only since 2026-11-21 (issue #342). Run
+  `eventsub:backfill-goals` once on prod after the deploy; it is generic and idempotent despite
+  its name.
 - Nothing reads the ledger yet. Next step, when it comes: a month of rows on CasualElephant's
   channel compared against his tracker, THEN decide the shape (a `plus_points_this_month`
   source-managed control with a scheduler reset at 00:00 UTC on the 1st was the leading option) and
