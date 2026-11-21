@@ -388,6 +388,15 @@ class UserEventSubManager
         ]);
         if ($twitchSubs && isset($twitchSubs['data'])) {
             foreach ($twitchSubs['data'] as $sub) {
+                // The user_id filter matches ANY id in a condition, so the bot
+                // account's list holds every streamer's chat notification
+                // subscription. Only delete what this account broadcasts.
+                $condition = $sub['condition'] ?? [];
+                $broadcaster = $condition['broadcaster_user_id'] ?? $condition['to_broadcaster_user_id'] ?? null;
+                if ((string) $broadcaster !== (string) $user->twitch_id) {
+                    continue;
+                }
+
                 try {
                     if ($this->eventSubService->deleteSubscription($appToken, $sub['id'])) {
                         $deletedCount++;
@@ -438,6 +447,12 @@ class UserEventSubManager
         // Create a map of Twitch subscriptions
         $twitchSubsMap = collect($twitchSubs['data'])->keyBy('id');
 
+        // Twitch pages at 100 and this reads one page. The user_id filter
+        // matches any id in a condition, so the bot account's list carries
+        // every streamer's chat notification subscription and reaches the cap.
+        // A row absent from an incomplete list is unknown, not gone.
+        $listIsComplete = empty($twitchSubs['pagination']['cursor']);
+
         // Get user's stored subscriptions
         $userSubs = UserEventsubSubscription::where('user_id', $user->id)->get();
 
@@ -450,6 +465,10 @@ class UserEventSubManager
 
         foreach ($userSubs as $userSub) {
             $twitchSub = $twitchSubsMap->get($userSub->twitch_subscription_id);
+
+            if (! $twitchSub && ! $listIsComplete) {
+                continue;
+            }
 
             if (! $twitchSub) {
                 // Subscription not found on Twitch - mark as failed locally
@@ -564,7 +583,7 @@ class UserEventSubManager
                 'webhook_callback_verification_failed',
                 'notification_failures_exceeded',
             ])->count(),
-            'subscriptions_by_type' => UserEventsubSubscription::select('event_type')
+            'subscriptions_by_type' => UserEventsubSubscription::selectRaw('event_type, count(*) as count')
                 ->groupBy('event_type')
                 ->pluck('count', 'event_type'),
         ];

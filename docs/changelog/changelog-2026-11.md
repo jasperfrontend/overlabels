@@ -1,5 +1,37 @@
 # Changelog - November 2026
 
+## OL-2611-032 - November 21st, 2026 - fix(eventsub): the hourly subscription monitor runs again, report-only, and can no longer delete other streamers' subscriptions
+
+A real follow on JasperDiscovers never reached Overlabels. It was not the server, the connection
+or Linode's emergency host migration the day before: other channels' raids, subs and follows kept
+arriving all evening. The follow simply never left Twitch. That channel's follow subscription had
+delivered nothing since September 10th while the database still listed it as enabled, and every
+follow stored since then was a Twitch CLI test. Reconnecting created a fresh subscription, and a
+follow from an alt account arrived straight away.
+
+Something was supposed to catch that. `eventsub:monitor --fix` runs every hour, asks Twitch for the
+real status of every subscription not checked in a day, and repairs the dead ones. It had crashed
+on every run since a cleanup in April, before checking a single thing, so for seven months nothing
+was watching.
+
+- **The crash is fixed**: one query selected an event type and then read a count it never asked for.
+- **The monitor now ships report-only.** Its repair code has not run against today's data since
+  April, so before it touches anyone's subscriptions it reports for a while. It still checks every
+  subscription against Twitch each hour and records the real status, which is what lets the report
+  name the dead ones. Repairs come back once that report has been read (issue #342).
+- **A subscription Twitch dropped is repaired, not forgotten.** Before, it was marked "not found on
+  Twitch", stamped as checked, and never looked at again. With repairs on, the dead row is removed
+  and the normal setup recreates just the missing event types, deleting nothing on Twitch.
+- **The bot account can no longer take every streamer's chat notifications down with it.** Twitch's
+  subscription search by user matches anyone named in a subscription, and the bot is named in every
+  streamer's chat notification subscription. Removing the bot account's subscriptions, by a repair,
+  a reconnect or an account erasure, would have deleted all of those too. Removal now only deletes
+  subscriptions the account is the broadcaster of.
+- **A partial answer from Twitch is no longer read as a dead subscription.** Twitch answers in pages
+  of 100 and the check reads one; a subscription on page two is now left alone, not marked missing.
+- **The Ghost User is skipped.** It has no Twitch login, so the monitor would have queued a setup
+  for it every hour that failed every time.
+
 ## OL-2611-030 - November 20th, 2026 - feat(designer): the preview plays the game while you pick its colors
 
 The color designer for the three full-screen games had one flaw the moment it shipped: the preview

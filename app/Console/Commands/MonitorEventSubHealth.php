@@ -57,7 +57,10 @@ class MonitorEventSubHealth extends Command
         $this->newLine();
         $this->line('🔍 Checking for users missing subscriptions...');
 
+        // System users (the Ghost User) have no Twitch login, so a setup job
+        // for them fails every attempt, every hour.
         $usersWhoShouldBeConnected = User::where('eventsub_auto_connect', true)
+            ->where('is_system_user', false)
             ->whereNull('eventsub_connected_at')
             ->get();
 
@@ -117,6 +120,45 @@ class MonitorEventSubHealth extends Command
             $this->info('✅ No failed subscriptions found');
         }
 
+        // Rows Twitch no longer lists. Verify stamps them as checked, so the
+        // stale pass below never sees them again and the event is silently
+        // gone for good. The repair deliberately avoids the force-recreate
+        // above: its Twitch-side cleanup deletes every subscription whose
+        // condition names the user, which for the bot account means every
+        // streamer's chat notification subscription. Dropping the dead rows
+        // and running the ordinary setup creates only the missing types.
+        $this->newLine();
+        $this->line('🔍 Checking for subscriptions no longer on Twitch...');
+
+        $missingByUser = UserEventsubSubscription::where('status', 'not_found_on_twitch')
+            ->with('user')
+            ->get()
+            ->groupBy('user_id');
+
+        if ($missingByUser->count() > 0) {
+            foreach ($missingByUser as $userMissingSubs) {
+                $user = $userMissingSubs->first()->user;
+                if (! $user) {
+                    continue;
+                }
+
+                $types = $userMissingSubs->pluck('event_type')->implode(', ');
+                $this->warn("  - {$user->name} (ID: {$user->id}): no longer on Twitch: {$types}");
+
+                if ($fix) {
+                    $this->info('    → Recreating the missing subscriptions...');
+                    UserEventsubSubscription::whereIn('id', $userMissingSubs->pluck('id'))->delete();
+                    SetupUserEventSubSubscriptions::dispatch($user);
+                }
+            }
+
+            if (! $fix) {
+                $this->comment('  Use --fix to recreate them');
+            }
+        } else {
+            $this->info('✅ Every stored subscription is on Twitch');
+        }
+
         // Check for stale verification timestamps
         $this->newLine();
         $this->line('🔍 Checking for stale subscriptions...');
@@ -133,21 +175,27 @@ class MonitorEventSubHealth extends Command
 
             foreach ($staleSubscriptions as $userId => $userStaleSubs) {
                 $user = $userStaleSubs->first()->user;
+                if (! $user) {
+                    continue;
+                }
+
                 $this->line("  - {$user->name} (ID: {$user->id}): {$userStaleSubs->count()} stale subscriptions");
 
-                if ($fix || $force) {
-                    $this->info('    → Verifying subscriptions...');
-                    try {
-                        $status = $this->manager->verifyUserSubscriptions($user);
-                        $this->info("      Status: {$status['active']} active, {$status['failed']} failed, {$status['renewed']} renewed");
-                    } catch (\Exception $e) {
-                        $this->error("      Failed to verify: {$e->getMessage()}");
+                // Verifying runs with or without --fix: it only reads Twitch and
+                // records each row's real status here, which is what lets a
+                // report-only run name the dead subscriptions. Repairs are the
+                // only thing --fix gates.
+                $this->info('    → Verifying subscriptions...');
+                try {
+                    $status = $this->manager->verifyUserSubscriptions($user);
+                    if (isset($status['error'])) {
+                        $this->error("      Failed to verify: {$status['error']}");
+                    } else {
+                        $this->info("      Status: {$status['active']} active, {$status['failed']} failed, {$status['missing']} missing");
                     }
+                } catch (\Exception $e) {
+                    $this->error("      Failed to verify: {$e->getMessage()}");
                 }
-            }
-
-            if (! $fix && ! $force) {
-                $this->comment('  Use --fix to automatically verify these subscriptions');
             }
         } else {
             $this->info('✅ All subscriptions are recently verified');
