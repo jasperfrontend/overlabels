@@ -1,0 +1,65 @@
+# Deploys the Cloudflare EventSub front desk Worker (cloudflare/eventsub-front-desk).
+# See docs/design/eventsub-front-desk.md.
+#
+# Secrets: CLOUDFLARE_API_TOKEN (custom token "overlabels-github-worker-deploy":
+# Workers Scripts Edit, Queues Edit, Account Settings Read on the account;
+# Workers Routes Edit on overlabels.com), CLOUDFLARE_ACCOUNT_ID, and
+# FRONT_DESK_SECRET (the same value Laravel gets through Kamal).
+name: Front desk
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cloudflare/eventsub-front-desk/**'
+      - '.github/workflows/front-desk.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: front-desk-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudflare/eventsub-front-desk
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER: npx --yes wrangler@4.158.0
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # The consumer binding refers to both queues, so they must exist before the
+      # first deploy. Creating one that exists is the only error tolerated here.
+      - name: Ensure the queues exist
+        run: |
+          for q in twitch-eventsub twitch-eventsub-dlq; do
+            if out=$($WRANGLER queues create "$q" 2>&1); then
+              echo "created $q"
+            elif echo "$out" | grep -qi "already"; then
+              echo "$q already exists"
+            else
+              echo "$out"
+              exit 1
+            fi
+          done
+
+      - name: Deploy the Worker
+        run: $WRANGLER deploy
+
+      - name: Upload the front desk secret
+        env:
+          FRONT_DESK_SECRET: ${{ secrets.FRONT_DESK_SECRET }}
+        run: |
+          if [ -z "$FRONT_DESK_SECRET" ]; then
+            echo "::warning::FRONT_DESK_SECRET is not set; queue mode cannot deliver batches until it is."
+            exit 0
+          fi
+          printf '%s' "$FRONT_DESK_SECRET" | $WRANGLER secret put FRONT_DESK_SECRET

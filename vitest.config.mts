@@ -22,6 +22,8 @@ export default defineConfig({
     },
     test: {
         environment: 'node',
-        include: ['resources/js/**/*.test.ts'],
+        // The Cloudflare front desk Worker is plain functions over Request and
+        // Response, which Node provides, so it is tested here too.
+        include: ['resources/js/**/*.test.ts', 'cloudflare/**/*.test.ts'],
     },
 });
