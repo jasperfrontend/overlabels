@@ -15,8 +15,8 @@ routes = [
 [vars]
 # "passthrough" forwards every request to Laravel untouched; "queue" turns the
 # front desk on. Setting it back to "passthrough" is the fast rollback; removing
-# the route below is the full one.
-MODE = "passthrough"
+# the route above is the full one.
+MODE = "queue"
 BATCH_URL = "https://overlabels.com/api/twitch/webhook/batch"
 # FRONT_DESK_SECRET is a Worker secret, uploaded by the workflow.
 
