@@ -340,19 +340,13 @@ class TwitchApiService
      */
     public function getChannelFollowers(string $accessToken, string $userId, int $first = User::FOREACH_CAP_MAX): ?array
     {
-        // Special case: needs channel info first to get broadcaster_id
-        $channelInfo = $this->getChannelInfo($accessToken, $userId);
-
-        if (! $channelInfo) {
-            Log::warning('Could not get channel info for followers request', ['user_id' => $userId]);
-
-            return null;
-        }
-
+        // A channel's broadcaster_id IS its owner's user id. This used to fetch
+        // GET helix/channels first, uncached, only to read that id back: one
+        // wasted Helix round trip on every follower refetch (#343).
         $response = $this->makeApiRequest(
             $accessToken,
             'channels/followers',
-            ['broadcaster_id' => $channelInfo['broadcaster_id'], 'first' => $first],
+            ['broadcaster_id' => $userId, 'first' => $first],
             'get channel followers'
         );
 
