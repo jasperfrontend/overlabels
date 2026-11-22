@@ -85,12 +85,19 @@ class TwitchApiService
                 }
 
                 if ($response->status() === 429) {
-                    // Rate limited, wait longer before retry
-                    $retryAfter = $response->header('Retry-After') ?? 60;
-                    Log::warning("Rate limited on $errorContext, waiting $retryAfter seconds");
-                    sleep(min($retryAfter, 60)); // Cap at 60 seconds
+                    // Never wait here. This used to sleep (Retry-After, which
+                    // Helix does not send, so 60 s) and retry three times,
+                    // inside whatever process made the call - on the single
+                    // twitch-events worker that froze every streamer's alerts
+                    // once one raided channel had spent its budget (#343). A
+                    // 429 is a failed call like any other: every caller
+                    // already handles null.
+                    Log::warning("Rate limited on $errorContext", [
+                        'endpoint' => $endpoint,
+                        'ratelimit_reset' => $response->header('Ratelimit-Reset'),
+                    ]);
 
-                    continue;
+                    return null;
                 }
 
                 // For other 5xx errors, retry with exponential backoff
