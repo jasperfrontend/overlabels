@@ -134,6 +134,14 @@ return [
         'healthcheck_url' => env('HC_PING_URL'),
     ],
 
+    'eventsub_monitor' => [
+        // Healthchecks.io dead-man's switch for the hourly eventsub:monitor run,
+        // a separate check from the backup's. The monitor crashed on every run
+        // from April to November 2026 and nothing noticed: a dead monitor reports
+        // nothing, so only an outside check on the absence of its ping can.
+        'healthcheck_url' => env('HC_EVENTSUB_MONITOR_PING_URL'),
+    ],
+
     'elevenlabs' => [
         'api_key' => env('ELEVENLABS_API_KEY'),
         // Kaylin - "the voice of Overlabels". Single voice for all TTS.

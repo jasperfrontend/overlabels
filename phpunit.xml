@@ -29,6 +29,7 @@
              BackupDatabaseTest can drive them. Never reached: the tests bind a
              recording HTTP client in place of Guzzle. -->
         <env name="HC_PING_URL" value="https://hc-ping.test/00000000-0000-0000-0000-000000000000"/>
+        <env name="HC_EVENTSUB_MONITOR_PING_URL" value="https://hc-ping.test/11111111-1111-1111-1111-111111111111"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="METERING_ENABLED" value="false"/>
         <env name="PULSE_ENABLED" value="false"/>

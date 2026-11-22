@@ -158,11 +158,22 @@ Artisan::command('ban:user {twitch_id : The Twitch ID of the user to ban} {comme
 // EventSub Health Monitoring - runs every hour. Ran report-only from Nov
 // 21st to 22nd 2026 (the command had crashed on every run since April);
 // --fix restored after the first reports were read (issue #342).
-Schedule::command('eventsub:monitor --fix')
+$eventsubMonitor = Schedule::command('eventsub:monitor --fix')
     ->hourly()
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/eventsub-monitor.log'));
+
+// Dead-man's switch (Healthchecks.io), same shape as the backup's below: on
+// the SCHEDULE, so a manual run cannot satisfy it. The command exits 1 on a
+// crash or when fewer than 80% of subscriptions are enabled, and either sends
+// the /fail ping; a monitor that stops running sends nothing, which the check
+// reports once its grace period runs out. With runInBackground() the pings are
+// sent by schedule:finish, which runs this event's after-callbacks.
+if ($monitorHealthcheck = config('services.eventsub_monitor.healthcheck_url')) {
+    $eventsubMonitor->pingOnSuccess($monitorHealthcheck)
+        ->pingOnFailure(rtrim($monitorHealthcheck, '/').'/fail');
+}
 
 // Prune Telescope entries older than 48 hours - keeps the DB from ballooning
 Schedule::command('telescope:prune --hours=48')

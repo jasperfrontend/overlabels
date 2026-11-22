@@ -109,6 +109,7 @@ jobs:
           SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
           BACKUP_ALERT_WEBHOOK_URL: ${{ secrets.BACKUP_ALERT_WEBHOOK_URL }}
           HC_PING_URL: ${{ secrets.HC_PING_URL }}
+          HC_EVENTSUB_MONITOR_PING_URL: ${{ secrets.HC_EVENTSUB_MONITOR_PING_URL }}
           PADDLE_ENVIRONMENT: ${{ secrets.PADDLE_ENVIRONMENT }}
           PADDLE_API_KEY: ${{ secrets.PADDLE_API_KEY }}
           PADDLE_CLIENT_TOKEN: ${{ secrets.PADDLE_CLIENT_TOKEN }}
@@ -138,7 +139,8 @@ jobs:
                      R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_ACCOUNT_ID \
                      R2_IMAGES_ACCESS_KEY_ID R2_IMAGES_SECRET_ACCESS_KEY \
                      SCW_ACCESS_KEY SCW_SECRET_KEY \
-                     BACKUP_ALERT_WEBHOOK_URL HC_PING_URL \n                     PADDLE_ENVIRONMENT PADDLE_API_KEY PADDLE_CLIENT_TOKEN PADDLE_WEBHOOK_SECRET; do
+                     BACKUP_ALERT_WEBHOOK_URL HC_PING_URL HC_EVENTSUB_MONITOR_PING_URL \
+                     PADDLE_ENVIRONMENT PADDLE_API_KEY PADDLE_CLIENT_TOKEN PADDLE_WEBHOOK_SECRET; do
               printf '%s=%q\n' "$v" "${!v}"
             done
           } > .kamal/secrets

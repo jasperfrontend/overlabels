@@ -345,6 +345,9 @@ env:
     # URL - anyone holding it can fake a successful ping - so it lives here
     # rather than in env.clear.
     - HC_PING_URL
+    # Healthchecks.io dead-man's switch for the hourly eventsub:monitor run,
+    # its own check (a capability URL, same reasoning as above).
+    - HC_EVENTSUB_MONITOR_PING_URL
     # Paddle store (merchant of record). All four are secrets so that moving
     # from the sandbox account to the live one is a GitHub-secrets swap with no
     # code change: environment, API key, client token and webhook signing
