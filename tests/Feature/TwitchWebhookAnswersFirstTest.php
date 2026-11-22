@@ -39,8 +39,10 @@ function postAnswersFirstNotification(string $type, array $event, string $messag
 function answersFirstUser(): User
 {
     $user = User::factory()->create(['access_token' => 'token']);
+    // Shows the follower's avatar, so the job has a reason to look it up (it
+    // skips the lookup for an account whose templates never show one).
     $alert = OverlayTemplate::factory()->create([
-        'owner_id' => $user->id, 'type' => 'alert', 'html' => '<div>[[[event.user_name]]]</div>', 'template_tags' => ['event.user_name'],
+        'owner_id' => $user->id, 'type' => 'alert', 'html' => '<div><img src="[[[event.user_avatar]]]">[[[event.user_name]]]</div>', 'template_tags' => ['event.user_avatar', 'event.user_name'],
     ]);
     EventTemplateMapping::create([
         'user_id' => $user->id, 'event_type' => 'channel.follow', 'template_id' => $alert->id, 'duration_ms' => 5000, 'enabled' => true,

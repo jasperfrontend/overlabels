@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * @property int $id
@@ -147,6 +148,65 @@ class OverlayTemplate extends Model
                 throw new Exception('Cannot delete a template that is part of a kit. Remove it from all kits first.');
             }
         });
+
+        // A template edit can add or remove an avatar tag; the next event must see it.
+        static::saved(fn ($template) => self::forgetEventAvatarUsage($template->owner_id));
+        static::deleted(fn ($template) => self::forgetEventAvatarUsage($template->owner_id));
+    }
+
+    /**
+     * Does any of this owner's templates show an event actor's avatar?
+     *
+     * Every Twitch event used to cost a Helix /users call for the acting user's
+     * avatar - in a raid, the whole remaining cost of a follow (#343). Only two
+     * things read it: an alert's `event.*_avatar` tags, and a static overlay's
+     * bare `*_avatar` tags, which the event payload overwrites. `channel_avatar`
+     * comes from the cached profile, never from an event, so it does not count;
+     * nor does an image URL that merely contains "avatar" (a hyphen is not part
+     * of a tag name). Cached, and forgotten whenever one of the owner's templates
+     * is saved or deleted.
+     */
+    public static function ownerShowsEventAvatars(?int $ownerId): bool
+    {
+        if ($ownerId === null) {
+            return false;
+        }
+
+        return Cache::remember(self::eventAvatarUsageKey($ownerId), now()->addMinutes(10), function () use ($ownerId) {
+            $columns = ['html', 'css', 'head', 'tts_message', 'chat_message'];
+
+            return self::where('owner_id', $ownerId)
+                ->where(function (Builder $q) use ($columns) {
+                    foreach ($columns as $column) {
+                        $q->orWhere($column, 'like', '%_avatar%');
+                    }
+                })
+                ->get($columns)
+                ->contains(function (self $template) use ($columns) {
+                    foreach ($columns as $column) {
+                        preg_match_all('/[\w.:]*_avatar\b/', (string) $template->{$column}, $matches);
+                        foreach ($matches[0] as $tag) {
+                            if ($tag !== 'channel_avatar' && ! str_ends_with($tag, '.channel_avatar') && ! str_ends_with($tag, ':channel_avatar')) {
+                                return true;
+                            }
+                        }
+                    }
+
+                    return false;
+                });
+        });
+    }
+
+    private static function forgetEventAvatarUsage(?int $ownerId): void
+    {
+        if ($ownerId !== null) {
+            Cache::forget(self::eventAvatarUsageKey($ownerId));
+        }
+    }
+
+    private static function eventAvatarUsageKey(int $ownerId): string
+    {
+        return "overlay_templates:event_avatars:$ownerId";
     }
 
     /**

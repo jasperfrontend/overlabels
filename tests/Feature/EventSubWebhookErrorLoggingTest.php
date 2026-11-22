@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\OverlayTemplate;
 use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Services\TwitchApiService;
@@ -36,8 +37,12 @@ function postTwitchNotification(array $subscription, array $event): TestResponse
 
 test('a PHP Error thrown while handling a notification is logged, not swallowed', function () {
     $user = User::factory()->create(['access_token' => 'token']);
+    // An avatar tag, so the job runs enrichment (it skips it for an account
+    // whose templates never show an event avatar).
+    OverlayTemplate::factory()->create(['owner_id' => $user->id, 'type' => 'alert', 'html' => '<img src="[[[event.user_avatar]]]">']);
 
     $this->mock(TwitchApiService::class, function ($mock) {
+        $mock->shouldReceive('warmEventAvatars');
         $mock->shouldReceive('enrichEventWithUserAvatars')
             ->once()
             ->andThrow(new TypeError('enrichment blew up'));

@@ -541,6 +541,58 @@ class TwitchApiService
     }
 
     /**
+     * Fill the avatar cache for this event AND the events queued behind it, in
+     * one Helix /users call (it takes 100 ids).
+     *
+     * Only when this event needs a lookup anyway: if every id it references is
+     * cached, nothing is fetched and $upcoming is never called. Otherwise the
+     * ids of the following events ride along up to the 100-id limit, so in a
+     * raid the next ~99 follows find their avatar cached and make no call at
+     * all (#343). $upcoming yields stored, already-scrubbed payloads, so an
+     * anonymous or !forgetme viewer is never looked up. Same 60 s cache and
+     * the same failure behaviour as enrichEventWithUserAvatars().
+     *
+     * @param  callable(): iterable<array<string, mixed>>  $upcoming
+     */
+    public function warmEventAvatars(string $accessToken, array $event, callable $upcoming): void
+    {
+        try {
+            $ids = [];
+            $this->collectUserTrigrams($event, $ids);
+            $needed = array_values(array_filter($ids, fn ($id) => Cache::get("twitch_event_avatar_$id") === null));
+
+            if ($needed === []) {
+                return;
+            }
+
+            foreach ($upcoming() as $next) {
+                if (count($needed) >= 100) {
+                    break;
+                }
+                $more = [];
+                $this->collectUserTrigrams(is_array($next) ? $next : [], $more);
+                foreach ($more as $id) {
+                    if (count($needed) >= 100) {
+                        break;
+                    }
+                    if (! in_array($id, $needed, true) && Cache::get("twitch_event_avatar_$id") === null) {
+                        $needed[] = $id;
+                    }
+                }
+            }
+
+            $users = $this->getUsersInfo($accessToken, $needed);
+            foreach ($needed as $id) {
+                Cache::put("twitch_event_avatar_$id", (string) ($users[$id]['profile_image_url'] ?? ''), now()->addSeconds(60));
+            }
+        } catch (Throwable $e) {
+            Log::warning('EventSub avatar warm-up failed; enrichment will look up on its own', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * Pass 1 of avatar enrichment: walk the payload and collect every user id
      * referenced by a complete `<prefix>_id` + `<prefix>_login` + `<prefix>_name`
      * trigram. Bare `user_id`/`user_login`/`user_name` (no prefix) is treated as

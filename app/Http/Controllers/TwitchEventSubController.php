@@ -11,6 +11,7 @@ use App\Jobs\ProcessTwitchEvent;
 use App\Jobs\SynthesizeAlertTts;
 use App\Models\BotChatOutbox;
 use App\Models\EventTemplateMapping;
+use App\Models\OverlayTemplate;
 use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
@@ -647,10 +648,22 @@ class TwitchEventSubController extends Controller
             // batched lookup, memoised per user id, then mutates $event so
             // DB persist, alert render, raw broadcast, and tts message
             // all see the same `<prefix>_avatar` keys.
-            $enrichmentToken = $user?->access_token ?: $this->eventSubService->getAppAccessToken();
-            if ($enrichmentToken) {
-                $event = $this->twitchService->enrichEventWithUserAvatars($enrichmentToken, $event);
-                $data['event'] = $event;
+            //
+            // Only when one of the streamer's own templates shows an event
+            // avatar: nothing else reads it, and in a raid this lookup was the
+            // whole remaining cost of a follow (#343). When it is needed, the
+            // warm-up fetches the rows queued behind this one in the same call.
+            if ($user && OverlayTemplate::ownerShowsEventAvatars($user->id)) {
+                $enrichmentToken = $user->access_token ?: $this->eventSubService->getAppAccessToken();
+                if ($enrichmentToken) {
+                    $this->twitchService->warmEventAvatars($enrichmentToken, $event, fn () => TwitchEvent::where('user_id', $user->id)
+                        ->where('id', '>', $twitchEvent->id)
+                        ->orderBy('id')
+                        ->limit(99)
+                        ->pluck('event_data'));
+                    $event = $this->twitchService->enrichEventWithUserAvatars($enrichmentToken, $event);
+                    $data['event'] = $event;
+                }
             }
 
             // The row was stored before enrichment, so the webhook could
