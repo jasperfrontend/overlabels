@@ -23,6 +23,8 @@ use App\Exceptions\TwitchTokenInvalidException;
  *   unknown_user no account for the broadcaster (row has user_id = null)
  *   gift_absorbed a gifted sub whose gift alert already announced the whole
  *                batch (see GiftSubAbsorber)
+ *   late         Twitch sent it more than five minutes before we got to it
+ *                (an outage backlog): stored and counted, no alert
  *
  * A row with alert_id set and outcome null is in flight: broadcast queued,
  * not yet closed by the worker. See docs/design/event-delivery-ledger-2026-08.md.
@@ -40,6 +42,7 @@ enum DeliveryOutcome: string
     case ChatOnly = 'chat_only';
     case UnknownUser = 'unknown_user';
     case GiftAbsorbed = 'gift_absorbed';
+    case Late = 'late';
 
     /**
      * Whether this outcome counts toward a success rate. no_target outcomes

@@ -348,6 +348,11 @@ env:
     # Healthchecks.io dead-man's switch for the hourly eventsub:monitor run,
     # its own check (a capability URL, same reasoning as above).
     - HC_EVENTSUB_MONITOR_PING_URL
+    # Shared with the Cloudflare front desk Worker, which posts queued EventSub
+    # batches to /api/twitch/webhook/batch (docs/design/eventsub-front-desk.md).
+    # The same GitHub secret is uploaded to the Worker by front-desk.yml. Empty
+    # keeps the batch endpoint shut.
+    - FRONT_DESK_SECRET
     # Paddle store (merchant of record). All four are secrets so that moving
     # from the sandbox account to the live one is a GitHub-secrets swap with no
     # code change: environment, API key, client token and webhook signing

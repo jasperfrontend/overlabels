@@ -17,6 +17,7 @@ export const OUTCOME_LABELS: Record<string, string> = {
   chat_only: 'chat only',
   unknown_user: 'unknown user',
   gift_absorbed: 'in a gift alert',
+  late: 'arrived late',
 };
 
 export function outcomeLabel(outcome: string | null | undefined): string | null {

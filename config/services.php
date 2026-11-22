@@ -21,6 +21,10 @@ return [
         'client_secret' => env('TWITCH_CLIENT_SECRET', ''),
         'redirect' => env('TWITCH_REDIRECT_URI'),
         'cache_ttl' => (int) env('TWITCH_CACHE_TTL', 10),
+        // Shared with the Cloudflare front desk Worker, which posts queued
+        // EventSub batches to /api/twitch/webhook/batch. Empty = endpoint off.
+        // See docs/design/eventsub-front-desk.md.
+        'front_desk_secret' => env('FRONT_DESK_SECRET', ''),
     ],
 
     // Paddle is the merchant of record for the Overlabels store (one-off

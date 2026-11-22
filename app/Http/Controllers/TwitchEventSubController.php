@@ -34,7 +34,9 @@ use App\Services\TwitchTokenService;
 use App\Services\ViewerErasureService;
 use Exception;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -330,7 +332,11 @@ class TwitchEventSubController extends Controller
 
             // Handle actual events (notifications)
             if ($messageType === 'notification' && isset($data['event'])) {
-                $this->handleTwitchEvent($data, $request->header('Twitch-Eventsub-Message-Id'));
+                $this->handleTwitchEvent(
+                    $data,
+                    $request->header('Twitch-Eventsub-Message-Id'),
+                    $request->header('Twitch-Eventsub-Message-Timestamp'),
+                );
             }
 
             // Handle revocations
@@ -369,15 +375,25 @@ class TwitchEventSubController extends Controller
      */
     private function verifyTwitchSignature(Request $request): bool
     {
-        $signature = $request->header('Twitch-Eventsub-Message-Signature');
-        $timestamp = $request->header('Twitch-Eventsub-Message-Timestamp');
-        $body = $request->getContent();
+        return $this->signatureIsValid(
+            $request->header('Twitch-Eventsub-Message-Id'),
+            $request->header('Twitch-Eventsub-Message-Timestamp'),
+            $request->getContent(),
+            $request->header('Twitch-Eventsub-Message-Signature'),
+        );
+    }
 
+    /**
+     * The HMAC check, from its parts, so the direct webhook and the front desk
+     * batch (where the headers travel inside the message) verify identically.
+     */
+    private function signatureIsValid(?string $messageId, ?string $timestamp, string $body, ?string $signature): bool
+    {
         if (! $signature || ! $timestamp) {
             return false;
         }
 
-        $message = $request->header('Twitch-Eventsub-Message-Id').$timestamp.$body;
+        $message = $messageId.$timestamp.$body;
 
         // Try per-user webhook secret first
         $data = json_decode($body, true);
@@ -388,7 +404,7 @@ class TwitchEventSubController extends Controller
             : ($event['broadcaster_user_id'] ?? null);
 
         if ($broadcasterId) {
-            $user = User::where('twitch_id', $broadcasterId)->first();
+            $user = $this->userByTwitchId((string) $broadcasterId);
             if ($user && $user->webhook_secret) {
                 $expected = 'sha256='.hash_hmac('sha256', $message, $user->webhook_secret);
                 if (hash_equals($expected, $signature)) {
@@ -516,9 +532,12 @@ class TwitchEventSubController extends Controller
     }
 
     /**
-     * Process incoming Twitch events
+     * Store a verified notification and queue its work.
+     *
+     * @return 'stored'|'duplicate'|'error' what the front desk batch reports per
+     *                                      message: an error is retried, the rest acked
      */
-    private function handleTwitchEvent(array $data, ?string $messageId = null): void
+    private function handleTwitchEvent(array $data, ?string $messageId = null, ?string $sentAt = null): string
     {
         $eventType = $data['subscription']['type'] ?? 'unknown';
         $event = $data['event'] ?? [];
@@ -530,7 +549,7 @@ class TwitchEventSubController extends Controller
                 ? ($event['to_broadcaster_user_id'] ?? null)
                 : ($event['broadcaster_user_id'] ?? null);
 
-            $user = $broadcasterId ? User::where('twitch_id', $broadcasterId)->first() : null;
+            $user = $broadcasterId ? $this->userByTwitchId((string) $broadcasterId) : null;
 
             // Twitch poll payloads ship per-choice votes but no winner. Compute it
             // server-side once so the same value flows through DB persist, alert
@@ -581,13 +600,14 @@ class TwitchEventSubController extends Controller
                     'message_id' => $messageId,
                 ]);
 
-                return;
+                return 'duplicate';
             }
 
             // Answer Twitch now; everything with an outbound call or alert
             // work happens on the twitch-events queue. See ProcessTwitchEvent.
-            ProcessTwitchEvent::dispatch($twitchEvent->id, $data);
+            ProcessTwitchEvent::dispatch($twitchEvent->id, $data, $sentAt);
 
+            return 'stored';
         } catch (Exception $e) {
             Log::error("Failed to store Twitch event: {$e->getMessage()}", [
                 'event_type' => $eventType,
@@ -611,15 +631,124 @@ class TwitchEventSubController extends Controller
                 'line' => $e->getLine(),
             ]);
         }
+
+        return 'error';
+    }
+
+    /**
+     * Notifications from the Cloudflare front desk, up to 100 at a time.
+     *
+     * The Worker answered Twitch at the edge and queued each notification with
+     * its headers and raw body; it holds no secrets and checks nothing beyond
+     * shape. So every message is verified here exactly like a direct webhook,
+     * then stored and queued the same way. The answer names each message's
+     * fate: `stored`, `duplicate` and `invalid` are acked, `error` is retried.
+     * The raw request content is decoded directly: TrimStrings would trim the
+     * bodies inside it and break their signatures.
+     *
+     * See docs/design/eventsub-front-desk.md.
+     */
+    public function batch(Request $request): JsonResponse
+    {
+        $secret = (string) config('services.twitch.front_desk_secret');
+        if ($secret === '' || ! hash_equals($secret, (string) $request->header('X-Front-Desk-Secret'))) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $payload = json_decode($request->getContent(), true);
+        $messages = is_array($payload) && is_array($payload['messages'] ?? null) ? $payload['messages'] : null;
+        if ($messages === null || count($messages) > 100) {
+            return response()->json(['error' => 'Expected at most 100 messages'], 422);
+        }
+
+        $lockdown = app(LockdownService::class)->isActive();
+        $results = [];
+        $invalid = 0;
+
+        foreach ($messages as $message) {
+            $id = is_array($message) && is_string($message['id'] ?? null) ? $message['id'] : null;
+            if ($id === null) {
+                $invalid++;
+
+                continue;
+            }
+
+            // Absorbed silently during lockdown, like the direct webhook.
+            if ($lockdown) {
+                $results[$id] = 'ignored';
+
+                continue;
+            }
+
+            $timestamp = is_string($message['timestamp'] ?? null) ? $message['timestamp'] : null;
+            $signature = is_string($message['signature'] ?? null) ? $message['signature'] : null;
+            $body = is_string($message['body'] ?? null) ? $message['body'] : '';
+            $data = json_decode($body, true);
+
+            if (! is_array($data) || ! isset($data['event']) || ! $this->signatureIsValid($id, $timestamp, $body, $signature)) {
+                $results[$id] = 'invalid';
+                $invalid++;
+
+                continue;
+            }
+
+            $results[$id] = $this->handleTwitchEvent($data, $id, $timestamp);
+        }
+
+        if ($invalid > 0) {
+            Log::warning('Front desk batch held messages that failed verification', [
+                'invalid' => $invalid,
+                'messages' => count($messages),
+            ]);
+        }
+
+        return response()->json(['results' => (object) $results]);
+    }
+
+    /** Notifications Twitch sent longer ago than this fire no alert. See DeliveryOutcome::Late. */
+    public const int LATE_ALERT_SECONDS = 300;
+
+    /**
+     * Was this notification sent more than LATE_ALERT_SECONDS ago? Twitch's
+     * timestamp carries nanoseconds, which PHP cannot parse, so the fraction is
+     * cut to microseconds first. Missing or unreadable: not late.
+     */
+    private static function isLate(?string $sentAt): bool
+    {
+        if ($sentAt === null || $sentAt === '') {
+            return false;
+        }
+
+        try {
+            $sent = Carbon::parse(preg_replace('/(\.\d{6})\d+/', '$1', $sentAt));
+        } catch (Throwable) {
+            return false;
+        }
+
+        return $sent->diffInSeconds(now()) > self::LATE_ALERT_SECONDS;
+    }
+
+    /** @var array<string, User|null> per-request memo: a batch is mostly one broadcaster */
+    private array $usersByTwitchId = [];
+
+    private function userByTwitchId(string $twitchId): ?User
+    {
+        if (! array_key_exists($twitchId, $this->usersByTwitchId)) {
+            $this->usersByTwitchId[$twitchId] = User::where('twitch_id', $twitchId)->first();
+        }
+
+        return $this->usersByTwitchId[$twitchId];
     }
 
     /**
      * Everything a stored notification sets off: token refresh, avatar
      * enrichment, metering, caches, counters, the alert and the broadcasts.
      * Called by ProcessTwitchEvent on the twitch-events queue, after the
-     * webhook has answered.
+     * webhook has answered. $sentAt is Twitch's message timestamp: a
+     * notification that reaches us late is stored and counted but fires no
+     * alert (an outage backlog must not replay as a wall of stale alerts).
      */
-    public function processStoredEvent(TwitchEvent $twitchEvent, array $data): void
+    public function processStoredEvent(TwitchEvent $twitchEvent, array $data, ?string $sentAt = null): void
     {
         $eventType = $data['subscription']['type'] ?? 'unknown';
         $event = $data['event'] ?? [];
@@ -711,6 +840,9 @@ class TwitchEventSubController extends Controller
                     // A recipient of a gift bomb whose gift alert already
                     // announced the whole batch. See GiftSubAbsorber.
                     app(DeliveryLedger::class)->record($twitchEvent, DeliveryOutcome::GiftAbsorbed);
+                } elseif ($user && self::isLate($sentAt)) {
+                    // Stored and counted above; an alert this stale is noise.
+                    app(DeliveryLedger::class)->record($twitchEvent, DeliveryOutcome::Late);
                 } elseif ($user) {
                     // Pick the alert template for this event, honoring variant
                     // conditions (e.g. cheer at_least/exactly bits thresholds).

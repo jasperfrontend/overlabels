@@ -210,6 +210,11 @@ Route::prefix('/map')->group(function () {
 Route::post('/twitch/webhook', [TwitchEventSubController::class, 'webhook'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
 
+// Batches of the same notifications from the Cloudflare front desk Worker,
+// authenticated by a shared secret. docs/design/eventsub-front-desk.md
+Route::post('/twitch/webhook/batch', [TwitchEventSubController::class, 'batch'])
+    ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class]);
+
 // Paddle webhook (store fulfillment) - no auth/CSRF, verified by Paddle-Signature
 Route::post('/paddle/webhook', [PaddleWebhookController::class, 'handle'])
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class, CheckBanned::class])

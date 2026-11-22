@@ -37,10 +37,16 @@ class ProcessTwitchEvent implements ShouldQueue
 
     public int $timeout = 120;
 
-    /** @param array $data the scrubbed notification body, `subscription` + `event` */
+    /**
+     * @param  array  $data  the scrubbed notification body, `subscription` + `event`
+     * @param  string|null  $sentAt  Twitch-Eventsub-Message-Timestamp, so a notification
+     *                               that reaches us late (an outage backlog) fires no alert.
+     *                               Null on jobs queued before it existed: never late.
+     */
     public function __construct(
         public readonly int $twitchEventId,
         public readonly array $data,
+        public readonly ?string $sentAt = null,
     ) {
         $this->onQueue(self::QUEUE);
     }
@@ -54,6 +60,6 @@ class ProcessTwitchEvent implements ShouldQueue
             return;
         }
 
-        $controller->processStoredEvent($row, $this->data);
+        $controller->processStoredEvent($row, $this->data, $this->sentAt);
     }
 }
