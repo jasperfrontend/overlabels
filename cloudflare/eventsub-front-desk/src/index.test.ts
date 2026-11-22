@@ -117,6 +117,14 @@ describe('queue consumer', () => {
         expect(JSON.parse(init.body).messages.map((m: { id: string }) => m.id)).toEqual(['early', 'late']);
     });
 
+    it('sends the shared secret without a trailing newline', async () => {
+        origin.mockResolvedValueOnce(Response.json({ results: {} }));
+
+        await handleQueue(fakeBatch([queueMessage('a', '2026-11-22T21:21:43Z')]), { ...env('queue'), FRONT_DESK_SECRET: 's3cret\n' });
+
+        expect(new Headers(origin.mock.calls[0][1].headers).get('X-Front-Desk-Secret')).toBe('s3cret');
+    });
+
     it('acks what Laravel settled and retries what it could not', async () => {
         origin.mockResolvedValueOnce(Response.json({ results: { a: 'stored', b: 'duplicate', c: 'invalid', d: 'error' } }));
         const [a, b, c, d, e] = ['a', 'b', 'c', 'd', 'e'].map((id) => queueMessage(id, '2026-11-22T21:21:43Z'));

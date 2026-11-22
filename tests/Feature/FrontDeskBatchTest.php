@@ -70,6 +70,14 @@ it('refuses a batch without the right front desk secret', function () {
     expect(TwitchEvent::count())->toBe(0);
 });
 
+it('ignores a trailing newline on either copy of the shared secret', function () {
+    Queue::fake();
+    config(['services.twitch.front_desk_secret' => FRONT_DESK_SECRET."\n"]);
+
+    postBatch([deskMessage('m-nl', ['broadcaster_user_id' => '1', 'user_id' => '42'])])->assertOk();
+    postBatch([deskMessage('m-nl2', ['broadcaster_user_id' => '1', 'user_id' => '42'])], FRONT_DESK_SECRET.' ')->assertOk();
+});
+
 it('stores every valid message and queues it like a direct notification', function () {
     Queue::fake();
     $user = User::factory()->create();

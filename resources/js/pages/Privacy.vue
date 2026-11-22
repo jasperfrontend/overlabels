@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from '@lucide/vue';
 
-const lastUpdated = 'November 7, 2026';
+const lastUpdated = 'November 22, 2026';
 </script>
 
 <template>
@@ -120,9 +120,11 @@ const lastUpdated = 'November 7, 2026';
             <p class="mb-4 text-gray-600 dark:text-gray-400">We do not sell your personal information. We may share your data with:</p>
             <ul class="list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
               <li>
-                <strong>Service providers we actually use:</strong> Linode (hosting, Frankfurt), Cloudflare (network, object storage in the EU, and
-                the page analytics described above), Scaleway (backup storage, Paris), Twitch, the donation service you connect, ElevenLabs (only the
-                text of an alert you configured to be spoken) and Freesound (only your search terms)
+                <strong>Service providers we actually use:</strong> Linode (hosting, Frankfurt), Cloudflare (network, object storage in the EU, the
+                page analytics described above, and a queue that holds the events Twitch sends us about your channel until our servers pick them up:
+                normally a second or two, at most four days if our servers are down, in locations not limited to the EU), Scaleway (backup storage,
+                Paris), Twitch, the donation service you connect, ElevenLabs (only the text of an alert you configured to be spoken) and Freesound
+                (only your search terms)
               </li>
               <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
               <li><strong>Business Transfers:</strong> In connection with a merger, sale, or acquisition</li>

@@ -104,7 +104,9 @@ export async function handleQueue(batch, env) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Front-Desk-Secret': env.FRONT_DESK_SECRET ?? '',
+                // Trimmed on both ends: a secret piped in through a shell can
+                // pick up a trailing newline in one store and not the other.
+                'X-Front-Desk-Secret': String(env.FRONT_DESK_SECRET ?? '').trim(),
                 'User-Agent': 'overlabels-eventsub-front-desk',
             },
             body: JSON.stringify({ messages: messages.map((m) => m.body) }),

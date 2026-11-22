@@ -650,8 +650,10 @@ class TwitchEventSubController extends Controller
      */
     public function batch(Request $request): JsonResponse
     {
-        $secret = (string) config('services.twitch.front_desk_secret');
-        if ($secret === '' || ! hash_equals($secret, (string) $request->header('X-Front-Desk-Secret'))) {
+        // Trimmed on both ends: a secret piped in through a shell can pick up a
+        // trailing newline in one store (Kamal, wrangler) and not the other.
+        $secret = trim((string) config('services.twitch.front_desk_secret'));
+        if ($secret === '' || ! hash_equals($secret, trim((string) $request->header('X-Front-Desk-Secret')))) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
