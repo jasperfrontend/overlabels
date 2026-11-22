@@ -101,15 +101,23 @@ class MonitorEventSubHealth extends Command
 
             foreach ($failedByUser as $userId => $userFailedSubs) {
                 $user = $userFailedSubs->first()->user;
+                if (! $user) {
+                    continue;
+                }
+
                 $this->line("  - {$user->name} (ID: {$user->id}): {$userFailedSubs->count()} failed");
 
                 foreach ($userFailedSubs as $sub) {
                     $this->line("    • {$sub->event_type}: {$sub->status}");
                 }
 
+                // Not a force recreate: that wiped every row first, so a
+                // refused recreate left the account looking healthy (issue
+                // #344). The failed ones become dead rows instead, and the
+                // not-found pass below recreates just those, in this run.
                 if ($fix) {
-                    $this->info('    → Recreating subscriptions...');
-                    SetupUserEventSubSubscriptions::dispatch($user, true);
+                    $this->info('    → Retiring them for the recreate below...');
+                    $this->manager->retireFailedSubscriptions($userFailedSubs);
                 }
             }
 
@@ -125,8 +133,11 @@ class MonitorEventSubHealth extends Command
         // gone for good. The repair deliberately avoids the force-recreate
         // above: its Twitch-side cleanup deletes every subscription whose
         // condition names the user, which for the bot account means every
-        // streamer's chat notification subscription. Dropping the dead rows
-        // and running the ordinary setup creates only the missing types.
+        // streamer's chat notification subscription. The ordinary setup
+        // creates only the missing types; a dead row stays until its recreate
+        // succeeds (setup then drops it) or is refused (setup marks it
+        // creation_refused, reported below), so the account never looks
+        // healthy while it is not (issue #344).
         $this->newLine();
         $this->line('🔍 Checking for subscriptions no longer on Twitch...');
 
@@ -147,7 +158,6 @@ class MonitorEventSubHealth extends Command
 
                 if ($fix) {
                     $this->info('    → Recreating the missing subscriptions...');
-                    UserEventsubSubscription::whereIn('id', $userMissingSubs->pluck('id'))->delete();
                     SetupUserEventSubSubscriptions::dispatch($user);
                 }
             }
@@ -157,6 +167,30 @@ class MonitorEventSubHealth extends Command
             }
         } else {
             $this->info('✅ Every stored subscription is on Twitch');
+        }
+
+        // Recreates Twitch refused. Retrying cannot help: only the streamer
+        // logging in to Overlabels again restores the authorization, and that
+        // login runs setup by itself. Named every hour so it is never silent.
+        $this->newLine();
+        $this->line('🔍 Checking for subscriptions Twitch refused to recreate...');
+
+        $refusedByUser = UserEventsubSubscription::where('status', UserEventSubManager::STATUS_REFUSED)
+            ->with('user')
+            ->get()
+            ->groupBy('user_id');
+
+        if ($refusedByUser->count() > 0) {
+            foreach ($refusedByUser as $userRefusedSubs) {
+                $user = $userRefusedSubs->first()->user;
+                if (! $user) {
+                    continue;
+                }
+
+                $this->warn("  - {$user->name} (ID: {$user->id}): {$userRefusedSubs->count()} refused by Twitch, the streamer must log in again");
+            }
+        } else {
+            $this->info('✅ No refused subscriptions');
         }
 
         // Check for stale verification timestamps

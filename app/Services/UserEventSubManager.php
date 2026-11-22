@@ -16,6 +16,17 @@ class UserEventSubManager
 
     private TwitchScopeService $scopeService;
 
+    /**
+     * A stored row Twitch no longer lists, whose recreate Twitch then refused
+     * (403) or that needs a scope the streamer never granted. The monitor names
+     * these but never retries them; a fresh Twitch login runs setup again.
+     * Issue #344.
+     */
+    public const string STATUS_REFUSED = 'creation_refused';
+
+    /** Rows that stand for a subscription Twitch does not have. */
+    private const array DEAD_STATUSES = ['not_found_on_twitch', self::STATUS_REFUSED];
+
     // Define which events we support
     public const array SUPPORTED_EVENTS = [
         'channel.follow' => [
@@ -243,6 +254,7 @@ class UserEventSubManager
             $requiredScope = $config['required_scope'] ?? null;
             if ($requiredScope && ! $this->scopeService->hasScope($user, $requiredScope)) {
                 $results['skipped_missing_scope'][] = $eventType;
+                $this->markDeadRowsRefused($user, $eventType);
                 $this->broadcastSetupProgress($user, $results, $total);
 
                 continue;
@@ -302,10 +314,22 @@ class UserEventSubManager
                     'last_verified_at' => now(),
                 ]);
 
+                // The new subscription stands in for any dead row of the type.
+                UserEventsubSubscription::where('user_id', $user->id)
+                    ->where('event_type', $eventType)
+                    ->whereIn('status', self::DEAD_STATUSES)
+                    ->delete();
+
                 $results['created'][] = $eventType;
 
             } else {
                 $results['failed'][$eventType] = $response['message'] ?? 'Unknown error';
+
+                // 403 is Twitch refusing the authorization, which only the
+                // streamer can restore. Anything else may pass next hour.
+                if (($response['status'] ?? null) === 403) {
+                    $this->markDeadRowsRefused($user, $eventType);
+                }
 
                 Log::warning('Failed to create EventSub subscription', [
                     'user_id' => $user->id,
@@ -328,6 +352,46 @@ class UserEventSubManager
         ]);
 
         return $results;
+    }
+
+    /**
+     * Turn failed subscriptions (revoked, disabled after notification failures,
+     * failed verification) into dead rows: delete each one on Twitch by its own
+     * id, then mark the row not_found_on_twitch so the ordinary setup recreates
+     * just that type. Replaces the force wipe for this case, which deleted every
+     * row first and left nothing on record when the recreate was refused
+     * (issue #344). Never searches by user_id, so it cannot touch another
+     * account's subscriptions.
+     *
+     * @param  iterable<UserEventsubSubscription>  $rows
+     */
+    public function retireFailedSubscriptions(iterable $rows): void
+    {
+        $appToken = $this->eventSubService->getAppAccessToken();
+        if (! $appToken) {
+            // Leave them failed; the next hourly run tries again.
+            return;
+        }
+
+        foreach ($rows as $row) {
+            // A subscription Twitch already dropped answers 404; either way
+            // it is gone afterwards, which is all the recreate needs.
+            $this->eventSubService->deleteSubscription($appToken, $row->twitch_subscription_id);
+
+            $row->update(['status' => 'not_found_on_twitch', 'last_verified_at' => now()]);
+        }
+    }
+
+    /**
+     * Keep a dead row of this type on record as refused, so the monitor and
+     * /wiring keep counting it instead of the account looking healthy.
+     */
+    private function markDeadRowsRefused(User $user, string $eventType): void
+    {
+        UserEventsubSubscription::where('user_id', $user->id)
+            ->where('event_type', $eventType)
+            ->whereIn('status', self::DEAD_STATUSES)
+            ->update(['status' => self::STATUS_REFUSED, 'last_verified_at' => now()]);
     }
 
     /**
@@ -465,6 +529,14 @@ class UserEventSubManager
 
         foreach ($userSubs as $userSub) {
             $twitchSub = $twitchSubsMap->get($userSub->twitch_subscription_id);
+
+            // Already known to be gone and refused; marking it not_found again
+            // would hand it back to the monitor's repair every hour.
+            if (! $twitchSub && $userSub->status === self::STATUS_REFUSED) {
+                $userSub->update(['last_verified_at' => now()]);
+
+                continue;
+            }
 
             if (! $twitchSub && ! $listIsComplete) {
                 continue;

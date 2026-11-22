@@ -45,6 +45,7 @@ use App\Services\Recipes\RecipeCatalog;
 use App\Services\TwitchApiService;
 use App\Services\TwitchScopeService;
 use App\Services\TwitchTokenService;
+use App\Services\UserEventSubManager;
 use App\Support\HelpPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -527,9 +528,13 @@ Route::get('/auth/callback/twitch', function (TwitchScopeService $scopeService) 
         // auto-connect enabled but aren't connected yet, or users whose
         // reauth just unlocked new scopes (setupUserSubscriptions is
         // idempotent - it skips already-enabled subscriptions).
+        // A refused recreate is the one failure only this login can fix: Twitch
+        // refused because the streamer's authorization was gone, and the
+        // monitor never retries it (issue #344).
         $shouldSetup = $isNewUser
             || ($user->eventsub_auto_connect && ! $user->eventsub_connected_at)
-            || ($scopesJustUnlocked && $user->eventsub_auto_connect);
+            || ($scopesJustUnlocked && $user->eventsub_auto_connect)
+            || $user->eventsubSubscriptions()->where('status', UserEventSubManager::STATUS_REFUSED)->exists();
 
         if ($shouldSetup) {
             try {

@@ -1,5 +1,31 @@
 # Changelog - November 2026
 
+## OL-2611-034 - November 22nd, 2026 - fix(eventsub): a refused recreate stays on record, and failed subscriptions are repaired one by one instead of wiped
+
+The first real repair run of the revived subscription monitor (OL-2611-032) exposed a blind spot.
+Two accounts had lost 25 of their 29 Twitch subscriptions because their permission for Overlabels
+was gone. The monitor deleted the dead records, asked Twitch to recreate them, and Twitch refused.
+Nothing was stored, so the next report said 100% healthy and never named those accounts again.
+Their own /wiring page went quiet too. Both accounts had stopped using Overlabels and were deleted,
+but the next streamer whose permission lapses would have been invisible (issue #344).
+
+- **A refused recreate is now kept on record.** A dead subscription stays until its recreate
+  works, at which point the new one replaces it. If Twitch refuses it, or the permission it needs
+  was never granted, it is marked as refused. The monitor names that account every hour ("refused
+  by Twitch, the streamer must log in again") and stops retrying. /wiring shows the subscriptions
+  as needing repair.
+- **Logging in again now actually repairs it.** Before, a returning streamer's login only set up
+  subscriptions for new or never-connected accounts, so logging back in after withdrawing
+  permission changed nothing. A login now runs the setup whenever the account has refused
+  subscriptions.
+- **The same blind spot had a second door, and it is closed too.** A subscription Twitch revoked
+  or disabled used to trigger a full wipe: every subscription of the account deleted, then all of
+  them recreated, so a refusal left nothing behind. Now only the failed subscription is deleted, by
+  its own id, and it goes through the same recreate-or-record-the-refusal path.
+
+The full wipe still exists where it is asked for: the reconnect button on the integrations page,
+the monitor's manual `--force`, and account deletion.
+
 ## OL-2611-032 - November 21st, 2026 - fix(eventsub): the hourly subscription monitor runs again, report-only, and can no longer delete other streamers' subscriptions
 
 A real follow on JasperDiscovers never reached Overlabels. It was not the server, the connection

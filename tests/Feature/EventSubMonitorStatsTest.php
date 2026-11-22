@@ -45,7 +45,7 @@ it('runs the monitor to completion when subscriptions exist', function () {
  * the user - for the bot account, that is every streamer's
  * channel.chat.notification subscription.
  */
-it('drops not_found_on_twitch rows and re-runs a non-destructive setup', function () {
+it('keeps not_found_on_twitch rows and re-runs a non-destructive setup', function () {
     Bus::fake([SetupUserEventSubSubscriptions::class]);
 
     $user = User::factory()->create(['eventsub_connected_at' => now()]);
@@ -65,7 +65,9 @@ it('drops not_found_on_twitch rows and re-runs a non-destructive setup', functio
     // Exit code reflects the health score (1 of 2 enabled = poor), not this branch.
     $this->artisan('eventsub:monitor', ['--fix' => true])->run();
 
-    expect(UserEventsubSubscription::find($dead->id))->toBeNull()
+    // The dead row stays until its recreate succeeds or is refused (issue
+    // #344): deleting it up front is what made a refused account vanish.
+    expect(UserEventsubSubscription::find($dead->id))->not->toBeNull()
         ->and(UserEventsubSubscription::find($alive->id))->not->toBeNull();
 
     Bus::assertDispatched(SetupUserEventSubSubscriptions::class, function (SetupUserEventSubSubscriptions $job) {
