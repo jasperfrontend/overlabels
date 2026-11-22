@@ -43,9 +43,19 @@
 	root * /app/public
 	encode zstd br gzip
 
+	# Request headers are dropped from the access log entirely. Caddy redacts
+	# Cookie and Authorization by itself, but not our own secret headers, and
+	# it printed every one of them in plain text: X-Internal-Secret (the bot),
+	# X-Listener-Secret, X-Front-Desk-Secret (the Cloudflare front desk) and
+	# Twitch's signatures (found 2026-11-22). Deleting the whole object rather
+	# than naming headers means the next secret header cannot leak either.
+	# Method, URI, status, duration and client IP stay.
 	log {
 		output stderr
-		format console
+		format filter {
+			wrap console
+			request>headers delete
+		}
 	}
 
 	# www exists only to redirect. kamal-proxy terminates TLS for it (see the
