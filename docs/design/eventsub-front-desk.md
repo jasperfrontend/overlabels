@@ -1,7 +1,12 @@
 # EventSub Front Desk on Cloudflare - Design Strawman (#343)
 
-> **Status:** forks decided by Jasper 2026-11-22 (section 9). Part 1 (avatar lookups) built the
-> same day. The front desk itself (sections 3-6) is next, in the build order of section 10.
+> **Status:** LIVE in queue mode since 2026-11-22 22:49 UTC (2c4b8a5c). Built the same day as the
+> design, with the forks of section 9 decided by Jasper. Measured on prod right after: 13,800
+> unsigned test notifications at 460/s through the edge, every one answered 200 (p50 92 ms, max
+> 1.5 s), everyone else's `/up` at p50 42 ms throughout, the box at load 0.7. The queue then
+> drained into Laravel at ~1 batch of 100 per second (one batch at a time, ~16 ms each in Laravel),
+> i.e. ~100 notifications/s - so the events worker (~16 follows/s in a burst after the avatar
+> changes) is the bottleneck now, which is section 8's flood summarizer.
 
 ---
 
@@ -69,8 +74,13 @@ alerts, counters, the delivery ledger, the alert queue on the overlay.
   are rare and both write to our database, so they stay Laravel's.
 - **A notification is queued when it:**
   - is a POST with `Twitch-Eventsub-Message-Id`, `-Timestamp`, `-Signature` and `-Type: notification`
-  - has a timestamp no older than 10 minutes (Twitch's own replay advice)
-  - has a body that is valid JSON with a `subscription.type`, at most 64 KB (one queue op)
+  - has a body that is valid JSON with a `subscription.type`, at most 64 KB (one queue op; a bigger
+    one is passed through to Laravel instead)
+
+  **No age check at the edge** (dropped while building, 2026-11-22). A Twitch redelivery can carry an
+  old timestamp, and refusing it would count as a failed delivery against the subscription - the
+  very thing this exists to prevent. Age is Laravel's call: old notifications are stored without an
+  alert (section 6).
 
   It goes on the queue as `{id, timestamp, signature, raw body}` - the raw body string, because the
   HMAC is computed over the exact bytes. Answer: `200 OK`.
