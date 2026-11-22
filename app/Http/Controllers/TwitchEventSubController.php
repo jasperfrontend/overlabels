@@ -6,6 +6,7 @@ use App\Enums\DeliveryOutcome;
 use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
 use App\Jobs\DeleteTestTwitchEvent;
+use App\Jobs\ForgetTwitchCache;
 use App\Jobs\ProcessTwitchEvent;
 use App\Jobs\SynthesizeAlertTts;
 use App\Models\BotChatOutbox;
@@ -55,6 +56,9 @@ class TwitchEventSubController extends Controller
      * later, as the ledger a Plus Points count is built from.
      */
     public const array STORE_ONLY_EVENTS = ['channel.chat.notification'];
+
+    /** How often one streamer's follower/subscriber/goal caches may be cleared. See clearVolatileCache(). */
+    public const int CACHE_CLEAR_WINDOW_SECONDS = 10;
 
     private TwitchEventSubService $eventSubService;
 
@@ -442,28 +446,28 @@ class TwitchEventSubController extends Controller
             switch ($eventType) {
                 case 'channel.follow':
                     // New follower - refresh followers and goals
-                    $this->twitchService->clearChannelFollowersCaches($broadcasterId);
-                    $this->twitchService->clearGoalsCaches($broadcasterId);
+                    $this->clearVolatileCache('channel_followers', $broadcasterId);
+                    $this->clearVolatileCache('goals', $broadcasterId);
                     break;
 
                 case 'channel.subscribe':
                 case 'channel.subscription.gift':
                 case 'channel.subscription.message':
                     // New subscriber - refresh subscribers and goals
-                    $this->twitchService->clearSubscribersCaches($broadcasterId);
-                    $this->twitchService->clearGoalsCaches($broadcasterId);
+                    $this->clearVolatileCache('subscribers', $broadcasterId);
+                    $this->clearVolatileCache('goals', $broadcasterId);
                     break;
 
                 case 'channel.raid':
                     // Raid might affect goals
-                    $this->twitchService->clearGoalsCaches($broadcasterId);
+                    $this->clearVolatileCache('goals', $broadcasterId);
                     break;
 
                 case 'channel.goal.begin':
                 case 'channel.goal.progress':
                 case 'channel.goal.end':
                     // Goal updates - keep goals cache fresh
-                    $this->twitchService->clearGoalsCaches($broadcasterId);
+                    $this->clearVolatileCache('goals', $broadcasterId);
                     break;
 
                 case 'stream.online':
@@ -485,6 +489,29 @@ class TwitchEventSubController extends Controller
             ]);
             // Don't throw - cache clearing failure shouldn't break event processing
         }
+    }
+
+    /**
+     * Clear a volatile Helix cache (followers, subscribers, goals) at most once
+     * per window per streamer, plus once more when the window ends.
+     *
+     * Clearing on EVERY event made the alert render fetch the data straight back
+     * from Helix each time: four round trips per follow on the single
+     * twitch-events worker, and a raid's worth of them against the streamer's
+     * rate budget, for a follower total Twitch itself only updates minutes later
+     * (#343). The overlay never needed it - it counts from the events. Now the
+     * first event of a window clears (its alert reads fresh data), the rest reuse
+     * that, and ForgetTwitchCache clears again at the end of the window so the
+     * last change of a burst is not held for the full TTL.
+     */
+    private function clearVolatileCache(string $cache, string $broadcasterId): void
+    {
+        if (! Cache::add("twitch:cache_clear:{$cache}:{$broadcasterId}", 1, self::CACHE_CLEAR_WINDOW_SECONDS)) {
+            return;
+        }
+
+        ForgetTwitchCache::forget($this->twitchService, $cache, $broadcasterId);
+        ForgetTwitchCache::dispatch($cache, $broadcasterId)->delay(now()->addSeconds(self::CACHE_CLEAR_WINDOW_SECONDS));
     }
 
     /**
