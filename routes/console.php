@@ -155,11 +155,10 @@ Artisan::command('ban:user {twitch_id : The Twitch ID of the user to ban} {comme
     $this->info("User {$user->name} (Twitch: {$twitch_id}) has been banned.");
 })->purpose('Ban a user by Twitch ID');
 
-// EventSub Health Monitoring - runs every hour. Report-only since Nov 21st
-// 2026: the command crashed on every run from April to November, so its
-// repair paths have not run against today's data. Restore --fix once the
-// report in eventsub-monitor.log has been read.
-Schedule::command('eventsub:monitor')
+// EventSub Health Monitoring - runs every hour. Ran report-only from Nov
+// 21st to 22nd 2026 (the command had crashed on every run since April);
+// --fix restored after the first reports were read (issue #342).
+Schedule::command('eventsub:monitor --fix')
     ->hourly()
     ->withoutOverlapping()
     ->runInBackground()
