@@ -70,7 +70,7 @@
               'chat-tower' => 'Your whole chat builds one tower together with !stack. It sways more with every block, and when it falls, everyone sees who toppled it. How high can your chat go?',
               'follower-bowling' => 'Your ten newest followers get racked up as pins. Chat lines up with !bowl and takes turns rolling at them. Can your chat bowl a strike?',
               'twitch-chat-overlay' => 'Your chat on stream, badges and emotes included, with nothing to connect and no bot to add. Pick one of ten looks, from a terminal to speech bubbles to a news ticker, and make it yours.',
-              'twitch-chat-plinko' => 'Chat types !drop and a ball with their name bounces down a Plinko board on stream. Most land on 5. The edges pay 1000. Who is feeling lucky?',
+              'twitch-chat-plinko' => 'Chat types !drop and a chip with their name bounces down a Plinko board on stream. Most land on 5. The edges pay 1000. Who is feeling lucky?',
           ];
           // These lead the grid in this order; everything else follows in
           // catalogue order. Hero cards only: the rows further down keep theirs.
