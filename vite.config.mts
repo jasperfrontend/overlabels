@@ -21,6 +21,7 @@ export default defineConfig(() => ({
                 'resources/js/app.ts',
                 'resources/js/welcome/app.ts',
                 'resources/js/overlay/app.js',
+                'resources/js/overlay/dotlottie.ts',
                 'resources/js/map/app.ts',
                 'resources/js/events-feed/app.ts',
                 'resources/js/help/main.ts',

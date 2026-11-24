@@ -7,10 +7,7 @@
     <link rel="icon" href="/favicon.svg" sizes="any">
     <title>Loading Overlay...</title>
     @vite('resources/js/overlay/app.js')
-    <script
-        src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js"
-        type="module"
-    ></script>
+    @vite('resources/js/overlay/dotlottie.ts')
     <style>
         html, body {
             margin: 0;

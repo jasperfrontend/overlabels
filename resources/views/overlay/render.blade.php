@@ -13,7 +13,7 @@
         @vite('resources/js/overlay/app.js')
     @endif
     @if(str_contains($html, 'dotlottie-wc'))
-        <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.6.2/dist/dotlottie-wc.js" type="module"></script>
+        @vite('resources/js/overlay/dotlottie.ts')
     @endif
     <script>
         // Helper function

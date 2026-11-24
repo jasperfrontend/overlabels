@@ -3,6 +3,11 @@ import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { LMap, LTileLayer, LMarker, LPolyline, LPopup } from '@vue-leaflet/vue-leaflet';
 import { useMapWebSocket } from './composables/useMapWebSocket';
 import { Icon, type PointExpression } from 'leaflet';
+// Bundled from the leaflet package rather than hotlinked from unpkg.com, so
+// the map page does not hand every viewer's IP to a third-party CDN.
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
+import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
 
 const props = defineProps<{
   slug: string;
@@ -172,9 +177,9 @@ function formatSpeed(ms: number): string {
 
 const markerAnchor: PointExpression = [12, 41];
 const markerIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconUrl: markerIconUrl,
+  iconRetinaUrl: markerIcon2xUrl,
+  shadowUrl: markerShadowUrl,
   iconSize: [25, 41],
   iconAnchor: markerAnchor,
 });
