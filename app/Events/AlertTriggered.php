@@ -56,6 +56,16 @@ class AlertTriggered implements ShouldBroadcast
     public const INLINE_SOURCE_BUDGET = 9000;
 
     /**
+     * Everything an alert is - this broadcast, its TTS synthesis and the
+     * TtsAudioReady that follows - runs on this queue, which the `queue`
+     * worker always empties before `default` (`--queue=alerts,default` in
+     * config/deploy.yml). A raid puts a broadcast per follow on `default`
+     * (the raw event, list and counter updates); without this, every other
+     * streamer's alert waited behind them (#343). Nothing else goes here.
+     */
+    public const QUEUE = 'alerts';
+
+    /**
      * Create a new event instance.
      *
      * $alertId is a server-generated UUID. The overlay correlates the matching
@@ -175,5 +185,10 @@ class AlertTriggered implements ShouldBroadcast
     public function broadcastAs(): string
     {
         return 'alert.triggered';
+    }
+
+    public function broadcastQueue(): string
+    {
+        return self::QUEUE;
     }
 }

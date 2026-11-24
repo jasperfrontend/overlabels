@@ -59,4 +59,10 @@ class TtsAudioReady implements ShouldBroadcast
     {
         return 'tts.ready';
     }
+
+    /** With the alert it belongs to. See AlertTriggered::QUEUE. */
+    public function broadcastQueue(): string
+    {
+        return AlertTriggered::QUEUE;
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\AlertTriggered;
 use App\Events\TtsAudioReady;
 use App\Services\Tts\TtsService;
 use Illuminate\Bus\Queueable;
@@ -36,7 +37,10 @@ class SynthesizeAlertTts implements ShouldQueue
         public readonly string $broadcasterId,
         public readonly string $text,
         public readonly ?array $targetSlugs = null,
-    ) {}
+    ) {
+        // With the alert it voices. See AlertTriggered::QUEUE.
+        $this->onQueue(AlertTriggered::QUEUE);
+    }
 
     public function handle(TtsService $tts): void
     {

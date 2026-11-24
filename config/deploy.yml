@@ -88,7 +88,10 @@ servers:
   queue:
     hosts:
       - 172.235.171.209
-    cmd: php artisan queue:work --verbose --tries=3 --timeout=300 --sleep=3 --max-jobs=1000 --max-time=3600
+    # `alerts` first: the worker empties it before taking the next `default`
+    # job, so a raid's backlog of event broadcasts never delays an alert.
+    # Without `alerts` here nothing broadcasts an alert. See AlertTriggered::QUEUE.
+    cmd: php artisan queue:work --queue=alerts,default --verbose --tries=3 --timeout=300 --sleep=3 --max-jobs=1000 --max-time=3600
     options:
       volume:
         - "overlabels-tts-storage:/app/storage/app/public/tts"
