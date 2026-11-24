@@ -43,6 +43,7 @@ class SitemapController extends Controller
         ['path' => '/products', 'priority' => '0.9', 'changefreq' => 'weekly'],
         ['path' => '/privacy', 'priority' => '0.3', 'changefreq' => 'yearly'],
         ['path' => '/terms', 'priority' => '0.3', 'changefreq' => 'yearly'],
+        ['path' => '/about', 'priority' => '0.5', 'changefreq' => 'yearly'],
         ['path' => '/help/reference', 'priority' => '0.8', 'changefreq' => 'weekly'],
         // The one help page that is a Vue component rather than markdown, so
         // HelpCorpus does not know about it.

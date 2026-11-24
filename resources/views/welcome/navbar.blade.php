@@ -11,6 +11,7 @@
         <a href="/#how-it-works" class="text-sm hover:text-sky-500 cursor-pointer">How it works</a>
         <a href="/#alerts" class="text-sm hover:text-sky-500 cursor-pointer">Alerts</a>
         <a href="/help" class="text-sm hover:text-sky-500 cursor-pointer">Help</a>
+        <a href="{{ route('about') }}" class="text-sm hover:text-sky-500 cursor-pointer">About</a>
         @include('welcome.theme-toggle')
         @auth
           <a href="{{ route('dashboard.index') }}" class="btn btn-primary text-sm cursor-pointer">
@@ -64,6 +65,8 @@
          class="block rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer">Help</a>
       <a href="/help/manifesto" data-mobile-menu-link
          class="block rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer">Why Overlabels</a>
+      <a href="{{ route('about') }}" data-mobile-menu-link
+         class="block rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer">About</a>
     </div>
   </div>
 </nav>

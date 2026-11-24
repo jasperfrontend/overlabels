@@ -77,6 +77,10 @@ Route::get('/terms', function () {
     return Inertia::render('Terms');
 })->name('terms');
 
+// Standalone Blade, not Inertia: the page that says who works on Overlabels has
+// to be readable by a crawler and by anyone checking a claim.
+Route::view('/about', 'about')->name('about');
+
 // Help pages are markdown files in resources/help/pages. Both the URL and the
 // route name are derived from the slug, so adding a page is adding a file - no
 // route, no controller, no Vue component. A slug ending in `index` maps to its

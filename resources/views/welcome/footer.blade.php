@@ -15,6 +15,7 @@
         <a href="#kits" class="hover:text-sky-500 cursor-pointer">Kits</a>
         <a href="/help" class="hover:text-sky-500 cursor-pointer">Help</a>
         <a href="/help/manifesto" class="hover:text-sky-500 cursor-pointer">Why Overlabels</a>
+        <a href="{{ route('about') }}" class="hover:text-sky-500 cursor-pointer">About</a>
         <a href="/terms" class="hover:text-sky-500 cursor-pointer">Terms</a>
         <a href="/privacy" class="hover:text-sky-500 cursor-pointer">Privacy</a>
         <a
