@@ -264,6 +264,7 @@ class User extends Authenticatable
             'preferences' => 'array',
             'is_system_user' => 'boolean',
             'alerts_overlay_live_at' => 'datetime',
+            'twitch_followers_checked_at' => 'datetime',
         ];
     }
 

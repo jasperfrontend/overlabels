@@ -354,6 +354,24 @@ class TwitchApiService
     }
 
     /**
+     * A channel's follower total and nothing else: one row asked for, no
+     * profile image lookup. Null when Twitch does not answer with a total.
+     *
+     * @throws TwitchTokenInvalidException when Twitch refuses the token
+     */
+    public function getFollowerTotal(string $accessToken, string $userId): ?int
+    {
+        $response = $this->makeApiRequest(
+            $accessToken,
+            'channels/followers',
+            ['broadcaster_id' => $userId, 'first' => 1],
+            'get follower total'
+        );
+
+        return isset($response['total']) ? (int) $response['total'] : null;
+    }
+
+    /**
      * Look up a single follower relationship: is $followerUserId following
      * $broadcasterId, and if so since when? Helix returns at most one row
      * because the user_id filter pins the relationship. Returns null on

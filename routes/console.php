@@ -175,6 +175,11 @@ if ($monitorHealthcheck = config('services.eventsub_monitor.healthcheck_url')) {
         ->pingOnFailure(rtrim($monitorHealthcheck, '/').'/fail');
 }
 
+// Each account's follower total for /admin/users: which channels could drop a
+// big raid's follow flood on the platform (#343). One Helix call per account.
+Schedule::command('twitch:refresh-follower-counts')
+    ->dailyAt('05:00')->withoutOverlapping();
+
 // Prune Telescope entries older than 48 hours - keeps the DB from ballooning
 Schedule::command('telescope:prune --hours=48')
     ->daily();

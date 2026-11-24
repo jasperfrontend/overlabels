@@ -22,6 +22,8 @@ interface User {
   created_at: string;
   overlay_templates_count: number;
   overlay_access_tokens_count: number;
+  twitch_followers_total: number | null;
+  twitch_followers_checked_at: string | null;
 }
 
 interface Paginator {
@@ -39,6 +41,7 @@ const props = defineProps<{
     search?: string;
     role?: string;
     include_deleted?: boolean;
+    sort?: string;
   };
 }>();
 
@@ -50,6 +53,12 @@ const breadcrumbs = [
 const search = ref(props.filters.search ?? '');
 const role = ref(props.filters.role ?? '');
 const includeDeleted = ref(props.filters.include_deleted ?? false);
+const sortByFollowers = ref(props.filters.sort === 'followers');
+
+/** Null = never refreshed, or Twitch would not say. Shown as a dash, never as 0. */
+function followers(user: User): string {
+  return user.twitch_followers_total === null ? '-' : user.twitch_followers_total.toLocaleString();
+}
 
 let debounce: ReturnType<typeof setTimeout>;
 
@@ -60,12 +69,13 @@ function applyFilters() {
       search: search.value || undefined,
       role: role.value || undefined,
       include_deleted: includeDeleted.value || undefined,
+      sort: sortByFollowers.value ? 'followers' : undefined,
     },
     { preserveState: true, replace: true },
   );
 }
 
-watch([search, role, includeDeleted], () => {
+watch([search, role, includeDeleted, sortByFollowers], () => {
   clearTimeout(debounce);
   debounce = setTimeout(applyFilters, 400);
 });
@@ -92,6 +102,10 @@ watch([search, role, includeDeleted], () => {
         <label class="flex items-center gap-2 text-sm">
           <input type="checkbox" v-model="includeDeleted" />
           Include deleted
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" v-model="sortByFollowers" />
+          Most followers first
         </label>
       </div>
 
@@ -120,6 +134,7 @@ watch([search, role, includeDeleted], () => {
             <span v-if="user.twitch_id">Twitch: {{ user.twitch_id }}</span>
             <span>{{ user.overlay_templates_count }} templates</span>
             <span>{{ user.overlay_access_tokens_count }} tokens</span>
+            <span>{{ followers(user) }} followers</span>
             <span>Joined {{ formatDateTime(user.created_at) }}</span>
             <span v-if="user.bot_enabled">Bot enabled</span>
           </div>
@@ -136,6 +151,17 @@ watch([search, role, includeDeleted], () => {
               <th class="px-3 py-2">Role</th>
               <th class="px-3 py-2">Templates</th>
               <th class="px-3 py-2">Tokens</th>
+              <th class="px-3 py-2">
+                <button
+                  type="button"
+                  class="cursor-pointer hover:text-foreground"
+                  :class="{ 'text-foreground': sortByFollowers }"
+                  :title="sortByFollowers ? 'Sorted by followers. Click for newest first.' : 'Click to sort by followers'"
+                  @click="sortByFollowers = !sortByFollowers"
+                >
+                  Followers{{ sortByFollowers ? ' ↓' : '' }}
+                </button>
+              </th>
               <th class="px-3 py-2">Joined</th>
               <th class="px-3 py-2">Bot</th>
               <th class="px-3 py-2">View</th>
@@ -157,6 +183,7 @@ watch([search, role, includeDeleted], () => {
               </td>
               <td class="px-3 py-2">{{ user.overlay_templates_count }}</td>
               <td class="px-3 py-2">{{ user.overlay_access_tokens_count }}</td>
+              <td class="px-3 py-2 tabular-nums">{{ followers(user) }}</td>
               <td class="px-3 py-2 text-xs">{{ formatDateTime(user.created_at) }}</td>
               <td class="px-3 py-2">
                 <span v-if="user.bot_enabled"><CheckIcon class="size-5 text-green-400" /></span>
@@ -166,7 +193,7 @@ watch([search, role, includeDeleted], () => {
                 <a :href="route('admin.users.show', user.id)" class="text-xs text-primary hover:underline">View</a>
               </td>
             </tr>
-            <EmptyState v-if="users.data.length === 0" :colspan="7" message="No users found." />
+            <EmptyState v-if="users.data.length === 0" :colspan="9" message="No users found." />
           </tbody>
         </table>
       </div>

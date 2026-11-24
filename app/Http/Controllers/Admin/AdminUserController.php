@@ -57,11 +57,16 @@ class AdminUserController extends Controller
             $query->whereNull('deleted_at');
         }
 
+        // Biggest channels first: the accounts a raid's follow flood would come from (#343).
+        if ($request->input('sort') === 'followers') {
+            $query->orderByRaw('twitch_followers_total DESC NULLS LAST');
+        }
+
         $users = $query->latest()->paginate(25)->withQueryString();
 
         return Inertia::render('admin/users/index', [
             'users' => $users,
-            'filters' => $request->only(['search', 'role', 'include_deleted']),
+            'filters' => $request->only(['search', 'role', 'include_deleted', 'sort']),
         ]);
     }
 
