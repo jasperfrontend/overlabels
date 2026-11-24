@@ -65,7 +65,7 @@ test('the webhook stores the event and queues the work instead of doing it', fun
     $twitch->shouldNotHaveReceived('enrichEventWithUserAvatars');
     $twitch->shouldNotHaveReceived('getExtendedUserData');
     Event::assertNotDispatched(AlertTriggered::class);
-    Queue::assertPushedOn(ProcessTwitchEvent::QUEUE, ProcessTwitchEvent::class, fn ($job) => $job->twitchEventId === TwitchEvent::where('message_id', 'msg-1')->value('id'));
+    Queue::assertPushedOn(ProcessTwitchEvent::queueFor((string) $user->twitch_id), ProcessTwitchEvent::class, fn ($job) => $job->twitchEventId === TwitchEvent::where('message_id', 'msg-1')->value('id'));
 });
 
 test('a redelivered notification queues no second job', function () {
@@ -96,11 +96,14 @@ test('the queued job does the rest: enrichment onto the row, then the alert', fu
     Event::assertDispatched(AlertTriggered::class, 1);
 });
 
-test('prod runs exactly one worker on the twitch-events queue', function () {
-    // Without it nothing consumes the queue and every alert stops; with two,
-    // a gift's recipients can be handled before the gift and escape absorbing.
+test('prod runs exactly one worker on each twitch-events lane', function () {
+    // Without it nothing consumes the lane and its streamers get no alerts;
+    // with two, a gift's recipients can be handled before the gift and escape
+    // absorbing. EventLanesTest holds every role to this too.
     $deploy = file_get_contents(base_path('config/deploy.yml'));
 
-    expect(substr_count($deploy, '--queue='.ProcessTwitchEvent::QUEUE))->toBe(1)
-        ->and($deploy)->not->toMatch('/--queue='.ProcessTwitchEvent::QUEUE.'.*--(processes|workers)/');
+    foreach (ProcessTwitchEvent::queues() as $lane) {
+        expect(preg_match_all('/--queue='.preg_quote($lane, '/').'(?=\s)/', $deploy))->toBe(1, $lane)
+            ->and($deploy)->not->toMatch('/--queue='.preg_quote($lane, '/').'\s.*--(processes|workers)/');
+    }
 });
