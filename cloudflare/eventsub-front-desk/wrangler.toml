@@ -29,9 +29,12 @@ queue = "twitch-eventsub"
 # Up to 100 per batch, waiting at most 1 s to fill one.
 max_batch_size = 100
 max_batch_timeout = 1
-# One batch at a time: delivery order (GiftSubAbsorber needs a gift before its
-# recipients) and a gentle intake for the one Linode.
-max_concurrency = 1
+# Up to 10 batches at once (#343). At 1, Laravel needed 0.33 s per full batch
+# but batches started 2.8 s apart, so intake ran at 35-62/s and every streamer's
+# notifications queued behind a raid. Batches no longer arrive strictly in turn:
+# a gift's recipients landing before the gift alert on their own. Cloudflare
+# Queues never promised order, so that guarantee was already soft.
+max_concurrency = 10
 # With the Worker's backoff (capped at 15 min) this rides out about a day of a
 # dead Linode before a message gives up and lands in the dead letter queue.
 max_retries = 100

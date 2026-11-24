@@ -94,8 +94,9 @@ alerts, counters, the delivery ledger, the alert queue on the overlay.
 - **Consumer = the same Worker's `queue()` handler**, push-based (no idle polling, nothing billed
   while quiet):
   - `max_batch_size` 100, `max_batch_timeout` 1 s (fork 9.2)
-  - `max_concurrency` 1: Laravel never gets more than one batch at a time, and batches go out in
-    order (fork 9.4)
+  - `max_concurrency` 10 (was 1, fork 9.4, until 2026-11-24): at 1, Laravel needed 0.33 s per full
+    batch but batches started 2.8 s apart, so intake ran at 35-62/s and was the line every
+    streamer queued in during a raid (#343). At 10, batches no longer arrive strictly in order
 - **Per batch:** sort by Twitch timestamp, `POST /api/twitch/webhook/batch` with a shared-secret
   header, read back a per-message result. `stored` / `duplicate` / `invalid` are acked; `error` is
   retried. A non-2xx answer or a network failure retries the whole batch.
