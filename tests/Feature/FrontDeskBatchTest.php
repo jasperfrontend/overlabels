@@ -89,7 +89,7 @@ it('stores every valid message and queues it like a direct notification', functi
 
     expect(TwitchEvent::whereIn('message_id', ['m-1', 'm-2'])->count())->toBe(2);
     Queue::assertPushed(ProcessTwitchEvent::class, 2);
-    Queue::assertPushedOn(ProcessTwitchEvent::QUEUE, ProcessTwitchEvent::class);
+    Queue::assertPushedOn(ProcessTwitchEvent::queueFor((string) $user->twitch_id), ProcessTwitchEvent::class);
 });
 
 it('verifies against the streamer\'s own webhook secret too', function () {

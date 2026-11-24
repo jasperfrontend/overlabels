@@ -33,9 +33,10 @@ use Illuminate\Support\Facades\Cache;
  * alert and runs first. Cheers burst only across DIFFERENT viewers: one viewer
  * cheering again gets an alert per cheer (Jasper, 2026-11-24).
  *
- * The state lives in the cache and is read and written only by the single
- * `events` worker (ProcessTwitchEvent and FlushAlertBurst share its queue), so
- * nothing here races.
+ * The state is per streamer and lives in the cache. It is read and written
+ * only by that streamer's events lane, which has exactly one worker
+ * (ProcessTwitchEvent and FlushAlertBurst pick the same lane), so nothing
+ * here races.
  */
 final class AlertBursts
 {

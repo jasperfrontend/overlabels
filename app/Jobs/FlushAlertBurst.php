@@ -16,8 +16,8 @@ use Throwable;
  * Plays the alert a held event was waiting for: its own when nothing joined
  * it, one burst alert when others did. See AlertBursts.
  *
- * On the events queue, so it runs on the same single worker as the events
- * that join the burst and after every event queued before it. One try, like
+ * On the streamer's own events lane, so it runs on the same single worker as
+ * the events that join the burst and after every event queued before it. One try, like
  * ProcessTwitchEvent: a retry after a half-done run would fire the alert twice.
  */
 class FlushAlertBurst implements ShouldQueue
@@ -37,7 +37,8 @@ class FlushAlertBurst implements ShouldQueue
         public readonly int $twitchEventId,
         public readonly array $data,
     ) {
-        $this->onQueue(ProcessTwitchEvent::QUEUE);
+        // The streamer's own lane, so it runs after the events queued before it.
+        $this->onQueue(ProcessTwitchEvent::queueFor(ProcessTwitchEvent::broadcasterOf($data)));
     }
 
     public function handle(AlertBursts $bursts, TwitchEventSubController $controller): void

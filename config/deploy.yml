@@ -101,14 +101,43 @@ servers:
         ENTRYPOINT_SKIP_CACHE: "0"
 
   # Twitch notifications, after the webhook has answered (ProcessTwitchEvent).
-  # Its own worker so alerts never wait behind a TTS job on `queue`, and
-  # exactly ONE process so events are handled in delivery order - the gift
-  # absorber needs a gift handled before its recipients. Without this role
-  # nothing consumes the twitch-events queue and every alert stops.
+  # Four lanes, one role each: a streamer always lands on the same lane
+  # (ProcessTwitchEvent::queueFor), so their events run in delivery order -
+  # the gift absorber needs a gift before its recipients - while different
+  # streamers run side by side. EXACTLY ONE worker per lane: two would break
+  # that order, none and the streamers on that lane get no alerts at all.
+  # EventLanesTest holds this file to ProcessTwitchEvent::queues().
   events:
     hosts:
       - 172.235.171.209
     cmd: php artisan queue:work --queue=twitch-events --verbose --tries=1 --timeout=120 --sleep=1 --max-jobs=1000 --max-time=3600
+    env:
+      clear:
+        ROLE: events
+        ENTRYPOINT_SKIP_CACHE: "0"
+
+  events-1:
+    hosts:
+      - 172.235.171.209
+    cmd: php artisan queue:work --queue=twitch-events-1 --verbose --tries=1 --timeout=120 --sleep=1 --max-jobs=1000 --max-time=3600
+    env:
+      clear:
+        ROLE: events
+        ENTRYPOINT_SKIP_CACHE: "0"
+
+  events-2:
+    hosts:
+      - 172.235.171.209
+    cmd: php artisan queue:work --queue=twitch-events-2 --verbose --tries=1 --timeout=120 --sleep=1 --max-jobs=1000 --max-time=3600
+    env:
+      clear:
+        ROLE: events
+        ENTRYPOINT_SKIP_CACHE: "0"
+
+  events-3:
+    hosts:
+      - 172.235.171.209
+    cmd: php artisan queue:work --queue=twitch-events-3 --verbose --tries=1 --timeout=120 --sleep=1 --max-jobs=1000 --max-time=3600
     env:
       clear:
         ROLE: events
