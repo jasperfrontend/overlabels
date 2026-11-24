@@ -19,8 +19,8 @@
         </h1>
 
         <p class="mb-10 max-w-2xl text-xl leading-relaxed text-foreground">
-          Free Twitch chat games your viewers play by typing a !command in chat, plus a <a href="#twitch-chat-overlay" class="cursor-pointer text-sky-500 hover:underline">Twitch chat overlay</a> you can
-          style any way you like in just a few clicks. Put a quick <a href="#chat-tower" class="cursor-pointer text-sky-500 hover:underline">Chat Tower</a> or <a href="#follower-bowling" class="cursor-pointer text-sky-500 hover:underline">Follower Bowling</a> game up while you grab a drink,
+          Free Twitch chat games your viewers play by typing a single !command in chat, plus a <a href="#twitch-chat-overlay" class="cursor-pointer text-sky-500 hover:underline">Twitch chat overlay</a> you can
+            style any way you like in just a few clicks. Put a quick <a href="#chat-tower" class="cursor-pointer text-sky-500 hover:underline">Chat Tower</a>, <a href="#twitch-chat-plinko" class="cursor-pointer text-sky-500 hover:underline">Chat Plinko</a> or <a href="#follower-bowling" class="cursor-pointer text-sky-500 hover:underline">Follower Bowling</a> game up while you grab a drink,
           and chat has something to do until you're back.
         </p>
 

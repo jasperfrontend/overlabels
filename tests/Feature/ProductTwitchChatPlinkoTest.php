@@ -127,8 +127,10 @@ it('has no wires beyond the overlay and its OBS link', function () {
 
 it('serves a public pitch page with the hero as its share image', function () {
     $response = $this->get(route('products.show', 'twitch-chat-plinko'))->assertOk();
+    $manifest = json_decode(file_get_contents(base_path('resources/recipes/twitch-chat-plinko/manifest.json')), true);
 
-    $response->assertSee('It&#039;s Plinko. You know it already. Now it lives on your stream.', false)
+    // The tagline is copy and gets rewritten; what matters is that the pitch renders it.
+    $response->assertSee($manifest['pitch']['tagline'])
         ->assertSee('Get Twitch Chat Plinko')
         ->assertSee('/products/twitch-chat-plinko-hero.jpg')
         ->assertSee('/products/twitch-chat-plinko/play-board.svg');
