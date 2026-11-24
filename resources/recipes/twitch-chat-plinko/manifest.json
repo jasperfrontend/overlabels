@@ -3,7 +3,7 @@
   "slug": "twitch-chat-plinko",
   "name": "Twitch Chat Plinko",
   "version": 1,
-  "description": "Type !drop in chat, or any command you choose yourself, and a ball with your name on it drops through a Plinko board on stream. Every drop plays in the order chat sent it, one ball per chatter at a time, bouncing off every peg into a slot worth 5 in the middle and 1000 at the rare edges. Read straight from Twitch chat with nothing to connect and no bot to add.",
+  "description": "Type !drop in chat, or any command you choose yourself, and a chip with your name on it drops through a Plinko board on stream. Every drop plays in the order chat sent it, one chip per chatter at a time, bouncing off every peg into a slot worth 5 in the middle and 1000 at the rare edges. Read straight from Twitch chat with nothing to connect and no bot to add.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"
@@ -16,23 +16,23 @@
   "category": "product",
   "game": true,
   "hero": "/products/twitch-chat-plinko-hero.jpg",
-  "hero_alt": "Twitch Chat Plinko on stream: balls carrying chatters' names bounce down a Plinko board into slots worth 5 to 1000 points",
+  "hero_alt": "Twitch Chat Plinko on stream: chips carrying chatters' names bounce down a Plinko board into slots worth 5 to 1000 points",
   "obs_hint": "Make the browser source your whole canvas, 1920 by 1080. It is a full scene, made for BRB and downtime.",
-  "ready_message": "Every !drop in your chat drops a ball. Type it in your own chat to see the first one land.",
+  "ready_message": "Every !drop in your chat drops a chip. Type it in your own chat to see the first one land.",
   "highlights": [
-    "Chat types !drop, or any word you pick, and a ball with their name on it bounces down a Plinko board on your stream.",
-    "Played in the order chat sends it, one ball each. A big chat waits in a line you can see.",
-    "Nothing to connect and no bot to add. Top scores fill in as the balls land."
+    "Chat types !drop, or any word you pick, and a chip with their name on it bounces down a Plinko board on your stream.",
+    "Played in the order chat sends it, one chip each. A big chat waits in a line you can see.",
+    "Nothing to connect and no bot to add. Top scores fill in as the chips land."
   ],
   "pitch": {
     "meta_title": "Twitch Chat Plinko - a Plinko game your chat plays",
     "meta_description": "Twitch Chat Plinko puts Plinko on your stream as an OBS browser source. Chat types !drop and their name bounces down the board. Free, no bot, no points.",
-    "tagline": "It's Plinko. You know it already. Now it lives on your stream.",
-    "lede": "Drop a ball, watch it bounce off the pegs, hope for the edge. Twitch Chat Plinko is the same game, except your chat is playing: every `!drop` (or the word you pick) sends a ball with that chatter's name on it down the board, and the best scores go up beside it.",
+    "tagline": "Introducing Plinko for Twitch Chat: The perfect game for downtime.",
+    "lede": "Twitch Chat Plinko is a game where a chip drops from the top of the pyramid and random luck decides the score. Your Twitch Chat controls it: every `!drop` (or the word you pick) sends a chip with that chatter's name on it down the board. Scores are kept and appear on screen.",
     "plays": [
       {
         "title": "Chat types !drop",
-        "line": "Or any word you pick. One ball each, in the order chat sends them.",
+        "line": "Or any word you pick. One chip each, in the order chat sends them.",
         "art": {
           "type": "chat",
           "lines": [
@@ -55,12 +55,12 @@
         }
       },
       {
-        "title": "Their name rides the ball",
+        "title": "Their name rides the chip",
         "line": "It bounces off every peg on the way down.",
         "art": {
           "type": "image",
           "src": "/products/twitch-chat-plinko/play-board.svg",
-          "alt": "A ball with a chatter's name on it bouncing down through rows of pegs"
+          "alt": "A chip with a chatter's name on it bouncing down through rows of pegs"
         }
       },
       {
@@ -88,7 +88,7 @@
       {
         "icon": "trophy",
         "title": "Twitch Chat Plinko keeps score",
-        "body": "The six latest drops and the five best totals fill in beside the board as the balls land."
+        "body": "The six latest drops and the five best totals fill in beside the board as the chips land."
       },
       {
         "icon": "zap",
@@ -98,7 +98,7 @@
       {
         "icon": "shield",
         "title": "Follows your mods",
-        "body": "When a mod deletes a drop or times someone out, their ball leaves the board. Chatters you have hidden never get one."
+        "body": "When a mod deletes a drop or times someone out, their chip leaves the board. Chatters you have hidden never get one."
       }
     ],
     "looks_heading": "Three themes to start from.",
@@ -107,15 +107,15 @@
     "faq": [
       {
         "q": "What do my viewers type?",
-        "a": "`!drop`, unless you picked another word. Anything after it still counts, so `!drop come on edges` drops a ball too."
+        "a": "`!drop`, unless you picked another word. Anything after it still counts, so `!drop come on edges` drops a chip too."
       },
       {
         "q": "What if my whole chat drops at once?",
-        "a": "Everyone gets a turn. Up to 150 balls are on the board at once and ten new ones join every second. Everyone else waits in line in the order they typed, and the line shows on screen."
+        "a": "Everyone gets a turn. Up to 150 chips are on the board at once and ten new ones join every second. Everyone else waits in line in the order they typed, and the line shows on screen."
       },
       {
         "q": "Can one chatter flood the board?",
-        "a": "No. Each chatter has one ball at a time. Another drop while theirs is still on the board is ignored."
+        "a": "No. Each chatter has one chip at a time. Another drop while theirs is still on the board is ignored."
       },
       {
         "q": "Do the scores carry over?",
@@ -130,10 +130,10 @@
         "a": "No. Twitch Chat Plinko reads your chat directly. The bot never has to be in your channel."
       }
     ],
-    "closing": "Let your chat drop the first ball tonight."
+    "closing": "Let your chat drop the first chip tonight."
   },
   "notes": [
-    "Hiding commands in the chat feed does not stop Plinko, since that setting only hides them from the feed. Chatters on your hidden list never get a ball.",
+    "Hiding commands in the chat feed does not stop Plinko, since that setting only hides them from the feed. Chatters on your hidden list never get a chip.",
     "Scores count from when the overlay loaded. Reloading the browser source starts a new game.",
     "The command is !drop unless you pick another word on the Plinko page (Settings, Integrations). Reload the browser source in OBS after changing it."
   ],
