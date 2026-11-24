@@ -5,7 +5,7 @@ import LoginSocial from '@/components/LoginSocial.vue';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ArrowRight } from '@lucide/vue';
 
-const lastUpdated = 'January 13, 2025';
+const lastUpdated = 'November 24, 2026';
 const effectiveDate = 'January 13, 2025';
 </script>
 
@@ -93,18 +93,41 @@ const effectiveDate = 'January 13, 2025';
             <p class="mb-4 text-gray-600 dark:text-gray-400">You may use our Service only for lawful purposes and in accordance with these Terms.</p>
 
             <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">4.2 Prohibited Use</h3>
-            <p class="mb-2 text-gray-600 dark:text-gray-400">You agree not to:</p>
-            <ul class="list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
-              <li>Violate any applicable laws or regulations</li>
-              <li>Infringe on intellectual property rights</li>
-              <li>Upload malicious code or harmful content</li>
-              <li>Attempt to gain unauthorized access to our systems</li>
-              <li>Interfere with or disrupt the Service</li>
-              <li>Create overlays containing hate speech, harassment, or inappropriate content</li>
-              <li>Use the Service for spam or fraudulent purposes</li>
-              <li>Reverse engineer or attempt to extract source code</li>
-              <li>Resell or redistribute the Service without permission</li>
+            <p class="mb-4 text-gray-600 dark:text-gray-400">
+              Everything you host on Overlabels ends up on a Twitch stream, so the simplest rule comes first: do not host anything you could not show
+              on Twitch under the
+              <a
+                href="https://safety.twitch.tv/s/article/Community-Guidelines"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-purple-600 hover:underline dark:text-purple-400"
+                >Twitch Community Guidelines</a
+              >. On top of that, you may not host, show or link to:
+            </p>
+            <ul class="mb-4 list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
+              <li>Anything that sexualises, exploits or endangers minors. There are no exceptions to this rule.</li>
+              <li>Sexual content or nudity</li>
+              <li>Hate speech, racism, or content that attacks people for who they are</li>
+              <li>Harassment, threats, or content that targets a specific person</li>
+              <li>Anything that sells or promotes weapons, drugs or other illegal goods and services</li>
+              <li>Gambling, scams, fraud or deceptive offers</li>
+              <li>Other people's personal data, such as addresses, phone numbers or private messages</li>
+              <li>Content that impersonates a person, a streamer or a brand</li>
+              <li>Content you do not have the right to use, such as someone else's artwork, music or fonts</li>
             </ul>
+            <p class="mb-2 text-gray-600 dark:text-gray-400">You also agree not to:</p>
+            <ul class="mb-4 list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
+              <li>Break any law that applies to you or to Overlabels</li>
+              <li>Upload malicious code, crypto miners, or anything built to harm or track the people who see your overlay</li>
+              <li>Use Overlabels for spam, click farming, view or follow botting, or other fake engagement</li>
+              <li>Claim to work for, speak for, or be connected to Overlabels, unless we have agreed to it in writing</li>
+              <li>Try to get into accounts or systems that are not yours</li>
+              <li>Interfere with or disrupt the Service</li>
+              <li>Resell access to the hosted Service without our permission</li>
+            </ul>
+            <p class="text-gray-600 dark:text-gray-400">
+              We decide whether content breaks these rules. When it does, we may remove the content or close the account that hosts it.
+            </p>
           </section>
 
           <section>
