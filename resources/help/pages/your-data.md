@@ -298,13 +298,25 @@ Honesty matters more than reassurance here.
 
 Overlabels administrators can see the events on your account, your overlays and kits, your overlay
 tokens and their access logs including IP addresses, and the login sessions on your account. They can
-also **impersonate** your account, which is a complete identity swap: while impersonating, an
-administrator sees and can do exactly what you can, including editing your overlays and acting on your
-Twitch channel.
+also **impersonate** your account, which is a complete identity swap inside Overlabels: while
+impersonating, an administrator sees and can do everything you can do in Overlabels, including editing
+your overlays and using the Twitch permissions you gave Overlabels when you connected your channel.
+
+Almost all of those permissions only read data. The one that changes anything lets Overlabels edit
+your channel's stream information, such as its title and category. Impersonation does not give anyone
+access to your Twitch account itself: Overlabels never sees your Twitch password, nobody can log in to
+Twitch as you through it, and nothing can be done on Twitch beyond what you authorized Overlabels to do.
 
 Starting and stopping an impersonation is written to an append-only audit log, with the administrator's
 identity, your name and Twitch ID, and their IP address. Actions taken during an impersonation are not
 separately marked as such.
+
+**Our promise: we stay out of your overlays.** Being able to edit your account is not the same as being
+allowed to. Administrators never add to or change what you host on Overlabels unless you explicitly
+ask us to. You can ask in a Discord conversation, by email or in a GitHub issue. 
+The only time we change or remove your content, or remove your account, without being asked is
+when something you host on Overlabels breaks our [Terms of Service](/terms). This is a promise, not a
+technical limit. What you show on your Twitch stream remains your own responsibility.
 
 The administrator role is held by the people who run Overlabels, and it is granted to as few accounts
 as the job allows.

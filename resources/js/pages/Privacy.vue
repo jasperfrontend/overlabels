@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from '@lucide/vue';
 
-const lastUpdated = 'November 22, 2026';
+const lastUpdated = 'November 24, 2026';
 </script>
 
 <template>
@@ -139,9 +139,21 @@ const lastUpdated = 'November 22, 2026';
               hides it from other users and from the public. It does not hide it from administrators.
             </p>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
-              Administrators can also sign in as you. While they do, they see and can do exactly what you can, including editing your overlays and
-              acting on your Twitch channel. Starting and stopping this is recorded in an audit log with the administrator's identity and IP address.
-              They cannot see your overlay access tokens themselves: we only store a fingerprint of each token, not the token.
+              Administrators can also open your Overlabels account as if they were you (we call this impersonation). While they do, they see and can
+              do everything you can do in Overlabels, including editing your overlays and using the Twitch permissions you gave Overlabels when you
+              connected your channel. Almost all of those permissions only read data. The one that changes anything lets Overlabels edit your
+              channel's stream information, such as its title and category. This does not give them access to your Twitch account itself: they never
+              see your Twitch password, they can't log in to Twitch as you, and they can't do anything on Twitch beyond what you authorized Overlabels
+              to do. Starting and stopping impersonation is recorded in an audit log with the administrator's identity and IP address. They cannot see
+              your overlay access tokens themselves: we only store a fingerprint of each token, not the token.
+            </p>
+            <p class="mb-4 text-gray-600 dark:text-gray-400">
+              <strong>Our promise: we stay out of your overlays.</strong> Being able to edit your account is not the same as being allowed to.
+              Administrators never add to or change what you host on Overlabels unless you explicitly ask us to. You can ask in a Discord
+              conversation, by email or in a GitHub issue. The only time we change or remove your content, or remove your account, without being asked
+              is when something you host on Overlabels breaks our
+              <a href="/terms" class="text-purple-600 hover:underline dark:text-purple-400">Terms of Service</a>. This is a promise, not a technical
+              limit. What you show on your Twitch stream remains your own responsibility.
             </p>
             <p class="text-gray-600 dark:text-gray-400">
               We look at your content to answer your support requests, to investigate reports and abuse, and to keep the service working. The
