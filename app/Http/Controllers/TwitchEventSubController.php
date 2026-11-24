@@ -73,19 +73,6 @@ class TwitchEventSubController extends Controller
 
     private StreamStateMachineService $streamStateMachine;
 
-    // PHASE0-TIMING (#343): temporary, remove once the follow timings are read.
-    /** @var array<string, float> */
-    private array $phase0Laps = [];
-
-    private float $phase0At = 0.0;
-
-    private function phase0Lap(string $step): void
-    {
-        $now = hrtime(true) / 1e6;
-        $this->phase0Laps[$step] = round(($this->phase0Laps[$step] ?? 0) + $now - $this->phase0At, 1);
-        $this->phase0At = $now;
-    }
-
     public function __construct(
         TwitchEventSubService $eventSubService,
         TwitchApiService $twitchService,
@@ -767,9 +754,6 @@ class TwitchEventSubController extends Controller
     {
         $eventType = $data['subscription']['type'] ?? 'unknown';
         $event = $data['event'] ?? [];
-        $this->phase0Laps = [];
-        $this->phase0At = hrtime(true) / 1e6;
-        $phase0Start = $this->phase0At;
 
         try {
             // Find the broadcaster user
@@ -788,7 +772,6 @@ class TwitchEventSubController extends Controller
             if ($user && $user->token_expires_at?->isPast()) {
                 $this->refreshExpiredToken($user);
             }
-            $this->phase0Lap('user_and_token');
 
             // Decorate the payload with profile_image_url for every user the
             // event references (acting user, broadcaster, raid source, hype
@@ -817,16 +800,13 @@ class TwitchEventSubController extends Controller
             // The row was stored before enrichment, so the webhook could
             // answer without waiting on Helix. Keep it in step with what the
             // alert and the broadcast below see.
-            $this->phase0Lap('avatars');
             $twitchEvent->forceFill(['event_data' => $event])->save();
-            $this->phase0Lap('save_row');
 
             // Meter the inbound event (the usage unit pricing is set against).
             // testCheer() synthetic events use a different path and are not counted.
             if ($user) {
                 app(EventMeter::class)->record($user->id);
             }
-            $this->phase0Lap('meter');
 
             if (in_array($eventType, self::STORE_ONLY_EVENTS, true)) {
                 return;
@@ -834,7 +814,6 @@ class TwitchEventSubController extends Controller
 
             // Clear relevant caches based on event type
             $this->refreshCachesForEvent($eventType, $broadcasterId);
-            $this->phase0Lap('caches');
 
             // The living title re-renders on any event, debounced. Except a
             // channel.update, which IS a title change - possibly ours, possibly
@@ -846,7 +825,6 @@ class TwitchEventSubController extends Controller
                     app(LivingTitleService::class)->schedule($user);
                 }
             }
-            $this->phase0Lap('living_title');
 
             // Stream session lifecycle and per-stream controls
             if ($user) {
@@ -858,7 +836,6 @@ class TwitchEventSubController extends Controller
                     $this->streamSessionService->handleEvent($user, $eventType, $event);
                 }
             }
-            $this->phase0Lap('counters');
 
             if ($broadcasterId) {
                 if ($user && $eventType === 'channel.subscribe' && app(GiftSubAbsorber::class)->absorb($user, $event)) {
@@ -872,7 +849,6 @@ class TwitchEventSubController extends Controller
                     // Pick the alert template for this event, honoring variant
                     // conditions (e.g. cheer at_least/exactly bits thresholds).
                     $mapping = EventTemplateMapping::resolveForEvent($user->id, $eventType, $event);
-                    $this->phase0Lap('alert.resolve_mapping');
 
                     if ($mapping && $mapping->template) {
                         // The gift alert announces the whole batch, so its
@@ -909,18 +885,8 @@ class TwitchEventSubController extends Controller
             // broadcaster's private per-user channel. Without a broadcaster id
             // we have nowhere to send it - drop silently rather than fan out
             // to a guessable global channel.
-            $this->phase0Lap('alert.other');
             if ($broadcasterId) {
                 broadcast(new TwitchEventReceived($eventType, $event, (string) $broadcasterId));
-            }
-            $this->phase0Lap('raw_broadcast');
-
-            if ($eventType === 'channel.follow') {
-                Log::info('phase0.follow_timing', [
-                    'event_id' => $twitchEvent->id,
-                    'total_ms' => round(hrtime(true) / 1e6 - $phase0Start, 1),
-                    'laps_ms' => $this->phase0Laps,
-                ]);
             }
 
         } catch (Exception $e) {
@@ -982,15 +948,12 @@ class TwitchEventSubController extends Controller
             return;
         }
 
-        $this->phase0Lap('alert.mute_check');
-
         try {
             // Get user's Twitch data for static template tags
             $twitchData = $this->twitchService->getExtendedUserData(
                 $user->access_token,
                 $user->twitch_id
             );
-            $this->phase0Lap('alert.twitch_data');
 
             // Map template data including event tags
             $templateData = $this->mapper->mapForTemplate(
@@ -999,8 +962,6 @@ class TwitchEventSubController extends Controller
                 $mapping->template->template_tags,
                 $eventData // Pass event data for event.* tags
             );
-
-            $this->phase0Lap('alert.map_tags');
 
             // Where it renders: its targets, else the live Alerts overlay,
             // else every static overlay (null). See AlertsOverlay.
@@ -1016,7 +977,6 @@ class TwitchEventSubController extends Controller
             );
             $ttsText = $rendered['tts'];
             $templateData = $rendered['data'];
-            $this->phase0Lap('alert.targets_and_messages');
 
             $alertId = (string) Str::uuid();
 
@@ -1044,7 +1004,6 @@ class TwitchEventSubController extends Controller
             } else {
                 app(DeliveryLedger::class)->record($row, DeliveryOutcome::ChatOnly);
             }
-            $this->phase0Lap('alert.broadcast');
 
             // Synthesis is queued (best-effort, never blocks the alert). The
             // overlay correlates the resulting TtsAudioReady by alert_id and
@@ -1052,7 +1011,6 @@ class TwitchEventSubController extends Controller
             if ($ttsText !== null) {
                 SynthesizeAlertTts::dispatch($alertId, (string) $user->twitch_id, $ttsText, $targetSlugs);
             }
-            $this->phase0Lap('alert.tts_dispatch');
 
             // Optional bot chat message - queued for the bot to post. Gated on
             // bot_enabled so we never enqueue a message the bot can't deliver
@@ -1066,7 +1024,6 @@ class TwitchEventSubController extends Controller
                     ]);
                 }
             }
-            $this->phase0Lap('alert.chat_outbox');
 
         } catch (Exception $e) {
             // The alert should have reached the overlay and could not even be
