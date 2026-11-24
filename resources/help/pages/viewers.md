@@ -68,7 +68,7 @@ again. You do not need to give a reason, quote a law, or explain yourself.
 It works for everyone, and a streamer cannot switch it off or restrict it to subscribers or mods. It
 is the one command on the platform that belongs to you rather than to the channel.
 
-If you would rather not type it in public, email **privacy@overlabels.com** with your Twitch
+If you would rather not type it in public, email **jasper@emailjasper.com** with your Twitch
 username instead.
 
 Either way, your check-ins, your blocks in any chat game, the record of anything you added to a list,

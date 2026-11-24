@@ -117,15 +117,145 @@ const lastUpdated = 'November 24, 2026';
 
           <section>
             <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">4. Data Sharing and Disclosure</h2>
-            <p class="mb-4 text-gray-600 dark:text-gray-400">We do not sell your personal information. We may share your data with:</p>
+            <p class="mb-4 text-gray-600 dark:text-gray-400">
+              We do not sell your personal information. These are all the companies that receive data when you use Overlabels, what they receive, and
+              why. Where a company is outside the EU, see International Data Transfers below.
+            </p>
+
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">Services that run Overlabels</h3>
+            <div class="mb-6 overflow-x-auto">
+              <table class="w-full min-w-xl border-collapse text-left text-sm text-gray-600 dark:text-gray-400">
+                <thead>
+                  <tr class="border-b border-gray-300 text-gray-900 dark:border-gray-700 dark:text-white">
+                    <th class="py-2 pr-4 font-semibold">Service</th>
+                    <th class="py-2 pr-4 font-semibold">What it receives</th>
+                    <th class="py-2 pr-4 font-semibold">Why</th>
+                    <th class="py-2 font-semibold">Where</th>
+                  </tr>
+                </thead>
+                <tbody class="align-top">
+                  <tr class="border-b border-gray-200 dark:border-gray-800">
+                    <td class="py-2 pr-4">Linode (Akamai)</td>
+                    <td class="py-2 pr-4">Everything Overlabels stores</td>
+                    <td class="py-2 pr-4">Our servers and database</td>
+                    <td class="py-2">Frankfurt, Germany</td>
+                  </tr>
+                  <tr class="border-b border-gray-200 dark:border-gray-800">
+                    <td class="py-2 pr-4">Cloudflare</td>
+                    <td class="py-2 pr-4">
+                      All traffic to our websites, uploaded images, the page analytics described above, and the events Twitch sends us about your
+                      channel, held in a queue until our servers pick them up (normally a second or two, at most four days if our servers are down)
+                    </td>
+                    <td class="py-2 pr-4">Network, security, image storage, analytics</td>
+                    <td class="py-2">Images in the EU. Network and event queue worldwide</td>
+                  </tr>
+                  <tr class="border-b border-gray-200 dark:border-gray-800">
+                    <td class="py-2 pr-4">Scaleway</td>
+                    <td class="py-2 pr-4">Database backups</td>
+                    <td class="py-2 pr-4">A second backup copy</td>
+                    <td class="py-2">Paris, France</td>
+                  </tr>
+                  <tr class="border-b border-gray-200 dark:border-gray-800">
+                    <td class="py-2 pr-4">Twitch</td>
+                    <td class="py-2 pr-4">Your login, and the requests Overlabels makes for your channel</td>
+                    <td class="py-2 pr-4">Overlabels is built on Twitch</td>
+                    <td class="py-2">United States</td>
+                  </tr>
+                  <tr class="border-b border-gray-200 dark:border-gray-800">
+                    <td class="py-2 pr-4">Bunny Fonts</td>
+                    <td class="py-2 pr-4">Your IP address, when a page loads its font</td>
+                    <td class="py-2 pr-4">The font our website uses</td>
+                    <td class="py-2">EU</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">Healthchecks.io</td>
+                    <td class="py-2 pr-4">No personal data, only a signal that the daily backup ran</td>
+                    <td class="py-2 pr-4">Warns us when a backup fails</td>
+                    <td class="py-2">EU</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">Services used only when you use a feature</h3>
+            <div class="mb-6 overflow-x-auto">
+              <table class="w-full min-w-xl border-collapse text-left text-sm text-gray-600 dark:text-gray-400">
+                <thead>
+                  <tr class="border-b border-gray-300 text-gray-900 dark:border-gray-700 dark:text-white">
+                    <th class="py-2 pr-4 font-semibold">Service</th>
+                    <th class="py-2 pr-4 font-semibold">What it receives</th>
+                    <th class="py-2 pr-4 font-semibold">When</th>
+                    <th class="py-2 font-semibold">Where</th>
+                  </tr>
+                </thead>
+                <tbody class="align-top">
+                  <tr class="border-b border-gray-200 dark:border-gray-800">
+                    <td class="py-2 pr-4">Ko-fi, Streamlabs, Fourthwall, Buy Me a Coffee, Throne</td>
+                    <td class="py-2 pr-4">The connection details, and the events the service sends us</td>
+                    <td class="py-2 pr-4">Only the services you connect</td>
+                    <td class="py-2">Differs per service</td>
+                  </tr>
+                  <tr class="border-b border-gray-200 dark:border-gray-800">
+                    <td class="py-2 pr-4">ElevenLabs</td>
+                    <td class="py-2 pr-4">Only the text of an alert you set up to be spoken</td>
+                    <td class="py-2 pr-4">Text-to-speech alerts</td>
+                    <td class="py-2">United States</td>
+                  </tr>
+                  <tr class="border-b border-gray-200 dark:border-gray-800">
+                    <td class="py-2 pr-4">Freesound</td>
+                    <td class="py-2 pr-4">Only your search terms</td>
+                    <td class="py-2 pr-4">Searching the sound library</td>
+                    <td class="py-2">Spain</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">Discord</td>
+                    <td class="py-2 pr-4">Your Twitch name and ID and what you wrote, when you suggest an integration</td>
+                    <td class="py-2 pr-4">The suggestion form. Backup alerts go there too, with no personal data</td>
+                    <td class="py-2">United States</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">Services your browser or OBS contacts directly</h3>
+            <p class="mb-3 text-gray-600 dark:text-gray-400">
+              Some content is loaded by the browser showing it, not by our servers. These services see the IP address of that browser, which for an
+              overlay is the computer running OBS.
+            </p>
+            <div class="mb-4 overflow-x-auto">
+              <table class="w-full min-w-xl border-collapse text-left text-sm text-gray-600 dark:text-gray-400">
+                <thead>
+                  <tr class="border-b border-gray-300 text-gray-900 dark:border-gray-700 dark:text-white">
+                    <th class="py-2 pr-4 font-semibold">Service</th>
+                    <th class="py-2 pr-4 font-semibold">What it receives</th>
+                    <th class="py-2 font-semibold">When</th>
+                  </tr>
+                </thead>
+                <tbody class="align-top">
+                  <tr class="border-b border-gray-200 dark:border-gray-800">
+                    <td class="py-2 pr-4">Twitch</td>
+                    <td class="py-2 pr-4">IP address, and which channel's chat is read</td>
+                    <td class="py-2">Overlays that show chat read it straight from Twitch</td>
+                  </tr>
+                  <tr class="border-b border-gray-200 dark:border-gray-800">
+                    <td class="py-2 pr-4">BetterTTV, FrankerFaceZ, 7TV</td>
+                    <td class="py-2 pr-4">IP address, and which channel's emotes are loaded</td>
+                    <td class="py-2">Overlays that show chat emotes</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-4">OpenStreetMap</td>
+                    <td class="py-2 pr-4">IP address, and which part of the map is shown</td>
+                    <td class="py-2">GPS maps</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="mb-6 text-gray-600 dark:text-gray-400">
+              Anything you add to your own overlays yourself, such as fonts or images from another website, is loaded from wherever you point it.
+            </p>
+
+            <p class="mb-2 text-gray-600 dark:text-gray-400">Beyond these services, we only share your data:</p>
             <ul class="list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
-              <li>
-                <strong>Service providers we actually use:</strong> Linode (hosting, Frankfurt), Cloudflare (network, object storage in the EU, the
-                page analytics described above, and a queue that holds the events Twitch sends us about your channel until our servers pick them up:
-                normally a second or two, at most four days if our servers are down, in locations not limited to the EU), Scaleway (backup storage,
-                Paris), Twitch, the donation service you connect, ElevenLabs (only the text of an alert you configured to be spoken) and Freesound
-                (only your search terms)
-              </li>
               <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
               <li><strong>Business Transfers:</strong> In connection with a merger, sale, or acquisition</li>
               <li><strong>Your Consent:</strong> With your explicit permission</li>
@@ -250,8 +380,11 @@ const lastUpdated = 'November 24, 2026';
           <section>
             <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">10. International Data Transfers</h2>
             <p class="text-gray-600 dark:text-gray-400">
-              Your information may be transferred to and processed in countries other than your own. We ensure appropriate safeguards are in place to
-              protect your information in accordance with this Privacy Policy.
+              Overlabels is run from the EU and stores your data in the EU. Some of the services listed in section 4 are outside it: Twitch,
+              ElevenLabs and Discord are in the United States, Cloudflare's network and event queue run worldwide, and OpenStreetMap is in the United
+              Kingdom. For the United States we rely on the EU-US Data Privacy Framework where the company is certified under it, and otherwise on the
+              European Commission's Standard Contractual Clauses. The United Kingdom is covered by an adequacy decision of the European Commission.
+              The donation services you choose to connect handle your data under their own policies, wherever they are based.
             </p>
           </section>
 
@@ -268,14 +401,14 @@ const lastUpdated = 'November 24, 2026';
             <p class="mb-4 text-gray-600 dark:text-gray-400">If you have questions or concerns about this Privacy Policy, please contact us at:</p>
             <div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
               <p class="text-gray-700 dark:text-gray-300">
-                Email: privacy@overlabels.com<br />
+                Email: jasper@emailjasper.com<br />
                 Discord:
                 <a
-                  href="https://discord.gg/overlabels"
+                  href="https://discord.gg/qANdj5QPpd"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-purple-600 hover:underline dark:text-purple-400"
-                  >discord.gg/overlabels</a
+                  >discord.gg/qANdj5QPpd</a
                 >
               </p>
             </div>

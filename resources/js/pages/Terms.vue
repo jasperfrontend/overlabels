@@ -131,43 +131,20 @@ const effectiveDate = 'January 13, 2025';
           </section>
 
           <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">5. Subscription and Pricing</h2>
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">5.1 Free Tier</h3>
-            <p class="mb-4 text-gray-600 dark:text-gray-400">
-              We offer a free tier with limited features. Free accounts may have restrictions on the number of overlays, templates, and available
-              features.
-            </p>
-
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">5.2 Paid Subscriptions</h3>
-            <p class="mb-4 text-gray-600 dark:text-gray-400">
-              Paid subscriptions provide access to additional features and resources. Subscription fees are billed in advance on a monthly or annual
-              basis and are non-refundable except as required by law.
-            </p>
-
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">5.3 Billing</h3>
-            <ul class="list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
-              <li>Payments are processed through secure third-party payment processors</li>
-              <li>You authorize us to charge your payment method for recurring fees</li>
-              <li>Price changes will be notified 30 days in advance</li>
-              <li>Failed payments may result in service suspension</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">6. Intellectual Property Rights</h2>
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">6.1 Our Property</h3>
+            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">5. Intellectual Property Rights</h2>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">5.1 Our Property</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
               The Service and its original content, features, and functionality are owned by Overlabels and are protected by international copyright,
               trademark, patent, trade secret, and other intellectual property laws.
             </p>
 
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">6.2 Your Content</h3>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">5.2 Your Content</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
               You retain ownership of any content you create using our Service. By using the Service, you grant us a worldwide, non-exclusive,
               royalty-free license to use, reproduce, and display your content as necessary to provide the Service.
             </p>
 
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">6.3 Feedback</h3>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">5.3 Feedback</h3>
             <p class="text-gray-600 dark:text-gray-400">
               Any feedback, suggestions, or ideas you provide about the Service becomes our property and may be used without compensation or
               attribution.
@@ -175,43 +152,42 @@ const effectiveDate = 'January 13, 2025';
           </section>
 
           <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">7. Privacy and Data Protection</h2>
+            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">6. Privacy and Data Protection</h2>
             <p class="text-gray-600 dark:text-gray-400">
-              Your use of the Service is also governed by our Privacy Policy. By using the Service, you consent to the collection and use of
-              information as detailed in the Privacy Policy.
+              Our Privacy Policy explains what data we collect, why, and who receives it. We process your data because it is needed to provide the
+              Service you signed up for, and, for things like security and preventing abuse, because we have a legitimate interest in keeping the
+              Service safe and working. Where we need your consent for something, we ask for it separately.
             </p>
           </section>
 
           <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">8. Third-Party Services</h2>
-            <p class="mb-4 text-gray-600 dark:text-gray-400">Our Service integrates with third-party services, including:</p>
-            <ul class="mb-4 list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
-              <li>Twitch API and EventSub services</li>
-              <li>Payment processors</li>
-              <li>Analytics providers</li>
-              <li>Cloud hosting services</li>
-            </ul>
+            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">7. Third-Party Services</h2>
+            <p class="mb-4 text-gray-600 dark:text-gray-400">
+              Overlabels works with other services, such as Twitch and the donation services you choose to connect. Every company that receives data,
+              what it receives and why, is listed in our
+              <a href="/privacy" class="text-purple-600 hover:underline dark:text-purple-400">Privacy Policy</a>.
+            </p>
             <p class="text-gray-600 dark:text-gray-400">
-              Your use of these third-party services is subject to their respective terms and privacy policies. We are not responsible for the
-              practices of third-party services.
+              When you use another service through Overlabels, that service's own terms and privacy policy also apply. We are not responsible for how
+              other services handle your data.
             </p>
           </section>
 
           <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">9. Disclaimers and Limitations of Liability</h2>
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">9.1 Service Availability</h3>
+            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">8. Disclaimers and Limitations of Liability</h2>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">8.1 Service Availability</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
               The Service is provided "as is" and "as available" without warranties of any kind. We do not guarantee uninterrupted, secure, or
               error-free operation of the Service.
             </p>
 
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">9.2 Limitation of Liability</h3>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">8.2 Limitation of Liability</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
               To the maximum extent permitted by law, Overlabels shall not be liable for any indirect, incidental, special, consequential, or punitive
               damages, including loss of profits, data, or goodwill.
             </p>
 
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">9.3 Indemnification</h3>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">8.3 Indemnification</h3>
             <p class="text-gray-600 dark:text-gray-400">
               You agree to indemnify and hold harmless Overlabels from any claims, damages, or expenses arising from your use of the Service or
               violation of these Terms.
@@ -219,13 +195,13 @@ const effectiveDate = 'January 13, 2025';
           </section>
 
           <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">10. Termination</h2>
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">10.1 Termination by You</h3>
+            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">9. Termination</h2>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">9.1 Termination by You</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
               You may terminate your account at any time through the account settings or by contacting support.
             </p>
 
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">10.2 Termination by Us</h3>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">9.2 Termination by Us</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">We may suspend or terminate your account immediately for:</p>
             <ul class="mb-4 list-disc space-y-2 pl-6 text-gray-600 dark:text-gray-400">
               <li>Violation of these Terms</li>
@@ -234,7 +210,7 @@ const effectiveDate = 'January 13, 2025';
               <li>Harmful behavior toward other users or the Service</li>
             </ul>
 
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">10.3 Effect of Termination</h3>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">9.3 Effect of Termination</h3>
             <p class="text-gray-600 dark:text-gray-400">
               Upon termination, your right to use the Service will immediately cease. We may delete your account data after a reasonable period,
               except as required by law.
@@ -242,48 +218,43 @@ const effectiveDate = 'January 13, 2025';
           </section>
 
           <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">11. Dispute Resolution</h2>
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">11.1 Informal Resolution</h3>
+            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">10. Dispute Resolution</h2>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">10.1 Informal Resolution</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">We encourage you to contact us first to resolve any disputes informally.</p>
 
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">11.2 Binding Arbitration</h3>
-            <p class="mb-4 text-gray-600 dark:text-gray-400">
-              Any disputes not resolved informally shall be resolved through binding arbitration in accordance with the rules of the American
-              Arbitration Association.
-            </p>
-
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">11.3 Governing Law</h3>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">10.2 Governing Law</h3>
             <p class="text-gray-600 dark:text-gray-400">
-              These Terms shall be governed by the laws of the United States and the State of Delaware, without regard to conflict of law principles.
+              These Terms are governed by Dutch law. If you are a consumer living in the EU, you also keep the protection of the mandatory consumer
+              laws of the country you live in.
             </p>
           </section>
 
           <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">12. Changes to Terms</h2>
+            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">11. Changes to Terms</h2>
             <p class="text-gray-600 dark:text-gray-400">
-              We reserve the right to modify these Terms at any time. Material changes will be notified via email or through the Service at least 30
-              days before taking effect. Continued use of the Service after changes constitutes acceptance of the modified Terms.
+              We may change these Terms at any time. We will not notify you about changes: the "Last updated" date at the top of this page shows when
+              they last changed. Continued use of the Service after a change means you accept the changed Terms.
             </p>
           </section>
 
           <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">13. General Provisions</h2>
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">13.1 Entire Agreement</h3>
+            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">12. General Provisions</h2>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">12.1 Entire Agreement</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
               These Terms constitute the entire agreement between you and Overlabels regarding the Service.
             </p>
 
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">13.2 Severability</h3>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">12.2 Severability</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
               If any provision of these Terms is found to be unenforceable, the remaining provisions will continue in effect.
             </p>
 
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">13.3 Waiver</h3>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">12.3 Waiver</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
               Our failure to enforce any right or provision of these Terms will not be considered a waiver.
             </p>
 
-            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">13.4 Assignment</h3>
+            <h3 class="mb-3 text-xl font-semibold text-gray-800 dark:text-gray-200">12.4 Assignment</h3>
             <p class="text-gray-600 dark:text-gray-400">
               You may not assign or transfer these Terms without our prior written consent. We may assign our rights and obligations without
               restriction.
@@ -291,20 +262,19 @@ const effectiveDate = 'January 13, 2025';
           </section>
 
           <section>
-            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">14. Contact Information</h2>
+            <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">13. Contact Information</h2>
             <p class="mb-4 text-gray-600 dark:text-gray-400">For questions about these Terms of Service, please contact us at:</p>
             <div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
               <p class="text-gray-700 dark:text-gray-300">
-                Email: legal@overlabels.com<br />
+                Email: jasper@emailjasper.com<br />
                 Discord:
                 <a
-                  href="https://discord.gg/overlabels"
+                  href="https://discord.gg/qANdj5QPpd"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-purple-600 hover:underline dark:text-purple-400"
-                  >discord.gg/overlabels</a
-                ><br />
-                Support: support@overlabels.com
+                  >discord.gg/qANdj5QPpd</a
+                >
               </p>
             </div>
           </section>

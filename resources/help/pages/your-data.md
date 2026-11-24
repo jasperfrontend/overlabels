@@ -372,7 +372,7 @@ If you want both, do both: delete your Overlabels account first, then revoke at 
 ## Asking us something
 
 If you want to know what is held on your account specifically, or you want something removed that this
-page says would survive, write to **privacy@overlabels.com**. You do not need to cite a regulation and
+page says would survive, write to **jasper@emailjasper.com**. You do not need to cite a regulation and
 you do not need a reason.
 
 ## Related
