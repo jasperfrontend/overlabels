@@ -1111,8 +1111,8 @@ clobbered by a checkout, a stash, or a branch switch that a later step needs to 
   runs alongside it, blocking nothing. So the full local gate is the ONLY gate and is never
   skipped: `php artisan pint --test && npm run format:check && npm run lint:check && npm test &&
   npm run typecheck && npm run build && php artisan test` (build before pest - two tests inspect
-  the built assets). Red gate = no push. `/ship` runs exactly this.
-- "Ship it" means gate, commit, push - one shot, no confirmation pause.
+  the built assets). Red gate = no push. `/deploy` runs exactly this (renamed from `/ship` on 2026-11-24: Claude Code now ships a built-in `/ship` that opens a PR and watches CI, the opposite of this flow).
+- "Ship it" means `/deploy`: gate, commit, push - one shot, no confirmation pause. Never the built-in `/ship`.
 - **A claim file is written ONLY when a prose changelog entry is written, or when Jasper asks
   for one** (decided 2026-09-25). There is no path rule any more. The earlier rules - every commit
   from 2026-09-01, then every logic change from 2026-09-17 - produced 135 claims in 25 days, and a
@@ -1145,7 +1145,7 @@ clobbered by a checkout, a stash, or a branch switch that a later step needs to 
   SKIPPED (with the reason), writes `remedy.md` beside the audit and a NEW claim. Shipped `claim.md`
   and `audit.md` are never edited; every correction is a new claim citing the old one inline. Remy
   commits locally and never pushes; his claim is unaudited until `/sally` runs on it.
-- **`/settle <ID>` is the standard way both run (Jasper, 2026-11-20)**, and `/ship` starts it after
+- **`/settle <ID>` is the standard way both run (Jasper, 2026-11-20)**, and `/deploy` starts it after
   pushing any commit with a `Changelog:` trailer: Sally once, Remy once on her findings, act on Remy
   only if he found something broken, fix leftovers by hand, commit locally, never push. One pass per
   ID: Remy's own claims and `(settles <ID>)` fixes are never settled again. That is what keeps the
