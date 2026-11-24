@@ -25,6 +25,8 @@ use App\Exceptions\TwitchTokenInvalidException;
  *                batch (see GiftSubAbsorber)
  *   late         Twitch sent it more than five minutes before we got to it
  *                (an outage backlog): stored and counted, no alert
+ *   burst_absorbed one of many of the same event at once, announced by the
+ *                burst's single alert (see AlertBursts)
  *
  * A row with alert_id set and outcome null is in flight: broadcast queued,
  * not yet closed by the worker. See docs/design/event-delivery-ledger-2026-08.md.
@@ -43,6 +45,7 @@ enum DeliveryOutcome: string
     case UnknownUser = 'unknown_user';
     case GiftAbsorbed = 'gift_absorbed';
     case Late = 'late';
+    case BurstAbsorbed = 'burst_absorbed';
 
     /**
      * Whether this outcome counts toward a success rate. no_target outcomes

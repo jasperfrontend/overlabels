@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { OUTCOME_LABELS, SCORED_OUTCOMES, isScoredOutcome, outcomeLabel } from './deliveryOutcome';
 
 describe('deliveryOutcome', () => {
-  it('mirrors the eleven outcomes of App\\Enums\\DeliveryOutcome', () => {
+  it('mirrors the twelve outcomes of App\\Enums\\DeliveryOutcome', () => {
     expect(Object.keys(OUTCOME_LABELS).sort()).toEqual(
       [
         'delivered',
@@ -16,6 +16,7 @@ describe('deliveryOutcome', () => {
         'unknown_user',
         'gift_absorbed',
         'late',
+        'burst_absorbed',
       ].sort(),
     );
   });

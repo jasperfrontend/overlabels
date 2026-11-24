@@ -1,5 +1,33 @@
 # Changelog - November 2026
 
+## OL-2611-036 - November 24th, 2026 - feat(alerts): many of the same Twitch event at once play one alert
+
+A raid arrives as a follow bomb: dozens or hundreds of follows within seconds, each with its own
+alert, TTS line and chat line. The overlay queue drops most of them anyway, the TTS talks over the
+streamer, and on the single events worker every one of those alerts cost ~50 ms while every other
+streamer's alerts waited behind them (measured on prod the same day, issue #343). Now a burst is one
+alert.
+
+- **How it decides.** The first follow, sub, resub, cheer or channel point redemption waits about a
+  second. If nothing of the same kind follows, it plays as it always did. If more arrive, they play
+  ONE alert: the first event's, with a new `[[[event.burst_count]]]` tag holding how many there
+  were and `[[[event.burst_started_at]]]` when it began (Unix seconds). The burst stays open while
+  more keep coming, until a four-second gap closes it. Both timings are one constant each in
+  `AlertBursts`.
+- **Only the alert is merged.** Every event in a burst is still stored, counted, metered and sent to
+  the overlay as an event. Stream sessions list the merged ones as "part of a burst alert".
+- **The rules.** Cheers burst only across different viewers: one viewer cheering again gets an
+  alert per cheer. Gifted subs stay with the gift bomb handling and never burst. Channel point
+  redemptions burst per reward. Raids, hype trains and gift bombs are already one event each. The
+  donation services (Ko-fi and the rest) always alert once per donation. An event with no alert
+  mapped is never held.
+- **No migration, nothing breaks.** Existing alerts do not use the new tags, and an unused tag
+  renders as nothing, so a burst plays the streamer's normal alert once. Burst alerts of their own
+  on the Triggers page come next.
+
+A single event now reaches the overlay one to two seconds later than before: the database queue
+delays in whole seconds.
+
 ## OL-2611-034 - November 22nd, 2026 - fix(eventsub): a refused recreate stays on record, and failed subscriptions are repaired one by one instead of wiped
 
 The first real repair run of the revived subscription monitor (OL-2611-032) exposed a blind spot.

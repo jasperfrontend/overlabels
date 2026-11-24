@@ -6,6 +6,7 @@ use App\Enums\DeliveryOutcome;
 use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
 use App\Jobs\DeleteTestTwitchEvent;
+use App\Jobs\FlushAlertBurst;
 use App\Jobs\ForgetTwitchCache;
 use App\Jobs\ProcessTwitchEvent;
 use App\Jobs\SynthesizeAlertTts;
@@ -17,6 +18,7 @@ use App\Models\TwitchEvent;
 use App\Models\User;
 use App\Models\UserEventsubSubscription;
 use App\Services\AlertMuteService;
+use App\Services\Alerts\AlertBursts;
 use App\Services\Alerts\AlertsOverlay;
 use App\Services\Alerts\GiftSubAbsorber;
 use App\Services\DeliveryLedger;
@@ -846,29 +848,7 @@ class TwitchEventSubController extends Controller
                     // Stored and counted above; an alert this stale is noise.
                     app(DeliveryLedger::class)->record($twitchEvent, DeliveryOutcome::Late);
                 } elseif ($user) {
-                    // Pick the alert template for this event, honoring variant
-                    // conditions (e.g. cheer at_least/exactly bits thresholds).
-                    $mapping = EventTemplateMapping::resolveForEvent($user->id, $eventType, $event);
-
-                    if ($mapping && $mapping->template) {
-                        // The gift alert announces the whole batch, so its
-                        // recipients' own sub alerts are absorbed. Set before
-                        // rendering: recipients arrive while it renders.
-                        if ($eventType === 'channel.subscription.gift') {
-                            app(GiftSubAbsorber::class)->expect($user, (int) ($event['total'] ?? 0));
-                        }
-
-                        // Render the user's custom alert template
-                        $this->renderEventAlert($user, $mapping, $data, $twitchEvent);
-                    } else {
-                        app(DeliveryLedger::class)->record($twitchEvent, DeliveryOutcome::NoMapping);
-                        Log::warning('No enabled template mapping found', [
-                            'event_type' => $eventType,
-                            'user_id' => $user->id,
-                            'mapping_exists' => EventTemplateMapping::where('user_id', $user->id)
-                                ->where('event_type', $eventType)->exists(),
-                        ]);
-                    }
+                    $this->alertOrBurst($user, $eventType, $event, $data, $twitchEvent);
                 } else {
                     app(DeliveryLedger::class)->record($twitchEvent, DeliveryOutcome::UnknownUser);
                     Log::warning("User not found for Twitch ID: $broadcasterId");
@@ -910,6 +890,75 @@ class TwitchEventSubController extends Controller
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
+            ]);
+        }
+    }
+
+    /**
+     * Alert now, or hand the event to its burst. See AlertBursts.
+     */
+    private function alertOrBurst(User $user, string $eventType, array $event, array $data, TwitchEvent $row): void
+    {
+        $kind = AlertBursts::kindOf($eventType, $event);
+
+        // Only an event that would alert can burst. With no alert mapped it
+        // says no_mapping as it always did, never "part of a burst".
+        $alerts = $kind !== null && EventTemplateMapping::where('user_id', $user->id)
+            ->where('event_type', $eventType)
+            ->where('enabled', true)
+            ->whereHas('template')
+            ->exists();
+
+        if ($alerts) {
+            $decision = app(AlertBursts::class)->offer($user, $kind, $eventType, $event);
+
+            if ($decision === AlertBursts::HOLD) {
+                FlushAlertBurst::dispatch($user->id, $kind, $row->id, $data)
+                    ->delay(now()->addSeconds(AlertBursts::OPEN_WINDOW_SECONDS));
+
+                return;
+            }
+
+            if ($decision === AlertBursts::JOINED) {
+                app(DeliveryLedger::class)->record($row, DeliveryOutcome::BurstAbsorbed);
+
+                return;
+            }
+        }
+
+        $this->fireAlert($user, $data, $row);
+    }
+
+    /**
+     * Play the alert mapped to this event: the event's own, or a burst's,
+     * when FlushAlertBurst has added `burst_count` to it.
+     */
+    public function fireAlert(User $user, array $data, TwitchEvent $row): void
+    {
+        $eventType = $data['subscription']['type'] ?? 'unknown';
+        $event = $data['event'] ?? [];
+
+        // Pick the alert template for this event, honoring variant
+        // conditions (e.g. cheer at_least/exactly bits thresholds).
+        $mapping = EventTemplateMapping::resolveForEvent($user->id, $eventType, $event);
+
+        if ($mapping && $mapping->template) {
+            // The gift alert announces the whole batch, so its
+            // recipients' own sub alerts are absorbed. Set before
+            // rendering: recipients arrive while it renders.
+            if ($eventType === 'channel.subscription.gift') {
+                app(GiftSubAbsorber::class)->expect($user, (int) ($event['total'] ?? 0));
+            }
+
+            // Render the user's custom alert template
+            $this->renderEventAlert($user, $mapping, $data, $row);
+        } else {
+            app(DeliveryLedger::class)->record($row, DeliveryOutcome::NoMapping);
+            Log::warning('No enabled template mapping found', [
+                'event_type' => $eventType,
+                'user_id' => $user->id,
+                'mapping_exists' => EventTemplateMapping::where('user_id', $user->id)
+                    ->where('event_type', $eventType)->exists(),
             ]);
         }
     }
