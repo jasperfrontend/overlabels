@@ -901,10 +901,11 @@ class TwitchEventSubController extends Controller
     {
         $kind = AlertBursts::kindOf($eventType, $event);
 
-        // Only an event that would alert can burst. With no alert mapped it
-        // says no_mapping as it always did, never "part of a burst".
+        // Only an event that would alert can burst: one with its own alert or
+        // a burst alert mapped. With neither it says no_mapping as it always
+        // did, never "part of a burst".
         $alerts = $kind !== null && EventTemplateMapping::where('user_id', $user->id)
-            ->where('event_type', $eventType)
+            ->whereIn('event_type', [$eventType, EventTemplateMapping::burstTypeFor($eventType)])
             ->where('enabled', true)
             ->whereHas('template')
             ->exists();
@@ -931,7 +932,8 @@ class TwitchEventSubController extends Controller
 
     /**
      * Play the alert mapped to this event: the event's own, or a burst's,
-     * when FlushAlertBurst has added `burst_count` to it.
+     * when FlushAlertBurst has added `burst_count` to it. A burst plays the
+     * burst trigger's alert when one is mapped, else the event's own.
      */
     public function fireAlert(User $user, array $data, TwitchEvent $row): void
     {
@@ -940,7 +942,10 @@ class TwitchEventSubController extends Controller
 
         // Pick the alert template for this event, honoring variant
         // conditions (e.g. cheer at_least/exactly bits thresholds).
-        $mapping = EventTemplateMapping::resolveForEvent($user->id, $eventType, $event);
+        $mapping = isset($event['burst_count'])
+            ? EventTemplateMapping::resolveForEvent($user->id, EventTemplateMapping::burstTypeFor($eventType), $event)
+            : null;
+        $mapping ??= EventTemplateMapping::resolveForEvent($user->id, $eventType, $event);
 
         if ($mapping && $mapping->template) {
             // The gift alert announces the whole batch, so its

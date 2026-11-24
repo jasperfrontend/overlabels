@@ -90,13 +90,20 @@ final class AlertEventSamples
         $out = [];
 
         if ($service === self::TWITCH) {
-            foreach ($this->twitchPayloads($eventType) as $key => [$variant, $event]) {
+            // A burst trigger plays its base event with the burst's count on
+            // top, exactly what FlushAlertBurst hands a live burst alert.
+            $base = EventTemplateMapping::baseEventType($eventType);
+            $burst = $base !== $eventType
+                ? ['burst_count' => 24, 'burst_started_at' => strtotime(self::WHEN)]
+                : [];
+
+            foreach ($this->twitchPayloads($base) as $key => [$variant, $event]) {
                 $out[] = [
                     'key' => $key,
                     'label' => $variant === null ? $label : "{$label} - {$variant}",
                     'tags' => $this->mapper->mapEventDataForTemplates([
-                        'subscription' => ['type' => $eventType],
-                        'event' => $event,
+                        'subscription' => ['type' => $base],
+                        'event' => [...$event, ...$burst],
                     ]),
                 ];
             }

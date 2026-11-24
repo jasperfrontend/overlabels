@@ -2,6 +2,7 @@
 
 use App\Models\EventTemplateMapping;
 use App\Models\User;
+use App\Services\Alerts\AlertBursts;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchScopeService;
 use App\Services\UserEventSubManager;
@@ -267,12 +268,27 @@ test('every alert trigger the UI offers is an event we actually subscribe to', f
     // bits amount-variant conditions, cheers_this_stream, the all-time
     // bits_received pair and latest_cheer* were all shipped and reachable
     // only from the integrations test button.
+    //
+    // A burst trigger (`burst.channel.follow`) is no Twitch event: it is
+    // reached through its base event, so the base is what must be subscribed.
     $unreachable = array_values(array_diff(
-        array_keys(EventTemplateMapping::EVENT_TYPES),
+        array_map(EventTemplateMapping::baseEventType(...), array_keys(EventTemplateMapping::EVENT_TYPES)),
         array_keys(UserEventSubManager::SUPPORTED_EVENTS),
     ));
 
     expect($unreachable)->toBe([]);
+});
+
+test('every burst trigger is built on an event that bursts', function () {
+    // A burst trigger whose base event AlertBursts never bursts is an alert
+    // that can be wired up and can never fire.
+    $dead = collect(array_keys(EventTemplateMapping::EVENT_TYPES))
+        ->filter(fn (string $type) => str_starts_with($type, EventTemplateMapping::BURST_PREFIX))
+        ->reject(fn (string $type) => AlertBursts::kindOf(EventTemplateMapping::baseEventType($type), ['reward' => ['id' => 'r']]) !== null)
+        ->values()
+        ->all();
+
+    expect($dead)->toBe([]);
 });
 
 test('an amount-variant condition can only be built on an event we receive', function () {

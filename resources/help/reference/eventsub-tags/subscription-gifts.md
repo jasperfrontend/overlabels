@@ -13,4 +13,4 @@ when someone gifts subscriptions.
 - `[[[event.cumulative_total]]]` :: Total gifts ever
 - `[[[event.is_anonymous]]]` :: true/false if anonymous
 
-note: maps to the Twitch EventSub event `channel.subscription.gift`. Overlabels collapses gift bombs (multiple gifts from the same user within an 8-second window) into a single alert; use `[[[event.total]]]` for the combined count.
+note: maps to the Twitch EventSub event `channel.subscription.gift`. A gift bomb is one alert: Twitch sends this event once with the number of subs gifted, and Overlabels skips the New Subscription alerts of that many gifted subs that follow it (for up to 120 seconds after the last one arrives). Use `[[[event.total]]]` for the count.

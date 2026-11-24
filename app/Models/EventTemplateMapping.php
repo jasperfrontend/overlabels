@@ -87,12 +87,17 @@ class EventTemplateMapping extends Model
      */
     public const array EVENT_TYPES = [
         'channel.follow' => 'New Follower',
+        'burst.channel.follow' => 'Follower Burst',
         'channel.subscribe' => 'New Subscription',
+        'burst.channel.subscribe' => 'Subscription Burst',
         'channel.subscription.gift' => 'Gift Subscription',
         'channel.subscription.message' => 'Resubscription',
+        'burst.channel.subscription.message' => 'Resubscription Burst',
         'channel.cheer' => 'Bits Cheer',
+        'burst.channel.cheer' => 'Bits Cheer Burst',
         'channel.raid' => 'Raid',
         'channel.channel_points_custom_reward_redemption.add' => 'Channel Points Redemption',
+        'burst.channel.channel_points_custom_reward_redemption.add' => 'Channel Points Burst',
         'stream.online' => 'Stream Online',
         'stream.offline' => 'Stream Offline',
         'channel.update' => 'Stream Info Updated',
@@ -119,6 +124,27 @@ class EventTemplateMapping extends Model
         'channel.prediction.lock' => 'Prediction Locked',
         'channel.prediction.end' => 'Prediction Ended',
     ];
+
+    /**
+     * A burst trigger is its event type behind this prefix: `burst.channel.follow`
+     * fires on a burst of follows (see AlertBursts). It is not a Twitch event
+     * and nothing subscribes to it; it is reached through its base event.
+     */
+    public const string BURST_PREFIX = 'burst.';
+
+    /** The burst trigger for an event type. */
+    public static function burstTypeFor(string $eventType): string
+    {
+        return self::BURST_PREFIX.$eventType;
+    }
+
+    /** The Twitch event a trigger is reached through: itself, or a burst trigger's base event. */
+    public static function baseEventType(string $eventType): string
+    {
+        return str_starts_with($eventType, self::BURST_PREFIX)
+            ? substr($eventType, strlen(self::BURST_PREFIX))
+            : $eventType;
+    }
 
     /**
      * Get the user that owns this mapping

@@ -252,6 +252,45 @@ test('a flush that fails clears its burst, so the kind does not absorb for an ho
     Queue::assertPushed(FlushAlertBurst::class, 2);
 });
 
+test('a burst plays the burst trigger\'s alert when one is assigned', function () {
+    $user = burstUser(['channel.follow', 'burst.channel.follow']);
+
+    burstFollow($user, 'Alice');
+    burstFollow($user, 'Bob');
+    burstFlushAll();
+
+    expect(burstAlerts())->toBe([['type' => 'burst.channel.follow', 'who' => 'Alice', 'count' => 2]]);
+});
+
+test('a lone follow still plays the follow alert when a burst alert is assigned too', function () {
+    $user = burstUser(['channel.follow', 'burst.channel.follow']);
+
+    burstFollow($user, 'Alice');
+    burstFlushAll();
+
+    expect(burstAlerts())->toBe([['type' => 'channel.follow', 'who' => 'Alice', 'count' => null]]);
+});
+
+test('with only a burst alert assigned, bursts alert and a lone follow does not', function () {
+    $user = burstUser(['burst.channel.follow']);
+
+    burstFollow($user, 'Alone');
+    burstFlushAll();
+    $this->travel(AlertBursts::KEEP_OPEN_SECONDS + 1)->seconds();
+    burstFollow($user, 'Alice');
+    burstFollow($user, 'Bob');
+    burstFlushAll();
+
+    expect(burstAlerts())->toBe([['type' => 'burst.channel.follow', 'who' => 'Alice', 'count' => 2]])
+        ->and(TwitchEvent::where('user_id', $user->id)->orderBy('id')->first()->outcome)->toBe(DeliveryOutcome::NoMapping);
+});
+
+test('a burst trigger is its base event behind the burst prefix', function () {
+    expect(EventTemplateMapping::burstTypeFor('channel.follow'))->toBe('burst.channel.follow')
+        ->and(EventTemplateMapping::baseEventType('burst.channel.follow'))->toBe('channel.follow')
+        ->and(EventTemplateMapping::baseEventType('channel.follow'))->toBe('channel.follow');
+});
+
 test('the burst kind is per reward for channel point redemptions', function () {
     expect(AlertBursts::kindOf('channel.channel_points_custom_reward_redemption.add', ['reward' => ['id' => 'abc']]))
         ->toBe('channel.channel_points_custom_reward_redemption.add:abc')

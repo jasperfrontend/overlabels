@@ -1,5 +1,24 @@
 # Changelog - November 2026
 
+## OL-2611-037 - November 24th, 2026 - feat(alerts): burst triggers, so a burst can have an alert of its own
+
+Since OL-2611-036 a burst of follows, subs, resubs, cheers or channel point redemptions plays one
+alert, but it had to be the streamer's normal alert for that event. Now a burst can play an alert
+made for it.
+
+- **Five new triggers** on an alert's Triggers tab, each listed right under its own event: Follower
+  Burst, Subscription Burst, Resubscription Burst, Bits Cheer Burst and Channel Points Burst. A burst
+  plays the burst trigger's alert when one is assigned and the event's normal alert when not. A
+  single event always plays the normal alert, so assigning only a burst alert means single events
+  play nothing and bursts do.
+- **Kits and previews know them.** Each burst trigger has preview samples (its event plus a count),
+  so a kit can declare one and its preview plays it.
+- **A reference page for the burst tags**, `[[[event.burst_count]]]` and
+  `[[[event.burst_started_at]]]`, with a copyable example of one alert that serves both a single
+  follow and a burst.
+- The gift subs reference page no longer describes an "8-second window" left over from an older
+  gift bomb detector; it describes how gift bombs are handled today.
+
 ## OL-2611-036 - November 24th, 2026 - feat(alerts): many of the same Twitch event at once play one alert
 
 A raid arrives as a follow bomb: dozens or hundreds of follows within seconds, each with its own
