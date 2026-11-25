@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Http\Controllers\TwitchEventSubController;
 use App\Models\TwitchEvent;
+use App\Support\Phase2Laps;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -93,7 +94,9 @@ class ProcessTwitchEvent implements ShouldQueue
 
     public function handle(TwitchEventSubController $controller): void
     {
+        Phase2Laps::start();
         $row = TwitchEvent::find($this->twitchEventId);
+        Phase2Laps::lap('find_row');
 
         // Deleted in the meantime (viewer erasure, a test event's cleanup).
         if ($row === null) {

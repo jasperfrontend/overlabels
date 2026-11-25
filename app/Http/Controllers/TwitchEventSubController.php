@@ -34,6 +34,7 @@ use App\Services\TwitchEventSubService;
 use App\Services\TwitchPayloadScrubber;
 use App\Services\TwitchTokenService;
 use App\Services\ViewerErasureService;
+use App\Support\Phase2Laps;
 use Exception;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -765,6 +766,7 @@ class TwitchEventSubController extends Controller
                 : ($event['broadcaster_user_id'] ?? null);
 
             $user = $broadcasterId ? User::where('twitch_id', $broadcasterId)->first() : null;
+            Phase2Laps::lap('user');
 
             // Everything below builds with the stored access token and nothing
             // else on this path refreshes it. An expired one is refreshed once,
@@ -774,6 +776,7 @@ class TwitchEventSubController extends Controller
             if ($user && $user->token_expires_at?->isPast()) {
                 $this->refreshExpiredToken($user);
             }
+            Phase2Laps::lap('token');
 
             // Decorate the payload with profile_image_url for every user the
             // event references (acting user, broadcaster, raid source, hype
@@ -802,13 +805,16 @@ class TwitchEventSubController extends Controller
             // The row was stored before enrichment, so the webhook could
             // answer without waiting on Helix. Keep it in step with what the
             // alert and the broadcast below see.
+            Phase2Laps::lap('avatars');
             $twitchEvent->forceFill(['event_data' => $event])->save();
+            Phase2Laps::lap('save_row');
 
             // Meter the inbound event (the usage unit pricing is set against).
             // testCheer() synthetic events use a different path and are not counted.
             if ($user) {
                 app(EventMeter::class)->record($user->id);
             }
+            Phase2Laps::lap('meter');
 
             if (in_array($eventType, self::STORE_ONLY_EVENTS, true)) {
                 return;
@@ -816,6 +822,7 @@ class TwitchEventSubController extends Controller
 
             // Clear relevant caches based on event type
             $this->refreshCachesForEvent($eventType, $broadcasterId);
+            Phase2Laps::lap('caches');
 
             // The living title re-renders on any event, debounced. Except a
             // channel.update, which IS a title change - possibly ours, possibly
@@ -827,6 +834,7 @@ class TwitchEventSubController extends Controller
                     app(LivingTitleService::class)->schedule($user);
                 }
             }
+            Phase2Laps::lap('living_title');
 
             // Stream session lifecycle and per-stream controls
             if ($user) {
@@ -838,6 +846,7 @@ class TwitchEventSubController extends Controller
                     $this->streamSessionService->handleEvent($user, $eventType, $event);
                 }
             }
+            Phase2Laps::lap('counters');
 
             if ($broadcasterId) {
                 if ($user && $eventType === 'channel.subscribe' && app(GiftSubAbsorber::class)->absorb($user, $event)) {
@@ -865,9 +874,12 @@ class TwitchEventSubController extends Controller
             // broadcaster's private per-user channel. Without a broadcaster id
             // we have nowhere to send it - drop silently rather than fan out
             // to a guessable global channel.
+            Phase2Laps::lap('alert');
             if ($broadcasterId) {
                 broadcast(new TwitchEventReceived($eventType, $event, (string) $broadcasterId));
             }
+            Phase2Laps::lap('raw_broadcast');
+            Phase2Laps::log($eventType, $twitchEvent->id);
 
         } catch (Exception $e) {
             Log::error("Failed to store Twitch event: {$e->getMessage()}", [
