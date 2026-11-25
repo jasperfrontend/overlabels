@@ -25,6 +25,11 @@ class EventFeedAppender
 
     public function handleTwitchEvent(TwitchEventReceived $event): void
     {
+        // The event lane fed the lists already, batched (#343).
+        if ($event->feedHandled()) {
+            return;
+        }
+
         $user = User::where('twitch_id', $event->broadcasterId)->first();
         if (! $user) {
             return;

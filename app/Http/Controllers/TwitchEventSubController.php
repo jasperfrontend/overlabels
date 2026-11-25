@@ -23,6 +23,7 @@ use App\Services\Alerts\AlertsOverlay;
 use App\Services\Alerts\GiftSubAbsorber;
 use App\Services\DeliveryLedger;
 use App\Services\EventMeter;
+use App\Services\Lists\EventFeedService;
 use App\Services\LivingTitleService;
 use App\Services\LockdownService;
 use App\Services\Messages\AlertMessageRenderer;
@@ -766,6 +767,7 @@ class TwitchEventSubController extends Controller
                 : ($event['broadcaster_user_id'] ?? null);
 
             $user = $broadcasterId ? User::where('twitch_id', $broadcasterId)->first() : null;
+            $enriched = false;
             Phase2Laps::lap('user');
 
             // Everything below builds with the stored access token and nothing
@@ -799,14 +801,19 @@ class TwitchEventSubController extends Controller
                         ->pluck('event_data'));
                     $event = $this->twitchService->enrichEventWithUserAvatars($enrichmentToken, $event);
                     $data['event'] = $event;
+                    $enriched = true;
                 }
             }
 
             // The row was stored before enrichment, so the webhook could
             // answer without waiting on Helix. Keep it in step with what the
-            // alert and the broadcast below see.
+            // alert and the broadcast below see. Unenriched, it already is,
+            // and save() would find nothing dirty and write nothing - but its
+            // encode-and-compare still cost ~1.4 ms a follow in a flood (#343).
             Phase2Laps::lap('avatars');
-            $twitchEvent->forceFill(['event_data' => $event])->save();
+            if ($enriched) {
+                $twitchEvent->forceFill(['event_data' => $event])->save();
+            }
             Phase2Laps::lap('save_row');
 
             // Meter the inbound event (the usage unit pricing is set against).
@@ -875,8 +882,17 @@ class TwitchEventSubController extends Controller
             // we have nowhere to send it - drop silently rather than fan out
             // to a guessable global channel.
             Phase2Laps::lap('alert');
+            //
+            // The lane feeds the recent-events lists itself, batched per
+            // window, and tells EventFeedAppender so it does not append the
+            // same line again with a lookup of its own (#343).
             if ($broadcasterId) {
-                broadcast(new TwitchEventReceived($eventType, $event, (string) $broadcasterId));
+                $received = new TwitchEventReceived($eventType, $event, (string) $broadcasterId);
+                if ($user) {
+                    app(EventFeedService::class)->handleTwitchEventOnLane($user, $eventType, $event);
+                    $received->markFeedHandled();
+                }
+                broadcast($received);
             }
             Phase2Laps::lap('raw_broadcast');
             Phase2Laps::log($eventType, $twitchEvent->id);

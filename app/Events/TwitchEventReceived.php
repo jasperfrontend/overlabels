@@ -22,6 +22,26 @@ class TwitchEventReceived implements ShouldBroadcast
     public string $timestamp;
 
     /**
+     * Set by the event lane, which has already fed the streamer's recent-events
+     * lists (EventFeedService::handleTwitchEventOnLane), so EventFeedAppender
+     * skips it: no second write and no second broadcaster lookup. Private, so
+     * it stays out of the broadcast payload (only public properties go out).
+     */
+    private bool $feedHandled = false;
+
+    public function markFeedHandled(): static
+    {
+        $this->feedHandled = true;
+
+        return $this;
+    }
+
+    public function feedHandled(): bool
+    {
+        return $this->feedHandled;
+    }
+
+    /**
      * Create a new event instance.
      *
      * $broadcasterId scopes the broadcast to that user's private channel so
