@@ -252,7 +252,9 @@ env:
     SESSION_DOMAIN: .overlabels.com
     SESSION_SECURE_COOKIE: "true"
 
-    QUEUE_CONNECTION: database
+    # Its own Redis (accessory `redis-queue`), not Postgres: putting a job on
+    # the database queue was 12.8 of the 18 ms a follow costs a lane (#343).
+    QUEUE_CONNECTION: redis
     CACHE_STORE: redis
     # `metered` wraps the reverb driver to count outbound broadcasts per user
     # (MeteredBroadcaster). Set back to `reverb` to bypass metering entirely.
