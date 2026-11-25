@@ -299,3 +299,64 @@ test('the burst kind is per reward for channel point redemptions', function () {
         ->and(AlertBursts::kindOf('channel.subscribe', ['is_gift' => true]))->toBeNull()
         ->and(AlertBursts::kindOf('channel.subscribe', ['is_gift' => false]))->toBe('channel.subscribe');
 });
+
+/** One follow every 3 s, inside the 4 s keep-open gap, so the burst never closes. */
+function burstKeepFollowing(User $user, int $times, string $prefix): void
+{
+    for ($i = 1; $i <= $times; $i++) {
+        test()->travel(3)->seconds();
+        burstFollow($user, "{$prefix}{$i}");
+    }
+}
+
+test('a long burst is announced again with its running count once it has doubled and 15 s have passed', function () {
+    $user = burstUser(['channel.follow']);
+
+    burstFollow($user, 'Alice');
+    burstFollow($user, 'Bob');
+    burstFlushAll(); // announced at 2, t = 0
+
+    // Doubled at once, but too soon: absorbed.
+    burstFollow($user, 'Carol');
+    burstFollow($user, 'Dave');
+    expect(burstAlerts())->toHaveCount(1);
+
+    // t = 15 on the fifth: 9 follows, doubled and past the gap.
+    burstKeepFollowing($user, 5, 'Keeper');
+
+    expect(burstAlerts())->toBe([
+        ['type' => 'channel.follow', 'who' => 'Alice', 'count' => 2],
+        ['type' => 'channel.follow', 'who' => 'Keeper5', 'count' => 9],
+    ]);
+    Queue::assertNothingPushed();
+});
+
+test('a re-announcement needs both the doubling and the gap', function () {
+    $user = burstUser(['channel.follow']);
+
+    burstFollow($user, 'Alice');
+    burstFollow($user, 'Bob');
+    burstFlushAll(); // announced at 2, t = 0
+
+    // Count 2 + k at t = 3k. 7 at t = 15 is the first; the next needs 14 AND
+    // t >= 30, so not 12 at t = 30 or 13 at t = 33, but 14 at t = 36.
+    burstKeepFollowing($user, 12, 'F');
+
+    expect(collect(burstAlerts())->pluck('count')->all())->toBe([2, 7, 14])
+        ->and(collect(burstAlerts())->pluck('who')->all())->toBe(['Alice', 'F5', 'F12']);
+});
+
+test('the follow that re-announces a burst is not treated as silent, so it keeps its avatar', function () {
+    $user = burstUser(['channel.follow']);
+    $bursts = app(AlertBursts::class);
+
+    burstFollow($user, 'Alice');
+    burstFollow($user, 'Bob');
+    burstFlushAll(); // announced at 2, t = 0
+
+    burstKeepFollowing($user, 4, 'F'); // 6 at t = 12
+    expect($bursts->wouldJoin($user, 'channel.follow', 'channel.follow', []))->toBeTrue(); // 7 at t = 12: too soon
+
+    $this->travel(3)->seconds();
+    expect($bursts->wouldJoin($user, 'channel.follow', 'channel.follow', []))->toBeFalse(); // 7 at t = 15: re-announces
+});

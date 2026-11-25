@@ -25,6 +25,12 @@ use Illuminate\Support\Facades\Cache;
  *    `burst_started_at` added) and the burst stays OPEN: every further event
  *    of that kind within KEEP_OPEN_SECONDS of the last one joins it too.
  *    A longer gap closes it.
+ *  - While a burst stays open it is ANNOUNCED AGAIN, with its running count,
+ *    each time the count has at least doubled since the last alert and at
+ *    least REANNOUNCE_MIN_SECONDS have passed (Jasper, 2026-11-26). The event
+ *    that tips it over plays the burst alert. Without this a long wave was
+ *    one alert at its start: in the chaos run one follower burst lasted
+ *    2 min 16 s and covered 6,081 follows, announced once at "20".
  *
  * One mechanism for any size, decided by rate and not by a magic count. Twitch
  * only: the donation services always alert once per donation.
@@ -54,11 +60,19 @@ final class AlertBursts
      */
     public const int PENDING_TTL_SECONDS = 3600;
 
+    /** An open burst is announced again once its count has grown by this factor since the last alert. */
+    public const int REANNOUNCE_FACTOR = 2;
+
+    /** ...and at least this long after the last alert. */
+    public const int REANNOUNCE_MIN_SECONDS = 15;
+
     public const string HOLD = 'hold';
 
     public const string JOINED = 'joined';
 
     public const string ALONE = 'alone';
+
+    public const string REANNOUNCE = 'reannounce';
 
     /**
      * What makes two events "the same thing", or null when this event never
@@ -83,6 +97,8 @@ final class AlertBursts
      * HOLD: this event opened a pending burst; dispatch FlushAlertBurst.
      * JOINED: it is part of a burst; it gets no alert of its own.
      * ALONE: it plays its own alert now (a viewer's repeat cheer).
+     * REANNOUNCE: it is part of an open burst that has doubled since its last
+     * alert; it plays the burst alert with the running count (see announced()).
      */
     public function offer(User $user, string $kind, string $eventType, array $event): string
     {
@@ -110,18 +126,32 @@ final class AlertBursts
             $state['actors'][] = $actor;
         }
 
+        $decision = self::JOINED;
+        if (self::reannounces($state)) {
+            $state['announced'] = $state['count'];
+            $state['announced_at'] = now()->timestamp;
+            $decision = self::REANNOUNCE;
+        }
+
         $ttl = $state['phase'] === 'open' ? self::KEEP_OPEN_SECONDS : self::PENDING_TTL_SECONDS;
         Cache::put($key, $state, $ttl);
 
-        return self::JOINED;
+        return $decision;
     }
 
     /**
-     * Decide a pending burst. Returns null when it played alone (or there was
-     * nothing to decide), else the burst's size and start, and leaves it open.
+     * The open burst's size and start as last announced, for the caller of an
+     * offer() that answered REANNOUNCE.
      *
      * @return array{count: int, started_at: int}|null
      */
+    public function announced(User $user, string $kind): ?array
+    {
+        $state = Cache::get(self::key($user, $kind));
+
+        return is_array($state) ? ['count' => $state['count'], 'started_at' => $state['started_at']] : null;
+    }
+
     /**
      * Whether offer() would answer JOINED for this event, without changing
      * anything. Asked before avatar enrichment: an event that joins a burst
@@ -137,10 +167,22 @@ final class AlertBursts
         }
 
         $actor = $eventType === 'channel.cheer' ? self::actorOf($event) : null;
+        if ($actor !== null && in_array($actor, $state['actors'], true)) {
+            return false;
+        }
 
-        return $actor === null || ! in_array($actor, $state['actors'], true);
+        // The event that re-announces plays an alert, so it is not silent.
+        $state['count']++;
+
+        return ! self::reannounces($state);
     }
 
+    /**
+     * Decide a pending burst. Returns null when it played alone (or there was
+     * nothing to decide), else the burst's size and start, and leaves it open.
+     *
+     * @return array{count: int, started_at: int}|null
+     */
     public function flush(User $user, string $kind): ?array
     {
         $key = self::key($user, $kind);
@@ -153,6 +195,8 @@ final class AlertBursts
         }
 
         $state['phase'] = 'open';
+        $state['announced'] = $state['count'];
+        $state['announced_at'] = now()->timestamp;
         Cache::put($key, $state, self::KEEP_OPEN_SECONDS);
 
         return ['count' => $state['count'], 'started_at' => $state['started_at']];
@@ -162,6 +206,24 @@ final class AlertBursts
     public function forget(User $user, string $kind): void
     {
         Cache::forget(self::key($user, $kind));
+    }
+
+    /**
+     * Whether an open burst, with this event already counted, is due another
+     * announcement. A burst opened before this existed has no `announced`:
+     * it counts from now, so it never re-announces on the deploy itself.
+     */
+    private static function reannounces(array $state): bool
+    {
+        if ($state['phase'] !== 'open') {
+            return false;
+        }
+
+        $announced = (int) ($state['announced'] ?? $state['count']);
+        $announcedAt = (int) ($state['announced_at'] ?? now()->timestamp);
+
+        return $state['count'] >= $announced * self::REANNOUNCE_FACTOR
+            && now()->timestamp - $announcedAt >= self::REANNOUNCE_MIN_SECONDS;
     }
 
     /** Anonymous cheers carry no user id: each counts as a different viewer. */

@@ -952,6 +952,16 @@ class TwitchEventSubController extends Controller
 
                 return;
             }
+
+            // A long burst that has doubled since its last alert: this event
+            // plays the burst alert again, with the running count.
+            if ($decision === AlertBursts::REANNOUNCE) {
+                $burst = app(AlertBursts::class)->announced($user, $kind);
+                if ($burst !== null) {
+                    $data['event']['burst_count'] = $burst['count'];
+                    $data['event']['burst_started_at'] = $burst['started_at'];
+                }
+            }
         }
 
         $this->fireAlert($user, $data, $row);
