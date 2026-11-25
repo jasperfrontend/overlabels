@@ -10,7 +10,6 @@ use App\Jobs\FlushAlertBurst;
 use App\Jobs\ForgetTwitchCache;
 use App\Jobs\ProcessTwitchEvent;
 use App\Jobs\SynthesizeAlertTts;
-use App\Listeners\EventFeedAppender;
 use App\Models\BotChatOutbox;
 use App\Models\EventTemplateMapping;
 use App\Models\OverlayTemplate;
@@ -867,26 +866,7 @@ class TwitchEventSubController extends Controller
             // we have nowhere to send it - drop silently rather than fan out
             // to a guessable global channel.
             if ($broadcasterId) {
-                // PHASE1-TIMING (#343): temporary, remove once the follow timings are read.
-                $p1 = hrtime(true);
-                $p1Event = new TwitchEventReceived($eventType, $event, (string) $broadcasterId);
-                $p1Built = hrtime(true);
-                EventFeedAppender::$phase1Ms = null;
-                EventFeedAppender::$phase1LookupMs = null;
-                broadcast($p1Event);
-                $p1Done = hrtime(true);
-                if ($eventType === 'channel.follow') {
-                    $p1Listener = EventFeedAppender::$phase1Ms;
-                    $p1Dispatch = ($p1Done - $p1Built) / 1e6;
-                    Log::info('phase1.raw_broadcast_timing', [
-                        'event_id' => $twitchEvent->id,
-                        'build_ms' => round(($p1Built - $p1) / 1e6, 2),
-                        'dispatch_ms' => round($p1Dispatch, 2),
-                        'feed_listener_ms' => $p1Listener === null ? null : round($p1Listener, 2),
-                        'feed_lookup_ms' => EventFeedAppender::$phase1LookupMs,
-                        'queue_push_ms' => round($p1Dispatch - ($p1Listener ?? 0), 2),
-                    ]);
-                }
+                broadcast(new TwitchEventReceived($eventType, $event, (string) $broadcasterId));
             }
 
         } catch (Exception $e) {

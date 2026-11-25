@@ -23,24 +23,14 @@ class EventFeedAppender
         private readonly EventFeedService $feeds,
     ) {}
 
-    // PHASE1-TIMING (#343): temporary, remove once the follow timings are read.
-    public static ?float $phase1Ms = null;
-
-    public static ?float $phase1LookupMs = null;
-
     public function handleTwitchEvent(TwitchEventReceived $event): void
     {
-        $p1 = hrtime(true);
         $user = User::where('twitch_id', $event->broadcasterId)->first();
-        self::$phase1LookupMs = round((hrtime(true) - $p1) / 1e6, 2);
         if (! $user) {
-            self::$phase1Ms = (hrtime(true) - $p1) / 1e6;
-
             return;
         }
 
         $this->feeds->handleEvent($user, 'twitch', $event->eventType, $event->eventData, null);
-        self::$phase1Ms = (hrtime(true) - $p1) / 1e6;
     }
 
     public function handleExternalEvent(ExternalEventStored $event): void
