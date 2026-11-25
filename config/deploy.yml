@@ -272,6 +272,11 @@ env:
 
     REDIS_HOST: overlabels-redis
     REDIS_PORT: "6379"
+    # The job queue's own Redis (accessory `redis-queue` below), read by the
+    # `queue` connection in config/database.php once QUEUE_CONNECTION is redis.
+    REDIS_QUEUE_HOST: overlabels-redis-queue
+    REDIS_QUEUE_PORT: "6379"
+    REDIS_QUEUE_DB: "0"
 
     # Expression Control evaluator sidecar. Container-to-container via Kamal's
     # auto-named accessory container (overlabels-expression-engine). The
@@ -439,6 +444,25 @@ accessories:
       - redis-data:/data
     options:
       memory: 256m
+
+  # The job queue (#343). NOT the cache Redis above, and must never become
+  # like it: that one evicts keys under pressure (allkeys-lru) and keeps
+  # nothing across a restart, which for a queue means jobs vanishing without
+  # an error. Here: noeviction, so a full Redis refuses the dispatch loudly
+  # instead of dropping an older job, and an append-only file synced every
+  # second, so a restart loses at most a second of jobs. 1 GB is ~3x a
+  # 55,000-follow flood queued all at once and never drained (one event job,
+  # 1.8 KB measured, plus two broadcasts per follow, assumed similar).
+  # No host port: the app reaches it by container name.
+  # QueueRedisTest holds these flags.
+  redis-queue:
+    image: redis:7-alpine
+    host: 172.235.171.209
+    cmd: redis-server --maxmemory 1gb --maxmemory-policy noeviction --appendonly yes --appendfsync everysec --save ""
+    directories:
+      - redis-queue-data:/data
+    options:
+      memory: 1280m
 
   streamlabs-listener:
     image: ghcr.io/jasperfrontend/overlabels-streamlabs-listener:latest

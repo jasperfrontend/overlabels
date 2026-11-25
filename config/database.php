@@ -169,6 +169,19 @@ return [
             'database' => env('REDIS_CACHE_DB', '1'),
         ],
 
+        // The job queue (#343). On prod its own Redis (the `redis-queue`
+        // accessory), because the cache Redis evicts keys under memory
+        // pressure and keeps nothing across a restart - as a queue it would
+        // lose jobs without a word. Locally it falls back to the one Redis.
+        'queue' => [
+            'url' => env('REDIS_QUEUE_URL'),
+            'host' => env('REDIS_QUEUE_HOST', env('REDIS_HOST', '127.0.0.1')),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_QUEUE_PORT', env('REDIS_PORT', '6379')),
+            'database' => env('REDIS_QUEUE_DB', '2'),
+        ],
+
     ],
 
 ];

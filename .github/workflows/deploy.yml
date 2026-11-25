@@ -158,6 +158,7 @@ jobs:
           # line here.
           kamal accessory boot expression-engine || true
           kamal accessory boot streamlabs-listener || true
+          kamal accessory boot redis-queue || true
 
       - name: Notify app of successful deploy
         env:
