@@ -788,7 +788,17 @@ class TwitchEventSubController extends Controller
             // avatar: nothing else reads it, and in a raid this lookup was the
             // whole remaining cost of a follow (#343). When it is needed, the
             // warm-up fetches the rows queued behind this one in the same call.
-            if ($user && OverlayTemplate::ownerShowsEventAvatars($user->id)) {
+            //
+            // Never for an event that plays no alert of its own: a late one,
+            // or one joining a burst (the burst's alert plays from the event
+            // that opened it, which was enriched). In the 55,000-follow flood
+            // those were 54,934 of 54,935 and their lookups a fifth of the
+            // lane's time. A static overlay showing a bare user_avatar gets no
+            // avatar from them; that is the price, taken knowingly (#343).
+            $silent = self::isLate($sentAt)
+                || ($user && ($kind = AlertBursts::kindOf($eventType, $event)) !== null
+                    && app(AlertBursts::class)->wouldJoin($user, $kind, $eventType, $event));
+            if ($user && ! $silent && OverlayTemplate::ownerShowsEventAvatars($user->id)) {
                 $enrichmentToken = $user->access_token ?: $this->eventSubService->getAppAccessToken();
                 if ($enrichmentToken) {
                     $this->twitchService->warmEventAvatars($enrichmentToken, $event, fn () => TwitchEvent::where('user_id', $user->id)

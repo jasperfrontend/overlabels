@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\TwitchEventSubController;
+use App\Jobs\FlushAlertBurst;
 use App\Jobs\ForgetTwitchCache;
+use App\Models\EventTemplateMapping;
 use App\Models\OverlayTemplate;
 use App\Models\TwitchEvent;
 use App\Models\User;
@@ -149,4 +151,30 @@ it('never looks up a viewer whose stored row was anonymised', function () {
             return (array) ($params['id'] ?? []);
         });
     expect($ids->all())->not->toContain('')->and($ids->contains(null))->toBeFalse();
+});
+
+it('makes no avatar lookup for a late event, which plays no alert', function () {
+    $user = User::factory()->create(['access_token' => 'token']);
+    OverlayTemplate::factory()->create(['owner_id' => $user->id, 'type' => 'alert', 'html' => '<img src="[[[event.user_avatar]]]">']);
+    $row = avatarFollowRow($user, '601');
+
+    app(TwitchEventSubController::class)->processStoredEvent($row, ['subscription' => ['type' => 'channel.follow'], 'event' => $row->event_data], now()->subMinutes(10)->toIso8601String());
+
+    expect(usersCalls())->toBe(0);
+});
+
+it('makes no avatar lookup for a follow that joins a burst, only for the one that opened it', function () {
+    // The sync test queue would run the delayed flush at once and close the burst.
+    Queue::fake([ForgetTwitchCache::class, FlushAlertBurst::class]);
+    $user = User::factory()->create(['access_token' => 'token']);
+    $alert = OverlayTemplate::factory()->create(['owner_id' => $user->id, 'type' => 'alert', 'html' => '<img src="[[[event.user_avatar]]]">']);
+    EventTemplateMapping::create(['user_id' => $user->id, 'event_type' => 'channel.follow', 'template_id' => $alert->id, 'enabled' => true]);
+
+    $first = avatarProcess(avatarFollowRow($user, '701'));
+    $callsAfterFirst = usersCalls();
+    $second = avatarProcess(avatarFollowRow($user, '702'));
+
+    expect($first->event_data['user_avatar'] ?? null)->toBe('https://example.test/701.png')
+        ->and($second->event_data)->not->toHaveKey('user_avatar')
+        ->and(usersCalls())->toBe($callsAfterFirst);
 });

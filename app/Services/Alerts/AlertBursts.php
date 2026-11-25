@@ -122,6 +122,25 @@ final class AlertBursts
      *
      * @return array{count: int, started_at: int}|null
      */
+    /**
+     * Whether offer() would answer JOINED for this event, without changing
+     * anything. Asked before avatar enrichment: an event that joins a burst
+     * plays no alert of its own, so its avatar lookup is skipped (#343).
+     * A burst only ever exists for a streamer with an alert mapped, so this
+     * is false for everyone else, exactly like offer() never being called.
+     */
+    public function wouldJoin(User $user, string $kind, string $eventType, array $event): bool
+    {
+        $state = Cache::get(self::key($user, $kind));
+        if (! is_array($state)) {
+            return false;
+        }
+
+        $actor = $eventType === 'channel.cheer' ? self::actorOf($event) : null;
+
+        return $actor === null || ! in_array($actor, $state['actors'], true);
+    }
+
     public function flush(User $user, string $kind): ?array
     {
         $key = self::key($user, $kind);
