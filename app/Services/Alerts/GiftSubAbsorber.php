@@ -30,6 +30,13 @@ final class GiftSubAbsorber
 {
     public const int WINDOW_SECONDS = 120;
 
+    /**
+     * How long a gifted sub with no gift credit waits for its gift before it
+     * alerts alone (SettleGiftRecipient). Parallel front desk batches can
+     * store a recipient up to about a second before its gift (#343).
+     */
+    public const int WAIT_SECONDS = 2;
+
     /** A gift alert for `$total` subs fired: the next `$total` gifted subs are part of it. */
     public function expect(User $user, int $total): void
     {

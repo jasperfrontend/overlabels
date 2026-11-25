@@ -9,6 +9,7 @@ use App\Jobs\DeleteTestTwitchEvent;
 use App\Jobs\FlushAlertBurst;
 use App\Jobs\ForgetTwitchCache;
 use App\Jobs\ProcessTwitchEvent;
+use App\Jobs\SettleGiftRecipient;
 use App\Jobs\SynthesizeAlertTts;
 use App\Models\BotChatOutbox;
 use App\Models\EventTemplateMapping;
@@ -865,6 +866,12 @@ class TwitchEventSubController extends Controller
                 } elseif ($user && self::isLate($sentAt)) {
                     // Stored and counted above; an alert this stale is noise.
                     app(DeliveryLedger::class)->record($twitchEvent, DeliveryOutcome::Late);
+                } elseif ($user && $eventType === 'channel.subscribe' && ($event['is_gift'] ?? false) === true) {
+                    // A gifted sub with no gift credit: its gift may be stored
+                    // just after it (parallel front desk batches). Give it a
+                    // moment before it alerts alone. See SettleGiftRecipient.
+                    SettleGiftRecipient::dispatch($user->id, $twitchEvent->id, $data)
+                        ->delay(now()->addSeconds(GiftSubAbsorber::WAIT_SECONDS));
                 } elseif ($user) {
                     $this->alertOrBurst($user, $eventType, $event, $data, $twitchEvent);
                 } else {

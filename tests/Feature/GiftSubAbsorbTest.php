@@ -2,6 +2,8 @@
 
 use App\Enums\DeliveryOutcome;
 use App\Events\AlertTriggered;
+use App\Jobs\ProcessTwitchEvent;
+use App\Jobs\SettleGiftRecipient;
 use App\Models\EventTemplateMapping;
 use App\Models\OverlayTemplate;
 use App\Models\TwitchEvent;
@@ -10,6 +12,7 @@ use App\Services\Alerts\GiftSubAbsorber;
 use App\Services\TwitchApiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
 
@@ -154,3 +157,40 @@ test('two gift bombs at once absorb both batches', function () {
 
     expect(giftAbsorbAlerts())->toBe(['channel.subscription.gift', 'channel.subscription.gift']);
 });
+
+test('a recipient stored before its gift waits for it and is absorbed, not alerted', function () {
+    Event::fake([AlertTriggered::class]);
+    Queue::fake([SettleGiftRecipient::class]);
+    $user = giftAbsorbSetup(['channel.subscription.gift', 'channel.subscribe']);
+
+    giftAbsorbSub($user, gifted: true, who: 'Early');
+    Queue::assertPushed(SettleGiftRecipient::class, fn (SettleGiftRecipient $job) => $job->delay !== null
+        && $job->queue === ProcessTwitchEvent::queueFor((string) $user->twitch_id));
+
+    giftAbsorbGift($user, 1);
+    giftAbsorbSettleAll();
+
+    expect(giftAbsorbAlerts())->toBe(['channel.subscription.gift'])
+        ->and(TwitchEvent::where('event_type', 'channel.subscribe')->first()->outcome)->toBe(DeliveryOutcome::GiftAbsorbed);
+});
+
+test('a recipient whose gift never comes alerts as a sub after the wait', function () {
+    Event::fake([AlertTriggered::class]);
+    Queue::fake([SettleGiftRecipient::class]);
+    $user = giftAbsorbSetup(['channel.subscription.gift', 'channel.subscribe']);
+
+    giftAbsorbSub($user, gifted: true, who: 'Orphan');
+    expect(giftAbsorbAlerts())->toBe([]);
+
+    giftAbsorbSettleAll();
+
+    expect(giftAbsorbAlerts())->toBe(['channel.subscribe']);
+});
+
+/** Run every waiting recipient, as the lane would GiftSubAbsorber::WAIT_SECONDS later. */
+function giftAbsorbSettleAll(): void
+{
+    foreach (Queue::pushed(SettleGiftRecipient::class) as $job) {
+        app()->call([$job, 'handle']);
+    }
+}
