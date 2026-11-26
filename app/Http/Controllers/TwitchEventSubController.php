@@ -588,6 +588,7 @@ class TwitchEventSubController extends Controller
             // Past the first FloodGate::PASS_THROUGH of a flood, a follow or a
             // redemption is counted, not stored or queued (#346). It reports
             // `stored` so the front desk acks it, exactly like a stored one.
+            $gate = null;
             if ($user) {
                 $gate = $this->floodGate()->offer($user, $eventType, $event, $messageId);
                 if ($gate === FloodGate::DUPLICATE) {
@@ -620,6 +621,14 @@ class TwitchEventSubController extends Controller
                 ]);
 
                 return 'duplicate';
+            } catch (Throwable $e) {
+                // This delivery claimed its message id at the flood gate; give it
+                // back so the front desk's retry of this message is not a duplicate.
+                if ($gate === FloodGate::PASS && $messageId !== null) {
+                    $this->floodGate()->release($messageId);
+                }
+
+                throw $e;
             }
 
             // Answer Twitch now; everything with an outbound call or alert

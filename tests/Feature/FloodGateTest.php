@@ -304,3 +304,24 @@ test('a counted message in two batches at once is counted once', function () {
 
     expect([$first, $second])->toBe([FloodGate::COUNTED, FloodGate::DUPLICATE]);
 });
+
+test('a redelivered copy of one of the first hundred is a duplicate, not counted', function () {
+    $user = floodUser();
+
+    floodSend($user, 100);             // the first hundred, stored as rows
+    floodSend($user, 100, from: 100);  // now past the hundred: counted
+    $again = floodSend($user, 1, from: 0); // Cloudflare redelivers a copy of the very first one
+    floodTick();
+
+    expect($again)->toBe(['flood-msg-channel.follow-0' => 'duplicate'])
+        ->and(floodSummary($user)->event_data['flood_count'])->toBe(100);
+});
+
+test('a first-hundred event whose row could not be stored can be redelivered', function () {
+    $user = floodUser();
+
+    expect(app(FloodGate::class)->offer($user, 'channel.follow', ['user_name' => 'X'], 'retry-me'))->toBe(FloodGate::PASS);
+    app(FloodGate::class)->release('retry-me');
+
+    expect(app(FloodGate::class)->offer($user, 'channel.follow', ['user_name' => 'X'], 'retry-me'))->toBe(FloodGate::PASS);
+});

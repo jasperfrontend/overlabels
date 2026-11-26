@@ -27,8 +27,9 @@ use Illuminate\Support\Str;
  * longer than KEEP_OPEN_SECONDS between arrivals - are counted. The first
  * PASS_THROUGH are handled exactly as always: stored, queued, alerted. Every
  * one after that is never stored and never queued: it is counted, and its
- * payload is kept in a rolling list of the last KEPT. A redelivery of a counted
- * event is recognised by its message id, since there is no row to catch it.
+ * payload is kept in a rolling list of the last KEPT. Every follow and redemption
+ * claims its message id on arrival, so a redelivery - of a counted event, which
+ * has no row to catch it, or of a first-hundred one - is never counted.
  *
  * On the streamer's lane (tick(), every TICK_SECONDS while the flood lasts),
  * the new count is applied in one go: the per-stream counter and the meter by
@@ -64,7 +65,7 @@ final class FloodGate
     /** How often a flood's count is applied while it lasts. */
     public const int TICK_SECONDS = 2;
 
-    /** How long a counted event's message id is remembered against redelivery. */
+    /** How long a follow's or redemption's message id is remembered against redelivery. */
     public const int DEDUP_SECONDS = 900;
 
     private const int STATE_TTL_SECONDS = 3600;
@@ -96,8 +97,13 @@ final class FloodGate
             return self::PASS;
         }
 
-        $messageKey = $messageId !== null ? self::messageKey($messageId) : null;
-        if ($messageKey !== null && Cache::has($messageKey)) {
+        // Every follow or redemption claims its message id up front, atomically.
+        // Cloudflare Queues delivers at least once: a copy of one of a burst's
+        // first hundred arriving after the hundred used to be counted on top of
+        // its row (+45 and +53 on 55k runs, 2026-11-26), and a copy in two
+        // batches at once was counted twice. A first-hundred event whose row
+        // then fails to store is release()d, so its redelivery still works.
+        if ($messageId !== null && ! Cache::add(self::messageKey($messageId), 1, self::DEDUP_SECONDS)) {
             return self::DUPLICATE;
         }
 
@@ -123,17 +129,6 @@ final class FloodGate
             return self::PASS;
         }
 
-        // Claimed now, atomically, not at flush(): Cloudflare Queues delivers at
-        // least once, and a message in two batches in flight at once was counted
-        // twice while its key waited for the end of the batch (55,027 counted for
-        // 54,974 sent, 2026-11-26).
-        if ($messageKey !== null && ! Cache::add($messageKey, 1, self::DEDUP_SECONDS)) {
-            if (! $this->buffering) {
-                $this->touched = [];
-            }
-
-            return self::DUPLICATE;
-        }
         $this->pending[$base] ??= ['user' => $user, 'eventType' => $eventType, 'kind' => $kind, 'dropped' => 0, 'tail' => []];
         $this->pending[$base]['dropped']++;
         $this->pending[$base]['tail'][] = $event;
@@ -148,10 +143,16 @@ final class FloodGate
         return self::COUNTED;
     }
 
+    /** Let a message id be offered again: its event passed but could not be stored. */
+    public function release(string $messageId): void
+    {
+        Cache::forget(self::messageKey($messageId));
+    }
+
     /**
      * Collect what offer() counts and write it in one go at flush(). The front
      * desk batch endpoint does this per batch of up to 100: a counted follow
-     * then costs three cache calls instead of eleven and a lock, and the kept
+     * then costs two cache calls instead of eleven and a lock, and the kept
      * list is written once per batch instead of once per event.
      */
     public function buffer(): void
