@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { handleFetch, handleQueue, MAX_QUEUED_BODY_BYTES, retryDelaySeconds, sentAtMs } from './index.js';
+import { handleFetch, handleQueue, MAX_QUEUED_BODY_BYTES, MAX_SEND_WAIT_MS, retryDelaySeconds, sentAtMs } from './index.js';
 
 const URL_ = 'https://overlabels.com/api/twitch/webhook';
 
@@ -67,6 +67,43 @@ describe('fetch: queue mode', () => {
 
     expect(Number(response.headers.get('X-Front-Desk-Send-Ms'))).toBeGreaterThanOrEqual(25);
     expect(Number(response.headers.get('X-Front-Desk-Handler-Ms'))).toBeGreaterThanOrEqual(Number(response.headers.get('X-Front-Desk-Send-Ms')));
+    expect(response.headers.get('X-Front-Desk-Send')).toBe('sent');
+  });
+
+  it('answers Twitch after MAX_SEND_WAIT_MS when the queue write is slow, and lets the write finish', async () => {
+    vi.useFakeTimers();
+    let finish: () => void = () => {};
+    send.mockImplementationOnce(() => new Promise<void>((resolve) => (finish = resolve)));
+    const background: Promise<unknown>[] = [];
+
+    const pending = handleFetch(twitchRequest('notification', FOLLOW), env('queue'), { waitUntil: (p: Promise<unknown>) => background.push(p) });
+    await vi.advanceTimersByTimeAsync(MAX_SEND_WAIT_MS);
+    const response = await pending;
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-Front-Desk-Send')).toBe('slow');
+    expect(background).toHaveLength(1);
+
+    finish();
+    await Promise.all(background);
+    expect(origin).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('hands a slow write that fails after the answer to Laravel in the background', async () => {
+    vi.useFakeTimers();
+    let fail: (e: Error) => void = () => {};
+    send.mockImplementationOnce(() => new Promise<void>((_, reject) => (fail = reject)));
+    const background: Promise<unknown>[] = [];
+
+    const pending = handleFetch(twitchRequest('notification', FOLLOW), env('queue'), { waitUntil: (p: Promise<unknown>) => background.push(p) });
+    await vi.advanceTimersByTimeAsync(MAX_SEND_WAIT_MS);
+    expect((await pending).status).toBe(200);
+
+    fail(new Error('queue gave up'));
+    await Promise.all(background);
+    expect(origin).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 
   it('passes the subscription handshake and revocations through to Laravel', async () => {

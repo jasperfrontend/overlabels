@@ -87,6 +87,12 @@ alerts, counters, the delivery ledger, the alert queue on the overlay.
 - **Fails those checks:** `400`. Only something that is not Twitch fails them.
 - **`queue.send()` throws** (5,000 msg/s per queue, or the 25 GB backlog cap): fall back to
   passthrough for that request, so the worst case is today's behaviour, never a dropped event.
+- **`queue.send()` is slow** (added 2026-11-26, #346): after ~25 quiet minutes the queue takes up
+  to ~20 s per write for the first ~19 s of a burst. Measured with the `X-Front-Desk-Send-Ms`
+  header: the write was the whole wait, everything else ~30 ms. The answer now waits at most
+  `MAX_SEND_WAIT_MS` (2 s); a write still running then finishes in `waitUntil`, and if it fails
+  after all it goes to Laravel in the background. The one new loss case: a late failed write AND
+  Laravel unreachable at that moment - Twitch got its 200, so it does not retry.
 
 ## 5. The queue and the consumer
 

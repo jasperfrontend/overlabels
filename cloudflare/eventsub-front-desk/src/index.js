@@ -25,6 +25,13 @@ const HEADER_TYPE = 'Twitch-Eventsub-Message-Type';
 /** One queue operation covers 64 KB; Twitch notifications are a few KB. */
 export const MAX_QUEUED_BODY_BYTES = 64 * 1024;
 
+/**
+ * The longest the answer to Twitch waits for the queue write. Past it the
+ * write finishes after the answer (see handleFetch). Twitch documents only "a
+ * few seconds" before it counts a delivery as failed.
+ */
+export const MAX_SEND_WAIT_MS = 2000;
+
 /** Retry backoff for a batch Laravel could not take, capped at 15 minutes. */
 export const MAX_RETRY_DELAY_SECONDS = 15 * 60;
 
@@ -48,7 +55,7 @@ function forward(request, body) {
   return fetch(request.url, { method: request.method, headers: request.headers, body });
 }
 
-export async function handleFetch(request, env) {
+export async function handleFetch(request, env, ctx) {
   const handlerStarted = Date.now();
   if (env.MODE !== 'queue' || request.method !== 'POST') {
     return forward(request);
@@ -84,26 +91,46 @@ export async function handleFetch(request, env) {
   }
 
   const sendStarted = Date.now();
-  try {
-    await env.EVENTSUB_QUEUE.send({ id, timestamp, signature, body }, { contentType: 'json' });
-  } catch (error) {
-    // Queue full or rate limited: today's behaviour, never a dropped event.
-    console.error('front desk: queue send failed, passing through', String(error));
+  const sending = env.EVENTSUB_QUEUE.send({ id, timestamp, signature, body }, { contentType: 'json' }).then(
+    () => 'sent',
+    (error) => {
+      console.error('front desk: queue send failed, passing through', String(error));
 
+      return 'failed';
+    },
+  );
+
+  // The queue is slow to accept writes for the first ~19 s of a burst after a
+  // quiet spell: measured on 2026-11-26 (#346), the send itself took up to 20 s
+  // while everything else in the request took ~30 ms. Twitch wants an answer in
+  // a few seconds, so the wait is bounded. A write still running then finishes
+  // after the answer; if it fails after all, the notification goes to Laravel
+  // in the background, as a failed write always has.
+  const outcome = await Promise.race([sending, new Promise((resolve) => setTimeout(() => resolve('slow'), MAX_SEND_WAIT_MS))]);
+
+  if (outcome === 'failed') {
+    // Queue full or rate limited: today's behaviour, never a dropped event.
     return forward(request, body);
   }
-  const sent = Date.now();
 
-  // Timings for the burst measurements in #346: a cold burst got ~19 s answers
-  // for its first ~19 s, and these say whether that time is the queue write,
-  // the rest of this handler, or before the handler ran at all. Twitch ignores
-  // extra headers. Date.now() only advances across I/O in a Worker, so the
-  // send time is real and the rest of the handler reads as near zero.
+  if (outcome === 'slow') {
+    ctx?.waitUntil(
+      sending.then(async (late) => {
+        if (late === 'failed') {
+          await forward(request, body);
+        }
+      }),
+    );
+  }
+
+  // Timings for the burst measurements in #346. Twitch ignores extra headers.
+  const answered = Date.now();
   return new Response('OK', {
     status: 200,
     headers: {
-      'X-Front-Desk-Send-Ms': String(sent - sendStarted),
-      'X-Front-Desk-Handler-Ms': String(sent - handlerStarted),
+      'X-Front-Desk-Send': outcome,
+      'X-Front-Desk-Send-Ms': String(answered - sendStarted),
+      'X-Front-Desk-Handler-Ms': String(answered - handlerStarted),
     },
   });
 }
