@@ -305,16 +305,19 @@ const breadcrumbs = [{ title: 'Dashboard', href: '/dashboard' }];
         <section v-if="props.highlights.length > 0" class="rise flex flex-col gap-4" style="--d: 250ms" aria-labelledby="highlights-heading">
           <h2 id="highlights-heading" class="text-2xl font-bold tracking-tight text-foreground">Did you know?</h2>
           <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <div v-for="highlight in props.highlights" :key="highlight.id" class="flex flex-col gap-4 border border-border p-6">
+            <!-- The whole card is the link, like the Last stream tile below. -->
+            <Link
+              v-for="highlight in props.highlights"
+              :key="highlight.id"
+              :href="highlight.link_url"
+              class="tile group flex flex-col gap-4 border border-border p-6 transition-all duration-200 hover:-translate-y-1 hover:border-[#1DAAFF]"
+            >
               <p class="text-sm text-foreground">{{ highlight.body }}</p>
-              <Link
-                :href="highlight.link_url"
-                class="mt-auto inline-flex items-center gap-1 text-sm font-medium text-[#0A78BE] hover:underline dark:text-[#1DAAFF]"
-              >
+              <span class="mt-auto inline-flex items-center gap-1 text-sm font-medium text-[#0A78BE] group-hover:underline dark:text-[#1DAAFF]">
                 {{ highlight.link_label }}
-                <ArrowRight class="size-3.5" />
-              </Link>
-            </div>
+                <ArrowRight class="size-3.5 transition-transform group-hover:translate-x-1" />
+              </span>
+            </Link>
           </div>
         </section>
 
