@@ -10,7 +10,11 @@ const props = defineProps<{
   update: Update;
 }>();
 
-marked.setOptions({ breaks: true, gfm: true });
+// No `breaks`: a single line break joins the lines and a blank line starts a
+// new paragraph, so a post can be written wrapped like prose (Jasper,
+// 2026-11-26). `breaks: true` turned every wrap into a <br>, and as a global
+// setOptions it leaked into every other marked call once a post was opened.
+marked.setOptions({ gfm: true });
 
 const page = usePage<AppPageProps>();
 const isAdmin = computed(() => page.props.isAdmin);
