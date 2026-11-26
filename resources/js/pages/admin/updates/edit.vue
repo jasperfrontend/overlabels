@@ -8,7 +8,8 @@ import { html as cmHtml } from '@codemirror/lang-html';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView } from '@codemirror/view';
 import { marked } from 'marked';
-import { ArrowLeft, Save, Trash2, ExternalLink } from '@lucide/vue';
+import { ArrowLeft, Save, Trash2, ExternalLink, Wand2 } from '@lucide/vue';
+import { parseUpdateDraft } from '@/utils/updateDraft';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import type { Update } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
@@ -57,6 +58,44 @@ function syncTagsFromInput() {
     .split(',')
     .map((t) => t.trim())
     .filter(Boolean);
+}
+
+// A /changeblog draft pasted whole into Body: its Title/Excerpt/Tags/Slug
+// block fills the fields and the rest stays as the body. Nothing is saved
+// until Publish, so what got filled can be checked first.
+const draftNote = ref('');
+let filledBody: string | null = null;
+
+function fillFromDraft() {
+  const draft = parseUpdateDraft(form.body);
+  // A second click on a body that was just filled is not a missing draft.
+  if (!draft && form.body === filledBody) return;
+  if (!draft) {
+    draftNote.value = 'No draft found: Body has to start with Title:, Excerpt: and Tags: lines, then a line with ---.';
+    return;
+  }
+
+  const filled: string[] = [];
+  if (draft.title !== undefined) {
+    form.title = draft.title;
+    filled.push('title');
+  }
+  if (draft.slug !== undefined) {
+    form.slug = draft.slug;
+    filled.push('slug');
+  }
+  if (draft.excerpt !== undefined) {
+    form.excerpt = draft.excerpt;
+    filled.push('excerpt');
+  }
+  if (draft.tags !== undefined) {
+    tagsInput.value = draft.tags.join(', ');
+    syncTagsFromInput();
+    filled.push('tags');
+  }
+  form.body = draft.body;
+  filledBody = draft.body;
+  draftNote.value = `Filled ${filled.join(', ')} from the draft. Check them, then Publish.`;
 }
 
 async function submit() {
@@ -173,7 +212,19 @@ const bodyExtensions = computed(() => [cmHtml(), baseTheme, ...(isDark.value ? [
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium"> Body <span class="text-muted-foreground">(markdown, HTML allowed)</span> </label>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label class="text-sm font-medium"> Body <span class="text-muted-foreground">(markdown, HTML allowed)</span> </label>
+              <button
+                type="button"
+                class="btn btn-chill cursor-pointer"
+                title="Paste a whole /changeblog draft into Body, then click to fill Title, Excerpt, Tags and Slug from it"
+                @click="fillFromDraft"
+              >
+                <Wand2 class="mr-2 h-4 w-4" />
+                Fill from draft
+              </button>
+            </div>
+            <p v-if="draftNote" class="text-xs text-muted-foreground">{{ draftNote }}</p>
             <div class="overflow-hidden rounded-sm border border-sidebar-border" style="height: 600px">
               <Codemirror
                 :key="'body-' + editorKey"
