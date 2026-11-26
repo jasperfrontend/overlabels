@@ -144,8 +144,12 @@ class StreamSessionService
      * applied whether or not the channel is live, matching how every donation
      * service behaves. Only the `*_this_stream` keys require a confident live
      * state.
+     *
+     * $times counts that many events in one write: FloodGate applies a flood's
+     * count this way instead of one event at a time (#346). Only the per-event
+     * counter honours it; a cheer is never counted away, so it never sees one.
      */
-    public function handleEvent(User $user, string $eventType, array $event = []): void
+    public function handleEvent(User $user, string $eventType, array $event = [], int $times = 1): void
     {
         $controlKey = self::EVENT_CONTROL_MAP[$eventType] ?? null;
         $isCheer = $eventType === 'channel.cheer';
@@ -195,11 +199,11 @@ class StreamSessionService
         }
 
         if ($controlKey) {
-            $this->applyTwitchControl($user, $controlKey, function (OverlayControl $control) {
+            $this->applyTwitchControl($user, $controlKey, function (OverlayControl $control) use ($times) {
                 $step = (float) ($control->config['step'] ?? 1);
                 $current = (float) ($control->value ?? 0);
 
-                return (string) ($current + $step);
+                return (string) ($current + $step * max(1, $times));
             });
 
             Log::info("Incremented twitch control {$controlKey} for user {$user->id}");

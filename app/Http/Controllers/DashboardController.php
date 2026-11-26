@@ -17,6 +17,7 @@ use App\Services\UnifiedEventFeedService;
 use App\Support\ProductSetup;
 use App\Support\WiringCatalog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -118,9 +119,10 @@ class DashboardController extends Controller
         $end = $session->ended_at ?? now();
         $window = fn ($query) => $query->where('user_id', $userId)->whereBetween('created_at', [$session->started_at, $end]);
 
-        $moments = $window(TwitchEvent::query())
+        // A flood's summary row stands for event_data.flood_count events (#346).
+        $moments = (int) $window(TwitchEvent::query())
             ->whereNotIn('event_type', ['stream.online', 'stream.offline'])
-            ->count()
+            ->sum(DB::raw("COALESCE((event_data->>'flood_count')::int, 1)"))
             + $window(ExternalEvent::query())->where('service', '!=', 'gps')->count();
 
         return [

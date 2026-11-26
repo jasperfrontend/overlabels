@@ -89,7 +89,7 @@ it('scores the delivery family and reports no_target as context', function () {
         ->and($d['delivered'])->toBe(3)
         ->and($d['no_listener'])->toBe(1)
         ->and($d['failed'])->toBe(1)
-        ->and($d['no_target'])->toBe(['no_mapping' => 1, 'muted' => 0, 'chat_only' => 1, 'unknown_user' => 0, 'gift_absorbed' => 0, 'late' => 0, 'burst_absorbed' => 0, 'total' => 2])
+        ->and($d['no_target'])->toBe(['no_mapping' => 1, 'muted' => 0, 'chat_only' => 1, 'unknown_user' => 0, 'gift_absorbed' => 0, 'late' => 0, 'burst_absorbed' => 0, 'flood_counted' => 0, 'total' => 2])
         ->and($d['latency_p50_ms'])->toBe(2000)
         ->and($d['latency_p95_ms'])->toBe(2900)
         ->and($d['first_no_listener_at'])->not->toBeNull()
@@ -158,4 +158,25 @@ it('includes the outcome word on each row of the events feed', function () {
 
     expect($events[0]['outcome'])->toBe('token_invalid')
         ->and($events[1]['outcome'])->toBeNull();
+});
+
+it('counts a flood summary row as every follow it stands for', function () {
+    $user = deliveryUser();
+    deliverySession($user);
+    $mid = now()->subHours(2);
+
+    ledgerEvent($user, DeliveryOutcome::Delivered, $mid, 1000, 1);
+    $summary = TwitchEvent::create([
+        'user_id' => $user->id, 'event_type' => 'channel.follow', 'twitch_timestamp' => $mid->copy()->addMinute(),
+        'event_data' => ['flood_count' => 5000], 'outcome' => DeliveryOutcome::FloodCounted->value,
+    ]);
+    $summary->created_at = $mid->copy()->addMinute();
+    $summary->save();
+
+    $session = test()->actingAs($user)->get('/dashboard/stream-sessions')->assertOk()->viewData('page')['props']['sessions'][0];
+
+    expect($session['stats']['follows']['count'])->toBe(5001)
+        ->and(((array) $session['event_counts'])['channel.follow'])->toBe(5001)
+        ->and($session['delivery']['no_target']['flood_counted'])->toBe(5000)
+        ->and($session['delivery']['scored'])->toBe(1);
 });

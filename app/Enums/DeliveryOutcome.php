@@ -27,6 +27,9 @@ use App\Exceptions\TwitchTokenInvalidException;
  *                (an outage backlog): stored and counted, no alert
  *   burst_absorbed one of many of the same event at once, announced by the
  *                burst's single alert (see AlertBursts)
+ *   flood_counted the summary row of a flood: every follow or redemption past
+ *                the first FloodGate::PASS_THROUGH of one burst, kept only as
+ *                a number in event_data.flood_count (see FloodGate, #346)
  *
  * A row with alert_id set and outcome null is in flight: broadcast queued,
  * not yet closed by the worker. See docs/design/event-delivery-ledger-2026-08.md.
@@ -46,6 +49,7 @@ enum DeliveryOutcome: string
     case GiftAbsorbed = 'gift_absorbed';
     case Late = 'late';
     case BurstAbsorbed = 'burst_absorbed';
+    case FloodCounted = 'flood_counted';
 
     /**
      * Whether this outcome counts toward a success rate. no_target outcomes

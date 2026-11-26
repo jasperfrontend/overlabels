@@ -2,7 +2,9 @@
 export const EVENT_RULES: Record<string, Array<any>> = {
   // FOLLOWS
   'channel.follow': [
-    { op: 'inc', tag: 'followers_total', by: 1 },
+    // A flood's follows arrive as one event carrying flood_count (#346): the
+    // store adds that number when it is there, else 1.
+    { op: 'inc', tag: 'followers_total', by: 1, byPath: 'event.flood_count' },
     { op: 'set', tag: 'followers_latest_user_name', from: 'event.user_name' },
     { op: 'set', tag: 'followers_latest_user_id', from: 'event.user_id' },
     { op: 'set', tag: 'followers_latest_date', from: 'event.followed_at' },

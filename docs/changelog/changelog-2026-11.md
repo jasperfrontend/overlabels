@@ -1,5 +1,24 @@
 # Changelog - November 2026
 
+## OL-2611-038 - November 26th, 2026 - feat(eventsub): floods become numbers - the last hundred kept, the rest counted
+
+Jasper's principle for big floods: big data turns into a big number, and the payload is discarded.
+Nobody reads follower 3,912's name, an alert only needs the count, and lists of viewers are Twitch's
+job, not ours (issue #346).
+
+- **Past the first hundred, follows are counted, not stored.** Within one burst of follows (or of
+  redemptions of one reward), the first 100 are handled exactly as before. Every one after that is
+  counted the moment it arrives, never stored and never queued. A 55,000-follow raid no longer puts
+  55,000 jobs on the raided channel's lane.
+- **Nothing on stream gets smaller.** Every two seconds the new count goes out in one go: the overlay's
+  follower count and the follows-this-stream counter jump by the whole number, the newest follower
+  still shows, usage is still metered, and a long burst alert still re-announces as it doubles.
+- **The log keeps the last hundred and one number.** When the flood is over, its last 100 follows
+  become ordinary events and one line holds the rest: "+5,400 more". Stream sessions count it as
+  every follow it stands for; a recent-events feed gets that one line.
+- **Subs, cheers, gift subs and raids are never counted away.** They are rare next to follows, and
+  they are money.
+
 ## OL-2611-037 - November 24th, 2026 - feat(alerts): burst triggers, so a burst can have an alert of its own
 
 Since OL-2611-036 a burst of follows, subs, resubs, cheers or channel point redemptions plays one

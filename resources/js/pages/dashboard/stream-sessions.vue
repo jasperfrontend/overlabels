@@ -165,6 +165,7 @@ interface Delivery {
     gift_absorbed: number;
     late: number;
     burst_absorbed: number;
+    flood_counted: number;
     total: number;
   };
   first_no_listener_at: string | null;
@@ -431,6 +432,7 @@ function noTargetSentence(d: Delivery): string | null {
   if (d.no_target.gift_absorbed) parts.push(`part of a gift alert: ${fmtNum(d.no_target.gift_absorbed)}`);
   if (d.no_target.late) parts.push(`arrived late: ${fmtNum(d.no_target.late)}`);
   if (d.no_target.burst_absorbed) parts.push(`part of a burst alert: ${fmtNum(d.no_target.burst_absorbed)}`);
+  if (d.no_target.flood_counted) parts.push(`counted in a flood: ${fmtNum(d.no_target.flood_counted)}`);
   const detail = parts.length ? ` (${parts.join(', ')})` : '';
   return `${fmtNum(d.no_target.total)} ${d.no_target.total === 1 ? 'event' : 'events'} had no alert of their own${detail}.`;
 }

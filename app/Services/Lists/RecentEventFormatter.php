@@ -91,6 +91,16 @@ class RecentEventFormatter
      */
     public function format(string $source, string $eventType, ?array $eventData, ?array $normalizedPayload): string
     {
+        // A flood's summary row: everything past the kept events, as one number (#346).
+        if ($source === 'twitch' && isset($eventData['flood_count'])) {
+            $more = '+'.number_format((int) $eventData['flood_count']).' more';
+            $reward = $this->str($eventData['reward']['title'] ?? null);
+
+            return $eventType === 'channel.follow'
+                ? "{$more} follows"
+                : trim("{$more} redemptions".($reward !== null ? ": {$reward}" : ''));
+        }
+
         $parts = $source === 'twitch'
             ? [$this->twitchWho($eventType, $eventData ?? []), $this->twitchLabel($eventType, $eventData ?? []), $this->twitchDetails($eventType, $eventData ?? [])]
             : [$this->externalWho($normalizedPayload ?? []), $this->externalLabel($source, $eventType), $this->externalDetails($normalizedPayload ?? [])];

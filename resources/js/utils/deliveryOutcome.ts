@@ -19,6 +19,7 @@ export const OUTCOME_LABELS: Record<string, string> = {
   gift_absorbed: 'in a gift alert',
   late: 'arrived late',
   burst_absorbed: 'in a burst alert',
+  flood_counted: 'counted in a flood',
 };
 
 export function outcomeLabel(outcome: string | null | undefined): string | null {

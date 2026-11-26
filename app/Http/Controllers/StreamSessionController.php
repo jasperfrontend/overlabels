@@ -286,7 +286,8 @@ class StreamSessionController extends Controller
 
         $rows = "
             rows AS (
-                SELECT w.session_id, e.outcome, e.connections, e.created_at, e.delivered_at, e.event_type, 'twitch' AS source
+                SELECT w.session_id, e.outcome, e.connections, e.created_at, e.delivered_at, e.event_type, 'twitch' AS source,
+                       COALESCE((e.event_data->>'flood_count')::int, 0) AS flood_count
                 FROM windows w
                 JOIN twitch_events e
                     ON e.user_id = ?
@@ -294,7 +295,8 @@ class StreamSessionController extends Controller
                     AND e.created_at <= w.window_end
                     AND e.outcome IS NOT NULL
                 UNION ALL
-                SELECT w.session_id, e.outcome, e.connections, e.created_at, e.delivered_at, e.event_type, e.service AS source
+                SELECT w.session_id, e.outcome, e.connections, e.created_at, e.delivered_at, e.event_type, e.service AS source,
+                       0 AS flood_count
                 FROM windows w
                 JOIN external_events e
                     ON e.user_id = ?
@@ -320,6 +322,7 @@ class StreamSessionController extends Controller
                 COUNT(*) FILTER (WHERE outcome = 'gift_absorbed') AS gift_absorbed,
                 COUNT(*) FILTER (WHERE outcome = 'late') AS late,
                 COUNT(*) FILTER (WHERE outcome = 'burst_absorbed') AS burst_absorbed,
+                COALESCE(SUM(flood_count) FILTER (WHERE outcome = 'flood_counted'), 0) AS flood_counted,
                 COUNT(*) FILTER (WHERE outcome = 'unknown_user') AS unknown_user,
                 MIN(created_at) FILTER (WHERE outcome = 'no_listener') AS first_no_listener_at,
                 percentile_cont(0.5) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (delivered_at - created_at)) * 1000)
@@ -351,7 +354,9 @@ class StreamSessionController extends Controller
                     'gift_absorbed' => (int) $r->gift_absorbed,
                     'late' => (int) $r->late,
                     'burst_absorbed' => (int) $r->burst_absorbed,
-                    'total' => (int) $r->no_mapping + (int) $r->muted + (int) $r->chat_only + (int) $r->unknown_user + (int) $r->gift_absorbed + (int) $r->late + (int) $r->burst_absorbed,
+                    // A flood's summary row stands for flood_count events (#346).
+                    'flood_counted' => (int) $r->flood_counted,
+                    'total' => (int) $r->no_mapping + (int) $r->muted + (int) $r->chat_only + (int) $r->unknown_user + (int) $r->gift_absorbed + (int) $r->late + (int) $r->burst_absorbed + (int) $r->flood_counted,
                 ],
                 'first_no_listener_at' => $r->first_no_listener_at ? Carbon::parse($r->first_no_listener_at)->toIso8601String() : null,
                 'latency_p50_ms' => $r->latency_p50_ms !== null ? (int) round((float) $r->latency_p50_ms) : null,
@@ -431,10 +436,11 @@ class StreamSessionController extends Controller
                 LEFT JOIN LATERAL (
                     -- channel.poll.end fires twice per poll (status=completed|terminated, then status=archived).
                     -- Dedupe by poll id so the count reflects unique polls ended, not raw event firings.
+                    -- A flood's summary row stands for event_data.flood_count events (#346).
                     SELECT event_type,
                            CASE WHEN event_type = 'channel.poll.end'
                                 THEN COUNT(DISTINCT event_data->>'id')::int
-                                ELSE COUNT(*)::int
+                                ELSE SUM(COALESCE((event_data->>'flood_count')::int, 1))::int
                            END AS cnt
                     FROM twitch_events
                     WHERE user_id = ?
@@ -446,7 +452,8 @@ class StreamSessionController extends Controller
             )
             SELECT
                 w.session_id,
-                COUNT(*) FILTER (WHERE e.event_type = 'channel.follow') AS follows,
+                COALESCE(SUM(COALESCE((e.event_data->>'flood_count')::int, 1))
+                    FILTER (WHERE e.event_type = 'channel.follow'), 0) AS follows,
                 COUNT(*) FILTER (WHERE e.event_type = 'channel.subscribe'
                                    AND COALESCE((e.event_data->>'is_gift')::bool, false) = false) AS new_subs,
                 COUNT(*) FILTER (WHERE e.event_type = 'channel.subscription.message') AS resubs,
@@ -461,8 +468,9 @@ class StreamSessionController extends Controller
                 COUNT(*) FILTER (WHERE e.event_type = 'channel.cheer') AS cheers,
                 COALESCE(SUM((e.event_data->>'bits')::int)
                     FILTER (WHERE e.event_type = 'channel.cheer'), 0) AS cheer_bits,
-                COUNT(*) FILTER (WHERE e.event_type = 'channel.channel_points_custom_reward_redemption.add') AS redemptions,
-                COALESCE(SUM((e.event_data->'reward'->>'cost')::int)
+                COALESCE(SUM(COALESCE((e.event_data->>'flood_count')::int, 1))
+                    FILTER (WHERE e.event_type = 'channel.channel_points_custom_reward_redemption.add'), 0) AS redemptions,
+                COALESCE(SUM((e.event_data->'reward'->>'cost')::int * COALESCE((e.event_data->>'flood_count')::int, 1))
                     FILTER (WHERE e.event_type = 'channel.channel_points_custom_reward_redemption.add'), 0) AS redemption_cost,
                 COALESCE(ec.event_counts, '{}'::jsonb) AS event_counts
             FROM windows w

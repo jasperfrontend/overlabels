@@ -443,6 +443,31 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   recipe copy. The chat colour a block carries is `event.color` from Twurple, validated to
   `#RRGGBB` server-side before it reaches a style attribute.
 
+### Floods become numbers (Nov 26th 2026, #346, OL-2611-038)
+
+- **Jasper's principle: big data turns into a big number; the payload is discarded.** Lists of
+  viewers are Helix's job, not ours. `App\Services\Floods\FloodGate` is the whole mechanism.
+- At intake (`handleTwitchEvent()`, after the scrubber, before the row), per streamer and kind, the
+  events of one burst (arrival gaps under `KEEP_OPEN_SECONDS`) are counted. The first
+  `PASS_THROUGH` (100) are handled as always. Past that a follow or a redemption is NEVER stored or
+  queued: counted, payload kept in a rolling list of the last `KEPT` (100), and the batch result is
+  `stored` - the front desk retries anything it does not recognise, so never invent a new result.
+- **Follows and channel point redemptions only** (redemptions per reward). Subs, cheers, gifts and
+  raids are never counted away: rare next to follows, and money.
+- `FloodTick` on the streamer's lane every `TICK_SECONDS` applies the count in one go: per-stream
+  counter (`StreamSessionService::handleEvent(..., $times)`), `EventMeter`, ONE overlay broadcast
+  carrying `flood_count` (the overlay's `followers_total` rule reads it via `byPath`; the payload is
+  the newest kept event, so `user_*` is the latest follower) with its own `message_id` (the store
+  drops repeated ids), and `AlertBursts::grow()` so a long burst still re-announces as it doubles.
+- ONE summary row per flood: `outcome = flood_counted`, `event_data.flood_count`. When the flood ends
+  the kept events become `burst_absorbed` rows and the summary keeps the rest ("+5,400 more"); a flood
+  small enough to keep whole deletes its summary. **Any query that counts `twitch_events` rows must
+  add `COALESCE((event_data->>'flood_count')::int, 1)`** - stream session stats and the dashboard's
+  moments already do.
+- A counted event leaves no row, so its message id is remembered in the cache (`DEDUP_SECONDS`)
+  against Twitch redelivery. The counts live in the cache store too (evictable; losing a key costs
+  part of a count, nothing else).
+
 ### Donation integration controllers (consolidated Aug 2026)
 
 - The five donation integrations (kofi, streamlabs, fourthwall, bmac, throne) all extend `DonationIntegrationController`. It owns `show()`, `setTestMode()`, `seedDonationCount()` and `disconnect()`; subclasses supply `service()` and their connect flow only. GPS deliberately does NOT extend it (telemetry, not donations - no test mode, no seed).

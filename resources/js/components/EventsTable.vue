@@ -374,6 +374,8 @@ function who(event: UnifiedEvent): string | null {
     return (p?.['event.from_name'] as string) || (p?.['event.user_name'] as string) || null;
   }
   const d = event.event_data ?? {};
+  // A flood's summary row: everything past the kept events, as one number (#346).
+  if (typeof d.flood_count === 'number') return `+${d.flood_count.toLocaleString()} more`;
   if (event.event_type === 'channel.raid') return (d.from_broadcaster_user_name as string) ?? null;
   if (event.event_type === 'stream.online' || event.event_type === 'stream.offline') return null;
   if (event.event_type === 'channel.chat.notification') return (d.chatter_user_name as string) ?? null;

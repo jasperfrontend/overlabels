@@ -17,6 +17,7 @@ describe('deliveryOutcome', () => {
         'gift_absorbed',
         'late',
         'burst_absorbed',
+        'flood_counted',
       ].sort(),
     );
   });

@@ -140,6 +140,35 @@ final class AlertBursts
     }
 
     /**
+     * Add events counted by FloodGate (#346) to an existing burst of this kind:
+     * they never pass through offer() one by one. Answers REANNOUNCE when that
+     * makes the burst due another announcement, else JOINED. No burst, no
+     * change: a burst only exists for a streamer with an alert mapped.
+     */
+    public function grow(User $user, string $kind, int $events): string
+    {
+        $key = self::key($user, $kind);
+        $state = Cache::get($key);
+        if (! is_array($state) || $events < 1) {
+            return self::JOINED;
+        }
+
+        $state['count'] += $events;
+
+        $decision = self::JOINED;
+        if (self::reannounces($state)) {
+            $state['announced'] = $state['count'];
+            $state['announced_at'] = now()->timestamp;
+            $decision = self::REANNOUNCE;
+        }
+
+        $ttl = $state['phase'] === 'open' ? self::KEEP_OPEN_SECONDS : self::PENDING_TTL_SECONDS;
+        Cache::put($key, $state, $ttl);
+
+        return $decision;
+    }
+
+    /**
      * The open burst's size and start as last announced, for the caller of an
      * offer() that answered REANNOUNCE.
      *

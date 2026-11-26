@@ -24,6 +24,7 @@ use App\Services\Alerts\AlertsOverlay;
 use App\Services\Alerts\GiftSubAbsorber;
 use App\Services\DeliveryLedger;
 use App\Services\EventMeter;
+use App\Services\Floods\FloodGate;
 use App\Services\Lists\EventFeedService;
 use App\Services\LivingTitleService;
 use App\Services\LockdownService;
@@ -582,6 +583,19 @@ class TwitchEventSubController extends Controller
                 ),
             );
             $data['event'] = $event;
+
+            // Past the first FloodGate::PASS_THROUGH of a flood, a follow or a
+            // redemption is counted, not stored or queued (#346). It reports
+            // `stored` so the front desk acks it, exactly like a stored one.
+            if ($user) {
+                $gate = app(FloodGate::class)->offer($user, $eventType, $event, $messageId);
+                if ($gate === FloodGate::DUPLICATE) {
+                    return 'duplicate';
+                }
+                if ($gate === FloodGate::COUNTED) {
+                    return 'stored';
+                }
+            }
 
             // Store the event in the database. Twitch retries on any non-2xx or
             // timeout with the same message id; the unique index turns a
