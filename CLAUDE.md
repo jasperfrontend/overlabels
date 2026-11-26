@@ -517,8 +517,9 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   `BR_GOTENBERG_URL` + `GOTENBERG_API_BASIC_AUTH_*`, three Kamal secrets). `ReportPdf` posts the page's
   own HTML to `/forms/chromium/convert/html`; never call `/health` (it has no auth). The printer has no
   idea of the reader's clock, so the link carries `?tz=` from the browser and the print copy is rendered
-  with fixed times in that zone, no script and no buttons. No URL configured or printer down = the
-  page offers the browser's Print and the route answers 503. `throttle:6,1`: each request is a
+  with fixed times in that zone, no script and no buttons. No URL configured = the page offers the
+  browser's Print instead of the link. A configured printer that fails still shows the link; the
+  click answers a plain-text 503 that says to use the browser's Print. `throttle:6,1`: each request is a
   Chromium render.
 
 ### Donation integration controllers (consolidated Aug 2026)
