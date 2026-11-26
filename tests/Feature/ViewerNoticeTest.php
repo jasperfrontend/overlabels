@@ -18,7 +18,7 @@ it('appends the notice the first time a viewer is seen', function () {
     $decorated = app(ViewerNoticeService::class)->decorate('Alice checked in from Amsterdam!', '555000');
 
     expect($decorated)->toContain('Alice checked in from Amsterdam!')
-        ->and($decorated)->toContain('overlabels.com/viewers');
+        ->and($decorated)->toContain('https://overlabels.com/viewers');
 });
 
 it('says nothing the second time', function () {
@@ -35,7 +35,7 @@ it('tells a different viewer separately', function () {
 
     $service->decorate('first', '555000');
 
-    expect($service->decorate('hello', '999999'))->toContain('overlabels.com/viewers');
+    expect($service->decorate('hello', '999999'))->toContain('https://overlabels.com/viewers');
 });
 
 it('leaves a reply alone when there is no chatter id', function () {
@@ -63,5 +63,5 @@ it('tells a viewer again after they have asked to be forgotten', function () {
 
     $service->forget('555000');
 
-    expect($service->decorate('third', '555000'))->toContain('overlabels.com/viewers');
+    expect($service->decorate('third', '555000'))->toContain('https://overlabels.com/viewers');
 });

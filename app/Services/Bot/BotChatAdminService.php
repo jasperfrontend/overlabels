@@ -125,7 +125,7 @@ readonly class BotChatAdminService
         }
 
         if (! $this->titles->hasScope($owner)) {
-            $reply .= ' - Twitch has not allowed Overlabels to change your title yet, reauthorize once at /settings/title';
+            $reply .= ' - Twitch has not allowed Overlabels to change your title yet, reauthorize once at https://overlabels.com/settings/title';
         }
 
         return $reply;
@@ -197,13 +197,13 @@ readonly class BotChatAdminService
     private function reportStop(User $owner): string
     {
         if (! BusyStretch::settings($owner)['enabled']) {
-            return 'Overload Reports are already off - switch them back on at overlabels.com/settings/overload-report';
+            return 'Overload Reports are already off - switch them back on at https://overlabels.com/settings/overload-report';
         }
 
         $owner->setPreference('overload_report.enabled', false)->save();
         BusyStretch::forget($owner->id);
 
-        return 'Overload Reports are off - switch them back on at overlabels.com/settings/overload-report';
+        return 'Overload Reports are off - switch them back on at https://overlabels.com/settings/overload-report';
     }
 
     // ------- cmd (Bot Commands) -------
@@ -459,7 +459,7 @@ readonly class BotChatAdminService
             'options' => 'options: cooldown <secs> | permission everyone|sub|vip|mod|broadcaster | enabled true|false | hidden true|false | destroy <hours> (0 cancels, cmd only)',
             'tags' => 'random: [[[rand:0-69]]] (two whole numbers, low to high). counting: [[[counter:wins]]] adds 1 each time the command runs and shows the total - use [[[c:wins]]] to show it without adding.',
             'title' => '!ol title set <text> keeps your Twitch title true to a template, tags included. !ol title show | resume | off. example: !ol title set Road to 2K | [[[followers_total]]] followers',
-            'report' => '!ol report stop switches Overload Reports off. Switch them back on at overlabels.com/settings/overload-report',
+            'report' => '!ol report stop switches Overload Reports off. Switch them back on at https://overlabels.com/settings/overload-report',
             default => '!ol cmd <add|edit|delete|options> ; !ol alias <add|edit|delete|options> ; !ol title <set|show|resume|off> ; !ol report stop ; !ol list ; !ol help <cmd|alias|options|tags|title|report>',
         };
     }

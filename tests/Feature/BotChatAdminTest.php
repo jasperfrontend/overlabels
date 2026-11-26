@@ -565,12 +565,12 @@ it('!ol report stop switches Overload Reports off and says how to get them back'
 
     postManage(managePayload(['subject' => 'report', 'action' => 'stop']))
         ->assertOk()
-        ->assertJsonPath('reply', 'Overload Reports are off - switch them back on at overlabels.com/settings/overload-report');
+        ->assertJsonPath('reply', 'Overload Reports are off - switch them back on at https://overlabels.com/settings/overload-report');
 
     expect(BusyStretch::settings($user->fresh())['enabled'])->toBeFalse();
 
     postManage(managePayload(['subject' => 'report', 'action' => 'stop']))
-        ->assertJsonPath('reply', 'Overload Reports are already off - switch them back on at overlabels.com/settings/overload-report');
+        ->assertJsonPath('reply', 'Overload Reports are already off - switch them back on at https://overlabels.com/settings/overload-report');
 });
 
 it('!ol report with another verb answers with the one it knows, and changes nothing', function () {

@@ -31,7 +31,7 @@ class BotForgetMeController extends Controller
     public const ASK_REPLY = 'This deletes everything Overlabels holds about you, in every channel, and it cannot be brought back.'
         .' After that we stop storing you until you type !unforgetme, which works '
         .BotUnforgetMeController::COOLDOWN_HOURS.' hours later at the earliest.'
-        .' To go ahead, type !forgetme confirm within 2 minutes. overlabels.com/viewers';
+        .' To go ahead, type !forgetme confirm within 2 minutes. https://overlabels.com/viewers';
 
     /**
      * Handle one `!forgetme` from chat.
@@ -110,6 +110,6 @@ class BotForgetMeController extends Controller
             ? "Done - everything Overlabels held about you is deleted, and we won't store you again."
             : "Done - Overlabels held nothing about you, and we won't store you again.";
 
-        return $base.' Anything on a streamer\'s own list, ask them. overlabels.com/viewers';
+        return $base.' Anything on a streamer\'s own list, ask them. https://overlabels.com/viewers';
     }
 }

@@ -35,7 +35,7 @@ class ViewerNoticeService
      */
     private const int MAX_REPLY_LENGTH = 480;
 
-    private const string NOTICE = ' · your data: overlabels.com/viewers';
+    private const string NOTICE = ' · your data: https://overlabels.com/viewers';
 
     /**
      * Return the reply with the notice appended, if this viewer has not been
