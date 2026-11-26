@@ -13,6 +13,7 @@ import { parseUpdateDraft } from '@/utils/updateDraft';
 import { compileTailwindCss } from '@/utils/compileTailwind';
 import type { Update } from '@/types';
 import { useConfirm } from '@/composables/useConfirm';
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 
 const { confirm } = useConfirm();
 const props = defineProps<{
@@ -143,7 +144,18 @@ async function handleDelete() {
 const isDark = ref(document.documentElement.classList.contains('dark'));
 let observer: MutationObserver | null = null;
 
+// Ctrl+S saves, as it does in the overlay editor. One save at a time.
+const { register } = useKeyboardShortcuts();
+
 onMounted(() => {
+  register(
+    'save-update',
+    'ctrl+s',
+    () => {
+      if (!form.processing) submit();
+    },
+    { description: isEditing.value ? 'Save update' : 'Publish update' },
+  );
   observer = new MutationObserver(() => {
     isDark.value = document.documentElement.classList.contains('dark');
   });
