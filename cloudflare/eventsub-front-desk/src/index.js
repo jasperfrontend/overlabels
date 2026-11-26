@@ -29,123 +29,137 @@ export const MAX_QUEUED_BODY_BYTES = 64 * 1024;
 export const MAX_RETRY_DELAY_SECONDS = 15 * 60;
 
 export function retryDelaySeconds(attempts) {
-    return Math.min(MAX_RETRY_DELAY_SECONDS, 5 * 2 ** Math.max(0, attempts - 1));
+  return Math.min(MAX_RETRY_DELAY_SECONDS, 5 * 2 ** Math.max(0, attempts - 1));
 }
 
 /** Twitch timestamps carry nanoseconds; order by them as milliseconds. */
 export function sentAtMs(timestamp) {
-    const ms = Date.parse(String(timestamp ?? '').replace(/(\.\d{3})\d+/, '$1'));
+  const ms = Date.parse(String(timestamp ?? '').replace(/(\.\d{3})\d+/, '$1'));
 
-    return Number.isFinite(ms) ? ms : 0;
+  return Number.isFinite(ms) ? ms : 0;
 }
 
 /** The request as it arrived, for the origin. A consumed body is replayed from text. */
 function forward(request, body) {
-    if (body === undefined) {
-        return fetch(request);
-    }
+  if (body === undefined) {
+    return fetch(request);
+  }
 
-    return fetch(request.url, { method: request.method, headers: request.headers, body });
+  return fetch(request.url, { method: request.method, headers: request.headers, body });
 }
 
 export async function handleFetch(request, env) {
-    if (env.MODE !== 'queue' || request.method !== 'POST') {
-        return forward(request);
-    }
+  const handlerStarted = Date.now();
+  if (env.MODE !== 'queue' || request.method !== 'POST') {
+    return forward(request);
+  }
 
-    // The handshake and revocations write to Laravel's database and are rare.
-    if (request.headers.get(HEADER_TYPE) !== 'notification') {
-        return forward(request);
-    }
+  // The handshake and revocations write to Laravel's database and are rare.
+  if (request.headers.get(HEADER_TYPE) !== 'notification') {
+    return forward(request);
+  }
 
-    const id = request.headers.get(HEADER_ID);
-    const timestamp = request.headers.get(HEADER_TIMESTAMP);
-    const signature = request.headers.get(HEADER_SIGNATURE);
-    if (!id || !timestamp || !signature) {
-        return new Response('Missing Twitch EventSub headers', { status: 400 });
-    }
+  const id = request.headers.get(HEADER_ID);
+  const timestamp = request.headers.get(HEADER_TIMESTAMP);
+  const signature = request.headers.get(HEADER_SIGNATURE);
+  if (!id || !timestamp || !signature) {
+    return new Response('Missing Twitch EventSub headers', { status: 400 });
+  }
 
-    const body = await request.text();
+  const body = await request.text();
 
-    let data;
-    try {
-        data = JSON.parse(body);
-    } catch {
-        return new Response('Invalid JSON', { status: 400 });
-    }
-    if (!data || typeof data !== 'object' || !data.subscription || !data.subscription.type) {
-        return new Response('Not an EventSub notification', { status: 400 });
-    }
+  let data;
+  try {
+    data = JSON.parse(body);
+  } catch {
+    return new Response('Invalid JSON', { status: 400 });
+  }
+  if (!data || typeof data !== 'object' || !data.subscription || !data.subscription.type) {
+    return new Response('Not an EventSub notification', { status: 400 });
+  }
 
-    // Too big for one queue operation: rare enough to hand to Laravel as is.
-    if (new TextEncoder().encode(body).length > MAX_QUEUED_BODY_BYTES) {
-        return forward(request, body);
-    }
+  // Too big for one queue operation: rare enough to hand to Laravel as is.
+  if (new TextEncoder().encode(body).length > MAX_QUEUED_BODY_BYTES) {
+    return forward(request, body);
+  }
 
-    try {
-        await env.EVENTSUB_QUEUE.send({ id, timestamp, signature, body }, { contentType: 'json' });
-    } catch (error) {
-        // Queue full or rate limited: today's behaviour, never a dropped event.
-        console.error('front desk: queue send failed, passing through', String(error));
+  const sendStarted = Date.now();
+  try {
+    await env.EVENTSUB_QUEUE.send({ id, timestamp, signature, body }, { contentType: 'json' });
+  } catch (error) {
+    // Queue full or rate limited: today's behaviour, never a dropped event.
+    console.error('front desk: queue send failed, passing through', String(error));
 
-        return forward(request, body);
-    }
+    return forward(request, body);
+  }
+  const sent = Date.now();
 
-    return new Response('OK', { status: 200 });
+  // Timings for the burst measurements in #346: a cold burst got ~19 s answers
+  // for its first ~19 s, and these say whether that time is the queue write,
+  // the rest of this handler, or before the handler ran at all. Twitch ignores
+  // extra headers. Date.now() only advances across I/O in a Worker, so the
+  // send time is real and the rest of the handler reads as near zero.
+  return new Response('OK', {
+    status: 200,
+    headers: {
+      'X-Front-Desk-Send-Ms': String(sent - sendStarted),
+      'X-Front-Desk-Handler-Ms': String(sent - handlerStarted),
+    },
+  });
 }
 
 export async function handleQueue(batch, env) {
-    const messages = [...batch.messages].sort((a, b) => sentAtMs(a.body?.timestamp) - sentAtMs(b.body?.timestamp));
-    const attempts = Math.max(1, ...messages.map((m) => m.attempts ?? 1));
+  const messages = [...batch.messages].sort((a, b) => sentAtMs(a.body?.timestamp) - sentAtMs(b.body?.timestamp));
+  const attempts = Math.max(1, ...messages.map((m) => m.attempts ?? 1));
 
-    let response;
-    try {
-        response = await fetch(env.BATCH_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // Trimmed on both ends: a secret piped in through a shell can
-                // pick up a trailing newline in one store and not the other.
-                'X-Front-Desk-Secret': String(env.FRONT_DESK_SECRET ?? '').trim(),
-                'User-Agent': 'overlabels-eventsub-front-desk',
-            },
-            body: JSON.stringify({ messages: messages.map((m) => m.body) }),
-        });
-    } catch (error) {
-        console.error('front desk: Laravel unreachable, retrying batch', String(error));
-        batch.retryAll({ delaySeconds: retryDelaySeconds(attempts) });
+  let response;
+  try {
+    response = await fetch(env.BATCH_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Trimmed on both ends: a secret piped in through a shell can
+        // pick up a trailing newline in one store and not the other.
+        'X-Front-Desk-Secret': String(env.FRONT_DESK_SECRET ?? '').trim(),
+        'User-Agent': 'overlabels-eventsub-front-desk',
+      },
+      body: JSON.stringify({ messages: messages.map((m) => m.body) }),
+    });
+  } catch (error) {
+    console.error('front desk: Laravel unreachable, retrying batch', String(error));
+    batch.retryAll({ delaySeconds: retryDelaySeconds(attempts) });
 
-        return;
+    return;
+  }
+
+  if (!response.ok) {
+    console.error(`front desk: Laravel answered ${response.status}, retrying batch`);
+    batch.retryAll({ delaySeconds: retryDelaySeconds(attempts) });
+
+    return;
+  }
+
+  let results = {};
+  try {
+    results = (await response.json())?.results ?? {};
+  } catch {
+    batch.retryAll({ delaySeconds: retryDelaySeconds(attempts) });
+
+    return;
+  }
+
+  // stored, duplicate, invalid and ignored are final; error or no answer is retried.
+  for (const message of messages) {
+    const result = results[message.body?.id];
+    if (result === 'stored' || result === 'duplicate' || result === 'invalid' || result === 'ignored') {
+      message.ack();
+    } else {
+      message.retry({ delaySeconds: retryDelaySeconds(message.attempts ?? 1) });
     }
-
-    if (!response.ok) {
-        console.error(`front desk: Laravel answered ${response.status}, retrying batch`);
-        batch.retryAll({ delaySeconds: retryDelaySeconds(attempts) });
-
-        return;
-    }
-
-    let results = {};
-    try {
-        results = (await response.json())?.results ?? {};
-    } catch {
-        batch.retryAll({ delaySeconds: retryDelaySeconds(attempts) });
-
-        return;
-    }
-
-    // stored, duplicate, invalid and ignored are final; error or no answer is retried.
-    for (const message of messages) {
-        const result = results[message.body?.id];
-        if (result === 'stored' || result === 'duplicate' || result === 'invalid' || result === 'ignored') {
-            message.ack();
-        } else {
-            message.retry({ delaySeconds: retryDelaySeconds(message.attempts ?? 1) });
-        }
-    }
+  }
 }
 
 export default {
-    fetch: handleFetch,
-    queue: handleQueue,
+  fetch: handleFetch,
+  queue: handleQueue,
 };
