@@ -180,6 +180,26 @@ Whatever goal you have running on Twitch, current over target, kept in step.
 > Keep an eye on the character counter. A long template with three or four tags in it renders longer
 > than it looks, and everything past 140 is cut.
 
+## Thank your raiders
+
+Click **Thank your raiders** under the template, save, and every channel that raids you this stream
+is named at the end of your title:
+
+```
+Blasting tunes tonight!! | Thanks raiders: @newestraider @earlierraider
+```
+
+The button adds `[[[if:raiders]]]| Thanks raiders: [[[raiders]]][[[endif]]]` to your template, so
+you can move it or reword it like any other part.
+
+- `[[[raiders]]]` is the channels that raided you since this stream went live, newest first, each
+  named once. It starts empty every stream, and is empty while you are offline.
+- Your own text always comes first. Raiders get whatever room is left of the 140 characters, in whole
+  names: a name that does not fit is left out rather than cut in half, and the oldest raiders drop off
+  first. When not even one fits, the whole "Thanks raiders" line stays hidden.
+- Until the first raid, the condition keeps the line out of your title entirely.
+- `[[[raiders]]]` works in bot command replies too, where there is no length limit.
+
 ## When it updates
 
 Any event and any control change can move a tag, so any of them triggers a render: a follow, a sub, a

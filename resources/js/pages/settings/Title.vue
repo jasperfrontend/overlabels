@@ -8,7 +8,7 @@ import { useLivingTitle } from '@/composables/useLivingTitle';
 import { type BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { AlertTriangle, Gamepad2, Pause, Play, Save, Search, Sparkles, Tv } from '@lucide/vue';
+import { AlertTriangle, Gamepad2, PartyPopper, Pause, Play, Save, Search, Sparkles, Tv } from '@lucide/vue';
 
 interface LivingTitleProps {
   enabled: boolean;
@@ -49,6 +49,17 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const enabled = ref(props.livingTitle.enabled);
 const template = ref(props.livingTitle.template);
+
+// "Thank your raiders": one click adds this to the end of the template. The
+// condition hides the whole line until the first raid of the stream.
+const RAIDERS_SNIPPET = ' [[[if:raiders]]]| Thanks raiders: [[[raiders]]][[[endif]]]';
+const hasRaiders = computed(() => template.value.includes('[[[raiders'));
+
+function addRaiders() {
+  if (hasRaiders.value) return;
+  const current = template.value.trimEnd();
+  template.value = current === '' ? RAIDERS_SNIPPET.trimStart() : current + RAIDERS_SNIPPET;
+}
 
 // The pause and the last error come from the live state, not the prop: a
 // channel.update arriving while this page is open must flip the banner
@@ -277,6 +288,28 @@ onBeforeUnmount(() => {
             Any tag from <a href="/tags" target="_blank" class="cursor-pointer underline">your tags</a>, any control as
             <code class="font-mono">[[[c:key]]]</code>, plus <code class="font-mono">[[[if:...]]]</code> and pipes like
             <code class="font-mono">|number</code>. Not <code class="font-mono">[[[channel_title]]]</code>: once this is on, that IS the title.
+          </p>
+        </div>
+
+        <!-- One-click title features: each adds a ready-made line to the
+             template. The first is thanking raiders. -->
+        <div class="space-y-2">
+          <h3 class="text-sm font-medium">Title features</h3>
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              class="btn btn-chill cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="hasRaiders"
+              @click="addRaiders"
+            >
+              <PartyPopper class="mr-2 size-4" />
+              {{ hasRaiders ? 'Thanking your raiders' : 'Thank your raiders' }}
+            </button>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            Adds <code class="font-mono">{{ RAIDERS_SNIPPET.trim() }}</code> to the end. Every channel that raids you this stream is named, newest
+            first, in whatever room your title leaves: your own text always fits first, and a name is never cut in half. Nothing shows until the first
+            raid, and the list starts empty every stream. Save the title to switch it on.
           </p>
         </div>
 

@@ -6,6 +6,7 @@ use App\Models\OptionSet;
 use App\Models\User;
 use App\Services\Controls\ExpressionControlHydrator;
 use App\Services\Messages\PipeFormatter;
+use App\Services\StreamRaiders;
 use App\Services\TemplateDataMapperService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchTokenService;
@@ -39,6 +40,7 @@ use Throwable;
  *   bot:<key>          -> per-invocation context (from_user, args.0, ...)
  *   rand:<min>-<max>   -> a random whole number, rolled per occurrence
  *   counter:<key>      -> own counter OverlayControl by key (see below)
+ *   raiders            -> `@a @b` - channels that raided this stream, newest first (StreamRaiders)
  *   <bare>             -> Twitch Helix tag from TemplateDataMapperService
  *
  * `counter:` READS HERE AND ONLY READS HERE. It resolves exactly like `c:`;
@@ -84,6 +86,7 @@ class BotCommandResolver
         private readonly TemplateDataMapperService $mapper,
         private readonly TwitchTokenService $tokens,
         private readonly ExpressionControlHydrator $expressions,
+        private readonly StreamRaiders $raiders,
     ) {}
 
     /**
@@ -95,8 +98,12 @@ class BotCommandResolver
      * @param  bool  $dryRun  When true, skips the (possibly expensive) Twitch
      *                        fetch and resolves bare tags to empty. Used by the
      *                        builder UI's live preview and the validator.
+     * @param  array<string,string>  $overrides  Bare tags given a fixed value
+     *                                           instead of their own (the
+     *                                           Living Title fits `raiders`
+     *                                           into its 140 characters this way).
      */
-    public function resolve(User $user, string $reply, array $botContext = [], bool $dryRun = false, ?ControlSnapshot $snapshot = null): string
+    public function resolve(User $user, string $reply, array $botContext = [], bool $dryRun = false, ?ControlSnapshot $snapshot = null, array $overrides = []): string
     {
         // A random-mode control rolls fresh every time it is loaded, so two
         // resolve() calls for the same chat command are two rolls: the value
@@ -108,6 +115,13 @@ class BotCommandResolver
         $controls = ($snapshot ?? ControlSnapshot::for($user))->values;
         $lists = $this->loadLists($user);
         $twitchTags = $dryRun ? [] : $this->loadTwitchTags($user);
+
+        // Read only when the reply names it: one query, on the rare reply
+        // that thanks raiders.
+        if (str_contains($reply, 'raiders') && ! array_key_exists('raiders', $overrides)) {
+            $twitchTags['raiders'] = StreamRaiders::format($this->raiders->logins($user));
+        }
+        $twitchTags = [...$twitchTags, ...$overrides];
 
         // An Expression Control holds no value of its own; the row's scalar is
         // a cache only a dependency change refreshes, and an expression over

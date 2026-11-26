@@ -338,6 +338,15 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   change category from the dashboard mid-stream; the title must not fight them. Search is
   `GET helix/search/categories` proxied with the streamer's token.
 - The handoff's example tag `channel_game_name` does not exist; the tag is `channel_game`.
+- **`[[[raiders]]]` and "Thank your raiders" (Nov 26th 2026).** `App\Services\StreamRaiders`:
+  logins of channels that raided the LIVE session (`StreamSession::activeFor`), newest first, each
+  once; no live session = empty. Resolved by `BotCommandResolver` only when the text names it, so
+  bot replies get it too. In the title, `LivingTitleService::renderWithRaiders()` renders once with
+  a placeholder (the resolver's `$overrides`), then fills whole names newest-first into the room
+  the streamer's text leaves; if none fit it renders again with `raiders` empty so an
+  `[[[if:raiders]]]` line disappears whole. The settings page's "Thank your raiders" button only
+  appends that line to the template: it is the first of a row of one-click "title features", and
+  the next one is another button there, not a product.
 
 ## External Integrations (Implemented Mar 2026)
 

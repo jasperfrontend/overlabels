@@ -4,8 +4,12 @@ use App\Events\LivingTitleChanged;
 use App\Jobs\ProcessTwitchEvent;
 use App\Jobs\SyncLivingTitle;
 use App\Models\OverlayControl;
+use App\Models\StreamSession;
+use App\Models\TwitchEvent;
 use App\Models\User;
+use App\Services\Bot\BotCommandResolver;
 use App\Services\LivingTitleService;
+use App\Services\StreamRaiders;
 use App\Services\TwitchScopeService;
 use App\Services\TwitchTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -567,4 +571,74 @@ test('setting a category writes game_id once and never the title', function () {
 test('the settings routes require a login', function () {
     $this->get('/settings/title')->assertRedirect();
     $this->patch('/settings/title', ['enabled' => true, 'template' => 'x'])->assertRedirect();
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// "Thank your raiders": [[[raiders]]] (Jasper, 2026-11-26)
+// ──────────────────────────────────────────────────────────────────────────────
+
+function raidTitle(User $user, string $login, int $minutesAgo): void
+{
+    TwitchEvent::forceCreate([
+        'user_id' => $user->id,
+        'event_type' => 'channel.raid',
+        'event_data' => ['from_broadcaster_user_login' => $login, 'from_broadcaster_user_name' => ucfirst($login), 'viewers' => 10],
+        'twitch_timestamp' => now()->subMinutes($minutesAgo),
+        'created_at' => now()->subMinutes($minutesAgo),
+    ]);
+}
+
+const RAIDERS_LINE = ' [[[if:raiders]]]| Thanks raiders: [[[raiders]]][[[endif]]]';
+
+it('lists this stream\'s raiders newest first, each once, and only while live', function () {
+    $raiders = app(StreamRaiders::class);
+    expect($raiders->logins($this->user))->toBe([]);
+
+    StreamSession::create(['user_id' => $this->user->id, 'started_at' => now()->subHour(), 'ended_at' => null]);
+    raidTitle($this->user, 'lastweek', 60 * 24 * 7);
+    raidTitle($this->user, 'first', 50);
+    raidTitle($this->user, 'second', 30);
+    raidTitle($this->user, 'first', 10);
+    TwitchEvent::forceCreate(['user_id' => $this->user->id, 'event_type' => 'channel.raid', 'event_data' => ['from_broadcaster_user_login' => null], 'twitch_timestamp' => now(), 'created_at' => now()->subMinutes(5)]);
+
+    expect($raiders->logins($this->user))->toBe(['first', 'second']);
+
+    StreamSession::query()->update(['ended_at' => now()]);
+    expect($raiders->logins($this->user))->toBe([]);
+});
+
+it('fits raiders into the room the title leaves, whole names, newest first, and hides the line when none fit', function () {
+    $patches = [];
+    fakeHelix($patches);
+    StreamSession::create(['user_id' => $this->user->id, 'started_at' => now()->subHour(), 'ended_at' => null]);
+    $service = app(LivingTitleService::class);
+
+    // No raids yet: the whole thank-you line is hidden.
+    expect($service->preview($this->user, 'Blasting tunes!!'.RAIDERS_LINE)['resolved'])->toBe('Blasting tunes!!');
+
+    raidTitle($this->user, 'oldraider', 40);
+    raidTitle($this->user, 'midraider', 20);
+    raidTitle($this->user, 'newraider', 5);
+
+    expect($service->preview($this->user, 'Blasting tunes!!'.RAIDERS_LINE)['resolved'])
+        ->toBe('Blasting tunes!! | Thanks raiders: @newraider @midraider @oldraider');
+
+    // Room for exactly one name: the newest stays, nobody is cut in half.
+    $base = str_repeat('x', 140 - mb_strlen(' | Thanks raiders: @newraider'));
+    $one = $service->preview($this->user, $base.RAIDERS_LINE)['resolved'];
+    expect($one)->toBe($base.' | Thanks raiders: @newraider')
+        ->and(mb_strlen($one))->toBe(140);
+
+    // No room for even one: the line disappears and the streamer's text is untouched.
+    $full = str_repeat('y', 125);
+    expect($service->preview($this->user, $full.RAIDERS_LINE)['resolved'])->toBe($full);
+});
+
+it('works as a bot reply too, with no title limit', function () {
+    StreamSession::create(['user_id' => $this->user->id, 'started_at' => now()->subHour(), 'ended_at' => null]);
+    raidTitle($this->user, 'alpha', 20);
+    raidTitle($this->user, 'beta', 10);
+
+    expect(app(BotCommandResolver::class)->resolve($this->user, 'Thanks [[[raiders]]]!', dryRun: true))
+        ->toBe('Thanks @beta @alpha!');
 });

@@ -75,6 +75,7 @@ class LivingTitleService
         private readonly TwitchApiService $twitch,
         private readonly TwitchTokenService $tokens,
         private readonly TwitchScopeService $scopes,
+        private readonly StreamRaiders $raiders,
     ) {}
 
     /**
@@ -132,13 +133,43 @@ class LivingTitleService
             return ['resolved' => '', 'length' => 0, 'truncated' => false];
         }
 
-        $oneLine = self::oneLine($this->resolver->resolve($user, $template));
+        $oneLine = str_contains($template, 'raiders')
+            ? $this->renderWithRaiders($user, $template)
+            : self::oneLine($this->resolver->resolve($user, $template));
 
         return [
             'resolved' => self::fit($oneLine),
             'length' => mb_strlen($oneLine),
             'truncated' => mb_strlen($oneLine) > self::MAX_LENGTH,
         ];
+    }
+
+    /**
+     * `[[[raiders]]]` gets whatever room the rest of the title leaves, in whole
+     * names, newest raider first (Jasper, 2026-11-26): the streamer's own text
+     * always wins, and a name is never cut in half. The title is rendered once
+     * with a placeholder to measure that room, then filled. When not even one
+     * name fits, it is rendered again with no raiders, so a
+     * `[[[if:raiders]]] | Thanks raiders: ...[[[endif]]]` disappears whole.
+     */
+    private function renderWithRaiders(User $user, string $template): string
+    {
+        $logins = $this->raiders->logins($user);
+        if ($logins === []) {
+            return self::oneLine($this->resolver->resolve($user, $template, overrides: ['raiders' => '']));
+        }
+
+        $placeholder = "\u{E000}raiders\u{E001}";
+        $measured = self::oneLine($this->resolver->resolve($user, $template, overrides: ['raiders' => $placeholder]));
+
+        for ($take = count($logins); $take > 0; $take--) {
+            $candidate = self::oneLine(str_replace($placeholder, StreamRaiders::format(array_slice($logins, 0, $take)), $measured));
+            if (mb_strlen($candidate) <= self::MAX_LENGTH) {
+                return $candidate;
+            }
+        }
+
+        return self::oneLine($this->resolver->resolve($user, $template, overrides: ['raiders' => '']));
     }
 
     /**
