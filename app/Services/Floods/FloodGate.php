@@ -80,9 +80,6 @@ final class FloodGate
     /** @var array<string, array{user: User, eventType: string, kind: string, dropped: int, tail: list<array<string, mixed>>}> */
     private array $pending = [];
 
-    /** @var array<string, int> message keys of counted events, written at flush() */
-    private array $pendingMessages = [];
-
     /** @var array<string, true> bursts whose `last` was refreshed in this batch */
     private array $touched = [];
 
@@ -100,7 +97,7 @@ final class FloodGate
         }
 
         $messageKey = $messageId !== null ? self::messageKey($messageId) : null;
-        if ($messageKey !== null && (isset($this->pendingMessages[$messageKey]) || Cache::has($messageKey))) {
+        if ($messageKey !== null && Cache::has($messageKey)) {
             return self::DUPLICATE;
         }
 
@@ -126,8 +123,16 @@ final class FloodGate
             return self::PASS;
         }
 
-        if ($messageKey !== null) {
-            $this->pendingMessages[$messageKey] = 1;
+        // Claimed now, atomically, not at flush(): Cloudflare Queues delivers at
+        // least once, and a message in two batches in flight at once was counted
+        // twice while its key waited for the end of the batch (55,027 counted for
+        // 54,974 sent, 2026-11-26).
+        if ($messageKey !== null && ! Cache::add($messageKey, 1, self::DEDUP_SECONDS)) {
+            if (! $this->buffering) {
+                $this->touched = [];
+            }
+
+            return self::DUPLICATE;
         }
         $this->pending[$base] ??= ['user' => $user, 'eventType' => $eventType, 'kind' => $kind, 'dropped' => 0, 'tail' => []];
         $this->pending[$base]['dropped']++;
@@ -146,7 +151,7 @@ final class FloodGate
     /**
      * Collect what offer() counts and write it in one go at flush(). The front
      * desk batch endpoint does this per batch of up to 100: a counted follow
-     * then costs two cache calls instead of eleven and a lock, and the kept
+     * then costs three cache calls instead of eleven and a lock, and the kept
      * list is written once per batch instead of once per event.
      */
     public function buffer(): void
@@ -160,10 +165,6 @@ final class FloodGate
         $this->buffering = false;
         $this->touched = [];
 
-        if ($this->pendingMessages !== []) {
-            Cache::putMany($this->pendingMessages, self::DEDUP_SECONDS);
-        }
-
         foreach ($this->pending as $base => $p) {
             Cache::add("{$base}:dropped", 0, self::STATE_TTL_SECONDS);
             Cache::increment("{$base}:dropped", $p['dropped']);
@@ -176,7 +177,6 @@ final class FloodGate
         }
 
         $this->pending = [];
-        $this->pendingMessages = [];
     }
 
     /**

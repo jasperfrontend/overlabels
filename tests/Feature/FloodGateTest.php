@@ -285,3 +285,22 @@ test('the same counted follow twice in one batch is counted once', function () {
     expect($results)->toBe(['twice-1' => 'duplicate'])
         ->and(floodSummary($user)->event_data['flood_count'])->toBe(51);
 });
+
+test('a counted message in two batches at once is counted once', function () {
+    $user = floodUser();
+    floodSend($user, 150); // past the first hundred
+    $event = ['broadcaster_user_id' => (string) $user->twitch_id, 'user_id' => '8', 'user_name' => 'Twice'];
+
+    // Two front desk batches in flight at the same time, neither flushed yet:
+    // Cloudflare Queues delivers at least once, so a message can be in both.
+    $a = new FloodGate;
+    $b = new FloodGate;
+    $a->buffer();
+    $b->buffer();
+    $first = $a->offer($user, 'channel.follow', $event, 'same-message');
+    $second = $b->offer($user, 'channel.follow', $event, 'same-message');
+    $a->flush();
+    $b->flush();
+
+    expect([$first, $second])->toBe([FloodGate::COUNTED, FloodGate::DUPLICATE]);
+});
