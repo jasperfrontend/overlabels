@@ -23,6 +23,7 @@ import {
   LogIn,
   MapPin,
   Newspaper,
+  Lightbulb,
   Package,
   Pipette,
   Radio,
@@ -216,6 +217,7 @@ const adminNavItems = computed<NavItem[]>(() => {
     { title: 'Audit Log', href: route('admin.audit.index'), icon: FileText },
     { title: 'Lockdown', href: route('admin.lockdown.index'), icon: ShieldAlert },
     { title: 'Updates', href: route('admin.updates.index'), icon: Newspaper },
+    { title: 'Highlights', href: route('admin.highlights.index'), icon: Lightbulb },
     { title: 'Twitch Bot', href: route('admin.twitchbot.index'), icon: BotIcon },
   ];
 });

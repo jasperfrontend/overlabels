@@ -38,6 +38,14 @@ interface OverloadReportCard {
   expires_at: string;
 }
 
+/** A feature note written at /admin/highlights; see DashboardController::index(). */
+interface Highlight {
+  id: number;
+  body: string;
+  link_url: string;
+  link_label: string;
+}
+
 interface LastStream {
   started_at: string;
   ended_at: string | null;
@@ -57,6 +65,7 @@ const props = defineProps<{
   lastStream: LastStream | null;
   recentEvents: UnifiedEvent[];
   overloadReports: OverloadReportCard[];
+  highlights: Highlight[];
   whatsNew: WhatsNew;
   /** The five newest published posts from /updates. */
   latestUpdates: Pick<Update, 'id' | 'slug' | 'title' | 'excerpt' | 'tags' | 'published_at'>[];
@@ -291,6 +300,23 @@ const breadcrumbs = [{ title: 'Dashboard', href: '/dashboard' }];
           heading-id="others-heading"
           :products="others"
         />
+
+        <!-- 3b. Worth knowing: feature notes written in the admin, all alike. -->
+        <section v-if="props.highlights.length > 0" class="rise flex flex-col gap-4" style="--d: 250ms" aria-labelledby="highlights-heading">
+          <h2 id="highlights-heading" class="text-2xl font-bold tracking-tight text-foreground">Did you know?</h2>
+          <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div v-for="highlight in props.highlights" :key="highlight.id" class="flex flex-col gap-4 border border-border p-6">
+              <p class="text-sm text-foreground">{{ highlight.body }}</p>
+              <Link
+                :href="highlight.link_url"
+                class="mt-auto inline-flex items-center gap-1 text-sm font-medium text-[#0A78BE] hover:underline dark:text-[#1DAAFF]"
+              >
+                {{ highlight.link_label }}
+                <ArrowRight class="size-3.5" />
+              </Link>
+            </div>
+          </div>
+        </section>
 
         <!-- 4. Lately. -->
         <section class="rise grid gap-6 lg:grid-cols-[1fr_2fr]" style="--d: 270ms" aria-label="Lately">

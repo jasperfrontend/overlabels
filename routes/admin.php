@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminAuditLogController;
 use App\Http\Controllers\Admin\AdminBanController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminFunnelController;
+use App\Http\Controllers\Admin\AdminHighlightController;
 use App\Http\Controllers\Admin\AdminKitController;
 use App\Http\Controllers\Admin\AdminLockdownController;
 use App\Http\Controllers\Admin\AdminReportController;
@@ -106,6 +107,14 @@ Route::prefix('admin')
         Route::get('/updates/{update}/edit', [AdminUpdateController::class, 'edit'])->name('updates.edit');
         Route::put('/updates/{update}', [AdminUpdateController::class, 'update'])->name('updates.update');
         Route::delete('/updates/{update}', [AdminUpdateController::class, 'destroy'])->name('updates.destroy');
+
+        // Dashboard highlights: short feature notes with one link each
+        Route::get('/highlights', [AdminHighlightController::class, 'index'])->name('highlights.index');
+        Route::get('/highlights/create', [AdminHighlightController::class, 'create'])->name('highlights.create');
+        Route::post('/highlights', [AdminHighlightController::class, 'store'])->name('highlights.store');
+        Route::get('/highlights/{highlight}/edit', [AdminHighlightController::class, 'edit'])->name('highlights.edit');
+        Route::put('/highlights/{highlight}', [AdminHighlightController::class, 'update'])->name('highlights.update');
+        Route::delete('/highlights/{highlight}', [AdminHighlightController::class, 'destroy'])->name('highlights.destroy');
     });
 
 // Twitch Bot OAuth flow - must live at /auth/twitchbot/callback to match the Twitch app's

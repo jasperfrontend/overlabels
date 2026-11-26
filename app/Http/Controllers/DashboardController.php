@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DashboardHighlight;
 use App\Models\EventTemplateMapping;
 use App\Models\ExternalEvent;
 use App\Models\OptionSet;
@@ -48,6 +49,8 @@ class DashboardController extends Controller
             'lastStream' => $this->lastStream($user->id),
             'recentEvents' => $this->mergeRecentEvents($user->id, 5),
             'overloadReports' => $this->overloadReports($user),
+            // Feature notes written at /admin/highlights, the same for everyone.
+            'highlights' => DashboardHighlight::shown()->get(['id', 'body', 'link_url', 'link_label']),
             'whatsNew' => WhatsNewController::props($user),
             // The newest posts from /updates, seen or not - unlike whatsNew,
             // which only holds what this account has not cleared yet.
