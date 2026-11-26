@@ -8,7 +8,8 @@ import { useLivingTitle } from '@/composables/useLivingTitle';
 import { type BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { AlertTriangle, Gamepad2, PartyPopper, Pause, Play, Save, Search, Sparkles, Tv } from '@lucide/vue';
+import { AlertTriangle, Gamepad2, PartyPopper, Pause, Play, Save, Search, Sparkles, Tv, X } from '@lucide/vue';
+import SettingSwitch from '@/components/SettingSwitch.vue';
 
 interface LivingTitleProps {
   enabled: boolean;
@@ -74,13 +75,16 @@ const lastError = computed(() =>
 const saving = ref(false);
 const saveError = ref('');
 
-function save() {
+// One save path. The heading's switch saves on/off at once, together with
+// whatever is in the template box; the Save button keeps the switch as it is.
+function save(nextEnabled: boolean = enabled.value) {
+  enabled.value = nextEnabled;
   saving.value = true;
   saveError.value = '';
 
   router.patch(
     route('settings.title.update'),
-    { enabled: enabled.value, template: template.value },
+    { enabled: nextEnabled, template: template.value },
     {
       preserveScroll: true,
       onError: (errors) => {
@@ -147,6 +151,9 @@ const overLength = computed(() => previewLength.value > props.maxLength);
 
 // ── Category: search on debounce, set on click, never remembered ──────────
 
+// The picker opens inline, under the category it changes, so its results are
+// never pushed below the bottom of the page.
+const pickingCategory = ref(false);
 const categoryQuery = ref('');
 const categories = ref<Category[]>([]);
 const searching = ref(false);
@@ -189,6 +196,7 @@ function setCategory(category: Category) {
       onSuccess: () => {
         categoryQuery.value = '';
         categories.value = [];
+        pickingCategory.value = false;
       },
       onFinish: () => {
         settingCategory.value = null;
@@ -213,33 +221,28 @@ onBeforeUnmount(() => {
 
     <SettingsLayout>
       <div class="space-y-6">
-        <HeadingSmall
-          title="Living title"
-          description="Write your stream title with tags in it, and Overlabels keeps it true on Twitch. A follow arrives, the number in your title moves."
-        />
+        <!-- The heading carries the on/off: "Living title" is the feature. -->
+        <div class="flex items-start justify-between gap-4">
+          <HeadingSmall
+            title="Living title"
+            description="Write your stream title with tags in it, and Overlabels keeps it true on Twitch. A follow arrives, the number in your title moves."
+          />
+          <label class="flex shrink-0 cursor-pointer items-center gap-2 pt-1 text-sm">
+            <span :class="enabled ? 'text-foreground' : 'text-muted-foreground'">{{ enabled ? 'On' : 'Off' }}</span>
+            <SettingSwitch :model-value="enabled" label="Keep my title updated" @update:model-value="save" />
+          </label>
+        </div>
 
-        <div v-if="!hasScope" class="flex items-start gap-3 border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-          <AlertTriangle class="mt-0.5 size-4 shrink-0 text-amber-400" />
+        <div v-if="!hasScope" class="flex items-start gap-3 border border-[#1DAAFF]/40 bg-[#1DAAFF]/10 p-4 text-sm">
+          <AlertTriangle class="mt-0.5 size-4 shrink-0 text-[#0A78BE] dark:text-[#1DAAFF]" />
           <div class="space-y-2">
             <p>Twitch has not yet allowed Overlabels to change your title. That is a one-time permission, added for this feature.</p>
             <a href="/auth/redirect/twitch?reauth=1" class="btn btn-sm btn-secondary cursor-pointer">Reauthorize Twitch</a>
           </div>
         </div>
 
-        <div v-if="channel && (channel.title || channel.game_name)" class="border border-sidebar-border p-4">
-          <div class="mb-2 flex items-center gap-2 text-xs tracking-wide text-muted-foreground uppercase">
-            <Tv class="size-3.5" />
-            On Twitch right now
-          </div>
-          <p v-if="channel.title" class="text-base font-medium wrap-break-word">{{ channel.title }}</p>
-          <p v-if="channel.game_name" class="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Gamepad2 class="size-3.5 shrink-0" />
-            <span>{{ channel.game_name }}</span>
-          </p>
-        </div>
-
-        <div v-if="paused" class="flex items-start gap-3 border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-          <Pause class="mt-0.5 size-4 shrink-0 text-amber-400" />
+        <div v-if="paused" class="flex items-start gap-3 border border-[#1DAAFF]/40 bg-[#1DAAFF]/10 p-4 text-sm">
+          <Pause class="mt-0.5 size-4 shrink-0 text-[#0A78BE] dark:text-[#1DAAFF]" />
           <div class="space-y-2">
             <p>
               <span class="font-medium">Paused.</span> Your title was changed on Twitch to <span class="font-medium">"{{ pausedTitle }}"</span>, so
@@ -257,131 +260,148 @@ onBeforeUnmount(() => {
           <p>{{ lastError }}</p>
         </div>
 
-        <div class="space-y-3">
-          <label class="flex cursor-pointer items-start gap-3">
-            <input v-model="enabled" type="checkbox" class="mt-1 size-4 cursor-pointer" />
-            <span class="text-sm">
-              <span class="font-medium">Keep my title updated</span>
-              <span class="block text-muted-foreground">
-                Re-rendered on every event and every control change, written to Twitch at most once every {{ debounceSeconds }} seconds and only when
-                the text actually changed.
+        <!-- One card, read top to bottom: what Twitch shows now, what you
+             write, what that becomes, what you can add, save. -->
+        <div class="divide-y divide-sidebar-border border border-sidebar-border">
+          <section class="space-y-2 p-4" aria-labelledby="now-heading">
+            <h3 id="now-heading" class="flex items-center gap-2 text-xs tracking-wide text-muted-foreground uppercase">
+              <Tv class="size-3.5" />
+              Now on Twitch
+            </h3>
+            <p v-if="channel?.title" class="text-base font-medium wrap-break-word">{{ channel.title }}</p>
+            <p v-else class="text-sm text-muted-foreground italic">Twitch did not tell us your current title.</p>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+              <span class="flex items-center gap-1.5">
+                <Gamepad2 class="size-3.5 shrink-0" />
+                {{ channel?.game_name || 'No category' }}
               </span>
-            </span>
-          </label>
-        </div>
-
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <Label for="title-template">Title template</Label>
-            <span class="text-xs whitespace-nowrap" :class="overLength ? 'text-rose-400' : 'text-muted-foreground'">
-              {{ previewLength }} / {{ maxLength }} chars
-            </span>
-          </div>
-          <textarea
-            id="title-template"
-            v-model="template"
-            rows="2"
-            class="input-border w-full font-mono text-sm"
-            placeholder="Road to 2K | [[[followers_total]]] followers | playing [[[channel_game]]]"
-          ></textarea>
-          <p class="text-xs text-muted-foreground">
-            Any tag from <a href="/tags" target="_blank" class="cursor-pointer underline">your tags</a>, any control as
-            <code class="font-mono">[[[c:key]]]</code>, plus <code class="font-mono">[[[if:...]]]</code> and pipes like
-            <code class="font-mono">|number</code>. Not <code class="font-mono">[[[channel_title]]]</code>: once this is on, that IS the title.
-          </p>
-        </div>
-
-        <!-- One-click title features: each adds a ready-made line to the
-             template. The first is thanking raiders. -->
-        <div class="space-y-2">
-          <h3 class="text-sm font-medium">Title features</h3>
-          <div class="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              class="btn btn-chill cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-              :disabled="hasRaiders"
-              @click="addRaiders"
-            >
-              <PartyPopper class="mr-2 size-4" />
-              {{ hasRaiders ? 'Thanking your raiders' : 'Thank your raiders' }}
-            </button>
-          </div>
-          <p class="text-xs text-muted-foreground">
-            Adds <code class="font-mono">{{ RAIDERS_SNIPPET.trim() }}</code> to the end. Every channel that raids you this stream is named, newest
-            first, in whatever room your title leaves: your own text always fits first, and a name is never cut in half. Nothing shows until the first
-            raid, and the list starts empty every stream. Save the title to switch it on.
-          </p>
-        </div>
-
-        <div class="border border-sidebar-border bg-sidebar-accent/30 p-4">
-          <div class="mb-2 flex items-center gap-2 text-xs tracking-wide text-muted-foreground uppercase">
-            <Sparkles class="size-3.5" />
-            Preview with your real values
-            <span v-if="previewLoading" class="normal-case italic">resolving...</span>
-          </div>
-          <div class="min-h-10 text-sm">
-            <div v-if="previewError" class="flex items-center gap-2 text-rose-400">
-              <AlertTriangle class="size-4 shrink-0" />
-              {{ previewError }}
-            </div>
-            <div v-else-if="!previewOutput" class="text-muted-foreground italic">(empty)</div>
-            <div v-else class="wrap-break-word transition-opacity duration-150" :class="{ 'opacity-50': previewLoading }">
-              {{ previewOutput }}
-            </div>
-          </div>
-          <p v-if="previewTruncated" class="mt-2 text-xs text-rose-400">
-            Renders to {{ previewLength }} characters. Twitch allows {{ maxLength }}, so it is cut there.
-          </p>
-        </div>
-
-        <div class="flex flex-col items-start gap-3">
-          <button
-            type="button"
-            :disabled="saving"
-            class="btn btn-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-            @click="save"
-          >
-            <Save class="mr-2 size-4" />
-            {{ saving ? 'Saving...' : 'Save title' }}
-          </button>
-          <p v-if="saveError" class="text-sm text-destructive">{{ saveError }}</p>
-        </div>
-
-        <hr class="border-sidebar-border" />
-
-        <div class="space-y-3">
-          <HeadingSmall
-            title="Category"
-            description="Set your stream category from here. Picking one sets it on Twitch right away, once - your title never changes it back."
-          />
-          <div class="relative">
-            <Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              v-model="categoryQuery"
-              type="text"
-              class="input-border w-full pl-9 text-sm"
-              placeholder="Search categories"
-              autocomplete="off"
-              aria-label="Search categories"
-            />
-          </div>
-          <p v-if="searching" class="text-xs text-muted-foreground italic">searching...</p>
-          <ul v-else-if="categories.length > 0" class="divide-y divide-sidebar-border border border-sidebar-border">
-            <li v-for="category in categories" :key="category.id">
               <button
                 type="button"
-                :disabled="settingCategory !== null"
-                class="flex w-full cursor-pointer items-center gap-3 p-2 text-left text-sm hover:bg-sidebar-accent/40 disabled:cursor-not-allowed"
-                @click="setCategory(category)"
+                class="cursor-pointer text-[#0A78BE] hover:underline dark:text-[#1DAAFF]"
+                @click="pickingCategory = !pickingCategory"
               >
-                <img v-if="category.box_art_url" :src="boxArt(category.box_art_url)" alt="" class="h-9 w-auto shrink-0" loading="lazy" />
-                <span class="grow">{{ category.name }}</span>
-                <span v-if="settingCategory === category.id" class="text-xs text-muted-foreground italic">setting...</span>
-                <span v-else-if="channel && channel.game_id === category.id" class="text-xs text-muted-foreground">current</span>
+                {{ pickingCategory ? 'Close' : 'Change category' }}
               </button>
-            </li>
-          </ul>
-          <p v-else-if="categoryQuery.trim().length >= 2" class="text-xs text-muted-foreground">No categories match.</p>
+            </div>
+
+            <div v-if="pickingCategory" class="space-y-2 pt-2">
+              <p class="text-xs text-muted-foreground">Picking one sets it on Twitch right away, once. Your title never changes it back.</p>
+              <div class="relative">
+                <Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  v-model="categoryQuery"
+                  type="text"
+                  class="input-border w-full pr-9 pl-9 text-sm"
+                  placeholder="Search categories"
+                  autocomplete="off"
+                  aria-label="Search categories"
+                />
+                <button
+                  type="button"
+                  class="absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground"
+                  aria-label="Close category search"
+                  @click="pickingCategory = false"
+                >
+                  <X class="size-4" />
+                </button>
+              </div>
+              <p v-if="searching" class="text-xs text-muted-foreground italic">searching...</p>
+              <ul v-else-if="categories.length > 0" class="max-h-72 divide-y divide-sidebar-border overflow-y-auto border border-sidebar-border">
+                <li v-for="category in categories" :key="category.id">
+                  <button
+                    type="button"
+                    :disabled="settingCategory !== null"
+                    class="flex w-full cursor-pointer items-center gap-3 p-2 text-left text-sm hover:bg-sidebar-accent/40 disabled:cursor-not-allowed"
+                    @click="setCategory(category)"
+                  >
+                    <img v-if="category.box_art_url" :src="boxArt(category.box_art_url)" alt="" class="h-9 w-auto shrink-0" loading="lazy" />
+                    <span class="grow">{{ category.name }}</span>
+                    <span v-if="settingCategory === category.id" class="text-xs text-muted-foreground italic">setting...</span>
+                    <span v-else-if="channel && channel.game_id === category.id" class="text-xs text-muted-foreground">current</span>
+                  </button>
+                </li>
+              </ul>
+              <p v-else-if="categoryQuery.trim().length >= 2" class="text-xs text-muted-foreground">No categories match.</p>
+            </div>
+          </section>
+
+          <section class="space-y-2 p-4">
+            <div class="flex items-center justify-between">
+              <Label for="title-template" class="text-xs font-normal tracking-wide text-muted-foreground uppercase">Your template</Label>
+              <span class="text-xs whitespace-nowrap tabular-nums" :class="overLength ? 'text-rose-400' : 'text-muted-foreground'">
+                {{ previewLength }} / {{ maxLength }}
+              </span>
+            </div>
+            <textarea
+              id="title-template"
+              v-model="template"
+              rows="2"
+              class="input-border w-full font-mono text-sm"
+              placeholder="Road to 2K | [[[followers_total]]] followers | playing [[[channel_game]]]"
+            ></textarea>
+            <p class="text-xs text-muted-foreground">
+              Tags, <code class="font-mono">[[[c:key]]]</code> controls, <code class="font-mono">[[[if:...]]]</code> and pipes all work.
+              <a href="/tags" target="_blank" class="cursor-pointer underline">See all your tags</a>.
+            </p>
+          </section>
+
+          <section class="space-y-2 bg-sidebar-accent/30 p-4" aria-live="polite">
+            <h3 class="flex items-center gap-2 text-xs tracking-wide text-muted-foreground uppercase">
+              <Sparkles class="size-3.5" />
+              Becomes
+              <span v-if="previewLoading" class="normal-case italic">resolving...</span>
+            </h3>
+            <div class="min-h-6 text-base">
+              <div v-if="previewError" class="flex items-center gap-2 text-sm text-rose-400">
+                <AlertTriangle class="size-4 shrink-0" />
+                {{ previewError }}
+              </div>
+              <div v-else-if="!previewOutput" class="text-sm text-muted-foreground italic">Type a template above.</div>
+              <div v-else class="font-medium wrap-break-word transition-opacity duration-150" :class="{ 'opacity-50': previewLoading }">
+                {{ previewOutput }}
+              </div>
+            </div>
+            <p v-if="previewTruncated" class="text-xs text-rose-400">
+              Renders to {{ previewLength }} characters. Twitch allows {{ maxLength }}, so it is cut there.
+            </p>
+          </section>
+
+          <!-- One-click title features: each adds a ready-made line to the
+               template. The first is thanking raiders. -->
+          <section class="space-y-2 p-4">
+            <h3 class="text-xs tracking-wide text-muted-foreground uppercase">Add to your title</h3>
+            <div class="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                class="btn btn-chill cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="hasRaiders"
+                :title="RAIDERS_SNIPPET.trim()"
+                @click="addRaiders"
+              >
+                <PartyPopper class="mr-2 size-4" />
+                {{ hasRaiders ? 'Thanking your raiders' : 'Thank your raiders' }}
+              </button>
+            </div>
+            <p class="text-xs text-muted-foreground">
+              Names every channel that raids you this stream, newest first, in whatever room your title leaves. Hidden until the first raid.
+            </p>
+          </section>
+
+          <div class="flex flex-wrap items-center gap-3 p-4">
+            <button
+              type="button"
+              :disabled="saving"
+              class="btn btn-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+              @click="save()"
+            >
+              <Save class="mr-2 size-4" />
+              {{ saving ? 'Saving...' : 'Save title' }}
+            </button>
+            <p class="text-xs text-muted-foreground">
+              Written to Twitch at most once every {{ debounceSeconds }} seconds, and only when the text changed.
+            </p>
+            <p v-if="saveError" class="w-full text-sm text-destructive">{{ saveError }}</p>
+          </div>
         </div>
       </div>
     </SettingsLayout>
