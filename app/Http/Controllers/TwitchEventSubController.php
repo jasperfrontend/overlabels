@@ -589,7 +589,7 @@ class TwitchEventSubController extends Controller
             // redemption is counted, not stored or queued (#346). It reports
             // `stored` so the front desk acks it, exactly like a stored one.
             if ($user) {
-                $gate = app(FloodGate::class)->offer($user, $eventType, $event, $messageId);
+                $gate = $this->floodGate()->offer($user, $eventType, $event, $messageId);
                 if ($gate === FloodGate::DUPLICATE) {
                     return 'duplicate';
                 }
@@ -686,6 +686,36 @@ class TwitchEventSubController extends Controller
         $results = [];
         $invalid = 0;
 
+        // A flood's counted events are written once per batch (FloodGate::buffer()).
+        $this->floodGate()->buffer();
+        try {
+            $this->verifyAndHandleBatch($messages, $lockdown, $results, $invalid);
+        } finally {
+            try {
+                $this->floodGate()->flush();
+            } catch (Throwable $e) {
+                // The batch's other results stand; a 500 would make the front
+                // desk redeliver and double-count everything it stored.
+                Log::error('Flood gate flush failed; this batch\'s counted events are lost', ['error' => $e->getMessage()]);
+            }
+        }
+
+        if ($invalid > 0) {
+            Log::warning('Front desk batch held messages that failed verification', [
+                'invalid' => $invalid,
+                'messages' => count($messages),
+            ]);
+        }
+
+        return response()->json(['results' => (object) $results]);
+    }
+
+    /**
+     * @param  array<int, mixed>  $messages
+     * @param  array<string, string>  $results
+     */
+    private function verifyAndHandleBatch(array $messages, bool $lockdown, array &$results, int &$invalid): void
+    {
         foreach ($messages as $message) {
             $id = is_array($message) && is_string($message['id'] ?? null) ? $message['id'] : null;
             if ($id === null) {
@@ -715,15 +745,6 @@ class TwitchEventSubController extends Controller
 
             $results[$id] = $this->handleTwitchEvent($data, $id, $timestamp);
         }
-
-        if ($invalid > 0) {
-            Log::warning('Front desk batch held messages that failed verification', [
-                'invalid' => $invalid,
-                'messages' => count($messages),
-            ]);
-        }
-
-        return response()->json(['results' => (object) $results]);
     }
 
     /** Notifications Twitch sent longer ago than this fire no alert. See DeliveryOutcome::Late. */
@@ -751,6 +772,14 @@ class TwitchEventSubController extends Controller
 
     /** @var array<string, User|null> per-request memo: a batch is mostly one broadcaster */
     private array $usersByTwitchId = [];
+
+    private ?FloodGate $floodGate = null;
+
+    /** One gate per request, so a batch's counted events are buffered together. */
+    private function floodGate(): FloodGate
+    {
+        return $this->floodGate ??= app(FloodGate::class);
+    }
 
     private function userByTwitchId(string $twitchId): ?User
     {

@@ -271,3 +271,17 @@ test('a tick refreshes the follower caches and schedules the living title, once'
     Queue::assertPushed(ForgetTwitchCache::class, fn (ForgetTwitchCache $job) => $job->cache === 'channel_followers' && $job->broadcasterId === (string) $user->twitch_id);
     Queue::assertPushed(SyncLivingTitle::class, 1);
 });
+
+test('the same counted follow twice in one batch is counted once', function () {
+    $user = floodUser();
+    floodSend($user, 150); // past the first hundred
+
+    $event = ['broadcaster_user_id' => (string) $user->twitch_id, 'user_id' => '9', 'user_login' => 'twice', 'user_name' => 'Twice'];
+    $results = test()->call('POST', '/api/twitch/webhook/batch', [], [], [], [
+        'CONTENT_TYPE' => 'application/json', 'HTTP_X_FRONT_DESK_SECRET' => FLOOD_DESK_SECRET,
+    ], json_encode(['messages' => [floodMessage('twice-1', 'channel.follow', $event), floodMessage('twice-1', 'channel.follow', $event)]]))->assertOk()->json('results');
+    floodTick();
+
+    expect($results)->toBe(['twice-1' => 'duplicate'])
+        ->and(floodSummary($user)->event_data['flood_count'])->toBe(51);
+});

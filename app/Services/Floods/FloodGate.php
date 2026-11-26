@@ -75,6 +75,17 @@ final class FloodGate
 
     public const string DUPLICATE = 'duplicate';
 
+    private bool $buffering = false;
+
+    /** @var array<string, array{user: User, eventType: string, kind: string, dropped: int, tail: list<array<string, mixed>>}> */
+    private array $pending = [];
+
+    /** @var array<string, int> message keys of counted events, written at flush() */
+    private array $pendingMessages = [];
+
+    /** @var array<string, true> bursts whose `last` was refreshed in this batch */
+    private array $touched = [];
+
     /**
      * At intake, before the row is written. PASS: handle it as always.
      * COUNTED: counted, not stored, not queued. DUPLICATE: a redelivery of an
@@ -88,36 +99,84 @@ final class FloodGate
             return self::PASS;
         }
 
-        if ($messageId !== null && Cache::has(self::messageKey($messageId))) {
+        $messageKey = $messageId !== null ? self::messageKey($messageId) : null;
+        if ($messageKey !== null && (isset($this->pendingMessages[$messageKey]) || Cache::has($messageKey))) {
             return self::DUPLICATE;
         }
 
         $kind = AlertBursts::kindOf($eventType, $event) ?? $eventType;
         $base = self::base($user->id, $kind);
 
-        $open = Cache::has("{$base}:last");
-        Cache::put("{$base}:last", 1, self::KEEP_OPEN_SECONDS);
-        if (! $open) {
-            Cache::put("{$base}:n", 0, self::STATE_TTL_SECONDS);
+        // Once per batch is enough to keep the burst open: a batch takes milliseconds.
+        if (! isset($this->touched[$base])) {
+            $open = Cache::has("{$base}:last");
+            Cache::put("{$base}:last", 1, self::KEEP_OPEN_SECONDS);
+            if (! $open) {
+                Cache::put("{$base}:n", 0, self::STATE_TTL_SECONDS);
+            }
+            $this->touched[$base] = true;
         }
 
+        // Per event, and atomic: up to ten batches decide the first hundred at once.
         if ((int) Cache::increment("{$base}:n") <= self::PASS_THROUGH) {
+            if (! $this->buffering) {
+                $this->touched = [];
+            }
+
             return self::PASS;
         }
 
-        if ($messageId !== null) {
-            Cache::put(self::messageKey($messageId), 1, self::DEDUP_SECONDS);
+        if ($messageKey !== null) {
+            $this->pendingMessages[$messageKey] = 1;
         }
-        Cache::add("{$base}:dropped", 0, self::STATE_TTL_SECONDS);
-        Cache::increment("{$base}:dropped");
-        $this->keep($base, $event);
+        $this->pending[$base] ??= ['user' => $user, 'eventType' => $eventType, 'kind' => $kind, 'dropped' => 0, 'tail' => []];
+        $this->pending[$base]['dropped']++;
+        $this->pending[$base]['tail'][] = $event;
+        if (count($this->pending[$base]['tail']) > self::KEPT) {
+            array_shift($this->pending[$base]['tail']);
+        }
 
-        if (Cache::add("{$base}:tick", 1, 60)) {
-            FloodTick::dispatch($user->id, (string) $user->twitch_id, $eventType, $kind)
-                ->delay(now()->addSeconds(self::TICK_SECONDS));
+        if (! $this->buffering) {
+            $this->flush();
         }
 
         return self::COUNTED;
+    }
+
+    /**
+     * Collect what offer() counts and write it in one go at flush(). The front
+     * desk batch endpoint does this per batch of up to 100: a counted follow
+     * then costs two cache calls instead of eleven and a lock, and the kept
+     * list is written once per batch instead of once per event.
+     */
+    public function buffer(): void
+    {
+        $this->buffering = true;
+    }
+
+    /** Write what offer() counted since buffer() (or the one event, unbuffered). */
+    public function flush(): void
+    {
+        $this->buffering = false;
+        $this->touched = [];
+
+        if ($this->pendingMessages !== []) {
+            Cache::putMany($this->pendingMessages, self::DEDUP_SECONDS);
+        }
+
+        foreach ($this->pending as $base => $p) {
+            Cache::add("{$base}:dropped", 0, self::STATE_TTL_SECONDS);
+            Cache::increment("{$base}:dropped", $p['dropped']);
+            $this->withTail($base, fn (array $tail) => array_slice([...$tail, ...$p['tail']], -self::KEPT));
+
+            if (Cache::add("{$base}:tick", 1, 60)) {
+                FloodTick::dispatch($p['user']->id, (string) $p['user']->twitch_id, $p['eventType'], $p['kind'])
+                    ->delay(now()->addSeconds(self::TICK_SECONDS));
+            }
+        }
+
+        $this->pending = [];
+        $this->pendingMessages = [];
     }
 
     /**
@@ -290,16 +349,6 @@ final class FloodGate
         $data['flood_count'] = max(0, (int) ($data['flood_count'] ?? 0) + $by);
         $data['flood_ended_at'] = now()->toIso8601String();
         $summary->forceFill(['event_data' => $data])->save();
-    }
-
-    /** @param  array<string, mixed>  $event */
-    private function keep(string $base, array $event): void
-    {
-        $this->withTail($base, function (array $tail) use ($event) {
-            $tail[] = $event;
-
-            return array_slice($tail, -self::KEPT);
-        });
     }
 
     /** @return array<string, mixed>|null */
