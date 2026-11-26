@@ -466,9 +466,21 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   small enough to keep whole deletes its summary. **Any query that counts `twitch_events` rows must
   add `COALESCE((event_data->>'flood_count')::int, 1)`** - stream session stats and the dashboard's
   moments already do.
-- A counted event leaves no row, so its message id is remembered in the cache (`DEDUP_SECONDS`)
-  against Twitch redelivery. The counts live in the cache store too (evictable; losing a key costs
-  part of a count, nothing else).
+- **Every follow and redemption claims its message id on arrival** (`Cache::add`, atomic,
+  `DEDUP_SECONDS`), not only counted ones. Cloudflare Queues delivers at least once: a copy of one
+  of the first hundred arriving after the hundred was counted on top of its row (+45/+53 on 55k
+  runs) until 28620d29. A passed event whose row fails to store `release()`s the claim, so the
+  front desk's retry still lands. Do not narrow the claim back to counted events, and do not move
+  it to `flush()` (c6d6e548: a message in two batches at once counted twice).
+- The batch endpoint buffers (`buffer()` / `flush()` in a `finally`): per counted event two cache
+  calls, per batch one write of the count, the kept list and the tick (43841351). The counts live
+  in the cache store (evictable; losing a key costs part of a count, nothing else).
+- **Verify any change here by reconciling a flood**: the follows the database accounts for (sum of
+  `flood_count`, else 1) must equal the 200s the sender got. That check found both holes above.
+- The front desk Worker waits at most `MAX_SEND_WAIT_MS` (2 s) for the queue write before
+  answering (0d07d695): after ~25 quiet minutes the queue takes up to ~20 s per write for the
+  first ~19 s of a burst, measured with the `X-Front-Desk-Send-Ms` header. A write still running
+  finishes in `waitUntil`; a late failure goes to Laravel in the background.
 
 ### Donation integration controllers (consolidated Aug 2026)
 
