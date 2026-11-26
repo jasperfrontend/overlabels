@@ -4,7 +4,9 @@ use App\Enums\DeliveryOutcome;
 use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
 use App\Jobs\FloodTick;
+use App\Jobs\ForgetTwitchCache;
 use App\Jobs\ProcessTwitchEvent;
+use App\Jobs\SyncLivingTitle;
 use App\Models\EventTemplateMapping;
 use App\Models\OptionSet;
 use App\Models\OverlayControl;
@@ -252,4 +254,20 @@ test('the formatter writes a summary row as one number', function () {
     expect($f->format('twitch', 'channel.follow', ['flood_count' => 5400], null))->toBe('+5,400 more follows')
         ->and($f->format('twitch', 'channel.channel_points_custom_reward_redemption.add', ['flood_count' => 12, 'reward' => ['title' => 'Hydrate']], null))
         ->toBe('+12 more redemptions: Hydrate');
+});
+
+test('a tick refreshes the follower caches and schedules the living title, once', function () {
+    Queue::fake([ProcessTwitchEvent::class, FloodTick::class, ForgetTwitchCache::class, SyncLivingTitle::class]);
+    $user = floodUser();
+    $user->forceFill(['preferences' => ['living_title' => ['enabled' => true, 'template' => '[[[followers_total]]] followers']]])->save();
+
+    floodSend($user, 300);
+    // The 100 passed-through follows never ran (ProcessTwitchEvent is faked), so only the tick acts.
+    // Run by hand: floodTick() re-fakes the queue and would drop the two fakes above.
+    foreach (Queue::pushed(FloodTick::class) as $job) {
+        app()->call([$job, 'handle']);
+    }
+
+    Queue::assertPushed(ForgetTwitchCache::class, fn (ForgetTwitchCache $job) => $job->cache === 'channel_followers' && $job->broadcasterId === (string) $user->twitch_id);
+    Queue::assertPushed(SyncLivingTitle::class, 1);
 });

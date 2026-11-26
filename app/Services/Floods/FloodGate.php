@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Alerts\AlertBursts;
 use App\Services\EventMeter;
 use App\Services\Lists\EventFeedService;
+use App\Services\LivingTitleService;
 use App\Services\StreamSessionService;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
@@ -163,6 +164,12 @@ final class FloodGate
 
         app(EventMeter::class)->record($user->id, $n);
         app(StreamSessionService::class)->handleEvent($user, $eventType, [], $n);
+
+        // Once per tick what processStoredEvent() does per event for the ones it
+        // handles: the follower/goal cache refresh and the living title. Both
+        // are rate-limited on their own (Jasper, 2026-11-26; OL-2611-039 F1).
+        app(TwitchEventSubController::class)->refreshCachesForEvent($eventType, (string) $user->twitch_id);
+        app(LivingTitleService::class)->schedule($user);
 
         // Its own message_id: the overlay drops an event whose id it has seen,
         // and without one a follow's id is built from its followed_at, so two

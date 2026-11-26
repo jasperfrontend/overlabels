@@ -458,7 +458,9 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   counter (`StreamSessionService::handleEvent(..., $times)`), `EventMeter`, ONE overlay broadcast
   carrying `flood_count` (the overlay's `followers_total` rule reads it via `byPath`; the payload is
   the newest kept event, so `user_*` is the latest follower) with its own `message_id` (the store
-  drops repeated ids), and `AlertBursts::grow()` so a long burst still re-announces as it doubles.
+  drops repeated ids), `AlertBursts::grow()` so a long burst still re-announces as it doubles, and
+  once per tick the follower/goal cache refresh and `LivingTitleService::schedule()` that
+  `processStoredEvent()` does per event (both rate-limited on their own; OL-2611-040).
 - ONE summary row per flood: `outcome = flood_counted`, `event_data.flood_count`. When the flood ends
   the kept events become `burst_absorbed` rows and the summary keeps the rest ("+5,400 more"); a flood
   small enough to keep whole deletes its summary. **Any query that counts `twitch_events` rows must

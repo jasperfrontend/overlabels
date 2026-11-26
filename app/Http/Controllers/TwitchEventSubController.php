@@ -455,9 +455,10 @@ class TwitchEventSubController extends Controller
     }
 
     /**
-     * Refresh relevant caches based on the event type
+     * Refresh relevant caches based on the event type. Public for FloodGate,
+     * whose counted events never pass through processStoredEvent() (#346).
      */
-    private function refreshCachesForEvent(string $eventType, ?string $broadcasterId): void
+    public function refreshCachesForEvent(string $eventType, ?string $broadcasterId): void
     {
         if (! $broadcasterId) {
             return;
