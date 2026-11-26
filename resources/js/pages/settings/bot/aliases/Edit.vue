@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import SettingSwitch from '@/components/SettingSwitch.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
@@ -234,14 +235,14 @@ const previewExample = computed(() => {
           <!-- Toggles -->
           <div class="space-y-3">
             <label class="flex cursor-pointer items-start gap-3">
-              <input type="checkbox" v-model="form.enabled" class="mt-1 size-4 cursor-pointer" />
+              <SettingSwitch v-model="form.enabled" class="mt-0.5" />
               <div>
                 <p class="text-sm font-medium">Enabled</p>
                 <p class="text-xs text-foreground/60">Disabled aliases stay in your library but don't fire.</p>
               </div>
             </label>
             <label class="flex cursor-pointer items-start gap-3">
-              <input type="checkbox" v-model="form.hidden" class="mt-1 size-4 cursor-pointer" />
+              <SettingSwitch v-model="form.hidden" class="mt-0.5" />
               <div>
                 <p class="text-sm font-medium">Hide from <code>!commands</code> listing</p>
                 <p class="text-xs text-foreground/60">When the bot exposes a <code>!commands</code> meta-command, this alias won't be listed.</p>

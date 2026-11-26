@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import SettingSwitch from '@/components/SettingSwitch.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -254,7 +255,7 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
                 <span v-if="previewLoading" class="text-foreground/40 normal-case italic">resolving...</span>
               </div>
               <label class="flex cursor-pointer items-center gap-2 text-xs text-foreground/70">
-                <input type="checkbox" v-model="livePreview" class="size-3.5 cursor-pointer" />
+                <SettingSwitch v-model="livePreview" />
                 Live preview
               </label>
             </div>
@@ -403,14 +404,14 @@ const startsWithSlash = computed(() => (form.reply ?? '').trimStart().startsWith
           <!-- Toggles -->
           <div class="space-y-3">
             <label class="flex cursor-pointer items-start gap-3">
-              <input type="checkbox" v-model="form.enabled" class="mt-1 size-4 cursor-pointer" />
+              <SettingSwitch v-model="form.enabled" class="mt-0.5" />
               <div>
                 <p class="text-sm font-medium">Enabled</p>
                 <p class="text-xs text-foreground/60">Disabled commands stay in your library but don't fire.</p>
               </div>
             </label>
             <label class="flex cursor-pointer items-start gap-3">
-              <input type="checkbox" v-model="form.hidden" class="mt-1 size-4 cursor-pointer" />
+              <SettingSwitch v-model="form.hidden" class="mt-0.5" />
               <div>
                 <p class="text-sm font-medium">Hide from <code>!commands</code> listing</p>
                 <p class="text-xs text-foreground/60">

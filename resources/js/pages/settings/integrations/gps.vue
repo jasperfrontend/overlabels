@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import SettingSwitch from '@/components/SettingSwitch.vue';
 import { Head, useForm, Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import QRCode from 'qrcode';
@@ -283,7 +284,7 @@ function formatDate(iso: string | null): string {
                   Share your live GPS location on a public map page. Anyone with the link can see where you are while tracking is active.
                 </p>
                 <label class="flex cursor-pointer items-center gap-2">
-                  <input id="map_sharing_enabled" v-model="form.map_sharing_enabled" type="checkbox" class="rounded border-sidebar" />
+                  <SettingSwitch id="map_sharing_enabled" v-model="form.map_sharing_enabled" />
                   <span class="text-sm text-foreground">Enable public map</span>
                 </label>
               </div>

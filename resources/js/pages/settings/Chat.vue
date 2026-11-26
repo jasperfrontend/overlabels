@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import SettingSwitch from '@/components/SettingSwitch.vue';
 import { Label } from '@/components/ui/label';
 import { type BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -104,7 +105,7 @@ function save() {
 
         <div class="space-y-3">
           <label class="flex cursor-pointer items-start gap-3">
-            <input v-model="hideCommands" type="checkbox" class="mt-1 size-4 cursor-pointer" />
+            <SettingSwitch v-model="hideCommands" class="mt-0.5" />
             <span class="text-sm">
               <span class="font-medium">Hide messages starting with <code class="font-mono">!</code></span>
               <span class="block text-muted-foreground">
@@ -136,7 +137,7 @@ function save() {
              the overlay, the streamer's choice to allow it. -->
         <div id="redacted-messages" class="scroll-mt-24 space-y-3">
           <label class="flex cursor-pointer items-start gap-3">
-            <input v-model="redactEnabled" type="checkbox" class="mt-1 size-4 cursor-pointer" />
+            <SettingSwitch v-model="redactEnabled" class="mt-0.5" />
             <span class="text-sm">
               <span class="font-medium">Let chatters hide a message</span>
               <span class="block text-muted-foreground">
