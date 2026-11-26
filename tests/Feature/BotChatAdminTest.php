@@ -5,6 +5,7 @@ use App\Models\BotAlias;
 use App\Models\BotChatOutbox;
 use App\Models\BotCommand;
 use App\Models\User;
+use App\Services\OverloadReports\BusyStretch;
 use App\Services\TwitchScopeService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Queue;
@@ -552,4 +553,31 @@ it('returns channel_not_found for an unknown login', function () {
 it('refuses requests without the internal secret header', function () {
     test()->postJson('/api/internal/bot/manage', managePayload())
         ->assertStatus(403);
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// report: the Overlabels Overload Report opt-out (#345)
+// ──────────────────────────────────────────────────────────────────────────────
+
+it('!ol report stop switches Overload Reports off and says how to get them back', function () {
+    $user = adminUser();
+    expect(BusyStretch::settings($user)['enabled'])->toBeTrue();
+
+    postManage(managePayload(['subject' => 'report', 'action' => 'stop']))
+        ->assertOk()
+        ->assertJsonPath('reply', 'Overload Reports are off - switch them back on at overlabels.com/settings/overload-report');
+
+    expect(BusyStretch::settings($user->fresh())['enabled'])->toBeFalse();
+
+    postManage(managePayload(['subject' => 'report', 'action' => 'stop']))
+        ->assertJsonPath('reply', 'Overload Reports are already off - switch them back on at overlabels.com/settings/overload-report');
+});
+
+it('!ol report with another verb answers with the one it knows, and changes nothing', function () {
+    $user = adminUser();
+
+    postManage(managePayload(['subject' => 'report', 'action' => 'start']))
+        ->assertJsonPath('reply', 'do you mean !ol report stop');
+
+    expect(BusyStretch::settings($user->fresh())['enabled'])->toBeTrue();
 });

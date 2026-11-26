@@ -1,5 +1,26 @@
 # Changelog - November 2026
 
+## OL-2611-041 - November 26th, 2026 - feat(reports): the Overlabels Overload Report
+
+When a stream gets busy, not every event can have its own alert. The Overload Report is where the
+whole picture lives afterwards: a public page with everything that happened, in order (issue #345).
+
+- **A busy stretch makes a report.** While you are live, a stretch of follows, subs, gift subs, bits,
+  raids and hype trains that reaches 50 events, and then goes quiet for a minute, becomes a report.
+  A gift bomb of 10 counts as 10, and so does every follow of a flood.
+- **A timeline, numbers and times only.** "Follows! 412 new followers." "Gift subs! 10x Tier 1 gift sub
+  received." "Raid! 1,544 viewers." Never a viewer's name, id or message.
+- **A short public link, kept 90 days.** `overlabels.com/report/<your id>/<8 digits>`, hidden from
+  search engines, with a PDF download (times in the reader's own clock) and a Markdown download. The
+  page says when it expires.
+- **On your dashboard, and in chat if the bot is a moderator.** The bot posts one line with the link,
+  "Overlabels Overload Report: 34 new subs and 412 follows in 3 minutes", only where it is a mod.
+- **On for everyone, off with one command.** A moderator types `!ol report stop` and reports are off;
+  the settings page switches them back on. Every chat line says so.
+- **Your settings, at /settings/overload-report,** all switches: on or off, how many events make a report, how long
+  the quiet spell is, which events count (channel points and charity are off until you tick them),
+  and a test mode that also makes reports while offline for an hour.
+
 ## OL-2611-038 - November 26th, 2026 - feat(eventsub): floods become numbers - the last hundred kept, the rest counted
 
 Jasper's principle for big floods: big data turns into a big number, and the payload is discarded.

@@ -12,11 +12,14 @@ use App\Services\Alerts\AlertBursts;
 use App\Services\EventMeter;
 use App\Services\Lists\EventFeedService;
 use App\Services\LivingTitleService;
+use App\Services\OverloadReports\BusyStretch;
 use App\Services\StreamSessionService;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 /**
  * Floods become numbers (#346, Jasper 2026-11-26): "big data turns into a big
@@ -230,6 +233,13 @@ final class FloodGate
         // are rate-limited on their own (Jasper, 2026-11-26; OL-2611-039 F1).
         app(TwitchEventSubController::class)->refreshCachesForEvent($eventType, (string) $user->twitch_id);
         app(LivingTitleService::class)->schedule($user);
+
+        // The counted events still count toward an Overload Report (#345).
+        try {
+            app(BusyStretch::class)->note($user, $eventType, $latest, $n);
+        } catch (Throwable $e) {
+            Log::warning("Overload Report stretch skipped a flood tick: {$e->getMessage()}");
+        }
 
         // Its own message_id: the overlay drops an event whose id it has seen,
         // and without one a follow's id is built from its followed_at, so two

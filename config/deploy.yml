@@ -388,6 +388,11 @@ env:
     - SCW_ACCESS_KEY
     - SCW_SECRET_KEY
     - BACKUP_ALERT_WEBHOOK_URL
+    # Gotenberg, the PDF printer behind the Overload Report's "Download as
+    # PDF" (#345). The URL is a secret too: the instance is private.
+    - BR_GOTENBERG_URL
+    - GOTENBERG_API_BASIC_AUTH_USERNAME
+    - GOTENBERG_API_BASIC_AUTH_PASSWORD
     # Healthchecks.io dead-man's switch for the daily backup. A capability
     # URL - anyone holding it can fake a successful ping - so it lives here
     # rather than in env.clear.

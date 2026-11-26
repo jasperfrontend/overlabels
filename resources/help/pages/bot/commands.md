@@ -127,6 +127,7 @@ chat-side typos too (reserved names, self-looping aliases, bad placeholder synta
 | `!ol title show` | Mod+ | Print the title template, whether it is on, paused or off, and what was last written to Twitch. |
 | `!ol title resume` | Mod+ | Take over again after the title was changed on Twitch by hand. |
 | `!ol title off` | Mod+ | Stop updating the title. Whatever is on Twitch stays. |
+| `!ol report stop` | Mod+ | Switch Overload Reports off: no more report pages and no more report links in chat. Switch them back on at /settings/overload-report. |
 | `!ol list [cmd\|alias]` | Mod+ | Print every command and alias you have. Optional filter. |
 | `!ol help [cmd\|alias\|options\|title]` | Mod+ | Print a usage line for `!ol` or one of its subverbs. |
 

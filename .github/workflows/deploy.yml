@@ -115,6 +115,9 @@ jobs:
           PADDLE_API_KEY: ${{ secrets.PADDLE_API_KEY }}
           PADDLE_CLIENT_TOKEN: ${{ secrets.PADDLE_CLIENT_TOKEN }}
           PADDLE_WEBHOOK_SECRET: ${{ secrets.PADDLE_WEBHOOK_SECRET }}
+          BR_GOTENBERG_URL: ${{ secrets.BR_GOTENBERG_URL }}
+          GOTENBERG_API_BASIC_AUTH_USERNAME: ${{ secrets.GOTENBERG_API_BASIC_AUTH_USERNAME }}
+          GOTENBERG_API_BASIC_AUTH_PASSWORD: ${{ secrets.GOTENBERG_API_BASIC_AUTH_PASSWORD }}
           APP_COMMIT_SHA: ${{ github.sha }}
         run: |
           mkdir -p ~/.ssh
@@ -142,7 +145,7 @@ jobs:
                      SCW_ACCESS_KEY SCW_SECRET_KEY \
                      BACKUP_ALERT_WEBHOOK_URL HC_PING_URL HC_EVENTSUB_MONITOR_PING_URL \
                      FRONT_DESK_SECRET \
-                     PADDLE_ENVIRONMENT PADDLE_API_KEY PADDLE_CLIENT_TOKEN PADDLE_WEBHOOK_SECRET; do
+                     PADDLE_ENVIRONMENT PADDLE_API_KEY PADDLE_CLIENT_TOKEN PADDLE_WEBHOOK_SECRET \n                     BR_GOTENBERG_URL GOTENBERG_API_BASIC_AUTH_USERNAME GOTENBERG_API_BASIC_AUTH_PASSWORD; do
               printf '%s=%q\n' "$v" "${!v}"
             done
           } > .kamal/secrets

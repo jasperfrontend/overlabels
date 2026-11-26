@@ -30,6 +30,14 @@ type NextUp =
   | { kind: 'finish'; slug: string; name: string; hero: string | null; remaining: number; todo: string | null; href: string }
   | { kind: 'try'; slug: string; name: string; hero: string | null; description: string; href: string };
 
+/** An Overlabels Overload Report (#345); see DashboardController::overloadReports(). */
+interface OverloadReportCard {
+  url: string;
+  started_at: string;
+  summary: string;
+  expires_at: string;
+}
+
 interface LastStream {
   started_at: string;
   ended_at: string | null;
@@ -48,6 +56,7 @@ const props = defineProps<{
   showWelcomeDialog: boolean;
   lastStream: LastStream | null;
   recentEvents: UnifiedEvent[];
+  overloadReports: OverloadReportCard[];
   whatsNew: WhatsNew;
   /** The five newest published posts from /updates. */
   latestUpdates: Pick<Update, 'id' | 'slug' | 'title' | 'excerpt' | 'tags' | 'published_at'>[];
@@ -331,6 +340,36 @@ const breadcrumbs = [{ title: 'Dashboard', href: '/dashboard' }];
             <EventsTable v-if="props.recentEvents.length > 0" :events="props.recentEvents" />
             <p v-else class="text-sm text-foreground">Quiet so far. Follows, subs, raids and donations land here the moment they happen.</p>
           </div>
+        </section>
+
+        <!-- 4b. Overload Reports: only once there is one. -->
+        <section
+          v-if="props.overloadReports.length > 0"
+          class="rise flex flex-col gap-4 border border-border p-6"
+          style="--d: 290ms"
+          aria-labelledby="overload-heading"
+        >
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="overload-heading" class="text-sm font-semibold tracking-widest text-muted-foreground uppercase">Overload Reports</h2>
+            <Link
+              :href="route('settings.overload-report')"
+              class="inline-flex items-center gap-1 text-sm font-medium text-[#0A78BE] hover:underline dark:text-[#1DAAFF]"
+            >
+              Report settings
+              <ArrowRight class="size-3.5" />
+            </Link>
+          </div>
+          <ul class="flex flex-col gap-3">
+            <li v-for="report in props.overloadReports" :key="report.url" class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <a :href="report.url" target="_blank" rel="noopener" class="text-sm font-medium text-foreground hover:underline">
+                {{ report.summary.charAt(0).toUpperCase() + report.summary.slice(1) }}
+              </a>
+              <span class="text-xs text-muted-foreground">
+                {{ relativeDay(report.started_at) }}, kept until
+                {{ new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric' }).format(new Date(report.expires_at)) }}
+              </span>
+            </li>
+          </ul>
         </section>
 
         <!-- 5. The last five posts from /updates, in the /updates list design. -->

@@ -29,6 +29,7 @@ use App\Services\Lists\EventFeedService;
 use App\Services\LivingTitleService;
 use App\Services\LockdownService;
 use App\Services\Messages\AlertMessageRenderer;
+use App\Services\OverloadReports\BusyStretch;
 use App\Services\StreamSessionService;
 use App\Services\StreamStateMachineService;
 use App\Services\TemplateDataMapperService;
@@ -954,6 +955,16 @@ class TwitchEventSubController extends Controller
                     $received->markFeedHandled();
                 }
                 broadcast($received);
+            }
+
+            // The busy stretch behind an Overload Report (#345). Last, and on
+            // its own: nothing above may wait on or fail because of it.
+            if ($user) {
+                try {
+                    app(BusyStretch::class)->note($user, $eventType, $event, 1, $twitchEvent->created_at);
+                } catch (Throwable $e) {
+                    Log::warning("Overload Report stretch skipped an event: {$e->getMessage()}", ['event_type' => $eventType]);
+                }
             }
 
         } catch (Exception $e) {

@@ -22,6 +22,7 @@ use App\Http\Controllers\OverlayAccessTokenController;
 use App\Http\Controllers\OverlayControlController;
 use App\Http\Controllers\OverlayReportController;
 use App\Http\Controllers\OverlayTemplateController;
+use App\Http\Controllers\OverloadReportController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipeInstanceController;
@@ -865,6 +866,23 @@ Route::middleware('auth.redirect')->group(function () {
 // Sqids-encoded Twitch ID so the numeric ID never appears in the URL.
 Route::get('/map/{slug}', [MapController::class, 'live'])->name('map.live');
 Route::get('/map/{slug}/{sessionId}', [MapController::class, 'session'])->name('map.session');
+
+// Public Overlabels Overload Reports (#345). The streamer part is the same
+// slug as the map; the 8 random digits make the link unguessable. Not the
+// abuse report on an overlay (reports.store).
+Route::middleware('throttle:60,1')->group(function () {
+    // A Chromium render on the printer per request: a tighter limit.
+    Route::get('/report/{slug}/{code}.pdf', [OverloadReportController::class, 'pdf'])
+        ->where(['slug' => '[A-Za-z0-9]+', 'code' => '[0-9]{8}'])
+        ->middleware('throttle:6,1')
+        ->name('overload-report.pdf');
+    Route::get('/report/{slug}/{code}.md', [OverloadReportController::class, 'markdown'])
+        ->where(['slug' => '[A-Za-z0-9]+', 'code' => '[0-9]{8}'])
+        ->name('overload-report.markdown');
+    Route::get('/report/{slug}/{code}', [OverloadReportController::class, 'show'])
+        ->where(['slug' => '[A-Za-z0-9]+', 'code' => '[0-9]{8}'])
+        ->name('overload-report.show');
+});
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

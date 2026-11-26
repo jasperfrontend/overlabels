@@ -3,6 +3,7 @@
 use App\Enums\DeliveryOutcome;
 use App\Events\AlertTriggered;
 use App\Events\TwitchEventReceived;
+use App\Jobs\CloseBusyStretch;
 use App\Jobs\FloodTick;
 use App\Jobs\ForgetTwitchCache;
 use App\Jobs\ProcessTwitchEvent;
@@ -17,6 +18,7 @@ use App\Models\User;
 use App\Services\Alerts\AlertBursts;
 use App\Services\Floods\FloodGate;
 use App\Services\Lists\RecentEventFormatter;
+use App\Services\OverloadReports\BusyStretch;
 use App\Services\TwitchApiService;
 use App\Support\ListItems;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -324,4 +326,18 @@ test('a first-hundred event whose row could not be stored can be redelivered', f
     app(FloodGate::class)->release('retry-me');
 
     expect(app(FloodGate::class)->offer($user, 'channel.follow', ['user_name' => 'X'], 'retry-me'))->toBe(FloodGate::PASS);
+});
+
+test('the counted events of a flood count toward an Overload Report (#345)', function () {
+    Queue::fake([ProcessTwitchEvent::class, FloodTick::class, CloseBusyStretch::class]);
+    $user = floodUser();
+    StreamState::forUser($user)->forceFill(['state' => 'live', 'confidence' => 1.0])->save();
+
+    floodSend($user, 160);
+    floodTick();
+
+    // The first hundred are the lane's (faked here); the tick brought the rest.
+    test()->travel(61)->seconds();
+    $report = app(BusyStretch::class)->close($user);
+    expect($report?->event_count)->toBe(60);
 });

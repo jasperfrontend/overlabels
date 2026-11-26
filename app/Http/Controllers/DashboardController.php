@@ -6,12 +6,14 @@ use App\Models\EventTemplateMapping;
 use App\Models\ExternalEvent;
 use App\Models\OptionSet;
 use App\Models\OverlayTemplate;
+use App\Models\OverloadReport;
 use App\Models\RecipeInstance;
 use App\Models\StreamSession;
 use App\Models\TwitchEvent;
 use App\Models\Update;
 use App\Models\User;
 use App\Services\AlertMuteService;
+use App\Services\OverloadReports\ReportKinds;
 use App\Services\Recipes\RecipeCatalog;
 use App\Services\UnifiedEventFeedService;
 use App\Support\ProductSetup;
@@ -45,6 +47,7 @@ class DashboardController extends Controller
             'showWelcomeDialog' => fn () => $isNewUser && $this->claimWelcomeDialog($user),
             'lastStream' => $this->lastStream($user->id),
             'recentEvents' => $this->mergeRecentEvents($user->id, 5),
+            'overloadReports' => $this->overloadReports($user),
             'whatsNew' => WhatsNewController::props($user),
             // The newest posts from /updates, seen or not - unlike whatsNew,
             // which only holds what this account has not cleared yet.
@@ -54,6 +57,28 @@ class DashboardController extends Controller
                 ->limit(5)
                 ->get(['id', 'slug', 'title', 'excerpt', 'tags', 'published_at']),
         ]);
+    }
+
+    /**
+     * The streamer's newest Overload Reports (#345), still within their 90
+     * days. The section shows only when there is one.
+     *
+     * @return list<array{url: string, started_at: string, summary: string, expires_at: string}>
+     */
+    private function overloadReports(User $user): array
+    {
+        return OverloadReport::kept()
+            ->where('user_id', $user->id)
+            ->latest('started_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (OverloadReport $report) => [
+                'url' => $report->setRelation('user', $user)->url(),
+                'started_at' => $report->started_at->toIso8601String(),
+                'summary' => ReportKinds::summary($report->totals, (int) $report->started_at->diffInSeconds($report->ended_at)),
+                'expires_at' => $report->expiresAt()->toIso8601String(),
+            ])
+            ->all();
     }
 
     /**

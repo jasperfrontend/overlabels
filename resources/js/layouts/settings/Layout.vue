@@ -18,6 +18,7 @@ const sidebarNavGroups: NavGroup[] = [
       { title: 'Account', href: '/settings/account' },
       { title: 'Chat', href: '/settings/chat' },
       { title: 'Stream title', href: '/settings/title' },
+      { title: 'Overload Report', href: '/settings/overload-report' },
       { title: 'Integrations', href: '/settings/integrations' },
       { title: 'Bot commands', href: '/settings/bot/commands' },
       { title: 'Bot aliases', href: '/settings/bot/aliases' },

@@ -10,6 +10,7 @@ use App\Models\ListAppendHistory;
 use App\Models\ListSnapshot;
 use App\Models\OverlayAccessLog;
 use App\Models\OverlayReport;
+use App\Models\OverloadReport;
 use App\Models\StreamState;
 use App\Models\TwitchEvent;
 use App\Models\User;
@@ -216,6 +217,10 @@ Schedule::call(fn () => OverlayReport::where('status', OverlayReport::STATUS_REA
     ->where('reviewed_at', '<', now()->subDays(180))
     ->delete()
 )->daily()->name('prune:overlay-reports')->withoutOverlapping();
+
+// Overlabels Overload Reports are kept 90 days, and the page says so (#345).
+Schedule::call(fn () => OverloadReport::where('created_at', '<', now()->subDays(OverloadReport::KEEP_DAYS))->delete())
+    ->daily()->name('prune:overload-reports')->withoutOverlapping();
 
 // Auto-prune check-in pins after 90 days of not being touched. This table had
 // no sweep at all: a viewer who typed !checkin once had their self-declared

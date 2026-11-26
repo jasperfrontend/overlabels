@@ -14,6 +14,7 @@ use App\Http\Controllers\Settings\GpsIntegrationController;
 use App\Http\Controllers\Settings\IntegrationController;
 use App\Http\Controllers\Settings\KofiIntegrationController;
 use App\Http\Controllers\Settings\LivingTitleController;
+use App\Http\Controllers\Settings\OverloadReportSettingsController;
 use App\Http\Controllers\Settings\PlinkoSettingsController;
 use App\Http\Controllers\Settings\StreamLabsIntegrationController;
 use App\Http\Controllers\Settings\ThroneIntegrationController;
@@ -118,6 +119,10 @@ Route::middleware('auth.redirect')->group(function () {
 
         return back()->with('success', 'Chat display settings saved. Reload your overlay in OBS to apply them.');
     })->name('settings.chat.update');
+
+    // Overlabels Overload Report (#345): when a busy stretch becomes a report.
+    Route::get('/settings/overload-report', [OverloadReportSettingsController::class, 'show'])->name('settings.overload-report');
+    Route::patch('/settings/overload-report', [OverloadReportSettingsController::class, 'update'])->name('settings.overload-report.update');
 
     // The living Twitch title: a tag template kept true on Twitch, plus the
     // one-shot category picker. Everything that writes to Twitch goes through

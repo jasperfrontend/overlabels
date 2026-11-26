@@ -7,6 +7,7 @@ use App\Models\BotBuiltin;
 use App\Models\BotCommand;
 use App\Models\User;
 use App\Services\LivingTitleService;
+use App\Services\OverloadReports\BusyStretch;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -73,9 +74,12 @@ readonly class BotChatAdminService
             'title:show' => $this->titleShow($owner),
             'title:resume' => $this->titleResume($owner),
             'title:off' => $this->titleOff($owner),
-            default => $subject === 'title'
-                ? 'do you mean !ol title [set, show, resume, off]'
-                : 'unknown !ol command - try !ol help',
+            'report:stop' => $this->reportStop($owner),
+            default => match ($subject) {
+                'title' => 'do you mean !ol title [set, show, resume, off]',
+                'report' => 'do you mean !ol report stop',
+                default => 'unknown !ol command - try !ol help',
+            },
         };
     }
 
@@ -181,6 +185,25 @@ readonly class BotChatAdminService
         ]);
 
         return 'title updates off - the title stays as it is on Twitch';
+    }
+
+    // ------- report (the Overlabels Overload Report) -------
+
+    /**
+     * `!ol report stop` switches Overload Reports off, exactly as the
+     * settings page's switch would (#345). The one opt-out from chat: the way
+     * back is the settings page, so chat cannot flip it on and off.
+     */
+    private function reportStop(User $owner): string
+    {
+        if (! BusyStretch::settings($owner)['enabled']) {
+            return 'Overload Reports are already off - switch them back on at overlabels.com/settings/overload-report';
+        }
+
+        $owner->setPreference('overload_report.enabled', false)->save();
+        BusyStretch::forget($owner->id);
+
+        return 'Overload Reports are off - switch them back on at overlabels.com/settings/overload-report';
     }
 
     // ------- cmd (Bot Commands) -------
@@ -436,7 +459,8 @@ readonly class BotChatAdminService
             'options' => 'options: cooldown <secs> | permission everyone|sub|vip|mod|broadcaster | enabled true|false | hidden true|false | destroy <hours> (0 cancels, cmd only)',
             'tags' => 'random: [[[rand:0-69]]] (two whole numbers, low to high). counting: [[[counter:wins]]] adds 1 each time the command runs and shows the total - use [[[c:wins]]] to show it without adding.',
             'title' => '!ol title set <text> keeps your Twitch title true to a template, tags included. !ol title show | resume | off. example: !ol title set Road to 2K | [[[followers_total]]] followers',
-            default => '!ol cmd <add|edit|delete|options> ; !ol alias <add|edit|delete|options> ; !ol title <set|show|resume|off> ; !ol list ; !ol help <cmd|alias|options|tags|title>',
+            'report' => '!ol report stop switches Overload Reports off. Switch them back on at overlabels.com/settings/overload-report',
+            default => '!ol cmd <add|edit|delete|options> ; !ol alias <add|edit|delete|options> ; !ol title <set|show|resume|off> ; !ol report stop ; !ol list ; !ol help <cmd|alias|options|tags|title|report>',
         };
     }
 

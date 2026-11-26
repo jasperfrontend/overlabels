@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="/favicon.png" sizes="any">
+    <title>Overload Report - {{ $streamerName }} - Overlabels</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #0f172a;
+            --muted: #475569;
+            --line: #cbd5e1;
+            --accent: #0A78BE;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0b0f17;
+                --fg: #e2e8f0;
+                --muted: #94a3b8;
+                --line: #334155;
+                --accent: #1DAAFF;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--fg);
+            font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+        main { max-width: 42rem; margin: 0 auto; padding: 2.5rem 1rem 3rem; }
+        .brand { font-size: .75rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0; }
+        h1 { font-size: 1.75rem; line-height: 1.2; margin: .25rem 0 .5rem; }
+        .when { color: var(--muted); margin: 0 0 1rem; }
+        .intro { margin: 0 0 2rem; }
+        ol.timeline { list-style: none; margin: 0; padding: 0; }
+        ol.timeline li { position: relative; padding: 0 0 1.5rem 1.75rem; break-inside: avoid; }
+        ol.timeline li::before {
+            content: ""; position: absolute; left: .3rem; top: .35rem; width: .75rem; height: .75rem;
+            border-radius: 50%; background: var(--accent);
+        }
+        ol.timeline li::after {
+            content: ""; position: absolute; left: .62rem; top: 1.1rem; bottom: -.35rem; width: 2px; background: var(--line);
+        }
+        ol.timeline li:last-child::after { display: none; }
+        .stamp { display: block; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .title { font-weight: 700; }
+        footer { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+        .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .75rem; }
+        .actions a, .actions button {
+            font: inherit; color: var(--accent); background: none; border: 1px solid var(--line);
+            padding: .4rem .8rem; cursor: pointer; text-decoration: none;
+        }
+        .actions a:hover, .actions button:hover { border-color: var(--accent); }
+        footer a.home { color: var(--accent); }
+        @media print {
+            :root { --bg: #ffffff; --fg: #000000; --muted: #333333; --line: #999999; --accent: #000000; }
+            main { padding: 0; max-width: none; }
+            .actions { display: none; }
+        }
+    </style>
+</head>
+@php
+    // $tz set = the print copy (Gotenberg): times written in the reader's
+    // zone, no buttons, no script. Otherwise UTC, localised by the script.
+    $zone = $tz ?? 'UTC';
+    $clock = fn ($at) => $at->copy()->setTimezone($zone)->format('H:i').($tz === null ? ' UTC' : '');
+@endphp
+<body>
+<main>
+    <p class="brand">Overlabels Overload Report</p>
+    <h1>{{ $streamerName }}</h1>
+    <p class="when">
+        {{ $report->started_at->copy()->setTimezone($zone)->format('F jS, Y') }},
+        <time datetime="{{ $report->started_at->toIso8601String() }}" data-local>{{ $clock($report->started_at) }}</time>
+        to
+        <time datetime="{{ $report->ended_at->toIso8601String() }}" data-local>{{ $clock($report->ended_at) }}</time>
+        @if ($tz !== null)
+            ({{ $tz }})
+        @endif
+    </p>
+    <p class="intro">{{ \App\Http\Controllers\OverloadReportController::intro($streamerName) }}</p>
+
+    <ol class="timeline">
+        @foreach ($dots as $dot)
+            <li>
+                <span class="stamp">
+                    <time datetime="{{ $dot['first']->toIso8601String() }}" data-local>{{ $clock($dot['first']) }}</time>
+                    @if ($dot['last']->format('H:i') !== $dot['first']->format('H:i'))
+                        - <time datetime="{{ $dot['last']->toIso8601String() }}" data-local>{{ $clock($dot['last']) }}</time>
+                    @endif
+                </span>
+                <span class="title">{{ $dot['title'] }}</span> {{ $dot['line'] }}
+            </li>
+        @endforeach
+    </ol>
+
+    <footer>
+        This report is kept until {{ $report->expiresAt()->utc()->format('F jS, Y') }}.@if ($tz === null) Keep your own copy:@endif
+        @if ($tz === null)
+            <div class="actions">
+                @if ($pdfUrl)
+                    <a href="{{ $pdfUrl }}" data-pdf>Download as PDF</a>
+                @else
+                    <button type="button" onclick="window.print()">Print or save as PDF</button>
+                @endif
+                <a href="{{ $markdownUrl }}">Download as Markdown</a>
+            </div>
+        @endif
+        <p>Made by <a class="home" href="https://overlabels.com">Overlabels</a>.</p>
+    </footer>
+</main>
+@if ($tz === null)
+<script>
+    // Times are written in UTC; show them in the reader's own clock.
+    document.querySelectorAll('time[data-local]').forEach(function (el) {
+        var d = new Date(el.getAttribute('datetime'));
+        if (!isNaN(d)) {
+            el.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    });
+    // The printer cannot know the reader's clock, so the PDF link carries it.
+    document.querySelectorAll('a[data-pdf]').forEach(function (el) {
+        try {
+            var zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            if (zone) {
+                el.href += (el.href.indexOf('?') === -1 ? '?' : '&') + 'tz=' + encodeURIComponent(zone);
+            }
+        } catch (e) {}
+    });
+</script>
+@endif
+</body>
+</html>

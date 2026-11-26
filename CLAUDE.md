@@ -482,6 +482,45 @@ alongside the foreach tag-injection fix (PR #230), which had no automated covera
   first ~19 s of a burst, measured with the `X-Front-Desk-Send-Ms` header. A write still running
   finishes in `waitUntil`; a late failure goes to Laravel in the background.
 
+### Overlabels Overload Report (Nov 26th 2026, #345, OL-2611-041)
+
+- **A busy stretch on stream becomes a public timeline page.** `App\Services\OverloadReports\BusyStretch`
+  is the whole mechanism, `ReportKinds` the counting and wording (pure). A stretch opens with the first
+  ticked event **while confidently live at its START** (or in test mode, which switches itself off
+  after an hour), stays open while ticked events keep coming, closes after `quiet_seconds` (default
+  60) without one, and becomes a report if it held `threshold` events (default 50). Settings live in
+  `preferences.overload_report`, read through `BusyStretch::settings()` - no defaults in `User`.
+- **Numbers and timestamps only, never a viewer.** A dot is a kind, two timestamps and counts.
+  `OverloadReportTest` asserts no name, id or message reaches the stored row. Keep it so.
+- **One dot = a run of one kind** (Jasper, 2026-11-26): follows in a row merge until another kind cuts
+  in; a raid, a gift bomb and a hype train are always their own dot. A gift bomb counts as its
+  `total`, its recipients never again. A hype train counts ONCE at `begin`; progress/end only raise its
+  dot's level, because the subs and cheers inside it count as themselves. Channel points and charity
+  are off by default. The kinds are viewer actions only, deliberately not "every subscribed type":
+  goal and poll progress fire on the same follows and would count them twice.
+- **Two hooks, both on the streamer's lane**, so the one cache key per streamer is never written by two
+  workers: the end of `processStoredEvent()` and `FloodGate::apply()` (a tick counts as its `n`).
+  `CloseBusyStretch` runs on that lane too and re-dispatches itself while events keep coming. The
+  quiet spell runs from when an event was HANDLED, so a lane that is behind cannot close a stretch
+  that is still pouring in. The state is in the evictable cache: losing it costs that report only.
+- **The link is `/report/<map slug>/<8 random digits>`**, the same `MapSlugService` slug as the public
+  map, `throttle:60,1`, `noindex` (meta and header), plus a `.md` twin for the export and a print
+  stylesheet for Save as PDF. Kept `OverloadReport::KEEP_DAYS` (90), shown on the page, pruned daily.
+  Not the abuse report on an overlay: that is `OverlayReport` / `reports.store`.
+- **Chat:** one line through `BotChatOutbox` only when the bot is enabled AND `BotModeratedChannels`
+  says it is a moderator. Unknown posts nothing. Settings page `/settings/overload-report` shows which.
+- **On by default; the one chat opt-out is `!ol report stop`** (Jasper, 2026-11-26). Backend verb
+  `report:stop` in `BotChatAdminService`, behind `!ol`'s moderator gate; the bot forwards subject
+  `report` as it forwards `title` (bot repo `olReport.test.js`). Chat can only switch it OFF - the way
+  back is the settings page - and every chat line ends with the opt-out, because nobody asked for it.
+- **Download as PDF is Gotenberg** (Jasper's private instance, basic auth; `services.gotenberg`, env
+  `BR_GOTENBERG_URL` + `GOTENBERG_API_BASIC_AUTH_*`, three Kamal secrets). `ReportPdf` posts the page's
+  own HTML to `/forms/chromium/convert/html`; never call `/health` (it has no auth). The printer has no
+  idea of the reader's clock, so the link carries `?tz=` from the browser and the print copy is rendered
+  with fixed times in that zone, no script and no buttons. No URL configured or printer down = the
+  page offers the browser's Print and the route answers 503. `throttle:6,1`: each request is a
+  Chromium render.
+
 ### Donation integration controllers (consolidated Aug 2026)
 
 - The five donation integrations (kofi, streamlabs, fourthwall, bmac, throne) all extend `DonationIntegrationController`. It owns `show()`, `setTestMode()`, `seedDonationCount()` and `disconnect()`; subclasses supply `service()` and their connect flow only. GPS deliberately does NOT extend it (telemetry, not donations - no test mode, no seed).
