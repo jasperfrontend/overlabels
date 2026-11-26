@@ -156,11 +156,6 @@ return [
         'model_id' => env('ELEVENLABS_MODEL_ID', 'eleven_multilingual_v2'),
     ],
 
-    // Sqids encoding for the public map slug. Encodes a Twitch ID into an
-    // opaque short string so /map/{slug} URLs and the public map.{slug}
-    // broadcast channel never expose the numeric Twitch ID. Pure CPU,
-    // no DB lookup. The alphabet is the only "secret" - it must stay
-    // stable across deploys or every previously shared map URL breaks.
     // Gotenberg, the HTML-to-PDF printer behind the Overload Report's
     // "Download as PDF" (#345). Private, behind basic auth. No URL = the page
     // offers the browser's own print instead.
@@ -170,6 +165,11 @@ return [
         'password' => env('GOTENBERG_API_BASIC_AUTH_PASSWORD'),
     ],
 
+    // Sqids encoding for the public map slug. Encodes a Twitch ID into an
+    // opaque short string so /map/{slug} URLs and the public map.{slug}
+    // broadcast channel never expose the numeric Twitch ID. Pure CPU,
+    // no DB lookup. The alphabet is the only "secret" - it must stay
+    // stable across deploys or every previously shared map URL breaks.
     'map_slug' => [
         'alphabet' => env('MAP_SLUG_ALPHABET', 'k4n2pSvBDfWHtgJULRamE6GYqcQA7ujM3i85zVbsX9eyKwoxN1ZhCdrTPlF0OI'),
         'min_length' => (int) env('MAP_SLUG_MIN_LENGTH', 8),
