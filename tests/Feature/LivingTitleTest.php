@@ -12,6 +12,7 @@ use App\Services\LivingTitleService;
 use App\Services\StreamRaiders;
 use App\Services\TwitchScopeService;
 use App\Services\TwitchTokenService;
+use App\Support\LivingTitleExamples;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
@@ -641,4 +642,20 @@ it('works as a bot reply too, with no title limit', function () {
 
     expect(app(BotCommandResolver::class)->resolve($this->user, 'Thanks [[[raiders]]]!', dryRun: true))
         ->toBe('Thanks @beta @alpha!');
+});
+
+it('offers every example on the help page as a one-click insert, and every one is a title the page would save', function () {
+    $examples = LivingTitleExamples::all();
+
+    expect(count($examples))->toBeGreaterThanOrEqual(14)
+        ->and($examples[0]['name'])->toBe('The follower goal')
+        ->and($examples[0]['template'])->toBe('Road to 2K | [[[followers_total]]] followers');
+
+    foreach ($examples as $example) {
+        expect($example['template'])->not->toBe('')
+            ->and(app(LivingTitleService::class)->problem($example['template']))->toBeNull("'{$example['name']}' would be refused on save");
+    }
+
+    $this->actingAs($this->user)->get('/settings/title')
+        ->assertInertia(fn ($page) => $page->has('examples', count($examples)));
 });

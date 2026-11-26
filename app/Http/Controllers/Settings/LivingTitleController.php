@@ -7,6 +7,7 @@ use App\Services\LivingTitleService;
 use App\Services\TwitchApiService;
 use App\Services\TwitchScopeService;
 use App\Services\TwitchTokenService;
+use App\Support\LivingTitleExamples;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,6 +43,8 @@ class LivingTitleController extends Controller
             'channel' => $this->channel($request),
             'maxLength' => LivingTitleService::MAX_LENGTH,
             'debounceSeconds' => LivingTitleService::DEBOUNCE_SECONDS,
+            // The help page's examples, as one-click inserts.
+            'examples' => LivingTitleExamples::all(),
         ]);
     }
 

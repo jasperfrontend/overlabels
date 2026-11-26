@@ -60,8 +60,9 @@ happens, so you can shorten the template rather than find out on your channel pa
 
 ## Examples
 
-Every one of these works as written. Copy it into the template box, or type
-`!ol title set ` in front of it in chat.
+Every one of these works as written. On the settings page, **Browse examples** above the template
+box puts any of them in with one click. Or copy it into the box yourself, or type `!ol title set `
+in front of it in chat.
 
 ### The follower goal
 

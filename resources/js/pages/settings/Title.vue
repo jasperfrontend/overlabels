@@ -5,6 +5,7 @@ import axios from 'axios';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Label } from '@/components/ui/label';
 import { useLivingTitle } from '@/composables/useLivingTitle';
+import { useConfirm } from '@/composables/useConfirm';
 import { type BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
@@ -27,6 +28,12 @@ interface ChannelProps {
   game_name: string;
 }
 
+interface TitleExample {
+  name: string;
+  template: string;
+  description: string;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -39,6 +46,8 @@ const props = defineProps<{
   channel: ChannelProps | null;
   maxLength: number;
   debounceSeconds: number;
+  /** The help page's examples (LivingTitleExamples), one-click inserts. */
+  examples: TitleExample[];
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -55,6 +64,24 @@ const template = ref(props.livingTitle.template);
 // condition hides the whole line until the first raid of the stream.
 const RAIDERS_SNIPPET = ' [[[if:raiders]]]| Thanks raiders: [[[raiders]]][[[endif]]]';
 const hasRaiders = computed(() => template.value.includes('[[[raiders'));
+
+// An example replaces the template; asks first when there is one to lose.
+// Nothing is saved until Save, and the preview shows the result at once.
+const showExamples = ref(false);
+const { confirm } = useConfirm();
+
+async function useExample(example: TitleExample) {
+  const current = template.value.trim();
+  if (current !== '' && current !== example.template) {
+    const ok = await confirm({
+      message: `Replace your template with "${example.name}"? It is not saved until you click Save title.`,
+      confirmLabel: 'Replace',
+    });
+    if (!ok) return;
+  }
+  template.value = example.template;
+  showExamples.value = false;
+}
 
 function addRaiders() {
   if (hasRaiders.value) return;
@@ -326,12 +353,25 @@ onBeforeUnmount(() => {
           </section>
 
           <section class="space-y-2 p-4">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between gap-3">
               <Label for="title-template" class="text-xs font-normal tracking-wide text-muted-foreground uppercase">Your template</Label>
-              <span class="text-xs whitespace-nowrap tabular-nums" :class="overLength ? 'text-rose-400' : 'text-muted-foreground'">
-                {{ previewLength }} / {{ maxLength }}
-              </span>
+              <div class="flex items-center gap-4">
+                <button
+                  v-if="examples.length > 0"
+                  type="button"
+                  class="cursor-pointer text-xs text-[#0A78BE] hover:underline dark:text-[#1DAAFF]"
+                  :aria-expanded="showExamples"
+                  aria-controls="title-examples"
+                  @click="showExamples = !showExamples"
+                >
+                  {{ showExamples ? 'Hide examples' : `Browse ${examples.length} examples` }}
+                </button>
+                <span class="text-xs whitespace-nowrap tabular-nums" :class="overLength ? 'text-rose-400' : 'text-muted-foreground'">
+                  {{ previewLength }} / {{ maxLength }}
+                </span>
+              </div>
             </div>
+
             <textarea
               id="title-template"
               v-model="template"
@@ -343,6 +383,26 @@ onBeforeUnmount(() => {
               Tags, <code class="font-mono">[[[c:key]]]</code> controls, <code class="font-mono">[[[if:...]]]</code> and pipes all work.
               <a href="/tags" target="_blank" class="cursor-pointer underline">See all your tags</a>.
             </p>
+
+            <!-- The help page's examples, one click each. Inline and scrolling,
+                 so the template box never moves far away. -->
+            <ul v-if="showExamples" id="title-examples" class="max-h-96 divide-y divide-sidebar-border overflow-y-auto border border-sidebar-border">
+              <li v-for="example in examples" :key="example.name" class="flex items-start gap-4 p-3">
+                <div class="min-w-0 grow space-y-1">
+                  <p class="text-sm font-medium">{{ example.name }}</p>
+                  <p class="font-mono text-xs wrap-break-word text-foreground/80">{{ example.template }}</p>
+                  <p v-if="example.description" class="text-xs text-muted-foreground">{{ example.description }}</p>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-secondary shrink-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                  :disabled="template.trim() === example.template"
+                  @click="useExample(example)"
+                >
+                  {{ template.trim() === example.template ? 'In use' : 'Use this' }}
+                </button>
+              </li>
+            </ul>
           </section>
 
           <section class="space-y-2 bg-sidebar-accent/30 p-4" aria-live="polite">
