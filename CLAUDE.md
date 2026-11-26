@@ -1014,6 +1014,24 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
   promise a strike; do not copy the dice formula into the designer to force one.
 - `postMessage` of a Vue prop throws DataCloneError (props are reactive proxies): send a JSON copy.
 
+### Live product demos (Nov 27th 2026)
+
+- **Chat Tower and Follower Bowling demo themselves with their REAL overlay**, on the homepage and
+  their product pages (`welcome/demos/_overlay-demo.blade.php`). `App\Services\Recipes\ProductDemo`
+  builds the render payload straight from the recipe (`OverlayMarkdown::parse` + ingredient defaults,
+  the integration's provisioned controls, the manifest's Lists empty, sample followers), writing
+  nothing, in the shape `renderAuthenticated` returns. `/api/overlay/demo/{slug}` serves it and
+  `/products/{slug}/demo-frame` is the page; OverlayRenderer's `demo` prop fetches it instead of the
+  token render and skips health checks. No `user_twitch_id` in the payload = no Echo listeners.
+- `resources/js/welcome/overlayDemo.ts` frames it and plays the manifest's `designer.scenes` into
+  it on a loop through the same `preview-scene` message the designer sends. **A product has a demo
+  exactly when its designer declares scenes** - no list of products to keep. Homepage: behind a
+  "Play the live demo" click, so the page loads none up front; product page: `autostart`, once in
+  view. The loop pauses off screen.
+- Plinko and Checkin keep their own script demos; Chat Overlay and Emote Bubbles keep CSS loops.
+  The old CSS imitations of Tower and Bowling (`welcome.css`, the bowling section of
+  `welcome-demos.css`) are deleted - do not bring a drawing back where the product can run.
+
 ### Control vocabularies and the unified product designer (started Sept 27th 2026, OL-2609-140)
 
 - **A text control's allowed values live on the row, as `config.choices`**, declared in the overlay

@@ -24,7 +24,7 @@
                 <div class="mx-auto max-w-5xl">
                     <div class="min-w-0">
                         @if ($demo)
-                            @include('welcome.demos.'.$demo)
+                            @include('welcome.demos.'.$demo, ['autostart' => true])
                         @elseif (!empty($product['hero']))
                             <img src="{{ $product['hero'] }}" alt="{{ $product['hero_alt'] }}" class="block aspect-video w-full rounded-sm border border-sidebar-border object-cover" width="1280" height="720" loading="lazy" />
                         @endif

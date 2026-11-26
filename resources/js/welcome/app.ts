@@ -3,10 +3,10 @@ import '../../css/product-page.css';
 import '../../css/welcome-checkin.css';
 import '../../css/welcome-demos.css';
 import '../../css/welcome-plinko.css';
-import '../../css/welcome.css';
 import { wireThemeMenus } from '../utils/themeMenu';
 import { initCheckinDemo } from './checkinDemo';
 import { initLooksTeasers } from './looksTeaser';
+import { initOverlayDemos } from './overlayDemo';
 import { initPlinkoDemo } from './plinkoDemo';
 
 // The homepage is a static blade page - this entry only wires up the handful
@@ -123,4 +123,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initCheckinDemo();
   initLooksTeasers();
   initPlinkoDemo();
+  initOverlayDemos();
 });

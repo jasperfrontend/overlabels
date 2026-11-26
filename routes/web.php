@@ -25,6 +25,7 @@ use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\OverloadReportController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductDemoController;
 use App\Http\Controllers\RecipeInstanceController;
 use App\Http\Controllers\SavedChatPresetController;
 use App\Http\Controllers\Settings\FourthwallIntegrationController;
@@ -337,6 +338,12 @@ Route::get('/products', [ProductController::class, 'index'])->name('products.ind
 Route::get('/products/{slug}', [ProductController::class, 'pitch'])
     ->name('products.show')
     ->where('slug', '[a-z][a-z0-9_-]*');
+// A chat game's public demo: its real overlay with sample values, framed by
+// the homepage and the product page (ProductDemo).
+Route::get('/products/{slug}/demo-frame', [ProductDemoController::class, 'frame'])
+    ->name('products.demo-frame')
+    ->where('slug', '[a-z][a-z0-9_-]*')
+    ->middleware('throttle:60,1');
 
 // A public kit as plain markdown: the kit, then every overlay in it described
 // exactly as its own `.md` describes it.

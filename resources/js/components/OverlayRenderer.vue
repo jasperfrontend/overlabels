@@ -112,6 +112,12 @@ const props = defineProps<{
   // Generated chat instead of the channel's own, for the chat designer. See
   // startSampleChat() - the socket is never opened in this mode.
   sample?: boolean;
+  // A product slug: the public product demo (homepage and product pages).
+  // The payload is built from the product's own recipe with sample values
+  // (/api/overlay/demo/{product}), so there is no token, no account and no
+  // socket; the framing page plays the designer's scenes into it. Always
+  // comes with `sample`, which is what lets those scenes in.
+  demo?: string;
 }>();
 
 const head = ref<string | null>(null);
@@ -1215,8 +1221,10 @@ onMounted(async () => {
     void import('@/dev/chatHose').then(({ installChatHose }) => installChatHose(twitchChat));
   }
 
-  // Use resilient fetch with retry
-  const result = await health.fetchWithRetry(props.slug, props.token);
+  // Use resilient fetch with retry. A product demo has no token to retry
+  // with: one plain fetch of its sample payload, and a failure leaves the
+  // demo's poster where it was.
+  const result = props.demo ? await fetchDemoPayload(props.demo) : await health.fetchWithRetry(props.slug, props.token);
 
   if (result.ok) {
     const json = result.data;
@@ -1391,9 +1399,14 @@ onMounted(async () => {
 
     setupAlertListener();
 
-    // Start health monitoring now that we're connected
-    health.startHealthChecks(props.slug, props.token);
-    health.startPusherMonitoring();
+    if (props.demo) {
+      // Tell the framing page the overlay is up, so it starts its scenes.
+      if (window.parent !== window) window.parent.postMessage({ ol: 'demo-ready' }, window.location.origin);
+    } else {
+      // Start health monitoring now that we're connected
+      health.startHealthChecks(props.slug, props.token);
+      health.startPusherMonitoring();
+    }
   } else {
     // fetchWithRetry already set status/message and scheduled auto-reload
     document.getElementById('loading')?.remove();
@@ -1652,6 +1665,17 @@ function handleTowerUpdated(event: any) {
 
   data.value = withTowerSlots(data.value, blocks, height);
   bump();
+}
+
+/** A product demo's sample payload (see the `demo` prop). */
+async function fetchDemoPayload(product: string): Promise<{ ok: true; data: any } | { ok: false; status: number; message: string }> {
+  try {
+    const response = await fetch(`/api/overlay/demo/${encodeURIComponent(product)}`, { headers: { Accept: 'application/json' } });
+    if (!response.ok) return { ok: false, status: response.status, message: 'Demo unavailable' };
+    return { ok: true, data: await response.json() };
+  } catch {
+    return { ok: false, status: 0, message: 'Demo unavailable' };
+  }
 }
 
 /**

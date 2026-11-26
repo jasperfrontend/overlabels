@@ -30,6 +30,7 @@ use App\Http\Controllers\ExpressionTagController;
 use App\Http\Controllers\OverlayBroadcastingAuthController;
 use App\Http\Controllers\OverlayTemplateController;
 use App\Http\Controllers\PaddleWebhookController;
+use App\Http\Controllers\ProductDemoController;
 use App\Http\Controllers\TemplateTagController;
 use App\Http\Controllers\TwitchEventSubController;
 use App\Http\Middleware\CheckBanned;
@@ -85,6 +86,12 @@ Route::post('/external-events/{externalEvent}/replay', [EventFeedController::cla
     ->withoutMiddleware([EnsureFrontendRequestsAreStateful::class]);
 
 Route::prefix('/overlay')->group(function () {
+    // A chat game's public demo payload: built from its recipe, no token,
+    // nothing written (ProductDemo).
+    Route::get('/demo/{slug}', [ProductDemoController::class, 'payload'])
+        ->name('api.overlay.demo')
+        ->where('slug', '[a-z][a-z0-9_-]*')
+        ->middleware('throttle:60,1');
     Route::post('/render', [OverlayTemplateController::class, 'renderAuthenticated'])
         ->name('api.overlay.render')
         ->middleware(['throttle:overlay', 'rate.limit.overlay', 'lockdown'])
