@@ -1,5 +1,22 @@
 # Changelog - November 2026
 
+## OL-2611-049 - November 28th, 2026 - fix(checkin): a real checkin reaches the globe without a reload, with the first component test
+
+On a Chat Checkin globe with the HUD and the pin list both off, which is how a new install starts,
+a viewer's `!checkin` did not put a pin on the globe until the browser source was reloaded. The
+overlay only told the globe about new pins while redrawing its HTML, and a checkin on its own
+changes nothing in that HTML when no HUD or list shows it. A globe with the HUD on worked, because
+the HUD's numbers changed with every checkin.
+
+- **Fixed:** a checkin now hands its pin to the globe directly, the same way the designer's sample
+  checkins already did.
+- **The first component test.** The frontend tests were pure functions only. A second test project
+  now mounts a real component in a simulated DOM (happy-dom), and its first test mounts the overlay
+  renderer with a fake server, a fake Reverb and a fake globe, sends one checkin and checks the pin
+  arrives. It failed before the fix. A real-browser test run is still a separate decision.
+- Plinko, Snow and Chat Emote Bubbles were checked for the same gap and do not have it: their data
+  never waits for the HTML to be redrawn.
+
 ## OL-2611-047 - November 28th, 2026 - feat(checkin): hexagon globe, mixed land tones, bold text and sample checkins in the designer
 
 The Chat Checkin globe drew its continents as screen-facing dots with a soft gradient edge, so every

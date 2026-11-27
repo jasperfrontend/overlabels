@@ -1,3 +1,4 @@
+import vue from '@vitejs/plugin-vue';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
@@ -9,21 +10,45 @@ import { defineConfig } from 'vitest/config';
 // wanted by a unit test run, and the git call in particular would make the
 // suite fail outside a checkout.
 //
-// Scope is the pure TypeScript under resources/js: the DSL, the tag parser, the
-// two-pass template renderer, the formatters. These are plain functions with no
-// Vue or DOM dependency, which is why `environment: 'node'` is enough and no
-// jsdom is installed. Testing a component would mean adding both, so keep the
-// line here: this suite guards template/tag semantics, not rendering.
+// Two projects:
+//
+// - `unit` is the pure TypeScript under resources/js: the DSL, the tag parser,
+//   the two-pass template renderer, the formatters. Plain functions with no Vue
+//   or DOM dependency, so `environment: 'node'`.
+// - `dom` is `*.dom.test.ts` only: a component mounted with Vue's own
+//   createApp() in happy-dom, for bugs that live in a component's reactivity
+//   rather than in a pure function. happy-dom is a simulated DOM, not a browser:
+//   no WebGL, no layout, so anything that draws (three.js, canvas) is replaced
+//   with a fake in the test. Added Nov 2026 for the Chat Checkin globe missing
+//   real checkins (OverlayRenderer.dom.test.ts). A real browser (Vitest Browser
+//   Mode) is a separate, still open decision.
+const alias = { '@': fileURLToPath(new URL('./resources/js', import.meta.url)) };
+
 export default defineConfig({
-    resolve: {
-        alias: {
-            '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
-        },
-    },
+    resolve: { alias },
     test: {
-        environment: 'node',
-        // The Cloudflare front desk Worker is plain functions over Request and
-        // Response, which Node provides, so it is tested here too.
-        include: ['resources/js/**/*.test.ts', 'cloudflare/**/*.test.ts'],
+        projects: [
+            {
+                resolve: { alias },
+                test: {
+                    name: 'unit',
+                    environment: 'node',
+                    // The Cloudflare front desk Worker is plain functions over
+                    // Request and Response, which Node provides, so it is tested
+                    // here too.
+                    include: ['resources/js/**/*.test.ts', 'cloudflare/**/*.test.ts'],
+                    exclude: ['resources/js/**/*.dom.test.ts'],
+                },
+            },
+            {
+                plugins: [vue()],
+                resolve: { alias },
+                test: {
+                    name: 'dom',
+                    environment: 'happy-dom',
+                    include: ['resources/js/**/*.dom.test.ts'],
+                },
+            },
+        ],
     },
 });

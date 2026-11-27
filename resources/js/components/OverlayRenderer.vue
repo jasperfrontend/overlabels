@@ -1692,6 +1692,11 @@ function handleCheckinsUpdated(event: any) {
 
   data.value = withCheckinSlots(data.value, pins, count);
   bump();
+  // The globe is only re-synced when the compiled HTML changes, and with the
+  // HUD and pin list off a checkin changes nothing in it: tell it directly.
+  // Without this a real checkin stayed off the globe until the browser source
+  // reloaded (OverlayRenderer.dom.test.ts).
+  if (templateUsesGlobe.value) syncGlobes();
 }
 
 // A topple keeps the fallen blocks in the data for TOPPLE_HOLD_MS with
