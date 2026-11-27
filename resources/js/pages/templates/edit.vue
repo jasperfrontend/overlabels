@@ -269,8 +269,6 @@ const previewData = computed<Record<string, unknown>>(() => ({
   ...controlsToPreviewData(localControls.value),
 }));
 
-const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
-
 const freesoundLibrary = ref<FreesoundLibraryRow[]>([...(props.freesoundLibrary ?? [])]);
 const freesoundModalOpen = ref(false);
 const libraryAuditioningId = ref<number | null>(null);
@@ -370,18 +368,6 @@ function formatDuration(d: number | null | undefined): string {
   if (d === null || d === undefined) return '';
   if (d < 1) return `${Math.round(d * 1000)}ms`;
   return `${d.toFixed(1)}s`;
-}
-
-function saveTargeting() {
-  router.put(
-    route('templates.target-overlays', props.template),
-    { overlay_ids: localTargetOverlayIds.value },
-    {
-      preserveScroll: true,
-      onSuccess: () => pushToast('Targeting settings saved.', 'success'),
-      onError: () => pushToast('Failed to save targeting settings.', 'error'),
-    },
-  );
 }
 
 const toastMessage = ref<string>('');
@@ -761,7 +747,7 @@ onMounted(() => {
           </div>
 
           <!-- Triggers Tab (alert templates only) -->
-          <div v-if="mainTab === 'triggers'" class="p-4">
+          <div v-if="mainTab === 'triggers'" class="max-w-6xl p-4">
             <TriggerManager
               v-if="triggers"
               :template-id="template.id"
@@ -772,9 +758,15 @@ onMounted(() => {
           </div>
 
           <!-- Targeting Tab (alert templates only) -->
-          <div v-if="mainTab === 'targeting'" class="max-w-2xl p-4">
-            <AlertTargetOverlaySelector v-model="localTargetOverlayIds" :static-overlays="staticOverlays ?? []" />
-            <button type="button" @click="saveTargeting" class="btn btn-primary mt-4">Save targeting</button>
+          <div v-if="mainTab === 'targeting'" class="max-w-6xl p-4">
+            <AlertTargetOverlaySelector
+              :template-id="template.id"
+              :static-overlays="staticOverlays ?? []"
+              :initial-ids="targetStaticOverlayIds ?? []"
+              :alerts-overlay="alertsOverlay"
+              @saved="pushToast('Targeting settings saved.', 'success')"
+              @error="(msg: string) => pushToast(msg, 'error')"
+            />
           </div>
 
           <!-- Effects Tab (alert templates only): alert sound + TTS + bot chat message -->

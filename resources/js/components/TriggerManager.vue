@@ -67,10 +67,11 @@ export function firstAssignedEvent(triggers?: TriggerData | null): { eventType: 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
-import { Save, Zap } from '@lucide/vue';
-import FilterableGroupedList, { type FilterableGroup } from '@/components/FilterableGroupedList.vue';
+import { Save } from '@lucide/vue';
+import ActiveFirstPicker, { type PickerGroup } from '@/components/ActiveFirstPicker.vue';
 import TriggerRow from '@/components/TriggerRow.vue';
 import { SERVICE_LABELS } from '@/utils/services';
+import { TWITCH_TRIGGER_GROUPS, stripServicePrefix, twitchTriggerGroup } from '@/utils/triggerGroups';
 
 const props = defineProps<{
   templateId: number;
@@ -91,79 +92,79 @@ interface Row {
   enabled: boolean;
   /** Filled for external rows, empty for Twitch. Drives the "kofi:donation" key text. */
   service: string;
+  /** The picker tile this row sits under. */
+  group_key: string;
+  /** "Twitch" or the service's name, on the active row and on a search result. */
+  source_label: string;
 }
 
 const DEFAULT_DURATION_MS = 5000;
-const TWITCH_GROUP_KEY = 'twitch';
 
-const twitchRows = ref<Row[]>(
-  Object.entries(props.triggers.eventTypes).map(([eventType, label]) => {
-    const existing = props.triggers.assigned.twitch.find((t) => t.event_type === eventType);
+const twitchRows: Row[] = Object.entries(props.triggers.eventTypes).map(([eventType, label]) => {
+  const existing = props.triggers.assigned.twitch.find((t) => t.event_type === eventType);
+  return {
+    event_type: eventType,
+    event_label: label,
+    condition_type: existing?.condition_type ?? null,
+    condition_value: existing?.condition_value ?? null,
+    duration_ms: existing?.duration_ms ?? DEFAULT_DURATION_MS,
+    enabled: existing?.enabled ?? false,
+    service: '',
+    group_key: twitchTriggerGroup(eventType).key,
+    source_label: 'Twitch',
+  };
+});
+
+const externalRows: Row[] = props.triggers.connectedServices.flatMap((service) => {
+  const serviceLabel = SERVICE_LABELS[service] ?? service;
+  return Object.entries(props.triggers.externalEventTypes[service] ?? {}).map(([eventType, label]) => {
+    const existing = props.triggers.assigned.external.find((e) => e.service === service && e.event_type === eventType);
     return {
       event_type: eventType,
-      event_label: label,
+      event_label: stripServicePrefix(label, serviceLabel),
       condition_type: existing?.condition_type ?? null,
       condition_value: existing?.condition_value ?? null,
       duration_ms: existing?.duration_ms ?? DEFAULT_DURATION_MS,
       enabled: existing?.enabled ?? false,
-      service: '',
+      service,
+      group_key: `service:${service}`,
+      source_label: serviceLabel,
     };
-  }),
-);
-
-const externalRowsByService = ref<Record<string, Row[]>>(
-  props.triggers.connectedServices.reduce(
-    (acc, service) => {
-      const eventTypes = props.triggers.externalEventTypes[service] ?? {};
-      acc[service] = Object.entries(eventTypes).map(([eventType, label]) => {
-        const existing = props.triggers.assigned.external.find((e) => e.service === service && e.event_type === eventType);
-        return {
-          event_type: eventType,
-          event_label: label,
-          condition_type: existing?.condition_type ?? null,
-          condition_value: existing?.condition_value ?? null,
-          duration_ms: existing?.duration_ms ?? DEFAULT_DURATION_MS,
-          enabled: existing?.enabled ?? false,
-          service,
-        };
-      });
-      return acc;
-    },
-    {} as Record<string, Row[]>,
-  ),
-);
-
-const groups = computed<FilterableGroup<Row>[]>(() => {
-  const all: FilterableGroup<Row>[] = [
-    {
-      key: TWITCH_GROUP_KEY,
-      label: 'Twitch',
-      items: twitchRows.value,
-      badge: `${twitchRows.value.filter((r) => r.enabled).length}/${twitchRows.value.length}`,
-    },
-  ];
-
-  for (const service of props.triggers.connectedServices) {
-    const rows = externalRowsByService.value[service] ?? [];
-    all.push({
-      key: service,
-      label: SERVICE_LABELS[service] ?? service,
-      items: rows,
-      badge: `${rows.filter((r) => r.enabled).length}/${rows.length}`,
-    });
-  }
-
-  return all;
+  });
 });
 
-const enabledCount = computed(() => groups.value.reduce((s, g) => s + g.items.filter((r) => r.enabled).length, 0));
+// One list in catalogue order: Twitch first, then each connected service.
+const rows = ref<Row[]>([...twitchRows, ...externalRows]);
+
+const groups = computed<PickerGroup<Row>[]>(() => [
+  ...TWITCH_TRIGGER_GROUPS.map((g) => ({
+    key: g.key,
+    title: g.title,
+    section: 'Twitch',
+    items: rows.value.filter((r) => !r.service && r.group_key === g.key),
+  })),
+  ...props.triggers.connectedServices.map((service) => ({
+    key: `service:${service}`,
+    title: SERVICE_LABELS[service] ?? service,
+    section: 'External sources',
+    items: rows.value.filter((r) => r.service === service),
+  })),
+]);
+
+const activeRows = computed(() => rows.value.filter((r) => r.enabled));
+
+const summary = computed(() => {
+  const n = activeRows.value.length;
+  if (n === 0) return 'No events yet';
+  return `${n} event${n === 1 ? '' : 's'} on, out of ${rows.value.length} available`;
+});
 
 function rowKeyText(row: Row): string {
   return row.service ? `${row.service}:${row.event_type}` : row.event_type;
 }
 
 function rowSearchText(row: Row): string {
-  return `${row.event_label} ${row.event_type} ${row.service} ${rowKeyText(row)}`;
+  return `${row.event_label} ${row.event_type} ${row.source_label} ${rowKeyText(row)}`;
 }
 
 /** Unit label for the condition picker, or undefined if the row has no amount. */
@@ -174,16 +175,25 @@ function amountUnitFor(row: Row): string | undefined {
   return props.triggers.externalAmountEventTypes[row.service]?.includes(row.event_type) ? 'amount' : undefined;
 }
 
+function toggle(row: Row) {
+  row.enabled = !row.enabled;
+  save();
+}
+
 const isSaving = ref(false);
 
-function save() {
+/**
+ * Every change saves on its own (`announce` false); the Save button does the
+ * same save and says so. preserveState keeps the open picker and the rows
+ * where they are while the page props come back.
+ */
+function save(announce = false) {
   isSaving.value = true;
 
-  const externalRows = Object.values(externalRowsByService.value).flat();
-
+  const enabled = rows.value.filter((r) => r.enabled);
   const payload = {
-    twitch: twitchRows.value
-      .filter((r) => r.enabled)
+    twitch: enabled
+      .filter((r) => !r.service)
       .map((r) => ({
         event_type: r.event_type,
         condition_type: r.condition_type,
@@ -191,8 +201,8 @@ function save() {
         duration_ms: r.duration_ms,
         enabled: r.enabled,
       })),
-    external: externalRows
-      .filter((r) => r.enabled)
+    external: enabled
+      .filter((r) => r.service)
       .map((r) => ({
         service: r.service,
         event_type: r.event_type,
@@ -205,7 +215,10 @@ function save() {
 
   router.put(route('templates.triggers', props.templateId), payload, {
     preserveScroll: true,
-    onSuccess: () => emit('saved'),
+    preserveState: true,
+    onSuccess: () => {
+      if (announce) emit('saved');
+    },
     onError: () => emit('error', 'Failed to save triggers.'),
     onFinish: () => {
       isSaving.value = false;
@@ -215,46 +228,46 @@ function save() {
 </script>
 
 <template>
-  <FilterableGroupedList
+  <ActiveFirstPicker
     :groups="groups"
+    :item-key="(r: Row) => `${r.service}:${r.event_type}`"
+    :item-name="(r: Row) => r.event_label"
+    :item-sub="rowKeyText"
     :item-search-text="rowSearchText"
-    :items-label="{ singular: 'trigger', plural: 'triggers' }"
-    placeholder="Filter triggers..."
-    expanded-storage-key="triggers_manager_expanded"
+    :item-badge="(r: Row) => r.source_label"
+    :is-picked="(r: Row) => r.enabled"
+    add-label="Add trigger"
+    :search-placeholder="`Type to search ${rows.length} triggers, for example raid or hype`"
+    back-label="All groups"
+    :group-hint="(g: PickerGroup<Row>) => `${g.title}, ${g.items.length} event${g.items.length === 1 ? '' : 's'}`"
+    @toggle="toggle"
   >
-    <template #description>
-      Pick the events that should fire this alert. One alert template can be reused across many events.
-      <div class="mt-1.5 text-xs text-muted-foreground">{{ enabledCount }} event{{ enabledCount !== 1 ? 's' : '' }} firing this alert</div>
-    </template>
-
-    <template #header-actions>
-      <button type="button" :disabled="isSaving" class="btn btn-primary btn-sm shrink-0 cursor-pointer" @click="save">
-        <Save class="mr-1.5 h-3.5 w-3.5" />
+    <template #title>This alert fires when</template>
+    <template #subtitle>{{ summary }}</template>
+    <template #actions>
+      <button type="button" :disabled="isSaving" class="btn btn-primary btn-sm cursor-pointer" @click="save(true)">
+        <Save class="h-3.5 w-3.5" />
         {{ isSaving ? 'Saving...' : 'Save triggers' }}
       </button>
     </template>
 
-    <template #group-icon="{ group }">
-      <Zap v-if="group.key === TWITCH_GROUP_KEY" class="h-3.5 w-3.5 shrink-0 text-violet-400" />
-      <span v-else class="rounded-full border border-orange-400/40 px-2 py-0.5 text-[10px] text-orange-400"> external </span>
-    </template>
-
-    <template #item="{ item, group }">
+    <div v-if="activeRows.length > 0" class="flex flex-col gap-1.5">
       <TriggerRow
-        v-model:enabled="item.enabled"
-        v-model:duration-ms="item.duration_ms"
-        v-model:condition-type="item.condition_type"
-        v-model:condition-value="item.condition_value"
-        :amount-unit="amountUnitFor(item)"
-        :label="item.event_label"
-        :key-text="rowKeyText(item)"
-        :toggle-checked-class="
-          group.key === TWITCH_GROUP_KEY
-            ? 'peer-checked:bg-green-400 dark:peer-checked:bg-green-800'
-            : 'peer-checked:bg-green-400 dark:peer-checked:bg-violet-700'
-        "
-        @save="save"
+        v-for="row in activeRows"
+        :key="`${row.service}:${row.event_type}`"
+        v-model:duration-ms="row.duration_ms"
+        v-model:condition-type="row.condition_type"
+        v-model:condition-value="row.condition_value"
+        :amount-unit="amountUnitFor(row)"
+        :label="row.event_label"
+        :source="row.source_label"
+        :key-text="rowKeyText(row)"
+        @save="save()"
+        @remove="toggle(row)"
       />
-    </template>
-  </FilterableGroupedList>
+    </div>
+    <div v-else class="border border-dashed border-violet-400/50 p-6 text-center text-sm text-muted-foreground">
+      Nothing is on, so this alert never fires. Use Add trigger to pick events.
+    </div>
+  </ActiveFirstPicker>
 </template>

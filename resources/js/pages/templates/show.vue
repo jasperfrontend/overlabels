@@ -127,30 +127,6 @@ const { eventTypeDotClass } = useEventColors();
 
 const boundEvent = computed(() => firstAssignedEvent(props.triggers));
 
-const localTargetOverlayIds = ref<number[]>([...(props.targetStaticOverlayIds ?? [])]);
-
-function saveTargeting() {
-  router.put(
-    route('templates.target-overlays', props.template),
-    { overlay_ids: localTargetOverlayIds.value },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        showToast.value = false;
-        toastMessage.value = 'Targeting settings saved.';
-        toastType.value = 'success';
-        showToast.value = true;
-      },
-      onError: () => {
-        showToast.value = false;
-        toastMessage.value = 'Failed to save targeting settings.';
-        toastType.value = 'error';
-        showToast.value = true;
-      },
-    },
-  );
-}
-
 const showCode = ref(true);
 const localControls = ref<OverlayControl[]>([...(props.controls ?? [])]);
 const { register } = useKeyboardShortcuts();
@@ -385,7 +361,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         </Dialog>
 
         <!-- Triggers tab (alert templates, owner only) -->
-        <div v-if="canEdit && mainTab === 'triggers'" class="mb-6 p-4">
+        <div v-if="canEdit && mainTab === 'triggers'" class="mb-6 max-w-6xl p-4">
           <TriggerManager
             v-if="triggers"
             :template-id="template.id"
@@ -410,9 +386,29 @@ const breadcrumbs: BreadcrumbItem[] = [
         </div>
 
         <!-- Targeting tab (alert templates, owner only) -->
-        <div v-if="canEdit && mainTab === 'targeting'" class="mb-6 p-4 lg:max-w-3xl">
-          <AlertTargetOverlaySelector v-model="localTargetOverlayIds" :static-overlays="staticOverlays ?? []" />
-          <button type="button" @click="saveTargeting" class="btn btn-primary mt-4">Save targeting</button>
+        <div v-if="canEdit && mainTab === 'targeting'" class="mb-6 max-w-6xl p-4">
+          <AlertTargetOverlaySelector
+            :template-id="template.id"
+            :static-overlays="staticOverlays ?? []"
+            :initial-ids="targetStaticOverlayIds ?? []"
+            :alerts-overlay="alertsOverlay"
+            @saved="
+              () => {
+                showToast = false;
+                toastMessage = 'Targeting settings saved.';
+                toastType = 'success';
+                showToast = true;
+              }
+            "
+            @error="
+              (msg: string) => {
+                showToast = false;
+                toastMessage = msg;
+                toastType = 'error';
+                showToast = true;
+              }
+            "
+          />
         </div>
 
         <!-- Add to OBS tab (owner only) -->

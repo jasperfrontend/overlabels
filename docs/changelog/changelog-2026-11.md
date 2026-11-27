@@ -1,5 +1,24 @@
 # Changelog - November 2026
 
+## OL-2611-045 - November 27th, 2026 - feat(alerts): active-first Triggers and Targeting tabs
+
+An alert's Triggers and Targeting tabs used to list everything at once: fifty triggers in collapsible
+groups, and every static overlay in one long column of checkboxes. Both now show only what is on, and
+keep the rest one click away.
+
+- **Only what is on.** The Triggers tab lists the events that fire this alert, each with its amount
+  filter, seconds on screen and a remove button. The Targeting tab lists the overlays it fires on.
+- **One picker for both.** Add trigger and Add overlay open the same picker: a search box, tiles per
+  group with how many are picked (Audience, Support, Hype Train, each connected service; or overlays
+  by first letter), and a tick list inside each tile. It stays open so you can add several.
+- **Targeting says what the default really is.** The default card reads "your Alerts overlay" once
+  that overlay is in OBS, and "all static overlays" before then, which is how untargeted alerts
+  actually behave. Picking "Only some overlays" with nothing picked saves nothing until you pick one.
+- **Both tabs save as you go**, and keep a Save button.
+- **Fixed:** switching an amount filter from "Any amount" to "At least" with the number left at 1
+  failed to save, because the number was sent empty. Switching back to "Any amount" also kept the
+  old number in the save; the server ignored it.
+
 ## OL-2611-043 - November 27th, 2026 - feat(products): Snow Overlay for OBS
 
 The seventh product, and the first that reads nothing at all: no chat, no events, just snow falling

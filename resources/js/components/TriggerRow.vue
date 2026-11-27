@@ -1,5 +1,8 @@
 <script setup lang="ts">
-const enabled = defineModel<boolean>('enabled', { required: true });
+import { X } from '@lucide/vue';
+
+// One switched-on trigger in the Triggers tab. Switching off is the remove
+// button: an alert's active list only ever shows what fires it.
 const durationMs = defineModel<number>('durationMs', { required: true });
 /** Variant condition. null = base/any amount; otherwise 'at_least' | 'exactly'. */
 const conditionType = defineModel<string | null>('conditionType', { default: null });
@@ -8,17 +11,18 @@ const conditionValue = defineModel<number | null>('conditionValue', { default: n
 defineProps<{
   /** Human label rendered as the main row text. */
   label: string;
-  /** Monospace key text shown under the label (e.g. `channel.follow` or `kofi:donation`). */
+  /** Where the event comes from: "Twitch", "Ko-fi". */
+  source: string;
+  /** Monospace key text (e.g. `channel.follow` or `kofi:donation`). */
   keyText: string;
-  /** Custom Tailwind classes for the toggle's checked color, so external groups can differ from Twitch. */
-  toggleCheckedClass?: string;
   /** When set (e.g. "bits"), this event supports a variant condition and the picker is shown. */
   amountUnit?: string;
 }>();
 
 const emit = defineEmits<{
-  /** Save the row (fired when the toggle changes or duration commits). */
+  /** A finished change: duration or condition committed. */
   save: [];
+  remove: [];
 }>();
 
 function clampSeconds(value: number): number {
@@ -31,8 +35,11 @@ function onDurationInput(raw: string) {
 }
 
 function onConditionTypeChange(raw: string) {
-  conditionType.value = raw === '' ? null : raw;
-  if (conditionType.value === null) {
+  // Branch on `next`, never on conditionType.value: a defineModel read right
+  // after a write returns the parent's prop, which has not caught up yet.
+  const next = raw === '' ? null : raw;
+  conditionType.value = next;
+  if (next === null) {
     conditionValue.value = null;
   } else if (conditionValue.value == null || conditionValue.value < 1) {
     conditionValue.value = 1;
@@ -46,61 +53,69 @@ function onConditionValueInput(raw: string) {
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-3 rounded-sm border border-sidebar-border bg-sidebar-accent p-3">
-    <label class="relative inline-flex cursor-pointer items-center" :title="enabled ? 'Disable' : 'Enable'">
-      <input v-model="enabled" type="checkbox" class="peer sr-only" @change="emit('save')" />
-      <span
-        class="peer h-6 w-10 rounded-full bg-gray-300 peer-focus:outline-none after:absolute after:inset-s-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-4 dark:bg-gray-600 dark:after:bg-gray-100"
-        :class="toggleCheckedClass ?? 'peer-checked:bg-green-400 dark:peer-checked:bg-green-800'"
-      />
-    </label>
-
-    <div class="min-w-0 flex-1">
-      <div class="font-medium text-foreground">{{ label }}</div>
-      <div class="font-mono text-xs text-muted-foreground">{{ keyText }}</div>
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border border-sidebar-border bg-sidebar-accent px-3 py-2.5">
+    <div class="flex min-w-0 flex-[1_1_14rem] flex-col">
+      <div class="flex min-w-0 items-center gap-2">
+        <span class="truncate text-sm font-semibold text-foreground">{{ label }}</span>
+        <span class="shrink-0 border border-violet-400/50 px-2 py-px text-[11px] text-muted-foreground">{{ source }}</span>
+      </div>
+      <span class="truncate font-mono text-[11px] text-muted-foreground">{{ keyText }}</span>
     </div>
 
-    <div v-if="amountUnit" class="flex items-center gap-2" :class="{ 'opacity-40': !enabled }">
-      <select
-        :value="conditionType ?? ''"
-        class="input-border h-9 cursor-pointer rounded-sm"
-        :disabled="!enabled"
-        @change="onConditionTypeChange(($event.target as HTMLSelectElement).value)"
-      >
-        <option value="">Any amount</option>
-        <option value="at_least">At least</option>
-        <option value="exactly">Exactly</option>
-      </select>
-      <template v-if="conditionType">
+    <div class="ml-auto flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div v-if="amountUnit" class="flex items-center gap-2">
+        <select
+          :value="conditionType ?? ''"
+          class="input-border h-9 cursor-pointer"
+          aria-label="Amount filter"
+          @change="onConditionTypeChange(($event.target as HTMLSelectElement).value)"
+        >
+          <option value="">Any amount</option>
+          <option value="at_least">At least</option>
+          <option value="exactly">Exactly</option>
+        </select>
+        <template v-if="conditionType">
+          <input
+            :value="conditionValue ?? 1"
+            type="number"
+            min="1"
+            step="1"
+            class="input-border h-9 w-24"
+            aria-label="Amount"
+            @input="onConditionValueInput(($event.target as HTMLInputElement).value)"
+            @blur="emit('save')"
+            @keydown.enter.prevent="emit('save')"
+          />
+          <span class="text-xs text-muted-foreground">{{ amountUnit }}</span>
+        </template>
+      </div>
+
+      <label class="flex items-center gap-2 text-xs text-muted-foreground">
+        Show
         <input
-          :value="conditionValue ?? 1"
+          :value="durationMs / 1000"
           type="number"
           min="1"
+          max="999"
           step="1"
-          class="input-border h-9 w-24 rounded-sm"
-          :disabled="!enabled"
-          @input="onConditionValueInput(($event.target as HTMLInputElement).value)"
+          class="input-border h-9 w-18"
+          aria-label="Seconds on screen"
+          @input="onDurationInput(($event.target as HTMLInputElement).value)"
           @blur="emit('save')"
           @keydown.enter.prevent="emit('save')"
         />
-        <span class="text-xs text-muted-foreground">{{ amountUnit }}</span>
-      </template>
-    </div>
+        sec
+      </label>
 
-    <div class="flex items-center gap-2" :class="{ 'opacity-40': !enabled }">
-      <input
-        :value="durationMs / 1000"
-        type="number"
-        min="1"
-        max="999"
-        step="1"
-        class="input-border h-9 w-20 rounded-sm"
-        :disabled="!enabled"
-        @input="onDurationInput(($event.target as HTMLInputElement).value)"
-        @blur="emit('save')"
-        @keydown.enter.prevent="emit('save')"
-      />
-      <span class="text-xs text-muted-foreground">sec</span>
+      <button
+        type="button"
+        class="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center border border-violet-400/50 text-muted-foreground transition-colors hover:border-red-500 hover:text-red-500"
+        :aria-label="`Remove ${label}`"
+        :title="`Remove ${label}`"
+        @click="emit('remove')"
+      >
+        <X :size="14" />
+      </button>
     </div>
   </div>
 </template>
