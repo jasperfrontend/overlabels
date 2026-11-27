@@ -45,9 +45,9 @@ class ProductDesigner
 
     /**
      * The account-level extras a manifest may switch on, and nothing else.
-     * The schema's enum lists the same three; a test holds them together.
+     * The schema's enum lists the same four; a test holds them together.
      */
-    public const EXTRAS = ['sample_chat', 'chat_window', 'chat_filters'];
+    public const EXTRAS = ['sample_chat', 'chat_window', 'chat_filters', 'sample_checkins'];
 
     /**
      * The top of the sample-chat rate slider when the block declares no

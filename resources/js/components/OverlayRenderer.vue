@@ -50,6 +50,7 @@ import { expandScene } from '@/utils/previewScene';
 import { withChatSlots } from '@/utils/chatSlots';
 import { withEmoteSlots } from '@/utils/emoteSlots';
 import { DEFAULT_CHECKINS_WINDOW, clampCheckinsWindow, pinsFromData, toPin, upsertPin, withCheckinSlots } from '@/utils/checkinSlots';
+import type { CheckinPin } from '@/utils/checkinSlots';
 import {
   DEFAULT_TOWER_WINDOW,
   TOPPLE_HOLD_MS,
@@ -1276,7 +1277,10 @@ onMounted(async () => {
 
   // The designer's scene buttons. Sample mode only: an overlay in OBS never
   // listens, so nothing can stage a moment on a real stream.
-  if (props.sample) window.addEventListener('message', handlePreviewScene);
+  if (props.sample) {
+    window.addEventListener('message', handlePreviewScene);
+    window.addEventListener('message', handleCheckinSample);
+  }
 
   // Synthetic chat firehose for load-testing the renderer. The condition is
   // inlined by Vite at build time, so an ordinary production build eliminates
@@ -1409,6 +1413,12 @@ onMounted(async () => {
     checkinsWindow.value = clampCheckinsWindow(json.checkins_window);
     towerWindow.value = clampTowerWindow(json.tower_window);
 
+    // The designer's sample pins need the payload in place first; say so,
+    // and the designer answers with the number it wants shown.
+    if (props.sample && window.parent !== window) {
+      window.parent.postMessage({ ol: 'checkin-sample', ready: true }, '*');
+    }
+
     // Initialise user locale for pipe formatters
     userLocale.value = json.locale ?? 'en-US';
 
@@ -1521,6 +1531,7 @@ onUnmounted(() => {
   // reload, and the backoff timer keeps reopening one after the component dies.
   twitchChat.disconnect();
   window.removeEventListener('message', handlePreviewScene);
+  window.removeEventListener('message', handleCheckinSample);
   if (sampleFeed) {
     sampleFeed.stop();
     window.removeEventListener('message', handleSampleMessage);
@@ -1742,6 +1753,40 @@ async function fetchDemoPayload(product: string): Promise<{ ok: true; data: any 
   } catch {
     return { ok: false, status: 0, message: 'Demo unavailable' };
   }
+}
+
+/**
+ * The Chat Checkin designer's sample pins (utils/checkinSample.ts): a number
+ * of invented checkins written into the same `checkins.*` slots a real one
+ * lands in, so the globe, pin list and count react as on stream. 0 puts back
+ * whatever the window held before the first sample. Sample mode only, and
+ * only the framing page is heard, the same rule as the sample chat.
+ */
+let pinsBeforeSample: { pins: CheckinPin[]; count: number } | null = null;
+
+async function handleCheckinSample(event: MessageEvent): Promise<void> {
+  if (event.source !== window.parent) return;
+  const payload = event.data as { ol?: string; count?: unknown } | null;
+  if (!payload || payload.ol !== 'checkin-sample' || typeof payload.count !== 'number') return;
+
+  const { sampleCheckinPins } = await import('@/utils/checkinSample');
+  if (!data.value || typeof data.value !== 'object') return;
+
+  if (pinsBeforeSample === null) {
+    pinsBeforeSample = { pins: pinsFromData(data.value), count: Number(data.value['checkins.count']) || 0 };
+  }
+
+  if (payload.count <= 0) {
+    data.value = withCheckinSlots(data.value, pinsBeforeSample.pins, pinsBeforeSample.count);
+    pinsBeforeSample = null;
+  } else {
+    const pins = sampleCheckinPins(Math.min(payload.count, checkinsWindow.value), Math.floor(Date.now() / 1000));
+    data.value = withCheckinSlots(data.value, pins, pins.length);
+  }
+  bump();
+  // The globe is only re-synced when the compiled HTML changes, and with the
+  // HUD and pin list off, pins alone change nothing in it: tell it directly.
+  if (templateUsesGlobe.value) syncGlobes();
 }
 
 /**

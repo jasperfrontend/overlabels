@@ -462,9 +462,9 @@
         },
         "extras": {
           "type": "array",
-          "description": "Account-level settings the page edits beside the knobs, and the sample feed. `sample_chat` puts the sample-chat rate, More and Clear above the preview (for an overlay that reads chat, which includes the emotes loop). `chat_window` is the chat foreach cap slider; `chat_filters` is the hide-commands switch and the hidden-chatters box. Each is a closed name the page knows.",
+          "description": "Account-level settings the page edits beside the knobs, and the sample feed. `sample_chat` puts the sample-chat rate, More and Clear above the preview (for an overlay that reads chat, which includes the emotes loop). `chat_window` is the chat foreach cap slider; `chat_filters` is the hide-commands switch and the hidden-chatters box. `sample_checkins` puts a sample-checkins button and count above the preview (for an overlay that draws checkin pins). Each is a closed name the page knows.",
           "uniqueItems": true,
-          "items": { "type": "string", "enum": ["sample_chat", "chat_window", "chat_filters"] }
+          "items": { "type": "string", "enum": ["sample_chat", "chat_window", "chat_filters", "sample_checkins"] }
         },
         "sample_chat_max": {
           "type": "integer",

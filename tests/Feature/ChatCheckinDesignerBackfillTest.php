@@ -43,16 +43,22 @@ function checkinBackfillInstall(User $user): OverlayTemplate
     return OverlayTemplate::findOrFail($instance->primitive_map['overlays']['globe']);
 }
 
+/** The next upgrade in line, 2026-11-27: the land tones switch. */
+function checkinLandTonesUpgrade(): Migration
+{
+    return require base_path('database/migrations/2026_11_27_120000_add_land_tones_and_bold_text_to_installed_chat_checkin_globes.php');
+}
+
 /** Turn a fresh install back into one from before the designer. */
 function makePreDesigner(OverlayTemplate $template): void
 {
-    $keys = array_column(checkinBackfillConstant('CONTROLS'), 0);
+    $keys = [...array_column(checkinBackfillConstant('CONTROLS'), 0), 'land_tones', 'font_bold'];
     $template->controls()->whereIn('key', $keys)->delete();
 
     $template->update([
         'css' => checkinBackfillConstant('OLD_CSS'),
         'html' => str_replace(checkinBackfillConstant('HTML_TO'), checkinBackfillConstant('HTML_FROM'), $template->html),
-        'template_tags' => array_values(array_diff($template->template_tags, checkinBackfillConstant('TAGS'))),
+        'template_tags' => array_values(array_diff($template->template_tags, [...checkinBackfillConstant('TAGS'), 'c:land_tones', 'c:font_bold'])),
     ]);
 }
 
@@ -65,16 +71,21 @@ function setCheckinHome(User $user, ?string $label): void
     $integration->save();
 }
 
-it('ships exactly the CSS and html a fresh install gets', function () {
+// The recipe has moved on since this backfill, so it no longer matches a fresh
+// install on its own. It must hand the next upgrade exactly the CSS that one
+// starts from, and the two run in order must land on a fresh install.
+it('ships exactly the CSS the next upgrade starts from, and the html a fresh install gets', function () {
     $fresh = checkinBackfillInstall(checkinBackfillUser());
+    $nextOldCss = (new ReflectionClass(checkinLandTonesUpgrade()))->getConstant('OLD_CSS');
 
-    expect(checkinBackfillConstant('NEW_CSS'))->toBe(trim($fresh->css))
+    expect(checkinBackfillConstant('NEW_CSS'))->toBe($nextOldCss)
         ->and(substr_count($fresh->html, checkinBackfillConstant('HTML_TO')))->toBe(1);
 });
 
 it('gives an old install the controls at the Classic look, the CSS and its old home', function () {
     $user = checkinBackfillUser();
     $template = checkinBackfillInstall($user);
+    $freshCss = trim($template->css);
     $fresh = $template->controls()->get()->keyBy('key');
     makePreDesigner($template);
     setCheckinHome($user, 'Rotterdam, NL');
@@ -82,13 +93,18 @@ it('gives an old install the controls at the Classic look, the CSS and its old h
     checkinBackfill()->up();
 
     $template->refresh();
+    expect($template->css)->toBe(checkinBackfillConstant('NEW_CSS'));
+
+    checkinLandTonesUpgrade()->up();
+
+    $template->refresh();
     $controls = $template->controls()->get()->keyBy('key');
     $classic = collect(json_decode(file_get_contents(base_path('resources/recipes/chat-checkin/manifest.json')), true)['designer']['presets'])
         ->firstWhere('key', 'classic')['values'];
 
-    expect($template->css)->toBe(checkinBackfillConstant('NEW_CSS'))
+    expect($template->css)->toBe($freshCss)
         ->and(substr_count($template->html, checkinBackfillConstant('HTML_TO')))->toBe(1)
-        ->and($template->template_tags)->toContain('c:land_color', 'c:hometown', 'if:c:hometown')
+        ->and($template->template_tags)->toContain('c:land_color', 'c:hometown', 'if:c:hometown', 'c:land_tones', 'c:font_bold')
         ->and($controls['hometown']->value)->toBe('Rotterdam, NL');
 
     // Every look control is at the Classic preset, so the designer shows
@@ -98,7 +114,7 @@ it('gives an old install the controls at the Classic look, the CSS and its old h
     }
 
     // Everything but the value matches what a fresh install creates.
-    foreach (array_column(checkinBackfillConstant('CONTROLS'), 0) as $key) {
+    foreach ([...array_column(checkinBackfillConstant('CONTROLS'), 0), 'land_tones', 'font_bold'] as $key) {
         expect($controls[$key]->only(['label', 'type', 'config', 'description']))
             ->toBe($fresh[$key]->only(['label', 'type', 'config', 'description']), "control {$key}");
     }

@@ -158,7 +158,7 @@
     "groups": [
       {
         "title": "Globe",
-        "keys": ["land_color", "land_dot_size", "globe_color", "globe_opacity", "spin_seconds", "tilt"]
+        "keys": ["land_color", "land_dot_size", "land_tones", "globe_color", "globe_opacity", "spin_seconds", "tilt"]
       },
       {
         "title": "Pins",
@@ -166,7 +166,7 @@
       },
       {
         "title": "Text",
-        "keys": ["font", "text_color", "accent_color"]
+        "keys": ["font", "font_bold", "text_color", "accent_color"]
       },
       {
         "title": "Settings",
@@ -182,6 +182,7 @@
         "values": {
           "land_color": "#4caf50",
           "land_dot_size": "5",
+          "land_tones": "0",
           "globe_color": "#0b3d91",
           "globe_opacity": "0.92",
           "spin_seconds": "60",
@@ -190,6 +191,7 @@
           "label_color": "#ffffff",
           "label_size": "14",
           "font": "Albert Sans",
+          "font_bold": "0",
           "text_color": "#e8f1ff",
           "accent_color": "#7cc4ff"
         }
@@ -201,6 +203,7 @@
         "values": {
           "land_color": "#2dd4bf",
           "land_dot_size": "5",
+          "land_tones": "0",
           "globe_color": "#000000",
           "globe_opacity": "0.5",
           "spin_seconds": "30",
@@ -209,6 +212,7 @@
           "label_color": "#dfe8e8",
           "label_size": "13",
           "font": "JetBrains Mono",
+          "font_bold": "0",
           "text_color": "#8fb6b3",
           "accent_color": "#1daaff"
         }
@@ -220,6 +224,7 @@
         "values": {
           "land_color": "#8b9cff",
           "land_dot_size": "3",
+          "land_tones": "0",
           "globe_color": "#05070f",
           "globe_opacity": "0.9",
           "spin_seconds": "90",
@@ -228,6 +233,7 @@
           "label_color": "#e0e7ff",
           "label_size": "14",
           "font": "Space Grotesk",
+          "font_bold": "0",
           "text_color": "#a5b4fc",
           "accent_color": "#c4b5fd"
         }
@@ -239,6 +245,7 @@
         "values": {
           "land_color": "#f8fafc",
           "land_dot_size": "4",
+          "land_tones": "0",
           "globe_color": "#4fa8e8",
           "globe_opacity": "0.95",
           "spin_seconds": "60",
@@ -247,6 +254,7 @@
           "label_color": "#ffffff",
           "label_size": "14",
           "font": "Fredoka",
+          "font_bold": "0",
           "text_color": "#f0f9ff",
           "accent_color": "#bae6fd"
         }
@@ -258,6 +266,7 @@
         "values": {
           "land_color": "#f2efe6",
           "land_dot_size": "4",
+          "land_tones": "0",
           "globe_color": "#111111",
           "globe_opacity": "0.95",
           "spin_seconds": "60",
@@ -266,6 +275,7 @@
           "label_color": "#f2efe6",
           "label_size": "14",
           "font": "Inter",
+          "font_bold": "0",
           "text_color": "#bdbab2",
           "accent_color": "#f2efe6"
         }
@@ -277,6 +287,7 @@
         "values": {
           "land_color": "#f97316",
           "land_dot_size": "4",
+          "land_tones": "0",
           "globe_color": "#2a0f05",
           "globe_opacity": "0.9",
           "spin_seconds": "60",
@@ -285,6 +296,7 @@
           "label_color": "#ffe4e6",
           "label_size": "14",
           "font": "Albert Sans",
+          "font_bold": "0",
           "text_color": "#fed7aa",
           "accent_color": "#fb7185"
         }
@@ -296,6 +308,7 @@
         "values": {
           "land_color": "#bae6fd",
           "land_dot_size": "3.5",
+          "land_tones": "0",
           "globe_color": "#031627",
           "globe_opacity": "0.85",
           "spin_seconds": "75",
@@ -304,11 +317,13 @@
           "label_color": "#e0f2fe",
           "label_size": "14",
           "font": "Space Grotesk",
+          "font_bold": "0",
           "text_color": "#7dd3fc",
           "accent_color": "#38bdf8"
         }
       }
     ],
+    "extras": ["sample_checkins"],
     "stage": [
       {
         "w": 1920,

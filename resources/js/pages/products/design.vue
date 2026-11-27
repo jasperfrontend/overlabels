@@ -2,13 +2,14 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Eraser, Loader2, MessageSquarePlus, Pause, Play, RotateCcw } from '@lucide/vue';
+import { Eraser, Loader2, MapPin, MapPinOff, MessageSquarePlus, Pause, Play, RotateCcw } from '@lucide/vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AddToObsButton from '@/components/AddToObsButton.vue';
 import Heading from '@/components/Heading.vue';
 import RekaToast from '@/components/RekaToast.vue';
 import ControlKnob from '@/components/controls/ControlKnob.vue';
 import { angleColorKeys } from '@/utils/angleKnob';
+import { SAMPLE_CHECKINS_MAX } from '@/utils/checkinSample';
 import { type ConditionSubject, disabledReason } from '@/utils/controlConditions';
 import { stageFor, type StageSize } from '@/utils/designerStage';
 import type { AppPageProps, BreadcrumbItem, ForeachCaps } from '@/types';
@@ -44,11 +45,12 @@ interface SavedPreset {
 
 /**
  * The account-level extras a manifest may switch on beside the knobs.
- * `sample_chat` is the rate, More and Clear above the preview; the other two
- * are the chat foreach cap and the two display filters, which arrive with
- * their own props only when declared.
+ * `sample_chat` is the rate, More and Clear above the preview;
+ * `sample_checkins` is a button and a count of invented checkin pins above
+ * it; the other two are the chat foreach cap and the two display filters,
+ * which arrive with their own props only when declared.
  */
-type Extra = 'sample_chat' | 'chat_window' | 'chat_filters';
+type Extra = 'sample_chat' | 'chat_window' | 'chat_filters' | 'sample_checkins';
 
 /** A manifest scene. Its events are read by the frame (utils/previewScene.ts), never here. */
 interface Scene {
@@ -586,6 +588,30 @@ function setRate(perMinute: number): void {
   postToFrame({ rate: perMinute });
 }
 
+/* -------------------------------------------------------- sample checkins */
+
+/**
+ * Invented checkin pins on the globe (utils/checkinSample.ts), written by the
+ * frame into its own checkins window only: nothing is stored or broadcast.
+ * 0 puts the real pins back. Show resumes at the last number shown.
+ */
+const samplePins = ref(0);
+const lastSamplePins = ref(Math.round(SAMPLE_CHECKINS_MAX / 2));
+
+function postCheckinSample(count: number): void {
+  frame.value?.contentWindow?.postMessage({ ol: 'checkin-sample', count }, window.location.origin);
+}
+
+function setSamplePins(count: number): void {
+  samplePins.value = count;
+  if (count > 0) lastSamplePins.value = count;
+  postCheckinSample(count);
+}
+
+function toggleSamplePins(): void {
+  setSamplePins(samplePins.value > 0 ? 0 : lastSamplePins.value);
+}
+
 /* ---------------------------------------------------------------- scenes */
 
 /** The last moment played, until Live puts the real game back. */
@@ -725,6 +751,13 @@ function onFrameMessage(event: MessageEvent): void {
   if (event.source !== frame.value?.contentWindow) return;
 
   const payload = event.data as { ol?: string; ready?: boolean; applied?: string; expired?: boolean } | null;
+
+  // A frame that (re)loaded has its own pins again; hand it the sample count.
+  if (payload?.ol === 'checkin-sample') {
+    if (payload.ready && has('sample_checkins') && samplePins.value > 0) postCheckinSample(samplePins.value);
+    return;
+  }
+
   if (payload?.ol !== 'chat-sample') return;
 
   if (payload.ready) postToFrame({ rate: rate.value });
@@ -1067,6 +1100,45 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
             </div>
           </div>
 
+          <!-- Sample checkins: invented pins on the globe, so the look can be
+               judged with a crowd on it. The same bar shape as the sample
+               chat: Show/Hide, a slider that takes the spare width, the
+               count read out large at a fixed width. -->
+          <div
+            v-if="has('sample_checkins')"
+            class="-mb-2 flex flex-col gap-3 rounded-t-sm border border-b-0 border-border bg-card p-3 sm:flex-row sm:items-center sm:gap-4"
+          >
+            <button
+              type="button"
+              class="btn min-w-48 shrink-0"
+              :class="samplePins === 0 ? 'btn-primary' : 'btn-secondary'"
+              :aria-pressed="samplePins > 0"
+              @click="toggleSamplePins"
+            >
+              <MapPin v-if="samplePins === 0" class="size-4" />
+              <MapPinOff v-else class="size-4" />
+              {{ samplePins === 0 ? 'Show sample checkins' : 'Hide sample checkins' }}
+            </button>
+
+            <div class="flex min-w-0 flex-1 items-center gap-3">
+              <label class="sr-only" for="sample-pins">Number of sample checkins</label>
+              <input
+                id="sample-pins"
+                type="range"
+                class="min-w-0 flex-1 cursor-pointer accent-[#1DAAFF]"
+                min="0"
+                :max="SAMPLE_CHECKINS_MAX"
+                step="1"
+                :value="samplePins"
+                @input="setSamplePins(Number(($event.target as HTMLInputElement).value))"
+              />
+              <div class="w-24 shrink-0 text-right leading-tight" aria-live="polite">
+                <span class="block text-xl font-semibold text-foreground tabular-nums">{{ samplePins === 0 ? 'Off' : samplePins }}</span>
+                <span class="block text-xs text-muted-foreground">{{ samplePins === 0 ? 'your real pins' : 'sample pins' }}</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Scenes: moments of a game the server drives, played into the
                preview only, so every color can be seen where it shows up.
                Live reloads the frame onto the real game. -->
@@ -1131,6 +1203,7 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
           <p class="pr-12 text-sm text-muted-foreground">
             The real overlay, at {{ sourceSize.w }}&times;{{ sourceSize.h }} - the browser source size this look wants.
             <template v-if="has('sample_chat')">The chat in it is invented, so it reads the same whether or not you are live.</template>
+            <template v-if="has('sample_checkins')">Sample checkins are invented viewers and only show here, never on stream.</template>
           </p>
         </div>
       </div>

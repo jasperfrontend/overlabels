@@ -1,5 +1,34 @@
 # Changelog - November 2026
 
+## OL-2611-047 - November 28th, 2026 - feat(checkin): hexagon globe, mixed land tones, bold text and sample checkins in the designer
+
+The Chat Checkin globe drew its continents as screen-facing dots with a soft gradient edge, so every
+dot looked like a little glowing ball sitting on top of the world. The continents are now flat
+hexagon tiles lying on the sphere, and the designer can finally show a crowded globe without a
+single real viewer.
+
+- **Flat hexagon tiles.** Each land tile is a small hexagon turned to face outward, so tiles near the
+  edge squash the way tiles on a real ball would. They sit on an even grid now, so the rows no
+  longer bunch up toward the poles.
+- **Room around the core.** The inner ball is 60% of the globe instead of 98%. The far side of the
+  world shows faintly through the gap at 30%, and pins round the back hide with their names instead
+  of shining through it.
+- **Land dot size means something new.** It is now how much of the gap between tiles each tile
+  fills: 10 and they nearly touch, 5 and they are half that wide. Tiles grow and shrink with the
+  globe. Existing globes keep their number, so they will look a little bolder than before.
+- **Mixed land tones** (new switch, off by default). Every tile takes the land colour, a little
+  lighter or a little darker, scattered with no pattern and the same on every load.
+- **Bold text** (new switch, off by default) for the names, the HUD and the pin list.
+- **Names that stay readable.** Pins stand at three heights so neighbouring names spread out, names
+  fade out as their pin turns toward the left or right edge, every latitude gets its turn at the
+  front, and the names have a hard outline instead of a soft shadow. Stalks are thicker.
+- **Sample checkins in the designer.** A "Show sample checkins" bar above the preview puts up to 50
+  invented viewers on the globe, from a handful spread over every continent to a crowded Europe.
+  They only exist in the preview, never on stream.
+- **Existing installs are upgraded** with both new switches, off, unless their CSS was edited by
+  hand, in which case they are left alone.
+- A new hero image for the product page.
+
 ## OL-2611-045 - November 27th, 2026 - feat(alerts): active-first Triggers and Targeting tabs
 
 An alert's Triggers and Targeting tabs used to list everything at once: fifty triggers in collapsible

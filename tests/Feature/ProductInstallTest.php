@@ -42,6 +42,14 @@ function chatCheckinRecipe(): Recipe
 // The catalogue
 // ---------------------------------------------------------------------------
 
+it('ships the chat-checkin hero without a c2pa manifest', function () {
+    $file = public_path('products/chat-checkin-hero.jpg');
+
+    expect(app(RecipeCatalog::class)->find('chat-checkin')['hero'])->toBe('/products/chat-checkin-hero.jpg')
+        ->and(is_file($file))->toBeTrue()
+        ->and(file_get_contents($file))->not->toContain('c2pa');
+});
+
 it('lists chat-checkin as a product and keeps the picker recipes unlisted', function () {
     $listed = app(RecipeCatalog::class)->listed();
 
@@ -126,8 +134,8 @@ it('creates the globe overlay with its designer controls on install', function (
 
     $keys = OverlayControl::where('overlay_template_id', $template->id)->pluck('key')->sort()->values()->all();
     expect($keys)->toBe([
-        'accent_color', 'font', 'globe_color', 'globe_opacity', 'hometown', 'label_color', 'label_size',
-        'land_color', 'land_dot_size', 'pin_color', 'spin_seconds', 'text_color', 'tilt', 'toggle_hud', 'toggle_pinlist',
+        'accent_color', 'font', 'font_bold', 'globe_color', 'globe_opacity', 'hometown', 'label_color', 'label_size',
+        'land_color', 'land_dot_size', 'land_tones', 'pin_color', 'spin_seconds', 'text_color', 'tilt', 'toggle_hud', 'toggle_pinlist',
     ]);
 });
 

@@ -85,6 +85,32 @@ export function landDots(): LandDot[] {
 }
 
 /**
+ * About as many points as the 2 degree grid has cells at the equator, spread
+ * over the whole sphere: 4 pi steradians / (2 degrees)^2 is ~10,300.
+ */
+export const EVEN_DOT_COUNT = 10000;
+
+/**
+ * The same continents sampled on a Fibonacci sphere instead of the grid, so
+ * every dot sits at nearly the same distance from its neighbours. The grid's
+ * rows bunch together toward the poles; flat tiles on those rows overlap.
+ */
+export function evenLandDots(count: number = EVEN_DOT_COUNT): LandDot[] {
+  const dots: LandDot[] = [];
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < count; i++) {
+    const y = 1 - (2 * (i + 0.5)) / count;
+    const lat = (Math.asin(y) * 180) / Math.PI;
+    const turn = (i * golden) % (Math.PI * 2);
+    const lng = (turn * 180) / Math.PI - 180;
+    const row = Math.min(MASK_ROWS - 1, Math.floor((90 - lat) / (180 / MASK_ROWS)));
+    const col = Math.min(MASK_COLS - 1, Math.floor((lng + 180) / (360 / MASK_COLS)));
+    if (isLandCell(row, col)) dots.push({ lat, lng });
+  }
+  return dots;
+}
+
+/**
  * lat/lng in degrees to a unit vector in three.js coordinates (y up, camera
  * looking down -z). lng 0 faces the camera at rotation 0.
  */

@@ -69,6 +69,7 @@ The stylesheet. Tags work in here too.
 :root {
   --land: [[[c:land_color]]];
   --land-size: [[[c:land_dot_size]]];
+  --land-tones: [[[c:land_tones]]];
   --globe: [[[c:globe_color]]];
   --globe-alpha: [[[c:globe_opacity]]];
   --spin: [[[c:spin_seconds]]];
@@ -77,11 +78,12 @@ The stylesheet. Tags work in here too.
   --label: [[[c:label_color]]];
   --label-size: [[[c:label_size]]]px;
   --font: [[[c:font]]];
+  --bold: [[[c:font_bold]]];
   --text: [[[c:text_color]]];
   --accent: [[[c:accent_color]]];
 }
 body { background: transparent; margin: 0; }
-.globe-stage { position: relative; width: 100vw; height: 100vh; font-family: var(--font), ui-monospace, monospace; }
+.globe-stage { position: relative; width: 100vw; height: 100vh; font-family: var(--font), ui-monospace, monospace; font-weight: calc(400 + 300 * var(--bold)); }
 /* the globe reads these off its own element twice a second, so a designer
    change lands without reloading the browser source */
 .ol-checkin-globe {
@@ -90,11 +92,12 @@ body { background: transparent; margin: 0; }
   --globe-shell-opacity: var(--globe-alpha);
   --globe-dot-color: var(--land);
   --globe-dot-size: var(--land-size);
+  --globe-dot-tones: var(--land-tones);
   --globe-pin-color: var(--pin);
   --globe-rotation-seconds: var(--spin);
   --globe-tilt-degrees: var(--tilt);
 }
-.ol-globe-label { color: var(--label); font-size: var(--label-size); letter-spacing: 0.08em; text-shadow: 0 0 6px #000; transition: opacity 0.3s; }
+.ol-globe-label { color: var(--label); font-size: var(--label-size); letter-spacing: 0.08em; text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; transition: opacity 0.3s; }
 .globe-hud { position: absolute; top: 24px; left: 24px; color: var(--accent); }
 .hud-latest { color: var(--text); margin-top: 4px; }
 .pin-list { position: absolute; right: 24px; top: 24px; color: var(--text); font-size: 12px; }
@@ -103,12 +106,13 @@ body { background: transparent; margin: 0; }
 
 ## Controls
 
-Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 15 are defined by the overlay itself and are recreated, with the default values shown, for anyone who installs it.
+Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`. These 17 are defined by the overlay itself and are recreated, with the default values shown, for anyone who installs it.
 
 | Tag | Type | Label | Default | Referenced in source |
 |---|---|---|---|---|
 | `[[[c:land_color]]]` | color | Land color | `#4caf50` | yes |
 | `[[[c:land_dot_size]]]` | number | Land dot size | `5` | yes |
+| `[[[c:land_tones]]]` | boolean | Mixed land tones | `0` | yes |
 | `[[[c:globe_color]]]` | color | Globe color | `#0b3d91` | yes |
 | `[[[c:globe_opacity]]]` | number | Globe opacity | `0.92` | yes |
 | `[[[c:spin_seconds]]]` | number | Seconds per turn | `60` | yes |
@@ -117,6 +121,7 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 | `[[[c:label_color]]]` | color | Name color | `#ffffff` | yes |
 | `[[[c:label_size]]]` | number | Name size | `14` | yes |
 | `[[[c:font]]]` | text | Font | `Albert Sans` | yes |
+| `[[[c:font_bold]]]` | boolean | Bold text | `0` | yes |
 | `[[[c:text_color]]]` | color | Text color | `#e8f1ff` | yes |
 | `[[[c:accent_color]]]` | color | Accent color | `#7cc4ff` | yes |
 | `[[[c:hometown]]]` | text | Your location |  | yes |
@@ -126,8 +131,10 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
 ### Control detail
 
 - `c:land_color` - The color of the dots that draw the continents.
-- `c:land_dot_size` - How big each continent dot is, in pixels.
+- `c:land_dot_size` - How big each continent tile is. 10 and the tiles nearly touch, 5 and they are half that wide.
   - min=1, max=10, step=0.5, reset_value=5, random=false, random_interval=null
+- `c:land_tones` - Gives every continent tile one of three tones of the land color: the color itself, a little lighter or a little darker.
+  - min=null, max=null, step=1, reset_value=0, random=false, random_interval=null
 - `c:globe_color` - The color of the globe itself, under the continents.
 - `c:globe_opacity` - How solid the globe is. 1 is fully solid; lower lets the far side of the world show through faintly.
   - min=0, max=1, step=0.05, reset_value=0.92, random=false, random_interval=null
@@ -141,6 +148,8 @@ Controls are named, live-updatable values the overlay reads with `[[[c:<key>]]]`
   - min=9, max=32, step=1, reset_value=14, random=false, random_interval=null
 - `c:font` - The font for the names, the HUD and the pin list, any family Bunny Fonts serves. The overlay loads it itself.
   - webfont=true
+- `c:font_bold` - Shows the names, the HUD and the pin list in bold.
+  - min=null, max=null, step=1, reset_value=0, random=false, random_interval=null
 - `c:text_color` - The HUD's detail lines and the pin list.
 - `c:accent_color` - The HUD's headline and the places in the pin list.
 - `c:hometown` - Where you stream from, as City, country code - like Rotterdam, NL. The farthest checkin is measured from here and the HUD names it. Leave it empty to measure nothing.
