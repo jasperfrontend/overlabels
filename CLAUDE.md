@@ -118,9 +118,14 @@ Critical variables:
 Frontend unit tests are Vitest, co-located as `resources/js/**/*.test.ts`, configured in
 `vitest.config.mts` (deliberately separate from `vite.config.mts`, which loads the Vue/Tailwind
 plugins and shells out to `git rev-parse` at module scope). Scope is the pure TypeScript Pest cannot
-reach - the DSL, tag parser, two-pass template renderer, formatters. `environment: 'node'`, no jsdom:
-component testing would mean adding both and is an open decision, not an oversight. Added Aug 2026
-alongside the foreach tag-injection fix (PR #230), which had no automated coverage to catch it.
+reach - the DSL, tag parser, two-pass template renderer, formatters. `environment: 'node'` for the
+`unit` project. Added Aug 2026 alongside the foreach tag-injection fix (PR #230), which had no
+automated coverage to catch it.
+
+A second `dom` project runs `*.dom.test.ts` in happy-dom (a simulated DOM, not a browser): components
+are mounted with Vue's own `createApp()`, and anything that draws, such as three.js, is faked. First
+used for the Chat Checkin globe missing real checkins (OL-2611-049). A real-browser run (Vitest
+Browser Mode with the installed Firefox) is still an open decision.
 
 ### Key Architecture Notes
 
