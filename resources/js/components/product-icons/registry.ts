@@ -3,6 +3,7 @@ import ChatCheckin from './ChatCheckin.vue';
 import ChatEmoteBubbles from './ChatEmoteBubbles.vue';
 import ChatTower from './ChatTower.vue';
 import FollowerBowling from './FollowerBowling.vue';
+import SnowOverlay from './SnowOverlay.vue';
 import TwitchChatOverlay from './TwitchChatOverlay.vue';
 import TwitchChatPlinko from './TwitchChatPlinko.vue';
 
@@ -16,6 +17,7 @@ export const PRODUCT_ICONS: Record<string, Component> = {
   'chat-emote-bubbles': ChatEmoteBubbles,
   'chat-tower': ChatTower,
   'follower-bowling': FollowerBowling,
+  'snow-overlay': SnowOverlay,
   'twitch-chat-overlay': TwitchChatOverlay,
   'twitch-chat-plinko': TwitchChatPlinko,
 };

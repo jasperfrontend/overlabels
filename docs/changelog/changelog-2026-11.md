@@ -1,5 +1,26 @@
 # Changelog - November 2026
 
+## OL-2611-043 - November 27th, 2026 - feat(products): Snow Overlay for OBS
+
+The seventh product, and the first that reads nothing at all: no chat, no events, just snow falling
+over the stream as one browser source.
+
+- **Every flake falls at its own speed and drifts a little.** Each flake gets a depth when it is born:
+  near flakes are bigger, brighter and faster, far ones small, faint and slow, and each sways on its
+  own rhythm. That is what makes it look like snow rather than a sheet moving in step.
+- **Speed and size are factors, not settings.** Fall speed and flake size are percentages of each
+  flake's own speed and size, so a slow snowfall is still a crowd of flakes at different speeds.
+- **Three shapes.** Soft round flakes, crisp square pixels, or real six-armed snowflake crystals,
+  sixteen different ones, turning slowly as they fall.
+- **A designer like Chat Emote Bubbles'.** Shape, size, a color or a two-color gradient with the same
+  angle knob, how much snow (up to 3000 flakes), how fast it falls, and a transparent or colored
+  background. Five presets: Gentle, Crystals, Blizzard, Pixel and Night sky.
+- **Drawn by three.js in the overlay itself**, through a `[[[snow_scene]]]` tag that loads the snow
+  only when a template uses it, the way the checkin globe and Plinko load theirs.
+- **Its demo is a recording.** There is nothing for a live demo to act out, so the homepage and product
+  pages play a 60 fps clip of the real overlay, loaded only once it starts.
+- The homepage product rows now show the first two sentences of each description instead of one.
+
 ## OL-2611-041 - November 26th, 2026 - feat(reports): the Overlabels Overload Report
 
 When a stream gets busy, not every event can have its own alert. The Overload Report is where the

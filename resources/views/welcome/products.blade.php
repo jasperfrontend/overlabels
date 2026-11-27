@@ -3,7 +3,7 @@
   read from the recipe catalogue by the home route, so a new manifest shows
   up here without anyone editing this file. A product with a demo partial in
   welcome/demos gets it, running; one without gets its hero artwork. This is
-  a teaser, not the pitch: name, first sentence, one button to the product's
+  a teaser, not the pitch: name, first two sentences, one button to the product's
   own pitch page (resources/views/products/pitch.blade.php), which is where
   the full "what you get" highlights live now.
 
@@ -15,10 +15,17 @@
   the last one), and wireProductNav in welcome/app.ts marks the row in view.
 --}}
 @php
-    $firstSentence = function (string $text): string {
-        $end = strpos($text, '. ');
+    $firstSentences = function (string $text, int $count = 2): string {
+        $end = -1;
+        for ($i = 0; $i < $count; $i++) {
+            $next = strpos($text, '. ', $end + 1);
+            if ($next === false) {
+                return $text;
+            }
+            $end = $next;
+        }
 
-        return $end === false ? $text : substr($text, 0, $end + 1);
+        return substr($text, 0, $end + 1);
     };
 
     $demos = [
@@ -28,6 +35,7 @@
         'twitch-chat-overlay' => 'chat',
         'chat-emote-bubbles' => 'bubbles',
         'twitch-chat-plinko' => 'plinko',
+        'snow-overlay' => 'snow',
     ];
 @endphp
 <section id="products" class="scroll-mt-(--ol-nav-h) border-b border-b-sidebar-border bg-card py-20 sm:py-24">
@@ -37,7 +45,7 @@
       <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Pick one. Your Twitch chat plays it tonight.</h2>
       <p class="mb-10 max-w-2xl text-lg text-foreground sm:mb-12">
         Every product installs in one click and shows up on your Twitch stream as one browser source in OBS. Made by
-        Overlabels, free, and not available anywhere else. Every demo below runs the product's own rules, with made-up
+        Overlabels, free, and not available anywhere else. Every demo below (except Snow Overlay) runs the product's own rules, with made-up
         Twitch viewers.
       </p>
 
@@ -77,7 +85,7 @@
                   <span class="inline-block border border-sidebar-border px-2 py-0.5 text-xs text-muted-foreground">no bot needed</span>
                 @endif
                 <h3 id="product-{{ $game['slug'] }}-name" class="text-3xl leading-[1.1] font-bold tracking-tight sm:text-4xl">{{ $game['name'] }}</h3>
-                <p class="text-lg leading-relaxed text-foreground">{{ $firstSentence($game['description']) }}</p>
+                <p class="text-lg leading-relaxed text-foreground">{{ $firstSentences($game['description']) }}</p>
                 <a href="{{ route('products.show', $game['slug']) }}" class="btn btn-primary mt-2 w-full cursor-pointer sm:w-auto">
                   Get {{ $game['name'] }}
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 h-4 w-4"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>

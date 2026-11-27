@@ -251,6 +251,7 @@ class TemplateDataMapperService
         'checkin_globe' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Check-in Globe', 'desc' => 'A spinning globe with a pin per !checkin. Drawn by the overlay itself, style it with CSS', 'sample' => ''],
         'plinko_command' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Plinko Command', 'desc' => 'The word Twitch Chat Plinko listens for, without its !. Chosen on the Plinko settings page', 'sample' => 'drop'],
         'plinko_board' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Plinko Board', 'desc' => 'A Plinko board: every !drop in chat drops a ball with the chatter name on it. Drawn by the overlay itself, style it with CSS', 'sample' => ''],
+        'snow_scene' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Snow Scene', 'desc' => 'Falling snow, each flake at its own speed and drifting a little. Drawn by the overlay itself, set its look with CSS custom properties', 'sample' => ''],
     ];
 
     /**
@@ -333,6 +334,8 @@ class TemplateDataMapperService
             'checkin_globe' => '',
             // Same for [[[plinko_board]]] (plinkoTag.ts).
             'plinko_board' => '',
+            // Same for [[[snow_scene]]] (snowTag.ts).
+            'snow_scene' => '',
             // The default; an overlay render overwrites it with the
             // account's own word (OverlayTemplateController).
             'plinko_command' => User::PREFERENCE_DEFAULTS['plinko']['command'],

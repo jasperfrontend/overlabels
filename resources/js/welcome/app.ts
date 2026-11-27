@@ -8,6 +8,7 @@ import { initCheckinDemo } from './checkinDemo';
 import { initLooksTeasers } from './looksTeaser';
 import { initOverlayDemos } from './overlayDemo';
 import { initPlinkoDemo } from './plinkoDemo';
+import { initVideoDemos } from './videoDemo';
 
 // The homepage is a static blade page - this entry only wires up the handful
 // of interactive bits: theme switching, the mobile menu, tab groups and the
@@ -124,4 +125,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initLooksTeasers();
   initPlinkoDemo();
   initOverlayDemos();
+  initVideoDemos();
 });

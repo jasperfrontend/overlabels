@@ -65,6 +65,8 @@ import { GLOBE_SELECTOR, replaceGlobeTags, sourceUsesGlobe } from '@/globe/globe
 import type { GlobeInstance } from '@/globe/checkinGlobe';
 import { DEFAULT_PLINKO_COMMAND, isDropCommand, PLINKO_SELECTOR, replacePlinkoTags, sourceUsesPlinko } from '@/plinko/plinkoTag';
 import type { PlinkoInstance } from '@/plinko/plinkoBoard';
+import { replaceSnowTags, SNOW_SELECTOR, sourceUsesSnow } from '@/snow/snowTag';
+import type { SnowInstance } from '@/snow/snowScene';
 import type { ChatMessage } from '@/utils/ircParser';
 import { useExpressionEngine } from '@/composables/useExpressionEngine';
 import { useCssCustomProperties } from '@/composables/useCssCustomProperties';
@@ -200,6 +202,12 @@ const templateUsesGlobe = computed(() => sourceUsesGlobe(rawHtml.value ?? ''));
  * messages read straight from Twitch, like the chat feed.
  */
 const templateUsesPlinko = computed(() => sourceUsesPlinko(rawHtml.value ?? ''));
+
+/**
+ * Does this template embed the snowfall? Gates the placeholder pre-pass and
+ * the lazy three.js snow chunk. Snow reads nothing from chat or the server.
+ */
+const templateUsesSnow = computed(() => sourceUsesSnow(rawHtml.value ?? ''));
 
 /**
  * The chat designer's sample feed.
@@ -646,6 +654,7 @@ const compiledHtml = computed(() => {
   let source = rawHtml.value;
   if (templateUsesGlobe.value) source = replaceGlobeTags(source);
   if (templateUsesPlinko.value) source = replacePlinkoTags(source);
+  if (templateUsesSnow.value) source = replaceSnowTags(source);
   return parseSource(source, true);
 });
 // On the fast path, compiledCss resolves to the statically-rewritten stylesheet
@@ -701,7 +710,8 @@ watchEffect(
       // The globe mounts a canvas + label layer INSIDE its placeholder, while
       // the compiled HTML always contains the placeholder empty - without
       // this guard every data write would wipe the mounted globe.
-      onBeforeElChildrenUpdated: (fromEl) => !fromEl.hasAttribute('data-checkin-globe') && !fromEl.hasAttribute('data-plinko-board'),
+      onBeforeElChildrenUpdated: (fromEl) =>
+        !fromEl.hasAttribute('data-checkin-globe') && !fromEl.hasAttribute('data-plinko-board') && !fromEl.hasAttribute('data-snow-scene'),
     });
 
     if (templateUsesGlobe.value) {
@@ -709,6 +719,9 @@ watchEffect(
     }
     if (templateUsesPlinko.value) {
       syncPlinkos();
+    }
+    if (templateUsesSnow.value) {
+      syncSnows();
     }
   },
   { flush: 'post' },
@@ -832,6 +845,58 @@ function destroyPlinkos() {
     instance.destroy();
   }
   plinkoInstances.clear();
+}
+
+// ── Snowfall ─────────────────────────────────────────────────────────────────
+// Same arrangement as the globe and the board: a lazy chunk, instances keyed
+// by their placeholder. The settings ride CSS custom properties, so nothing
+// here feeds it after mount.
+let snowModule: typeof import('@/snow/snowScene') | null = null;
+let snowModuleLoading = false;
+const snowInstances = new Map<HTMLElement, SnowInstance>();
+
+function loadSnowModule() {
+  if (snowModule || snowModuleLoading) return;
+  snowModuleLoading = true;
+  void import('@/snow/snowScene')
+    .then((mod) => {
+      snowModule = mod;
+      syncSnows();
+    })
+    .catch((err) => {
+      console.warn('snow scene failed to load', err);
+    })
+    .finally(() => {
+      snowModuleLoading = false;
+    });
+}
+
+function syncSnows() {
+  if (!snowModule) {
+    loadSnowModule();
+    return;
+  }
+  const container = staticContainer.value;
+  if (!container) return;
+
+  const present = new Set<HTMLElement>();
+  for (const el of container.querySelectorAll<HTMLElement>(SNOW_SELECTOR)) {
+    present.add(el);
+    if (!snowInstances.has(el)) snowInstances.set(el, snowModule.mountSnowScene(el));
+  }
+  for (const [el, instance] of snowInstances) {
+    if (!present.has(el)) {
+      instance.destroy();
+      snowInstances.delete(el);
+    }
+  }
+}
+
+function destroySnows() {
+  for (const instance of snowInstances.values()) {
+    instance.destroy();
+  }
+  snowInstances.clear();
 }
 
 // The streamer's command word, from the render payload (settings.integrations.plinko).
@@ -1450,6 +1515,7 @@ onUnmounted(() => {
   // an OBS source that reloads would otherwise leak a context per reload.
   destroyGlobes();
   destroyPlinkos();
+  destroySnows();
   // Closes the socket, cancels the reconnect backoff and drops any queued
   // flush. Without this an OBS source that reloads leaks a connection per
   // reload, and the backoff timer keeps reopening one after the component dies.

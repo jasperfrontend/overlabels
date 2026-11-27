@@ -49,11 +49,11 @@ it('is listed last on the products shelf, with its hero', function () {
     $this->get('/products')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('products.5.slug', 'twitch-chat-plinko')
-            ->where('products.5.category', 'product')
-            ->where('products.5.hero', '/products/twitch-chat-plinko-hero.jpg')
-            ->where('products.5.installs', ['Overlay'])
-            ->where('products.5.service', null)
+            ->where('products.6.slug', 'twitch-chat-plinko')
+            ->where('products.6.category', 'product')
+            ->where('products.6.hero', '/products/twitch-chat-plinko-hero.jpg')
+            ->where('products.6.installs', ['Overlay'])
+            ->where('products.6.service', null)
         );
 
     foreach (['products/twitch-chat-plinko-hero.jpg', 'products/twitch-chat-plinko-hero.svg', 'products/twitch-chat-plinko/play-board.svg'] as $file) {

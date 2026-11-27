@@ -1,0 +1,235 @@
+{
+  "recipe_format_version": 1,
+  "slug": "snow-overlay",
+  "name": "Snow Overlay for OBS",
+  "version": 1,
+  "description": "Snow falling over your stream, as one browser source in OBS. Choose from design presets and make it fully your own style with the included Designer. Every flake falls at its own speed and drifts a little on its own rhythm, so it looks like real snow and never like a sheet moving in step. Pick round flakes, square pixel flakes or real six-armed snowflake crystals, a color or a two-color gradient, how much snow and how fast it falls, over a transparent or colored background.",
+  "author": {
+    "name": "Overlabels",
+    "twitch_login": "overlabels"
+  },
+  "changelog": "Initial release. The seventh product, and the first that needs nothing at all: no chat, no events, just snow.",
+  "min_overlabels_version": 1,
+  "requires_integrations": [],
+  "requires_bot": false,
+  "listed": true,
+  "category": "product",
+  "hero": "/products/snow-overlay-hero.jpg",
+  "hero_alt": "Snow Overlay for OBS: white and ice-blue snowflake crystals of every size falling across a deep night-blue scene",
+  "obs_hint": "Make the browser source your whole canvas, 1920 by 1080, and put it above your camera and game.",
+  "ready_message": "It is snowing. The designer below sets the flakes, the colors, how much snow and how fast it falls.",
+  "highlights": [
+    "Snow falling over your stream. Every flake falls at its own speed and drifts a little, near flakes big and quick, far ones small and slow.",
+    "Round flakes, square pixel flakes or real snowflake crystals, in one color or a two-color gradient, from a few flakes to a blizzard.",
+    "Nothing to connect and no bot to add. Every change lands in OBS as you make it."
+  ],
+  "pitch": {
+    "meta_title": "Snow Overlay for OBS - free falling snow for your stream",
+    "meta_description": "A free snow overlay for OBS and Twitch. Real-looking snowfall as one browser source: round, pixel or snowflake crystals, any color, as much snow as you like.",
+    "tagline": "Snow falling over your stream, as one browser source.",
+    "lede": "Every flake falls at its own speed and drifts a little on its own rhythm, near flakes big and quick, far ones small and slow. Round, pixel or real snowflake crystals, in any color.",
+    "plays": [
+      {
+        "title": "Pick a flake",
+        "line": "Soft and round, crisp square pixels, or real six-armed snowflakes that turn as they fall.",
+        "art": {
+          "type": "stat",
+          "stats": [
+            {
+              "value": "16",
+              "label": "different crystals"
+            }
+          ],
+          "caption": "Or round, or square"
+        }
+      },
+      {
+        "title": "Set the weather",
+        "line": "From a few lazy flakes to a blizzard, falling slow or fast.",
+        "art": {
+          "type": "stat",
+          "stats": [
+            {
+              "value": "3000",
+              "label": "flakes at most"
+            }
+          ],
+          "caption": "250 to start with"
+        }
+      },
+      {
+        "title": "It snows on stream",
+        "line": "Over your camera and game, or over a color of your own.",
+        "art": {
+          "type": "stat",
+          "stats": [
+            {
+              "value": "1",
+              "label": "browser source"
+            }
+          ],
+          "caption": "Nothing else to set up"
+        }
+      }
+    ],
+    "reasons_heading": "Snow that looks like snow.",
+    "reasons": [
+      {
+        "icon": "eye",
+        "title": "Every flake its own",
+        "body": "Each flake falls at its own speed and sways on its own rhythm. Slow it down or speed it up and it still looks like snow."
+      },
+      {
+        "icon": "palette",
+        "title": "Your colors",
+        "body": "White, pale blue, or a two-color gradient across every flake at any angle, over a transparent or colored background."
+      },
+      {
+        "icon": "zap",
+        "title": "Nothing to set up",
+        "body": "No bot, no account to connect and no chat to read. It is one browser source in OBS."
+      },
+      {
+        "icon": "clock",
+        "title": "Changes land live",
+        "body": "Every change in the designer reaches OBS as you make it, without reloading the browser source."
+      }
+    ],
+    "looks_heading": "Five kinds of snow to start from.",
+    "looks_lede": "Pick one in the designer, then change the flakes, the colors, the amount and the speed to suit your stream.",
+    "setup_note": "Size the browser source to your whole canvas, 1920 by 1080, and put it above your camera and game.",
+    "faq": [
+      {
+        "q": "Will it slow down my stream?",
+        "a": "The snow is drawn by your graphics card in one go, however many flakes there are. If OBS ever struggles, lower the amount of snow."
+      },
+      {
+        "q": "Can I put snow behind my camera instead of over it?",
+        "a": "Yes. It is an ordinary browser source, so move it below your camera in the OBS source list."
+      },
+      {
+        "q": "Does it need my chat or the Overlabels bot?",
+        "a": "No. The snow reads nothing from your stream. It just snows."
+      }
+    ],
+    "closing": "Let it snow on your stream tonight."
+  },
+  "notes": [
+    "The background is transparent by default, so the snow falls over whatever is below it in OBS. Set Background to Color to paint a color behind it instead.",
+    "Flake size and Fall speed are percentages of each flake's own size and speed. 100 is as designed; every flake keeps its own, so lower values still look like snow."
+  ],
+  "max_instances_per_user": 1,
+  "designer": {
+    "overlay": "snow",
+    "groups": [
+      {
+        "title": "Flakes",
+        "keys": ["shape", "flake_size", "flake_color", "flake_color_2", "gradient_angle"]
+      },
+      {
+        "title": "Snowfall",
+        "keys": ["flake_count", "speed"]
+      },
+      {
+        "title": "Background",
+        "keys": ["background", "background_color"]
+      }
+    ],
+    "presets": [
+      {
+        "key": "gentle",
+        "label": "Gentle",
+        "blurb": "Soft white flakes drifting down over your stream. The one you start with.",
+        "values": {
+          "shape": "round",
+          "flake_size": "100",
+          "flake_color": "#ffffff",
+          "flake_color_2": "#ffffff",
+          "gradient_angle": "0",
+          "flake_count": "250",
+          "speed": "100",
+          "background": "transparent",
+          "background_color": "#0b1626"
+        }
+      },
+      {
+        "key": "crystals",
+        "label": "Crystals",
+        "blurb": "Real snowflake crystals, white fading to ice blue, turning slowly as they fall.",
+        "values": {
+          "shape": "snowflake",
+          "flake_size": "100",
+          "flake_color": "#ffffff",
+          "flake_color_2": "#a5d8ff",
+          "gradient_angle": "0",
+          "flake_count": "120",
+          "speed": "70",
+          "background": "transparent",
+          "background_color": "#0b1626"
+        }
+      },
+      {
+        "key": "blizzard",
+        "label": "Blizzard",
+        "blurb": "Fifteen hundred small flakes, falling fast. For a cold game or a stormy night.",
+        "values": {
+          "shape": "round",
+          "flake_size": "80",
+          "flake_color": "#ffffff",
+          "flake_color_2": "#dbeafe",
+          "gradient_angle": "0",
+          "flake_count": "1500",
+          "speed": "260",
+          "background": "transparent",
+          "background_color": "#0b1626"
+        }
+      },
+      {
+        "key": "pixel",
+        "label": "Pixel",
+        "blurb": "Crisp square flakes, like snow in an old video game.",
+        "values": {
+          "shape": "square",
+          "flake_size": "100",
+          "flake_color": "#ffffff",
+          "flake_color_2": "#ffffff",
+          "gradient_angle": "0",
+          "flake_count": "300",
+          "speed": "80",
+          "background": "transparent",
+          "background_color": "#0b1626"
+        }
+      },
+      {
+        "key": "night",
+        "label": "Night sky",
+        "blurb": "Snowflakes falling on a deep night blue. A full scene for your BRB or starting soon screen.",
+        "values": {
+          "shape": "snowflake",
+          "flake_size": "120",
+          "flake_color": "#ffffff",
+          "flake_color_2": "#ffffff",
+          "gradient_angle": "0",
+          "flake_count": "200",
+          "speed": "60",
+          "background": "color",
+          "background_color": "#0b1626"
+        }
+      }
+    ],
+    "stage": [
+      {
+        "w": 1920,
+        "h": 1080
+      }
+    ]
+  },
+  "installs": {
+    "overlays": [
+      {
+        "ref": "snow",
+        "file": "snow.md"
+      }
+    ]
+  }
+}

@@ -44,15 +44,15 @@ function twitchChatDocument(): array
     return OverlayMarkdown::parse(file_get_contents(RecipeInstaller::directoryFor('twitch-chat-overlay').DIRECTORY_SEPARATOR.'chat.md'));
 }
 
-it('is listed on the products shelf with its hero image, after bowling', function () {
+it('is listed on the products shelf with its hero image, after Snow Overlay', function () {
     $this->get('/products')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('products.4.slug', 'twitch-chat-overlay')
-            ->where('products.4.category', 'product')
-            ->where('products.4.hero', '/products/twitch-chat-hero.jpg')
-            ->where('products.4.installs', ['Overlay'])
-            ->where('products.4.service', null)
+            ->where('products.5.slug', 'twitch-chat-overlay')
+            ->where('products.5.category', 'product')
+            ->where('products.5.hero', '/products/twitch-chat-hero.jpg')
+            ->where('products.5.installs', ['Overlay'])
+            ->where('products.5.service', null)
         );
 
     expect(is_file(public_path('products/twitch-chat-hero.jpg')))->toBeTrue()

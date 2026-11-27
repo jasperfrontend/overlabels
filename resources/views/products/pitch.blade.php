@@ -14,6 +14,7 @@
                 'twitch-chat-overlay' => 'chat',
                 'chat-emote-bubbles' => 'bubbles',
                 'twitch-chat-plinko' => 'plinko',
+                'snow-overlay' => 'snow',
             ];
             $demo = $demos[$product['slug']] ?? null;
             $command = preg_match('/!\w+/', $product['description'], $m) ? $m[0] : null;
