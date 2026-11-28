@@ -77,8 +77,8 @@ function save() {
 
         <p class="text-sm text-muted-foreground">
           The board itself, the OBS link and the uninstall button are on the
-          <Link :href="route('products.manage', 'twitch-chat-plinko')" class="cursor-pointer text-violet-600 hover:underline dark:text-violet-400"
-            >Twitch Chat Plinko page</Link
+          <Link :href="route('products.manage', 'chat-plinko')" class="cursor-pointer text-violet-600 hover:underline dark:text-violet-400"
+            >Chat Plinko page</Link
           >.
         </p>
       </div>

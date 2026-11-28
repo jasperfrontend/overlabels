@@ -1,11 +1,11 @@
 import type { Component } from 'vue';
 import ChatCheckin from './ChatCheckin.vue';
 import ChatEmoteBubbles from './ChatEmoteBubbles.vue';
+import ChatPlinko from './ChatPlinko.vue';
 import ChatTower from './ChatTower.vue';
 import FollowerBowling from './FollowerBowling.vue';
 import SnowOverlay from './SnowOverlay.vue';
 import TwitchChatOverlay from './TwitchChatOverlay.vue';
-import TwitchChatPlinko from './TwitchChatPlinko.vue';
 
 /**
  * Product slug -> its icon. A new product's icon is one file in this folder
@@ -19,7 +19,7 @@ export const PRODUCT_ICONS: Record<string, Component> = {
   'follower-bowling': FollowerBowling,
   'snow-overlay': SnowOverlay,
   'twitch-chat-overlay': TwitchChatOverlay,
-  'twitch-chat-plinko': TwitchChatPlinko,
+  'chat-plinko': ChatPlinko,
 };
 
 export function hasProductIcon(slug: string): boolean {

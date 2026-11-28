@@ -57,7 +57,7 @@ it('files the seven products and the five alerts on the expected shelves', funct
 
     expect($byCategory)->toBe([
         'alert' => ['buy-me-a-coffee-alerts', 'fourthwall-alerts', 'ko-fi-alerts', 'streamlabs-alerts', 'throne-alerts'],
-        'product' => ['chat-checkin', 'chat-emote-bubbles', 'chat-tower', 'follower-bowling', 'snow-overlay', 'twitch-chat-overlay', 'twitch-chat-plinko'],
+        'product' => ['chat-checkin', 'chat-emote-bubbles', 'chat-plinko', 'chat-tower', 'follower-bowling', 'snow-overlay', 'twitch-chat-overlay'],
     ]);
 });
 
@@ -91,7 +91,7 @@ it('sorts Show all with products first, then alerts, slug order within a shelf',
                 ->has('products', 12);
 
             expect(shelfSlugs($page))->toBe([
-                'chat-checkin', 'chat-emote-bubbles', 'chat-tower', 'follower-bowling', 'snow-overlay', 'twitch-chat-overlay', 'twitch-chat-plinko',
+                'chat-checkin', 'chat-emote-bubbles', 'chat-plinko', 'chat-tower', 'follower-bowling', 'snow-overlay', 'twitch-chat-overlay',
                 'buy-me-a-coffee-alerts', 'fourthwall-alerts', 'ko-fi-alerts', 'streamlabs-alerts', 'throne-alerts',
             ]);
         });
@@ -127,7 +127,7 @@ it('filters to one shelf through the URL', function () {
         ->assertInertia(function (Assert $page) {
             $page->where('category', 'product')->where('shelf.label', 'Products')->has('products', 7);
 
-            expect(shelfSlugs($page))->toBe(['chat-checkin', 'chat-emote-bubbles', 'chat-tower', 'follower-bowling', 'snow-overlay', 'twitch-chat-overlay', 'twitch-chat-plinko']);
+            expect(shelfSlugs($page))->toBe(['chat-checkin', 'chat-emote-bubbles', 'chat-plinko', 'chat-tower', 'follower-bowling', 'snow-overlay', 'twitch-chat-overlay']);
         });
 });
 
@@ -152,11 +152,11 @@ it('carries each product\'s category, service and install chips onto the card', 
             ->where('products.0.category', 'product')
             ->where('products.0.service', 'checkin')
             ->where('products.0.installs', ['Overlay', 'Integration'])
-            ->where('products.2.slug', 'chat-tower')
-            ->where('products.2.installs', ['Overlay', 'Integration', 'List'])
-            ->where('products.3.slug', 'follower-bowling')
-            ->where('products.3.service', null)
-            ->where('products.3.installs', ['Overlay', 'List', 'Chat command'])
+            ->where('products.3.slug', 'chat-tower')
+            ->where('products.3.installs', ['Overlay', 'Integration', 'List'])
+            ->where('products.4.slug', 'follower-bowling')
+            ->where('products.4.service', null)
+            ->where('products.4.installs', ['Overlay', 'List', 'Chat command'])
             ->where('products.9.slug', 'ko-fi-alerts')
             ->where('products.9.category', 'alert')
             ->where('products.9.service', 'kofi')

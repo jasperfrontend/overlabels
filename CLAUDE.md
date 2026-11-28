@@ -960,7 +960,7 @@ Then: `php artisan help:build-index` (so local search sees it) and `php artisan 
 - Hero SVGs from Claude Design carry a c2pa manifest in `<metadata>` plus an `xmlns:c2pa`; every
   product test asserts the file has no `c2pa`. Strip both before committing.
 
-### Twitch Chat Plinko (Nov 7th 2026, OL-2611-002)
+### Chat Plinko (Nov 7th 2026, OL-2611-002)
 
 - **The first product that ships its own script.** `[[[plinko_board]]]` is the `[[[checkin_globe]]]`
   pattern exactly: a literal pre-pass swaps the tag for a placeholder (`resources/js/plinko/plinkoTag.ts`),

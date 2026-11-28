@@ -31,7 +31,7 @@ function designerBlockMessages(array $manifest, string $slug = 'twitch-chat-over
 }
 
 it('accepts every shipped designer block next to its document', function () {
-    foreach (['twitch-chat-overlay', 'chat-emote-bubbles', 'chat-checkin', 'twitch-chat-plinko', 'chat-tower', 'follower-bowling'] as $slug) {
+    foreach (['twitch-chat-overlay', 'chat-emote-bubbles', 'chat-checkin', 'chat-plinko', 'chat-tower', 'follower-bowling'] as $slug) {
         expect(designerBlockErrors(designerBlockManifest($slug), $slug))->toBe([]);
     }
 });

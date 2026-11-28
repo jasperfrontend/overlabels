@@ -78,6 +78,8 @@ class HandleInertiaRequests extends Middleware
             // this stays empty until a page claims the route.
             'help' => fn () => HelpContext::forRequest($request),
             'isAdmin' => fn () => $request->user()?->isAdmin() ?? false,
+            // The community Discord, for the "Got questions?" links (config/services.php).
+            'discordUrl' => config('services.discord.invite'),
             // The origin "Add to OBS" mints hosted-overlay URLs on
             // (https://overlabels.net on prod). Null = use the current origin.
             // Only the OBS dialog reads it; the events-feed link stays on the

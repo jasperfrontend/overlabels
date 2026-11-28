@@ -53,7 +53,7 @@ it('ships the chat-checkin hero without a c2pa manifest', function () {
 it('lists chat-checkin as a product and keeps the picker recipes unlisted', function () {
     $listed = app(RecipeCatalog::class)->listed();
 
-    expect(array_keys($listed))->toBe(['buy-me-a-coffee-alerts', 'chat-checkin', 'chat-emote-bubbles', 'chat-tower', 'follower-bowling', 'fourthwall-alerts', 'ko-fi-alerts', 'snow-overlay', 'streamlabs-alerts', 'throne-alerts', 'twitch-chat-overlay', 'twitch-chat-plinko'])
+    expect(array_keys($listed))->toBe(['buy-me-a-coffee-alerts', 'chat-checkin', 'chat-emote-bubbles', 'chat-plinko', 'chat-tower', 'follower-bowling', 'fourthwall-alerts', 'ko-fi-alerts', 'snow-overlay', 'streamlabs-alerts', 'throne-alerts', 'twitch-chat-overlay'])
         ->and(array_keys(app(RecipeCatalog::class)->all()))->toContain('coin_flip', 'dice');
 });
 

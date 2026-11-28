@@ -121,7 +121,7 @@ it('refuses anything that could not be a command, and keeps the old word', funct
 ]);
 
 it('refuses the Plinko word when Plinko is installed', function () {
-    installProductForChatRedact($this->user, 'twitch-chat-plinko', 'twitch_chat_plinko');
+    installProductForChatRedact($this->user, 'chat-plinko', 'chat_plinko');
 
     saveChatSettings($this->user, ['redact_enabled' => true, 'redact_command' => 'drop'])->assertSessionHasErrors('redact_command');
 
@@ -159,7 +159,7 @@ it('stays out of incidental User serialisation', function () {
 
 it('tells the chat overlay product page whether it is on, and no other product', function () {
     installProductForChatRedact($this->user, 'twitch-chat-overlay', 'twitch_chat');
-    installProductForChatRedact($this->user, 'twitch-chat-plinko', 'twitch_chat_plinko');
+    installProductForChatRedact($this->user, 'chat-plinko', 'chat_plinko');
 
     $this->actingAs($this->user)
         ->get('/products/twitch-chat-overlay/install')
@@ -167,7 +167,7 @@ it('tells the chat overlay product page whether it is on, and no other product',
         ->assertInertia(fn (Assert $page) => $page->where('chat_redact', ['enabled' => false, 'command' => 'hide']));
 
     $this->actingAs($this->user)
-        ->get('/products/twitch-chat-plinko/install')
+        ->get('/products/chat-plinko/install')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('chat_redact', null));
 });

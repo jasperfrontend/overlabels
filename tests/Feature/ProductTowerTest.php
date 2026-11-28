@@ -41,12 +41,12 @@ function towerRecipe(): Recipe
     return $catalog->sync($catalog->find('chat-tower'));
 }
 
-it('is listed with its hero image, between the bubbles and bowling', function () {
+it('is listed with its hero image, between Plinko and bowling', function () {
     $this->get('/products')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('products.2.slug', 'chat-tower')
-            ->where('products.2.hero', '/products/chat-tower-hero.jpg')
+            ->where('products.3.slug', 'chat-tower')
+            ->where('products.3.hero', '/products/chat-tower-hero.jpg')
         );
 
     expect(is_file(public_path('products/chat-tower-hero.jpg')))->toBeTrue()

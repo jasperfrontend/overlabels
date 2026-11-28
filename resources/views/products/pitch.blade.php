@@ -13,7 +13,7 @@
                 'chat-checkin' => 'checkin',
                 'twitch-chat-overlay' => 'chat',
                 'chat-emote-bubbles' => 'bubbles',
-                'twitch-chat-plinko' => 'plinko',
+                'chat-plinko' => 'plinko',
                 'snow-overlay' => 'snow',
             ];
             $demo = $demos[$product['slug']] ?? null;

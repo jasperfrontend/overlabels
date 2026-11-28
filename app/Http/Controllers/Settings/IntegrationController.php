@@ -52,7 +52,7 @@ class IntegrationController extends Controller
             ];
         }, ExternalServiceRegistry::services());
 
-        // Twitch Chat Plinko connects nothing, so it is not in the registry,
+        // Chat Plinko connects nothing, so it is not in the registry,
         // but its settings live here with every other product's. Listed only
         // once it is installed, which is also when its page stops 404ing.
         if (PlinkoSettingsController::installedFor($user)) {

@@ -213,7 +213,7 @@ Route::middleware('auth.redirect')->group(function () {
         Route::post('/checkin', [CheckinIntegrationController::class, 'save'])->name('checkin.save');
         Route::delete('/checkin', [CheckinIntegrationController::class, 'disconnect'])->name('checkin.disconnect');
 
-        // Twitch Chat Plinko's settings. Not a service integration - nothing
+        // Chat Plinko's settings. Not a service integration - nothing
         // connects - but the product's settings live where every other
         // product's do. 404 unless the product is installed.
         Route::get('/plinko', [PlinkoSettingsController::class, 'show'])->name('plinko.show');

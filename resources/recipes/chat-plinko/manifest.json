@@ -1,9 +1,10 @@
 {
   "recipe_format_version": 1,
-  "slug": "twitch-chat-plinko",
-  "name": "Twitch Chat Plinko",
+  "slug": "chat-plinko",
+  "url_aliases": ["twitch-chat-plinko"],
+  "name": "Chat Plinko",
   "version": 1,
-  "description": "Type !drop in chat, or any command you choose yourself, and a chip with your name on it drops through a Plinko board on stream. Every drop plays in the order chat sent it, one chip per chatter at a time, bouncing off every peg into a slot worth 5 in the middle and 1000 at the rare edges. Read straight from Twitch chat with nothing to connect and no bot to add.",
+  "description": "Type !drop in chat, or any command you choose yourself, and a chip with your name on it drops through a Plinko board on stream. Every drop plays in the order chat sent it, one chip per chatter at a time, bouncing off every peg into a slot worth 5 in the middle and 1000 at the rare edges. Read straight from your chat with nothing to connect and no bot to add.",
   "author": {
     "name": "Overlabels",
     "twitch_login": "overlabels"
@@ -15,8 +16,8 @@
   "listed": true,
   "category": "product",
   "game": true,
-  "hero": "/products/twitch-chat-plinko-hero.jpg",
-  "hero_alt": "Twitch Chat Plinko on stream: chips carrying chatters' names bounce down a Plinko board into slots worth 5 to 1000 points",
+  "hero": "/products/chat-plinko-hero.jpg",
+  "hero_alt": "Chat Plinko on stream: chips carrying chatters' names bounce down a Plinko board into slots worth 5 to 1000 points",
   "obs_hint": "Make the browser source your whole canvas, 1920 by 1080. It is a full scene, made for BRB and downtime.",
   "ready_message": "Every !drop in your chat drops a chip. Type it in your own chat to see the first one land.",
   "highlights": [
@@ -25,10 +26,10 @@
     "Nothing to connect and no bot to add. Top scores fill in as the chips land."
   ],
   "pitch": {
-    "meta_title": "Twitch Chat Plinko - a Plinko game your chat plays",
-    "meta_description": "Twitch Chat Plinko puts Plinko on your stream as an OBS browser source. Chat types !drop and their name bounces down the board. Free, no bot, no points.",
+    "meta_title": "Chat Plinko - a Plinko game your chat plays",
+    "meta_description": "Chat Plinko puts Plinko on your stream as an OBS browser source. Chat types !drop and their name bounces down the board. Free, no bot, no points.",
     "tagline": "Introducing Plinko for Twitch Chat: The perfect game for downtime.",
-    "lede": "Twitch Chat Plinko is a game where a chip drops from the top of the pyramid and random luck decides the score. Your Twitch Chat controls it: every `!drop` (or the word you pick) sends a chip with that chatter's name on it down the board. Scores are kept and appear on screen.",
+    "lede": "Chat Plinko is a game where a chip drops from the top of the pyramid and random luck decides the score. Your chat controls it: every `!drop` (or the word you pick) sends a chip with that chatter's name on it down the board. Scores are kept and appear on screen.",
     "plays": [
       {
         "title": "Chat types !drop",
@@ -59,7 +60,7 @@
         "line": "It bounces off every peg on the way down.",
         "art": {
           "type": "image",
-          "src": "/products/twitch-chat-plinko/play-board.svg",
+          "src": "/products/chat-plinko/play-board.svg",
           "alt": "A chip with a chatter's name on it bouncing down through rows of pegs"
         }
       },
@@ -78,7 +79,7 @@
         }
       }
     ],
-    "reasons_heading": "Twitch Chat Plinko: the Plinko you know, played by your chat.",
+    "reasons_heading": "Chat Plinko: the Plinko you know, played by your chat.",
     "reasons": [
       {
         "icon": "people",
@@ -87,13 +88,13 @@
       },
       {
         "icon": "trophy",
-        "title": "Twitch Chat Plinko keeps score",
+        "title": "Chat Plinko keeps score",
         "body": "The six latest drops and the five best totals fill in beside the board as the chips land."
       },
       {
         "icon": "zap",
         "title": "Nothing to set up",
-        "body": "No bot and no account to connect. Twitch Chat Plinko reads your chat directly, like any viewer does."
+        "body": "No bot and no account to connect. Chat Plinko reads your chat directly, like any viewer does."
       },
       {
         "icon": "shield",
@@ -103,7 +104,7 @@
     ],
     "looks_heading": "Three themes to start from.",
     "looks_lede": "Pick one in the designer, then change any of the five colors, from the pegs to the highlight, to match your stream.",
-    "setup_note": "Size the browser source to your whole canvas, 1920 by 1080. Twitch Chat Plinko is a full scene, made for BRB and downtime.",
+    "setup_note": "Size the browser source to your whole canvas, 1920 by 1080. Chat Plinko is a full scene, made for BRB and downtime.",
     "faq": [
       {
         "q": "What do my viewers type?",
@@ -127,7 +128,7 @@
       },
       {
         "q": "Does it need the Overlabels bot?",
-        "a": "No. Twitch Chat Plinko reads your chat directly. The bot never has to be in your channel."
+        "a": "No. Chat Plinko reads your chat directly. The bot never has to be in your channel."
       }
     ],
     "closing": "Let your chat drop the first chip tonight."

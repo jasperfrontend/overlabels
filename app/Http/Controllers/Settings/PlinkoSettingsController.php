@@ -12,7 +12,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Twitch Chat Plinko's settings, at /settings/integrations/plinko: the word
+ * Chat Plinko's settings, at /settings/integrations/plinko: the word
  * the board listens for. The page only exists for an account that has Plinko
  * installed - a setting for a product you do not have is noise - and the
  * integrations overview lists it on the same condition (IntegrationController).
@@ -22,7 +22,7 @@ use Inertia\Response;
  */
 class PlinkoSettingsController extends Controller
 {
-    public const string PRODUCT_SLUG = 'twitch-chat-plinko';
+    public const string PRODUCT_SLUG = 'chat-plinko';
 
     public static function installedFor(User $user): bool
     {

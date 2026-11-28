@@ -944,7 +944,15 @@ async function uninstall(): Promise<void> {
       </section>
 
       <div class="mt-8">
-        <h3 class="text-2xl" v-if="finished && (alerts.length || product.notes.length)">Thank you for installing {{ product.name }}!</h3>
+        <template v-if="finished && (alerts.length || product.notes.length)">
+          <h3 class="text-2xl">Thank you for installing {{ product.name }}!</h3>
+          <p class="mt-1 text-foreground">
+            Got questions?
+            <a :href="page.props.discordUrl" target="_blank" rel="noopener noreferrer" class="cursor-pointer text-sky-500 hover:underline"
+              >Visit our Discord</a
+            >
+          </p>
+        </template>
         <!-- The same artwork as the listing card, full width, as the page's hero. -->
         <img v-if="product.hero" :src="product.hero" alt="" class="mt-8 block aspect-video w-full object-cover" />
       </div>

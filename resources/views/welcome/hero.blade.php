@@ -20,7 +20,7 @@
 
         <p class="mb-10 max-w-2xl text-xl leading-relaxed text-foreground">
           Free Twitch chat games your viewers play by typing a single !command in chat, plus a <a href="#twitch-chat-overlay" class="cursor-pointer text-sky-500 hover:underline">Twitch chat overlay</a> you can
-            style any way you like in just a few clicks. Put a quick <a href="#chat-tower" class="cursor-pointer text-sky-500 hover:underline">Chat Tower</a>, <a href="#twitch-chat-plinko" class="cursor-pointer text-sky-500 hover:underline">Chat Plinko</a> or <a href="#follower-bowling" class="cursor-pointer text-sky-500 hover:underline">Follower Bowling</a> game up while you grab a drink,
+            style any way you like in just a few clicks. Put a quick <a href="#chat-tower" class="cursor-pointer text-sky-500 hover:underline">Chat Tower</a>, <a href="#chat-plinko" class="cursor-pointer text-sky-500 hover:underline">Chat Plinko</a> or <a href="#follower-bowling" class="cursor-pointer text-sky-500 hover:underline">Follower Bowling</a> game up while you grab a drink,
           and chat has something to do until you're back.
         </p>
 
@@ -45,6 +45,7 @@
             <li class="flex items-start gap-2.5">{!! $heart !!}<span>Always 100% free and <a href="https://github.com/jasperfrontend/overlabels" class="cursor-pointer text-sky-500 hover:underline" target="_blank" rel="noopener noreferrer">open source</a>.</span></li>
             <li class="flex items-start gap-2.5">{!! $heart !!}<span>Created by <a href="https://www.twitch.tv/jasperdiscovers" class="cursor-pointer whitespace-nowrap text-sky-500 hover:underline" target="_blank" rel="noopener noreferrer">JasperDiscovers</a> for Twitch streamers.</span></li>
             <li class="flex items-start gap-2.5">{!! $heart !!}<span>We don't sell your data. <a href="/ai" class="cursor-pointer text-sky-500 hover:underline" target="_blank" rel="noopener">Promised</a>.</span></li>
+            <li class="flex items-start gap-2.5">{!! $heart !!}<span>Got questions? <a href="{{ config('services.discord.invite') }}" class="cursor-pointer text-sky-500 hover:underline" target="_blank" rel="noopener noreferrer">Visit our Discord</a>.</span></li>
           </ul>
         </x-slot:footer>
       </x-brand-icons>
@@ -70,16 +71,16 @@
               'chat-tower' => 'Your whole chat builds one tower together with !stack. It sways more with every block, and when it falls, everyone sees who toppled it. How high can your chat go?',
               'follower-bowling' => 'Your ten newest followers get racked up as pins. Chat lines up with !bowl and takes turns rolling at them. Can your chat bowl a strike?',
               'twitch-chat-overlay' => 'Your chat on stream, badges and emotes included, with nothing to connect and no bot to add. Pick one of ten looks, from a terminal to speech bubbles to a news ticker, and make it yours.',
-              'twitch-chat-plinko' => 'Chat types !drop and a chip with their name bounces down a Plinko board on stream. Most land on 5. The edges pay 1000. Who is feeling lucky?',
+              'chat-plinko' => 'Chat types !drop and a chip with their name bounces down a Plinko board on stream. Most land on 5. The edges pay 1000. Who is feeling lucky?',
           ];
           // These lead the grid in this order; everything else follows in
           // catalogue order. Hero cards only: the rows further down keep theirs.
-          $cardsFirst = ['twitch-chat-plinko', 'twitch-chat-overlay'];
+          $cardsFirst = ['chat-plinko', 'twitch-chat-overlay'];
           $cards = collect($games)->sortBy(fn ($game) => array_search($game['slug'], $cardsFirst, true) === false
               ? count($cardsFirst)
               : array_search($game['slug'], $cardsFirst, true))->values();
           // A "New" badge, hand-kept. It stays until someone takes it off.
-          $cardsNew = ['twitch-chat-plinko'];
+          $cardsNew = ['chat-plinko'];
       @endphp
       <ul id="product-cards" class="mt-14 grid scroll-mt-(--ol-nav-h) grid-cols-2 gap-3 sm:mt-20 sm:gap-6 lg:gap-8" aria-label="Products">
         @foreach ($cards as $game)

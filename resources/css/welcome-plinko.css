@@ -1,12 +1,12 @@
 /*
-  Twitch Chat Plinko demo (product page and homepage): the product's real
+  Chat Plinko demo (product page and homepage): the product's real
   board in the demo scene, a chat column of !drop lines on the left, the
   board's own scoreboard on the right, and the chat box under the scene
   (the .ol-ck__prompt styles from welcome-checkin.css). Hand-written.
 
   The scene sits on .ol-demo (16:9) from welcome-demos.css and sizes in cqw
   against .ol-demo-frame like the other demos. Colours and fonts are the
-  product overlay's exact values (resources/recipes/twitch-chat-plinko/plinko.md);
+  product overlay's exact values (resources/recipes/chat-plinko/plinko.md);
   the board reads the --plinko-* properties once, when it mounts.
 */
 

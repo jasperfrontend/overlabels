@@ -117,6 +117,11 @@ Route::get('/help/integration-presets', function () {
 Route::redirect('/help/bot/expressions', '/help/bot/commands', 301);
 Route::redirect('/help/bot/expressions.md', '/help/bot/commands.md', 301);
 
+// Twitch Chat Plinko became Chat Plinko on 2026-11-28 (its product page 301s
+// through the manifest's url_aliases). The help page moved with it.
+Route::redirect('/help/twitch-chat-plinko', '/help/chat-plinko', 301);
+Route::redirect('/help/twitch-chat-plinko.md', '/help/chat-plinko.md', 301);
+
 // The manifesto was a top-level route before the help pages became markdown.
 // Google still has the old URL and reported it as a 404.
 Route::redirect('/manifesto', '/help/manifesto', 301);

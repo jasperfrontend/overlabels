@@ -1,5 +1,25 @@
 # Changelog - November 2026
 
+## OL-2611-050 - November 28th, 2026 - feat(products): rename Twitch Chat Plinko to Chat Plinko, per-product beat headings, Discord links
+
+Twitch Chat Plinko is now Chat Plinko, at `/products/chat-plinko`. A product URL that pairs a
+platform name with a game of chance is not a pairing worth keeping in search results.
+
+- **Chat Plinko everywhere.** The product page, its homepage card and anchor, the help page
+  (`/help/chat-plinko`), the settings link and the search titles. The tagline keeps "Plinko for
+  Twitch Chat". New hero image.
+- **Old links keep working.** `/products/twitch-chat-plinko` and `/help/twitch-chat-plinko` answer
+  with a permanent redirect. Existing installs stay installed; the overlay a streamer already has
+  keeps its own name.
+- **Chat Plinko moves up the shelf.** Products are listed alphabetically, so it now sits third.
+- **No more "One command" on products without one.** The heading over a product's three beats was
+  the same on every page, so Snow, the chat overlay and the emote bubbles promised a command they do
+  not have. Each of them now says what it does ("Ho, ho, ho - let it snow!"), and a new product
+  without a command has to name its own heading.
+- **The Discord, wherever a question comes up.** A link in the app header, under Learn in the
+  sidebar, beside the products list, under the thank-you after an install, in the designer and on
+  the homepage. The designer's Add to OBS notes are a short list now instead of a paragraph.
+
 ## OL-2611-049 - November 28th, 2026 - fix(checkin): a real checkin reaches the globe without a reload, with the first component test
 
 On a Chat Checkin globe with the HUD and the pin list both off, which is how a new install starts,

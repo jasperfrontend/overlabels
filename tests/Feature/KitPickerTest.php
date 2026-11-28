@@ -121,7 +121,7 @@ test('a brand new account lands on the dashboard after its first login, not the 
 });
 
 test('a brand new account that was going somewhere still goes there', function () {
-    $target = url('/products/twitch-chat-plinko/install');
+    $target = url('/products/chat-plinko/install');
 
     pickerLoginAsNewAccount($target)->assertRedirect($target);
 });

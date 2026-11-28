@@ -157,7 +157,7 @@ class User extends Authenticatable
             'hide_commands' => false,
             'hidden_logins' => [],
         ],
-        // The word Twitch Chat Plinko listens for, without its `!`. Chosen
+        // The word Chat Plinko listens for, without its `!`. Chosen
         // per account because `!drop` is already a well-known command from
         // another chat game, and a channel running both would get two games
         // from one message.

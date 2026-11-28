@@ -14,7 +14,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 uses(RefreshDatabase::class);
 
 /**
- * The word Twitch Chat Plinko listens for is the streamer's own setting,
+ * The word Chat Plinko listens for is the streamer's own setting,
  * because `!drop` is already a well-known command from another chat game.
  * It lives on /settings/integrations/plinko, which only exists once the
  * product is installed, and reaches the overlay in the render payload:
@@ -39,7 +39,7 @@ beforeEach(function () {
 function installPlinkoFor(User $user): void
 {
     $catalog = app(RecipeCatalog::class);
-    app(RecipeInstaller::class)->install($catalog->sync($catalog->find('twitch-chat-plinko')), $user, 'twitch_chat_plinko');
+    app(RecipeInstaller::class)->install($catalog->sync($catalog->find('chat-plinko')), $user, 'chat_plinko');
 }
 
 function savePlinkoCommand(User $user, mixed $command): TestResponse
@@ -112,7 +112,7 @@ it('lists Plinko on the integrations overview once installed, saying what it lis
     expect($row)->not->toBeNull()
         ->and($row['url_slug'])->toBe('plinko')
         ->and($row['name'])->toBe('Plinko')
-        ->and($row['product'])->toBe('twitch-chat-plinko')
+        ->and($row['product'])->toBe('chat-plinko')
         ->and($row['connected'])->toBeTrue()
         ->and($row['status'])->toBe('Listening for !bonk');
 });

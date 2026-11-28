@@ -28,6 +28,8 @@
     "meta_description": "A free snow overlay for OBS and Twitch. Real-looking snowfall as one browser source: round, pixel or snowflake crystals, any color, as much snow as you like.",
     "tagline": "Snow falling over your stream, as one browser source.",
     "lede": "Every flake falls at its own speed and drifts a little on its own rhythm, near flakes big and quick, far ones small and slow. Round, pixel or real snowflake crystals, in any color.",
+    "plays_kicker": "How it works",
+    "plays_heading": "Ho, ho, ho - let it snow!",
     "plays": [
       {
         "title": "Pick a flake",

@@ -663,8 +663,16 @@ class ProductController extends Controller
             ->values()
             ->all();
 
+        // The three beats' label and heading. The defaults describe a product
+        // chat drives with a !command; one without (Snow, the chat feed) names
+        // its own in the manifest, and the jump bar takes the same label.
+        $playsKicker = $pitch['plays_kicker'] ?? null;
+
         return [
             ...$pitch,
+            'plays_kicker' => $playsKicker ?? 'What your chat does',
+            'plays_nav' => $playsKicker ?? 'What chat does',
+            'plays_heading' => $pitch['plays_heading'] ?? 'One command. Three things happen.',
             'plays_note' => $note,
             'looks' => $looks,
             'steps' => $steps,

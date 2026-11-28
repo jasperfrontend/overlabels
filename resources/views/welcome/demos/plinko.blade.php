@@ -1,5 +1,5 @@
 {{--
-  Twitch Chat Plinko, for real: resources/js/welcome/plinkoDemo.ts mounts the
+  Chat Plinko, for real: resources/js/welcome/plinkoDemo.ts mounts the
   product's own board (resources/js/plinko/plinkoBoard.ts, the same physics
   and scoreboard the overlay runs) into the scene, made-up viewers type !drop
   in the chat column, and the chat box under the scene lets the visitor drop
@@ -14,17 +14,17 @@
   @unless ($bare ?? false)
   <div class="flex items-center gap-2 border-b border-sidebar-border bg-card/50 px-4 py-2.5">
     <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-600 dark:bg-emerald-500"></span>
-    <span class="font-mono text-xs text-muted-foreground">Twitch Chat Plinko, live in OBS</span>
+    <span class="font-mono text-xs text-muted-foreground">Chat Plinko, live in OBS</span>
   </div>
   @endunless
-  <div class="ol-demo ol-pk" aria-label="Twitch Chat Plinko demo: viewers type !drop in chat and a ball with their name bounces down a Plinko board">
+  <div class="ol-demo ol-pk" aria-label="Chat Plinko demo: viewers type !drop in chat and a ball with their name bounces down a Plinko board">
     <div class="ol-pk__chat" data-plinko-demo-chat aria-hidden="true"></div>
     <div class="ol-pk__board ol-plinko" data-plinko-demo-board aria-hidden="true"></div>
     <img
       class="ol-pk__fallback"
       data-plinko-demo-fallback
-      src="/products/twitch-chat-plinko-hero.jpg"
-      alt="Twitch Chat Plinko on stream: balls carrying chatters' names bounce down a Plinko board into slots worth 5 to 1000 points"
+      src="/products/chat-plinko-hero.jpg"
+      alt="Chat Plinko on stream: balls carrying chatters' names bounce down a Plinko board into slots worth 5 to 1000 points"
       width="1280"
       height="720"
       loading="lazy"

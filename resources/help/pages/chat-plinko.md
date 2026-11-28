@@ -1,20 +1,20 @@
 ---
-title: Twitch Chat Plinko - your chat types !drop and their name bounces down a Plinko board - Overlabels
+title: Chat Plinko - your chat types !drop and their name bounces down a Plinko board - Overlabels
 section: Bot & chat
-description: A Plinko board your Twitch chat plays on stream. Every !drop drops a ball with that chatter's name through real pegs, in chat order. One click to install, no bot. How the line works, the scores, and how to restyle it.
-heading: Twitch Chat Plinko
+description: A Plinko board your chat plays on stream. Every !drop drops a ball with that chatter's name through real pegs, in chat order. One click to install, no bot. How the line works, the scores, and how to restyle it.
+heading: Chat Plinko
 lead: Your chat types !drop and a ball with their name on it bounces down a Plinko board on your stream. The middle pays 5, the rare edges pay 1000. Nothing to connect, no bot to add.
 keywords: plinko, drop game, chat game, pachinko, galton board, brb game, downtime game, drop command, chat plinko
 ---
 
-Install [Twitch Chat Plinko from Products](/products/twitch-chat-plinko) and you get the overlay in one
+Install [Chat Plinko from Products](/products/chat-plinko) and you get the overlay in one
 click. Put it in OBS as a browser source the size of your canvas, 1920 by 1080. It is a full scene, so it
 works best on a BRB or downtime scene. From then on, every `!drop` in your chat drops a ball.
 
 ## What viewers type
 
 A chatter types `!drop`, or the word you chose instead (see below). Anything after the word still counts, so `!drop come on edges` drops a ball too,
-but `!dropped` does not. A ball with their name on it, in their Twitch name colour, falls from the top,
+but `!dropped` does not. A ball with their name on it, in their chat name colour, falls from the top,
 bounces off every peg it touches and lands in a slot. The slot's points go on the chatter's total.
 
 The middle slots pay 5 and the edges pay 1000. Most balls land near the middle, the way a real board
@@ -54,7 +54,7 @@ which listens for exactly those messages.
 
 ## Where the drops come from
 
-The overlay reads your Twitch chat directly, over the same public connection any chat viewer uses, the
+The overlay reads your chat directly, over the same public connection any chat viewer uses, the
 way [Twitch Chat Overlay](/help/chat) does. Nothing passes through Overlabels, so a busy chat costs
 nothing extra, and the Overlabels bot never has to be in your channel.
 

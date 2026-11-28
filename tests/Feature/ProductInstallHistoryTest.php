@@ -98,10 +98,10 @@ it('keeps one row per install, so a second product the next day shows up too', f
     $user = historyUser();
     app(RecipeInstaller::class)->uninstall(historyInstall($user, 'follower-bowling'));
     $this->travel(1)->day();
-    historyInstall($user, 'twitch-chat-plinko');
+    historyInstall($user, 'chat-plinko');
 
     expect(ProductInstall::where('user_id', $user->id)->orderBy('id')->pluck('product_slug')->all())
-        ->toBe(['follower-bowling', 'twitch-chat-plinko']);
+        ->toBe(['follower-bowling', 'chat-plinko']);
 });
 
 it('stamps the first load through a real overlay link, and only the first', function () {

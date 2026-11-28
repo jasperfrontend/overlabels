@@ -50,20 +50,20 @@ function loginThroughTwitchAfterVisiting(string $redirectTo)
 }
 
 it('returns to a page on our own site after logging in', function () {
-    $target = url('/products/twitch-chat-plinko/install');
+    $target = url('/products/chat-plinko/install');
 
     loginThroughTwitchAfterVisiting($target)->assertRedirect($target);
 });
 
 it('returns to a site-relative path after logging in', function () {
-    loginThroughTwitchAfterVisiting('/products/twitch-chat-plinko/install')
-        ->assertRedirect(url('/products/twitch-chat-plinko/install'));
+    loginThroughTwitchAfterVisiting('/products/chat-plinko/install')
+        ->assertRedirect(url('/products/chat-plinko/install'));
 });
 
 it('sends you to the dashboard instead of another site', function (string $redirectTo) {
     loginThroughTwitchAfterVisiting($redirectTo)->assertRedirect('/dashboard');
 })->with([
-    'another host' => 'https://evil.example/products/twitch-chat-plinko/install',
+    'another host' => 'https://evil.example/products/chat-plinko/install',
     'protocol-relative host' => '//evil.example/phish',
 ]);
 

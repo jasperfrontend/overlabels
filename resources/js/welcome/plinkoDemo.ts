@@ -1,5 +1,5 @@
 /**
- * The Twitch Chat Plinko demo, for real: the product's own board
+ * The Chat Plinko demo, for real: the product's own board
  * (resources/js/plinko/plinkoBoard.ts) mounted into the demo scene, made-up
  * viewers typing !drop in the chat column, and a chat box under the scene
  * where the visitor drops their own ball and chases the top score. The board

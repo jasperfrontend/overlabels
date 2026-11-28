@@ -121,7 +121,7 @@
                         <a href="{{ route('products.show', 'chat-tower') }}" class="{{ $link }}">Chat Tower</a>,
                         <a href="{{ route('products.show', 'follower-bowling') }}" class="{{ $link }}">Follower Bowling</a>
                         and
-                        <a href="{{ route('products.show', 'twitch-chat-plinko') }}" class="{{ $link }}">Twitch Chat Plinko</a>
+                        <a href="{{ route('products.show', 'chat-plinko') }}" class="{{ $link }}">Chat Plinko</a>
                         were born. Next to them sit a full-featured
                         <a href="{{ route('products.show', 'twitch-chat-overlay') }}" class="{{ $link }}">Twitch Chat Overlay</a>,
                         <a href="{{ route('products.show', 'chat-checkin') }}" class="{{ $link }}">Chat Checkin</a>
@@ -181,7 +181,7 @@
                     </p>
 
                     <p class="mt-10 text-xl font-semibold">
-                        Now go install <a href="{{ route('products.show', 'twitch-chat-plinko') }}" class="{{ $link }}">Twitch Chat Plinko</a>. It's great!
+                        Now go install <a href="{{ route('products.show', 'chat-plinko') }}" class="{{ $link }}">Chat Plinko</a>. It's great!
                     </p>
                 </div>
             </div>

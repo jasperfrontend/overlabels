@@ -8,6 +8,7 @@ use App\Services\Recipes\RecipeCatalog;
 use App\Services\Recipes\RecipeInstaller;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 
 uses(DatabaseTransactions::class);
 
@@ -34,12 +35,23 @@ function paletteTemplate(string $product): OverlayTemplate
         'twitch_id' => (string) fake()->unique()->randomNumber(9),
         'twitch_data' => ['login' => 'palette'.fake()->unique()->randomNumber(5)],
     ]);
+    // The migration is frozen at the slugs products had on 2026-11-20. Plinko
+    // has been chat-plinko since 2026-11-28, so install it under that and put
+    // the recipe row back the way it was when the migration ran.
+    $current = ['twitch-chat-plinko' => 'chat-plinko'][$product] ?? $product;
+    if ($current !== $product) {
+        // A second install in the same test finds the row already moved back.
+        DB::table('recipes')->where('slug', $product)->update(['slug' => $current]);
+    }
     $catalog = app(RecipeCatalog::class);
     $instance = app(RecipeInstaller::class)->install(
-        $catalog->sync($catalog->find($product)),
+        $catalog->sync($catalog->find($current)),
         $user,
         RecipeInstance::instanceSlugFrom($product),
     );
+    if ($current !== $product) {
+        DB::table('recipes')->where('slug', $current)->update(['slug' => $product]);
+    }
 
     return OverlayTemplate::findOrFail($instance->primitive_map['overlays'][paletteSpec($product)['overlay_ref']]);
 }

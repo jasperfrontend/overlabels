@@ -33,7 +33,7 @@ it('renders every section of a chat product page', function () {
         $response = $this->get(route('products.show', $product['slug']))->assertOk();
 
         $response->assertSee($pitch['tagline']);
-        $response->assertSee('One command. Three things happen.');
+        $response->assertSee($pitch['plays_heading'] ?? 'One command. Three things happen.');
         $response->assertSee($pitch['reasons_heading']);
         $response->assertSee('Before you click.');
         $response->assertSee($pitch['closing']);
@@ -118,6 +118,36 @@ it('ships every picture a pitch points at', function () {
             expect(public_path(ltrim($path, '/')))->toBeFile();
         }
     }
+});
+
+// The default heading over the three beats is "One command. Three things
+// happen.", true only of a product chat drives with a !command. A product whose
+// description names none (Snow, the chat feed, the emote bubbles) must name its
+// own, or its page promises a command that does not exist.
+it('never promises a command to a product that has none', function () {
+    foreach (listedProducts('product') as $product) {
+        if (preg_match('/!\w+/', $product['description'])) {
+            continue;
+        }
+
+        expect($product['pitch'])->toHaveKey('plays_heading');
+
+        $this->get(route('products.show', $product['slug']))
+            ->assertOk()
+            ->assertSee($product['pitch']['plays_heading'])
+            ->assertDontSee('One command. Three things happen.');
+    }
+});
+
+it('labels the three beats and their jump link with the manifest\'s own kicker', function () {
+    $pitch = listedProducts('product')->firstWhere('slug', 'snow-overlay')['pitch'];
+
+    $this->get(route('products.show', 'snow-overlay'))
+        ->assertOk()
+        ->assertSee('<p class="pp-kicker">'.e($pitch['plays_kicker']).'</p>', false)
+        ->assertSee('>'.e($pitch['plays_kicker']).'</a>', false)
+        ->assertDontSee('What your chat does')
+        ->assertDontSee('What chat does');
 });
 
 it('keeps the short page for a donation alert', function () {

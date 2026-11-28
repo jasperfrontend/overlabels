@@ -1,4 +1,5 @@
 import type { LucideIcon } from '@lucide/vue';
+import type { Component } from 'vue';
 
 export interface Auth {
   csrf: string | null | undefined;
@@ -13,7 +14,8 @@ export interface BreadcrumbItem {
 export interface NavItem {
   title: string;
   href: string;
-  icon?: LucideIcon;
+  // A Lucide icon, or a brand mark component (DiscordIcon) Lucide does not ship.
+  icon?: LucideIcon | Component;
   isActive?: boolean;
   target?: string;
   // Second key of the "G then <key>" chord that navigates here, when it has one.
@@ -59,6 +61,8 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
   help: HelpLink[];
   flash: FlashMessage;
   isAdmin: boolean;
+  /** The community Discord invite (config services.discord.invite). */
+  discordUrl: string;
   /** Origin the "Add to OBS" dialog mints hosted-overlay URLs on; null = the current origin. */
   overlayOrigin: string | null;
   /** Keys of one-off NudgeBars this user has already clicked away. */

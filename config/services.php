@@ -175,4 +175,11 @@ return [
         'min_length' => (int) env('MAP_SLUG_MIN_LENGTH', 8),
     ],
 
+    // The Overlabels community Discord. A public invite, not a secret, so it
+    // lives here rather than in env. Every "Got questions?" link on the site
+    // reads it (shared to Vue as the `discordUrl` Inertia prop).
+    'discord' => [
+        'invite' => 'https://discord.gg/qANdj5QPpd',
+    ],
+
 ];

@@ -249,7 +249,7 @@ class TemplateDataMapperService
         'overlay_name' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Overlay Name', 'desc' => 'Name of the overlay', 'sample' => 'My Awesome Overlay'],
         'timestamp' => ['category' => 'overlay', 'type' => 'datetime', 'label' => 'Timestamp', 'desc' => 'Current timestamp', 'sample' => '2026-08-20 12:00:00'],
         'checkin_globe' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Check-in Globe', 'desc' => 'A spinning globe with a pin per !checkin. Drawn by the overlay itself, style it with CSS', 'sample' => ''],
-        'plinko_command' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Plinko Command', 'desc' => 'The word Twitch Chat Plinko listens for, without its !. Chosen on the Plinko settings page', 'sample' => 'drop'],
+        'plinko_command' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Plinko Command', 'desc' => 'The word Chat Plinko listens for, without its !. Chosen on the Plinko settings page', 'sample' => 'drop'],
         'plinko_board' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Plinko Board', 'desc' => 'A Plinko board: every !drop in chat drops a ball with the chatter name on it. Drawn by the overlay itself, style it with CSS', 'sample' => ''],
         'snow_scene' => ['category' => 'overlay', 'type' => 'string', 'label' => 'Snow Scene', 'desc' => 'Falling snow, each flake at its own speed and drifting a little. Drawn by the overlay itself, set its look with CSS custom properties', 'sample' => ''],
     ];

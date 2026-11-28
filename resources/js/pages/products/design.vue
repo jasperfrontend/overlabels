@@ -1038,11 +1038,18 @@ const skinControl = computed(() => (props.skin_key ? (controls[props.skin_key] ?
           <div class="flex flex-col gap-3 border-t border-border pt-5">
             <div>
               <h2 class="text-base font-bold text-foreground">Happy with your design?</h2>
-              <p class="mt-1 text-sm text-foreground">
-                Click the button below and follow the steps to add {{ product.name }} to OBS as a browser source. You can come back and change your
-                design any time. You don't need to add this overlay again once installed! Changes you make on this page will directly reflect on the
-                overlay you already have installed. Also, do not click the ADD TO OBS button when you're live, okay?
-              </p>
+              <ul class="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-foreground">
+                <li>The button below adds {{ product.name }} to OBS as a browser source, step by step.</li>
+                <li>Already in OBS? Every change you make here shows there right away. No need to add it again.</li>
+                <li>Come back and change your design any time.</li>
+                <li>Don't click Add to OBS while you're live.</li>
+                <li>
+                  Got questions?
+                  <a :href="page.props.discordUrl" target="_blank" rel="noopener noreferrer" class="cursor-pointer text-sky-500 hover:underline"
+                    >Visit our Discord</a
+                  >
+                </li>
+              </ul>
             </div>
             <AddToObsButton :template="overlay" />
           </div>

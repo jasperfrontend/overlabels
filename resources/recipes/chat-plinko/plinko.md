@@ -1,12 +1,12 @@
 ---
-name: Twitch Chat Plinko
+name: Chat Plinko
 type: static
 author: Overlabels
 ---
 
-# Twitch Chat Plinko
+# Chat Plinko
 
-A Plinko board your Twitch chat plays. Every !drop in chat (or the word you pick in your Plinko settings) drops a ball with that chatter's name on it, in the order chat sends them, one ball each at a time. Real bouncing off every peg, 1000 points at the rare edges, a line of who is next and the top scores so far.
+A Plinko board your chat plays. Every !drop in chat (or the word you pick in your Plinko settings) drops a ball with that chatter's name on it, in the order chat sends them, one ball each at a time. Real bouncing off every peg, 1000 points at the rare edges, a line of who is next and the top scores so far.
 
 An Overlabels **static overlay** by Overlabels.
 
@@ -177,5 +177,5 @@ Every control also exposes a companion `[[[c:<key>_at]]]` holding the Unix times
 
 ## Live data tags used
 
-- `[[[plinko_board]]]` - the board itself. The overlay draws it, reading every `!drop` straight from your Twitch chat, and the CSS custom properties on `.ol-plinko` set the rows, the pace and the colours.
+- `[[[plinko_board]]]` - the board itself. The overlay draws it, reading every `!drop` straight from your chat, and the CSS custom properties on `.ol-plinko` set the rows, the pace and the colours.
 - `[[[plinko_command]]]` - the word the board listens for, without its `!`. `drop` unless you chose another on the Plinko settings page.

@@ -45,7 +45,7 @@ it('writes nothing while building a demo', function () {
 it('has no demo for a product without designer scenes, or one that does not exist', function (string $slug) {
     $this->getJson("/api/overlay/demo/{$slug}")->assertNotFound();
     $this->get("/products/{$slug}/demo-frame")->assertNotFound();
-})->with(['twitch-chat-plinko', 'no-such-product']);
+})->with(['chat-plinko', 'no-such-product']);
 
 it('serves the demo frame page, noindex', function () {
     $this->get('/products/chat-tower/demo-frame')

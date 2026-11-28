@@ -13,7 +13,7 @@
                 'chat-checkin' => 'checkin',
                 'twitch-chat-overlay' => 'chat',
                 'chat-emote-bubbles' => 'bubbles',
-                'twitch-chat-plinko' => 'plinko',
+                'chat-plinko' => 'plinko',
                 'snow-overlay' => 'snow',
             ];
             $demo = $demos[$product['slug']] ?? null;
@@ -95,7 +95,7 @@
              wireProductNav (welcome/app.ts) marks the section in view. --}}
         @php
             $jumps = array_filter([
-                'what-chat-does' => 'What chat does',
+                'what-chat-does' => $page['plays_nav'],
                 'why' => 'Why streamers use it',
                 'looks' => $page['looks'] ? 'Looks' : null,
                 'setup' => 'Setup',
@@ -118,12 +118,14 @@
             </div>
         </nav>
 
-        {{-- 2. What chat does: three beats, the pictures carry them. --}}
+        {{-- 2. The three beats, the pictures carry them. Label and heading come
+             from the manifest (pitchPage() supplies the !command defaults); the
+             id stays what-chat-does so existing links keep landing here. --}}
         <section id="what-chat-does" data-product-row class="scroll-mt-[calc(var(--ol-nav-h)+3rem)] py-20 sm:py-28">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-5xl">
-                    <p class="pp-kicker">What your chat does</p>
-                    <h2 class="mb-10 text-3xl font-bold tracking-tight text-balance sm:text-4xl">One command. Three things happen.</h2>
+                    <p class="pp-kicker">{{ $page['plays_kicker'] }}</p>
+                    <h2 class="mb-10 text-3xl font-bold tracking-tight text-balance sm:text-4xl">{{ $page['plays_heading'] }}</h2>
                     <ol class="pp-flow">
                         @foreach ($page['plays'] as $i => $play)
                             <li class="pp-beat">

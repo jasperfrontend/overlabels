@@ -38,6 +38,7 @@ import {
 } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import AppLogo from './AppLogo.vue';
+import DiscordIcon from './DiscordIcon.vue';
 import type { AppPageProps } from '@/types';
 
 const page = usePage<AppPageProps>();
@@ -81,6 +82,8 @@ const learnNavItems = computed<NavItem[]>(() =>
         // Alt+R opens the reference search; G then R opens the reference itself.
         { title: 'Reference', href: route('help.reference'), target: '_blank', icon: Brackets, shortcut: 'r' },
         { title: 'Updates', href: route('updates.index'), icon: Newspaper, shortcut: 'u' },
+        // Off-site: target _blank also stops Inertia's Link from trying to visit it.
+        { title: 'Discord', href: page.props.discordUrl, target: '_blank', icon: DiscordIcon },
       ]
     : [],
 );

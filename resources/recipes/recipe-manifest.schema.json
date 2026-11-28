@@ -198,7 +198,7 @@
         },
         "plays": {
           "type": "array",
-          "description": "What chat does, as exactly three beats, each a picture, a short title and one line.",
+          "description": "What the product does on stream, as exactly three beats, each a picture, a short title and one line.",
           "minItems": 3,
           "maxItems": 3,
           "items": {
@@ -251,6 +251,18 @@
               }
             }
           }
+        },
+        "plays_kicker": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30,
+          "description": "Optional: the small label over the three beats, also their link in the page's jump bar. Without it: \"What your chat does\" (and \"What chat does\" in the bar)."
+        },
+        "plays_heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Optional: the heading over the three beats. Without it: \"One command. Three things happen.\", which is only true of a product chat drives with a !command. A product without one names its own (ProductPitchPageTest holds that)."
         },
         "plays_note": {
           "type": "object",

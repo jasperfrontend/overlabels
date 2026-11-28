@@ -144,40 +144,50 @@ const isActive = (key: string) => (props.category === null ? key === 'all' : key
              Real links with the filter in the URL, so a category can be
              shared and comes back on the back button. -->
         <aside class="mb-6 border-b border-border pb-4 lg:mb-0 lg:w-52 lg:shrink-0 lg:border-r lg:border-b-0 lg:pr-6 lg:pb-0">
-          <NavigationMenu
-            orientation="vertical"
-            :viewport="false"
-            aria-label="Product categories"
-            class="w-full max-w-none items-stretch justify-start lg:sticky lg:top-6 [&>div]:w-full"
-          >
-            <NavigationMenuList class="-mx-4 justify-start gap-1 overflow-x-auto px-4 lg:mx-0 lg:w-full lg:flex-col lg:items-stretch lg:px-0">
-              <NavigationMenuItem
-                v-for="entry in entries"
-                :key="entry.key"
-                class="shrink-0"
-                :class="{ 'lg:mt-2 lg:border-t lg:border-border lg:pt-2': entry.separated }"
-              >
-                <NavigationMenuLink
-                  as-child
-                  :active="isActive(entry.key)"
-                  class="group/entry w-full cursor-pointer flex-row items-center gap-3 rounded-none border-l-2 border-transparent px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-sidebar-accent hover:bg-sidebar-accent/5 data-[active]:border-violet-500 data-[active]:bg-sidebar-accent data-[active]:text-violet-500 dark:data-[active]:text-violet-400"
+          <!-- One sticky block for the menu and the line under it, so the two
+               scroll as one. Sticky on the menu alone left the line behind. -->
+          <div class="lg:sticky lg:top-6">
+            <NavigationMenu
+              orientation="vertical"
+              :viewport="false"
+              aria-label="Product categories"
+              class="w-full max-w-none items-stretch justify-start [&>div]:w-full"
+            >
+              <NavigationMenuList class="-mx-4 justify-start gap-1 overflow-x-auto px-4 lg:mx-0 lg:w-full lg:flex-col lg:items-stretch lg:px-0">
+                <NavigationMenuItem
+                  v-for="entry in entries"
+                  :key="entry.key"
+                  class="shrink-0"
+                  :class="{ 'lg:mt-2 lg:border-t lg:border-border lg:pt-2': entry.separated }"
                 >
-                  <Link :href="entry.href" :aria-current="isActive(entry.key) ? 'page' : undefined">
-                    <component
-                      :is="entry.icon"
-                      class="size-4 shrink-0 text-muted-foreground transition-colors group-hover/entry:text-foreground group-data-[active]/entry:text-violet-500 dark:group-data-[active]/entry:text-violet-400"
-                    />
-                    <span>{{ entry.label }}</span>
-                    <span
-                      class="ml-auto inline-flex h-5 min-w-5 items-center justify-center border border-border px-1.5 text-xs text-muted-foreground tabular-nums transition-colors group-data-[active]/entry:border-violet-500/60 group-data-[active]/entry:text-violet-500 dark:group-data-[active]/entry:text-violet-400"
-                    >
-                      {{ entry.count }}
-                    </span>
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+                  <NavigationMenuLink
+                    as-child
+                    :active="isActive(entry.key)"
+                    class="group/entry w-full cursor-pointer flex-row items-center gap-3 rounded-none border-l-2 border-transparent px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-sidebar-accent hover:bg-sidebar-accent/5 data-[active]:border-violet-500 data-[active]:bg-sidebar-accent data-[active]:text-violet-500 dark:data-[active]:text-violet-400"
+                  >
+                    <Link :href="entry.href" :aria-current="isActive(entry.key) ? 'page' : undefined">
+                      <component
+                        :is="entry.icon"
+                        class="size-4 shrink-0 text-muted-foreground transition-colors group-hover/entry:text-foreground group-data-[active]/entry:text-violet-500 dark:group-data-[active]/entry:text-violet-400"
+                      />
+                      <span>{{ entry.label }}</span>
+                      <span
+                        class="ml-auto inline-flex h-5 min-w-5 items-center justify-center border border-border px-1.5 text-xs text-muted-foreground tabular-nums transition-colors group-data-[active]/entry:border-violet-500/60 group-data-[active]/entry:text-violet-500 dark:group-data-[active]/entry:text-violet-400"
+                      >
+                        {{ entry.count }}
+                      </span>
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+            <p class="mt-3 px-3 text-sm text-muted-foreground lg:mt-6">
+              Got questions?
+              <a :href="page.props.discordUrl" target="_blank" rel="noopener noreferrer" class="cursor-pointer text-sky-500 hover:underline"
+                >Visit our Discord</a
+              >
+            </p>
+          </div>
         </aside>
 
         <div class="min-w-0 flex-1">

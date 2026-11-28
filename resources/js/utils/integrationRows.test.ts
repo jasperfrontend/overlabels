@@ -159,7 +159,7 @@ describe('filtering', () => {
 
 describe('a row with its own status', () => {
   it('shows the status the server sent instead of a last-event date', () => {
-    const services = [service({ key: 'plinko', name: 'Plinko', product: 'twitch-chat-plinko', connected: true, status: 'Listening for !drop' })];
+    const services = [service({ key: 'plinko', name: 'Plinko', product: 'chat-plinko', connected: true, status: 'Listening for !drop' })];
 
     const row = buildIntegrationRows(services, offline, botOff, never).find((r) => r.key === 'plinko');
 

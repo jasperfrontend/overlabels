@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import DarkModeToggle from '@/components/DarkModeToggle.vue';
+import DiscordIcon from '@/components/DiscordIcon.vue';
 import StreamStatus from '@/components/StreamStatus.vue';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -44,6 +45,11 @@ const settingsLinks = [
         <StreamStatus class="ml-2 md:mr-2 md:ml-auto" />
 
         <nav class="hidden items-center gap-1 md:flex">
+          <!-- Off-site, so a plain link in a new tab rather than an Inertia visit. -->
+          <a :href="page.props.discordUrl" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-ghost">
+            <DiscordIcon class="size-4" />
+            Discord
+          </a>
           <Link v-for="item in settingsLinks" :key="item.label" :href="item.href" class="btn btn-sm btn-ghost">
             <component :is="item.icon" class="size-4" />
             {{ item.label }}
@@ -58,6 +64,12 @@ const settingsLinks = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="min-w-48" align="end">
+            <DropdownMenuItem as-child>
+              <a :href="page.props.discordUrl" target="_blank" rel="noopener noreferrer" class="flex w-full cursor-pointer items-center">
+                <DiscordIcon class="mr-2 size-4" />
+                Discord
+              </a>
+            </DropdownMenuItem>
             <DropdownMenuItem v-for="item in settingsLinks" :key="item.label" as-child>
               <Link :href="item.href" class="flex w-full cursor-pointer items-center">
                 <component :is="item.icon" class="mr-2 size-4" />

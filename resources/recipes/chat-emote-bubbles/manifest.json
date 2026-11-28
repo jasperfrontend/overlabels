@@ -26,6 +26,7 @@
   "pitch": {
     "tagline": "Every emote your chat types floats across your stream.",
     "lede": "Type PogChamp five times and five PogChamps drift up your screen in soap bubbles. Twitch, 7TV, BTTV and FFZ emotes all count, and there's nothing to connect and no bot to add.",
+    "plays_heading": "Every emote in chat floats across your stream in its own bubble.",
     "plays": [
       {
         "title": "Chat types emotes",
