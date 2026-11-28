@@ -48,11 +48,21 @@ if [ "${ENTRYPOINT_RUN_HELP_INDEX:-0}" = "1" ]; then
     php artisan help:build-index || echo "help:build-index failed (continuing - search will stay on Loading...)"
 fi
 
-# Pre-render help/reference and update-post OG images, web role only. ~135
-# PNGs in a few seconds; subsequent boots skip anything whose context hash is
-# already on disk.
+# Pre-render help/reference and update-post OG images, web role only, in the
+# BACKGROUND, so the server starts without waiting for it.
+#
+# It used to run here in the foreground: ~225 PNGs, ~23 s, every boot (public/og
+# is not a volume, so a fresh container has none of them). That kept every web
+# boot within a few seconds of Kamal's healthcheck window, and on 2026-11-28 one
+# went over: the deploy failed AFTER the migrations above had run, leaving the
+# old code serving a migrated database.
+#
+# Nothing waits on it. A page whose card is not rendered yet renders it on that
+# request (OgImageService::renderOrCached()), so the only cost of the warm-up
+# still running is a slower first scrape in the seconds after a deploy. The
+# subshell outlives the exec below and logs to the same stdout.
 if [ "${ENTRYPOINT_RUN_OG_GENERATE:-0}" = "1" ]; then
-    php artisan og:generate || echo "og:generate failed (continuing - layout falls back to /ogimage.png)"
+    ( php artisan og:generate || echo "og:generate failed (continuing - pages render their own card on request)" ) &
 fi
 
 exec "$@"

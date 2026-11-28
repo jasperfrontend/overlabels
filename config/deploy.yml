@@ -12,11 +12,11 @@ service: overlabels
 image: jasperfrontend/overlabels
 
 # How long a new container has to pass its healthcheck before Kamal gives up
-# (default 30 s). The web entrypoint renders every OG image before the server
-# starts (docker/docker-entrypoint.sh, og:generate, ~23 s: public/og is not a
-# volume, so a fresh container renders all of them), which put every web boot
-# within a few seconds of the default. On 2026-11-28 one went over and the
-# deploy failed after its migrations had already run.
+# (default 30 s). On 2026-11-28 a web boot went over the default and the deploy
+# failed after its migrations had already run: the entrypoint rendered every OG
+# image (~23 s) before starting the server. That now runs in the background
+# (docker/docker-entrypoint.sh), so a boot is a few seconds; 60 stays as the
+# margin for a slow host, not as room for the warm-up.
 deploy_timeout: 60
 
 servers:
